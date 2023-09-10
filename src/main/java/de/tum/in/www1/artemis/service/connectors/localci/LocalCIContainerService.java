@@ -57,16 +57,13 @@ public class LocalCIContainerService {
     /**
      * Configure the volumes of the container such that it can access the assignment repository, the test repository, and the build script.
      *
-     * @param assignmentRepositoryPath   the path to the assignment repository in the file system
-     * @param testRepositoryPath         the path to the test repository in the file system
-     * @param auxiliaryRepositoriesPaths the paths to the auxiliary repositories in the file system
-     * @param auxiliaryRepositoryNames   the names of the auxiliary repositories
-     * @param buildScriptPath            the path to the build script in the file system
+     * @param assignmentRepositoryPath the path to the assignment repository in the file system
+     * @param testRepositoryPath       the path to the test repository in the file system
      * @return the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
      */
     public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames,
             Path buildScriptPath) {
-        // The binds are used to mount the assignment repository, the test repository, and the build script into the container.
+
         Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
         binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
         binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
@@ -75,8 +72,7 @@ public class LocalCIContainerService {
         }
         binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptPath.toString(), new Volume("/script.sh"));
 
-        return HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
-                .withBinds(binds);
+        return HostConfig.newHostConfig().withAutoRemove(true).withBinds(binds); // Automatically remove the container when it exits.
     }
 
     /**
@@ -89,9 +85,8 @@ public class LocalCIContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, HostConfig volumeConfig, String branch, String commitHash) {
-        log.info("Configuring container {} with branch {} and commit hash {}", containerName, branch, commitHash);
         return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
-                .withEnv("ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
+                .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
@@ -135,33 +130,6 @@ public class LocalCIContainerService {
 
         try {
             log.info("Started running the build script for build job in container with id " + containerId);
-            // Block until the latch reaches 0 or until the thread is interrupted.
-            latch.await();
-        }
-        catch (InterruptedException e) {
-            throw new LocalCIException("Interrupted while waiting for command to complete", e);
-        }
-    }
-
-    /**
-     * Make the script specified in the container's bind mount executable.
-     *
-     * @param containerId the id of the container in which the script should be made executable
-     */
-    public void makeScriptExecutable(String containerId) {
-        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd("chmod", "+x", "script.sh")
-                .exec();
-        final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
-
-            @Override
-            public void onComplete() {
-                latch.countDown();
-            }
-        });
-
-        try {
-            log.info("Started making the script executable for build job in container with id " + containerId);
             // Block until the latch reaches 0 or until the thread is interrupted.
             latch.await();
         }
@@ -250,6 +218,7 @@ public class LocalCIContainerService {
 
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && auxiliaryRepositories.size() > 0;
+
         Path scriptsPath = Path.of("local-ci-scripts");
 
         if (!Files.exists(scriptsPath)) {

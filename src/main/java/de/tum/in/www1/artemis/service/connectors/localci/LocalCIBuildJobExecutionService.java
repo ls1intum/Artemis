@@ -17,6 +17,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
+import org.hibernate.LazyInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,8 +42,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
- * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService}
- * and submitted to the
+ * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and submitted to the
  * executor service.
  */
 @Service
@@ -110,11 +110,22 @@ public class LocalCIBuildJobExecutionService {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
-        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
+        List<AuxiliaryRepository> auxiliaryRepositories;
+
+        auxiliaryRepositories = participation.getProgrammingExercise().getAuxiliaryRepositories();
+
+        try {
+            // If the auxiliary repositories are not initialized, we need to fetch them from the database.
+            log.info("Auxiliary Reposities: " + auxiliaryRepositories.size());
+        }
+        catch (LazyInitializationException ex) {
+            auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
+        }
 
         // Prepare script
 
         Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise());
+        log.info("Created build script at {}", buildScriptPath);
 
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
@@ -129,7 +140,7 @@ public class LocalCIBuildJobExecutionService {
             assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
             testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
 
-            if (auxiliaryRepositories != null) {
+            if (!auxiliaryRepositories.isEmpty()) {
                 auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[auxiliaryRepositories.size()];
                 auxiliaryRepositoryNames = new String[auxiliaryRepositories.size()];
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
@@ -142,7 +153,6 @@ public class LocalCIBuildJobExecutionService {
                 auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[0];
                 auxiliaryRepositoryNames = new String[0];
             }
-
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
@@ -151,9 +161,16 @@ public class LocalCIBuildJobExecutionService {
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
 
-        Path[] auxiliaryRepositoriesPaths = new Path[auxiliaryRepositoriesUrls.length];
-        for (int i = 0; i < auxiliaryRepositoriesUrls.length; i++) {
-            auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+        Path[] auxiliaryRepositoriesPaths;
+
+        if (auxiliaryRepositoriesUrls.length > 0) {
+            auxiliaryRepositoriesPaths = new Path[auxiliaryRepositoriesUrls.length];
+            for (int i = 0; i < auxiliaryRepositoriesUrls.length; i++) {
+                auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+            }
+        }
+        else {
+            auxiliaryRepositoriesPaths = new Path[0];
         }
 
         String branch;
@@ -164,8 +181,7 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
-        // Create the volume configuration for the container. The assignment repository, the tests repository, the auxiliary repositories and the build script are bound into the
-        // container to be used by
+        // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
         // the build job.
         HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
                 buildScriptPath);
@@ -199,8 +215,6 @@ public class LocalCIBuildJobExecutionService {
 
         log.info("Started container for build job " + containerName);
 
-        localCIContainerService.makeScriptExecutable(containerId);
-
         localCIContainerService.runScriptInContainer(containerId);
 
         log.info("Finished running the build script in container " + containerName);
@@ -217,7 +231,6 @@ public class LocalCIBuildJobExecutionService {
             }
             // Always use the latest commit from the test repository.
             testRepoCommitHash = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.TEST, branch);
-
         }
         catch (NotFoundException | IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and
@@ -247,6 +260,7 @@ public class LocalCIBuildJobExecutionService {
         }
 
         localCIContainerService.stopContainer(containerName);
+
         // Delete script file from host system
         localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
 
