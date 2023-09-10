@@ -4,7 +4,7 @@ export class FileDetails {
         public extension: string = '',
     ) {}
     static getFileDetailsFromPath(filePath: string): FileDetails {
-        const filePathSplit: string[] = filePath!.split('/');
+        const filePathSplit: string[] = filePath.split('/');
         const fileName = filePathSplit.last()!;
         const fileNameSplit: string[] = fileName.split('.');
         const fileExtension = fileNameSplit.last()!;

@@ -5,13 +5,6 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { AlertService } from 'app/core/util/alert.service';
 import { FileService } from 'app/shared/http/file.service';
 
-export class StagedFile {
-    constructor(
-        public fileDetails: FileDetails,
-        public file: File,
-    ) {}
-}
-
 @Component({
     selector: 'jhi-stage',
     templateUrl: './file-upload-stage.component.html',
@@ -19,12 +12,12 @@ export class StagedFile {
 })
 export class FileUploadStageComponent {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
-    stagedFiles: StagedFile[] = [];
+    stagedFiles: File[] = [];
     @Input() allowsUploads?: boolean;
     @Input() submission?: FileUploadSubmission;
     @Input() allowedFileExtensions: string[];
     @Input() showUploadButton: boolean;
-    @Output() stagedFilesChanged = new EventEmitter<StagedFile[]>();
+    @Output() stagedFilesChanged = new EventEmitter<File[]>();
     @Output() uploadButtonClicked = new EventEmitter();
 
     protected readonly FileDetails = FileDetails;
@@ -47,7 +40,7 @@ export class FileUploadStageComponent {
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
-                this.stagedFiles!.push(new StagedFile(FileDetails.getFileDetailsFromPath(submissionFile.name), submissionFile));
+                this.stagedFiles!.push(submissionFile);
             }
 
             this.fileInput.nativeElement.value = '';
@@ -59,7 +52,7 @@ export class FileUploadStageComponent {
      * Removes a file submission from the stage
      * @param stagedFile File to be removed
      */
-    removeFileSubmissionFromStage(stagedFile: StagedFile): void {
+    removeFileSubmissionFromStage(stagedFile: File): void {
         this.stagedFiles = this.stagedFiles!.filter((file) => file != stagedFile);
         this.stagedFilesChanged.emit(this.stagedFiles);
     }

@@ -25,12 +25,12 @@
 
     <ul class="list-group">
         <li *ngFor="let stagedFile of stagedFiles" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center w-50">
-            <a class="d-flex justify-content-between align-items-center" (click)="openFile(stagedFile.file!)">
+            <a class="d-flex justify-content-between align-items-center" (click)="openFile(stagedFile)">
                 <div>
-                    {{ 'artemisApp.fileUploadSubmission.open' | artemisTranslate: { fileName: stagedFile.fileDetails.name } }}
+                    {{ 'artemisApp.fileUploadSubmission.open' | artemisTranslate: { fileName: FileDetails.getFileDetailsFromPath(stagedFile.path).name } }}
                 </div>
                 <span class="ms-2 badge bg-info" *ngIf="stagedFile.fileDetails.extension">
-                    {{ stagedFile.fileDetails.extension | uppercase }}
+                    {{ FileDetails.getFileDetailsFromPath(stagedFile.path).extension | uppercase }}
                 </span>
             </a>
 

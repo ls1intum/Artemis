@@ -7,7 +7,6 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { FileDetails } from 'app/entities/file-details.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -18,7 +17,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { FileUploadStageComponent, StagedFile } from 'app/exercises/file-upload/stage/file-upload-stage.component';
+import { FileUploadStageComponent } from 'app/exercises/file-upload/stage/file-upload-stage.component';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -35,8 +34,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent {
     @Input()
     exercise: FileUploadExercise;
 
-    stagedFiles: StagedFile[];
-    submittedFiles?: FileDetails[];
+    stagedFiles: File[] = [];
     participation: StudentParticipation;
     result: Result;
 
@@ -110,8 +108,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent {
             return;
         }
 
-        const files: File[] = this.stagedFiles.map((stagedFile) => stagedFile.file);
-        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, files).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.stagedFiles).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
                 this.studentSubmission.filePaths = submissionFromServer.filePaths;
@@ -122,7 +119,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent {
         });
     }
 
-    stagedFilesChanged(stagedFiles: StagedFile[]): void {
+    stagedFilesChanged(stagedFiles: File[]): void {
         this.stagedFiles = stagedFiles;
         this.studentSubmission.isSynced = false;
     }

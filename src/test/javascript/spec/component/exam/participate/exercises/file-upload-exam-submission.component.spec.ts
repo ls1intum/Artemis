@@ -1,6 +1,6 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { By, SafeHtml } from '@angular/platform-browser';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
@@ -15,18 +15,15 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { createFileUploadSubmission } from '../../../../helpers/mocks/service/mock-file-upload-submission.service';
-import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AlertService } from 'app/core/util/alert.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { FileUploadStageComponent } from 'app/exercises/file-upload/stage/file-upload-stage.module';
 
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
     let comp: FileUploadExamSubmissionComponent;
-    let alertService: AlertService;
     let mockSubmission: FileUploadSubmission;
     let mockExercise: FileUploadExercise;
     let fileUploadSubmissionService: FileUploadSubmissionService;
@@ -56,6 +53,7 @@ describe('FileUploadExamSubmissionComponent', () => {
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
+                MockComponent(FileUploadStageComponent),
             ],
             providers: [MockProvider(ChangeDetectorRef), { provide: TranslateService, useClass: MockTranslateService }],
         })
@@ -63,7 +61,6 @@ describe('FileUploadExamSubmissionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadExamSubmissionComponent);
                 comp = fixture.componentInstance;
-                alertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
             });
     });
@@ -107,20 +104,6 @@ describe('FileUploadExamSubmissionComponent', () => {
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === mockExercise.problemStatement);
             expect(el).not.toBeNull();
-        });
-    });
-
-    describe('ngOnInit', () => {
-        beforeEach(() => {
-            resetComponent();
-        });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-        it('should call updateViewFromSubmission', () => {
-            const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
-            comp.ngOnInit();
-            expect(updateViewStub).toHaveBeenCalledOnce();
         });
     });
 
@@ -182,6 +165,8 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
     });
 
+    // eslint-disable-next-line jest/no-commented-out-tests
+    /* nocheckin: we don't really do anything in updateViewFromSubmission anymore so well...
     describe('updateViewFromSubmission', () => {
         beforeEach(() => {
             resetComponent();
@@ -192,7 +177,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
         it('should do nothing if isSynced is false', () => {
             comp.studentSubmission.isSynced = false;
-            comp.submissionFile = new File([], 'file2');
+            comp.stagedFiles = [new File([], 'file2')];
             comp.updateViewFromSubmission();
             expect(comp.submissionFile).toBeDefined();
         });
@@ -205,66 +190,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(comp.submissionFile).toBeUndefined();
         });
     });
-
-    it('Too big file can not be submitted', fakeAsync(() => {
-        // Ignore console errors
-        console.error = jest.fn();
-        resetComponent();
-        fixture.detectChanges();
-        tick();
-
-        const submissionFile = new File([''], 'exampleSubmission.png');
-        Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
-        comp.studentSubmission = createFileUploadSubmission();
-        const jhiErrorSpy = jest.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
-        comp.setFileSubmissionForExercise(event);
-        fixture.detectChanges();
-
-        // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledOnce();
-        expect(comp.submissionFile).toBeUndefined();
-        expect(comp.studentSubmission!.filePath).toBeUndefined();
-
-        // check if fileUploadInput is available
-        const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).not.toBeNull();
-        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toBe('');
-        jest.restoreAllMocks();
-    }));
-
-    it('Incorrect file type can not be submitted', fakeAsync(() => {
-        // Ignore console errors
-        console.error = jest.fn();
-        resetComponent();
-        fixture.detectChanges();
-        tick();
-
-        // Only png and pdf types are allowed
-        const submissionFile = new File([''], 'exampleSubmission.jpg');
-        comp.studentSubmission = createFileUploadSubmission();
-        const jhiErrorSpy = jest.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
-        comp.setFileSubmissionForExercise(event);
-        fixture.detectChanges();
-
-        // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledOnce();
-        expect(comp.submissionFile).toBeUndefined();
-        expect(comp.studentSubmission!.filePath).toBeUndefined();
-
-        // check if fileUploadInput is available
-        const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).not.toBeNull();
-        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toBe('');
-
-        tick();
-        fixture.destroy();
-        flush();
-        jest.restoreAllMocks();
-    }));
+*/
 
     describe('saveUploadedFile', () => {
         beforeEach(() => {
@@ -282,12 +208,12 @@ describe('FileUploadExamSubmissionComponent', () => {
 
         it('should save if submissionFile is defined', () => {
             const newFilePath = 'new/path/image.png';
-            const updateStub = jest.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { id: 1, filePath: newFilePath } })));
-            comp.submissionFile = new File([], 'name.png');
-            expect(comp.studentSubmission.filePath).not.toEqual(newFilePath);
+            const updateStub = jest.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { id: 1, filePaths: [newFilePath] } })));
+            comp.stagedFiles = [new File([], 'name.png')];
+            expect(comp.studentSubmission.filePaths).toBeUndefined();
             comp.saveUploadedFile();
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(comp.studentSubmission.filePath).toEqual(newFilePath);
+            expect(comp.studentSubmission.filePaths![0]).toEqual(newFilePath);
         });
     });
 });

@@ -28,7 +28,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { FileUploadStageComponent, StagedFile } from 'app/exercises/file-upload/stage/file-upload-stage.component';
+import { FileUploadStageComponent } from 'app/exercises/file-upload/stage/file-upload-stage.component';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -37,7 +37,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     @ViewChild('stage', { static: false }) stage: FileUploadStageComponent;
-    stagedFiles: StagedFile[] = [];
+    stagedFiles: File[] = [];
     submittedFiles?: FileDetails[];
     submission?: FileUploadSubmission;
     fileUploadExercise: FileUploadExercise;
@@ -139,13 +139,12 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             return;
         }
 
-        if (!this.submission || !this.stagedFiles) {
+        if (!this.submission || this.stagedFiles.length === 0) {
             return;
         }
 
         this.isSaving = true;
-        const files: File[] = this.stagedFiles.map((stagedFile) => stagedFile.file);
-        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, files).subscribe({
+        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, this.stagedFiles).subscribe({
             next: (res) => {
                 this.submission = res.body!;
                 this.participation = this.submission.participation as StudentParticipation;
@@ -166,9 +165,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission!.submitted = false;
                 const serverError = error.headers.get('X-artemisApp-error');
                 if (serverError) {
-                    this.alertService.error(serverError, { fileName: files.toString() });
+                    this.alertService.error(serverError, { fileName: this.stagedFiles.toString() });
                 } else {
-                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: files.toString() });
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: this.stagedFiles.toString() });
                 }
                 this.fileInput.nativeElement.value = '';
                 this.stage.clearStagedFiles();
@@ -202,7 +201,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         return !this.examMode && this.fileUploadExercise && !hasExerciseDueDatePassed(this.fileUploadExercise, this.participation);
     }
 
-    stagedFilesChanged(stagedFiles: StagedFile[]) {
+    stagedFilesChanged(stagedFiles: File[]) {
         this.stagedFiles = stagedFiles;
     }
 
