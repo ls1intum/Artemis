@@ -1,5 +1,4 @@
 <!--resizable container-->
-<!-- nocheckin: NONE OF THIS is tested at all! -->
 <jhi-resizeable-container *ngIf="exercise">
     <!--region Left Panel-->
     <span class="exercise-title" left-header>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
@@ -11,46 +10,16 @@
         [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
-        <div class="row">
-            <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && studentSubmission">
-                <div class="form-group">
-                    <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
-                    <div class="input-group background-file">
-                        <div class="custom-file overflow-ellipsis">
-                            <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
-                        </div>
-                        <div class="col-4">
-                            <button class="btn btn-primary" id="file-upload-submit" (click)="saveUploadedFile()">
-                                {{ 'artemisApp.examParticipation.uploadFile' | artemisTranslate }}
-                            </button>
-                        </div>
-                    </div>
-                    <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
-                    <div class="d-inline-block" *ngFor="let extension of exercise.filePattern!.split(',')">
-                        <span class="ms-1 badge bg-info">
-                            {{ extension | uppercase }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div *ngIf="submittedFiles && studentSubmission?.filePaths" class="card-text">
-            <h6>
-                {{ 'artemisApp.fileUploadSubmission.submittedFiles' | artemisTranslate }}
-            </h6>
-
-            <ol>
-                <li *ngFor="let submittedFile of submittedFiles; let i = index" class="card-text">
-                    <a class="text-primary" (click)="downloadFile(studentSubmission!.filePaths![i]!)">
-                        {{ 'artemisApp.fileUploadSubmission.download' | artemisTranslate: { fileName: submittedFile.name } }}
-                    </a>
-                    <span class="ms-2 badge bg-info" *ngIf="submittedFile.extension">
-                        {{ submittedFile.extension | uppercase }}
-                    </span>
-                </li>
-            </ol>
-        </div>
+        <jhi-stage
+            #stage
+            [allowsUploads]="isActive && !result"
+            [submission]="studentSubmission"
+            [allowedFileExtensions]="exercise.filePattern!.split(',')"
+            [showUploadButton]="true"
+            (stagedFilesChanged)="stagedFilesChanged($event)"
+            (uploadButtonClicked)="uploadButtonClicked()"
+        >
+        </jhi-stage>
     </div>
     <!--endregion-->
     <!--region Right Panel-->

@@ -1,0 +1,66 @@
+<div class="row">
+    <div class="col-12 col-md-6" *ngIf="allowsUploads">
+        <div class="form-group">
+            <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
+            <div class="input-group background-file">
+                <div class="custom-file overflow-ellipsis">
+                    <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="stageFileSubmissionForExercise($event)" />
+                </div>
+            </div>
+            <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
+            <div class="d-inline-block" *ngFor="let extension of allowedFileExtensions">
+                <span class="ms-1 badge bg-info">
+                    {{ extension | uppercase }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="stagedFiles!.length > 0" class="mb-4">
+    <h6>
+        {{ 'artemisApp.fileUploadSubmission.stagedFiles' | artemisTranslate }}
+        <!-- nocheckin: make new json file for this component. just for the goofs-->
+    </h6>
+
+    <ul class="list-group">
+        <li *ngFor="let stagedFile of stagedFiles" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center w-50">
+            <a class="d-flex justify-content-between align-items-center" (click)="openFile(stagedFile.file!)">
+                <div>
+                    {{ 'artemisApp.fileUploadSubmission.open' | artemisTranslate: { fileName: stagedFile.fileDetails.name } }}
+                </div>
+                <span class="ms-2 badge bg-info" *ngIf="stagedFile.fileDetails.extension">
+                    {{ stagedFile.fileDetails.extension | uppercase }}
+                </span>
+            </a>
+
+            <button type="button" class="btn btn-danger btn-sm" (click)="removeFileSubmissionFromStage(stagedFile)">Delete</button>
+        </li>
+    </ul>
+
+    <div *ngIf="showUploadButton" class="mt-2 w-100">
+        <button class="btn btn-outline-primary w-50" id="file-upload-submit" (click)="uploadStagedFiles()">
+            {{ 'artemisApp.examParticipation.uploadFile' | artemisTranslate }}
+        </button>
+    </div>
+</div>
+
+<div *ngIf="submission">
+    <!-- nocheckin -->
+    <h6>
+        {{ 'artemisApp.fileUploadSubmission.submittedFiles' | artemisTranslate }}
+        <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
+    </h6>
+
+    <ol>
+        <li *ngFor="let filePath of submission!.filePaths" class="card-text">
+            <a class="text-primary" (click)="downloadFile(filePath)">
+                {{ 'artemisApp.fileUploadSubmission.download' | artemisTranslate: { fileName: FileDetails.getFileDetailsFromPath(filePath).name } }}
+            </a>
+            <span class="ms-2 badge bg-info">
+                <!-- nocheckin, where is this important?: *ngIf="submittedFile.extension"-->
+                {{ FileDetails.getFileDetailsFromPath(filePath).extension | uppercase }}
+            </span>
+        </li>
+    </ol>
+</div>

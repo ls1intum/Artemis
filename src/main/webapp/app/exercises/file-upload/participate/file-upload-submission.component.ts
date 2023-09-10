@@ -8,7 +8,6 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -29,13 +28,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-
-class StagedFile {
-    constructor(
-        public fileDetails: FileDetails,
-        public file: File,
-    ) {}
-}
+import { FileUploadStageComponent, StagedFile } from 'app/exercises/file-upload/stage/file-upload-stage.component';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -43,7 +36,8 @@ class StagedFile {
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
-    stagedFiles?: StagedFile[];
+    @ViewChild('stage', { static: false }) stage: FileUploadStageComponent;
+    stagedFiles: StagedFile[] = [];
     submittedFiles?: FileDetails[];
     submission?: FileUploadSubmission;
     fileUploadExercise: FileUploadExercise;
@@ -125,9 +119,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
 
-                if (this.submission?.submitted) {
-                    this.setSubmittedFiles();
-                }
                 if (this.submission?.submitted && this.result?.completionDate) {
                     this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
@@ -153,7 +144,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         }
 
         this.isSaving = true;
-        const files: File[] = this.stagedFiles?.map((stagedFile) => stagedFile.file);
+        const files: File[] = this.stagedFiles.map((stagedFile) => stagedFile.file);
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, files).subscribe({
             next: (res) => {
                 this.submission = res.body!;
@@ -163,7 +154,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.participationWebsocketService.addParticipation(this.participation, this.fileUploadExercise);
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.result = getLatestSubmissionResult(this.submission)!;
-                this.setSubmittedFiles();
+                this.stage.clearStagedFiles();
                 if (this.isActive) {
                     this.alertService.success('artemisApp.fileUploadExercise.submitSuccessful');
                 } else {
@@ -180,43 +171,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: files.toString() });
                 }
                 this.fileInput.nativeElement.value = '';
-                this.stagedFiles = undefined;
+                this.stage.clearStagedFiles();
                 this.isSaving = false;
             },
         });
-    }
-
-    /**
-     * Stages a file submission for exercise
-     * @param event {object} Event object which contains the uploaded file
-     */
-    stageFileSubmissionForExercise(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            const submissionFile = fileList[0];
-            const allowedFileExtensions = this.fileUploadExercise.filePattern!.split(',');
-            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
-            } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
-            } else {
-                if (!this.stagedFiles) this.stagedFiles = [];
-                this.stagedFiles?.push(new StagedFile(FileDetails.getFileDetailsFromPath(submissionFile.name), submissionFile));
-            }
-
-            this.fileInput.nativeElement.value = '';
-        }
-    }
-
-    /**
-     * Unstages a file submission.
-     * @param stagedFile File which is unstaged
-     */
-    unstageFile(stagedFile: StagedFile): void {
-        if (this.stagedFiles) {
-            this.stagedFiles = this.stagedFiles?.filter((file) => file != stagedFile);
-            if (this.stagedFiles!.length == 0) this.stagedFiles = undefined;
-        }
     }
 
     /**
@@ -228,29 +186,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             return getUnreferencedFeedback(this.result.feedbacks);
         }
         return undefined;
-    }
-
-    private setSubmittedFiles() {
-        // clear staged files
-        this.stagedFiles = undefined;
-        this.submittedFiles = [];
-
-        if (this.submission?.filePaths) {
-            for (const filePath of this.submission.filePaths) {
-                const fileDetails = FileDetails.getFileDetailsFromPath(filePath);
-                this.submittedFiles.push(fileDetails);
-            }
-        }
-    }
-
-    downloadFile(filePath: string) {
-        this.fileService.downloadFile(filePath);
-    }
-
-    openFile(file: File) {
-        const url = URL.createObjectURL(file);
-        window.open(url, '_blank');
-        URL.revokeObjectURL(url);
     }
 
     /**
@@ -265,6 +200,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      */
     get isActive(): boolean {
         return !this.examMode && this.fileUploadExercise && !hasExerciseDueDatePassed(this.fileUploadExercise, this.participation);
+    }
+
+    stagedFilesChanged(stagedFiles: StagedFile[]) {
+        this.stagedFiles = stagedFiles;
     }
 
     get submitButtonTooltip(): string {

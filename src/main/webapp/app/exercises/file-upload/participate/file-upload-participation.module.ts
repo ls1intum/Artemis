@@ -8,6 +8,7 @@ import { FileUploadSubmissionComponent } from './file-upload-submission.componen
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { FileUploadStageModule } from 'app/exercises/file-upload/stage/file-upload-stage.module';
 
 @NgModule({
     imports: [
@@ -19,6 +20,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisHeaderExercisePageWithDetailsModule,
         RatingModule,
         ArtemisMarkdownModule,
+        FileUploadStageModule,
     ],
     declarations: [FileUploadSubmissionComponent],
 })

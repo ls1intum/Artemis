@@ -1,5 +1,4 @@
-// nocheckin: NONE OF THIS is tested at all!
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -8,7 +7,6 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileDetails } from 'app/entities/file-details.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';
@@ -20,6 +18,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { FileUploadStageComponent, StagedFile } from 'app/exercises/file-upload/stage/file-upload-stage.component';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -27,18 +26,19 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
     // change deactivation must be triggered manually
 })
-export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    @ViewChild('stage', { static: false }) stage: FileUploadStageComponent;
 
     @Input()
     studentSubmission: FileUploadSubmission;
     @Input()
     exercise: FileUploadExercise;
 
+    stagedFiles: StagedFile[];
     submittedFiles?: FileDetails[];
     participation: StudentParticipation;
     result: Result;
-    submissionFile?: File;
 
     readonly ButtonType = ButtonType;
 
@@ -63,45 +63,12 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     /**
-     * Initializes data for file upload editor
-     */
-    ngOnInit() {
-        // show submission answers in UI
-        this.updateViewFromSubmission();
-    }
-
-    /**
      * Updates the problem statement of the currently loaded file upload exercise which is part of the user's student exam.
      * @param newProblemStatement is the updated problem statement that should be displayed to the user.
      */
     updateProblemStatement(newProblemStatement: string): void {
         this.exercise.problemStatement = newProblemStatement;
         this.changeDetectorReference.detectChanges();
-    }
-
-    /**
-     * Sets file submission for exercise
-     * Here the file selected with the -browse- button is handled.
-     * @param event {object} Event object which contains the uploaded file
-     */
-    setFileSubmissionForExercise(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            const submissionFile = fileList[0];
-            const allowedFileExtensions = this.exercise.filePattern!.split(',');
-            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
-            } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
-            } else {
-                this.submissionFile = submissionFile;
-                this.studentSubmission.isSynced = false;
-            }
-        }
-    }
-
-    downloadFile(filePath: string) {
-        this.fileService.downloadFile(filePath);
     }
 
     /**
@@ -115,7 +82,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         return this.exercise;
     }
 
-    public hasUnsavedChanges(): boolean {
+    hasUnsavedChanges(): boolean {
         return !this.studentSubmission.isSynced!;
     }
 
@@ -131,11 +98,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
     updateViewFromSubmission(): void {
-        if (this.studentSubmission.isSynced && this.studentSubmission.filePaths) {
-            // clear submitted file so that it is not displayed in the input (this might be confusing)
-            this.submissionFile = undefined;
-            this.submittedFiles = this.studentSubmission.filePaths.map((filePath) => FileDetails.getFileDetailsFromPath(filePath));
-        }
+        // we do nothing here as the studentSubmission is an input to the file upload stage which displays it correctly
     }
 
     /**
@@ -143,19 +106,30 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  set it in the submission.
      */
     saveUploadedFile() {
-        if (!this.submissionFile) {
+        if (this.stagedFiles?.length === 0) {
             return;
         }
-        /*this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, [this.submissionFile]).subscribe({ // nocheckin
+
+        const files: File[] = this.stagedFiles.map((stagedFile) => stagedFile.file);
+        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, files).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
-                this.studentSubmission.filePath = submissionFromServer.filePath; // nocheckin
+                this.studentSubmission.filePaths = submissionFromServer.filePaths;
                 this.studentSubmission.isSynced = true;
                 this.studentSubmission.submitted = true;
-                this.updateViewFromSubmission();
             },
             error: () => this.onError(),
-        });*/
+        });
+    }
+
+    stagedFilesChanged(stagedFiles: StagedFile[]): void {
+        this.stagedFiles = stagedFiles;
+        this.studentSubmission.isSynced = false;
+    }
+
+    uploadButtonClicked(): void {
+        this.saveUploadedFile();
+        this.stage.clearStagedFiles();
     }
 
     /**

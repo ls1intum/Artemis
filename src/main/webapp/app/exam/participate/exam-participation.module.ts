@@ -31,6 +31,7 @@ import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercise
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { FileUploadStageModule } from 'app/exercises/file-upload/stage/file-upload-stage.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -55,6 +56,7 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisParticipationSummaryModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
+        FileUploadStageModule,
     ],
     declarations: [
         ExamParticipationComponent,
