@@ -104,9 +104,9 @@ public class ProgrammingExerciseImportService {
         for (int i = 0; i < auxRepos.size(); i++) {
             AuxiliaryRepository auxRepo = auxRepos.get(i);
             var repoUrl = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName()).toString();
-            AuxiliaryRepository newAuxRepos = newExercise.getAuxiliaryRepositories().get(i);
-            newAuxRepos.setRepositoryUrl(repoUrl);
-            auxiliaryRepositoryRepository.save(newAuxRepos);
+            AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
+            newAuxRepo.setRepositoryUrl(repoUrl);
+            auxiliaryRepositoryRepository.save(newAuxRepo);
         }
 
         // Unprotect the default branch of the template exercise repo.
