@@ -59,7 +59,10 @@ export class ConversationErrorOccurredAction implements MessageStoreAction {
 export class StudentMessageSentAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(public readonly message: IrisClientMessage, public readonly timeoutId: ReturnType<typeof setTimeout> | null = null) {
+    public constructor(
+        public readonly message: IrisClientMessage,
+        public readonly timeoutId: ReturnType<typeof setTimeout> | null = null,
+    ) {
         this.type = ActionType.STUDENT_MESSAGE_SENT;
     }
 }
@@ -67,7 +70,10 @@ export class StudentMessageSentAction implements MessageStoreAction {
 export class SessionReceivedAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(public readonly sessionId: number, public readonly messages: ReadonlyArray<IrisMessage>) {
+    public constructor(
+        public readonly sessionId: number,
+        public readonly messages: ReadonlyArray<IrisMessage>,
+    ) {
         this.type = ActionType.SESSION_CHANGED;
     }
 }
@@ -75,7 +81,10 @@ export class SessionReceivedAction implements MessageStoreAction {
 export class RateMessageSuccessAction implements MessageStoreAction {
     readonly type: ActionType;
 
-    public constructor(public readonly index: number, public readonly helpful: boolean) {
+    public constructor(
+        public readonly index: number,
+        public readonly helpful: boolean,
+    ) {
         this.type = ActionType.RATE_MESSAGE_SUCCESS;
     }
 }
