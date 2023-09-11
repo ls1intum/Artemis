@@ -111,7 +111,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         executorService.shutdown();
 
         try {
-            boolean finished = executorService.awaitTermination(1, TimeUnit.HOURS);
+            boolean finished = executorService.awaitTermination(3, TimeUnit.HOURS);
             if (!finished) {
                 log.error(ERROR_MESSAGE);
                 throw new RuntimeException(ERROR_MESSAGE);
