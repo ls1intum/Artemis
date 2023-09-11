@@ -179,7 +179,7 @@ public class ProgrammingExerciseGitDiffReportService {
         try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoA)) {
             git.diff().setOldTree(treeParserRepoA).setNewTree(treeParserRepoB).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            return extractDiffEntries(diff).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
+            return extractDiffEntries(diff).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).map(Math::abs).sum();
         }
         catch (IOException | GitAPIException e) {
             return Integer.MAX_VALUE;
