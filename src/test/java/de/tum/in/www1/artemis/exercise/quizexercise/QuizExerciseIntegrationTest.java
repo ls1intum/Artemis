@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.byLessThan;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
@@ -1391,6 +1392,20 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             assertThat(quizQuestion.isInvalid()).as("Quiz Question invalid flag has been set to false").isFalse();
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCheckIfBackgroundFilePathIsABackgroundFilePathElseThrow_Valid() {
+        assertThatCode(() -> QuizExerciseImportService.checkIfBackgroundFilePathIsABackgroundFilePathElseThrow("/api/files/drag-and-drop/backgrounds/1/BackgroundFile.jpg"))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCheckIfBackgroundFilePathIsABackgroundFilePathElseThrow_Invalid() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
+                () -> QuizExerciseImportService.checkIfBackgroundFilePathIsABackgroundFilePathElseThrow("/api/files/drag-and-drop/backgrounds/1/../../BackgroundFile.jpg"));
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
