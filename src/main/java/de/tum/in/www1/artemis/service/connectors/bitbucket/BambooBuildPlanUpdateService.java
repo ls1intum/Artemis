@@ -24,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateService;
 
@@ -36,14 +37,17 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
 
+    private final BambooInternalUrlService bambooInternalUrlService;
+
     private static final String OLD_ASSIGNMENT_REPO_NAME = "Assignment";
 
     private final Logger log = LoggerFactory.getLogger(BambooBuildPlanUpdateService.class);
 
     private final RestTemplate bambooRestTemplate;
 
-    public BambooBuildPlanUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate) {
+    public BambooBuildPlanUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate, BambooInternalUrlService bambooInternalUrlService) {
         this.bambooRestTemplate = bambooRestTemplate;
+        this.bambooInternalUrlService = bambooInternalUrlService;
     }
 
     @Override
@@ -56,7 +60,7 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
                         + " to the student repository : Could not find assignment nor Assignment repository");
             }
 
-            updateBambooPlanRepository(bambooRepository, buildPlanKey, branchName, newRepoUrl);
+            updateBambooPlanRepository(bambooRepository, buildPlanKey, branchName, bambooInternalUrlService.toInternalVcsUrl(newRepoUrl));
 
             log.info("Update plan repository for build plan {} was successful", buildPlanKey);
         }
