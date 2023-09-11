@@ -101,7 +101,6 @@
             ],
             "styles": [
               "src/main/webapp/content/scss/themes/theme-default.scss",
-                "node_modules/angular2-draggable/css/resizable.min.css",
               {
                 "bundleName": "theme-dark",
                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",

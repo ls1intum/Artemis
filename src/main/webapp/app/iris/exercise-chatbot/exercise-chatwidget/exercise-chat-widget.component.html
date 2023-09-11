@@ -1,21 +1,8 @@
 <div class="container" (mouseenter)="toggleScrollLock(true)" (mouseleave)="toggleScrollLock(false)">
     <!-- chat box -->
-    <div
-        [style.width]="widgetWidth"
-        [style.height]="widgetHeight"
-        class="chat-widget"
-        #chatWidget
-        ngDraggable
-        [handle]="client"
-        ngResizable
-        rzHandles="all"
-        [rzMinWidth]="250"
-        [rzMinHeight]="250"
-        [rzMaxWidth]="1335"
-        [rzMaxHeight]="620"
-    >
+    <div class="chat-widget" [id]="ID">
         <!-- client -->
-        <div class="client" #client>
+        <div class="client">
             <div class="chat-header">
                 <h3 class="header-start">
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL"></jhi-iris-logo>
@@ -132,8 +119,8 @@
             >
                 {{ error.key | artemisTranslate }}
             </div>
-            <div class="client-chat-error" *ngIf="error && !isEmptyMessageError()" [ngClass]="{ 'shake-animation': shakeErrorField }">
-                {{ error.key | artemisTranslate : getConvertedErrorMap() }}
+            <div class="client-chat-error" *ngIf="error && !isEmptyMessageError()">
+                {{ error.key | artemisTranslate: getConvertedErrorMap() }}
             </div>
         </div>
 

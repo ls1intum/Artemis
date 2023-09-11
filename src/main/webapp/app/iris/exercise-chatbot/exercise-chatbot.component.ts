@@ -3,7 +3,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
-import { shakeAnimation } from 'angular-animations';
 import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -18,14 +17,12 @@ import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
     templateUrl: './exercise-chatbot.component.html',
     styleUrls: ['./exercise-chatbot.component.scss'],
     providers: [IrisStateStore, IrisWebsocketService, IrisSessionService, IrisHeartbeatService],
-    animations: [shakeAnimation({ anchor: 'shake', direction: '=>', duration: 700 })],
 })
 export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     public buttonDisabled = false;
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
     chatOpen = false;
     closed = true;
-    runAnimation = false;
     hasNewMessages = false;
     private exerciseId: number;
     private stateSubscription: Subscription;
@@ -43,8 +40,6 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         private overlay: Overlay,
         private readonly sessionService: IrisSessionService,
         private readonly stateStore: IrisStateStore,
-        private readonly websocketService: IrisWebsocketService,
-        private readonly heartbeatService: IrisHeartbeatService,
         private route: ActivatedRoute,
         private sharedService: SharedService,
     ) {}
@@ -112,9 +107,6 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
                 stateStore: this.stateStore,
                 exerciseId: this.exerciseId,
                 sessionService: this.sessionService,
-                widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
-                widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
-                fullSize: localStorage.getItem('fullSize') === 'true',
             },
         });
     }
