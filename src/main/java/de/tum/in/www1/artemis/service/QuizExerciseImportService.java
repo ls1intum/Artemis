@@ -160,20 +160,27 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param backgroundFilePath Path to be checked
      */
     public static void checkIfBackgroundFilePathIsABackgroundFilePathElseThrow(String backgroundFilePath) {
-        // Substitutes all escape sequences in the backgroundFilePath with their standard elements
-        String unescapedBackgroundFilePath = StringEscapeUtils.unescapeJava(backgroundFilePath);
-        // Removes redundant elements (e.g. ../ or ./) from the backgroundFilePath
-        Path normalisedBackgroundFilePath = Paths.get(unescapedBackgroundFilePath).normalize();
-        // Resolve the backgroundFilePath on the empty path in order to receive an absolute path
-        Path absoluteBackgroundFilePath = Path.of("").resolve(normalisedBackgroundFilePath);
         /*
-         * Check whether the absolute backgroundFilePath without any escape sequences
-         * or redundant elements starts with "/api/files/drag-and-drop/backgrounds"
-         * (the standard actual path for drag-and-drop background images)
+         * FileService.copyExistingFileToTarget(String, String, Long) only acts,
+         * when backgroundFilePath != null && !backgroundFilePath.contains("files/temp")
+         * => No need to check if backgroundFilePath == null || backgroundFilePath.contains("files/temp")
          */
-        if (!absoluteBackgroundFilePath.startsWith("/api/files/drag-and-drop/backgrounds")) {
-            // Throws an IllegalArgumentException if that is not the case
-            throw new IllegalArgumentException("Background File Path is not valid!");
+        if (backgroundFilePath != null && !backgroundFilePath.contains("files/temp")) {
+            // Substitutes all escape sequences in the backgroundFilePath with their standard elements
+            String unescapedBackgroundFilePath = StringEscapeUtils.unescapeJava(backgroundFilePath);
+            // Removes redundant elements (e.g. ../ or ./) from the backgroundFilePath
+            Path normalisedBackgroundFilePath = Paths.get(unescapedBackgroundFilePath).normalize();
+            // Resolve the backgroundFilePath on the empty path in order to receive an absolute path
+            Path absoluteBackgroundFilePath = Path.of("").resolve(normalisedBackgroundFilePath);
+            /*
+             * Check whether the absolute backgroundFilePath without any escape sequences
+             * or redundant elements starts with "/api/files/drag-and-drop/backgrounds"
+             * (the standard actual path for drag-and-drop background images)
+             */
+            if (!absoluteBackgroundFilePath.startsWith("/api/files/drag-and-drop/backgrounds")) {
+                // Throws an IllegalArgumentException if that is not the case
+                throw new IllegalArgumentException("Background File Path is not valid!");
+            }
         }
     }
 
