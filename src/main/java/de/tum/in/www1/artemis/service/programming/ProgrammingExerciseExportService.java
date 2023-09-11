@@ -238,6 +238,7 @@ public class ProgrammingExerciseExportService {
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
             var exportOptions = new RepositoryExportOptionsDTO();
             exportOptions.setAnonymizeRepository(false);
+            exportOptions.setExportAllParticipants(true);
 
             // Export student repositories and add them to list
             var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, outputDir, exportErrors).stream()
@@ -530,11 +531,14 @@ public class ProgrammingExerciseExportService {
             RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.isExportAllParticipants()) {
-            log.info("Request to export all student or team repositories of programming exercise {} with title '{}'", programmingExerciseId, programmingExercise.getTitle());
+            log.info("Request to export all {} student or team repositories of programming exercise {} with title '{}'", participations.size(), programmingExerciseId,
+                    programmingExercise.getTitle());
         }
         else {
-            log.info("Request to export the repositories of programming exercise {} with title '{}' of the following students or teams: {}", programmingExerciseId,
-                    programmingExercise.getTitle(), participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
+            log.info("Request to export the repositories of programming exercise {} with title '{}' of {} students or teams", programmingExerciseId, programmingExercise.getTitle(),
+                    participations.size());
+            log.debug("Export repositories for students or teams: {}",
+                    participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
         List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
