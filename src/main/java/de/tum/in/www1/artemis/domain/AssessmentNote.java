@@ -6,7 +6,6 @@ import javax.persistence.*;
 
 import org.springframework.data.annotation.CreatedDate;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
@@ -16,15 +15,12 @@ public class AssessmentNote extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "creator_id", referencedColumnName = "id")
-    @JsonIgnore
     private User creator;
 
     @CreatedDate
-    @JsonIgnore
     @Column(name = "created_date", updatable = false)
     private Instant createdDate = Instant.now();
 
-    @JsonIgnore
     @Column(name = "last_updated_date")
     private Instant lastUpdatedDate = Instant.now();
 
@@ -41,5 +37,17 @@ public class AssessmentNote extends DomainObject {
 
     public String getNote() {
         return this.note;
+    }
+
+    public User getCreator() {
+        return this.creator;
+    }
+
+    public Instant getCreatedDate() {
+        return this.createdDate;
+    }
+
+    public Instant getLastUpdatedDate() {
+        return this.lastUpdatedDate;
     }
 }
