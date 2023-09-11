@@ -150,7 +150,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      */
     private diffPrettyHtml(diffs: Diff[]): string {
         const html: any[] = [];
-        const colorForAddedText = this.isDark ? '#2a2' : '#e6ffe6;';
+        const colorForAddedText = this.isDark ? '#006400' : '#e6ffe6';
         const colorForDeletedText = this.isDark ? '#a22' : '#ffe6e6';
         diffs.forEach((diff: Diff, index: number) => {
             const op = diffs[index][0]; // Operation (insert, delete, equal)
