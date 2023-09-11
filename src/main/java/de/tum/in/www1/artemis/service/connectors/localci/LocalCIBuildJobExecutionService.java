@@ -116,7 +116,7 @@ public class LocalCIBuildJobExecutionService {
 
         try {
             // If the auxiliary repositories are not initialized, we need to fetch them from the database.
-            log.info("Auxiliary Reposities: " + auxiliaryRepositories.size());
+            log.info("Auxiliary repositories: {}", auxiliaryRepositories.size());
         }
         catch (LazyInitializationException ex) {
             auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
@@ -124,8 +124,7 @@ public class LocalCIBuildJobExecutionService {
 
         // Prepare script
 
-        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise());
-        log.info("Created build script at {}", buildScriptPath);
+        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise(), auxiliaryRepositories);
 
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes

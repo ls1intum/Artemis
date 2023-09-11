@@ -30,7 +30,6 @@ import com.github.dockerjava.api.model.Volume;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -44,14 +43,11 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
-    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
-    public LocalCIContainerService(DockerClient dockerClient, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+    public LocalCIContainerService(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
-        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -215,12 +211,10 @@ public class LocalCIContainerService {
      * @param programmingExercise the programming exercise for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExercise programmingExercise) {
-
-        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(programmingExercise.getId());
+    public Path createBuildScript(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> auxiliaryRepositories) {
 
         Long programmingExerciseId = programmingExercise.getId();
-        boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && auxiliaryRepositories.size() > 0;
+        boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
 
         Path scriptsPath = Path.of("local-ci-scripts");
 
