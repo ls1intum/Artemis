@@ -916,10 +916,8 @@ public class FileService implements DisposableBean {
         // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
 
         try {
-            // TODO: extend the list of potential binary files
-            var fileName = filePath.toString().toLowerCase();
-            if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".heic")) {
-                // do not try to read binary files
+            if (isBinaryFile(filePath)) {
+                // do not try to read binary files with 'readString'
                 return;
             }
             // Note: we cannot check if this is a binary file or not. We try to read it, in case it fails, we only log this below, but continue
@@ -935,17 +933,24 @@ public class FileService implements DisposableBean {
         }
     }
 
+    private static boolean isBinaryFile(Path filePath) {
+        // TODO: extend the list of potential binary files
+        var fileName = filePath.toString().toLowerCase();
+
+        return fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".heic");
+    }
+
     /**
      * This normalizes all line endings to UNIX-line-endings recursively from the startPath.
      * <p>
-     * {@link #normalizeLineEndings(String) normalizeLineEndings}
+     * {@link #normalizeLineEndings(Path) normalizeLineEndings}
      *
      * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
      */
-    public void normalizeLineEndingsDirectory(String startPath) throws IOException {
+    public void normalizeLineEndingsDirectory(Path startPath) throws IOException {
         log.debug("Normalizing file endings in directory {}", startPath);
-        File directory = new File(startPath);
+        File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("File endings in directory " + startPath + " should be normalized but the directory does not exist.");
         }
@@ -956,7 +961,7 @@ public class FileService implements DisposableBean {
         Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
 
         for (File file : files) {
-            normalizeLineEndings(file.getAbsolutePath());
+            normalizeLineEndings(file.toPath());
         }
     }
 
@@ -968,28 +973,29 @@ public class FileService implements DisposableBean {
      * @param filePath the path where the file is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
      */
-    public void normalizeLineEndings(String filePath) throws IOException {
+    public void normalizeLineEndings(Path filePath) throws IOException {
         log.debug("Normalizing line endings in file {}", filePath);
+        if (isBinaryFile(filePath)) {
+            // do not try to read binary files with 'readString'
+            return;
+        }
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
-        Path replaceFilePath = Path.of(filePath);
-        Charset charset = UTF_8;
-
-        String fileContent = Files.readString(replaceFilePath, charset);
+        String fileContent = Files.readString(filePath, UTF_8);
         fileContent = fileContent.replaceAll("\\r\\n?", "\n");
-        Files.writeString(replaceFilePath, fileContent, charset);
+        Files.writeString(filePath, fileContent, UTF_8);
     }
 
     /**
      * This converts all files to the UTF-8 encoding recursively from the startPath.
      * <p>
-     * {@link #convertToUTF8(String) convertToUTF8}
+     * {@link #convertToUTF8(Path) convertToUTF8}
      *
      * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
      */
-    public void convertToUTF8Directory(String startPath) throws IOException {
+    public void convertToUTF8Directory(Path startPath) throws IOException {
         log.debug("Converting files in directory {} to UTF-8", startPath);
-        File directory = new File(startPath);
+        File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be converted to UTF-8 but the directory does not exist.");
         }
@@ -1000,7 +1006,7 @@ public class FileService implements DisposableBean {
         Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
 
         for (File file : files) {
-            convertToUTF8(file.getAbsolutePath());
+            convertToUTF8(file.toPath());
         }
     }
 
@@ -1011,17 +1017,16 @@ public class FileService implements DisposableBean {
      * @param filePath the path where the file is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
      */
-    public void convertToUTF8(String filePath) throws IOException {
+    public void convertToUTF8(Path filePath) throws IOException {
         log.debug("Converting file {} to UTF-8", filePath);
-        Path replaceFilePath = Path.of(filePath);
-        byte[] contentArray = Files.readAllBytes(replaceFilePath);
+        byte[] contentArray = Files.readAllBytes(filePath);
 
         Charset charset = detectCharset(contentArray);
         log.debug("Detected charset for file {} is {}", filePath, charset.name());
 
         String fileContent = new String(contentArray, charset);
 
-        Files.writeString(replaceFilePath, fileContent, UTF_8);
+        Files.writeString(filePath, fileContent, UTF_8);
     }
 
     /**
