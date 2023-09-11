@@ -913,14 +913,15 @@ public class FileService implements DisposableBean {
      */
     public void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
         log.debug("Replacing {} in file {}", replacements, filePath);
-        // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
 
+        if (isBinaryFile(filePath)) {
+            // do not try to read binary files with 'readString'
+            return;
+        }
         try {
-            if (isBinaryFile(filePath)) {
-                // do not try to read binary files with 'readString'
-                return;
-            }
-            // Note: we cannot check if this is a binary file or not. We try to read it, in case it fails, we only log this below, but continue
+            // Note: Java does not offer a good way to check if a file is binary or not. If the basic check above fails (e.g. due to a custom binary file from an instructor),
+            // but the file is still binary, we try to read it. In case the method readString fails, we only log this below, but continue, because the exception should NOT
+            // interrupt the ongoing process
             String fileContent = Files.readString(filePath, UTF_8);
             for (Map.Entry<String, String> replacement : replacements.entrySet()) {
                 fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
@@ -933,10 +934,16 @@ public class FileService implements DisposableBean {
         }
     }
 
+    /**
+     * very simple and non-exhaustive check for the most common binary files such as images
+     * Unfortunately, Java cannot determine this correctly, so we need to provide typical file endings here
+     *
+     * @param filePath the path of the file
+     * @return whether the simple check for file endings determines the underlying file to be binary (true) or not (false)
+     */
     private static boolean isBinaryFile(Path filePath) {
         // TODO: extend the list of potential binary files
         var fileName = filePath.toString().toLowerCase();
-
         return fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".heic");
     }
 
