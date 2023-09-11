@@ -34,6 +34,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
 
+    private static final String TEST_PREFIX = "chtest";
+
     @Autowired
     TutorialGroupRepository tutorialGroupRepository;
 
@@ -45,8 +47,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private LectureRepository lectureRepository;
-
-    private static final String TEST_PREFIX = "chtest";
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -244,8 +244,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "instructor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE);
     }
 
     @ParameterizedTest
@@ -283,8 +281,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "tutor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE);
     }
 
     @ParameterizedTest

@@ -997,6 +997,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public abstract ExerciseType getExerciseType();
 
+    public abstract String getType();
+
     /**
      * Disconnects child entities from the exercise.
      * <p>
