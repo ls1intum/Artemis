@@ -246,6 +246,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     @Override
     public boolean buildPlanExists(String projectKey, String buildPlanKey) {
+        if (projectKey == null || buildPlanKey == null) {
+            return false;
+        }
         return bambooService.checkIfBuildPlanExists(projectKey, buildPlanKey);
     }
 

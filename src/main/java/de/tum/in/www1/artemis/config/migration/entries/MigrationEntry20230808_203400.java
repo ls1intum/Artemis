@@ -142,9 +142,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      */
     private void executeBatchedMigration(long start, long end, long exerciseCount, Map<ProgrammingExercise, Boolean> errorMap) {
         // do batches
-        for (int i = (int) start, j = 0; i < end; i++, j = j + BATCH_SIZE) {
+        for (int batchStartIndex = (int) start, batch = 0; batchStartIndex < end; batchStartIndex++, batch = batch + BATCH_SIZE) {
             var batchStart = System.currentTimeMillis();
-            Pageable pageable = PageRequest.of(i, BATCH_SIZE);
+            Pageable pageable = PageRequest.of(batchStartIndex, BATCH_SIZE);
 
             // TODO: in the unlikely case the buildPlanId is null, we could skip the template participation
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
@@ -221,7 +221,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 log.info("Migrated student build plan for exercise {} in {}ms", studentParticipation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             });
 
-            log.info("Migrated {} / {} programming exercises in current thread", (Math.min(exerciseCount, j + 1)), exerciseCount);
+            log.info("Migrated {} / {} programming exercises in current thread", (Math.min(exerciseCount, batch + 1)), exerciseCount);
             log.info("Migrated batch in {}ms", System.currentTimeMillis() - batchStart);
         }
     }
@@ -257,40 +257,46 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
      */
     private void migrateStudentBuildPlan(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation,
             List<AuxiliaryRepository> auxiliaryRepositories, Map<ProgrammingExercise, Boolean> errorMap) {
-        VcsRepositoryUrl repositoryUrl = null;
+        VcsRepositoryUrl repositoryUrl;
         try {
             repositoryUrl = new VcsRepositoryUrl(urlService.getPlainUrlFromRepositoryUrl(studentParticipation.getVcsRepositoryUrl()));
         }
         catch (URISyntaxException e) {
-            log.warn("Failed to convert git url {}", exercise.getId(), e);
+            log.warn("Failed to convert git url {} for studentParticipationId {} exerciseId {} with buildPlanId {}, will abort migration for this Participation",
+                    studentParticipation.getVcsRepositoryUrl(), studentParticipation.getId(), exercise.getId(), studentParticipation.getBuildPlanId(), e);
             errorMap.put(exercise, false);
+            return;
         }
         try {
             ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), studentParticipation.getBuildPlanId(), repositoryUrl);
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to migrate solution build plan for exercise {}", exercise.getId(), e);
+            log.warn("Failed to migrate solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
+                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
             errorMap.put(exercise, false);
         }
         try {
             ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), studentParticipation.getBuildPlanId(), repositoryUrl);
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to delete solution build triggers for exercise {}", exercise.getId(), e);
+            log.warn("Failed to delete solution build triggers for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
+                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
             errorMap.put(exercise, false);
         }
         try {
             ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "assignment", String.valueOf(repositoryUrl), exercise.getBranch());
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to replace solution repository in template build plan for exercise {}", exercise.getId(), e);
+            log.warn("Failed to replace solution repository in template build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ",
+                    studentParticipation.getId(), studentParticipation.getBuildPlanId(), exercise.getId(), e);
             errorMap.put(exercise, false);
         }
         try {
             ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "tests", exercise.getTestRepositoryUrl(), exercise.getBranch());
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to replace tests repository in solution build plan for exercise {}", exercise.getId(), e);
+            log.warn("Failed to replace tests repository in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
+                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
             errorMap.put(exercise, false);
         }
         for (var auxiliary : auxiliaryRepositories) {
@@ -299,7 +305,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                         exercise.getBranch());
             }
             catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-                log.warn("Failed to replace {} repository in solution build plan for exercise {}", auxiliary.getName(), exercise.getId(), e);
+                log.warn("Failed to replace {} repository in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", auxiliary.getName(),
+                        studentParticipation.getId(), studentParticipation.getBuildPlanId(), exercise.getId(), e);
                 errorMap.put(exercise, true);
             }
         }
@@ -307,7 +314,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(studentParticipation.getBuildPlanId(), auxiliaryRepositories);
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to replace repositories in solution build plan for exercise {}", exercise.getId(), e);
+            log.warn("Failed to replace repositories in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
+                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
             errorMap.put(exercise, false);
         }
     }
@@ -410,7 +418,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                         exercise.getBranch());
             }
             catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-                log.warn("Failed to replace template repository in student build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
+                log.warn("Failed to replace auxiliary repository {} in template build plan for exercise {} with buildPlanId {}", auxiliary.getName(), exercise.getId(),
+                        exercise.getTemplateBuildPlanId(), e);
                 errorMap.put(exercise, true);
             }
         }
@@ -418,7 +427,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getTemplateBuildPlanId(), auxiliaryRepositories);
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to replace repositories in template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
+            log.error("Failed to replace repositories in template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
             errorMap.put(exercise, true);
         }
     }
@@ -432,9 +441,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 .toList();
         List<Long> failedExerciseIdsForSolutions = errorMap.entrySet().stream().filter(entry -> Boolean.FALSE.equals(entry.getValue())).map(entry -> entry.getKey().getId())
                 .toList();
-        log.warn("Failed to migrate {} programming exercises", errorMap.size());
-        log.warn("Failed to migrate template build plan for exercises: {}", failedExerciseIdsForTemplates);
-        log.warn("Failed to migrate solution build plan for exercises: {}", failedExerciseIdsForSolutions);
+        log.error("Failed to migrate {} programming exercises", errorMap.size());
+        log.error("Failed to migrate template build plan for exercises: {}", failedExerciseIdsForTemplates);
+        log.error("Failed to migrate solution build plan for exercises: {}", failedExerciseIdsForSolutions);
         log.warn("Please check the logs for more information. Then either fix the issues and rerun the migration or "
                 + "fix the build plans yourself and mark the migration as run.");
     }
