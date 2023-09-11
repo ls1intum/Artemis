@@ -738,6 +738,7 @@ public class CourseService {
      */
     @Async
     public void archiveCourse(Course course) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
         // Archiving a course is only possible after the course is over
@@ -746,7 +747,7 @@ public class CourseService {
         }
 
         // This contains possible errors encountered during the archive process
-        ArrayList<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
 
@@ -775,6 +776,7 @@ public class CourseService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
+        log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
