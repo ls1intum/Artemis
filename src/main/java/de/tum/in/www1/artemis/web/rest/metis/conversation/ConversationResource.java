@@ -15,16 +15,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.CourseCodeOfConduct;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.CourseCodeOfConductRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseCodeOfConductService;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService.ConversationMemberSearchFilters;
@@ -47,18 +45,18 @@ public class ConversationResource extends ConversationManagementResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CourseCodeOfConductRepository courseCodeOfConductRepository;
+    private final CourseCodeOfConductService courseCodeOfConductService;
 
     private final UserRepository userRepository;
 
     public ConversationResource(ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            CourseCodeOfConductRepository courseCodeOfConductRepository) {
+            CourseCodeOfConductService courseCodeOfConductService) {
         super(courseRepository);
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.courseCodeOfConductRepository = courseCodeOfConductRepository;
+        this.courseCodeOfConductService = courseCodeOfConductService;
         this.userRepository = userRepository;
     }
 
@@ -141,15 +139,10 @@ public class ConversationResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        Optional<CourseCodeOfConduct> courseCodeOfConduct = courseCodeOfConductRepository.findByCourseIdAndUserId(courseId, requestingUser.getId());
-        if (courseCodeOfConduct.isPresent()) {
-            return ResponseEntity.ok(courseCodeOfConduct.get().getIsCodeOfConductAccepted());
-        }
-        else {
-            return ResponseEntity.ok(false);
-        }
+        return ResponseEntity.ok(courseCodeOfConductService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
     }
 
     /**
@@ -162,22 +155,11 @@ public class ConversationResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> acceptCodeOfConduct(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        Optional<CourseCodeOfConduct> courseCodeOfConduct = courseCodeOfConductRepository.findByCourseIdAndUserId(courseId, requestingUser.getId());
-        if (courseCodeOfConduct.isPresent()) {
-            CourseCodeOfConduct courseCodeOfConductSafe = courseCodeOfConduct.get();
-            courseCodeOfConductSafe.setIsCodeOfConductAccepted(true);
-            return ResponseEntity.ok(courseCodeOfConductRepository.save(courseCodeOfConductSafe).getIsCodeOfConductAccepted());
-        }
-        else {
-            CourseCodeOfConduct courseCodeOfConductSafe = new CourseCodeOfConduct();
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            courseCodeOfConductSafe.setCourse(course);
-            courseCodeOfConductSafe.setUser(requestingUser);
-            courseCodeOfConductSafe.setIsCodeOfConductAccepted(true);
-            return ResponseEntity.ok(false);
-        }
+        courseCodeOfConductService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
+        return ResponseEntity.ok(courseCodeOfConductService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
     }
 
     /**
