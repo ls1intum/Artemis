@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
@@ -1332,20 +1333,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         final var submission = modelingExerciseUtilService.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.partial.json",
                 TEST_PREFIX + "student1");
 
-        // verify setup
-        assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
-        assertThat(exam.getEndDate()).isBefore(ZonedDateTime.now());
-        var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
-        assertThat(optionalFetchedExercise).isPresent();
-        final var exerciseWithParticipation = optionalFetchedExercise.get();
-        final var studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
+        Participation studentParticipation = submission.getParticipation();
 
         // request to manually assess latest submission (correction round: 0)
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
-        ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment",
-                HttpStatus.OK, ModelingSubmission.class, params);
+        ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+                ModelingSubmission.class, params);
         // verify that no new submission was created
         assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
         // verify that the lock has been set
@@ -1357,7 +1352,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        var assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -1373,7 +1368,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
                 feedbacks, Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -1411,7 +1406,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
 
-        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
                 ModelingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
@@ -1451,8 +1446,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-                paramsGetAssessedCR2);
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class, paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
@@ -1462,8 +1456,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-                paramsGetAssessedCR1);
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class, paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
 

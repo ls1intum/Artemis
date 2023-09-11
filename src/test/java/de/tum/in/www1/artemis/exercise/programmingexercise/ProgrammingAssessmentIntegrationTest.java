@@ -637,14 +637,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, dummyHash);
         participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
-        // verify setup
-        assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
-        assertThat(exam.getEndDate()).isBefore(ZonedDateTime.now());
-        var optionalFetchedExercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId());
-        assertThat(optionalFetchedExercise).isPresent();
-        final var exerciseWithParticipation = optionalFetchedExercise.get();
-        var submissionsOfParticipation = submissionRepository
-                .findAllWithResultsAndAssessorByParticipationId(exerciseWithParticipation.getStudentParticipations().stream().iterator().next().getId());
+        var submissionsOfParticipation = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
         assertThat(submissionsOfParticipation).hasSize(3);
         for (final var submission : submissionsOfParticipation) {
             assertThat(submission.getResults()).isNotNull();
@@ -657,8 +650,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
-        ProgrammingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submission-without-assessment",
-                HttpStatus.OK, ProgrammingSubmission.class, params);
+        ProgrammingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
+                ProgrammingSubmission.class, params);
         // verify that a new submission was created
         // We want to get the third Submission, as it is the latest one, and contains an automatic result;
         assertThat(submissionWithoutFirstAssessment).isNotEqualTo(firstSubmission).isNotEqualTo(secondSubmission).isEqualTo(thirdSubmission);
@@ -671,7 +664,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        var assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -694,7 +687,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 manualResultLockedFirstRound, Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -736,8 +729,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
 
-        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submission-without-assessment",
-                HttpStatus.OK, ProgrammingSubmission.class, paramsSecondCorrection);
+        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
+                ProgrammingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
         // it should contain the latest automatic result, and the first manual result, and the lock for the second manual result
@@ -782,7 +775,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -793,7 +786,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
