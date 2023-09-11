@@ -176,8 +176,8 @@ public class ProgrammingExerciseGitDiffReportService {
         var treeParserRepoA = new FileTreeIterator(repoA);
         var treeParserRepoB = new FileTreeIterator(repoB);
 
-        try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoA)) {
-            git.diff().setOldTree(treeParserRepoA).setNewTree(treeParserRepoB).setOutputStream(diffOutputStream).call();
+        try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoB)) {
+            git.diff().setOldTree(treeParserRepoB).setNewTree(treeParserRepoA).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
             return extractDiffEntries(diff).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).map(Math::abs).sum();
         }
