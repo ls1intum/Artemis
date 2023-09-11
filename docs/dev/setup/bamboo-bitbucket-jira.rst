@@ -346,7 +346,10 @@ Configure Artemis
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
   If you run the Atlassian suite in containers and Artemis on your host machine, you may have to set internal urls for bamboo,
-  so that the CI and VCS servers are reachable from each other.
+  so that the CI and VCS servers are reachable from each other. If Artemis is executed in a container in the same network,
+  you won't need to specify internal URLs, as Artemis can then communicate with Bamboo and Bitbucket and Bamboo and Bitbucket
+  can communicate with each other using the same url. If you use the default docker-compose setup, you can use the following
+  configuration:
 
    .. code:: yaml
 

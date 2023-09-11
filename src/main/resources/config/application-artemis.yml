@@ -62,7 +62,6 @@ artemis:
         password: <password>
         token: <token>                  # Enter a valid token generated in Bamboo giving Artemis full Admin access
         url: https://bamboo.ase.in.tum.de
-        # Hash/key of the ci-token
         # Some CI systems, like Jenkins, offer a specific token that gets checked against any incoming notifications
         # from a VCS trying to trigger a build plan. Only if the notification request contains the correct token, the plan
         # is triggered. This can be seen as an alternative to sending an authenticated request to a REST API and then

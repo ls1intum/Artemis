@@ -36,7 +36,6 @@ artemis:
         password: fake-password
         url: https://version-control.fake.fake
         token: fake-token
-        ci-token: fake-Token
         health-api-token: fake-token
         ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
         ssh-keys-url-path: /plugins/servlet/ssh/account/keys
