@@ -6,6 +6,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -181,7 +182,7 @@ class ProgrammingPlagiarismDetectionService {
             throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
         }
 
-        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString());
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString(), minimumSize);
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -356,12 +357,41 @@ class ProgrammingPlagiarismDetectionService {
                 }).toList();
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath) {
+    private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {
+        try {
+            var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
+            gitService.resetToOriginHead(templateRepo); // start with clean state
+            return Optional.of(templateRepo);
+        }
+        catch (GitException | GitAPIException ex) {
+            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
+                    programmingExercise.getTitle(), ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private boolean shouldAddRepo(ProgrammingExercise programmingExercise, int minimumSize, Repository repo, Optional<Repository> templateRepo) {
+        if (templateRepo.isEmpty()) {
+            return true;
+        }
+
+        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
+                repo.getLocalPath(), templateRepo.get().getRemoteRepositoryUrl(), templateRepo.get().getLocalPath());
+        return diffToTemplate >= minimumSize;
+    }
+
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath,
+            int minimumSize) {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
         int maxRepositories = participations.size() + 1;
         List<Repository> downloadedRepositories = new ArrayList<>();
+
+        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Downloading repositories: 0/" + maxRepositories));
+        var templateRepo = cloneTemplateRepository(programmingExercise, targetPath);
+        templateRepo.ifPresent(downloadedRepositories::add);
+
         participations.parallelStream().forEach(participation -> {
             try {
                 var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + maxRepositories;
@@ -369,27 +399,19 @@ class ProgrammingPlagiarismDetectionService {
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginHead(repo); // start with clean state
-                downloadedRepositories.add(repo);
+
+                if (shouldAddRepo(programmingExercise, minimumSize, repo, templateRepo)) {
+                    downloadedRepositories.add(repo);
+                }
+                else {
+                    deleteTempLocalRepository(repo);
+                }
             }
             catch (GitException | GitAPIException | InvalidPathException ex) {
                 log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUrl(), programmingExercise.getTitle(),
                         ex.getMessage());
             }
         });
-
-        // clone the template repo
-        try {
-            var progressMessage = "Downloading repositories: " + maxRepositories + "/" + maxRepositories;
-            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
-
-            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
-            gitService.resetToOriginHead(templateRepo); // start with clean state
-            downloadedRepositories.add(templateRepo);
-        }
-        catch (GitException | GitAPIException ex) {
-            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
-                    programmingExercise.getTitle(), ex.getMessage());
-        }
 
         return downloadedRepositories;
     }
