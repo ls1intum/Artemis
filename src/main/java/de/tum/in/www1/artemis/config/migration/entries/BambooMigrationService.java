@@ -134,6 +134,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
         }
     }
 
+    /**
+     * If the setup was not done correctly, the migration will fail. We check if the shared credential exists as they
+     * are crucial for the new repositories to be checked out.
+     * If not, we throw an exception and the migration will fail.
+     */
     @Override
     public void checkPrerequisites() throws RuntimeException {
         Optional<Long> credentialsId = getSharedCredential();
