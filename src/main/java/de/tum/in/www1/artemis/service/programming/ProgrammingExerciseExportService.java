@@ -10,7 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
@@ -47,10 +54,16 @@ import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -108,36 +121,41 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Export programming exercise material for instructors including instructor repositories, problem statement (.md) and exercise detail (.json).
+     * <p>
+     * Optionally, student repositories can be included as well.
      *
-     * @param exercise     the programming exercise
-     * @param exportErrors List of failures that occurred during the export
+     * @param exercise            the programming exercise
+     * @param exportErrors        List of failures that occurred during the export
+     * @param includeStudentRepos flag that indicates whether the student repos should also be exported
      * @return the path to the zip file
      */
-    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
-        // Create export directory for programming exercises
-        if (!Files.exists(repoDownloadClonePath)) {
-            Files.createDirectories(repoDownloadClonePath);
+    private Path exportProgrammingExerciseMaterialWithStudentReposOptional(ProgrammingExercise exercise, List<String> exportErrors, boolean includeStudentRepos,
+            Optional<Path> exportDir, List<ArchivalReportEntry> archivalReportEntries) throws IOException {
+        if (exportDir.isEmpty()) {
+            // Create export directory for programming exercises
+            if (!Files.exists(repoDownloadClonePath)) {
+                Files.createDirectories(repoDownloadClonePath);
+            }
+            exportDir = Optional.of(fileService.getTemporaryUniquePath(repoDownloadClonePath, 5));
         }
-        Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
-
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories
         var pathsToBeZipped = new ArrayList<Path>();
 
         // Add the exported zip folder containing template, solution, and tests repositories
         // Ignore report data
-        pathsToBeZipped.add(exportProgrammingExerciseRepositories(exercise, false, exportDir, exportErrors, new ArrayList<>()));
+        pathsToBeZipped.add(exportProgrammingExerciseRepositories(exercise, includeStudentRepos, exportDir.orElseThrow(), exportErrors, archivalReportEntries));
 
         // Add problem statement as .md file if it is not null
         if (exercise.getProblemStatement() != null) {
-            exportProblemStatementAndEmbeddedFiles(exercise, exportErrors, exportDir, pathsToBeZipped);
+            exportProblemStatementAndEmbeddedFiles(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
         }
 
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         String cleanExerciseDetailsFileName = FileService.sanitizeFilename(exerciseDetailsFileName);
-        var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
+        var exerciseDetailsExportPath = exportDir.orElseThrow().resolve(cleanExerciseDetailsFileName);
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
 
         // Setup path to store the zip file for the exported programming exercise
@@ -145,11 +163,27 @@ public class ProgrammingExerciseExportService {
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
                 + "-" + timestamp + ".zip";
         String cleanFilename = FileService.sanitizeFilename(exportedExerciseZipFileName);
-        Path pathToZippedExercise = exportDir.resolve(cleanFilename);
+        Path pathToZippedExercise = exportDir.orElseThrow().resolve(cleanFilename);
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
         zipFileService.createTemporaryZipFile(pathToZippedExercise, pathsToBeZipped, 5);
         return pathToZippedExercise;
+    }
+
+    public Path exportProgrammingExerciseForArchival(ProgrammingExercise exercise, List<String> exportErrors, Optional<Path> exportDir,
+            List<ArchivalReportEntry> archivalReportEntries) {
+        try {
+            return exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, true, exportDir, archivalReportEntries);
+        }
+        catch (IOException e) {
+            // this should actually never happen because all operations that throw an IOException are not executed when calling the method with an exportDir
+            log.error("Failed to export programming exercise for archival: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    public Path exportProgrammingExerciseForDownload(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
+        return exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, Optional.empty(), new ArrayList<>());
     }
 
     private void exportProblemStatementAndEmbeddedFiles(ProgrammingExercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) {

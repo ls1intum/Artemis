@@ -267,7 +267,7 @@ public class ProgrammingExerciseExportImportResource {
         long start = System.nanoTime();
         Path path;
         try {
-            path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
+            path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
         }
         catch (Exception e) {
             log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);
