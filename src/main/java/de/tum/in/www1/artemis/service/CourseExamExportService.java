@@ -115,7 +115,7 @@ public class CourseExamExportService {
 
         Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir, exportedFiles);
 
-        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse);
+        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
         return exportedCourse;
     }
 
@@ -178,7 +178,7 @@ public class CourseExamExportService {
 
         Optional<Path> exportedExamPath = zipExportedExercises(outputDir, exportErrors, notificationTopic, tempExamsDir, exportedExercises);
 
-        log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
+        log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath.orElse(null));
         return exportedExamPath;
     }
 
@@ -356,7 +356,7 @@ public class CourseExamExportService {
 
         // Export exercises
         for (var exercise : sortedExercises) {
-            log.info("Exporting exercise {} with id {} ", exercise.getTitle(), exercise.getId());
+            log.info("Exporting {} exercise {} with id {} ", exercise.getType(), exercise.getTitle(), exercise.getId());
 
             // Notify the user after the progress
             currentProgress++;
