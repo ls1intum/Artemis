@@ -6,5 +6,6 @@ export class AssessmentNote implements BaseEntity {
 
     public creator?: User;
     public createdDate?: Date;
+    public lastUpdatedDate?: Date;
     public note?: string;
 }

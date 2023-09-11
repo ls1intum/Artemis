@@ -21,8 +21,12 @@ public class AssessmentNote extends DomainObject {
 
     @CreatedDate
     @JsonIgnore
-    @Column(name = "created_date")
+    @Column(name = "created_date", updatable = false)
     private Instant createdDate = Instant.now();
+
+    @JsonIgnore
+    @Column(name = "last_updated_date")
+    private Instant lastUpdatedDate = Instant.now();
 
     @Column(name = "note")
     private String note;

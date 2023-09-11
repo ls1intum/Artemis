@@ -10,6 +10,7 @@
                 <constraints nullable="false" primaryKey="true" primaryKeyName="assessment_notePK"/>
             </column>
             <column name="created_date" type="datetime(3)"/>
+            <column name="last_updated_date" type="datetime(3)"/>
             <column name="note" type="TEXT"/>
             <column name="creator_id" type="BIGINT"/>
             <column name="result_id" type="BIGINT"/>
