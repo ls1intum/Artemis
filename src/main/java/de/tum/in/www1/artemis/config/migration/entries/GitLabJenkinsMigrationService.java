@@ -46,9 +46,12 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     @Value("${artemis.continuous-integration.url}")
     protected URL jenkinsServerUrl;
 
+    @Value("${jenkins.internal-urls.ci-url:#{null}}")
+    protected URL internalJenkinsUrl;
+
     private final JenkinsJobService jenkinsJobService;
 
-    private JenkinsService jenkinsService;
+    private final JenkinsService jenkinsService;
 
     private final UrlService urlService;
 
@@ -129,7 +132,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
                  * the tests repository also has a webhook for the solution repository, so
                  * we check if the hook contains the JenkinsServerUrl and ensure that not the artemisServerUrl
                  */
-                if (url.contains(jenkinsServerUrl.toString()) && !url.contains(artemisServerUrl)) {
+                if ((url.contains(jenkinsServerUrl.toString()) || url.contains(internalJenkinsUrl.toString())) && !url.contains(artemisServerUrl)) {
                     gitlab.getProjectApi().deleteHook(projectHook);
                 }
             }

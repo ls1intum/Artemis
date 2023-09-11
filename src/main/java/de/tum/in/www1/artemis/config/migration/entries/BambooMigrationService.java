@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
 
 /**
@@ -43,7 +44,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
     @Value("${artemis.continuous-integration.url}")
     protected URL bambooServerUrl;
 
-    private BambooService bambooService;
+    private final BambooInternalUrlService bambooInternalUrlService;
+
+    private final BambooService bambooService;
 
     @Value("${server.url}")
     private String artemisServerUrl;
@@ -55,9 +58,10 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooMigrationService.class);
 
-    public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooService bambooService) {
+    public BambooMigrationService(@Qualifier("bambooRestTemplate") RestTemplate restTemplate, BambooService bambooService, BambooInternalUrlService bambooInternalUrlService) {
         this.restTemplate = restTemplate;
         this.bambooService = bambooService;
+        this.bambooInternalUrlService = bambooInternalUrlService;
     }
 
     /**
@@ -158,7 +162,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
             deleteLinkedRepository(buildPlanId, repositoryId.get());
         }
         log.debug("Adding repository " + name + " for build plan " + buildPlanId);
-        addGitRepository(buildPlanId, repositoryUrl, name, this.sharedCredentialId.orElseThrow(), defaultBranch);
+        addGitRepository(buildPlanId, bambooInternalUrlService.toInternalVcsUrl(repositoryUrl), name, this.sharedCredentialId.orElseThrow(), defaultBranch);
     }
 
     private List<Long> getAllTriggerIds(String buildPlanName) {

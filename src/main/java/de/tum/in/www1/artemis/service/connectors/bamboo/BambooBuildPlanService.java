@@ -68,6 +68,8 @@ public class BambooBuildPlanService {
     @Value("${server.url}")
     private URL artemisServerUrl;
 
+    private final BambooInternalUrlService bambooInternalUrlService;
+
     @Value("${artemis.version-control.user}")
     private String gitUser;
 
@@ -82,12 +84,13 @@ public class BambooBuildPlanService {
     private final UrlService urlService;
 
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService, BambooInternalUrlService bambooInternalUrlService) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.versionControlService = versionControlService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.urlService = urlService;
+        this.bambooInternalUrlService = bambooInternalUrlService;
     }
 
     /**
@@ -375,7 +378,7 @@ public class BambooBuildPlanService {
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
 
-    // TODO: aus repos also need to have a URL and not a slug
+    // TODO: aux repos also need to have a URL and not a slug
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, VcsRepositoryUrl assignmentRepoUrl,
             VcsRepositoryUrl testRepoUrl, boolean checkoutSolutionRepository, VcsRepositoryUrl solutionRepoUrl,
             List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
@@ -383,16 +386,16 @@ public class BambooBuildPlanService {
         VersionControlService versionControl = versionControlService.orElseThrow();
 
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
-        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, assignmentRepoUrl.toString(),
+        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, bambooInternalUrlService.toInternalVcsUrl(assignmentRepoUrl).toString(),
                 versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(assignmentRepoUrl))));
-        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, testRepoUrl.toString(),
+        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, bambooInternalUrlService.toInternalVcsUrl(testRepoUrl).toString(),
                 versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(testRepoUrl))));
         for (var auxRepo : auxiliaryRepositories) {
-            planRepositories.add(createBuildPlanRepository(auxRepo.name(), auxRepo.repositoryUrl().toString(),
+            planRepositories.add(createBuildPlanRepository(auxRepo.name(), bambooInternalUrlService.toInternalVcsUrl(auxRepo.repositoryUrl()).toString(),
                     versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(auxRepo.repositoryUrl()))));
         }
         if (checkoutSolutionRepository) {
-            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, solutionRepoUrl.toString(),
+            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, bambooInternalUrlService.toInternalVcsUrl(solutionRepoUrl).toString(),
                     versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(solutionRepoUrl))));
         }
 
