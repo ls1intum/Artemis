@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -631,7 +631,7 @@ public class FileService implements DisposableBean {
             filePath = resource.getFile().toPath();
         }
         else {
-            final String url = URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8);
+            final String url = URLDecoder.decode(resource.getURL().toString(), UTF_8);
             filePath = Path.of(url);
         }
 
@@ -738,7 +738,7 @@ public class FileService implements DisposableBean {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
-        try (var reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, StandardCharsets.UTF_8))) {
+        try (var reader = new BufferedReader(new FileReader(file, UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, UTF_8))) {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
@@ -856,29 +856,27 @@ public class FileService implements DisposableBean {
     /**
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
      * <p>
-     * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
+     * {@link #replaceVariablesInFile(Path, Map) replaceVariablesInFile}
      *
      * @param startPath    the path where the start directory is located
      * @param replacements the replacements that should be applied
-     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
+    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements) {
         replaceVariablesInFileRecursive(startPath, replacements, Collections.emptyList());
     }
 
     /**
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
      * <p>
-     * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
+     * {@link #replaceVariablesInFile(Path, Map) replaceVariablesInFile}
      *
      * @param startPath     the path where the start directory is located
      * @param replacements  the replacements that should be applied
      * @param filesToIgnore the name of files for which no replacement should be done
-     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements, List<String> filesToIgnore) throws IOException {
+    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) {
         log.debug("Replacing {} in files in directory {}", replacements, startPath);
-        File directory = new File(startPath);
+        File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
         }
@@ -889,7 +887,7 @@ public class FileService implements DisposableBean {
             // filter out files that should be ignored
             files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
             for (String file : files) {
-                replaceVariablesInFile(Path.of(directory.getAbsolutePath(), file).toString(), replacements);
+                replaceVariablesInFile(Path.of(directory.getAbsolutePath(), file), replacements);
             }
         }
 
@@ -901,7 +899,7 @@ public class FileService implements DisposableBean {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(Path.of(directory.getAbsolutePath(), subDirectory).toString(), replacements, filesToIgnore);
+                replaceVariablesInFileRecursive(Path.of(directory.getAbsolutePath(), subDirectory), replacements, filesToIgnore);
             }
         }
     }
@@ -912,19 +910,29 @@ public class FileService implements DisposableBean {
      *
      * @param filePath     the path where the file is located
      * @param replacements the replacements that should be applied
-     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFile(String filePath, Map<String, String> replacements) throws IOException {
+    public void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
         log.debug("Replacing {} in file {}", replacements, filePath);
         // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
-        Path replaceFilePath = Path.of(filePath);
-        Charset charset = StandardCharsets.UTF_8;
 
-        String fileContent = Files.readString(replaceFilePath, charset);
-        for (Map.Entry<String, String> replacement : replacements.entrySet()) {
-            fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
+        try {
+            // TODO: extend the list of potential binary files
+            var fileName = filePath.toString().toLowerCase();
+            if (fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".heic")) {
+                // do not try to read binary files
+                return;
+            }
+            // Note: we cannot check if this is a binary file or not. We try to read it, in case it fails, we only log this below, but continue
+            String fileContent = Files.readString(filePath, UTF_8);
+            for (Map.Entry<String, String> replacement : replacements.entrySet()) {
+                fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
+            }
+            Files.writeString(filePath, fileContent, UTF_8);
         }
-        Files.writeString(replaceFilePath, fileContent, charset);
+        catch (IOException ex) {
+            log.warn("Exception {} occurred when trying to replace {} in (binary) file {}", ex.getMessage(), replacements, filePath);
+            // continue
+        }
     }
 
     /**
@@ -964,7 +972,7 @@ public class FileService implements DisposableBean {
         log.debug("Normalizing line endings in file {}", filePath);
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
         Path replaceFilePath = Path.of(filePath);
-        Charset charset = StandardCharsets.UTF_8;
+        Charset charset = UTF_8;
 
         String fileContent = Files.readString(replaceFilePath, charset);
         fileContent = fileContent.replaceAll("\\r\\n?", "\n");
@@ -1013,7 +1021,7 @@ public class FileService implements DisposableBean {
 
         String fileContent = new String(contentArray, charset);
 
-        Files.writeString(replaceFilePath, fileContent, StandardCharsets.UTF_8);
+        Files.writeString(replaceFilePath, fileContent, UTF_8);
     }
 
     /**
@@ -1132,7 +1140,7 @@ public class FileService implements DisposableBean {
      * @return Path to the written file
      */
     public Path writeStringToFile(String stringToWrite, Path path) {
-        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), StandardCharsets.UTF_8)) {
+        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), UTF_8)) {
             outStream.write(stringToWrite);
         }
         catch (IOException e) {
