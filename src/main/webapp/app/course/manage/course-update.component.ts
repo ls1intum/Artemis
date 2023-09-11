@@ -162,6 +162,7 @@ export class CourseUpdateComponent implements OnInit {
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
+                learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
@@ -607,6 +608,8 @@ export class CourseUpdateComponent implements OnInit {
         this.croppedImage = undefined;
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
+
+    protected readonly FeatureToggle = FeatureToggle;
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
