@@ -54,6 +54,7 @@ export class UnreferencedFeedbackDetailComponent {
         }
         this.onFeedbackChange.emit(this.feedback);
     }
+
     /**
      * Emits the deletion of a feedback
      */
