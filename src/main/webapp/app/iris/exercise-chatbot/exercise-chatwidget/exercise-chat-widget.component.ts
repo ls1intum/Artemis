@@ -39,7 +39,6 @@ import {
 } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
-import { Overlay } from '@angular/cdk/overlay';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
@@ -48,6 +47,7 @@ import { AnimationEvent, animate, state, style, transition, trigger } from '@ang
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 import interact from 'interactjs';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -92,9 +92,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
 
-    // ID - random ID for the chat widget
-    readonly ID = 'ch-' + Math.floor(Math.random() * 1000000000);
-
     // Constants
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.LLM;
@@ -136,10 +133,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         @Inject(MAT_DIALOG_DATA) public data: any,
         private httpMessageService: IrisHttpMessageService,
         private userService: UserService,
-        private overlay: Overlay,
         private router: Router,
         private sharedService: SharedService,
         private modalService: NgbModal,
+        @Inject(DOCUMENT) private document: Document,
     ) {
         this.stateStore = data.stateStore;
         this.exerciseId = data.exerciseId;
@@ -209,7 +206,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                         target.style.height = event.rect.height + 'px';
 
                         // Reset fullsize if widget smaller than the full size factors times the overlay container size
-                        const cntRect = (document.querySelector('.cdk-overlay-container') as HTMLElement).getBoundingClientRect();
+                        const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement).getBoundingClientRect();
                         this.fullSize = !(event.rect.width < cntRect.width * this.fullWidthFactor || event.rect.height < cntRect.height * this.fullHeightFactor);
 
                         // translate when resizing from top or left edges
@@ -264,13 +261,15 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     setPositionAndScale() {
-        const cntRect = (document.querySelector('.cdk-overlay-container') as HTMLElement).getBoundingClientRect();
+        const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement)?.getBoundingClientRect();
+        if (!cntRect) {
+            return;
+        }
 
         const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 50;
         const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 100;
-        console.log(initX, initY, cntRect.width, cntRect.height, this.fullSize);
 
-        const nE = document.querySelector('#' + this.ID) as HTMLElement;
+        const nE = this.document.querySelector('.chat-widget') as HTMLElement;
         nE.style.transform = `translate(${initX}px, ${initY}px)`;
         nE.setAttribute('data-x', String(initX));
         nE.setAttribute('data-y', String(initY));
