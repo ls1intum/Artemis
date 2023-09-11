@@ -130,7 +130,7 @@ public class DataExportExerciseCreationService {
         repositoryExportOptions.setCombineStudentCommits(false);
         repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(false);
         repositoryExportOptions.setExcludePracticeSubmissions(false);
-        repositoryExportOptions.setNormalizeCodeStyle(true);
+        repositoryExportOptions.setNormalizeCodeStyle(false);
         var listOfProgrammingExerciseParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
