@@ -112,7 +112,8 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         catch (IllegalArgumentException e) {
             // Log a warning for rare scenarios i.e. ClientId is empty. This can occur when online courses lack an external LMS connection or use LTI v1.0.
             log.warn("Could not build Client Registration from onlineCourseConfiguration for course with ID: {} and title: {}. Reason: {}",
-                    onlineCourseConfiguration.getCourse().getId(), onlineCourseConfiguration.getCourse().getTitle(), e.getMessage());
+                    Optional.ofNullable(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getId).orElse(null),
+                    Optional.ofNullable(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getTitle).orElse(""), e.getMessage());
             return null;
         }
     }
