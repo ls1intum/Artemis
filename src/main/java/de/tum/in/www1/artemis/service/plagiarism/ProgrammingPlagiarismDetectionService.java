@@ -193,18 +193,9 @@ class ProgrammingPlagiarismDetectionService {
         JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of())
                 // JPlag expects a value between 0.0 and 1.0
                 .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
-
         if (templateRepoName != null) {
-
             var templateFolder = targetPath.resolve(projectKey).resolve(templateRepoName).toFile();
             options = options.withBaseCodeSubmissionDirectory(templateFolder);
-
-            repositories = repositories.stream().filter(repository -> {
-                var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(
-                        programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), templateFolder.toPath(), repository.getRemoteRepositoryUrl(),
-                        repository.getLocalPath());
-                return diffToTemplate >= minimumSize;
-            }).toList();
         }
 
         log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
