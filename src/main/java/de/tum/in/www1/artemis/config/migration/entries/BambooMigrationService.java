@@ -65,7 +65,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     /**
-     * Returns a list of all data-item-ids in the given html.
+     * Returns a list of all data-item-ids in the given html. The Bamboo
+     * sites with lists are similar, so this helper method can be used for all of them.
+     * to filter the items by their id.
      *
      * @param html response that contains a list of items with the data-item-id attribute
      * @return a list of all data-item-ids in the given html

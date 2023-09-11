@@ -1174,7 +1174,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         switch (participationType) {
             case SOLUTION -> buildPlanId = solutionProgrammingExerciseParticipationRepository.findById(participationId).orElseThrow().getBuildPlanId();
             case TEMPLATE -> buildPlanId = templateProgrammingExerciseParticipationRepository.findById(participationId).orElseThrow().getBuildPlanId();
-            default -> buildPlanId = studentParticipationRepository.findById(participationId).orElseThrow().getBuildPlanId();
+            case STUDENT -> buildPlanId = studentParticipationRepository.findById(participationId).orElseThrow().getBuildPlanId();
         }
         bambooRequestMockProvider.mockTriggerBuild(buildPlanId);
     }
