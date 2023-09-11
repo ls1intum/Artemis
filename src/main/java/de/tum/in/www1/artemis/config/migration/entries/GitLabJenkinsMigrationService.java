@@ -161,4 +161,9 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
                 "");
         return XmlFileUtils.readFromString(newStringConfig);
     }
+
+    @Override
+    public void checkPrerequisites() throws RuntimeException {
+        // nothing special is needed for Jenkins and GitLab
+    }
 }

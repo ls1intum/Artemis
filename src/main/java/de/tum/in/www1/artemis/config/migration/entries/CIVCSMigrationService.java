@@ -78,4 +78,9 @@ public interface CIVCSMigrationService {
      * @return true if the build plan exists in the CI system, false otherwise
      */
     boolean buildPlanExists(String projectKey, String buildPlanKey);
+
+    /**
+     * Checks if the prerequisites for the migration are met.
+     */
+    void checkPrerequisites() throws RuntimeException;
 }

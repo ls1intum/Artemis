@@ -216,6 +216,11 @@ under ``localhost:7990``.
    ``artemis-authentication-token-value``.
    You can create a global variable from settings on Bamboo.
 
+#. In Bamboo create a shared Username and Password credential.
+   The username and password should be the same as the ones you used to
+   create the Bitbucket admin user. The name of the shared credential
+   must be equal to the value set in ``artemis.continuous-integration.user``.
+
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
    and add it to bamboo. Go to `Bamboo → Manage apps <http://localhost:8085/plugins/servlet/upm>`__ → Upload app → select
@@ -339,6 +344,10 @@ Configure Artemis
                password: <bamboo-admin-password>
                token: <bamboo-admin-token>   # step 10.1
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
+
+  Make sure that the specified urls are reachable from the Artemis server and the CI and VCS servers are reachable from each other.
+  e.g. if you run the Atlassian suite in containers and Artemis on your host machine, you may have to use `docker.for.mac.host.internal`
+  or `host.docker.internal` as the url for the Atlassian suite.
 
 #. Also, set the server URL in ``src/main/resources/config/application-local.yml``:
 

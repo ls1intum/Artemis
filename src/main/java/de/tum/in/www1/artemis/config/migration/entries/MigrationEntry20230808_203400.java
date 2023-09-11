@@ -65,8 +65,15 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     @Override
     public void execute() {
+        try {
+            ciMigrationService.orElseThrow().checkPrerequisites();
+        }
+        catch (RuntimeException e) {
+            log.error("Can not run migration because the prerequisites for it to succeed are not met: {}", e.getMessage());
+            throw e;
+        }
         long exerciseCount = programmingExerciseRepository.count();
-        if (exerciseCount == 0 || ciMigrationService.isEmpty()) {
+        if (exerciseCount == 0) {
             return;
         }
 
