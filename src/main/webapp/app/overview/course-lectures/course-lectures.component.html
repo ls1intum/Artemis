@@ -20,8 +20,8 @@
                 >
                     <fa-icon class="pe-3" [icon]="weeklyLecturesGrouped[weekKey]!.isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
                     <span *ngIf="weeklyLecturesGrouped[weekKey].start && weeklyLecturesGrouped[weekKey].end">
-                        {{ weeklyLecturesGrouped[weekKey].start | artemisDate : 'long-date' }} -
-                        {{ weeklyLecturesGrouped[weekKey].end | artemisDate : 'long-date' }}
+                        {{ weeklyLecturesGrouped[weekKey].start | artemisDate: 'long-date' }} -
+                        {{ weeklyLecturesGrouped[weekKey].end | artemisDate: 'long-date' }}
                     </span>
                     <span *ngIf="!weeklyLecturesGrouped[weekKey].start || !weeklyLecturesGrouped[weekKey].end">
                         {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}

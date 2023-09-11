@@ -18,7 +18,7 @@
         <ng-container *ngIf="activeConversationAsChannel">
             <div *ngIf="activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle" class="p-2">
                 <a class="btn btn-info" [routerLink]="['/courses', course.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]" role="button">{{
-                    'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate : { title: activeConversationAsChannel.tutorialGroupTitle }
+                    'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: activeConversationAsChannel.tutorialGroupTitle }
                 }}</a>
             </div>
         </ng-container>

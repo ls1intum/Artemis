@@ -18,7 +18,9 @@ svg {
     }
     .progressbar {
         animation: ring-appear 1s ease-in-out forwards;
-        transition: stroke-dasharray 1s ease-in-out, opacity 1s linear;
+        transition:
+            stroke-dasharray 1s ease-in-out,
+            opacity 1s linear;
         stroke-linecap: round;
 
         &.hidden {

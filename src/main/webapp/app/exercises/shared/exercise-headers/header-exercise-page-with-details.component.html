@@ -46,7 +46,7 @@
                         submissionPolicy.submissionLimit +
                         (submissionPolicy.exceedingPenalty
                             ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-                              | artemisTranslate : { points: submissionPolicy.exceedingPenalty })
+                              | artemisTranslate: { points: submissionPolicy.exceedingPenalty })
                             : '')
                 }}
                 <fa-icon
@@ -63,7 +63,7 @@
             <span
                 [ngClass]="dueDateStatusBadge"
                 class="badge"
-                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate : { date: dueDate | artemisDate }"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate | artemisDate }"
             >
                 {{ dueDate | artemisTimeAgo }}
             </span>
@@ -73,7 +73,7 @@
             {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
             <span
                 class="badge bg-success"
-                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate : { days: course?.maxComplaintTimeDays }"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: course?.maxComplaintTimeDays }"
             >
                 {{ 'global.generic.yes' | artemisTranslate }}
             </span>
@@ -84,7 +84,7 @@
                 <span
                     [ngClass]="nextRelevantDateStatusBadge"
                     class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate : { date: nextRelevantDate | artemisDate }"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel + 'Tooltip' | artemisTranslate: { date: nextRelevantDate | artemisDate }"
                 >
                     {{ nextRelevantDate | artemisTimeAgo }}
                 </span>
