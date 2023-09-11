@@ -169,7 +169,6 @@ public class AdminCourseResource {
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
-        channelService.registerUsersToChannelAsynchronously(true, course, createdChannel);
+        channelService.createChannel(course, channelToCreate, Optional.empty());
     }
 }

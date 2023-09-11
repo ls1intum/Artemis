@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -132,17 +130,16 @@ public class DataExportExerciseCreationService {
         repositoryExportOptions.setCombineStudentCommits(false);
         repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(false);
         repositoryExportOptions.setExcludePracticeSubmissions(false);
-        repositoryExportOptions.setNormalizeCodeStyle(true);
+        repositoryExportOptions.setNormalizeCodeStyle(false);
         var listOfProgrammingExerciseParticipations = programmingExercise.getStudentParticipations().stream()
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
-        List<String> exportRepoErrors = new ArrayList<>();
 
         // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
         // --> we can delete it after use
         var tempRepoWorkingDir = fileService.getTemporaryUniqueSubfolderPath(repoClonePath, 10);
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
-                exerciseDir, exportRepoErrors);
+                exerciseDir, Collections.synchronizedList(new ArrayList<>()));
 
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, userId);
     }

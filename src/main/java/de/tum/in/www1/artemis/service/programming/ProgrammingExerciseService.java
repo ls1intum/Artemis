@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -213,8 +212,7 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(true, savedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook
@@ -226,7 +224,7 @@ public class ProgrammingExerciseService {
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
         scheduleOperations(savedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExercise(savedProgrammingExercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         return savedProgrammingExercise;
     }
 

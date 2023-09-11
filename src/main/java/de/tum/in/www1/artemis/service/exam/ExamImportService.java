@@ -8,15 +8,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.FileUploadExerciseImportService;
-import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
-import de.tum.in.www1.artemis.service.QuizExerciseImportService;
-import de.tum.in.www1.artemis.service.TextExerciseImportService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -105,9 +101,7 @@ public class ExamImportService {
 
         // 2nd: Copy the exercise groups to the exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
-        Channel createdChannel = channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
-        channelService.registerUsersToChannelAsynchronously(false, examCopied.getCourse(), createdChannel);
-
+        channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
     }
 
