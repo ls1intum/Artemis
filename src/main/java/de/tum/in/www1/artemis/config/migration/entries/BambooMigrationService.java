@@ -138,7 +138,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
         if (credentialsId.isEmpty()) {
             log.error("No shared credential found for git user " + gitUser + ". Migration will fail.");
             throw new RuntimeException("No shared credential found for git user " + gitUser
-                    + " in Bamboo. Migration will fail. Please create a shared Username and Password credential for this user and run " + "the migration again.");
+                    + " in Bamboo. Migration will fail. Please create a shared username and password credential for this user and run the migration again.");
         }
         this.sharedCredentialId = credentialsId;
     }
