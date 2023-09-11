@@ -964,9 +964,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("testGracePeriodValues")
+    @MethodSource("testSubmissionAfterDueDateValues")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGracePeriod(ZonedDateTime dueDate, SubmissionType expectedType, boolean expectedRated) throws Exception {
+    void testSubmissionAfterDueDate(ZonedDateTime dueDate, SubmissionType expectedType, boolean expectedRated, boolean testRun) throws Exception {
         var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
 
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -976,6 +976,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Add a participation for the programming exercise
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+        if (testRun) {
+            participation.setTestRun(testRun);
+            participation = participationRepository.save(participation);
+        }
 
         // mock request for fetchCommitInfo()
         final String projectKey = "test201904bprogrammingexercise6";
@@ -1011,13 +1015,15 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
     }
 
-    private static Stream<Arguments> testGracePeriodValues() {
+    private static Stream<Arguments> testSubmissionAfterDueDateValues() {
         ZonedDateTime now = ZonedDateTime.now();
         return Stream.of(
                 // short after due date -> grace period active, type manual + rated
-                Arguments.of(now.minusSeconds(10), SubmissionType.MANUAL, true),
+                Arguments.of(now.minusSeconds(10), SubmissionType.MANUAL, true, false),
                 // long after due date -> grace period not active, illegal + non rated
-                Arguments.of(now.minusMinutes(2), SubmissionType.ILLEGAL, false));
+                Arguments.of(now.minusMinutes(2), SubmissionType.ILLEGAL, false, false),
+                // After grace period but a practice submission and therefore ok
+                Arguments.of(now.minusMinutes(2), SubmissionType.MANUAL, false, true));
     }
 
     private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
