@@ -45,7 +45,7 @@ import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/co
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
-import { TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -60,6 +60,17 @@ describe('TextSubmissionAssessmentComponent', () => {
     let participation: StudentParticipation;
     let submission: TextSubmission;
     let mockActivatedRoute: ActivatedRoute;
+
+    function createTextBlockRefWithFeedbackFromTo(startIndex: number, endIndex: number): TextBlockRef {
+        const textBlock = new TextBlock();
+        textBlock.startIndex = startIndex;
+        textBlock.endIndex = endIndex;
+        const feedback = new Feedback();
+        feedback.type = FeedbackType.AUTOMATIC;
+        feedback.detailText = 'detail';
+        feedback.credits = 1;
+        return new TextBlockRef(textBlock, feedback);
+    }
 
     beforeEach(() => {
         exercise = {
@@ -473,12 +484,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
         component.unreferencedFeedback = [];
-        const suggestion = new TextFeedbackSuggestion(undefined, exercise.id!, submission.id!, "I'm a feedback suggestion", 'detail', 1, undefined, 0, 10);
-        const athenaServiceFeedbackSuggestionsStub = jest.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([suggestion]));
+        const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
+        feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
+        const athenaServiceFeedbackSuggestionsStub = jest.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
         component.loadFeedbackSuggestions();
         tick();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
-        expect(component.textBlockRefs[0].feedback?.text).toEqual(suggestion.title);
+        expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
     }));
 
     it.each([
@@ -591,9 +603,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.unreferencedFeedback = [];
 
         // Set up initial state with an existing text block that doesn't overlap
-        const feedbackSuggestions = input.map(
-            ([start, end]) => new TextFeedbackSuggestion(undefined, exercise.id!, submission.id!, "I'm a feedback suggestion", 'detail', 1, undefined, start, end),
-        );
+        const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
+
         jest.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of(feedbackSuggestions));
 
         component.loadFeedbackSuggestions();

@@ -158,7 +158,6 @@ public class TextAssessmentResource extends AssessmentResource {
             final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
             final var feedbacksWithIds = response.getBody().getFeedbacks();
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
-            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
         return response;
     }
