@@ -130,10 +130,10 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/code-of-conduct : Checks if the user accepted the code of conduct
+     * GET /api/courses/:courseId/code-of-conduct : Checks if the user agrees to the code of conduct
      *
-     * @param courseId
-     * @return ResponseEntity with status 200 (Ok) and body is true if the user accepted the course's code of conduct
+     * @param courseId the course's ID
+     * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the course's code of conduct
      */
     @GetMapping("/{courseId}/code-of-conduct")
     @EnforceAtLeastStudent
@@ -148,8 +148,8 @@ public class ConversationResource extends ConversationManagementResource {
     /**
      * POST /api/courses/:courseId/code-of-conduct : Accept the course's code of conduct
      *
-     * @param courseId
-     * @return ResponseEntity with status 200 (Ok) and body is true if the user accepted the code of conduct
+     * @param courseId the course's ID
+     * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the code of conduct
      */
     @PostMapping("/{courseId}/code-of-conduct")
     @EnforceAtLeastStudent

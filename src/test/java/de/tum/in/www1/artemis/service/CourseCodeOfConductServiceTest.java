@@ -14,13 +14,13 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class CourseCodeOfConductServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class CourseCodeOfConductServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "coursecodeofconductservice";
 
-    private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static final ZonedDateTime PastTimestamp = ZonedDateTime.now().minusDays(1);
 
-    private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime FutureTimestamp = ZonedDateTime.now().plusDays(1);
 
     @Autowired
     private CourseRepository courseRepo;
@@ -39,7 +39,7 @@ public class CourseCodeOfConductServiceTest extends AbstractSpringIntegrationBam
     @Test
     void fetchAndAgreeIsCodeOfConductAccepted() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "student", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PastTimestamp, FutureTimestamp, new HashSet<>(), "student", "tutor", "editor", "instructor");
         courseRepo.save(course);
         var resultBeforeAgreement = courseCodeOfConductService.fetchUserAgreesToCodeOfConductInCourse(user, course);
         assertThat(resultBeforeAgreement).isFalse();
