@@ -530,6 +530,38 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditor_secondCorrection_oneResult() throws Exception {
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        exam.setVisibleDate(now().minusHours(3));
+        exam.setStartDate(now().minusHours(2));
+        exam.setEndDate(now().minusHours(1));
+        exam.setPublishResultsDate(now().minusMinutes(30));
+        exam.setNumberOfCorrectionRoundsInExam(2);
+
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        exerciseGroup.addExercise(textExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        textExercise = exerciseRepo.save(textExercise);
+
+        examRepository.save(exam);
+
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        // second correction round
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor2");
+
+        var participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+
+        assertThat(participation).isNotNull();
+        assertThat(participation.getSubmissions()).containsExactly(textSubmission);
+        var submission = participation.getSubmissions().iterator().next();
+        assertThat(submission.getResults()).hasSize(1);
+        assertThat(participation.getResults()).hasSize(1);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getDataForTextEditor_studentHidden() throws Exception {
         exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
