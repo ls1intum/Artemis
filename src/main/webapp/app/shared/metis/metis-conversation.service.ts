@@ -13,7 +13,6 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
@@ -46,7 +45,6 @@ export class MetisConversationService implements OnDestroy {
     private _isServiceSetup$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
     constructor(
-        private courseManagementService: CourseManagementService,
         private groupChatService: GroupChatService,
         private oneToOneChatService: OneToOneChatService,
         private channelService: ChannelService,
