@@ -68,7 +68,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         try {
             ciMigrationService.orElseThrow().checkPrerequisites();
         }
-        catch (RuntimeException e) {
+        catch (ContinuousIntegrationException e) {
             log.error("Can not run migration because the prerequisites for it to succeed are not met: {}", e.getMessage());
             throw e;
         }
@@ -455,6 +455,6 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     @Override
     public String date() {
-        return "20230904_162300";
+        return "20230808_203400";
     }
 }

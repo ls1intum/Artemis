@@ -28,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -124,6 +125,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     @Override
     public void deleteBuildTriggers(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+        if (buildPlanKey == null) {
+            return;
+        }
         List<Long> triggerIds = getAllTriggerIds(buildPlanKey);
         if (triggerIds.size() != 1) {
             log.warn("The build plan {} has {} triggers", buildPlanKey, triggerIds.size());
@@ -140,11 +144,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * If not, we throw an exception and the migration will fail.
      */
     @Override
-    public void checkPrerequisites() throws RuntimeException {
+    public void checkPrerequisites() throws ContinuousIntegrationException {
         Optional<Long> credentialsId = getSharedCredential();
         if (credentialsId.isEmpty()) {
             log.error("No shared credential found for git user " + gitUser + ". Migration will fail.");
-            throw new RuntimeException("No shared credential found for git user " + gitUser
+            throw new ContinuousIntegrationException("No shared credential found for git user " + gitUser
                     + " in Bamboo. Migration will fail. Please create a shared username and password credential for this user and run the migration again.");
         }
         this.sharedCredentialId = credentialsId;
@@ -156,6 +160,8 @@ public class BambooMigrationService implements CIVCSMigrationService {
             Optional<Long> credentialsId = getSharedCredential();
             if (credentialsId.isEmpty()) {
                 log.error("No shared credential found for git user " + gitUser + ". Migration will fail.");
+                throw new ContinuousIntegrationException("No shared credential found for git user " + gitUser
+                        + " in Bamboo. Migration will fail. Please create a shared username and password credential for this user and run the migration again.");
             }
             this.sharedCredentialId = credentialsId;
         }
@@ -172,10 +178,14 @@ public class BambooMigrationService implements CIVCSMigrationService {
         addGitRepository(buildPlanId, bambooInternalUrlService.toInternalVcsUrl(repositoryUrl), name, this.sharedCredentialId.orElseThrow(), defaultBranch);
     }
 
+    /**
+     * Calls the Bamboo site containing the ids for the triggers of a build plan and returns the
+     * ids of all triggers found in the data item list.
+     *
+     * @param buildPlanName The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @return a list of all trigger ids for the given build plan
+     */
     private List<Long> getAllTriggerIds(String buildPlanName) {
-        if (buildPlanName == null) {
-            return List.of();
-        }
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("buildKey", buildPlanName);
         String requestUrl = bambooServerUrl + "/chain/admin/config/editChainTriggers.action";
@@ -222,12 +232,19 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
         if (testRepositoryId.isEmpty()) {
             log.error("Repository tests not found for build plan {}", buildPlanKey);
+            throw new ContinuousIntegrationException("Repository tests not found for build plan " + buildPlanKey);
         }
         if (assignmentRepositoryId.isEmpty()) {
             log.error("Repository assignment not found for build plan {}", buildPlanKey);
+            throw new ContinuousIntegrationException("Repository assignment not found for build plan " + buildPlanKey);
         }
 
         Map<String, Long> auxiliaryRepositoryIds = new HashMap<>();
+        /*
+         * Programming exercises can have multiple auxiliary repositories, we
+         * need the id (stored in Bamboo) of each of them to add them to the build plan. The names are unique.
+         * And we need every single one of them to be present, otherwise we throw an exception.
+         */
         for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoryList) {
             Optional<Long> repositoryId = getConnectedRepositoryId(buildPlanKey, auxiliaryRepository.getName());
             if (repositoryId.isPresent()) {
@@ -235,9 +252,10 @@ public class BambooMigrationService implements CIVCSMigrationService {
             }
             else {
                 log.error("Repository {} not found for build plan {}", auxiliaryRepository.getName(), buildPlanKey);
+                throw new ContinuousIntegrationException("Repository " + auxiliaryRepository.getName() + " not found for build plan " + buildPlanKey);
             }
         }
-        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.orElseThrow(), assignmentRepositoryId.orElseThrow(), auxiliaryRepositoryIds, auxiliaryRepositoryList);
+        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get(), auxiliaryRepositoryIds, auxiliaryRepositoryList);
     }
 
     @Override

@@ -23,6 +23,7 @@ import org.w3c.dom.Document;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -166,7 +167,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void checkPrerequisites() throws RuntimeException {
+    public void checkPrerequisites() throws ContinuousIntegrationException {
         // nothing special is needed for Jenkins and GitLab
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
@@ -82,5 +83,5 @@ public interface CIVCSMigrationService {
     /**
      * Checks if the prerequisites for the migration are met.
      */
-    void checkPrerequisites() throws RuntimeException;
+    void checkPrerequisites() throws ContinuousIntegrationException;
 }
