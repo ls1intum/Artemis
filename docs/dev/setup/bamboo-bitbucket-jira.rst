@@ -219,7 +219,7 @@ under ``localhost:7990``.
 #. In Bamboo create a shared Username and Password credential.
    The username and password should be the same as the ones you used to
    create the Bitbucket admin user. The name of the shared credential
-   must be equal to the value set in ``artemis.continuous-integration.user``.
+   must be equal to the value set in ``artemis.version-control.user``.
 
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
@@ -347,11 +347,15 @@ Configure Artemis
 
   If you run the Atlassian suite in containers and Artemis on your host machine, you may have to set internal urls for bamboo,
   so that the CI and VCS servers are reachable from each other.
-    .. code:: yaml
+
+   .. code:: yaml
+
     bamboo:
         internal-urls:
             ci-url: http://bamboo:8085
             vcs-url: http://bitbucket:7990
+
+
 
 #. Also, set the server URL in ``src/main/resources/config/application-local.yml``:
 
