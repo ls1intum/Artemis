@@ -216,7 +216,7 @@ under ``localhost:7990``.
    ``artemis-authentication-token-value``.
    You can create a global variable from settings on Bamboo.
 
-#. In Bamboo create a shared Username and Password credential.
+#. In Bamboo create a shared username and password credential.
    The username and password should be the same as the ones you used to
    create the Bitbucket admin user. The name of the shared credential
    must be equal to the value set in ``artemis.version-control.user``.
