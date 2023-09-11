@@ -46,4 +46,8 @@ export class Result implements BaseEntity {
     public static isManualResult(that: Result): boolean {
         return that.assessmentType === AssessmentType.MANUAL || that.assessmentType === AssessmentType.SEMI_AUTOMATIC;
     }
+
+    public static hasNonEmptyAssessmentNote(that: Result) {
+        return that.assessmentNote && that.assessmentNote.note && that.assessmentNote.note != '';
+    }
 }

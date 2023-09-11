@@ -515,10 +515,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.validateFeedback();
     }
 
-    hasAssessmentNote(): boolean {
-        return this.manualResult?.assessmentNote !== undefined;
-    }
-
     /**
      * Defines whether the inline feedback should be read only or not
      */
