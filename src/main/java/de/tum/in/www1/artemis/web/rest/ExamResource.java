@@ -33,7 +33,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -171,8 +173,7 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(exam);
 
-        Channel createdChannel = channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
-        channelService.registerTutorsAndInstructorsToChannel(savedExam.getCourse(), createdChannel);
+        channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
@@ -928,8 +929,6 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        channelService.registerCourseStudentsToChannelAsynchronously(exam.getCourse(), channel);
 
         return ResponseEntity.ok().body(null);
     }
