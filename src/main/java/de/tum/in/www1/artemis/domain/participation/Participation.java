@@ -149,6 +149,7 @@ public abstract class Participation extends DomainObject implements Participatio
      *
      * @return true if the participation is only used for practicing after the due date
      */
+    @JsonIgnore
     public boolean isPracticeMode() {
         return Boolean.TRUE.equals(testRun);
     }
