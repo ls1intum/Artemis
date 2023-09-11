@@ -1,31 +1,45 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Diff, DiffMatchPatch, DiffOperation } from 'diff-match-patch-typescript';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
     styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
 })
-export class ExamExerciseUpdateHighlighterComponent implements OnInit {
+export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     subscriptionToLiveExamExerciseUpdates: Subscription;
+    themeSubscription: Subscription;
     previousProblemStatementUpdate: string;
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
+    isDark = false;
 
     @Input() exercise: Exercise;
 
     @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
 
-    constructor(private examExerciseUpdateService: ExamExerciseUpdateService) {}
+    constructor(
+        private examExerciseUpdateService: ExamExerciseUpdateService,
+        private themeService: ThemeService,
+    ) {}
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
         });
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
+            this.isDark = theme === Theme.DARK;
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.subscriptionToLiveExamExerciseUpdates?.unsubscribe();
+        this.themeSubscription?.unsubscribe();
     }
 
     /**
@@ -79,12 +93,48 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
         }
 
         this.previousProblemStatementUpdate = this.updatedProblemStatement;
-
+        let removedDiagrams: string[] = [];
+        let diff: Diff[];
+        if (this.exercise.type === 'programming') {
+            const updatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(this.updatedProblemStatement);
+            const outdatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(outdatedProblemStatement);
+            const updatedProblemStatementWithoutDiagrams = updatedProblemStatementAndRemovedDiagrams.problemStatementWithoutPlantUmlDiagrams;
+            const outdatedProblemStatementWithoutDiagrams = outdatedProblemStatementAndRemovedDiagrams.problemStatementWithoutPlantUmlDiagrams;
+            removedDiagrams = updatedProblemStatementAndRemovedDiagrams.removedDiagrams;
+            diff = dmp.diff_main(outdatedProblemStatementWithoutDiagrams!, updatedProblemStatementWithoutDiagrams);
+        } else {
+            diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
+        }
         // finds the initial difference then cleans the text with added html & css elements
-        const diff = dmp.diff_main(outdatedProblemStatement!, this.updatedProblemStatement);
         dmp.diff_cleanupEfficiency(diff);
         this.updatedProblemStatementWithHighlightedDifferences = this.diffPrettyHtml(diff);
+
+        if (this.exercise.type === 'programming') {
+            this.addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams);
+        }
         return this.updatedProblemStatementWithHighlightedDifferences;
+    }
+
+    private addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams: string[]) {
+        removedDiagrams.forEach((text) => {
+            this.updatedProblemStatementWithHighlightedDifferences = this.updatedProblemStatementWithHighlightedDifferences.replace('@startuml', '@startuml\n' + text + '\n');
+            this.updatedProblemStatementWithHighlightedDifferences = this.updatedProblemStatementWithHighlightedDifferences.replace('@enduml', '@enduml');
+        });
+    }
+
+    private removeAnyPlantUmlDiagramsInProblemStatement(problemStatement: string): { problemStatementWithoutPlantUmlDiagrams: string; removedDiagrams: string[] } {
+        // Regular expression to match content between @startuml and @enduml
+        const plantUmlSequenceRegex = /@startuml([\s\S]*?)@enduml/g;
+        const removedDiagrams: string[] = [];
+        const problemStatementWithoutPlantUmlDiagrams = problemStatement.replace(plantUmlSequenceRegex, (match, content) => {
+            removedDiagrams.push(content);
+            // we have to keep the markers, otherwise we cannot add the diagrams back later
+            return '@startuml\n@enduml';
+        });
+        return {
+            problemStatementWithoutPlantUmlDiagrams,
+            removedDiagrams,
+        };
     }
 
     /**
@@ -98,17 +148,19 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
      * @param diffs Array of diff tuples. (from DiffMatchPatch)
      * @return the HTML representation as string with markdown intact.
      */
-    diffPrettyHtml = function (diffs: Diff[]): string {
+    private diffPrettyHtml(diffs: Diff[]): string {
         const html: any[] = [];
+        const colorForAddedText = this.isDark ? '#2a2' : '#e6ffe6;';
+        const colorForDeletedText = this.isDark ? '#a22' : '#ffe6e6';
         diffs.forEach((diff: Diff, index: number) => {
             const op = diffs[index][0]; // Operation (insert, delete, equal)
             const text = diffs[index][1]; // Text of change.
             switch (op) {
                 case DiffOperation.DIFF_INSERT:
-                    html[index] = '<ins style="background:#e6ffe6;">' + text + '</ins>';
+                    html[index] = '<ins style="background:' + colorForAddedText + '">' + text + '</ins>';
                     break;
                 case DiffOperation.DIFF_DELETE:
-                    html[index] = '<del style="background:#ffe6e6;">' + text + '</del>';
+                    html[index] = '<del style="background:' + colorForDeletedText + '">' + text + '</del>';
                     break;
                 case DiffOperation.DIFF_EQUAL:
                     html[index] = text;
@@ -116,5 +168,5 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit {
             }
         });
         return html.join('');
-    };
+    }
 }

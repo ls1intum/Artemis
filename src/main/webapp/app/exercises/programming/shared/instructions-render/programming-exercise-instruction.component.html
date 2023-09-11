@@ -1,5 +1,9 @@
 <div class="instructions__content border-0" *ngIf="!isLoading; else loadingInstructions">
     <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise" [latestResult]="latestResult" [tasks]="tasks"></jhi-programming-exercise-instructions-step-wizard>
+    <!-- problem statement update & difference highlighter -->
+    <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise" (problemStatementUpdateEvent)="renderUpdatedProblemStatement()">
+    </jhi-exam-exercise-update-highlighter>
+
     <!-- Rendered markdown will be inserted in this div -->
     <div
         id="programming-exercise-instructions-content"
