@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 
@@ -29,6 +30,9 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ResourceLoaderService resourceLoaderService;
+
+    @Autowired
+    private FileService fileService;
 
     private final Path javaPath = Path.of("templates", "java", "java.txt");
 
@@ -88,6 +92,54 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @BeforeEach
     void deleteFiles() throws IOException {
         FileUtils.deleteDirectory(Path.of(".", "exportTest").toFile());
+    }
+
+    @Test
+    void testGetFileForPath() throws IOException {
+        writeFile("testFile.txt", FILE_WITH_UNIX_LINE_ENDINGS);
+        byte[] result = fileService.getFileForPath(Path.of(".", "exportTest", "testFile.txt"));
+        assertThat(result).containsExactly(FILE_WITH_UNIX_LINE_ENDINGS.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void testGetFileFOrPath_notFound() throws IOException {
+        writeFile("testFile.txt", FILE_WITH_UNIX_LINE_ENDINGS);
+        byte[] result = fileService.getFileForPath(Path.of(".", "exportTest", UUID.randomUUID() + ".txt"));
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void testHandleSaveFile_noOriginalFilename() {
+        MultipartFile file = mock(MultipartFile.class);
+        doAnswer(invocation -> null).when(file).getOriginalFilename();
+        assertThatThrownBy(() -> fileService.handleSaveFile(file, false, false)).isInstanceOf(IllegalArgumentException.class);
+        verify(file, times(1)).getOriginalFilename();
+    }
+
+    @Test
+    void testCopyExistingFileToTarget() throws IOException {
+        String payload = "test";
+        Path filePath = Path.of(".", "exportTest", "testFile.txt");
+        FileUtils.writeStringToFile(filePath.toFile(), payload, StandardCharsets.UTF_8);
+        Path newFolder = Path.of(".", "exportTest", "newFolder");
+
+        Path newPath = fileService.copyExistingFileToTarget(filePath, newFolder);
+        assertThat(newPath).isNotNull();
+
+        assertThat(FileUtils.readFileToString(newPath.toFile(), StandardCharsets.UTF_8)).isEqualTo(payload);
+    }
+
+    @Test
+    void testCopyExistingFileToTarget_newFile() {
+        assertThat(fileService.copyExistingFileToTarget(null, Path.of(".", "exportTest"))).isNull();
+    }
+
+    @Test
+    void testCopyExistingFileToTarget_temporaryFile() {
+        // We don't need to create a file here as we expect the method to terminate early
+        Path tempPath = Path.of(".", "uploads", "files", "temp", "testFile.txt");
+        Path newPath = Path.of(".", "exportTest");
+        assertThat(fileService.copyExistingFileToTarget(tempPath, newPath)).isNull();
     }
 
     @Test
