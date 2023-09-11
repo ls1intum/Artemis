@@ -35,14 +35,14 @@ export class LearningPathStorageService {
         this.store(learningPathId, entry);
         return entry;
     }
+
     private store(learningPathId: number, entry: StorageEntry) {
-        if (!entry) {
-            return;
-        }
         if (!this.learningPathHistories.has(learningPathId)) {
             this.learningPathHistories.set(learningPathId, []);
         }
-        if (this.hasPrevious(learningPathId) && entry.equals(this.learningPathHistories.get(learningPathId)![this.learningPathHistories.get(learningPathId)!.length - 1])) {
+        // check if previous entry equals new entry
+        const history = this.learningPathHistories.get(learningPathId)!;
+        if (this.hasPrevious(learningPathId) && entry.equals(history[history.length - 1])) {
             return;
         }
         this.learningPathHistories.get(learningPathId)!.push(entry);
@@ -114,15 +114,15 @@ export class LearningPathStorageService {
      *
      * @param learningPathId the id of the learning path the entry belongs to
      * @param entry the entry that should be set to interacted with
-     * @param value the value that should be set
+     * @param interacted the value that should be set
      */
-    setInteraction(learningPathId: number, entry: StorageEntry, value: boolean) {
+    setInteraction(learningPathId: number, entry: StorageEntry, interacted: boolean) {
         if (!this.learningPathRecommendations.has(learningPathId)) {
             return;
         }
         const storedEntry = this.getStoredRecommendationEntry(learningPathId, entry);
         if (storedEntry) {
-            storedEntry.interacted = value;
+            storedEntry.interacted = interacted;
         }
     }
 
@@ -133,7 +133,7 @@ export class LearningPathStorageService {
      * @param learningPathId the id of the learning path
      * @param entry the entry for which the successor should be returned
      */
-    getNextRecommendation(learningPathId: number, entry: StorageEntry | undefined): StorageEntry | undefined {
+    getNextRecommendation(learningPathId: number, entry?: StorageEntry): StorageEntry | undefined {
         if (!this.learningPathRecommendations.has(learningPathId)) {
             return undefined;
         }
@@ -154,7 +154,7 @@ export class LearningPathStorageService {
             return nextEntry;
         } else {
             // if there is no successor, retrieve first not interacted entry
-            return this.getNextRecommendation(learningPathId, undefined);
+            return this.getNextRecommendation(learningPathId);
         }
     }
 

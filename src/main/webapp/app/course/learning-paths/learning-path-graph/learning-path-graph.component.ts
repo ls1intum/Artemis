@@ -165,7 +165,7 @@ export class LearningPathGraphComponent implements OnInit {
     }
 
     highlightNode(learningObject: LectureUnitEntry | ExerciseEntry) {
-        if (this.viewMode == LearningPathViewMode.GRAPH) {
+        if (this.viewMode === LearningPathViewMode.GRAPH) {
             this.highlightedNode = this.findNode(learningObject, this.ngxGraph!);
         } else {
             this.highlightedNode = this.findNode(learningObject, this.ngxPath!);
