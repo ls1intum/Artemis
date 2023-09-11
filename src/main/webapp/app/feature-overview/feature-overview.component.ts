@@ -42,7 +42,10 @@ export class FeatureOverviewComponent implements OnInit {
     features: Feature[];
     targetAudience = TargetAudience.INSTRUCTORS;
 
-    constructor(private route: ActivatedRoute, private profileService: ProfileService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private profileService: ProfileService,
+    ) {}
 
     /**
      * Initialises the feature overview page either for students or for instructors, depending on the url.

@@ -26,7 +26,12 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
 
-    constructor(private userService: UserService, private systemNotificationService: AdminSystemNotificationService, private route: ActivatedRoute, private router: Router) {}
+    constructor(
+        private userService: UserService,
+        private systemNotificationService: AdminSystemNotificationService,
+        private route: ActivatedRoute,
+        private router: Router,
+    ) {}
 
     /**
      * Loads notification from route data

@@ -53,7 +53,10 @@ export class TutorialGroupsTableComponent implements OnChanges {
      */
     mifOfDifferentLanguages = false;
 
-    constructor(private sortService: SortService, private cdr: ChangeDetectorRef) {}
+    constructor(
+        private sortService: SortService,
+        private cdr: ChangeDetectorRef,
+    ) {}
 
     trackId(index: number, item: TutorialGroup) {
         return item.id;

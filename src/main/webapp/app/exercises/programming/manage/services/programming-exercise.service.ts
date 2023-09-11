@@ -49,7 +49,11 @@ export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION
 export class ProgrammingExerciseService {
     public resourceUrl = 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService, private sortService: SortService) {}
+    constructor(
+        private http: HttpClient,
+        private exerciseService: ExerciseService,
+        private sortService: SortService,
+    ) {}
 
     /**
      * Sets a new programming exercise up

@@ -54,7 +54,10 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     faBook = faBook;
     faCircleStop = faCircleStop;
 
-    constructor(private router: Router, private examParticipationService: ExamParticipationService) {}
+    constructor(
+        private router: Router,
+        private examParticipationService: ExamParticipationService,
+    ) {}
 
     ngOnInit() {
         // A subscription is used here to limit the number of calls

@@ -10,7 +10,11 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 export abstract class DomainDependentEndpointService extends DomainDependentService {
     protected restResourceUrl?: string;
 
-    protected constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+    protected constructor(
+        protected http: HttpClient,
+        protected jhiWebsocketService: JhiWebsocketService,
+        domainService: DomainService,
+    ) {
         super(domainService);
         this.initDomainSubscription();
     }

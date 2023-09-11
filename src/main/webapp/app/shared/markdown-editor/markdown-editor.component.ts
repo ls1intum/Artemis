@@ -182,7 +182,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     uniqueMarkdownEditorId: string;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private fileUploaderService: FileUploaderService,
+        private alertService: AlertService,
+    ) {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
 

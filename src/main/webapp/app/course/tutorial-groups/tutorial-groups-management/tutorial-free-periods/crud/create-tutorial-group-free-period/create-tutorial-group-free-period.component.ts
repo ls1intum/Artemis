@@ -28,7 +28,11 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
     isInitialized = false;
 
-    constructor(private activeModal: NgbActiveModal, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService, private alertService: AlertService) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
+        private alertService: AlertService,
+    ) {}
 
     initialize() {
         if (!this.tutorialGroupConfigurationId || !this.course) {

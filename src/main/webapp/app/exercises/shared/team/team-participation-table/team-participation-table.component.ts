@@ -58,7 +58,12 @@ export class TeamParticipationTableComponent implements OnInit {
     faFolderOpen = faFolderOpen;
     faFlag = faFlag;
 
-    constructor(private teamService: TeamService, private alertService: AlertService, private router: Router, private accountService: AccountService) {}
+    constructor(
+        private teamService: TeamService,
+        private alertService: AlertService,
+        private router: Router,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Loads all needed data from the server for this component

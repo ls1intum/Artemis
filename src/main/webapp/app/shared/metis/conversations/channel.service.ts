@@ -10,7 +10,11 @@ import { AccountService } from 'app/core/auth/account.service';
 export class ChannelService {
     public resourceUrl = '/api/courses/';
 
-    constructor(private http: HttpClient, private conversationService: ConversationService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private conversationService: ConversationService,
+        private accountService: AccountService,
+    ) {}
 
     getChannelsOfCourse(courseId: number): Observable<HttpResponse<ChannelDTO[]>> {
         return this.http.get<ChannelDTO[]>(`${this.resourceUrl}${courseId}/channels/overview`, {
