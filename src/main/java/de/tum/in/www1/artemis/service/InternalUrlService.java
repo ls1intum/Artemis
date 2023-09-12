@@ -8,13 +8,11 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 
-@Profile("bamboo")
 @Service
 public abstract class InternalUrlService {
 
