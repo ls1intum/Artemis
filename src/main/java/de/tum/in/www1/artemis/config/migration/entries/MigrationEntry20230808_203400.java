@@ -32,7 +32,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private static final int MAX_THREAD_COUNT = 10;
 
-    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within one hour. Aborting migration.";
+    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within three hours. Aborting migration.";
+
+    private static final int TIMEOUT_IN_HOURS = 3;
 
     private final Logger log = LoggerFactory.getLogger(MigrationEntry20230808_203400.class);
 
@@ -118,7 +120,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         executorService.shutdown();
 
         try {
-            boolean finished = executorService.awaitTermination(3, TimeUnit.HOURS);
+            boolean finished = executorService.awaitTermination(TIMEOUT_IN_HOURS, TimeUnit.HOURS);
             if (!finished) {
                 log.error(ERROR_MESSAGE);
                 throw new RuntimeException(ERROR_MESSAGE);
@@ -150,8 +152,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} template programming exercises to migrate in batch", templateParticipationPage.getTotalElements());
             templateParticipationPage.map(templateParticipation -> {
-                if (!ciMigrationService.orElseThrow().buildPlanExists(templateParticipation.getProgrammingExercise().getProjectKey(),
-                        templateParticipation.getProgrammingExercise().getTemplateBuildPlanId())) {
+                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(templateParticipation.getProgrammingExercise().getProjectKey(),
+                        templateParticipation.getProgrammingExercise().getTemplateBuildPlanId());
+                if (!buildPlanExists) {
                     log.warn("Build plan {} does not exist for exercise {}", templateParticipation.getProgrammingExercise().getTemplateBuildPlanId(),
                             templateParticipation.getProgrammingExercise().getId());
                     log.info("Skipping migration for template of exercise {} and setting build_plan_id to null", templateParticipation.getProgrammingExercise().getId());
@@ -165,10 +168,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 return templateParticipation;
             }).filter(Objects::nonNull).forEach(templateParticipation -> {
                 var startMs = System.currentTimeMillis();
-                List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
-                if (ciMigrationService.orElseThrow().supportsAuxiliaryRepositories()) {
-                    auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(templateParticipation.getProgrammingExercise().getId());
-                }
+                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(templateParticipation.getProgrammingExercise().getId());
+
                 migrateTemplateBuildPlan(templateParticipation.getProgrammingExercise(), auxiliaryRepositories, errorMap);
 
                 migrateTestBuildPlan(templateParticipation.getProgrammingExercise(), errorMap);
@@ -179,7 +180,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} solution programming exercises to migrate in batch", solutionParticipationPage.getTotalElements());
             solutionParticipationPage.map(solutionParticipation -> {
-                if (!ciMigrationService.orElseThrow().buildPlanExists(solutionParticipation.getProgrammingExercise().getProjectKey(), solutionParticipation.getBuildPlanId())) {
+                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(solutionParticipation.getProgrammingExercise().getProjectKey(),
+                        solutionParticipation.getBuildPlanId());
+                if (!buildPlanExists) {
                     log.warn("Build plan {} does not exist for exercise {}", solutionParticipation.getBuildPlanId(), solutionParticipation.getProgrammingExercise().getId());
                     log.info("Skipping migration for exercise {} and setting build_plan_id to null", solutionParticipation.getProgrammingExercise().getId());
                     solutionParticipation.setBuildPlanId(null);
@@ -189,10 +192,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 return solutionParticipation;
             }).filter(Objects::nonNull).forEach(solutionParticipation -> {
                 var startMs = System.currentTimeMillis();
-                List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
-                if (ciMigrationService.orElseThrow().supportsAuxiliaryRepositories()) {
-                    auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(solutionParticipation.getProgrammingExercise().getId());
-                }
+                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(solutionParticipation.getProgrammingExercise().getId());
+
                 migrateSolutionBuildPlan(solutionParticipation.getProgrammingExercise(), auxiliaryRepositories, errorMap);
 
                 migrateTestBuildPlan(solutionParticipation.getProgrammingExercise(), errorMap);
@@ -203,7 +204,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
             log.info("Found {} student programming exercises to migrate in batch", studentParticipationPage.getTotalElements());
             studentParticipationPage.map(studentParticipation -> {
-                if (!ciMigrationService.orElseThrow().buildPlanExists(studentParticipation.getProgrammingExercise().getProjectKey(), studentParticipation.getBuildPlanId())) {
+                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(studentParticipation.getProgrammingExercise().getProjectKey(),
+                        studentParticipation.getBuildPlanId());
+                if (!buildPlanExists) {
                     log.warn("Build plan {} does not exist for exercise {}", studentParticipation.getBuildPlanId(), studentParticipation.getProgrammingExercise().getId());
                     log.info("Skipping migration for exercise {} and setting build_plan_id to null", studentParticipation.getProgrammingExercise().getId());
                     studentParticipation.setBuildPlanId(null);
@@ -213,17 +216,28 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 return studentParticipation;
             }).filter(Objects::nonNull).forEach(studentParticipation -> {
                 var startMs = System.currentTimeMillis();
-                List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
-                if (ciMigrationService.orElseThrow().supportsAuxiliaryRepositories()) {
-                    auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(studentParticipation.getProgrammingExercise().getId());
-                }
+                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(studentParticipation.getProgrammingExercise().getId());
+
                 migrateStudentBuildPlan(studentParticipation.getProgrammingExercise(), studentParticipation, auxiliaryRepositories, errorMap);
                 log.info("Migrated student build plan for exercise {} in {}ms", studentParticipation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             });
 
-            log.info("Migrated {} / {} programming exercises in current thread", (Math.min(exerciseCount, batch + 1)), exerciseCount);
+            log.info("Migrated {} / {} programming exercises in current thread", Math.min(exerciseCount, batch + 1), exerciseCount);
             log.info("Migrated batch in {}ms", System.currentTimeMillis() - batchStart);
         }
+    }
+
+    /**
+     * Returns a list of auxiliary repositories for the given exercise.
+     *
+     * @param exerciseId The id of the exercise
+     * @return A list of auxiliary repositories, or an empty list if the migration service does not support auxiliary repositories
+     */
+    private List<AuxiliaryRepository> getAuxiliaryRepositories(Long exerciseId) {
+        if (ciMigrationService.orElseThrow().supportsAuxiliaryRepositories()) {
+            return auxiliaryRepositoryRepository.findByExerciseId(exerciseId);
+        }
+        return new ArrayList<>();
     }
 
     /**
@@ -271,7 +285,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), studentParticipation.getBuildPlanId(), repositoryUrl);
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to migrate solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
+            log.warn("Failed to migrate build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
                     studentParticipation.getBuildPlanId(), exercise.getId(), e);
             errorMap.put(exercise, false);
         }
@@ -279,7 +293,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), studentParticipation.getBuildPlanId(), repositoryUrl);
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
-            log.warn("Failed to delete solution build triggers for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
+            log.warn("Failed to delete build triggers for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
                     studentParticipation.getBuildPlanId(), exercise.getId(), e);
             errorMap.put(exercise, false);
         }

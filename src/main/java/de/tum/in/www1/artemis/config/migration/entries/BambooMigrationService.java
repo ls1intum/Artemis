@@ -425,6 +425,10 @@ public class BambooMigrationService implements CIVCSMigrationService {
         parameters.add("selectFields", "selectedCondition");
         parameters.add("task.condition.variable.operation", "exists");
         parameters.add("selectFields", "task.condition.variable.operation");
+        /*
+         * Atlassian counts the repositories from 0, so we have to start with 0, selectedRepository_0
+         * is the first repository that is configured with the values *_0, selectedRepository_1 the second and so on
+         */
         parameters.add("selectedRepository_0", testsRepositoryId.toString());
         parameters.add("selectFields", "selectedRepository_0");
         parameters.add("checkoutDir_0", "");
@@ -453,7 +457,8 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     /**
-     * Returns the id of the shared credential for the git user configured in the application properties.
+     * Calls the Bamboo site containing the shared credentials of the Bamboo instance and returns the id of the
+     * shared credential for the git user configured in the application properties.
      *
      * @return the id of the shared credential for the git user configured in the application properties
      */
@@ -493,7 +498,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     private void addGitRepository(String buildPlanKey, String repository, String name, Long credentialsId, String defaultBranch) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("planKey", buildPlanKey);
-        body.add("repositoryId", Integer.toString(0));
+        body.add("repositoryId", "0");
         body.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         body.add("respositoryPluginKey", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         body.add("repositoryName", name);
@@ -504,7 +509,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
         body.add("repository.git.passwordSharedCredentials", credentialsId.toString());
         body.add("selectFields", "repository.git.passwordSharedCredentials");
         body.add("repository.git.branch", defaultBranch);
-        body.add("repository.git.commandTimeout", Integer.toString(180));
+        body.add("repository.git.commandTimeout", "180");
         body.add("checkBoxFields", "repository.git.useShallowClones");
         body.add("repository.git.useShallowClones", Boolean.TRUE.toString());
 
