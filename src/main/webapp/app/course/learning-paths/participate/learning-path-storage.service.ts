@@ -54,10 +54,7 @@ export class LearningPathStorageService {
      * @param learningPathId the id of the learning path for which the history should be checked
      */
     hasPrevious(learningPathId: number): boolean {
-        if (this.learningPathHistories.has(learningPathId)) {
-            return this.learningPathHistories.get(learningPathId)!.length !== 0;
-        }
-        return false;
+        return !!this.learningPathHistories.get(learningPathId)?.length;
     }
 
     /**
@@ -102,11 +99,8 @@ export class LearningPathStorageService {
      *
      * @param learningPathId the id of the learning path
      */
-    hasRecommendation(learningPathId: number) {
-        if (this.learningPathRecommendations.has(learningPathId)) {
-            return this.learningPathRecommendations.get(learningPathId)!.find((entry) => !entry.interacted) !== undefined;
-        }
-        return false;
+    hasRecommendation(learningPathId: number): boolean {
+        return !!this.learningPathRecommendations.get(learningPathId)?.find((entry) => !entry.interacted);
     }
 
     /**

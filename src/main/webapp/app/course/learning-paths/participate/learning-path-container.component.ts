@@ -151,7 +151,7 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     setupLectureUnitView(instance: LearningPathLectureUnitViewComponent) {
-        if (this.lecture) {
+        if (this.lecture && this.lectureUnit) {
             instance.lecture = this.lecture;
             instance.lectureUnit = this.lectureUnit!;
         }
