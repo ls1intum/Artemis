@@ -7,10 +7,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,9 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
@@ -145,6 +150,16 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
                 && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight()) && test.getSolutionEntries().size() == 1
                 && oldTest.getSolutionEntries().stream().findFirst().orElseThrow().getCode().equals(test.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("submissionPolicyProvider")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExerciseBasisWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+        final var imported = importExerciseBaseWithSubmissionPolicy(submissionPolicy);
+        assertThat(imported.getSubmissionPolicy()).isNotNull();
+        assertThat(imported.getSubmissionPolicy()).isInstanceOf(SubmissionPolicy.class);
+        assertThat(imported.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
     }
 
     @Test
@@ -284,8 +299,35 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
+    private ProgrammingExercise importExerciseBaseWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+        final var toBeImported = createToBeImportedWithSubmissionPolicy(submissionPolicy);
+        return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
+    }
+
     private ProgrammingExercise createToBeImported() {
         return ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
+    }
+
+    private ProgrammingExercise createToBeImportedWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
+        var exercise = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
+        if (submissionPolicy != null) {
+            submissionPolicy.setProgrammingExercise(exercise);
+            exercise.setSubmissionPolicy(submissionPolicy);
+        }
+        return exercise;
+    }
+
+    private static Stream<SubmissionPolicy> submissionPolicyProvider() {
+        var lockRepoPolicy = new LockRepositoryPolicy();
+        lockRepoPolicy.setSubmissionLimit(5);
+        lockRepoPolicy.setActive(true);
+
+        var submissionPenaltyPolicy = new SubmissionPenaltyPolicy();
+        submissionPenaltyPolicy.setSubmissionLimit(5);
+        submissionPenaltyPolicy.setExceedingPenalty(3.0);
+        submissionPenaltyPolicy.setActive(true);
+
+        return Stream.of(lockRepoPolicy, submissionPenaltyPolicy);
     }
 
 }

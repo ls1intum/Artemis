@@ -197,6 +197,7 @@
             "overallGradeColumn": "Gesamtnote",
             "overallBonusColumn": "Gesamt-Bonuspunkte",
             "bonusGradeColumn": "Bonusnote",
+            "bonusPointsColumn": "Bonuspunkte",
             "finalGradeColumn": "Endnote",
             "passedColumn": "Bestanden",
             "mostSeverePlagiarismVerdictColumn": "Urteil",
@@ -407,7 +408,7 @@
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
-                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl."
+                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl. Dies wirkt sich auch auf die Noten aller Studierenden in der Prüfung aus!"
             },
             "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",

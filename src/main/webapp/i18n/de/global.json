@@ -259,8 +259,7 @@
             "ldap": "von LDAP synchronisieren",
             "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "discardChanges": "Änderungen verwerfen",
-            "goBack": "Zurück",
-            "requestDataExport": "Datenexport anfordern"
+            "goBack": "Zurück"
         },
         "detail": {
             "field": "Feld",
@@ -327,6 +326,7 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "competencies": "Kompetenzen",
+        "learningPath": "Lernpfad",
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",

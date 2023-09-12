@@ -1,0 +1,33 @@
+<label class="mb-1 form-check-label" for="typeahead-user-login">{{ 'artemisApp.dataExport.loginOrName' | artemisTranslate }}</label>
+<div class="search-container">
+    <input
+        id="typeahead-user-login"
+        type="text"
+        class="form-control"
+        [(ngModel)]="loginOrName"
+        [ngbTypeahead]="search"
+        [placeholder]="'artemisApp.dataExport.loginOrName' | artemisTranslate"
+        (input)="onChange()"
+        (change)="onChange()"
+        (focus)="onChange()"
+        (select)="onChange()"
+        (blur)="onChange()"
+        [resultFormatter]="resultFormatter"
+        [inputFormatter]="inputFormatter"
+    />
+
+    <div class="search-info" [class.active]="searching">
+        <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+    </div>
+    <div class="search-info" [class.active]="searchFailed">
+        <span class="badge bg-danger" [jhiTranslate]="'artemisApp.dataTable.search.failed'"> Search failed </span>
+    </div>
+    <div class="search-info" [class.active]="searchNoResults">
+        <span class="badge bg-warning" [jhiTranslate]="'artemisApp.dataTable.search.noResults'"> No results </span>
+    </div>
+    <div class="search-info" [class.active]="searchQueryTooShort">
+        <span class="badge bg-info" [jhiTranslate]="'artemisApp.dataExport.searchQueryTooShort'" [translateValues]="{ length: minSearchQueryLength }">
+            Please enter at least {{ minSearchQueryLength }} characters
+        </span>
+    </div>
+</div>

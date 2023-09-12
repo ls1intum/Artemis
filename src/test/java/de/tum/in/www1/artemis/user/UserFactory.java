@@ -74,6 +74,6 @@ public class UserFactory {
      * @return the newly created student dto
      */
     public static StudentDTO generateStudentDTOWithRegistrationNumber(String registrationNumber) {
-        return new StudentDTO().registrationNumber(registrationNumber);
+        return new StudentDTO(null, null, null, registrationNumber, null);
     }
 }

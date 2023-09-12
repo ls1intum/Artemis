@@ -74,6 +74,10 @@ public class Competency extends DomainObject {
     @JsonIgnoreProperties({ "user", "competency" })
     private Set<CompetencyProgress> userProgress = new HashSet<>();
 
+    @ManyToMany(mappedBy = "competencies")
+    @JsonIgnoreProperties({ "competencies", "course" })
+    private Set<LearningPath> learningPaths = new HashSet<>();
+
     public String getTitle() {
         return title;
     }
@@ -200,6 +204,14 @@ public class Competency extends DomainObject {
 
     public void setUserProgress(Set<CompetencyProgress> userProgress) {
         this.userProgress = userProgress;
+    }
+
+    public Set<LearningPath> getLearningPaths() {
+        return learningPaths;
+    }
+
+    public void setLearningPaths(Set<LearningPath> learningPaths) {
+        this.learningPaths = learningPaths;
     }
 
     /**

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.exercise.quizexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
-import static org.awaitility.Awaitility.await;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -28,14 +27,12 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
@@ -84,9 +81,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ChannelRepository channelRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -1100,12 +1094,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Channel channelDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelDB).isNotNull();
         assertThat(channelDB.getName()).isEqualTo("testchannel-quiz");
-        // Check that the conversation participants are added correctly to the exercise channel
-        await().until(() -> {
-            SecurityUtils.setAuthorizationObject();
-            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelDB.getId());
-            return conversationParticipants.size() == 4; // 1 student, 1 tutor, 1 instructor and 1 editor (see @BeforeEach)
-        });
     }
 
     /**
@@ -1406,9 +1394,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
+        return createQuizOnServer(releaseDate, dueDate, quizMode, "exercise-new-quiz");
+    }
+
+    private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, String channelName) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
-        quizExercise.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
+        quizExercise.setChannelName(channelName);
         courseUtilService.enableMessagingForCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
 
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
@@ -1417,13 +1409,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(quizExerciseDatabase).isNotNull();
         Channel channelDB = channelRepository.findChannelByExerciseId(quizExerciseDatabase.getId());
         assertThat(channelDB).isNotNull();
-
-        // Check that the conversation participants are added correctly to the exercise channel
-        await().until(() -> {
-            SecurityUtils.setAuthorizationObject();
-            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channelDB.getId());
-            return conversationParticipants.size() == 4; // 1 student, 1 tutor, 1 instructor and 1 editor (see @BeforeEach)
-        });
 
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);

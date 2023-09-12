@@ -1,23 +1,21 @@
 <section class="mb-5">
-    <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle">General Information</span></h1>
-    <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage">Add some general information about the new exercise</span></p>
+    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle">General Information</h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage">Add some general information about the new exercise</p>
 
     <div class="form-group">
         <div>
-            <label class="label-narrow" jhiTranslate="artemisApp.exercise.title">Title</label>
+            <label jhiTranslate="artemisApp.exercise.title">Title</label>
             <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
         </div>
-        <jhi-title-channel-name
-            [(title)]="programmingExercise.title"
-            [(channelName)]="programmingExercise.channelName"
-            channelNamePrefix="exercise-"
+        <jhi-exercise-title-channel-name
+            [exercise]="programmingExercise"
+            [course]="programmingExercise.course"
             [minTitleLength]="3"
-            [pattern]="programmingExerciseCreationConfig.titleNamePattern"
+            [titlePattern]="programmingExerciseCreationConfig.titleNamePattern"
             [hideTitleLabel]="true"
-            [emphasizeLabels]="true"
-            [hideChannelName]="isExamMode || (isEdit && programmingExercise.channelName === undefined)"
-            [initChannelName]="!isEdit"
-        ></jhi-title-channel-name>
+            [isExamMode]="isExamMode"
+            [isImport]="isImport"
+        ></jhi-exercise-title-channel-name>
     </div>
 
     <div class="form-group">
@@ -44,7 +42,7 @@
         </ng-container>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="programmingExercise.shortName && !shortName.invalid">
         <div>
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
             <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
@@ -116,7 +114,6 @@
                     'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate
                 }}</span>
             </ngb-alert>
-            <!--        TODO Check if ngif below is correct-->
             <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="programmingExerciseCreationConfig">
                 <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
             </ngb-alert>

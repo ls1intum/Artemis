@@ -466,7 +466,12 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * Called on initialization
      */
     setBoundInclusivity(): void {
+        const lastStepId = this.gradingScale.gradeSteps.last()?.id;
         this.lowerBoundInclusivity = this.gradingScale.gradeSteps.every((gradeStep) => {
+            if (gradeStep.id === lastStepId) {
+                // ignore the last grade step since its inclusivity gets set differently.
+                return true;
+            }
             return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0;
         });
     }
