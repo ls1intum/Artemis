@@ -123,11 +123,16 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             boolean finished = executorService.awaitTermination(TIMEOUT_IN_HOURS, TimeUnit.HOURS);
             if (!finished) {
                 log.error(ERROR_MESSAGE);
+                if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                    log.error("Failed to cancel all threads. Some threads are still running.");
+                }
                 throw new RuntimeException(ERROR_MESSAGE);
             }
         }
         catch (InterruptedException e) {
             log.error(ERROR_MESSAGE);
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
 
@@ -148,7 +153,6 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             var batchStart = System.currentTimeMillis();
             Pageable pageable = PageRequest.of(batchStartIndex, BATCH_SIZE);
 
-            // TODO: in the unlikely case the buildPlanId is null, we could skip the template participation
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} template programming exercises to migrate in batch", templateParticipationPage.getTotalElements());
             templateParticipationPage.map(templateParticipation -> {
@@ -176,7 +180,6 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 log.info("Migrated template build plan for exercise {} in {}ms", templateParticipation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             });
 
-            // TODO: in the unlikely case the buildPlanId is null, we could skip the solution participation
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} solution programming exercises to migrate in batch", solutionParticipationPage.getTotalElements());
             solutionParticipationPage.map(solutionParticipation -> {

@@ -58,11 +58,11 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
 
     private final GitLabApi gitlab;
 
-    public GitLabJenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab, JenkinsService jenkinsService) {
+    public GitLabJenkinsMigrationService(JenkinsJobService jenkinsJobService, GitLabApi gitlab, JenkinsService jenkinsService, UrlService urlService) {
         this.jenkinsJobService = jenkinsJobService;
-        this.urlService = new UrlService();
         this.gitlab = gitlab;
         this.jenkinsService = jenkinsService;
+        this.urlService = urlService;
     }
 
     @Override

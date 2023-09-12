@@ -29,8 +29,6 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateService;
 
 @Service
-// Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
-// this if any profile is active (OR). We want both (AND)
 @Profile("bamboo")
 public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdateService {
 
@@ -157,6 +155,8 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
         // it iterates over all data-item-ids in the html code and tries to find the required repository information inside
         // please note: while this approach is not ideal, it works reliably, and there is currently no other API to get the repository id which is needed for other calls to Bamboo
         if (data != null) {
+            // Pattern matching the repo id saved in an HTML attribute and the name which is saved in a HTML tag
+            // Example: data-item-id="123" ... "item-title">Assignment</span> with the id 123 and the name Assignment
             Pattern findPattern = Pattern.compile("data-item-id=\"(\\d+)\".*\"item-title\">([^<]+)<", Pattern.DOTALL);
             int endIndex = 0;
             int count = 0;
