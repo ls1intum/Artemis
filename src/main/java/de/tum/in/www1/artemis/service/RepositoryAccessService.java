@@ -147,9 +147,10 @@ public class RepositoryAccessService {
      * Checks if the user has access to the test repository of the given programming exercise.
      * Throws an {@link AccessForbiddenException} otherwise.
      *
-     * @param atLeastEditor if true, the user needs at least editor permissions, otherwise only teaching assistant permissions are required.
-     * @param exercise      the programming exercise the test repository belongs to.
-     * @param user          the user that wants to access the test repository.
+     * @param atLeastEditor  if true, the user needs at least editor permissions, otherwise only teaching assistant permissions are required.
+     * @param exercise       the programming exercise the test repository belongs to.
+     * @param user           the user that wants to access the test repository.
+     * @param repositoryType the type of the repository.
      */
     public void checkAccessTestOrAuxRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user, String repositoryType) {
         if (atLeastEditor) {
