@@ -36,10 +36,9 @@ describe('LearningPathContainerComponent', () => {
     let exercise: Exercise;
     let getExerciseDetailsStub: jest.SpyInstance;
     let historyService: LearningPathStorageService;
-    let storeLectureUnitStub: jest.SpyInstance;
-    let storeExerciseStub: jest.SpyInstance;
-    let hasPreviousStub: jest.SpyInstance;
-    let getPreviousStub: jest.SpyInstance;
+    let getNextRecommendationStub: jest.SpyInstance;
+    let hasPrevRecommendationStub: jest.SpyInstance;
+    let getPrevRecommendationStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -88,10 +87,9 @@ describe('LearningPathContainerComponent', () => {
                 getExerciseDetailsStub = jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
                 historyService = TestBed.inject(LearningPathStorageService);
-                storeLectureUnitStub = jest.spyOn(historyService, 'storeLectureUnit');
-                storeExerciseStub = jest.spyOn(historyService, 'storeExercise');
-                hasPreviousStub = jest.spyOn(historyService, 'hasPrevious');
-                getPreviousStub = jest.spyOn(historyService, 'getPrevious');
+                getNextRecommendationStub = jest.spyOn(historyService, 'getNextRecommendation');
+                hasPrevRecommendationStub = jest.spyOn(historyService, 'hasPrevRecommendation');
+                getPrevRecommendationStub = jest.spyOn(historyService, 'getPrevRecommendation');
 
                 fixture.detectChanges();
             });
@@ -107,39 +105,26 @@ describe('LearningPathContainerComponent', () => {
         expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
     });
 
-    it('should store current lecture unit in history', () => {
+    it('should retrieve next recommended entry', () => {
         comp.learningObjectId = lectureUnit.id!;
         comp.lectureUnit = lectureUnit;
         comp.lectureId = lecture.id;
         comp.lecture = lecture;
         fixture.detectChanges();
         comp.onNextTask();
-        expect(storeLectureUnitStub).toHaveBeenCalledOnce();
-        expect(storeLectureUnitStub).toHaveBeenCalledWith(learningPathId, lecture.id, lectureUnit.id);
-        expect(storeExerciseStub).not.toHaveBeenCalled();
+        expect(getNextRecommendationStub).toHaveBeenCalledExactlyOnceWith(comp.learningPathId, new LectureUnitEntry(lecture.id!, lectureUnit.id!));
     });
 
-    it('should store current exercise in history', () => {
-        comp.learningObjectId = exercise.id!;
-        comp.exercise = exercise;
-        fixture.detectChanges();
-        comp.onNextTask();
-        expect(storeLectureUnitStub).not.toHaveBeenCalled();
-        expect(storeExerciseStub).toHaveBeenCalledOnce();
-        expect(storeExerciseStub).toHaveBeenCalledWith(learningPathId, exercise.id);
-    });
-
-    it('should load no previous task if history is empty', () => {
-        expect(historyService.hasPrevious(learningPathId)).toBeFalsy();
+    it('should not load previous task if no task selected', () => {
         comp.onPrevTask();
-        expect(getPreviousStub).not.toHaveBeenCalled();
+        expect(getPrevRecommendationStub).not.toHaveBeenCalled();
         expect(findWithDetailsStub).not.toHaveBeenCalled();
         expect(getExerciseDetailsStub).not.toHaveBeenCalled();
     });
 
     it('should load previous lecture unit', () => {
-        hasPreviousStub.mockReturnValue(true);
-        getPreviousStub.mockReturnValue(new LectureUnitEntry(lecture.id!, lectureUnit.id!));
+        hasPrevRecommendationStub.mockReturnValue(true);
+        getPrevRecommendationStub.mockReturnValue(new LectureUnitEntry(lecture.id!, lectureUnit.id!));
         comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         fixture.detectChanges();
         comp.onPrevTask();
@@ -148,8 +133,8 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should load previous exercise', () => {
-        hasPreviousStub.mockReturnValue(true);
-        getPreviousStub.mockReturnValue(new ExerciseEntry(exercise.id!));
+        hasPrevRecommendationStub.mockReturnValue(true);
+        getPrevRecommendationStub.mockReturnValue(new ExerciseEntry(exercise.id!));
         fixture.detectChanges();
         comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         comp.onPrevTask();
@@ -195,30 +180,5 @@ describe('LearningPathContainerComponent', () => {
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
         expect(getExerciseDetailsStub).toHaveBeenCalledWith(node.linkedResource);
-    });
-
-    it('should handle store current lecture unit in history on node click', () => {
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
-        comp.learningObjectId = lectureUnit.id!;
-        comp.lectureUnit = lectureUnit;
-        comp.lectureId = lecture.id;
-        comp.lecture = lecture;
-        fixture.detectChanges();
-        const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
-        comp.onNodeClicked(node);
-        expect(storeLectureUnitStub).toHaveBeenCalledExactlyOnceWith(learningPathId, lecture.id, lectureUnit.id!);
-        expect(storeExerciseStub).not.toHaveBeenCalled();
-    });
-
-    it('should handle store current exercise in history on node click', () => {
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
-        comp.learningObjectId = exercise.id!;
-        comp.exercise = exercise;
-        fixture.detectChanges();
-        const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
-        comp.onNodeClicked(node);
-        expect(storeLectureUnitStub).not.toHaveBeenCalled();
-        expect(storeExerciseStub).toHaveBeenCalledOnce();
-        expect(storeExerciseStub).toHaveBeenCalledWith(learningPathId, exercise.id!);
     });
 });

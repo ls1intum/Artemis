@@ -89,11 +89,11 @@ export class LearningPathStorageService {
      * @param learningPathId the id of the learning path
      * @param entry the entry for which the predecessor should be returned
      */
-    getPrevRecommendation(learningPathId: number, entry: StorageEntry): StorageEntry | undefined {
+    getPrevRecommendation(learningPathId: number, entry?: StorageEntry): StorageEntry | undefined {
         if (!this.hasPrevRecommendation(learningPathId, entry)) {
             return undefined;
         }
-        const prevIndex = this.getIndexOf(learningPathId, entry) - 1;
+        const prevIndex = this.getIndexOf(learningPathId, entry!) - 1;
         return this.learningPathRecommendations.get(learningPathId)![prevIndex];
     }
 

@@ -71,7 +71,7 @@ export class LearningPathContainerComponent implements OnInit {
         const entry = this.currentStateToEntry();
         // reset state to avoid invalid states
         this.undefineAll();
-        if (entry && this.learningPathStorageService.hasPrevRecommendation(this.learningPathId, entry)) {
+        if (this.learningPathStorageService.hasPrevRecommendation(this.learningPathId, entry)) {
             this.loadEntry(this.learningPathStorageService.getPrevRecommendation(this.learningPathId, entry));
         }
     }
