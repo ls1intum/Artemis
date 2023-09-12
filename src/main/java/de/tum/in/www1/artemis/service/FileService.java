@@ -64,7 +64,7 @@ public class FileService implements DisposableBean {
      * Extensions must be lower-case without leading dots.
      */
     private static final Set<String> binaryFileExtensions = Set.of("png", "jpg", "jpeg", "heic", "gif", "tiff", "psd", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "pages",
-            "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe");
+            "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar");
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
