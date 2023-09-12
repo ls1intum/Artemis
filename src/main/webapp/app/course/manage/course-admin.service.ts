@@ -51,8 +51,4 @@ export class CourseAdminService {
     delete(courseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
     }
-
-    codeOfConductTemplate(): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
-    }
 }

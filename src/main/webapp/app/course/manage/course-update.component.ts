@@ -27,6 +27,8 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { FileService } from 'app/shared/http/file.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-course-update',
@@ -79,6 +81,7 @@ export class CourseUpdateComponent implements OnInit {
         private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
+        private fileService: FileService,
         private alertService: AlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
@@ -111,15 +114,13 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             } else {
-                this.courseAdminService.codeOfConductTemplate().subscribe({
-                    next: (value: HttpResponse<string>) => {
-                        if (value.body) {
-                            this.course.courseInformationSharingMessagingCodeOfConduct = value.body;
+                this.fileService.getTemplateCodeOfCondcut().subscribe({
+                    next: (res: HttpResponse<string>) => {
+                        if (res.body) {
+                            this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
                         }
                     },
-                    error: (err: any) => {
-                        console.log(err);
-                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
                 });
             }
         });
