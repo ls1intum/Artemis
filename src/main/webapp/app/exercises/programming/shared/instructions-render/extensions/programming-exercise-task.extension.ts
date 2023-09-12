@@ -126,6 +126,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
     private createTasks(problemStatement: string, tasks: RegExpMatchArray[]): string {
         const testsForTask: TaskArray = tasks
+            // check that all groups (full match, name, tests) are present
             .filter((testMatch) => testMatch?.length === 3)
             .map((testMatch: RegExpMatchArray | null) => {
                 const nextIndex = this.taskIndex;
