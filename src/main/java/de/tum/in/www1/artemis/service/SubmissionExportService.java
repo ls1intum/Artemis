@@ -173,15 +173,7 @@ public abstract class SubmissionExportService {
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         // Create directory
-        Path submissionsFolderPath = Path.of(outputDir.toString(), "zippedSubmissions", zipGroupName);
         Path zipFilePath = Path.of(outputDir.toString(), "zippedSubmissions", zipFileName);
-
-        File submissionFolder = submissionsFolderPath.toFile();
-        if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {
-            log.error("Couldn't create dir: {}", submissionFolder);
-            exportErrors.add("Cannot create directory: " + submissionFolder.toPath());
-            return List.of();
-        }
 
         // Create counter for log entry
         MutableInt skippedEntries = new MutableInt();
@@ -197,7 +189,7 @@ public abstract class SubmissionExportService {
             // create file path
             String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
                     + this.getFileEndingForSubmission(latestSubmission);
-            Path submissionFilePath = Path.of(submissionsFolderPath.toString(), submissionFileName);
+            Path submissionFilePath = outputDir.resolve(submissionFileName);
 
             // store file
             try {
@@ -223,7 +215,7 @@ public abstract class SubmissionExportService {
         // zip stores submissions
         if (zipSubmissions) {
             try {
-                zipFileService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
+                zipFileService.createZipFile(zipFilePath, submissionFilePaths);
                 return List.of(zipFilePath);
             }
             finally {

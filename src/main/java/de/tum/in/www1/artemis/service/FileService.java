@@ -1136,6 +1136,7 @@ public class FileService implements DisposableBean {
             outStream.write(stringToWrite);
         }
         catch (IOException e) {
+            e.printStackTrace();
             log.warn("Could not write given string in file {}.", path);
         }
         return path;

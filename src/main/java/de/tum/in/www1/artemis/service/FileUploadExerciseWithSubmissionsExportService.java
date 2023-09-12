@@ -23,10 +23,11 @@ public class FileUploadExerciseWithSubmissionsExportService extends ExerciseExpo
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
     }
 
-    public void exportFileUploadExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
+    public Path exportFileUploadExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
             List<ArchivalReportEntry> reportEntries) throws IOException {
         List<Path> pathsToBeZipped = new ArrayList<>();
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
-        // fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), optionsDTO, false, exportDir, exportErrors, reportEntries);
+        fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), optionsDTO, false, exportDir, exportErrors, reportEntries);
+        return exportDir;
     }
 }

@@ -23,10 +23,11 @@ public class ModelingExerciseWithSubmissionsExportService extends ExerciseExport
         this.modelingSubmissionExportService = modelingSubmissionExportService;
     }
 
-    public void exportModelingExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
+    public Path exportModelingExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
             List<ArchivalReportEntry> reportEntries) throws IOException {
         List<Path> pathsToBeZipped = new ArrayList<>();
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
         modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), optionsDTO, false, exportDir, exportErrors, reportEntries);
+        return exportDir;
     }
 }

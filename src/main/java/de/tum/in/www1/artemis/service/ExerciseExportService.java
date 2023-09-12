@@ -48,13 +48,14 @@ public abstract class ExerciseExportService {
      * @param exportDir       the directory where the content of the export is stored
      * @param pathsToBeZipped the paths that should be included in the zip file
      */
-    protected void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) {
+    protected void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped)
+            throws IOException {
         var problemStatementFileExtension = ".md";
         String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
         String cleanProblemStatementFileName = FileService.sanitizeFilename(problemStatementFileName);
         var problemStatementExportPath = exportDir.resolve(cleanProblemStatementFileName);
         if (exercise.getProblemStatement() != null) {
-            pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
+            Files.writeString(problemStatementExportPath, exercise.getProblemStatement());
             copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped, exportErrors);
         }
         else {
