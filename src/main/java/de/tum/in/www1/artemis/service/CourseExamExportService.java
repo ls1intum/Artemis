@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,27 +41,29 @@ public class CourseExamExportService {
 
     private final ZipFileService zipFileService;
 
+    private final TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService;
+
+    private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;
+
+    private final ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService;
+
     private final FileService fileService;
-
-    private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
-
-    private final TextSubmissionExportService textSubmissionExportService;
-
-    private final ModelingSubmissionExportService modelingSubmissionExportService;
 
     private final ExamRepository examRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
-            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
+            TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService,
+            FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService,
+            ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService,
+            ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
-        this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
-        this.textSubmissionExportService = textSubmissionExportService;
-        this.modelingSubmissionExportService = modelingSubmissionExportService;
+        this.textExerciseWithSubmissionsExportService = textExerciseWithSubmissionsExportService;
+        this.fileUploadExerciseWithSubmissionsExportService = fileUploadExerciseWithSubmissionsExportService;
+        this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
         this.websocketMessagingService = websocketMessagingService;
         this.examRepository = examRepository;
     }
@@ -375,20 +375,18 @@ public class CourseExamExportService {
             var submissionsExportOptions = new SubmissionExportOptionsDTO();
             submissionsExportOptions.setExportAllParticipants(true);
 
-            // The zip file containing student submissions for the other exercise types
-            Optional<File> exportedSubmissionsFileOrEmpty = Optional.empty();
+            var exerciseExportDir = outputDir.resolve(exercise.getSanitizedExerciseTitle());
 
             try {
                 if (exercise instanceof FileUploadExercise) {
-                    exportedSubmissionsFileOrEmpty = fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
+                    fileUploadExerciseWithSubmissionsExportService.exportFileUploadExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir, exportErrors,
                             reportData);
                 }
                 else if (exercise instanceof TextExercise) {
-                    exportedSubmissionsFileOrEmpty = textSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
-                            reportData);
+                    textExerciseWithSubmissionsExportService.exportTextExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir, exportErrors, reportData);
                 }
                 else if (exercise instanceof ModelingExercise) {
-                    exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
+                    modelingExerciseWithSubmissionsExportService.exportModelingExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir, exportErrors,
                             reportData);
                 }
                 else if (exercise instanceof QuizExercise) {
@@ -406,21 +404,21 @@ public class CourseExamExportService {
 
             // Exported submissions are stored somewhere else, so we move the generated zip file into the
             // outputDir (directory where the files needed for the course archive are stored).
-            if (exportedSubmissionsFileOrEmpty.isPresent()) {
-                var exportedSubmissionsFile = exportedSubmissionsFileOrEmpty.get();
-                try {
-                    Path newExportedSubmissionsFilePath = Path.of(outputDir.toString(), exportedSubmissionsFile.getName());
-                    Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
-
-                    exportedExercises.add(newExportedSubmissionsFilePath);
-
-                    // Delete the directory where the zip was located before it was moved
-                    FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
-                }
-                catch (IOException e) {
-                    logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors, e);
-                }
-            }
+            // if (exportedSubmissionsFileOrEmpty.isPresent()) {
+            // var exportedSubmissionsFile = exportedSubmissionsFileOrEmpty.get();
+            // try {
+            // Path newExportedSubmissionsFilePath = Path.of(outputDir.toString(), exportedSubmissionsFile.getName());
+            // Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
+            //
+            // exportedExercises.add(newExportedSubmissionsFilePath);
+            //
+            // // Delete the directory where the zip was located before it was moved
+            // FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
+            // }
+            // catch (IOException e) {
+            // logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors, e);
+            // }
+            // }
         }
         return exportedExercises.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
     }
