@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
@@ -18,6 +18,9 @@ import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/rout
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
@@ -43,6 +46,8 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationHeaderComponent),
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockPipe(HtmlForMarkdownPipe),
                 ],
                 providers: [
                     MockProvider(AlertService),
