@@ -123,6 +123,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseCodeOfConductTemplate() throws Exception {
+        var template = request.get("/api/files/templates/code-of-conduct", HttpStatus.OK, String.class);
+        assertThat(template).startsWith("# Template");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDragAndDropBackgroundFile() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);

@@ -305,6 +305,21 @@ public class FileResource {
     }
 
     /**
+     * GET /files/course/code-of-conduct/template : Get the Code of Conduct template
+     *
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/templates/code-of-conduct")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<byte[]> getCourseCodeOfConduct() throws IOException {
+        var templatePath = Path.of("templates", "codeofconduct", "README.md");
+        log.debug("REST request to get template : {}", templatePath);
+        var resource = resourceLoaderService.getResource(templatePath);
+        var path = resource.getFile().getPath();
+        return responseEntityForFilePath(path);
+    }
+
+    /**
      * GET /files/exam-user/signatures/:examUserId/:filename : Get the exam user signature
      *
      * @param examUserId ID of the exam user, the image belongs to
