@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20230808_203400;
-
 /**
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
  */
@@ -28,7 +26,7 @@ public class MigrationRegistry {
         // Here we define the order of the ChangeEntries
         this.migrationService = migrationService;
 
-        this.migrationEntryMap.put(1, MigrationEntry20230808_203400.class);
+        // this.migrationEntryMap.put(1, MigrationEntry20230808_203400.class);
     }
 
     /**
