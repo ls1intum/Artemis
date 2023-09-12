@@ -207,7 +207,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
-        fileService.replaceVariablesInFileRecursive(Path.of(pomXml.getParent()), replacements);
+        fileService.replaceVariablesInFileRecursive(pomXml.getParentFile().toPath(), replacements);
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).doesNotContain("${exerciseName}").contains("SomeCoolExerciseName");
@@ -224,7 +224,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
-        fileService.replaceVariablesInFileRecursive(Path.of(pomXml.getParent()), replacements, List.of("pom.xml"));
+        fileService.replaceVariablesInFileRecursive(pomXml.getParentFile().toPath(), replacements, List.of("pom.xml"));
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");

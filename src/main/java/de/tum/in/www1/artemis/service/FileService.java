@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -54,6 +54,13 @@ public class FileService implements DisposableBean {
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    /**
+     * A list of common binary file extensions.
+     * Extensions must be lower-case without leading dots.
+     */
+    private static final Set<String> BINARY_FILE_EXTENSIONS = Set.of("png", "jpg", "jpeg", "heic", "gif", "tiff", "psd", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "pages", "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar");
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
@@ -331,7 +338,7 @@ public class FileService implements DisposableBean {
             filePath = resource.getFile().toPath();
         }
         else {
-            final String url = URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8);
+            final String url = URLDecoder.decode(resource.getURL().toString(), UTF_8);
             filePath = Path.of(url);
         }
 
@@ -438,7 +445,7 @@ public class FileService implements DisposableBean {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
-        try (var reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, StandardCharsets.UTF_8))) {
+        try (var reader = new BufferedReader(new FileReader(file, UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, UTF_8))) {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
@@ -562,9 +569,8 @@ public class FileService implements DisposableBean {
      *
      * @param startPath    the path where the start directory is located
      * @param replacements the replacements that should be applied
-     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements) throws IOException {
+    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements) {
         replaceVariablesInFileRecursive(startPath, replacements, Collections.emptyList());
     }
 
@@ -576,9 +582,8 @@ public class FileService implements DisposableBean {
      * @param startPath     the path where the start directory is located
      * @param replacements  the replacements that should be applied
      * @param filesToIgnore the name of files for which no replacement should be done
-     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) throws IOException {
+    public void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) {
         log.debug("Replacing {} in files in directory {}", replacements, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
@@ -614,18 +619,39 @@ public class FileService implements DisposableBean {
      *
      * @param filePath     the path where the file is located
      * @param replacements the replacements that should be applied
-     * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFile(Path filePath, Map<String, String> replacements) throws IOException {
+    public void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
         log.debug("Replacing {} in file {}", replacements, filePath);
-        // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
-        Charset charset = StandardCharsets.UTF_8;
-
-        String fileContent = Files.readString(filePath, charset);
-        for (Map.Entry<String, String> replacement : replacements.entrySet()) {
-            fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
+        if (isBinaryFile(filePath)) {
+            // do not try to read binary files with 'readString'
+            return;
         }
-        FileUtils.writeStringToFile(filePath.toFile(), fileContent, charset);
+        try {
+            // Note: Java does not offer a good way to check if a file is binary or not. If the basic check above fails (e.g. due to a custom binary file from an instructor),
+            // but the file is still binary, we try to read it. In case the method readString fails, we only log this below, but continue, because the exception should NOT
+            // interrupt the ongoing process
+            String fileContent = Files.readString(filePath, UTF_8);
+            for (Map.Entry<String, String> replacement : replacements.entrySet()) {
+                fileContent = fileContent.replace(replacement.getKey(), replacement.getValue());
+            }
+            FileUtils.writeStringToFile(filePath.toFile(), fileContent, UTF_8);
+        }
+        catch (IOException ex) {
+            log.warn("Exception {} occurred when trying to replace {} in (binary) file {}", ex.getMessage(), replacements, filePath);
+            // continue
+        }
+    }
+
+    /**
+     * very simple and non-exhaustive check for the most common binary files such as images
+     * Unfortunately, Java cannot determine this correctly, so we need to provide typical file endings here
+     *
+     * @param filePath the path of the file
+     * @return whether the simple check for file endings determines the underlying file to be binary (true) or not (false)
+     */
+    private static boolean isBinaryFile(Path filePath) {
+        final String fileExtension = FilenameUtils.getExtension(filePath.getFileName().toString());
+        return BINARY_FILE_EXTENSIONS.stream().anyMatch(fileExtension::equalsIgnoreCase);
     }
 
     /**
@@ -663,12 +689,14 @@ public class FileService implements DisposableBean {
      */
     public void normalizeLineEndings(Path filePath) throws IOException {
         log.debug("Normalizing line endings in file {}", filePath);
+        if (isBinaryFile(filePath)) {
+            // do not try to read binary files with 'readString'
+            return;
+        }
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
-        Charset charset = StandardCharsets.UTF_8;
-
-        String fileContent = Files.readString(filePath, charset);
+        String fileContent = Files.readString(filePath, UTF_8);
         fileContent = fileContent.replaceAll("\\r\\n?", "\n");
-        FileUtils.writeStringToFile(filePath.toFile(), fileContent, charset);
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, UTF_8);
     }
 
     /**
@@ -692,7 +720,7 @@ public class FileService implements DisposableBean {
         Collection<File> files = FileUtils.listFiles(directory, FileFilterUtils.trueFileFilter(), directoryFileFilter);
 
         for (File file : files) {
-            convertToUTF8(file.toPath().toAbsolutePath());
+            convertToUTF8(file.toPath());
         }
     }
 
@@ -712,7 +740,7 @@ public class FileService implements DisposableBean {
 
         String fileContent = new String(contentArray, charset);
 
-        FileUtils.writeStringToFile(filePath.toFile(), fileContent, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, UTF_8);
     }
 
     /**
@@ -823,7 +851,7 @@ public class FileService implements DisposableBean {
      * @return Path to the written file
      */
     public Path writeStringToFile(String stringToWrite, Path path) {
-        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), StandardCharsets.UTF_8)) {
+        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), UTF_8)) {
             outStream.write(stringToWrite);
         }
         catch (IOException e) {

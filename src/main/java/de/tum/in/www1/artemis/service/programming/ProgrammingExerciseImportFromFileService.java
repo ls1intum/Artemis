@@ -78,6 +78,7 @@ public class ProgrammingExerciseImportFromFileService {
             checkRepositoriesExist(importExerciseDir);
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
+            // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
             if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
@@ -130,7 +131,7 @@ public class ProgrammingExerciseImportFromFileService {
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);
     }
 
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) throws IOException {
+    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) {
         for (Repository repository : repositories) {
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
         }
