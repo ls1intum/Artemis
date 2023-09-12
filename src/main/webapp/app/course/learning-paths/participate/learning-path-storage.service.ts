@@ -2,72 +2,11 @@ import { Injectable } from '@angular/core';
 import { NgxLearningPathDTO, NodeType } from 'app/entities/competency/learning-path.model';
 
 /**
- * This service is used to store the histories and recommendations of learning path participation for the currently logged-in user.
+ * This service is used to store the recommendations of learning path participation for the currently logged-in user.
  */
 @Injectable({ providedIn: 'root' })
 export class LearningPathStorageService {
-    private readonly learningPathHistories: Map<number, StorageEntry[]> = new Map();
     private readonly learningPathRecommendations: Map<number, StorageEntry[]> = new Map();
-
-    /**
-     * Stores the lecture unit in the learning path's history.
-     *
-     * @param learningPathId the id of the learning path to which the new entry should be added
-     * @param lectureId the id of the lecture, the lecture unit belongs to
-     * @param lectureUnitId the id of the lecture unit
-     * @return the entry that is stored
-     */
-    storeLectureUnit(learningPathId: number, lectureId: number, lectureUnitId: number) {
-        const entry = new LectureUnitEntry(lectureId, lectureUnitId);
-        this.store(learningPathId, entry);
-        return entry;
-    }
-
-    /**
-     * Stores the exercise in the learning path's history.
-     *
-     * @param learningPathId the id of the learning path to which the new entry should be added
-     * @param exerciseId the id of the exercise
-     * @return the entry that is stored
-     */
-    storeExercise(learningPathId: number, exerciseId: number) {
-        const entry = new ExerciseEntry(exerciseId);
-        this.store(learningPathId, entry);
-        return entry;
-    }
-
-    private store(learningPathId: number, entry: StorageEntry) {
-        if (!this.learningPathHistories.has(learningPathId)) {
-            this.learningPathHistories.set(learningPathId, []);
-        }
-        // check if previous entry equals new entry
-        const history = this.learningPathHistories.get(learningPathId)!;
-        if (this.hasPrevious(learningPathId) && entry.equals(history[history.length - 1])) {
-            return;
-        }
-        this.learningPathHistories.get(learningPathId)!.push(entry);
-    }
-
-    /**
-     * Returns if the learning path's history stores at least one entry.
-     *
-     * @param learningPathId the id of the learning path for which the history should be checked
-     */
-    hasPrevious(learningPathId: number): boolean {
-        return !!this.learningPathHistories.get(learningPathId)?.length;
-    }
-
-    /**
-     * Gets and removes the latest stored entry from the learning path's history.
-     *
-     * @param learningPathId
-     */
-    getPrevious(learningPathId: number) {
-        if (!this.hasPrevious(learningPathId)) {
-            return undefined;
-        }
-        return this.learningPathHistories.get(learningPathId)!.pop();
-    }
 
     /**
      * Simplifies and stores the recommended order of learning objects for the given learning path
@@ -95,78 +34,80 @@ export class LearningPathStorageService {
     }
 
     /**
-     * Returns if there is a recommendation left that has not been interacted with yet.
+     * Gets if the given learning object has a successor.
      *
      * @param learningPathId the id of the learning path
+     * @param entry the entry for which the successor should be checked
      */
-    hasRecommendation(learningPathId: number): boolean {
-        return !!this.learningPathRecommendations.get(learningPathId)?.find((entry) => !entry.interacted);
-    }
-
-    /**
-     * Sets the given entry interaction.
-     *
-     * @param learningPathId the id of the learning path the entry belongs to
-     * @param entry the entry that should be set to interacted with
-     * @param interacted the value that should be set
-     */
-    setInteraction(learningPathId: number, entry: StorageEntry, interacted: boolean) {
+    hasNextRecommendation(learningPathId: number, entry?: StorageEntry): boolean {
         if (!this.learningPathRecommendations.has(learningPathId)) {
-            return;
+            return false;
         }
-        const storedEntry = this.getStoredRecommendationEntry(learningPathId, entry);
-        if (storedEntry) {
-            storedEntry.interacted = interacted;
+        if (!entry) {
+            return !!this.learningPathRecommendations.get(learningPathId)?.length;
         }
+        const index = this.getIndexOf(learningPathId, entry);
+        return 0 <= index && index + 1 < this.learningPathRecommendations.get(learningPathId)!.length;
     }
 
     /**
      * Gets the next recommended entry for a learning object.
      * <p>
-     * If the given entry has no successor, the first entry that has not been interacted with will be returned.
+     * First entry, if given entry undefined.
+     * Undefined if the current entry has no successor.
      * @param learningPathId the id of the learning path
      * @param entry the entry for which the successor should be returned
      */
     getNextRecommendation(learningPathId: number, entry?: StorageEntry): StorageEntry | undefined {
-        if (!this.learningPathRecommendations.has(learningPathId)) {
+        if (!this.hasNextRecommendation(learningPathId, entry)) {
             return undefined;
         }
-        // if no entry given, retrieve first not interacted entry
         if (!entry) {
-            const nextEntry = this.learningPathRecommendations.get(learningPathId)!.find((e) => !e.interacted);
-            if (nextEntry) {
-                nextEntry.interacted = true;
-            }
-            return nextEntry;
+            return this.learningPathRecommendations.get(learningPathId)![0];
         }
-        const storedEntry = this.getStoredRecommendationEntry(learningPathId, entry);
-        const nextIndex = this.learningPathRecommendations.get(learningPathId)!.indexOf(storedEntry!) + 1;
-        const nextEntry = this.learningPathRecommendations.get(learningPathId)!.find((e, idx) => idx >= nextIndex && !e.interacted);
-        if (nextEntry) {
-            // if there is a successor, update interaction and return
-            nextEntry.interacted = true;
-            return nextEntry;
-        } else {
-            // if there is no successor, retrieve first not interacted entry
-            return this.getNextRecommendation(learningPathId);
-        }
+        const nextIndex = this.getIndexOf(learningPathId, entry) + 1;
+        return this.learningPathRecommendations.get(learningPathId)![nextIndex];
     }
 
-    private getStoredRecommendationEntry(learningPathId: number, entry: StorageEntry) {
-        return this.learningPathRecommendations.get(learningPathId)!.find((e) => {
-            if (e instanceof LectureUnitEntry && entry instanceof LectureUnitEntry) {
-                return e.lectureId === entry.lectureId && e.lectureUnitId === entry.lectureUnitId;
-            } else if (e instanceof ExerciseEntry && entry instanceof ExerciseEntry) {
-                return e.exerciseId === entry.exerciseId;
-            }
+    /**
+     * Gets if the given learning object has a predecessor.
+     *
+     * @param learningPathId the id of the learning path
+     * @param entry the entry for which the predecessor should be checked
+     */
+    hasPrevRecommendation(learningPathId: number, entry?: StorageEntry): boolean {
+        if (!this.learningPathRecommendations.has(learningPathId) || !entry) {
             return false;
+        }
+        return 0 < this.getIndexOf(learningPathId, entry);
+    }
+
+    /**
+     * Gets the prior recommended entry for a learning object.
+     * <p>
+     * Undefined if the current entry has no predecessor.
+     * @param learningPathId the id of the learning path
+     * @param entry the entry for which the predecessor should be returned
+     */
+    getPrevRecommendation(learningPathId: number, entry: StorageEntry): StorageEntry | undefined {
+        if (!this.hasPrevRecommendation(learningPathId, entry)) {
+            return undefined;
+        }
+        const prevIndex = this.getIndexOf(learningPathId, entry) - 1;
+        return this.learningPathRecommendations.get(learningPathId)![prevIndex];
+    }
+
+    private getIndexOf(learningPathId: number, entry: StorageEntry) {
+        if (!this.learningPathRecommendations.has(learningPathId)) {
+            return -1;
+        }
+        return this.learningPathRecommendations.get(learningPathId)!.findIndex((e: StorageEntry) => {
+            return entry.equals(e);
         });
     }
 }
 
 export abstract class StorageEntry {
-    interacted = false;
-
     abstract equals(other: StorageEntry): boolean;
 }
 
