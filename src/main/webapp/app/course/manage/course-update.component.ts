@@ -110,6 +110,17 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintTextLimit! > 0 &&
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+            } else {
+                this.courseAdminService.codeOfConductTemplate().subscribe({
+                    next: (value: HttpResponse<string>) => {
+                        if (value.body) {
+                            this.course.courseInformationSharingMessagingCodeOfConduct = value.body;
+                        }
+                    },
+                    error: (err: any) => {
+                        console.log(err);
+                    },
+                });
             }
         });
 
