@@ -10,7 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
@@ -47,10 +54,16 @@ import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -90,7 +103,9 @@ public class ProgrammingExerciseExportService {
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
-    private static final String EMBEDDED_FILE_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
+    private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
+
+    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"/api/files/markdown/.*?\" .*?>";
 
     private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
 
@@ -170,13 +185,63 @@ public class ProgrammingExerciseExportService {
      */
 
     private void copyEmbeddedFiles(ProgrammingExercise exercise, Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors) {
-        Set<String> embeddedFiles = new HashSet<>();
+        Set<String> embeddedFilesWithMarkdownSyntax = new HashSet<>();
+        Set<String> embeddedFilesWithHtmlSyntax = new HashSet<>();
 
-        Matcher matcher = Pattern.compile(EMBEDDED_FILE_REGEX).matcher(exercise.getProblemStatement());
+        Matcher matcherForMarkdownSyntax = Pattern.compile(EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX).matcher(exercise.getProblemStatement());
+        Matcher matcherForHtmlSyntax = Pattern.compile(EMBEDDED_FILE_HTML_SYNTAX_REGEX).matcher(exercise.getProblemStatement());
+        checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithMarkdownSyntax, matcherForMarkdownSyntax);
+        Path embeddedFilesDir = checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithHtmlSyntax,
+                matcherForHtmlSyntax);
+        // if the returned path is null the directory could not be created
+        if (embeddedFilesDir == null) {
+            return;
+        }
+        copyFilesEmbeddedWithMarkdownSyntax(exercise, exportErrors, embeddedFilesWithMarkdownSyntax, embeddedFilesDir);
+        copyFilesEmbeddedWithHtmlSyntax(exercise, exportErrors, embeddedFilesWithHtmlSyntax, embeddedFilesDir);
+
+    }
+
+    private void copyFilesEmbeddedWithHtmlSyntax(ProgrammingExercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithHtmlSyntax, Path embeddedFilesDir) {
+        for (String embeddedFile : embeddedFilesWithHtmlSyntax) {
+            int indexOfFirstQuotationMark = embeddedFile.indexOf('"');
+            String filePath = embeddedFile.substring(embeddedFile.indexOf("src=") + 5, embeddedFile.indexOf('"', indexOfFirstQuotationMark + 1));
+            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
+        }
+    }
+
+    private void constructFilenameAndCopyFile(ProgrammingExercise exercise, List<String> exportErrors, Path embeddedFilesDir, String filePath) {
+        String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
+        Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
+        Path imageExportPath = embeddedFilesDir.resolve(fileName);
+        // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
+        if (!Files.exists(imageExportPath)) {
+            try {
+                Files.copy(imageFilePath, imageExportPath);
+            }
+            catch (IOException e) {
+                exportErrors.add("Failed to copy embedded files: " + e.getMessage());
+                log.warn("Could not copy embedded file {} for exercise with id {}", fileName, exercise.getId());
+            }
+        }
+    }
+
+    private void copyFilesEmbeddedWithMarkdownSyntax(ProgrammingExercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithMarkdownSyntax, Path embeddedFilesDir) {
+        for (String embeddedFile : embeddedFilesWithMarkdownSyntax) {
+            // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
+            String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
+            String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
+            String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
+            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, fileName);
+        }
+    }
+
+    private Path checkForMatchesInProblemStatementAndCreateDirectoryForFiles(Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors, Set<String> embeddedFiles,
+            Matcher matcher) {
         while (matcher.find()) {
             embeddedFiles.add(matcher.group());
         }
-        log.debug("Found embedded files:{} ", embeddedFiles);
+        log.debug("Found embedded files: {} ", embeddedFiles);
         Path embeddedFilesDir = outputDir.resolve("files");
         if (!embeddedFiles.isEmpty()) {
             if (!Files.exists(embeddedFilesDir)) {
@@ -186,30 +251,12 @@ public class ProgrammingExerciseExportService {
                 catch (IOException e) {
                     exportErrors.add("Could not create directory for embedded files: " + e.getMessage());
                     log.warn("Could not create directory for embedded files. Won't include embedded files: " + e.getMessage());
-                    return;
+                    return null;
                 }
             }
             pathsToBeZipped.add(embeddedFilesDir);
         }
-        for (String embeddedFile : embeddedFiles) {
-            // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
-            String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
-            String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
-            String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
-            Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
-            Path imageExportPath = embeddedFilesDir.resolve(fileName);
-            // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
-            if (!Files.exists(imageExportPath)) {
-                try {
-                    Files.copy(imageFilePath, imageExportPath);
-                }
-                catch (IOException e) {
-                    exportErrors.add("Failed to copy embedded files: " + e.getMessage());
-                    log.warn("Could not copy embedded file {} for exercise with id {}", fileName, exercise.getId());
-                }
-            }
-        }
-
+        return embeddedFilesDir;
     }
 
     /**
