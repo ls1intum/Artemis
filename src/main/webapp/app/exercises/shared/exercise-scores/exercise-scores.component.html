@@ -210,7 +210,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <jhi-result *ngIf="value.results?.[0]" [exercise]="exercise" [result]="value.results?.[0]" [participation]="value"></jhi-result>
+                        <jhi-updating-result [exercise]="exercise" [participation]="value" [showUngradedResults]="true"></jhi-updating-result>
                     </ng-template>
                 </ngx-datatable-column>
 
