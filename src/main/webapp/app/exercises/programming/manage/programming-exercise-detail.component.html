@@ -380,11 +380,11 @@
                                 </div>
                             </dt>
                             <dd>
-                                <div *ngif="!localVCEnabled">
+                                <ng-container *ngif="!localVCEnabled">
                                     <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
                                         auxiliaryRepository.repositoryUrl
                                     }}</a>
-                                </div>
+                                </ng-container>
                             </dd>
                         </li>
                     </ul>

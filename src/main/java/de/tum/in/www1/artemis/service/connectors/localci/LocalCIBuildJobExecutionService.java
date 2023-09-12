@@ -17,7 +17,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
-import org.hibernate.LazyInitializationException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,18 +112,15 @@ public class LocalCIBuildJobExecutionService {
 
         List<AuxiliaryRepository> auxiliaryRepositories;
 
-        auxiliaryRepositories = participation.getProgrammingExercise().getAuxiliaryRepositories();
-
-        try {
-            // If the auxiliary repositories are not initialized, we need to fetch them from the database.
-            log.info("Auxiliary repositories: {}", auxiliaryRepositories.size());
+        // If the auxiliary repositories are not initialized, we need to fetch them from the database.
+        if (Hibernate.isInitialized(participation.getProgrammingExercise().getAuxiliaryRepositories())) {
+            auxiliaryRepositories = participation.getProgrammingExercise().getAuxiliaryRepositories();
         }
-        catch (LazyInitializationException ex) {
+        else {
             auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
         }
 
         // Prepare script
-
         Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise(), auxiliaryRepositories);
 
         // Retrieve the paths to the repositories that the build job needs.
@@ -132,7 +129,7 @@ public class LocalCIBuildJobExecutionService {
         LocalVCRepositoryUrl assignmentRepositoryUrl;
         LocalVCRepositoryUrl testsRepositoryUrl;
         LocalVCRepositoryUrl[] auxiliaryRepositoriesUrls;
-
+        Path[] auxiliaryRepositoriesPaths;
         String[] auxiliaryRepositoryNames;
 
         try {
@@ -141,15 +138,17 @@ public class LocalCIBuildJobExecutionService {
 
             if (!auxiliaryRepositories.isEmpty()) {
                 auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[auxiliaryRepositories.size()];
+                auxiliaryRepositoriesPaths = new Path[auxiliaryRepositories.size()];
                 auxiliaryRepositoryNames = new String[auxiliaryRepositories.size()];
+
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
                     auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
+                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
                     auxiliaryRepositoryNames[i] = auxiliaryRepositories.get(i).getName();
                 }
-
             }
             else {
-                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[0];
+                auxiliaryRepositoriesPaths = new Path[0];
                 auxiliaryRepositoryNames = new String[0];
             }
         }
@@ -159,18 +158,6 @@ public class LocalCIBuildJobExecutionService {
 
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-
-        Path[] auxiliaryRepositoriesPaths;
-
-        if (auxiliaryRepositoriesUrls.length > 0) {
-            auxiliaryRepositoriesPaths = new Path[auxiliaryRepositoriesUrls.length];
-            for (int i = 0; i < auxiliaryRepositoriesUrls.length; i++) {
-                auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-            }
-        }
-        else {
-            auxiliaryRepositoriesPaths = new Path[0];
-        }
 
         String branch;
         try {

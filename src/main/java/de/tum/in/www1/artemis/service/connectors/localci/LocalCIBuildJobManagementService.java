@@ -73,7 +73,6 @@ public class LocalCIBuildJobManagementService {
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
     public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
-
         ProjectType projectType = participation.getProgrammingExercise().getProjectType();
         if (projectType == null || !projectType.isGradle()) {
             throw new LocalCIException("Project type must be Gradle.");

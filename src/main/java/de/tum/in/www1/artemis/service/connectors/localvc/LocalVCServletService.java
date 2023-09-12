@@ -236,28 +236,17 @@ public class LocalVCServletService {
     private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
             throws LocalVCAuthException, LocalVCForbiddenException {
 
-        boolean isAuxiliaryRepository = auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
+        if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
+            // Test and auxiliary repositories are only accessible by instructors and higher.
+            try {
+                repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
+            }
+            catch (AccessForbiddenException e) {
+                throw new LocalVCAuthException(e);
+            }
+            return;
+        }
 
-        if (isAuxiliaryRepository) {
-            // Auxiliary repositories are only accessible by instructors and higher.
-            try {
-                repositoryAccessService.checkAccessAuxiliaryRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user);
-            }
-            catch (AccessForbiddenException e) {
-                throw new LocalVCAuthException(e);
-            }
-            return;
-        }
-        else if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            try {
-                // Only editors and higher are able to push. Teaching assistants can only fetch.
-                repositoryAccessService.checkAccessTestRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user);
-            }
-            catch (AccessForbiddenException e) {
-                throw new LocalVCAuthException(e);
-            }
-            return;
-        }
         ProgrammingExerciseParticipation participation;
         try {
             participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);

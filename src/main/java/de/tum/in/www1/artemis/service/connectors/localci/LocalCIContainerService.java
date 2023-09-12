@@ -213,7 +213,6 @@ public class LocalCIContainerService {
      * @return the path to the build script file
      */
     public Path createBuildScript(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> auxiliaryRepositories) {
-
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
 
