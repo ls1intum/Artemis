@@ -60,6 +60,13 @@ public class FileService implements DisposableBean {
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     /**
+     * A list of common binary file extensions.
+     * Extensions must be lower-case without leading dots.
+     */
+    private static final Set<String> binaryFileExtensions = Set.of("png", "jpg", "jpeg", "heic", "gif", "tiff", "psd", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "pages",
+            "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe");
+
+    /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
      * Extensions must be lower-case without leading dots.
      * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
@@ -942,9 +949,8 @@ public class FileService implements DisposableBean {
      * @return whether the simple check for file endings determines the underlying file to be binary (true) or not (false)
      */
     private static boolean isBinaryFile(Path filePath) {
-        // TODO: extend the list of potential binary files
-        var fileName = filePath.toString().toLowerCase();
-        return fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".heic");
+        final String fileExtension = FilenameUtils.getExtension(filePath.getFileName().toString());
+        return binaryFileExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase);
     }
 
     /**
