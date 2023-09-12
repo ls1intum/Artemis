@@ -67,6 +67,11 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     @Override
     public void execute() {
+
+    }
+
+    // just do be absolutely sure that nothing happens and the migration is not executed
+    public void dont_execute() {
         try {
             ciMigrationService.orElseThrow().checkPrerequisites();
         }
