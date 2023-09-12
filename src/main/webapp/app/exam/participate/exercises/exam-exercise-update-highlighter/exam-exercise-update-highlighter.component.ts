@@ -118,7 +118,6 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     private addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams: string[]) {
         removedDiagrams.forEach((text) => {
             this.updatedProblemStatementWithHighlightedDifferences = this.updatedProblemStatementWithHighlightedDifferences.replace('@startuml', '@startuml\n' + text + '\n');
-            this.updatedProblemStatementWithHighlightedDifferences = this.updatedProblemStatementWithHighlightedDifferences.replace('@enduml', '@enduml');
         });
     }
 

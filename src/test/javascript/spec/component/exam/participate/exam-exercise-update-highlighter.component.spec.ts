@@ -17,14 +17,8 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     };
 
     const oldProblemStatement = 'problem statement with errors';
-    const oldProblemStatementWithPlantUml =
-        'problem statement with errors @startuml class BubbleSort {<color:testsColor(testBubbleSort())>+performSort(List<Date>)</color>' + '@enduml';
     const updatedProblemStatement = 'new updated ProblemStatement';
-    const updatedProblemStatementWithPlantUml =
-        'new updated ProblemStatement @startuml class BubbleSort {<color:testsColor(testBubbleSort())>+performSortUpdate(List<Date>)</color>' + '@enduml';
     const textExerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
-    const programmingExerciseDummy = { id: 42, problemStatement: oldProblemStatementWithPlantUml, type: ExerciseType.PROGRAMMING } as Exercise;
-
     beforeAll(() => {
         return TestBed.configureTestingModule({
             declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
@@ -71,15 +65,38 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         expect(problemStatementAfterClick).not.toEqual(problemStatementBeforeClick);
     });
 
-    it('should ignore plantuml diagrams in programming exercise problem statements for diff calculation', () => {
-        component.exercise = programmingExerciseDummy;
-        const exerciseId = component.exercise.id!;
-        const update = { exerciseId, problemStatement: updatedProblemStatementWithPlantUml };
+    describe('ExamExerciseUpdateHighlighterComponent for programming exercises', () => {
+        const oldProblemStatementWithPlantUml =
+            'problem statement with errors @startuml class BubbleSort {<color:testsColor(testBubbleSort())>+performSort(List<Date>)</color>' + '@enduml';
+        const programmingExerciseDummy = { id: 42, problemStatement: oldProblemStatementWithPlantUml, type: ExerciseType.PROGRAMMING } as Exercise;
+        const updatedProblemStatementWithPlantUml =
+            'new updated ProblemStatement @startuml class BubbleSort {<color:testsColor(testBubbleSort())>+performSortUpdate(List<Date>)</color>' + '@enduml';
+        beforeAll(() => {
+            return TestBed.configureTestingModule({
+                declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
+                providers: [
+                    { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
+                    { provide: ThemeService, useValue: { getCurrentThemeObservable: () => of(Theme.LIGHT) } },
+                ],
+            })
+                .compileComponents()
+                .then(() => {
+                    fixture = TestBed.createComponent(ExamExerciseUpdateHighlighterComponent);
+                    component = fixture.componentInstance;
 
-        fixture.detectChanges();
-        examExerciseIdAndProblemStatementSourceMock.next(update);
+                    component.exercise = programmingExerciseDummy;
+                    const exerciseId = component.exercise.id!;
+                    const update = { exerciseId, problemStatement: updatedProblemStatementWithPlantUml };
 
-        const result = component.exercise.problemStatement;
-        expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+                    fixture.detectChanges();
+                    examExerciseIdAndProblemStatementSourceMock.next(update);
+                });
+        });
+
+        it('should ignore plantuml diagrams in programming exercise problem statements for diff calculation', () => {
+            const result = component.exercise.problemStatement;
+            expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+            fixture.detectChanges();
+        });
     });
 });
