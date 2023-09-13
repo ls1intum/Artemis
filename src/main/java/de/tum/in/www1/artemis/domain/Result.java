@@ -459,7 +459,8 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Checks the initialization status of the assessment note before returning.
+     * Checks the initialization status of the assessment note before returning. Only a single element is returned instead of the list,
+     * because it is modelled that way on the client-side. Jackson therefore needs a single object for the (de-)serialization.
      *
      * @return Null, if the field is uninitialized or the encapsulating arraylist is empty, or else, the assessment note.
      */
