@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -11,8 +11,8 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
     templateUrl: './exam-edit-working-time-dialog.component.html',
 })
 export class ExamEditWorkingTimeDialogComponent {
-    exam: Exam;
-    examChange?: (exam: Exam) => void; // somehow, event emitter does not work
+    @Input() exam: Exam;
+    @Output() examChange = new EventEmitter<Exam>();
 
     isLoading: boolean;
 
@@ -40,7 +40,7 @@ export class ExamEditWorkingTimeDialogComponent {
         this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.workingTimeSeconds).subscribe({
             next: (res: HttpResponse<Exam>) => {
                 this.isLoading = false;
-                res.body && this.examChange?.(res.body);
+                res.body && this.examChange.emit(res.body);
                 this.clear();
             },
             error: () => {

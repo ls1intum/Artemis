@@ -49,7 +49,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
             animation: true,
         });
         this.modalRef.componentInstance.exam = this.exam;
-        this.modalRef.componentInstance.examChange = (exam: Exam) => this.examChange.emit(exam);
+        this.modalRef.componentInstance.examChange.subscribe((exam: Exam) => this.examChange.emit(exam));
 
         from(this.modalRef.result).subscribe(() => (this.modalRef = null));
     }
