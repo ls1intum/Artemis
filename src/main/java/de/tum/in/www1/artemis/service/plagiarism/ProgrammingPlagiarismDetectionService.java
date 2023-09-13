@@ -366,8 +366,8 @@ class ProgrammingPlagiarismDetectionService {
             return true;
         }
 
-        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
-                repo.getLocalPath(), templateRepo.get().getRemoteRepositoryUrl(), templateRepo.get().getLocalPath());
+        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(programmingExercise.getVcsTemplateRepositoryUrl(), repo.getLocalPath(),
+                templateRepo.get().getRemoteRepositoryUrl(), templateRepo.get().getLocalPath());
         return diffToTemplate >= minimumSize;
     }
 
