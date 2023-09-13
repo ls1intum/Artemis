@@ -81,6 +81,14 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             """)
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
+    /**
+     * Count users that were active within the given date range.
+     * Users are considered as active if they created a submission within the given date range
+     *
+     * @param startDate the minimum submission date
+     * @param endDate   the maximum submission date
+     * @return a list of active users
+     */
     @Query("""
             SELECT COUNT (DISTINCT u.id)
             FROM User u, Submission s, StudentParticipation p
