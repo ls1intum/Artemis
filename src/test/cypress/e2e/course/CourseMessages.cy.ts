@@ -24,6 +24,7 @@ describe('Course messages', () => {
         describe('Create channel', () => {
             it('check for pre-created channels', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseChannelsButton();
                 courseMessages.checkChannelsExists('tech-support');
                 courseMessages.checkChannelsExists('organization');
