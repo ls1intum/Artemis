@@ -1,7 +1,8 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div *ngIf="!isCodeOfConductAccepted">
-        <h3>{{ 'artemisApp.codeOfConduct.title' | artemisTranslate }}</h3>
-        <div [innerHTML]="codeOfConduct | htmlForMarkdown"></div>
+        <div *ngIf="course">
+            <jhi-course-conversations-code-of-conduct [course]="course!"></jhi-course-conversations-code-of-conduct>
+        </div>
         <button class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">{{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}</button>
     </div>
     <div class="row mt-2" *ngIf="isCodeOfConductAccepted && isServiceSetUp && course">
@@ -9,8 +10,9 @@
             <jhi-conversation-selection-sidebar> </jhi-conversation-selection-sidebar>
         </div>
         <div class="col pe-0 flex-grow-1" *ngIf="!activeConversation && isCodeOfConductPresented">
-            <h3>{{ 'artemisApp.codeOfConduct.title' | artemisTranslate }}</h3>
-            <div [innerHTML]="codeOfConduct | htmlForMarkdown"></div>
+            <div *ngIf="course">
+                <jhi-course-conversations-code-of-conduct [course]="course!"></jhi-course-conversations-code-of-conduct>
+            </div>
         </div>
         <div class="col pe-0 flex-grow-1" [ngClass]="{ 'card-border': activeConversation }" style="min-width: 200px">
             <ng-container *ngIf="activeConversation">

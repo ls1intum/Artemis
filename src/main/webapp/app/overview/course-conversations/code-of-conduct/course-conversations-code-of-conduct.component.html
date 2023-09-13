@@ -1,0 +1,9 @@
+<h3>{{ 'artemisApp.codeOfConduct.title' | artemisTranslate }}</h3>
+<div [innerHTML]="codeOfConduct | htmlForMarkdown"></div>
+<ul>
+    <li *ngFor="let user of responsibleContacts">
+        {{ getUserLabel(user) }}
+        (<a href="mailto:{{ user.email }}">{{ user.email }}</a
+        >)
+    </li>
+</ul>
