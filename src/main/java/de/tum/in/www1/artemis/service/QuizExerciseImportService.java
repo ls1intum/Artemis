@@ -179,7 +179,6 @@ public class QuizExerciseImportService extends ExerciseImportService {
              * (the standard actual path for drag-and-drop background images)
              */
             if (!absoluteBackgroundFilePath.startsWith("/api/files/drag-and-drop/backgrounds")) {
-                // Throws an IllegalArgumentException if that is not the case
                 throw new IllegalArgumentException("Background File Path is not valid!");
             }
         }
