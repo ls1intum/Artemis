@@ -34,7 +34,7 @@
         <button
             id="confirm"
             type="submit"
-            [ngClass]="['btn', 'btn-warning']"
+            class="btn btn-warning"
             [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeValid() ? 'not-allowed' : 'pointer'"
             [disabled]="editForm.invalid || isLoading || !isWorkingTimeValid()"
         >
