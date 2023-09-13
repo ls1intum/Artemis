@@ -66,6 +66,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToLoading();
                 this.isServiceSetUp = true;
                 this.updateQueryParameters();
+                this.metisConversationService.checkIsCodeOfConductAccepted(this.course!);
             }
         });
     }
