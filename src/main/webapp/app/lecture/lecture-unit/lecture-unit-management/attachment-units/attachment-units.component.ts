@@ -20,10 +20,7 @@ type LectureUnitDTOS = {
 type LectureUnitInformationDTO = {
     units: LectureUnitDTOS[];
     numberOfPages: number;
-    removeBreakSlides: boolean;
-    removeBreakSlidesKeyphrase: string;
-    removeSolutionSlides: boolean;
-    removeSolutionSlidesKeyphrase: string;
+    removeSlidesCommaSeparatedKeyPhrases: string;
 };
 
 @Component({
@@ -50,10 +47,7 @@ export class AttachmentUnitsComponent implements OnInit {
     file: File;
     fileName: string;
     invalidUnitTableMessage?: string;
-    removeBreakSlides: boolean;
-    removeBreakSlidesKeyphrase: string;
-    removeSolutionSlides: boolean;
-    removeSolutionSlidesKeyphrase: string;
+    removeSlidesCommaSeparatedKeyPhrases: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -72,10 +66,7 @@ export class AttachmentUnitsComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.removeBreakSlides = false;
-        this.removeBreakSlidesKeyphrase = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideKeyphrase');
-        this.removeSolutionSlides = false;
-        this.removeSolutionSlidesKeyphrase = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnits.removeSolutionSlideKeyphrase');
+        this.removeSlidesCommaSeparatedKeyPhrases = '';
         this.isLoading = true;
         this.isProcessingMode = true;
 
@@ -107,10 +98,7 @@ export class AttachmentUnitsComponent implements OnInit {
             const lectureUnitInformationDTOObj: LectureUnitInformationDTO = {
                 units: this.units,
                 numberOfPages: this.numberOfPages,
-                removeBreakSlides: this.removeBreakSlides,
-                removeBreakSlidesKeyphrase: this.removeBreakSlidesKeyphrase,
-                removeSolutionSlides: this.removeSolutionSlides,
-                removeSolutionSlidesKeyphrase: this.removeSolutionSlidesKeyphrase,
+                removeSlidesCommaSeparatedKeyPhrases: this.removeSlidesCommaSeparatedKeyPhrases,
             };
             const formData: FormData = new FormData();
             formData.append('file', this.file);
@@ -210,13 +198,5 @@ export class AttachmentUnitsComponent implements OnInit {
 
         this.invalidUnitTableMessage = undefined;
         return true;
-    }
-
-    onSelectRemoveBreakSlides() {
-        this.removeBreakSlides = !this.removeBreakSlides;
-    }
-
-    onSelectRemoveSolutionSlides() {
-        this.removeSolutionSlides = !this.removeSolutionSlides;
     }
 }

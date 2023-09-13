@@ -291,3 +291,22 @@ export const metisLectureChannel = {
     isArchived: false,
     isPublic: true,
 } as Channel;
+
+export const metisChannel = {
+    id: 16,
+    name: 'example-channel',
+    description: 'Example course-wide channel',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+} as Channel;
+
+export const metisPostInChannel = {
+    id: 4,
+    author: metisUser1,
+    course: metisCourse,
+    title: 'title',
+    content: 'metisPostOrganization',
+    creationDate: undefined,
+    conversation: metisChannel,
+} as Post;

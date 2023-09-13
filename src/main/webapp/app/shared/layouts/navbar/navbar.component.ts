@@ -269,6 +269,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manageCompetencies.title',
+        learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
         communication: 'artemisApp.metis.communication.label',
@@ -311,7 +312,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         grading_key: 'artemisApp.gradingSystem.title',
         exercise_statistics: 'exercise-statistics.title',
         tutor_effort_statistics: 'artemisApp.textExercise.tutorEffortStatistics.title',
-        text_cluster_statistics: 'artemisApp.textExercise.clusterStatistics.title',
         user_settings: 'artemisApp.userSettings.title',
         detailed: 'artemisApp.gradingSystem.detailedTab.title',
         interval: 'artemisApp.gradingSystem.intervalTab.title',
@@ -327,6 +327,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         privacy_statement: 'artemisApp.legal.privacyStatement.title',
         imprint: 'artemisApp.legal.imprint.title',
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
+        suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
+        suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -476,6 +478,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'import-from-file':
                 this.addTranslationAsCrumb(currentPath, 'import-from-file');
+                break;
+            case 'suspicious-behavior':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-behavior');
+                break;
+            case 'suspicious-sessions':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-sessions');
                 break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)

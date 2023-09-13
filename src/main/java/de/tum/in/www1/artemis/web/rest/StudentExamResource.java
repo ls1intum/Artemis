@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -85,6 +86,8 @@ public class StudentExamResource {
 
     private final WebsocketMessagingService messagingService;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -98,7 +101,7 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService messagingService) {
+            WebsocketMessagingService messagingService, SubmissionPolicyRepository submissionPolicyRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -115,6 +118,7 @@ public class StudentExamResource {
         this.examService = examService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.messagingService = messagingService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     /**
@@ -644,6 +648,20 @@ public class StudentExamResource {
             studentExam.setStartedAndStartDate(startDate);
             // send those changes in a modifying query to the database
             studentExamRepository.startStudentExam(studentExam.getId(), startDate);
+        }
+
+        var programmingExercises = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise)
+                .collect(Collectors.toSet());
+        if (!programmingExercises.isEmpty()) {
+            // Load all potential submission policies from the database
+            var submissionPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet()));
+            // Add the policy to their respective programming exercise
+            if (!submissionPolicies.isEmpty()) {
+                for (var programmingExercise : programmingExercises) {
+                    programmingExercise.setSubmissionPolicy(
+                            submissionPolicies.stream().filter(policy -> policy.getProgrammingExercise().getId().equals(programmingExercise.getId())).findFirst().orElse(null));
+                }
+            }
         }
 
         // Load quizzes from database, because they include lazy relationships

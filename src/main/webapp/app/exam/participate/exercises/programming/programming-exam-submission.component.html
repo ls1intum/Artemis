@@ -9,7 +9,7 @@
     </div>
 
     <jhi-code-editor-container
-        [editable]="true"
+        [editable]="!repositoryIsLocked"
         [participation]="studentParticipation"
         [showEditorInstructions]="showEditorInstructions"
         [course]="getCourseFromExercise(exercise)"
@@ -26,7 +26,11 @@
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                 [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
         </div>
-        <div editorToolbar>
+        <div submissionPolicy class="mt-3">
+            <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount"></jhi-programming-submission-policy-status>
+        </div>
+        <div editorToolbar class="d-inline-flex align-items-center">
+            <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3"> </jhi-code-editor-repository-is-locked>
             <jhi-updating-result
                 *ngIf="studentParticipation"
                 [exercise]="exercise"
@@ -55,12 +59,14 @@
 </div>
 <!-- ngIf Offline IDE clone button start -->
 <div *ngIf="!exercise.allowOnlineEditor && exercise.allowOfflineIde">
-    <h4 class="mb-1">
+    <h4 class="mb-3">
         <span class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
         <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</span>
     </h4>
     <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [examMode]="true"></jhi-exercise-details-student-actions>
-    <div style="display: flex; justify-content: flex-end">
+    <div class="d-flex gap-3 my-3 ms-1 align-items-center">
+        <jhi-programming-submission-policy-status [exercise]="exercise" [submissionCount]="submissionCount" class="flex-grow-1"></jhi-programming-submission-policy-status>
+        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3"> </jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="studentParticipation"
             [exercise]="exercise"

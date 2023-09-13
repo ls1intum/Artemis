@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -55,11 +54,9 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ChannelService channelService;
-
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ChannelService channelService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -70,16 +67,14 @@ public class ExamRegistrationService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
-        this.channelService = channelService;
     }
 
     /**
      * Add multiple users to the students of the exam so that they can access the exam
-     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
-     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
@@ -97,10 +92,8 @@ public class ExamRegistrationService {
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
-            var registrationNumber = examUserDto.registrationNumber();
-            var login = examUserDto.login();
-            var email = examUserDto.email();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login, email);
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(),
+                    course.getStudentGroupName(), Role.STUDENT);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
             }
@@ -136,7 +129,6 @@ public class ExamRegistrationService {
             }
         }
         examRepository.save(exam);
-        channelService.registerUsersToExamChannel(usersAddedToExam, exam);
 
         try {
             User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -205,8 +197,6 @@ public class ExamRegistrationService {
             registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
-
-            channelService.registerUsersToExamChannel(List.of(student.getLogin()), exam);
         }
         else {
             log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
@@ -267,9 +257,6 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         examUserRepository.delete(registeredExamUser);
 
-        // Remove the student from exam channel
-        channelService.deregisterUsersFromExamChannel(Set.of(student), exam.getId());
-
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
@@ -308,10 +295,6 @@ public class ExamRegistrationService {
         registeredExamUsers.forEach(exam::removeExamUser);
         examRepository.save(exam);
         examUserRepository.deleteAllById(registeredExamUsers.stream().map(ExamUser::getId).toList());
-
-        var students = userRepository.getStudents(exam.getCourse());
-
-        channelService.deregisterUsersFromExamChannel(students, exam.getId());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
