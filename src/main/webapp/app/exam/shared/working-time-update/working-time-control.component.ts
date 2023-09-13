@@ -52,7 +52,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
 
     constructor(private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe) {}
 
-    // ControlValueAccessor implementation
 
     /**
      * Updates the working time duration inputs whenever
