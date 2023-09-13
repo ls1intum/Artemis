@@ -81,4 +81,6 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
     @Transactional // ok because of modifying query
     @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.status = :status where plagiarismComparison.id = :plagiarismComparisonId")
     void updatePlagiarismComparisonStatus(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("status") PlagiarismStatus status);
+
+    Set<PlagiarismComparison<?>> findAllByPlagiarismResultExerciseId(long exerciseId);
 }
