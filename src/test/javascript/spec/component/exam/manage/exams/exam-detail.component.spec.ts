@@ -31,7 +31,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ExamEditWorkingTimeButtonDirective } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-button.directive';
+import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 
 @Component({
     template: '',
@@ -81,7 +81,7 @@ describe('ExamDetailComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockDirective(FeatureToggleLinkDirective),
-                ExamEditWorkingTimeButtonDirective,
+                ExamEditWorkingTimeComponent,
             ],
             providers: [
                 {

@@ -13,7 +13,7 @@ import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock
 import { of } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ExamEditWorkingTimeButtonDirective } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-button.directive';
+import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -63,7 +63,7 @@ describe('ExamChecklistComponent', () => {
                 MockDirective(TranslateDirective),
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
-                ExamEditWorkingTimeButtonDirective,
+                ExamEditWorkingTimeComponent,
             ],
             providers: [
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
