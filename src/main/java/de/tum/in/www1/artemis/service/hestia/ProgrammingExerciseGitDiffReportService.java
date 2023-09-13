@@ -182,6 +182,7 @@ public class ProgrammingExerciseGitDiffReportService {
             return extractDiffEntries(diff).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).map(Math::abs).sum();
         }
         catch (IOException | GitAPIException e) {
+            log.error("Error calculating number of diff lines between repositories: urlRepoA={}, urlRepoB={}.", urlRepoA, urlRepoB, e);
             return Integer.MAX_VALUE;
         }
     }
