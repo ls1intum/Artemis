@@ -172,8 +172,7 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(exam);
 
-        Channel createdChannel = channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
-        channelService.registerTutorsAndInstructorsToChannel(savedExam.getCourse(), createdChannel);
+        channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
@@ -990,8 +989,6 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        channelService.registerCourseStudentsToChannelAsynchronously(exam.getCourse(), channel);
 
         return ResponseEntity.ok().body(null);
     }

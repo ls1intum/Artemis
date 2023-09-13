@@ -693,7 +693,7 @@ public class StudentExamService {
                                     generatedParticipations.size(), startedAt, lock);
                             return null;
                         }))
-                .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
+                .toArray(CompletableFuture[]::new);
         return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
             threadPool.shutdown();
             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,

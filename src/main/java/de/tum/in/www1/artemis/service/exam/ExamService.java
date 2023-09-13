@@ -1187,15 +1187,16 @@ public class ExamService {
      */
     @Async
     public void archiveExam(Exam exam) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
-        // Archiving a course is only possible after the exam is over
+        // Archiving an exam is only possible after the exam is over
         if (ZonedDateTime.now().isBefore(exam.getEndDate())) {
             return;
         }
 
         // This contains possible errors encountered during the archive process
-        ArrayList<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
 
@@ -1224,6 +1225,7 @@ public class ExamService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
+        log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
