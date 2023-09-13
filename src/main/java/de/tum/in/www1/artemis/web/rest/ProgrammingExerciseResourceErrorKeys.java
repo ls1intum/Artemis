@@ -18,6 +18,8 @@ public final class ProgrammingExerciseResourceErrorKeys {
 
     public static final String INVALID_AUXILIARY_REPOSITORY_DESCRIPTION = "invalid.auxiliary.repository.description";
 
+    public static final String INVALID_BRANCH = "invalid.branch.description";
+
     public static final String INVALID_TEST_CASE_WEIGHTS = "invalid.testcases.weights";
 
     private ProgrammingExerciseResourceErrorKeys() {

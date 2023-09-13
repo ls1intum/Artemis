@@ -63,6 +63,7 @@ export class ProgrammingExercise extends Exercise {
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
+    public branch?: string;
 
     public testwiseCoverageEnabled?: boolean;
 
