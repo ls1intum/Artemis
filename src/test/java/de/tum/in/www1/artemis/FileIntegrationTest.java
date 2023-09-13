@@ -125,7 +125,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseCodeOfConductTemplate() throws Exception {
         var template = request.get("/api/files/templates/code-of-conduct", HttpStatus.OK, String.class);
-        assertThat(template).startsWith("# Template");
+        assertThat(template).startsWith("# Code of Conduct Template");
     }
 
     @Test
