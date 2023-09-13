@@ -20,6 +20,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -46,6 +47,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationHeaderComponent),
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
+                    MockComponent(CourseConversationsCodeOfConductComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
                 ],
@@ -99,6 +101,12 @@ examples.forEach((activeConversation) => {
                 get: () => new BehaviorSubject([new GroupChatDto()]).asObservable(),
             });
             Object.defineProperty(metisConversationService, 'isLoading$', {
+                get: () => new BehaviorSubject(false).asObservable(),
+            });
+            Object.defineProperty(metisConversationService, 'isCodeOfConductAccepted$', {
+                get: () => new BehaviorSubject(true).asObservable(),
+            });
+            Object.defineProperty(metisConversationService, 'isCodeOfConductPresented$', {
                 get: () => new BehaviorSubject(false).asObservable(),
             });
             Object.defineProperty(metisService, 'posts', {
