@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;
     let service: LectureService;
-    const resourceUrl = 'api/lectures';
+    const resourceUrl = 'api-lecture/lectures';
     let expectedResult: any;
     let elemDefault: Lecture;
 
@@ -150,7 +150,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/lectures?withLectureUnits=0`,
+                url: `api-lecture/courses/${courseId}/lectures?withLectureUnits=0`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -167,7 +167,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lectures/import/${lectureId}?courseId=${courseId}`,
+                url: `api-lecture/lectures/import/${lectureId}?courseId=${courseId}`,
                 method: 'POST',
             });
 
@@ -184,7 +184,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/lectures-with-slides`,
+                url: `api-lecture/courses/${courseId}/lectures-with-slides`,
                 method: 'GET',
             });
             req.flush(returnedFromService);

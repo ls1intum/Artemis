@@ -15,9 +15,12 @@ type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
     providedIn: 'root',
 })
 export class LectureUnitService {
-    private resourceURL = 'api';
+    private resourceURL = 'api-lecture';
 
-    constructor(private httpClient: HttpClient, private attachmentService: AttachmentService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private attachmentService: AttachmentService,
+    ) {}
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
         // Send an ordered list of ids of the lecture units
