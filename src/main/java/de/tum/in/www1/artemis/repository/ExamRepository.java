@@ -106,6 +106,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Integer countAllActiveExams(@Param("now") ZonedDateTime now);
 
+    /**
+     * Count all exams that end within the given dates.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return the number of exercises ending between minDate and maxDate
+     */
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam
@@ -115,6 +122,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Integer countExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
+    /**
+     * Count all exam users for exams that end within the given dates.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return the number of students registered in exams ending between minDate and maxDate
+     */
     @Query("""
             SELECT COUNT(DISTINCT examUsers.user.id)
             FROM Exam exam
@@ -125,6 +139,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Integer countExamUsersInExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
+    /**
+     * Count all exams that start within the given dates.
+     *
+     * @param minDate the minimum start date
+     * @param maxDate the maximum start date
+     * @return the number of exercises starting between minDate and maxDate
+     */
     @Query("""
             SELECT COUNT(exam)
             FROM Exam exam
@@ -134,6 +155,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Integer countExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
+    /**
+     * Count all exam users for exams that start within the given dates.
+     *
+     * @param minDate the minimum start date
+     * @param maxDate the maximum start date
+     * @return the number of students registered in exams starting between minDate and maxDate
+     */
     @Query("""
             SELECT COUNT(DISTINCT examUsers.user.id)
             FROM Exam exam

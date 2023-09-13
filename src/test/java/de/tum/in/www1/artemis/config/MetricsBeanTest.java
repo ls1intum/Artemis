@@ -63,9 +63,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    private StatisticsRepository statisticsRepository;
-
-    @Autowired
     CourseService courseService;
 
     @Autowired
