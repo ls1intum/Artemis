@@ -553,7 +553,6 @@
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
                 "goTo": "Seite",
-                "editWorkingTime": "Prüfungsdauer bearbeiten",
                 "testExam": {
                     "title": "Checkliste für die Durchführung von Testklausuren",
                     "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",

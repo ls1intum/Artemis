@@ -555,7 +555,6 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Page",
-                "editWorkingTime": "Edit duration",
                 "testExam": {
                     "title": "Test Exam Checklist",
                     "introduction": "This page gives an overview over the various steps when creating a test exam.",

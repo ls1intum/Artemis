@@ -16,7 +16,6 @@ export class ExamEditWorkingTimeDialogComponent {
 
     isLoading: boolean;
 
-    // used by *ngFor in the template
     // Icons
     faBan = faBan;
     faSpinner = faSpinner;
@@ -31,17 +30,10 @@ export class ExamEditWorkingTimeDialogComponent {
         private examManagementService: ExamManagementService,
     ) {}
 
-    /**
-     * Closes the dialog
-     */
     clear(): void {
-        // intentionally use close instead of dismiss here, because dismiss leads to a non-traceable runtime error
         this.activeModal.close();
     }
 
-    /**
-     * Emits delete event and passes additional checks from the dialog
-     */
     confirmUpdateWorkingTime(): void {
         if (!this.isWorkingTimeValid()) return;
         this.isLoading = true;

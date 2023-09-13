@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import { faChartBar, faEye, faHourglassHalf, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
@@ -35,7 +35,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     faListAlt = faListAlt;
     faThList = faThList;
     faChartBar = faChartBar;
-    faHourglassHalf = faHourglassHalf;
 
     constructor(
         private examChecklistService: ExamChecklistService,

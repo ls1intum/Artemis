@@ -207,7 +207,7 @@
                     <td>
                         <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | artemisTranslate }}</span>
                         <hr />
-                        <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }}:</span>
+                        <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }} :</span>
                         <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
                         <ul class="list-unstyled" *ngIf="isTestExam">
                             <li class="list-group-item border-1">
@@ -289,7 +289,7 @@
                             "
                         >
                             <!-- -->
-                            <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }}:</span>
+                            <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }} :</span>
                             <div class="pt-2">
                                 <jhi-progress-bar
                                     [denominator]="examChecklist.numberOfGeneratedStudentExams!"
@@ -306,7 +306,7 @@
                                 examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfGeneratedStudentExams !== 0 && numberOfSubmitted > 0
                             "
                         >
-                            <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }}:</span>
+                            <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }} :</span>
                             <div class="pt-2">
                                 <jhi-progress-bar [denominator]="numberOfStarted" [numerator]="numberOfSubmitted!" [percentage]="(100 * numberOfSubmitted!) / numberOfStarted">
                                 </jhi-progress-bar>
@@ -333,10 +333,7 @@
                         <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.editWorkingTime' | artemisTranslate }}</span>
                     </td>
                     <td>
-                        <button jhiEditWorkingTimeButton class="btn" [(exam)]="exam">
-                            <fa-icon [icon]="faHourglassHalf"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.checklist.editWorkingTime' | artemisTranslate }}</span>
-                        </button>
+                        <jhi-exam-edit-working-time [(exam)]="exam" />
                     </td>
                 </tr>
             </tbody>
