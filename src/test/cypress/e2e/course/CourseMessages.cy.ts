@@ -34,6 +34,7 @@ describe('Course messages', () => {
 
             it('instructors should be able to create public announcement channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.acceptCodeOfConductButton();
                 const name = 'public-ancmnt-ch';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
