@@ -259,7 +259,7 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
-        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examRepository.findByIdElseThrow(examId);
         var originalExamDuration = exam.getDuration();
 
         // 1. Update the end date & working time of the exam
