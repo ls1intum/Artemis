@@ -2,12 +2,19 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.Instant;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Represents an internal assessment note.
+ */
 @Entity
 @Table(name = "assessment_note")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -19,10 +26,10 @@ public class AssessmentNote extends DomainObject {
 
     @CreatedDate
     @Column(name = "created_date", updatable = false)
-    private Instant createdDate = Instant.now();
+    private final Instant createdDate = Instant.now();
 
     @Column(name = "last_updated_date")
-    private Instant lastUpdatedDate = Instant.now();
+    private final Instant lastUpdatedDate = Instant.now();
 
     @Column(name = "note")
     private String note;

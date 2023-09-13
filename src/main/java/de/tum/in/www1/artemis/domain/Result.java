@@ -458,12 +458,27 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
+    /**
+     * Checks the initialization status of the assessment note before returning.
+     *
+     * @return Null, if the field is uninitialized or the encapsulating arraylist is empty, or else, the assessment note.
+     */
     public AssessmentNote getAssessmentNote() {
-        return (!Hibernate.isInitialized(assessmentNote) || assessmentNote.isEmpty()) ? null : assessmentNote.get(0);
+        if (!Hibernate.isInitialized(assessmentNote) || assessmentNote.isEmpty()) {
+            return null;
+        }
+        else {
+            return assessmentNote.get(0);
+        }
     }
 
+    /**
+     * Clears the list before adding a new assessment note. This ensures that it contains at most one element.
+     *
+     * @param assessmentNote The assessment note that is added to the list as its new sole element.
+     */
     public void setAssessmentNote(AssessmentNote assessmentNote) {
-        this.assessmentNote = new ArrayList<>();
+        this.assessmentNote.clear();
         this.assessmentNote.add(assessmentNote);
     }
 
