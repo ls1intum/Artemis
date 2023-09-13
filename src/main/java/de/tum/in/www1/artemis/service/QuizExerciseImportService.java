@@ -155,9 +155,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * Checks whether an alleged backgroundFilePath is actually one. In case it isn't, a "Background File Path is not valid!"-IllegalArgumentException is thrown.
+     * Checks whether an alleged backgroundFilePath is actually one.
      *
      * @param backgroundFilePath Path to be checked
+     * @throws IllegalArgumentException if the provided path is not a valid background file path
      */
     public static void checkIfBackgroundFilePathIsABackgroundFilePathElseThrow(String backgroundFilePath) {
         /*
