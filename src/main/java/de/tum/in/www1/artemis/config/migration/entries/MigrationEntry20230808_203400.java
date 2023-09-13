@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 
 @Component
 public class MigrationEntry20230808_203400 extends MigrationEntry {
@@ -50,19 +51,22 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final Optional<CIVCSMigrationService> ciMigrationService;
 
+    private final AbstractVersionControlService versionControlService;
+
     private final UrlService urlService = new UrlService();
 
     public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<CIVCSMigrationService> ciMigrationService) {
+            Optional<CIVCSMigrationService> ciMigrationService, AbstractVersionControlService versionControlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.ciMigrationService = ciMigrationService;
+        this.versionControlService = versionControlService;
     }
 
     @Override
@@ -170,6 +174,19 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                         templateParticipation.getProgrammingExercise().getProjectKey() + "-" + templateParticipation.getBuildPlanId(),
                         templateParticipation.getProgrammingExercise().getId());
                 return templateParticipation;
+            }).filter(Objects::nonNull).map(templateParticipation -> {
+                String branch = templateParticipation.getProgrammingExercise().getBranch();
+                if (branch == null || branch.isEmpty()) {
+                    branch = versionControlService.getDefaultBranchOfRepository(templateParticipation.getVcsRepositoryUrl());
+                    templateParticipation.getProgrammingExercise().setBranch(branch);
+                    programmingExerciseRepository.save(templateParticipation.getProgrammingExercise());
+                    if (branch == null) {
+                        log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                                templateParticipation.getProgrammingExercise().getId(), templateParticipation.getBuildPlanId());
+                        return null;
+                    }
+                }
+                return templateParticipation;
             }).filter(Objects::nonNull).forEach(templateParticipation -> {
                 var startMs = System.currentTimeMillis();
                 List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(templateParticipation.getProgrammingExercise().getId());
@@ -191,6 +208,19 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     solutionParticipation.setBuildPlanId(null);
                     solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
                     return null;
+                }
+                return solutionParticipation;
+            }).filter(Objects::nonNull).map(solutionParticipation -> {
+                String branch = solutionParticipation.getProgrammingExercise().getBranch();
+                if (branch == null || branch.isEmpty()) {
+                    branch = versionControlService.getDefaultBranchOfRepository(solutionParticipation.getVcsRepositoryUrl());
+                    solutionParticipation.getProgrammingExercise().setBranch(branch);
+                    programmingExerciseRepository.save(solutionParticipation.getProgrammingExercise());
+                    if (branch == null) {
+                        log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                                solutionParticipation.getProgrammingExercise().getId(), solutionParticipation.getBuildPlanId());
+                        return null;
+                    }
                 }
                 return solutionParticipation;
             }).filter(Objects::nonNull).forEach(solutionParticipation -> {
@@ -215,6 +245,19 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     studentParticipation.setBuildPlanId(null);
                     programmingExerciseStudentParticipationRepository.save(studentParticipation);
                     return null;
+                }
+                return studentParticipation;
+            }).filter(Objects::nonNull).map(studentParticipation -> {
+                String branch = studentParticipation.getBranch();
+                if (branch == null || branch.isEmpty()) {
+                    branch = versionControlService.getDefaultBranchOfRepository(studentParticipation.getVcsRepositoryUrl());
+                    studentParticipation.setBranch(branch);
+                    programmingExerciseStudentParticipationRepository.save(studentParticipation);
+                    if (branch == null) {
+                        log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                                studentParticipation.getProgrammingExercise().getId(), studentParticipation.getBuildPlanId());
+                        return null;
+                    }
                 }
                 return studentParticipation;
             }).filter(Objects::nonNull).forEach(studentParticipation -> {
@@ -301,7 +344,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorMap.put(exercise, false);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "assignment", String.valueOf(repositoryUrl), exercise.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "assignment", String.valueOf(repositoryUrl),
+                    studentParticipation.getBranch());
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
             log.warn("Failed to replace solution repository in template build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ",
@@ -309,7 +353,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             errorMap.put(exercise, false);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "tests", exercise.getTestRepositoryUrl(), exercise.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "tests", exercise.getTestRepositoryUrl(),
+                    studentParticipation.getBranch());
         }
         catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
             log.warn("Failed to replace tests repository in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
@@ -319,12 +364,12 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         for (var auxiliary : auxiliaryRepositories) {
             try {
                 ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUrl(),
-                        exercise.getBranch());
+                        studentParticipation.getBranch());
             }
             catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
                 log.warn("Failed to replace {} repository in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", auxiliary.getName(),
                         studentParticipation.getId(), studentParticipation.getBuildPlanId(), exercise.getId(), e);
-                errorMap.put(exercise, true);
+                errorMap.put(exercise, false);
             }
         }
         try {
