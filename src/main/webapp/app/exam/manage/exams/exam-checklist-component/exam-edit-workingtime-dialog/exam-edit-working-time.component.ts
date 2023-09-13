@@ -2,7 +2,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { from } from 'rxjs';
+import { Subscription, from } from 'rxjs';
 
 import { Exam } from 'app/entities/exam.model';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
@@ -21,6 +21,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
 
     private modalRef: NgbModalRef | null;
     private intervalRef: any;
+    private subscription: Subscription;
 
     constructor(
         private modalService: NgbModal,
@@ -34,6 +35,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.intervalRef && clearInterval(this.intervalRef);
+        this.subscription && this.subscription.unsubscribe();
     }
 
     private checkWorkingTimeChangeAllowed() {
@@ -49,7 +51,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
             animation: true,
         });
         this.modalRef.componentInstance.exam = this.exam;
-        this.modalRef.componentInstance.examChange.subscribe((exam: Exam) => this.examChange.emit(exam));
+        this.subscription = this.modalRef.componentInstance.examChange.subscribe((exam: Exam) => this.examChange.emit(exam));
 
         from(this.modalRef.result).subscribe(() => (this.modalRef = null));
     }
