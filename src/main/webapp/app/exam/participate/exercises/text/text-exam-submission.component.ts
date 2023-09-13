@@ -32,7 +32,11 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     // Icons
     farListAlt = faListAlt;
 
-    constructor(private textService: TextEditorService, private stringCountService: StringCountService, changeDetectorReference: ChangeDetectorRef) {
+    constructor(
+        private textService: TextEditorService,
+        private stringCountService: StringCountService,
+        changeDetectorReference: ChangeDetectorRef,
+    ) {
         super(changeDetectorReference);
     }
 

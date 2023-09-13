@@ -25,7 +25,10 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
     private calcSize = 10;
     private resizeTimeout: any;
 
-    constructor(private el: ElementRef, private renderer: Renderer2) {
+    constructor(
+        private el: ElementRef,
+        private renderer: Renderer2,
+    ) {
         this.fitTextElement = el.nativeElement;
         this.fitTextParent = this.fitTextElement.parentElement!;
         this.computed = window.getComputedStyle(this.fitTextElement);

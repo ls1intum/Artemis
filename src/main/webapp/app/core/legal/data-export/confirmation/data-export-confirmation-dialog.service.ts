@@ -9,7 +9,10 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 export class DataExportConfirmationDialogService {
     modalRef: NgbModalRef | null;
 
-    constructor(private modalService: NgbModal, public alertService: AlertService) {}
+    constructor(
+        private modalService: NgbModal,
+        public alertService: AlertService,
+    ) {}
 
     /**
      * Opens data export confirmation dialog

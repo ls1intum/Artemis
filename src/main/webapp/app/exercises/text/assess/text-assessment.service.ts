@@ -24,7 +24,10 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 export class TextAssessmentService {
     private readonly resourceUrl = 'api';
 
-    constructor(private http: HttpClient, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Saves the passed feedback items of the assessment.

@@ -9,7 +9,10 @@ import { AlertService } from 'app/core/util/alert.service';
 export class DeleteDialogService {
     modalRef: NgbModalRef | null;
 
-    constructor(private modalService: NgbModal, public alertService: AlertService) {}
+    constructor(
+        private modalService: NgbModal,
+        public alertService: AlertService,
+    ) {}
 
     /**
      * Opens delete dialog

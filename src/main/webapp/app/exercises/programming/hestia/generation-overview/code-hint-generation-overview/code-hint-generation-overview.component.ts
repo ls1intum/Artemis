@@ -22,7 +22,10 @@ export class CodeHintGenerationOverviewComponent implements OnInit {
 
     readonly GenerationStep = CodeHintGenerationStep;
 
-    constructor(private route: ActivatedRoute, private router: Router) {}
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+    ) {}
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {

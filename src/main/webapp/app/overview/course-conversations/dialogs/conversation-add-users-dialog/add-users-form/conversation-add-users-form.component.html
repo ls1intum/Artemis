@@ -1,7 +1,7 @@
 <div class="row" *ngIf="activeConversation && courseId">
     <div class="col-12">
         <div *ngIf="maxSelectable !== undefined" class="alert alert-info">
-            {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote' | artemisTranslate : { max: maxSelectable } }}
+            {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote' | artemisTranslate: { max: maxSelectable } }}
         </div>
         <div [hidden]="maxSelectable === 0">
             <div class="mode-switch" [hidden]="!getAsChannel(activeConversation)">
@@ -35,7 +35,7 @@
                                 {{ 'artemisApp.dialogs.addUsers.addUsersForm.requiredError' | artemisTranslate }}
                             </div>
                             <div *ngIf="selectedUsersControl?.errors?.maxlength">
-                                {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxError' | artemisTranslate : { max: maxSelectable } }}
+                                {{ 'artemisApp.dialogs.addUsers.addUsersForm.maxError' | artemisTranslate: { max: maxSelectable } }}
                             </div>
                         </div>
                     </div>

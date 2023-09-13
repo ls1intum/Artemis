@@ -8,7 +8,11 @@ import { AlertService } from 'app/core/util/alert.service';
     providedIn: 'root',
 })
 export class ProfileToggleGuard implements CanActivate {
-    constructor(private alertService: AlertService, private profileToggleService: ProfileToggleService, private router: Router) {}
+    constructor(
+        private alertService: AlertService,
+        private profileToggleService: ProfileToggleService,
+        private router: Router,
+    ) {}
 
     canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
         const profile: ProfileToggle = route.data?.profile;

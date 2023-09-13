@@ -69,7 +69,11 @@ export class SecuredImageComponent implements OnChanges, OnInit {
     }
 
     // we need HttpClient to load the image and DomSanitizer to trust the url
-    constructor(private domSanitizer: DomSanitizer, private cacheableImageService: CacheableImageService, public element: ElementRef) {}
+    constructor(
+        private domSanitizer: DomSanitizer,
+        private cacheableImageService: CacheableImageService,
+        public element: ElementRef,
+    ) {}
 
     // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {

@@ -95,7 +95,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
 
-    constructor(private translateService: TranslateService, private alertService: AlertService, private fileService: CodeEditorFileService) {
+    constructor(
+        private translateService: TranslateService,
+        private alertService: AlertService,
+        private fileService: CodeEditorFileService,
+    ) {
         this.initializeProperties();
     }
 

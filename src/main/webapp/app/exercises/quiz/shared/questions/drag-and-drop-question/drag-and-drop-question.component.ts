@@ -98,7 +98,10 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faExclamationCircle = faExclamationCircle;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+    ) {}
 
     ngOnInit(): void {
         this.evaluateDropLocations();

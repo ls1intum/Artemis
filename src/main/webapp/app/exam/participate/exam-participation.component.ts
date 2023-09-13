@@ -773,8 +773,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 filter((submissionStateObj) => submissionStateObj != undefined),
                 distinctUntilChanged(),
                 tap((submissionStateObj) => {
-                    const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
-                        programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
+                    const exerciseForSubmission = this.studentExam.exercises?.find(
+                        (programmingExercise) =>
+                            programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
                     );
                     if (exerciseForSubmission?.studentParticipations && submissionStateObj.submission?.participation) {
                         exerciseForSubmission.studentParticipations[0] = submissionStateObj.submission.participation;
@@ -782,8 +783,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }),
             )
             .subscribe((programmingSubmissionObj) => {
-                const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
-                    programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
+                const exerciseForSubmission = this.studentExam.exercises?.find(
+                    (programmingExercise) =>
+                        programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
                 if (
                     exerciseForSubmission?.studentParticipations &&

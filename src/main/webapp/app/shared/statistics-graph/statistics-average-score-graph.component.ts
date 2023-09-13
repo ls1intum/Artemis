@@ -196,7 +196,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                     value: exercise.averageScore,
                     exerciseType: exercise.exerciseType,
                     exerciseId: exercise.exerciseId,
-                } as ExerciseStatisticsEntry),
+                }) as ExerciseStatisticsEntry,
         );
         this.ngxColor.domain = this.ngxData.map((exercise) => this.determineColor(exercise.value));
     }

@@ -8,7 +8,10 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 export class AthenaService {
     public resourceUrl = 'api/athena';
 
-    constructor(protected http: HttpClient, private profileService: ProfileService) {}
+    constructor(
+        protected http: HttpClient,
+        private profileService: ProfileService,
+    ) {}
 
     /**
      * Get feedback suggestions for the given submission from Athena

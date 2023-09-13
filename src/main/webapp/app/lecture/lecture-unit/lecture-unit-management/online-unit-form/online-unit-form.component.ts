@@ -54,7 +54,10 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     // Icons
     faArrowLeft = faArrowLeft;
 
-    constructor(private fb: FormBuilder, private onlineUnitService: OnlineUnitService) {}
+    constructor(
+        private fb: FormBuilder,
+        private onlineUnitService: OnlineUnitService,
+    ) {}
 
     get nameControl() {
         return this.form.get('name');

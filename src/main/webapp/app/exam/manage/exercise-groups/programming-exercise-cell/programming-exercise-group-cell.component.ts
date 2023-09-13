@@ -39,7 +39,11 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
 
     faDownload = faDownload;
 
-    constructor(private profileService: ProfileService, private programmingExerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
+    constructor(
+        private profileService: ProfileService,
+        private programmingExerciseService: ProgrammingExerciseService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

@@ -65,7 +65,10 @@ export class ShortAnswerQuestionComponent {
     faExclamationCircle = faExclamationCircle;
     farQuestionCircle = faQuestionCircle;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
+    ) {}
 
     /**
      * Update html for text, hint and explanation for the question and every answer option

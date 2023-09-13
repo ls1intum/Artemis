@@ -16,7 +16,10 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
 
     // unique index, even if multiple plant uml diagrams are shown from different problem statements on the same page (in different tabs)
     private plantUmlIndex = 0;
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private plantUmlService: ProgrammingExercisePlantUmlService) {}
+    constructor(
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private plantUmlService: ProgrammingExercisePlantUmlService,
+    ) {}
 
     /**
      * Sets latest result according to parameter.

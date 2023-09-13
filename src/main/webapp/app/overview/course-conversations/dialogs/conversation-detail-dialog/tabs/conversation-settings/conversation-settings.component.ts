@@ -49,7 +49,12 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     canChangeChannelArchivalState: boolean;
     canDeleteChannel: boolean;
 
-    constructor(private modalService: NgbModal, private channelService: ChannelService, private groupChatService: GroupChatService, private alertService: AlertService) {}
+    constructor(
+        private modalService: NgbModal,
+        private channelService: ChannelService,
+        private groupChatService: GroupChatService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.canLeaveConversation = canLeaveConversation(this.activeConversation);

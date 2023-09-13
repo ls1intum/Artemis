@@ -28,7 +28,11 @@ export class ExamParticipationService {
         return `api/courses/${courseId}/exams/${examId}`;
     }
 
-    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private localStorageService: LocalStorageService,
+        private sessionStorage: SessionStorageService,
+    ) {}
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';

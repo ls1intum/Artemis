@@ -10,7 +10,12 @@ import { AccountService } from 'app/core/auth/account.service';
 export class LoginService {
     logoutWasForceful = false;
 
-    constructor(private accountService: AccountService, private authServerProvider: AuthServerProvider, private router: Router, private alertService: AlertService) {}
+    constructor(
+        private accountService: AccountService,
+        private authServerProvider: AuthServerProvider,
+        private router: Router,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Login the user with the given credentials.

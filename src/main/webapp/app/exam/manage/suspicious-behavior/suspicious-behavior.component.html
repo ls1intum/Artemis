@@ -14,7 +14,7 @@
 </ul>
 
 <p>
-    {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number' | artemisTranslate : { numberOfSuspiciousSessions: suspiciousSessions.length } }}
+    {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number' | artemisTranslate: { numberOfSuspiciousSessions: suspiciousSessions.length } }}
 </p>
 
 <button *ngIf="suspiciousSessions.length !== 0" [disabled]="suspiciousSessions.length === 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">

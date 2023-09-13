@@ -9,12 +9,12 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
             <span>
                 {{
                     'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                        | artemisTranslate : { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                        | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
                 }}
             </span>
             <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
                 {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate : { points: exercise.submissionPolicy.exceedingPenalty }
+                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
                 }}
             </span>
         </div>

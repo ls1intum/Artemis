@@ -35,7 +35,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     faBullhorn = faBullhorn;
     faCheckSquare = faCheckSquare;
 
-    constructor(public metisService: MetisService, protected changeDetector: ChangeDetectorRef) {
+    constructor(
+        public metisService: MetisService,
+        protected changeDetector: ChangeDetectorRef,
+    ) {
         super();
     }
 

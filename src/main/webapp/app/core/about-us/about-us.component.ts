@@ -47,7 +47,11 @@ export class AboutUsComponent implements OnInit {
         ['openSource', { openSourceUrl: 'https://ls1intum.github.io/Artemis/dev/open-source/' }],
     ];
 
-    constructor(private route: ActivatedRoute, private profileService: ProfileService, private staticContentService: StaticContentService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private profileService: ProfileService,
+        private staticContentService: StaticContentService,
+    ) {}
 
     /**
      * On init get the json file from the Artemis server and save it.

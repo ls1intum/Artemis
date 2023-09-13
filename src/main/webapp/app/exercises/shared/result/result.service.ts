@@ -45,7 +45,10 @@ export class ResultService implements IResultService {
 
     private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
 
-    constructor(private http: HttpClient, private translateService: TranslateService) {}
+    constructor(
+        private http: HttpClient,
+        private translateService: TranslateService,
+    ) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http

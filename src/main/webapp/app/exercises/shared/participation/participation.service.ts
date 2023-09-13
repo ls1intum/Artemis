@@ -25,7 +25,11 @@ export type BuildArtifact = {
 export class ParticipationService {
     public resourceUrl = 'api/participations';
 
-    constructor(private http: HttpClient, private submissionService: SubmissionService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private submissionService: SubmissionService,
+        private accountService: AccountService,
+    ) {}
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationForServer(participation, exercise);

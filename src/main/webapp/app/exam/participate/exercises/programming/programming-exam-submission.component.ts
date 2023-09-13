@@ -66,7 +66,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+    constructor(
+        private domainService: DomainService,
+        changeDetectorReference: ChangeDetectorRef,
+    ) {
         super(changeDetectorReference);
     }
 

@@ -30,7 +30,12 @@ export class ExamManagementService {
     public resourceUrl = 'api/courses';
     public adminResourceUrl = 'api/admin/courses';
 
-    constructor(private router: Router, private http: HttpClient, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
+    constructor(
+        private router: Router,
+        private http: HttpClient,
+        private accountService: AccountService,
+        private entityTitleService: EntityTitleService,
+    ) {}
 
     /**
      * Create an exam on the server using a POST request.

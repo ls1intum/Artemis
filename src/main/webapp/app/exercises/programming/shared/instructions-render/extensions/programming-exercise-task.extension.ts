@@ -23,7 +23,10 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
 
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private injector: Injector) {}
+    constructor(
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private injector: Injector,
+    ) {}
 
     /**
      * Sets latest result according to parameter.

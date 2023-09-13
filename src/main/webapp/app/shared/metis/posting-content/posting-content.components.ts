@@ -30,7 +30,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(private metisService: MetisService, private profileToggleService: ProfileToggleService) {}
+    constructor(
+        private metisService: MetisService,
+        private profileToggleService: ProfileToggleService,
+    ) {}
 
     /**
      * on initialization: calculate posting parts to be displayed
