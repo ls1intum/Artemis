@@ -1,4 +1,4 @@
-# Template: Adapt to your demands
+# Code of Conduct Template: Adapt to your demands
 
 We as students, tutors, and instructors pledge to make participation in our course a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 

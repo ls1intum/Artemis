@@ -3,13 +3,13 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet author="zbil" id="20230908050001">
-        <createTable tableName="course_code_of_conduct">
+        <createTable tableName="course_code_of_conduct_agreement">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="course_id" type="bigint"/>
             <column name="user_id" type="bigint"/>
-            <column name="is_code_of_conduct_accepted" type="boolean"/>
+            <column name="is_accepted" type="boolean"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>

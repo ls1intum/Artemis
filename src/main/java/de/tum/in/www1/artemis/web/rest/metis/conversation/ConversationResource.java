@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseCodeOfConductService;
+import de.tum.in.www1.artemis.service.CourseCodeOfConductAgreementService;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService.ConversationMemberSearchFilters;
@@ -45,18 +45,18 @@ public class ConversationResource extends ConversationManagementResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CourseCodeOfConductService courseCodeOfConductService;
+    private final CourseCodeOfConductAgreementService courseCodeOfConductAgreementService;
 
     private final UserRepository userRepository;
 
     public ConversationResource(ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            CourseCodeOfConductService courseCodeOfConductService) {
+            CourseCodeOfConductAgreementService courseCodeOfConductAgreementService) {
         super(courseRepository);
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.courseCodeOfConductService = courseCodeOfConductService;
+        this.courseCodeOfConductAgreementService = courseCodeOfConductAgreementService;
         this.userRepository = userRepository;
     }
 
@@ -130,36 +130,36 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/code-of-conduct : Checks if the user agrees to the code of conduct
+     * GET /api/courses/:courseId/code-of-conduct-agreement : Checks if the user agrees to the code of conduct
      *
      * @param courseId the course's ID
      * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the course's code of conduct
      */
-    @GetMapping("/{courseId}/code-of-conduct")
+    @GetMapping("/{courseId}/code-of-conduct-agreement")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        return ResponseEntity.ok(courseCodeOfConductService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
+        return ResponseEntity.ok(courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
     }
 
     /**
-     * POST /api/courses/:courseId/code-of-conduct : Accept the course's code of conduct
+     * POST /api/courses/:courseId/code-of-conduct-agreement : Accept the course's code of conduct
      *
      * @param courseId the course's ID
      * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the code of conduct
      */
-    @PostMapping("/{courseId}/code-of-conduct")
+    @PostMapping("/{courseId}/code-of-conduct-agreement")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> acceptCodeOfConduct(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        courseCodeOfConductService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
-        return ResponseEntity.ok(courseCodeOfConductService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
+        courseCodeOfConductAgreementService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
+        return ResponseEntity.ok(courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
     }
 
     /**

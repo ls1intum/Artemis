@@ -1,5 +1,5 @@
 <h3>{{ 'artemisApp.codeOfConduct.title' | artemisTranslate }}</h3>
-<div [innerHTML]="codeOfConduct | htmlForMarkdown"></div>
+<div [innerHTML]="course.courseInformationSharingMessagingCodeOfConduct || '' | htmlForMarkdown"></div>
 <ul>
     <li *ngFor="let user of responsibleContacts">
         {{ getUserLabel(user) }}

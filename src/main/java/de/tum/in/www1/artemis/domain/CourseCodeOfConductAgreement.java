@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
  * A user's agreement of a course's code of conduct.
  */
 @Entity
-@Table(name = "course_code_of_conduct")
+@Table(name = "course_code_of_conduct_agreement")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CourseCodeOfConduct extends DomainObject {
 

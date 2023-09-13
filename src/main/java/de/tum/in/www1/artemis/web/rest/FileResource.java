@@ -305,7 +305,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/course/code-of-conduct/template : Get the Code of Conduct template
+     * GET /files/templates/code-of-conduct : Get the Code of Conduct template
      *
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */

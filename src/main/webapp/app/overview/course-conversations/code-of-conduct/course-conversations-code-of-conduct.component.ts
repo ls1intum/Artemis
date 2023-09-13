@@ -14,13 +14,6 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
     @Input()
     course: Course;
 
-    get codeOfConduct(): string {
-        if (this.course.courseInformationSharingMessagingCodeOfConduct) {
-            return this.course.courseInformationSharingMessagingCodeOfConduct;
-        }
-        return '';
-    }
-
     responsibleContacts: UserPublicInfoDTO[] = [];
 
     constructor(

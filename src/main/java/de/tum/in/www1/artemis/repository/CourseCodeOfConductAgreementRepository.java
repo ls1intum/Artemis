@@ -7,13 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.CourseCodeOfConduct;
+import de.tum.in.www1.artemis.domain.CourseCodeOfConductAgreement;
 
 /**
  * Spring Data repository for the Code of Conduct entity.
  */
 @Repository
-public interface CourseCodeOfConductRepository extends JpaRepository<CourseCodeOfConduct, Long> {
+public interface CourseCodeOfConductRepository extends JpaRepository<CourseCodeOfConductAgreement, Long> {
 
     /**
      * Find the user's agreement to a course's code of conduct.
@@ -24,8 +24,8 @@ public interface CourseCodeOfConductRepository extends JpaRepository<CourseCodeO
      */
     @Query("""
             SELECT c
-            FROM CourseCodeOfConduct c
+            FROM CourseCodeOfConductAgreement c
             WHERE c.course.id = :courseId AND c.user.id = :userId
             """)
-    Optional<CourseCodeOfConduct> findByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    Optional<CourseCodeOfConductAgreement> findByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

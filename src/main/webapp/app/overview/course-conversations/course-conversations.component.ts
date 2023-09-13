@@ -28,14 +28,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted: boolean = false;
     isCodeOfConductPresented: boolean = false;
 
-    get codeOfConduct(): string {
-        if (this.course?.courseInformationSharingMessagingCodeOfConduct) {
-            return this.course?.courseInformationSharingMessagingCodeOfConduct;
-        } else {
-            return '';
-        }
-    }
-
     // MetisConversationService is created in course overview, so we can use it here
     constructor(
         private router: Router,
