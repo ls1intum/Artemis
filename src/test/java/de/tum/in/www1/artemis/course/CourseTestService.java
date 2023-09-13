@@ -2102,7 +2102,7 @@ public class CourseTestService {
     }
 
     private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
         assertThat(exportedCourse).isNotEmpty();
 
@@ -2118,7 +2118,7 @@ public class CourseTestService {
 
     public void testExportCourse_cannotCreateTmpDir() throws Exception {
         Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectories(argThat(path -> path.toString().contains("exports")))).thenThrow(IOException.class);
@@ -2130,7 +2130,7 @@ public class CourseTestService {
 
     public void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
         Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("course-exercises")))).thenThrow(IOException.class);
@@ -2142,7 +2142,7 @@ public class CourseTestService {
 
     public void testExportCourseExam_cannotCreateTmpDir() throws Exception {
         Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         Optional<Exam> exam = examRepo.findByCourseId(course.getId()).stream().findFirst();
         assertThat(exam).isPresent();
@@ -2157,7 +2157,7 @@ public class CourseTestService {
 
     public void testExportCourseExam_cannotCreateExamsDir() throws Exception {
         Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         course = courseRepo.findWithEagerExercisesById(course.getId());
 

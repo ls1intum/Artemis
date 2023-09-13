@@ -289,7 +289,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationTest {
      */
     @Test
     void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -299,7 +299,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationTest {
     @Test
     void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -309,7 +309,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationTest {
     @Test
     void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(instanceMessageSendService, timeout(1500)).sendExerciseReleaseNotificationSchedule(any());
     }
 
