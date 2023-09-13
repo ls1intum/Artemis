@@ -1,18 +1,19 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
-    MANUAL = FeedbackType.MANUAL;
     @Input()
     get feedback(): Feedback {
         return this._feedback;
@@ -46,11 +47,15 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly ButtonSize = ButtonSize;
+    readonly MANUAL = FeedbackType.MANUAL;
 
     public elementRef: ElementRef;
 
     viewOnly: boolean;
     oldFeedback: Feedback;
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     faSave = faSave;
@@ -92,11 +97,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Deletes feedback after confirmation and emits to parent component
      */
     deleteFeedback() {
-        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.feedback.id ?? '' });
-        const confirmation = confirm(text);
-        if (confirmation) {
-            this.onDeleteFeedback.emit(this.feedback);
-        }
+        this.onDeleteFeedback.emit(this.feedback);
+        this.dialogErrorSource.next('');
     }
 
     /**

@@ -97,7 +97,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
-        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
@@ -647,7 +647,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void foo() {
+    void testExamWorkingTimeChangeDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(1));

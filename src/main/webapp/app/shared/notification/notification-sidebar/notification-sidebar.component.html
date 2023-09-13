@@ -2,7 +2,7 @@
     <button class="guided-tour-notification notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
         <fa-icon [icon]="faBell"></fa-icon>
         <span class="badge bg-danger rounded-pill" *ngIf="recentNotificationCount > 0">
-            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
+            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= sortedNotifications.length">+</span>
         </span>
     </button>
 </div>
@@ -68,10 +68,10 @@
             <div class="loading-spinner text-center mx-3 my-2" style="font-size: large" *ngIf="loading">
                 <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>
-            <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
+            <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="sortedNotifications.length > 0 && sortedNotifications.length >= totalNotifications">
                 {{ 'artemisApp.notification.allLoaded' | artemisTranslate }}
             </small>
-            <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
+            <span class="no-notifications" *ngIf="sortedNotifications && sortedNotifications.length === 0">
                 {{ 'artemisApp.notification.noNotifications' | artemisTranslate }}
             </span>
         </div>

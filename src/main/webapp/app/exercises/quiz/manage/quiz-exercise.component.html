@@ -38,7 +38,7 @@
                     <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
                 </td>
                 <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate : 'long' : true) : '-' }}</td>
-                <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long':true) : '-' }}</td>
+                <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long' : true) : '-' }}</td>
                 <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate : 'long' : true) : '-' }}</td>
                 <td>
                     {{ fullMinutesForSeconds(quizExercise.duration!) }}

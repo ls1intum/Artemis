@@ -409,7 +409,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * After rename the state is exited.
      **/
     onRenameFile(event: any) {
-        const newFileName = event as string;
+        const newFileNamePath = event as string;
+        // Take the actual file name if the packages are collapsed, otherwise take the name directly
+        const newFileName = newFileNamePath.split('/').pop() || newFileNamePath;
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
         if (!this.renamingFile) {
             return;

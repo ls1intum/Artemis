@@ -1,7 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
-import { ActivatedRoute } from '@angular/router';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
@@ -15,7 +14,6 @@ import {
     RenameFileChange,
     ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -97,13 +95,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
 
-    constructor(
-        private participationService: ParticipationService,
-        private translateService: TranslateService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private fileService: CodeEditorFileService,
-    ) {
+    constructor(private translateService: TranslateService, private alertService: AlertService, private fileService: CodeEditorFileService) {
         this.initializeProperties();
     }
 

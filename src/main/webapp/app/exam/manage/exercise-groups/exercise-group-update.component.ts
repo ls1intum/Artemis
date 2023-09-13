@@ -50,7 +50,6 @@ export class ExerciseGroupUpdateComponent implements OnInit {
         }
     }
 
-    // eslint-disable-next-line
     previousState() {
         this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exercise-groups']);
     }

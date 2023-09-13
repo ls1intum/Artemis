@@ -1,25 +1,26 @@
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
-import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
-import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, programmingExerciseEditor } from '../../../support/artemis';
-import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
+import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
+import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
+import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
+import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
+import { courseManagementAPIRequest, exerciseAPIRequest, programmingExerciseEditor } from '../../../support/artemis';
 import { ProgrammingLanguage } from '../../../support/constants';
+import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Programming exercise participation', () => {
     let course: Course;
 
     before('Create course', () => {
         cy.login(admin, '/');
-        courseManagementRequest.createCourse({ customizeGroups: true }).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addStudentToCourse(course, studentTwo);
-            courseManagementRequest.addStudentToCourse(course, studentThree);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addStudentToCourse(course, studentTwo);
+            courseManagementAPIRequest.addStudentToCourse(course, studentThree);
         });
     });
 
@@ -28,7 +29,7 @@ describe('Programming exercise participation', () => {
 
         before('Setup java programming exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA }).then((exerciseResponse) => {
+            exerciseAPIRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
         });
@@ -66,7 +67,7 @@ describe('Programming exercise participation', () => {
 
             before('Setup c programming exercise', () => {
                 cy.login(admin);
-                courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C }).then((exerciseResponse) => {
+                exerciseAPIRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C }).then((exerciseResponse) => {
                     exercise = exerciseResponse.body;
                 });
             });
@@ -86,7 +87,7 @@ describe('Programming exercise participation', () => {
 
         before('Setup python programming exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.PYTHON }).then((exerciseResponse) => {
+            exerciseAPIRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.PYTHON }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
         });
@@ -101,6 +102,6 @@ describe('Programming exercise participation', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

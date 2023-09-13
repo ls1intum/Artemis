@@ -1,5 +1,4 @@
-import { PROGRAMMING_EXERCISE_BASE } from '../../../requests/CourseManagementRequests';
-import { BASE_API, POST, ProgrammingLanguage } from '../../../constants';
+import { BASE_API, POST, PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the programming exercise creation page.

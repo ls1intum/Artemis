@@ -18,12 +18,12 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, throttleTime, timeout } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
@@ -34,6 +34,7 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -80,10 +81,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     handInPossible = true;
     submitInProgress = false;
 
+    examSummaryButtonSecondsLeft = 10;
+    examSummaryButtonTimer: ReturnType<typeof setInterval>;
+    showExamSummary = false;
+
     exerciseIndex = 0;
 
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
+
+    // Icons
+    faCheckCircle = faCheckCircle;
 
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
@@ -173,22 +181,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
-                            this.examParticipationService
-                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
-                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
-                        }
-
-                        // Directly start the exam when we continue from a failed save
-                        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                            this.examParticipationService
-                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
-                                .subscribe((localExam: StudentExam) => {
-                                    this.studentExam = localExam;
-                                    this.loadingExam = false;
-                                    this.examStarted(this.studentExam);
-                                });
+                            this.loadAndDisplaySummary();
                         } else {
-                            this.loadingExam = false;
+                            // Directly start the exam when we continue from a failed save
+                            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+                                this.examParticipationService
+                                    .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
+                                    .subscribe((localExam: StudentExam) => {
+                                        this.studentExam = localExam;
+                                        this.loadingExam = false;
+                                        this.examStarted(this.studentExam);
+                                    });
+                            } else {
+                                this.loadingExam = false;
+                            }
                         }
                     },
                     error: () => (this.loadingExam = false),
@@ -199,6 +205,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
+        });
+    }
+
+    loadAndDisplaySummary() {
+        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!).subscribe({
+            next: (studentExamWithExercises: StudentExam) => {
+                this.studentExam = studentExamWithExercises;
+                this.showExamSummary = true;
+                this.loadingExam = false;
+            },
+            error: () => (this.loadingExam = false),
         });
     }
 
@@ -342,24 +359,31 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }),
             )
             .subscribe({
-                next: (studentExam: StudentExam) => {
-                    if (studentExam.exam?.testExam) {
-                        // If we have a test exam, we reload the summary from the server.
-                        this.examParticipationService
-                            .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, studentExam.id!)
-                            .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
-                    } else {
-                        this.studentExam = studentExam;
+                next: () => {
+                    if (this.testExam) {
+                        // If we have a test exam, we reload the summary from the server right away
+                        this.loadAndDisplaySummary();
                     }
-                    this.alertService.addAlert({
-                        type: AlertType.SUCCESS,
-                        message: 'artemisApp.studentExam.submitSuccessful',
-                        timeout: 20000,
-                    });
+                    this.submitInProgress = false;
+
+                    // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
+                    this.studentExam.submitted = true;
+                    this.studentExam.submissionDate = dayjs();
+
+                    // Publish it so other components are aware of the change
+                    this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
+
                     if (this.testRunId) {
                         // If this is a test run, forward the user directly to the exam summary
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
                     }
+
+                    this.examSummaryButtonTimer = setInterval(() => {
+                        this.examSummaryButtonSecondsLeft -= 1;
+                        if (this.examSummaryButtonSecondsLeft === 0) {
+                            clearInterval(this.examSummaryButtonTimer);
+                        }
+                    }, 1000);
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
@@ -748,6 +772,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .pipe(
                 filter((submissionStateObj) => submissionStateObj != undefined),
                 distinctUntilChanged(),
+                tap((submissionStateObj) => {
+                    const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
+                        programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
+                    );
+                    if (exerciseForSubmission?.studentParticipations && submissionStateObj.submission?.participation) {
+                        exerciseForSubmission.studentParticipations[0] = submissionStateObj.submission.participation;
+                    }
+                }),
             )
             .subscribe((programmingSubmissionObj) => {
                 const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>

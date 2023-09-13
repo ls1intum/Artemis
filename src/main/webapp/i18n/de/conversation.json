@@ -106,6 +106,7 @@
                 "remove": "Nutzer:in entfernen"
             },
             "conversationSettings": {
+                "settingsUnavailable": "Keine Einstellungen möglich",
                 "actions": {
                     "leave": "Konversation verlassen",
                     "archiveChannel": "Kanal archivieren",

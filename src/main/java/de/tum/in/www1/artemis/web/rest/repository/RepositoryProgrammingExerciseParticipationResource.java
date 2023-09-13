@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -58,13 +57,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
     public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalCIConnectorService> localCIConnectorService) {
-        super(profileService, userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                repositoryAccessService, localCIConnectorService);
+            ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<VersionControlService> versionControlService,
+            RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalCIConnectorService> localCIConnectorService) {
+        super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
+                localCIConnectorService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
@@ -224,16 +222,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
-        return super.createFile(participationId, filename, request);
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
+        return super.createFile(participationId, filePath, request);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
-        return super.createFolder(participationId, folderName, request);
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
+        return super.createFolder(participationId, folderPath, request);
     }
 
     @Override

@@ -143,15 +143,25 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
      */
     private Stream<Arguments> languageTypeBuilder() {
         Stream.Builder<Arguments> argumentBuilder = Stream.builder();
-        // Add programming exercises that should be tested with Maven here
+        // Add programming exercises that should be tested with Maven or Gradle here
         List<ProgrammingLanguage> programmingLanguages = List.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN);
         for (ProgrammingLanguage language : programmingLanguages) {
-            List<ProjectType> projectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language).projectTypes();
+            var languageFeatures = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
+            var projectTypes = languageFeatures.projectTypes();
             if (projectTypes.isEmpty()) {
-                argumentBuilder.add(Arguments.of(language, null));
+                argumentBuilder.add(Arguments.of(language, null, false));
             }
             for (ProjectType projectType : projectTypes) {
-                argumentBuilder.add(Arguments.of(language, projectType));
+                argumentBuilder.add(Arguments.of(language, projectType, false));
+            }
+
+            if (languageFeatures.testwiseCoverageAnalysisSupported()) {
+                if (projectTypes.isEmpty()) {
+                    argumentBuilder.add(Arguments.of(language, null, true));
+                }
+                for (ProjectType projectType : projectTypes) {
+                    argumentBuilder.add(Arguments.of(language, projectType, true));
+                }
             }
         }
         return argumentBuilder.build();
@@ -160,31 +170,35 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
-        runTests(language, projectType, exerciseRepo, TestResult.FAILED);
+    void test_template_exercise(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
+        runTests(language, projectType, exerciseRepo, TestResult.FAILED, testwiseCoverageAnalysis);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
-        runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
+    void test_template_solution(ProgrammingLanguage language, ProjectType projectType, boolean testwiseCoverageAnalysis) throws Exception {
+        runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL, testwiseCoverageAnalysis);
     }
 
-    private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult) throws Exception {
+    private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult, boolean testwiseCoverageAnalysis)
+            throws Exception {
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false);
         exercise.setChannelName("exercise-pe");
+        if (testwiseCoverageAnalysis) {
+            exercise.setTestwiseCoverageEnabled(true);
+        }
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
         int exitCode;
         if (projectType != null && projectType.isGradle()) {
-            exitCode = invokeGradle();
+            exitCode = invokeGradle(testwiseCoverageAnalysis);
         }
         else {
-            exitCode = invokeMaven();
+            exitCode = invokeMaven(testwiseCoverageAnalysis);
         }
 
         if (TestResult.SUCCESSFUL.equals(testResult)) {
@@ -199,10 +213,13 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
-    private int invokeMaven() throws MavenInvocationException {
+    private int invokeMaven(boolean testwiseCoverageAnalysis) throws MavenInvocationException {
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setPomFile(testRepo.localRepoFile);
         mvnRequest.setGoals(List.of("clean", "test"));
+        if (testwiseCoverageAnalysis) {
+            mvnRequest.addArg("-Pcoverage");
+        }
         mvnRequest.setShowVersion(true);
 
         Invoker mvnInvoker = new DefaultInvoker();
@@ -212,10 +229,17 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         return result.getExitCode();
     }
 
-    private int invokeGradle() {
+    private int invokeGradle(boolean recordTestwiseCoverage) {
         try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
             BuildLauncher launcher = connector.newBuild();
-            launcher.forTasks("clean", "test");
+            String[] tasks;
+            if (recordTestwiseCoverage) {
+                tasks = new String[] { "clean", "test", "tiaTests", "--run-all-tests" };
+            }
+            else {
+                tasks = new String[] { "clean", "test" };
+            }
+            launcher.forTasks(tasks);
             launcher.run();
         }
         catch (Exception e) {
@@ -235,7 +259,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private Map<TestResult, Integer> readTestReports(String testResultPath) {
         File reportFolder = testRepo.localRepoFile.toPath().resolve(testResultPath).toFile();
-        assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles);
+        assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles, "the report folder should contain test reports");
 
         // Note that the locale does not have any effect on parsing and is only used in some other methods
         SurefireReportParser reportParser = new SurefireReportParser(List.of(reportFolder), new PrintStreamLogger(System.out));

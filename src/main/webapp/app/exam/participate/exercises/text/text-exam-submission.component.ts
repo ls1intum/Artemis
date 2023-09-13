@@ -1,9 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -35,14 +32,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     // Icons
     farListAlt = faListAlt;
 
-    constructor(
-        private textService: TextEditorService,
-        private alertService: AlertService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private translateService: TranslateService,
-        private stringCountService: StringCountService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
+    constructor(private textService: TextEditorService, private stringCountService: StringCountService, changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
     }
 

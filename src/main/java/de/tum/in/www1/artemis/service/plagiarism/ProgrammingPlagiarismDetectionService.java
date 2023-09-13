@@ -220,6 +220,7 @@ public class ProgrammingPlagiarismDetectionService {
         finally {
             cleanupResourcesAsync(programmingExercise, repositories, targetPath);
         }
+
         return result;
     }
 
@@ -251,6 +252,7 @@ public class ProgrammingPlagiarismDetectionService {
         // Create directories.
         if (!reportFolderFile.mkdirs()) {
             log.error("Cannot generate JPlag report because directories couldn't be created: {}", reportFolder);
+            // this error is unlikely to happen
             return null;
         }
 
@@ -267,11 +269,11 @@ public class ProgrammingPlagiarismDetectionService {
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final Path targetPath) {
         executor.schedule(() -> {
-            log.info("Will delete local repositories for programming exercise {}", programmingExercise.getId());
+            log.info("Will delete local repositories for programming exercise {} after plagiarism check", programmingExercise.getId());
             deleteLocalRepositories(repositories);
             // delete project root folder in the repos download folder
             programmingExerciseExportService.deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
-            log.info("Delete repositories done for programming exercise {}", programmingExercise.getId());
+            log.info("Delete local repositories done for programming exercise {} after plagiarism check", programmingExercise.getId());
         }, 10, TimeUnit.SECONDS);
     }
 

@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.math3.util.Precision;
@@ -118,17 +119,18 @@ public class ProgrammingExerciseGradingService {
      *
      * @param participation the participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
-     * @return result after compilation
+     * @return result after compilation (can only be null in case an error occurs)
      */
-    public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
+    @Nullable
+    public Result processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
-        Result newResult = null;
         try {
-            var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
+            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+            var buildResult = ciResultService.convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
-            newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
+            Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -141,7 +143,7 @@ public class ProgrammingExerciseGradingService {
                 var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
 
-                continuousIntegrationResultService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
+                ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
@@ -154,14 +156,14 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            newResult.setRatedIfNotExceeded(ExerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
+            newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
+            return processNewProgrammingExerciseResult(participation, newResult);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
+            return null;
         }
-
-        return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
     }
 
     /**

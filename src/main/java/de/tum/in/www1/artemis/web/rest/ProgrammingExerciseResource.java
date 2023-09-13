@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -108,8 +107,6 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    private final ConversationService conversationService;
-
     private final InstanceMessageSendService instanceMessageSendService;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
@@ -120,8 +117,7 @@ public class ProgrammingExerciseResource {
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ConversationService conversationService, ChannelRepository channelRepository,
-            InstanceMessageSendService instanceMessageSendService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService) {
         this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -143,7 +139,6 @@ public class ProgrammingExerciseResource {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
-        this.conversationService = conversationService;
         this.channelRepository = channelRepository;
         this.instanceMessageSendService = instanceMessageSendService;
     }
@@ -152,18 +147,21 @@ public class ProgrammingExerciseResource {
      * @param exercise the exercise object we want to check for errors
      */
     private void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if (!continuousIntegrationService.orElseThrow().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        VersionControlService versionControl = versionControlService.orElseThrow();
+
+        if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
             throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
         }
-        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControlService.orElseThrow().repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
+        if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControl.repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
             throw new BadRequestAlertException("The Template Repository URL seems to be invalid.", "Exercise",
                     ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
         }
-        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
+        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
             throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
         }
         var solutionRepositoryUrl = exercise.getVcsSolutionRepositoryUrl();
-        if (solutionRepositoryUrl != null && !versionControlService.get().repositoryUrlIsValid(solutionRepositoryUrl)) {
+        if (solutionRepositoryUrl != null && !versionControl.repositoryUrlIsValid(solutionRepositoryUrl)) {
             throw new BadRequestAlertException("The Solution Repository URL seems to be invalid.", "Exercise",
                     ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
         }
@@ -453,7 +451,6 @@ public class ProgrammingExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        conversationService.deregisterAllClientsFromChannel(programmingExercise);
         exerciseDeletionService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }

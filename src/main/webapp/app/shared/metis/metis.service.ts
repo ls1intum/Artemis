@@ -30,8 +30,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -40,6 +40,7 @@ export class MetisService implements OnDestroy {
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
 
     private currentPostContextFilter: PostContextFilter = {};
+    private currentConversation?: ConversationDto = undefined;
     private user: User;
     private pageType: PageType;
     private course: Course;
@@ -165,8 +166,9 @@ export class MetisService implements OnDestroy {
      * informs all components that subscribed on posts by sending the newly fetched posts
      * @param {PostContextFilter} postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
      * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
+     * @param conversation active conversation if available
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
+    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDto | undefined = undefined): void {
         // store value for promise
         this.forceUpdate = forceUpdate;
 
@@ -180,6 +182,7 @@ export class MetisService implements OnDestroy {
             postContextFilter?.page !== this.currentPostContextFilter?.page
         ) {
             this.currentPostContextFilter = postContextFilter;
+            this.currentConversation = conversation;
             this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
                 if (!forceUpdate && PageType.OVERVIEW === this.pageType) {
                     // if infinite scroll enabled, add fetched posts to the end of cachedPosts
@@ -511,7 +514,7 @@ export class MetisService implements OnDestroy {
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
                 this.currentPostContextFilter.page = 0;
-                this.getFilteredPosts(this.currentPostContextFilter);
+                this.getFilteredPosts(this.currentPostContextFilter, true, this.currentConversation);
                 this.currentPostContextFilter.pageSize = oldPageSize;
                 this.currentPostContextFilter.page = oldPage;
             } else {
@@ -528,7 +531,9 @@ export class MetisService implements OnDestroy {
      */
     private createSubscriptionFromPostContextFilter(): void {
         let channel = MetisWebsocketChannelPrefix;
-        if (this.currentPostContextFilter.conversationId) {
+        if (getAsChannelDto(this.currentConversation)?.isCourseWide) {
+            channel = `${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
+        } else if (this.currentPostContextFilter.conversationId) {
             channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case

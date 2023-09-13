@@ -276,6 +276,17 @@
             <span [innerHTML]="'artemisApp.competency.competencyButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
+            *ngIf="course.isAtLeastInstructor"
+            [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
+            [routerLink]="['/course-management', course.id, 'learning-path-management']"
+            class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+            [ngbTooltip]="'artemisApp.learningPath.learningPathButton' | artemisTranslate"
+            id="course-card-open-learning-paths"
+        >
+            <fa-icon [icon]="faNetworkWired"></fa-icon>
+            <span [innerHTML]="'artemisApp.learningPath.learningPathButton' | artemisTranslate" class="d-none d-xl-inline"></span>
+        </a>
+        <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
             class="btn btn-info me-1 mb-1"

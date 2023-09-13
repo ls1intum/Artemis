@@ -58,7 +58,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT COUNT(p.id) > 0
             FROM StudentParticipation p
-            LEFT JOIN p.team.students ts
+                LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                 AND (p.student.id = :studentId OR ts.id = :studentId)
              """)
@@ -69,7 +69,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             WHERE p.testRun = false
-                AND p.exercise.exerciseGroup.exam.id = :#{#examId}
+                AND p.exercise.exerciseGroup.exam.id = :examId
                 AND r.rated = true
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
@@ -298,14 +298,25 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results
-            left join fetch p.submissions s
-            where p.exercise.id = :#{#exerciseId}
-                and p.student.id = :#{#studentId}
-                and (s.type <> 'ILLEGAL' or s.type is null)
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
              """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+             """)
+    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
             select distinct p from StudentParticipation p
@@ -549,8 +560,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.testRun = FALSE
-                AND p.student.id = :#{#studentId}
-                AND p.exercise in :#{#exercises}
+                AND p.student.id = :studentId
+                AND p.exercise in :exercises
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
@@ -789,19 +800,32 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     /**
-     * Get all participations for the given studentExam and exercises combined with their submissions, but without results and assessors.
+     * Get all participations for the given studentExam and exercises (not necessarily all exercise of the student exam)
+     * Combines the participations with their submissions, but without results and assessors.
+     * Distinguishes between student exams and test runs and only loads the respective participations
+     *
+     * @param studentExam studentExam with exercises loaded
+     * @param exercises   exercises for which participations should be loaded
+     * @return student's participations with submissions and results
+     */
+    default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam, List<Exercise> exercises) {
+        if (studentExam.isTestRun()) {
+            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissions(studentExam.getUser().getId(), exercises);
+        }
+        else {
+            return findByStudentIdAndIndividualExercisesWithEagerSubmissionsIgnoreTestRuns(studentExam.getUser().getId(), exercises);
+        }
+    }
+
+    /**
+     * Get all participations for all exercises of the given studentExam combined with their submissions, but without results and assessors.
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
      * @param studentExam studentExam with exercises loaded
      * @return student's participations with submissions and results
      */
     default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam) {
-        if (studentExam.isTestRun()) {
-            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissions(studentExam.getUser().getId(), studentExam.getExercises());
-        }
-        else {
-            return findByStudentIdAndIndividualExercisesWithEagerSubmissionsIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
-        }
+        return findByStudentExamWithEagerSubmissions(studentExam, studentExam.getExercises());
     }
 
     /**

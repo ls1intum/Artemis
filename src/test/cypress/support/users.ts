@@ -10,6 +10,7 @@ export const USER_ID = {
     studentOne: 100,
     studentTwo: 102,
     studentThree: 104,
+    studentFour: 106,
     instructor: 103,
     tutor: 101,
 };
@@ -18,6 +19,7 @@ export const USER_ROLE = {
     studentOne: UserRole.Student,
     studentTwo: UserRole.Student,
     studentThree: UserRole.Student,
+    studentFour: UserRole.Student,
     instructor: UserRole.Instructor,
     tutor: UserRole.Tutor,
 };
@@ -54,6 +56,13 @@ export class CypressUserManagement {
      */
     public getStudentThree(): CypressCredentials {
         return this.getUserWithId(USER_ID.studentThree);
+    }
+
+    /**
+     * @returns the fourth testing account with student rights.
+     */
+    public getStudentFour(): CypressCredentials {
+        return this.getUserWithId(USER_ID.studentFour);
     }
 
     /**
@@ -115,6 +124,7 @@ export const tutor = users.getTutor();
 export const studentOne = users.getStudentOne();
 export const studentTwo = users.getStudentTwo();
 export const studentThree = users.getStudentThree();
+export const studentFour = users.getStudentFour();
 
 /**
  * Container class for user credentials.

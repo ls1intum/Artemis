@@ -1,4 +1,3 @@
-import { CypressCredentials } from './users';
 // ***********************************************
 // This example commands.js shows you how to
 // create various custom commands and overwrite
@@ -26,6 +25,7 @@ import { CypressCredentials } from './users';
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
 import { BASE_API, POST } from './constants';
+import { CypressCredentials } from './users';
 
 export {};
 
