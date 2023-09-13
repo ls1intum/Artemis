@@ -361,12 +361,12 @@ class ProgrammingPlagiarismDetectionService {
         }
     }
 
-    private boolean shouldAddRepo(ProgrammingExercise programmingExercise, int minimumSize, Repository repo, Optional<Repository> templateRepo) {
+    private boolean shouldAddRepo(int minimumSize, Repository repo, Optional<Repository> templateRepo) {
         if (templateRepo.isEmpty()) {
             return true;
         }
 
-        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(programmingExercise.getVcsTemplateRepositoryUrl(), repo.getLocalPath(),
+        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUrl(), repo.getLocalPath(),
                 templateRepo.get().getRemoteRepositoryUrl(), templateRepo.get().getLocalPath());
         return diffToTemplate >= minimumSize;
     }
@@ -391,7 +391,7 @@ class ProgrammingPlagiarismDetectionService {
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginHead(repo); // start with clean state
 
-                if (shouldAddRepo(programmingExercise, minimumSize, repo, templateRepo)) {
+                if (shouldAddRepo(minimumSize, repo, templateRepo)) {
                     downloadedRepositories.add(repo);
                 }
                 else {
