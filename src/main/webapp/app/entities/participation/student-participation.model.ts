@@ -23,7 +23,7 @@ export function isPracticeMode(studentParticipation: StudentParticipation | unde
 /**
  * Stores whether the participation is used for practicing in a course exercise.
  * @param studentParticipation the participation that should store if it is used for practicing
- * @param practiceMode true, if it used for practicing
+ * @param practiceMode true, if it is used for practicing
  */
 export function setPracticeMode(studentParticipation: StudentParticipation | undefined, practiceMode: boolean) {
     if (studentParticipation) {
