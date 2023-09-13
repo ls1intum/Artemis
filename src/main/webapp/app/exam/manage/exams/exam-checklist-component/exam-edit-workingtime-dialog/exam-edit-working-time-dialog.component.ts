@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
+
 import { Exam } from 'app/entities/exam.model';
-import { EntityResponseType, ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-edit-working-time-dialog',
@@ -44,7 +46,7 @@ export class ExamEditWorkingTimeDialogComponent {
         if (!this.isWorkingTimeValid()) return;
         this.isLoading = true;
         this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.workingTimeSeconds).subscribe({
-            next: (res: EntityResponseType) => {
+            next: (res: HttpResponse<Exam>) => {
                 this.isLoading = false;
                 res.body && this.examChange?.(res.body);
                 this.clear();

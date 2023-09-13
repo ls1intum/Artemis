@@ -21,8 +21,8 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
 
-export type EntityResponseType = HttpResponse<Exam>;
-export type EntityArrayResponseType = HttpResponse<Exam[]>;
+type EntityResponseType = HttpResponse<Exam>;
+type EntityArrayResponseType = HttpResponse<Exam[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExamManagementService {
@@ -67,7 +67,7 @@ export class ExamManagementService {
      */
     updateWorkingTime(courseId: number, examId: number, workingTimeChange: number): Observable<EntityResponseType> {
         return this.http
-            .patch(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/working-time`, workingTimeChange, { observe: 'response' })
+            .patch(`${this.resourceUrl}/${courseId}/exams/${examId}/working-time`, workingTimeChange, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 

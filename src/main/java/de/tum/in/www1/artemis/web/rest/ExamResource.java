@@ -241,14 +241,14 @@ public class ExamResource {
     }
 
     /**
-     * PATCH /courses/{courseId}/exams/{examId}/student-exams/working-time : Update the working time of all exams
+     * PATCH /courses/{courseId}/exams/{examId}/working-time : Update the working time of all exams
      *
      * @param courseId          the course ID to which the exam belong to
      * @param examId            the exam ID the working time should be extended for
      * @param workingTimeChange the working time change in seconds (can be positive or negative, but must not be 0)
      * @return the ResponseEntity with status 200 (OK) and with the updated exam as body
      */
-    @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/working-time")
+    @PatchMapping("/courses/{courseId}/exams/{examId}/working-time")
     @EnforceAtLeastInstructor
     public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Integer workingTimeChange) {
         log.debug("REST request to update the working time of exam with id {}", examId);
