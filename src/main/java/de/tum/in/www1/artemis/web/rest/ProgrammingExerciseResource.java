@@ -177,8 +177,8 @@ public class ProgrammingExerciseResource {
         }
 
         if (exercise.getBranch() == null) {
+            // TODO: only activate this after the migration where all branches are set properly
             log.warn("Branch of programming exercise {} is not specified.", exercise.getId());
-            // TODO: only activate this exception after the migration where all branches are set properly in the database to avoid issues
             // throw new BadRequestAlertException("The branch of the programming exercise must be set.", "Exercise",
             // ProgrammingExerciseResourceErrorKeys.INVALID_BRANCH);
         }
