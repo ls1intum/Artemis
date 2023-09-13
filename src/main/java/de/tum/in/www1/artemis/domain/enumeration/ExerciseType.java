@@ -38,6 +38,7 @@ public enum ExerciseType {
     /**
      * Get the exercise type based on a class.
      *
+     * @param exerciseClass the class for which the ExerciseType should be returned
      * @return the exercise type corresponding to the class
      */
     public static ExerciseType getExerciseTypeFromClass(Class<? extends Exercise> exerciseClass) {
