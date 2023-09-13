@@ -64,24 +64,27 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
 
     private User user;
 
+    private long sizeBefore;
+
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         final Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
-        exercise.setReleaseDate(now().plus(500, ChronoUnit.MILLIS));
-        exercise.setAssessmentDueDate(now().plus(2, ChronoUnit.SECONDS));
-        exerciseRepository.save(exercise);
+
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+        sizeBefore = notificationRepository.count();
     }
 
     @Test
     @Timeout(10)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
-        long sizeBefore = notificationRepository.count();
         notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
+        exercise.setReleaseDate(now().plus(200, ChronoUnit.MILLIS));
+        exerciseRepository.saveAndFlush(exercise);
+
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > sizeBefore);
         verify(groupNotificationService, timeout(4000)).notifyAllGroupsAboutReleasedExercise(exercise);
@@ -92,7 +95,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     @Timeout(10)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtAssessmentDueDate() {
-        long sizeBefore = notificationRepository.count();
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
         textSubmission.submitted(true);
@@ -104,7 +106,8 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         resultRepository.save(manualResult);
 
         notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
-
+        exercise.setAssessmentDueDate(now().plus(200, ChronoUnit.MILLIS));
+        exerciseRepository.saveAndFlush(exercise);
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
         await().until(() -> notificationRepository.count() > sizeBefore);
