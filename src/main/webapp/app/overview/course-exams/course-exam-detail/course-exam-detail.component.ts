@@ -24,7 +24,7 @@ export const enum ExamState {
     STUDENTREVIEW = 'STUDENTREVIEW',
     // Case 7: Fallback
     UNDEFINED = 'UNDEFINED',
-    // Case 99: No more attempts
+    // Case 8: No more attempts
     NO_MORE_ATTEMPTS = 'NO_MORE_ATTEMPTS',
 }
 
@@ -119,12 +119,14 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
 
     updateExamStateWithStudentExamOrTestExam() {
         if (!this.studentExam && !this.exam.testExam && this.course?.id && this.exam?.id) {
-            this.examParticipationService.getOwnStudentExam(this.course.id, this.exam.id).subscribe({
-                next: (studentExam) => {
-                    this.studentExam = studentExam;
-                    this.updateExamStateWithLoadedStudentExamOrTestExam();
-                },
-            });
+            this.examParticipationService
+                .getOwnStudentExam(this.course.id, this.exam.id)
+                .subscribe({
+                    next: (studentExam) => {
+                        this.studentExam = studentExam;
+                    },
+                })
+                .add(() => this.updateExamStateWithLoadedStudentExamOrTestExam());
         } else {
             this.updateExamStateWithLoadedStudentExamOrTestExam();
         }
@@ -134,7 +136,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
         const potentialLaterEndDate = this.studentExam?.workingTime ? dayjs(this.exam.startDate).add(this.studentExam.workingTime, 'seconds') : undefined;
         const noOrOverPotentialLaterEndDate = !potentialLaterEndDate || dayjs().isAfter(potentialLaterEndDate);
         if ((!this.studentExam || (!this.studentExam.submitted && noOrOverPotentialLaterEndDate)) && !this.exam.testExam) {
-            // Normal exam is over and student did not participate (no student exam was loaded or not submitted). We can cancel the subscription and the exam is closed
+            // Normal exam is over and student did not participate (no student exam was loaded nor submitted). We can cancel the subscription and the exam is closed
             this.examState = ExamState.CLOSED;
             this.cancelExamStateSubscription();
             return;
