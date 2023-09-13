@@ -88,8 +88,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
         var filePart = createLectureFile(true);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePart, LectureUnitInformationDTO.class, HttpStatus.OK);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
@@ -100,15 +100,15 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
         var filePart = createLectureFile(true);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePart, LectureUnitInformationDTO.class, HttpStatus.OK);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "");
 
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
+        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
 
         assertThat(attachmentUnits).hasSize(2);
@@ -126,7 +126,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldThrowError() throws Exception {
         var filePartWord = createLectureFile(false);
         // if trying to process not the right pdf file then it should throw server error
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartWord, LectureUnitInformationDTO.class,
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartWord, LectureUnitInformationDTO.class,
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -136,11 +136,11 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var filePartPDF = createLectureFile(true);
         var filePartWord = createLectureFile(false);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartPDF,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePartPDF, LectureUnitInformationDTO.class, HttpStatus.OK);
 
         // if trying to create multiple units with not the right pdf file then it should throw error
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
                 AttachmentUnit[].class, HttpStatus.BAD_REQUEST);
     }
 
@@ -149,15 +149,15 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldRemoveSolutionSlides_and_removeBreakSlides() throws Exception {
         var filePart = createLectureFile(true);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePart, LectureUnitInformationDTO.class, HttpStatus.OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         var commaSeparatedKeyPhrases = String.join(",", new String[] { "Break", "Example solution" });
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
 
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
+        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
         assertThat(attachmentUnits).hasSize(2);
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment units (1 break slide is removed and 1 solution slide is removed)
@@ -190,10 +190,10 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLectureFile(true), LectureUnitInformationDTO.class,
-                HttpStatus.FORBIDDEN);
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO", createLectureFile(true),
-                AttachmentUnit[].class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLectureFile(true),
+                LectureUnitInformationDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO",
+                createLectureFile(true), AttachmentUnit[].class, HttpStatus.FORBIDDEN);
     }
 
     /**

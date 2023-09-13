@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api-lecture")
 @Profile("!decoupling || lecture")
 public class OnlineUnitResource {
 

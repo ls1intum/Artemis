@@ -54,9 +54,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.put("/api/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
-        request.post("/api/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
-        request.get("/api/lectures/" + lecture.getId() + "/text-units/0", HttpStatus.FORBIDDEN, TextUnit.class);
+        request.put("/api-lecture/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
+        request.post("/api-lecture/lectures/" + lecture.getId() + "/text-units", textUnit, HttpStatus.FORBIDDEN);
+        request.get("/api-lecture/lectures/" + lecture.getId() + "/text-units/0", HttpStatus.FORBIDDEN, TextUnit.class);
     }
 
     @Test
@@ -74,7 +74,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
-        var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
+        var persistedTextUnit = request.postWithResponseBody("/api-lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
         assertThat(persistedTextUnit.getName()).isEqualTo("LoremIpsum");
     }
@@ -82,21 +82,21 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor42", roles = "EDITOR")
     void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
-        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
-        request.postWithResponseBody("/api/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api-lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api-lecture/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
         textUnit.setLecture(new Lecture());
-        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CONFLICT);
+        request.postWithResponseBody("/api-lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CONFLICT);
         textUnit.setId(21312321L);
-        request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api-lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateTextUnit_asEditor_shouldUpdateTextUnit() throws Exception {
         persistTextUnitWithLecture();
-        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
+        TextUnit textUnitFromRequest = request.get("/api-lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         textUnitFromRequest.setContent("Changed");
-        TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
+        TextUnit updatedTextUnit = request.putWithResponseBody("/api-lecture/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
     }
 
@@ -113,7 +113,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         List<LectureUnit> orderedUnits = lecture.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
-        request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
+        request.putWithResponseBody("/api-lecture/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
 
         List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
@@ -123,18 +123,18 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
         persistTextUnitWithLecture();
-        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
+        TextUnit textUnitFromRequest = request.get("/api-lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         textUnitFromRequest.setId(null);
-        request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api-lecture/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.BAD_REQUEST);
 
-        request.get("/api/lectures/" + "2379812738912" + "/text-units/" + this.textUnit.getId(), HttpStatus.CONFLICT, TextUnit.class);
+        request.get("/api-lecture/lectures/" + "2379812738912" + "/text-units/" + this.textUnit.getId(), HttpStatus.CONFLICT, TextUnit.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getTextUnit_correctId_shouldReturnTextUnit() throws Exception {
         persistTextUnitWithLecture();
-        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
+        TextUnit textUnitFromRequest = request.get("/api-lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         assertThat(this.textUnit.getId()).isEqualTo(textUnitFromRequest.getId());
     }
 
@@ -143,8 +143,8 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
         persistTextUnitWithLecture();
         assertThat(this.textUnit.getId()).isNotNull();
-        request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
+        request.delete("/api-lecture/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
+        request.get("/api-lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
     }
 
     private void persistTextUnitWithLecture() {

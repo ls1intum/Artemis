@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Lecture.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api-lecture")
 @Profile("!decoupling || lecture")
 public class LectureResource {
 
@@ -110,7 +110,7 @@ public class LectureResource {
         Lecture savedLecture = lectureRepository.save(lecture);
         channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
 
-        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
+        return ResponseEntity.created(new URI("/api-lecture/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
@@ -251,7 +251,7 @@ public class LectureResource {
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
         channelService.createLectureChannel(savedLecture, Optional.empty());
 
-        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
+        return ResponseEntity.created(new URI("/api-lecture/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**

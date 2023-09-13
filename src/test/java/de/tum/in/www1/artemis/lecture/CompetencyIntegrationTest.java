@@ -489,7 +489,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_asInstructor_shouldUpdateCompetency() throws Exception {
-        request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
+        request.delete("/api-lecture/lectures/" + lecture.getId(), HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getLectureUnits()).isEmpty();
     }
@@ -497,7 +497,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_asInstructor_shouldUpdateCompetency() throws Exception {
-        request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + idOfTextUnitOfLectureOne, HttpStatus.OK);
+        request.delete("/api-lecture/lectures/" + lecture.getId() + "/lecture-units/" + idOfTextUnitOfLectureOne, HttpStatus.OK);
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getLectureUnits()).isEmpty();
     }
