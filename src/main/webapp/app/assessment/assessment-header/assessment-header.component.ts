@@ -94,13 +94,12 @@ export class AssessmentHeaderComponent {
         if (this.result?.completionDate) {
             return true;
         } else {
-            const isBusy = this.saveBusy || this.submitBusy || this.cancelBusy;
-            // the presence of an assessment note can short-circuit some of the criteria for a save, since it might be
-            // desirable to save the internal note before starting with the actual assessment
             if (this.result && Result.hasNonEmptyAssessmentNote(this.result)) {
-                return isBusy;
+                // having an assessment note bypasses the valid assessment check
+                // this is not dangerous because it only affects saving, not submitting
+                return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
             } else {
-                return !this.assessmentsAreValid || !this.isAssessor || isBusy;
+                return this.submitDisabled;
             }
         }
     }
