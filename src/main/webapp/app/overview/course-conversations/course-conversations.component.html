@@ -3,7 +3,9 @@
         <div *ngIf="course">
             <jhi-course-conversations-code-of-conduct [course]="course!"></jhi-course-conversations-code-of-conduct>
         </div>
-        <button class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">{{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}</button>
+        <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
+            {{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}
+        </button>
     </div>
     <div class="row mt-2" *ngIf="isCodeOfConductAccepted && isServiceSetUp && course">
         <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">

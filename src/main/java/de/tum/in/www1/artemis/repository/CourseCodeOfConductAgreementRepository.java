@@ -10,10 +10,10 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.CourseCodeOfConductAgreement;
 
 /**
- * Spring Data repository for the Code of Conduct entity.
+ * Spring Data repository for the Code of Conduct Agreement entity.
  */
 @Repository
-public interface CourseCodeOfConductRepository extends JpaRepository<CourseCodeOfConductAgreement, Long> {
+public interface CourseCodeOfConductAgreementRepository extends JpaRepository<CourseCodeOfConductAgreement, Long> {
 
     /**
      * Find the user's agreement to a course's code of conduct.

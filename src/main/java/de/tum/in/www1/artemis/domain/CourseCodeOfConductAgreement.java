@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 @Entity
 @Table(name = "course_code_of_conduct_agreement")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class CourseCodeOfConduct extends DomainObject {
+public class CourseCodeOfConductAgreement extends DomainObject {
 
     @ManyToOne
     @JsonIncludeProperties({ "id" })
@@ -27,8 +27,8 @@ public class CourseCodeOfConduct extends DomainObject {
     @NotNull
     private User user;
 
-    @Column(name = "is_code_of_conduct_accepted")
-    private Boolean isCodeOfConductAccepted;
+    @Column(name = "is_accepted")
+    private Boolean isAccepted;
 
     public Course getCourse() {
         return course;
@@ -46,11 +46,11 @@ public class CourseCodeOfConduct extends DomainObject {
         this.user = user;
     }
 
-    public Boolean getIsCodeOfConductAccepted() {
-        return isCodeOfConductAccepted;
+    public Boolean getIsAccepted() {
+        return isAccepted;
     }
 
-    public void setIsCodeOfConductAccepted(Boolean isCodeOfConductAccepted) {
-        this.isCodeOfConductAccepted = isCodeOfConductAccepted;
+    public void setIsAccepted(Boolean isAccepted) {
+        this.isAccepted = isAccepted;
     }
 }
