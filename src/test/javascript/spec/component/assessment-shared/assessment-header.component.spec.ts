@@ -24,6 +24,7 @@ import { of } from 'rxjs';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { AssessmentNote } from 'app/entities/assessment-note.model';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -383,5 +384,24 @@ describe('AssessmentHeaderComponent', () => {
 
         expect(spyOnControlShiftAndArrowRight).toHaveBeenCalledOnce();
         expect(nextSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should enable saving after entering an internal assessment note', () => {
+        expect(component.saveDisabled).toBeTruthy();
+        component.isAssessor = true;
+        component.result = new Result();
+        component.result.assessmentNote = new AssessmentNote();
+        expect(component.saveDisabled).toBeTruthy();
+        component.result.assessmentNote.note = 'some input';
+        expect(component.saveDisabled).toBeFalsy();
+    });
+
+    it('should not enable submitting after entering an internal assessment note', () => {
+        expect(component.submitDisabled).toBeTruthy();
+        component.isAssessor = true;
+        component.result = new Result();
+        component.result.assessmentNote = new AssessmentNote();
+        component.result.assessmentNote.note = 'some input';
+        expect(component.submitDisabled).toBeTruthy();
     });
 });
