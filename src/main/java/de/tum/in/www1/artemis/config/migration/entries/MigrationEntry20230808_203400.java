@@ -175,16 +175,11 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                         templateParticipation.getProgrammingExercise().getId());
                 return templateParticipation;
             }).filter(Objects::nonNull).map(templateParticipation -> {
-                String branch = templateParticipation.getProgrammingExercise().getBranch();
+                String branch = versionControlService.getOrRetrieveBranchOfExercise(templateParticipation.getProgrammingExercise());
                 if (branch == null || branch.isEmpty()) {
-                    branch = versionControlService.getDefaultBranchOfRepository(templateParticipation.getVcsRepositoryUrl());
-                    templateParticipation.getProgrammingExercise().setBranch(branch);
-                    programmingExerciseRepository.save(templateParticipation.getProgrammingExercise());
-                    if (branch == null) {
-                        log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                                templateParticipation.getProgrammingExercise().getId(), templateParticipation.getBuildPlanId());
-                        return null;
-                    }
+                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                            templateParticipation.getProgrammingExercise().getId(), templateParticipation.getBuildPlanId());
+                    return null;
                 }
                 return templateParticipation;
             }).filter(Objects::nonNull).forEach(templateParticipation -> {
@@ -211,16 +206,11 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 }
                 return solutionParticipation;
             }).filter(Objects::nonNull).map(solutionParticipation -> {
-                String branch = solutionParticipation.getProgrammingExercise().getBranch();
+                String branch = versionControlService.getOrRetrieveBranchOfExercise(solutionParticipation.getProgrammingExercise());
                 if (branch == null || branch.isEmpty()) {
-                    branch = versionControlService.getDefaultBranchOfRepository(solutionParticipation.getVcsRepositoryUrl());
-                    solutionParticipation.getProgrammingExercise().setBranch(branch);
-                    programmingExerciseRepository.save(solutionParticipation.getProgrammingExercise());
-                    if (branch == null) {
-                        log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                                solutionParticipation.getProgrammingExercise().getId(), solutionParticipation.getBuildPlanId());
-                        return null;
-                    }
+                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                            solutionParticipation.getProgrammingExercise().getId(), solutionParticipation.getBuildPlanId());
+                    return null;
                 }
                 return solutionParticipation;
             }).filter(Objects::nonNull).forEach(solutionParticipation -> {
@@ -248,16 +238,11 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 }
                 return studentParticipation;
             }).filter(Objects::nonNull).map(studentParticipation -> {
-                String branch = studentParticipation.getBranch();
+                String branch = versionControlService.getOrRetrieveBranchOfStudentParticipation(studentParticipation);
                 if (branch == null || branch.isEmpty()) {
-                    branch = versionControlService.getDefaultBranchOfRepository(studentParticipation.getVcsRepositoryUrl());
-                    studentParticipation.setBranch(branch);
-                    programmingExerciseStudentParticipationRepository.save(studentParticipation);
-                    if (branch == null) {
-                        log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                                studentParticipation.getProgrammingExercise().getId(), studentParticipation.getBuildPlanId());
-                        return null;
-                    }
+                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                            studentParticipation.getProgrammingExercise().getId(), studentParticipation.getBuildPlanId());
+                    return null;
                 }
                 return studentParticipation;
             }).filter(Objects::nonNull).forEach(studentParticipation -> {
@@ -271,6 +256,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             log.info("Migrated {} / {} programming exercises in current thread", Math.min(exerciseCount, batch + 1), exerciseCount);
             log.info("Migrated batch in {}ms", System.currentTimeMillis() - batchStart);
         }
+
     }
 
     /**
