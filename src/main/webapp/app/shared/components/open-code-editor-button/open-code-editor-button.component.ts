@@ -4,6 +4,7 @@ import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-open-code-editor-button',
@@ -11,6 +12,7 @@ import { Exercise } from 'app/entities/exercise.model';
 })
 export class OpenCodeEditorButtonComponent implements OnChanges {
     readonly FeatureToggle = FeatureToggle;
+    readonly isPracticeMode = isPracticeMode;
 
     @Input()
     loading = false;
@@ -38,6 +40,6 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
     }
 
     switchPracticeMode() {
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !this.activeParticipation.testRun)!;
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !isPracticeMode(this.activeParticipation))!;
     }
 }
