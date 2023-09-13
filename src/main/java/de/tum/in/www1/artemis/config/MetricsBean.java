@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -45,7 +46,11 @@ public class MetricsBean {
 
     private static final int LOGGING_DELAY_SECONDS = 10;
 
-    private static final int[] minuteRanges = { 15, 30, 45, 60, 120 };
+    /**
+     * Some metrics (e.g. the number of upcoming exercises) are calculated for multiple lookahead periods.
+     * Each period/range is exposed as metrics with a according tag "range"
+     */
+    private static final int[] MINUTE_RANGES_LOOKAHEAD = { 15, 30, 45, 60, 120 };
 
     private final MeterRegistry meterRegistry;
 
@@ -112,6 +117,8 @@ public class MetricsBean {
 
     private MultiGauge releaseExamStudentMultiplierGauge;
 
+    private boolean scheduledMetricsEnabled = false;
+
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
@@ -131,9 +138,14 @@ public class MetricsBean {
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
-        registerExerciseAndExamMetrics();
 
-        registerPublicArtemisMetrics();
+        if (this.env.acceptsProfiles(Profiles.of("scheduling"))) {
+            // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
+            this.scheduledMetricsEnabled = true;
+
+            registerExerciseAndExamMetrics();
+            registerPublicArtemisMetrics();
+        }
 
         // the data source is optional as it is not used during testing
         hikariDataSource.ifPresent(this::registerDatasourceMetrics);
@@ -214,6 +226,9 @@ public class MetricsBean {
         return userRegistry.getUsers().stream().flatMap(user -> user.getSessions().stream()).map(session -> session.getSubscriptions().size()).reduce(0, Integer::sum);
     }
 
+    /**
+     * Register metrics for exercises and exams
+     */
     private void registerExerciseAndExamMetrics() {
         dueExerciseGauge = MultiGauge.builder("artemis.scheduled.exercises.due.count").description("Number of exercises ending within the next minutes").register(meterRegistry);
         releaseExerciseGauge = MultiGauge.builder("artemis.scheduled.exercises.release.count").description("Number of exercises starting within the next minutes")
@@ -226,6 +241,9 @@ public class MetricsBean {
         registerStudentExamMetrics();
     }
 
+    /**
+     * Register metrics for exercises, multiplied with the student that are enrolled for the exercise
+     */
     private void registerStudentExerciseMetrics() {
         dueExerciseStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exercises.due.student_multiplier")
                 .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
@@ -239,6 +257,9 @@ public class MetricsBean {
                 .register(meterRegistry);
     }
 
+    /**
+     * Register metrics for exams, multiplied with the student that are enrolled for the exam
+     */
     private void registerStudentExamMetrics() {
         dueExamStudentMultiplierGauge = MultiGauge.builder("artemis.scheduled.exams.due.student_multiplier")
                 .description("Number of exams ending within the next minutes multiplied with students in the course").register(meterRegistry);
@@ -247,11 +268,15 @@ public class MetricsBean {
     }
 
     /**
-     * Update student multiplier metrics that are exposed via Prometheus.
-     * The update (and recalculation) is performed every 1 minutes.
+     * Update exams & exercise metrics.
+     * The update (and recalculation) is performed every 5 minutes.
+     * Only executed if the "scheduling"-profile is present.
      */
     @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 0) // Every 5 minutes
     public void recalculateMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -262,16 +287,16 @@ public class MetricsBean {
 
         // Exercise metrics
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseGauge, activeUserNames,
-                (now, endDate, _ignored) -> exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, activeUserNames,
-                (now, endDate, _ignored) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, activeUserNames,
                 exerciseRepository::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
 
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, activeUserNames,
-                (now, endDate, _ignored) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, activeUserNames,
-                (now, endDate, _ignored) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, activeUserNames,
                 exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
@@ -288,21 +313,54 @@ public class MetricsBean {
     @FunctionalInterface
     interface NowEndDateActiveUserNamesMetricsEntryFunction {
 
+        /**
+         * This interface is used to calculate and expose metrics that are based on
+         * - the current date
+         * - an end date (which is the current date + one of the values of MINUTE_RANGES_LOOKAHEAD), and
+         * - a list of active users (that is, users that created a submission within the last 14 days).
+         *
+         * The implementing method may decide to ignore certain arguments.
+         * The method returns a list of ExerciseTypeMetricsEntries, that each correspond to an exercise type and a value.
+         *
+         * @param now             the current time
+         * @param endDate         the end date that should be taken into consideration
+         * @param activeUserNames a list of users that was active within the last 14 days
+         * @return a list of ExerciseTypeMetricsEntry (one for each exercise type) - if for one exercise type no value is returned, 0 will be assumed
+         */
         List<ExerciseTypeMetricsEntry> apply(ZonedDateTime now, ZonedDateTime endDate, List<String> activeUserNames);
     }
 
     @FunctionalInterface
     interface NowEndDateActiveUserNamesIntegerFunction {
 
+        /**
+         * This interface is used to calculate and expose metrics that are based on
+         * - the current date, and
+         * - an end date (which is the current date + one of the values of MINUTE_RANGES_LOOKAHEAD).
+         *
+         * The implementing method may decide to ignore certain arguments.
+         * The method returns an integer, representing the corresponding value.
+         *
+         * @param now     the current time
+         * @param endDate the end date that should be taken into consideration
+         * @return the corresponding value
+         */
         Integer apply(ZonedDateTime now, ZonedDateTime endDate);
     }
 
+    /**
+     * Update the given multiGauge for each of the values of MINUTE_RANGES_LOOKAHEAD and the given function
+     *
+     * @param multiGauge               the gauge that should be updated
+     * @param activeUserNames          a list of active users that the databaseRetrieveFunction may use
+     * @param databaseRetrieveFunction a function that returns a list of ExerciseTypeMetricsEntries, one for each exercise type (if one exercise type is missing, 0 will be assumed)
+     */
     private void updateMultiGaugeMetricsEntryForMinuteRanges(MultiGauge multiGauge, List<String> activeUserNames,
             NowEndDateActiveUserNamesMetricsEntryFunction databaseRetrieveFunction) {
         var now = ZonedDateTime.now();
         var results = new ArrayList<MultiGauge.Row<?>>();
 
-        for (var minutes : minuteRanges) {
+        for (var minutes : MINUTE_RANGES_LOOKAHEAD) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
             var result = databaseRetrieveFunction.apply(now, endDate, activeUserNames);
             extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
@@ -311,11 +369,17 @@ public class MetricsBean {
         multiGauge.register(results, true);
     }
 
+    /**
+     * Update the given multiGauge for each of the values of MINUTE_RANGES_LOOKAHEAD and the given function
+     *
+     * @param multiGauge               the gauge that should be updated
+     * @param databaseRetrieveFunction a function that returns an integer
+     */
     private void updateMultiGaugeIntegerForMinuteRanges(MultiGauge multiGauge, NowEndDateActiveUserNamesIntegerFunction databaseRetrieveFunction) {
         var now = ZonedDateTime.now();
         var results = new ArrayList<MultiGauge.Row<?>>();
 
-        for (var minutes : minuteRanges) {
+        for (var minutes : MINUTE_RANGES_LOOKAHEAD) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
             var result = databaseRetrieveFunction.apply(now, endDate);
             results.add(MultiGauge.Row.of(Tags.of("range", String.valueOf(minutes)), result));
@@ -324,6 +388,9 @@ public class MetricsBean {
         multiGauge.register(results, true);
     }
 
+    /**
+     * Register publicly exposed metrics.
+     */
     private void registerPublicArtemisMetrics() {
         SecurityUtils.setAuthorizationObject();
 
@@ -349,10 +416,14 @@ public class MetricsBean {
 
     /**
      * Update artemis public Artemis metrics that are exposed via Prometheus.
-     * The update (and recalculation) is performed every 15 minutes.
+     * The update (and recalculation) is performed every 60 minutes.
+     * Only executed if the "scheduling"-profile is present.
      */
-    @Scheduled(fixedRate = 15 * 60 * 1000, initialDelay = 0) // Every 15 minutes
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 0) // Every 60 minutes
     public void updatePublicArtemisMetrics() {
+        if (!scheduledMetricsEnabled) {
+            return;
+        }
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
