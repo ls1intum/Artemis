@@ -20,7 +20,6 @@ import { isPracticeMode } from 'app/entities/participation/student-participation
 })
 export class CloneRepoButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
-    readonly isPracticeMode = isPracticeMode;
 
     @Input()
     loading = false;
@@ -46,6 +45,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     wasCopied = false;
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
+    isPracticeMode: boolean | undefined;
 
     // Icons
     faDownload = faDownload;
@@ -90,10 +90,9 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         if (this.participations?.length) {
             const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
             this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, shouldPreferPractice) ?? this.participations[0];
+            this.isPracticeMode = isPracticeMode(this.activeParticipation);
             this.cloneHeadline =
-                isPracticeMode(this.activeParticipation) && !this.exercise?.exerciseGroup
-                    ? 'artemisApp.exerciseActions.clonePracticeRepository'
-                    : 'artemisApp.exerciseActions.cloneRatedRepository';
+                this.isPracticeMode && !this.exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
             this.isTeamParticipation = !!this.activeParticipation?.team;
         } else if (this.repositoryUrl) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
@@ -195,7 +194,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     switchPracticeMode() {
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !isPracticeMode(this.activeParticipation))!;
-        this.cloneHeadline = isPracticeMode(this.activeParticipation) ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
+        this.isPracticeMode = !this.isPracticeMode;
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
+        this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     }
 }
