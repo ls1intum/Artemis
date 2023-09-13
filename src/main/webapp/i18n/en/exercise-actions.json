@@ -19,7 +19,7 @@
             "openGradedCodeEditor": "Open graded code editor",
             "choseGradedMode": "Graded participation chosen",
             "openModelingEditor": "Open modeling editor",
-            "importIntoIntelliJ": "Open in IntelliJ",
+            "importIntoIDE": "Open in your IDE",
             "practiceMode": {
                 "title": "Practice Mode",
                 "explanation": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone as usual.",

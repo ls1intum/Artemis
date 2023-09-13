@@ -61,4 +61,16 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
         this.orionConnectorService.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
     }
+
+    /**
+     * returns feedback for an exercise
+     */
+    initializeFeedback() {
+        const { results, submissions } = this.exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
+        const feedbacks = results![0].feedbacks;
+        if (submissions) {
+            // @ts-ignore
+            this.orionConnectorService.initializeFeedback(submissions[0].id, feedbacks);
+        }
+    }
 }

@@ -18,7 +18,7 @@
             "openPracticeCodeEditor": "Übungs-Programmiereditor öffnen",
             "openGradedCodeEditor": "Bewerteten Programmiereditor öffnen",
             "openModelingEditor": "Modellierungseditor öffnen",
-            "importIntoIntelliJ": "In IntelliJ öffnen",
+            "importIntoIDE": "In deiner IDE öffnen",
             "practiceMode": {
                 "title": "Übungsmodus",
                 "explanation": "Der Übungsmodus ermöglicht es dir nach der Einreichungsfrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies wird deine Bewertung nicht beeinflussen! Artemis wird dafür ein separates Repository aufsetzen, das du erneut clonen musst.",

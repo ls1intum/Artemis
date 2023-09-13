@@ -280,4 +280,14 @@ export class OrionConnectorService {
     initializeAssessment(submissionId: number, feedback: Array<Feedback>) {
         theWindow().orionExerciseConnector.initializeAssessment(String(submissionId), stringifyCircular(feedback));
     }
+
+    /**
+     * Initializes the feedback comments for a student.
+     *
+     * @param submissionId if of the submission, for validation purposes
+     * @param feedback current feedback
+     */
+    initializeFeedback(submissionId: number, feedback: Array<Feedback>) {
+        theWindow().orionExerciseConnector.initializeFeedback(String(submissionId), stringifyCircular(feedback));
+    }
 }
