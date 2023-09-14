@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -16,6 +16,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() previewMode?: boolean;
     @Input() isAnnouncement = false;
     @Input() isEdited = false;
+
+    @Output() userReferenceClicked = new EventEmitter<string>();
+
     showContent = false;
     currentlyLoadedPosts: Post[];
     postingContentParts: PostingContentPart[];

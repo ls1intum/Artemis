@@ -92,4 +92,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     openCreateAnswerPostModal() {
         this.postFooterComponent.openCreateAnswerPostModal();
     }
+
+    onUserReferenceClicked(referencedUserLogin: string) {
+        console.log(referencedUserLogin, this.metisService.getCourse());
+    }
 }

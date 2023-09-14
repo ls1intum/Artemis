@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
+
 import {
     faAt,
     faBan,
@@ -17,7 +18,6 @@ import {
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
 import { MatDialog } from '@angular/material/dialog';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -27,6 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;
+    @Output() userReferenceClicked = new EventEmitter<string>();
 
     imageNotFound = false;
 
@@ -44,7 +45,6 @@ export class PostingContentPartComponent {
     constructor(
         private fileService: FileService,
         private dialog: MatDialog,
-        private metisConversationService: MetisConversationService,
         private accountService: AccountService,
     ) {}
 
@@ -106,7 +106,7 @@ export class PostingContentPartComponent {
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
         if (referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
-            this.metisConversationService.createOneToOneChat(referenceUserLogin).subscribe();
+            this.userReferenceClicked.emit(referenceUserLogin);
         }
     }
 }
