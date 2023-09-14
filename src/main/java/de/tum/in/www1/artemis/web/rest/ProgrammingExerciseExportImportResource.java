@@ -8,10 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -270,7 +267,7 @@ public class ProgrammingExerciseExportImportResource {
         long start = System.nanoTime();
         Path path;
         try {
-            path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
+            path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
         }
         catch (Exception e) {
             log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);
