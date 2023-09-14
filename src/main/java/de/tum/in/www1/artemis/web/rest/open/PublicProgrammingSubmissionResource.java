@@ -72,7 +72,7 @@ public class PublicProgrammingSubmissionResource {
      */
     @PostMapping("programming-submissions/{participationId}")
     @EnforceNothing
-    public ResponseEntity<?> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
+    public ResponseEntity<Void> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
         log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
         try {

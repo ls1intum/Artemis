@@ -71,6 +71,8 @@ public interface CIVCSMigrationService {
      */
     boolean supportsAuxiliaryRepositories();
 
+    void removeWebHook(VcsRepositoryUrl repositoryUrl);
+
     /**
      * Checks if the build plan exists.
      *

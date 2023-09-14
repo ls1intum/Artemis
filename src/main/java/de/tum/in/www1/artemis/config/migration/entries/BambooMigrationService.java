@@ -116,11 +116,16 @@ public class BambooMigrationService implements CIVCSMigrationService {
     public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
         List<Long> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
 
-        for (var id : notificationIds) {
-            deleteBuildPlanServerNotificationId(buildPlanKey, id);
+        for (var notificationId : notificationIds) {
+            deleteBuildPlanServerNotificationId(buildPlanKey, notificationId);
         }
 
         createBuildPlanServerNotification(buildPlanKey, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
+    }
+
+    @Override
+    public void removeWebHook(VcsRepositoryUrl repositoryUrl) {
+        // nothing to do
     }
 
     @Override
@@ -147,7 +152,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     public void checkPrerequisites() throws ContinuousIntegrationException {
         Optional<Long> credentialsId = getSharedCredential();
         if (credentialsId.isEmpty()) {
-            log.error("No shared credential found for git user " + gitUser + ". Migration will fail.");
+            log.error("No shared credentials found on Bamboo for git user " + gitUser + ". Migration will fail.");
             throw new ContinuousIntegrationException("No shared credential found for git user " + gitUser
                     + " in Bamboo. Migration will fail. Please create a shared username and password credential for this user and run the migration again.");
         }
@@ -168,6 +173,10 @@ public class BambooMigrationService implements CIVCSMigrationService {
         Optional<Long> repositoryId = getConnectedRepositoryId(buildPlanId, name);
 
         if (repositoryId.isEmpty()) {
+            if (name.equals("solution")) {
+                // if we do not find the edge case "solution" repository in the build plan, we simply continue
+                return;
+            }
             log.info("Repository " + name + " not found for build plan " + buildPlanId + ", will be added now");
         }
         else {
@@ -229,6 +238,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     public void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList) {
         Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, "tests");
         Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, "assignment");
+        Optional<Long> solutionRepositoryId = getConnectedRepositoryId(buildPlanKey, "solution");
 
         if (testRepositoryId.isEmpty()) {
             log.error("Repository tests not found for build plan {}", buildPlanKey);
@@ -251,10 +261,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
                 auxiliaryRepositoryIds.put(auxiliaryRepository.getName(), repositoryId.get());
             }
             else {
-                log.error("Repository {} not found for build plan {}", auxiliaryRepository.getName(), buildPlanKey);
-                throw new ContinuousIntegrationException("Repository " + auxiliaryRepository.getName() + " not found for build plan " + buildPlanKey);
+                log.warn("Auxiliary repository {} not found for build plan {}", auxiliaryRepository.getName(), buildPlanKey);
+                // Note: we do not throw
             }
         }
+        // TODO: add solutionRepositoryId
         setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get(), auxiliaryRepositoryIds, auxiliaryRepositoryList);
     }
 
@@ -413,6 +424,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * @param assignmentRepositoryIds The ids of the auxiliary repositories, checked out in the folder specified in the AuxiliaryRepository object
      * @param auxiliaryRepositories   The auxiliary repositories to be checked out
      */
+    // TODO: add the solution repository! in case it exists, handle it, otherwise ignore
     private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId, Map<String, Long> assignmentRepositoryIds,
             List<AuxiliaryRepository> auxiliaryRepositories) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -447,6 +459,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
             parameters.add("checkoutDir_" + index, auxiliaryRepo.getCheckoutDirectory());
             index++;
         }
+
+        // TODO: add solution if available
+
         parameters.add("checkBoxFields", "cleanCheckout");
         parameters.add("taskId", "1");
 

@@ -121,7 +121,8 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
         return jenkinsService.checkIfBuildPlanExists(projectKey, buildPlanKey);
     }
 
-    protected void removeWebHook(VcsRepositoryUrl repositoryUrl) {
+    @Override
+    public void removeWebHook(VcsRepositoryUrl repositoryUrl) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
 
         try {
