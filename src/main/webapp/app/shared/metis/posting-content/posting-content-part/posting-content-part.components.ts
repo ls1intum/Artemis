@@ -18,6 +18,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
 import { MatDialog } from '@angular/material/dialog';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
@@ -44,6 +45,7 @@ export class PostingContentPartComponent {
         private fileService: FileService,
         private dialog: MatDialog,
         private metisConversationService: MetisConversationService,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -103,7 +105,7 @@ export class PostingContentPartComponent {
      * @param referenceUserLogin login of the referenced user
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
-        if (referenceUserLogin) {
+        if (referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
             this.metisConversationService.createOneToOneChat(referenceUserLogin).subscribe();
         }
     }
