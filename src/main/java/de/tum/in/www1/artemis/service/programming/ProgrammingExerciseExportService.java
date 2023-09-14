@@ -10,14 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
@@ -54,12 +47,7 @@ import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -105,7 +93,7 @@ public class ProgrammingExerciseExportService {
 
     private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
 
-    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"/api/files/markdown/.*?\" .*?>";
+    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"/api/files/markdown/.*\" .*>";
 
     private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
 
@@ -210,6 +198,23 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
+     * Copies the files that are embedded with Markdown syntax to the embedded files' directory.
+     *
+     * @param exercise                        the programming exercise that is exported
+     * @param exportErrors                    List of failures that occurred during the export
+     * @param embeddedFilesWithMarkdownSyntax the files that are embedded with Markdown syntax
+     * @param embeddedFilesDir                the directory where the embedded files are stored
+     */
+    private void copyFilesEmbeddedWithMarkdownSyntax(ProgrammingExercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithMarkdownSyntax, Path embeddedFilesDir) {
+        for (String embeddedFile : embeddedFilesWithMarkdownSyntax) {
+            // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
+            String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
+            String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
+            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
+        }
+    }
+
+    /**
      * Copies the files that are embedded with html syntax to the embedded files' directory.
      * <p>
      *
@@ -248,23 +253,6 @@ public class ProgrammingExerciseExportService {
                 exportErrors.add("Failed to copy embedded files: " + e.getMessage());
                 log.warn("Could not copy embedded file {} for exercise with id {}", fileName, exercise.getId());
             }
-        }
-    }
-
-    /**
-     * Copies the files that are embedded with Markdown syntax to the embedded files' directory.
-     *
-     * @param exercise                        the programming exercise that is exported
-     * @param exportErrors                    List of failures that occurred during the export
-     * @param embeddedFilesWithMarkdownSyntax the files that are embedded with Markdown syntax
-     * @param embeddedFilesDir                the directory where the embedded files are stored
-     */
-    private void copyFilesEmbeddedWithMarkdownSyntax(ProgrammingExercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithMarkdownSyntax, Path embeddedFilesDir) {
-        for (String embeddedFile : embeddedFilesWithMarkdownSyntax) {
-            // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
-            String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
-            String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
-            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
         }
     }
 
