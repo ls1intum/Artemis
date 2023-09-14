@@ -1176,7 +1176,7 @@ public class FileService implements DisposableBean {
             for (String path : paths) {
                 File file = new File(path);
                 if (file.exists()) {
-                    pdfMerger.addSource(new File(path));
+                    pdfMerger.addSource(file);
                 }
             }
 

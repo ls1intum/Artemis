@@ -86,6 +86,15 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         }
     }
 
+    private void writeFile(String destinationPath, byte[] bytes) {
+        try {
+            FileUtils.writeByteArrayToFile(Path.of(".", "exportTest", destinationPath).toFile(), bytes);
+        }
+        catch (IOException ex) {
+            fail("Failed while writing test files", ex);
+        }
+    }
+
     @AfterEach
     @BeforeEach
     void deleteFiles() throws IOException {
@@ -203,15 +212,16 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         doc1.save(outputStream);
         doc1.close();
 
-        writeFile("testfile1.pdf", outputStream.toString());
+        writeFile("testfile1.pdf", outputStream.toByteArray());
 
+        outputStream.reset();
         PDDocument doc2 = new PDDocument();
         doc2.addPage(new PDPage());
         doc2.addPage(new PDPage());
         doc2.save(outputStream);
         doc2.close();
 
-        writeFile("testfile2.pdf", outputStream.toString());
+        writeFile("testfile2.pdf", outputStream.toByteArray());
 
         paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
         paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
