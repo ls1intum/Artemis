@@ -119,7 +119,8 @@ PostgreSQL Setup
 
 No special PostgreSQL settings are required.
 You can either use your package manager’s version, or set it up using a container.
-An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_ is provided in ``src/main/docker/postgresql.yml``.
+An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_
+is provided in ``src/main/docker/postgres.yml``.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
@@ -719,6 +720,8 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
+.. _docker_compose_setup_dev:
+
 Alternative: Docker Compose Setup
 ---------------------------------
 
@@ -757,7 +760,7 @@ Other Docker Compose Setups
 
 .. figure:: setup/artemis-docker-file-structure.drawio.png
    :align: center
-   :target: ../../_images/artemis-docker-file-structure.drawio.png
+   :target: ../_images/artemis-docker-file-structure.drawio.png
 
    Overview of the Artemis Docker / Docker Compose structure
 
@@ -765,7 +768,11 @@ The easiest way to configure a local deployment via Docker is a deployment with 
 In the directory ``docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+* ``artemis-dev-postgres.yml``: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and
+  a PostgreSQL DB
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
+* ``artemis-prod-postgres.yml``: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and
+  a PostgreSQL DB
 * ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
   (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
   for the configuration of this setup)
@@ -775,14 +782,15 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
 * ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
-* ``postgresql.yml``: **PostgreSQL** Setup containing a PostgreSQL DB instance
+* ``postgres.yml``: **Postgres** Setup containing a PostgreSQL DB instance
 
-Two example commands to run such setups:
+Three example commands to run such setups:
 
 .. code:: bash
 
   docker compose -f docker/atlassian.yml up
   docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
+  docker compose -f docker/artemis-dev-postgres.yml up
 
 .. tip::
   There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
@@ -796,7 +804,7 @@ is defined in the following files:
 * ``artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
 * ``nginx.yml``: **Nginx Service**
-* ``postgresql.yml``: **PostgreSQL DB Service**
+* ``postgres.yml``: **PostgreSQL DB Service**
 * ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 

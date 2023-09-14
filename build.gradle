@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.4.3"
+version = "6.5.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -96,10 +96,17 @@ modernizer {
 }
 
 // Execute the test cases: ./gradlew test
-
+// Execute only architecture tests: ./gradlew test -DincludeTags='ArchitectureTest'
 test {
-    useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
+    if (System.getProperty("includeTags")) {
+        useJUnitPlatform {
+            includeTags System.getProperty("includeTags")
+        }
+    } else {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    }
+
     testLogging {
         events "FAILED", "SKIPPED"
     }

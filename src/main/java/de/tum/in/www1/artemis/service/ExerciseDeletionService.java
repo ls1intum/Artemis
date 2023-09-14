@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * Service Implementation for managing Exercise.
@@ -123,8 +124,10 @@ public class ExerciseDeletionService {
         var exercise = exerciseRepository.findByIdWithCompetenciesElseThrow(exerciseId);
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
+        long start = System.nanoTime();
         Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
         channelService.deleteChannel(exreciseChannel);
+        log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());

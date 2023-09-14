@@ -3,19 +3,22 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    postgresql:
-        container_name: artemis-postgresql
-        image: postgres:15.3-alpine
+    postgres:
+        container_name: artemis-postgres
+        image: docker.io/library/postgres:15.3-alpine
         pull_policy: always
         user: postgres
         command: ["postgres", "-c", "max_connections=200"]
         volumes:
-            - artemis-postgresql-data:/var/lib/postgresql/data
+            - artemis-postgres-data:/var/lib/postgresql/data
         # DO NOT use this default file for production systems!
         env_file:
-            - ./postgresql/default.env
+            - ./postgres/default.env
         ports:
-            - "5432:5432"
+            - "127.0.0.1:5432:5432"
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "5432"
         healthcheck:
             test: pg_isready -U postgres -d Artemis
             interval: 5s
@@ -32,5 +35,5 @@ networks:
         name: artemis
 
 volumes:
-    artemis-postgresql-data:
-        name: artemis-postgresql-data
+    artemis-postgres-data:
+        name: artemis-postgres-data
