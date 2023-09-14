@@ -17,6 +17,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
+import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/programming/participate/programming-submission-policy-status.module';
 
 @NgModule({
     declarations: [
@@ -40,6 +41,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
         ArtemisCodeEditorModule,
         ArtemisFullscreenModule,
         ArtemisModelingEditorModule,
+        ArtemisProgrammingSubmissionPolicyStatusModule,
     ],
     exports: [FileUploadExamSubmissionComponent, QuizExamSubmissionComponent, ProgrammingExamSubmissionComponent, TextExamSubmissionComponent, ModelingExamSubmissionComponent],
 })
