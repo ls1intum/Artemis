@@ -10,7 +10,7 @@
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
-                "suggested": "Suggestion (not applied)",
+                "suggested": "Suggestion (not accepted)",
                 "accepted": "Accepted Suggestion",
                 "adapted": "Adapted Suggestion"
             },
