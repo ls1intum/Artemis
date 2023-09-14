@@ -94,7 +94,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation);
                 if (isChannelDto(this.activeConversation)) {
                     // the creator of a channel can not be removed from the channel
-                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator;
+                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !this.activeConversation.isCourseWide;
                     this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(this.activeConversation) && !this.conversationMember.isChannelModerator;
                     // the creator of a channel cannot be revoked the channel moderator role
                     this.canBeRevokedChannelModeratorRole =
