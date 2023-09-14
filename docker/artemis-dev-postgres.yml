@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Artemis-Dev-MySQL Setup
+# Artemis-Dev-Postgres Setup
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
@@ -19,20 +19,21 @@ services:
             - "5005"
         env_file:
             - ./artemis/config/dev.env
+            - ./artemis/config/postgres.env
         depends_on:
-            mysql:
+            postgres:
                 condition: service_healthy
-    mysql:
+    postgres:
         extends:
-            file: ./mysql.yml
-            service: mysql
+            file: ./postgres.yml
+            service: postgres
 
 networks:
     artemis:
         driver: "bridge"
         name: artemis
 volumes:
-    artemis-mysql-data:
-        name: artemis-mysql-data
+    artemis-postgres-data:
+        name: artemis-postgres-data
     artemis-data:
         name: artemis-data
