@@ -1028,9 +1028,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testCreateTestExam_asInstructor() throws Exception {
         // Test the creation of a test exam
         Exam examA = ExamFactory.generateTestExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
 
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
+        Channel channelFromDB = channelRepository.findChannelByExamId(savedExam.getId());
+        assertThat(channelFromDB).isNotNull();
     }
 
     @Test
