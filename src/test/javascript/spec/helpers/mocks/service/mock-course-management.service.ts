@@ -4,7 +4,8 @@ import { Course, CourseGroup } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from '@sentry/angular-ivy';
-import { EntityArrayResponseType } from 'app/course/manage/course-management.service';
+import { EntityArrayResponseType, RoleGroup } from 'app/course/manage/course-management.service';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 export class MockCourseManagementService {
     mockExercises: Exercise[] = [new TextExercise(undefined, undefined)];
@@ -39,6 +40,10 @@ export class MockCourseManagementService {
     }
 
     getAll(): Observable<EntityArrayResponseType> {
+        return of(new HttpResponse({ body: [] }));
+    }
+
+    searchUsers(courseId: number, loginOrName: string, roles: RoleGroup[]): Observable<HttpResponse<UserPublicInfoDTO[]>> {
         return of(new HttpResponse({ body: [] }));
     }
 }
