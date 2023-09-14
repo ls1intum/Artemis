@@ -557,14 +557,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         return gitService.zipFiles(localRepoPath, zipFilename, outputDir.toString(), contentFilter);
     }
 
-    private Path exportPlainRepository(VcsRepositoryUrl repositoryUrl, Path outputDir) throws GitAPIException, GitException, UncheckedIOException {
-        // Checkout the repository
-        try (Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, outputDir, true)) {
-            gitService.resetToOriginHead(repository);
-            return repository.getLocalPath();
-        }
-    }
-
     /**
      * Creates one single zip archive containing all zipped repositories found under the given paths
      *

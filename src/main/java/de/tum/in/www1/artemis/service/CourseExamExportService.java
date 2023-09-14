@@ -409,24 +409,6 @@ public class CourseExamExportService {
             catch (Exception e) {
                 logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage(), exportErrors, e);
             }
-
-            // Exported submissions are stored somewhere else, so we move the generated zip file into the
-            // outputDir (directory where the files needed for the course archive are stored).
-            // if (exportedSubmissionsFileOrEmpty.isPresent()) {
-            // var exportedSubmissionsFile = exportedSubmissionsFileOrEmpty.get();
-            // try {
-            // Path newExportedSubmissionsFilePath = Path.of(outputDir.toString(), exportedSubmissionsFile.getName());
-            // Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
-            //
-            // exportedExercises.add(newExportedSubmissionsFilePath);
-            //
-            // // Delete the directory where the zip was located before it was moved
-            // FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
-            // }
-            // catch (IOException e) {
-            // logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors, e);
-            // }
-            // }
         }
         return exportedExercises.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
     }

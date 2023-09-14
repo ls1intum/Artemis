@@ -353,7 +353,6 @@ public class FileService implements DisposableBean {
      *
      * @param publicPath the public file url to convert
      * @return the actual path to that file in the local filesystem
-     * @throws FilePathParsingException if the path is unknown
      */
     public String actualPathForPublicPathOrThrow(String publicPath) {
         String actualPath = actualPathForPublicPath(publicPath);
@@ -1148,24 +1147,6 @@ public class FileService implements DisposableBean {
             var error = "Failed to create temporary directory at path " + path + " : " + e.getMessage();
             log.info(error);
         }
-    }
-
-    /**
-     * Write a given string into a file at a given path
-     *
-     * @param stringToWrite The string that will be written into a file
-     * @param path          The path where the file will be written to
-     * @return Path to the written file
-     */
-    public Path writeStringToFile(String stringToWrite, Path path) {
-        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), UTF_8)) {
-            outStream.write(stringToWrite);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            log.warn("Could not write given string in file {}.", path);
-        }
-        return path;
     }
 
     /**

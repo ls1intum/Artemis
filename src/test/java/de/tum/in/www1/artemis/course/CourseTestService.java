@@ -128,9 +128,6 @@ public class CourseTestService {
     private CourseExamExportService courseExamExportService;
 
     @Autowired
-    private ZipFileService zipFileService;
-
-    @Autowired
     private FileService fileService;
 
     @Autowired
