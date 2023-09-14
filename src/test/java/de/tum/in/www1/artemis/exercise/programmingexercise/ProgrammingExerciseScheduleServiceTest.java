@@ -233,7 +233,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN") // failed
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExercisesWithManualAssessment() throws Exception {
         mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
@@ -289,7 +289,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         verify(programmingTriggerService, timeout(TIMEOUT_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}") // failed
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotUpdateScoresIfHasNoTestsAfterDueDate(boolean hasBuildAndTestAfterDueDate) throws Exception {
@@ -362,7 +362,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN") // failed
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
         mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
@@ -431,7 +431,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
     }
 
-    @Test // failed
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelAllSchedulesOnRemovingExerciseDueDate() throws Exception {
         mockStudentRepoLocks();
@@ -471,8 +471,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         }
     }
 
-    @Test // failed
-    @WithMockUser(username = "admin", roles = "ADMIN") // failed
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
         mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
@@ -526,7 +526,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         verify(scheduleService, timeout(TIMEOUT_MS).times(2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
     }
 
-    @Test // failed
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void keepIndividualScheduleOnExerciseDueDateChange() throws Exception {
         mockStudentRepoLocks();
