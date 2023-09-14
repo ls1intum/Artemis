@@ -50,6 +50,12 @@ public abstract class ExerciseExportService {
      */
     protected void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped)
             throws IOException {
+        exportProblemStatementWithEmbeddedFiles(exercise, exportErrors, exportDir, pathsToBeZipped);
+        exportExerciseDetails(exercise, exportDir, pathsToBeZipped);
+
+    }
+
+    private void exportProblemStatementWithEmbeddedFiles(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
         var problemStatementFileExtension = ".md";
         String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
         String cleanProblemStatementFileName = FileService.sanitizeFilename(problemStatementFileName);
@@ -57,15 +63,21 @@ public abstract class ExerciseExportService {
         if (exercise.getProblemStatement() != null) {
             Files.writeString(problemStatementExportPath, exercise.getProblemStatement());
             copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped, exportErrors);
+            pathsToBeZipped.add(problemStatementExportPath);
         }
         else {
             exportErrors.add("Could not export problem statement for exercise " + exercise.getId() + " because it is null.");
             log.warn("Could not export problem statement for exercise {} because it is null.", exercise.getId());
         }
-        exportExerciseDetails(exercise, exportDir, pathsToBeZipped);
-
     }
 
+    /**
+     * Exports the exercise details as json file. The exercise details are just the exercise object.
+     *
+     * @param exercise        the exercise that is exported
+     * @param exportDir       the directory where the content of the export is stored
+     * @param pathsToBeZipped the paths that should be included in the zip file
+     */
     private void exportExerciseDetails(Exercise exercise, Path exportDir, List<Path> pathsToBeZipped) {
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;

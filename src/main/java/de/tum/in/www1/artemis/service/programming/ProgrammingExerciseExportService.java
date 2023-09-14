@@ -136,10 +136,8 @@ public class ProgrammingExerciseExportService extends ExerciseExportService {
                 pathsToBeZipped.add(path);
             }
         });
-        // Add problem statement as .md file if it is not null
-        if (exercise.getProblemStatement() != null) {
-            super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
-        }
+        // Add problem statement as .md file
+        super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
 
         return exportDir.orElseThrow();
 
