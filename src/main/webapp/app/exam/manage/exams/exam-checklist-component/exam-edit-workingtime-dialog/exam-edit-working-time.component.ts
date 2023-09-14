@@ -38,10 +38,11 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     }
 
     private checkWorkingTimeChangeAllowed() {
-        this.workingTimeChangeAllowed = dayjs().isBetween(this.exam.startDate, this.exam.endDate?.subtract(5, 'minutes'));
+        const endDate = this.exam.endDate?.subtract(1, 'minutes');
+        this.workingTimeChangeAllowed = dayjs().isBefore(endDate);
 
-        // Run the check again when the exam starts or ends
-        const nextCheckTimeout = Math.min(dayjs().diff(this.exam.startDate), dayjs().diff(this.exam.endDate?.subtract(5, 'minutes')));
+        // Run the check again when the exam ends
+        const nextCheckTimeout = dayjs().diff(endDate);
         this.timeoutRef = setTimeout(this.checkWorkingTimeChangeAllowed.bind(this), nextCheckTimeout);
     }
 
