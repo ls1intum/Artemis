@@ -167,7 +167,7 @@ public interface InstanceMessageSendService {
      *
      * @param studentExamId the id of the student exam that should be scheduled
      */
-    void sendStudentExamWorkingTimeChangeDuringConduction(Long studentExamId);
+    void sendStudentExamIndividualWorkingTimeChangeDuringConduction(Long studentExamId);
 
     /**
      * Send a message to the main server that schedules to update the participant score for this exercise/participant

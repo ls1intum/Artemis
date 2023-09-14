@@ -152,7 +152,7 @@ public class InstanceMessageReceiveService {
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processStudentExamWorkingTimeChangeDuringConduction(message.getMessageObject());
+            processStudentExamIndividualWorkingTimeChangeDuringConduction(message.getMessageObject());
         });
         hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -295,7 +295,7 @@ public class InstanceMessageReceiveService {
         programmingExerciseScheduleService.rescheduleExamDuringConduction(examId);
     }
 
-    public void processStudentExamWorkingTimeChangeDuringConduction(Long studentExamId) {
+    public void processStudentExamIndividualWorkingTimeChangeDuringConduction(Long studentExamId) {
         log.info("Received reschedule of student exam during conduction {}", studentExamId);
         programmingExerciseScheduleService.rescheduleStudentExamDuringConduction(studentExamId);
     }

@@ -207,7 +207,7 @@ public class StudentExamResource {
         if (!savedStudentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             if (now.isAfter(exam.getVisibleDate())) {
-                instanceMessageSendService.sendStudentExamWorkingTimeChangeDuringConduction(studentExamId);
+                instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
                 websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
             if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {

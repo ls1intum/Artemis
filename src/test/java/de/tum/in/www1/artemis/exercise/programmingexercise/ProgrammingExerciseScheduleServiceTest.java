@@ -1,7 +1,14 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -657,7 +664,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         studentExam.setWorkingTime(1);
         studentExamRepository.save(studentExam);
 
-        instanceMessageReceiveService.processStudentExamWorkingTimeChangeDuringConduction(studentExam.getId());
+        instanceMessageReceiveService.processStudentExamIndividualWorkingTimeChangeDuringConduction(studentExam.getId());
 
         verify(versionControlService, timeout(200)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
                 participation.getStudents());
