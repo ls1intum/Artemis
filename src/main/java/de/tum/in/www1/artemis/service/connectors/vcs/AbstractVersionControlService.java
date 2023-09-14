@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.vcs;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.internal.JGitText;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,8 +123,15 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
         }
-        catch (GitAPIException | VersionControlException e) {
+        catch (GitAPIException | VersionControlException ex) {
+            if (isReadFullyShortReadOfBlockException(ex)) {
+                // NOTE: we ignore this particular error: it sometimes happens when pushing code that includes binary files, however the push operation typically worked correctly
+                // TODO: verify that the push operation actually worked correctly, e.g. by comparing the number of commits in the source and target repo
+                log.warn("TransportException/EOFException with 'Short read of block' when copying repository {} to {}. Will ignore it", sourceRepoUrl, targetRepoUrl);
+                return targetRepoUrl;
+            }
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
+            // clean up in case of an error
             try {
                 if (targetRepo != null) {
                     // delete the target repo if an error occurs
@@ -135,14 +142,28 @@ public abstract class AbstractVersionControlService implements VersionControlSer
                     FileUtils.deleteDirectory(localPath.toFile());
                 }
             }
-            catch (IOException ex) {
+            catch (IOException ioException) {
                 // ignore
                 log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
             }
-            throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
+            throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, ex);
         }
 
         return targetRepoUrl;
+    }
+
+    /**
+     * checks for a specific exception that we would like to ignore
+     *
+     * @param ex the exception
+     * @return whether we found the specific one or not
+     */
+    public static boolean isReadFullyShortReadOfBlockException(Throwable ex) {
+        return ex instanceof org.eclipse.jgit.api.errors.TransportException transportException
+                && transportException.getCause() instanceof org.eclipse.jgit.errors.TransportException innerTransportException
+                && innerTransportException.getCause() instanceof java.io.EOFException eofException && eofException.getMessage().equals(JGitText.get().shortReadOfBlock)
+                && Objects.equals(eofException.getStackTrace()[0].getClassName(), "org.eclipse.jgit.util.IO")
+                && Objects.equals(eofException.getStackTrace()[0].getMethodName(), "readFully");
     }
 
     @Override

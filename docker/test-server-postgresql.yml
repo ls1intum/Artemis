@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Setup for a test server with PostgreSQL
+# Setup for a test server with Postgres
 # ----------------------------------------------------------------------------------------------------------------------
 # It is designed to take in a lot of environment variables to take in all the configuration of the test server.
 # ----------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ services:
             service: artemis-app
         image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
         depends_on:
-            postgresql:
+            postgres:
                 condition: service_healthy
         pull_policy: always
         restart: always
@@ -22,15 +22,15 @@ services:
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
             - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
 
-    postgresql:
+    postgres:
         extends:
-            file: ./postgresql.yml
-            service: postgresql
+            file: ./postgres.yml
+            service: postgres
         restart: always
         env_file:
-            - ${DATABASE_ENV_FILE:-./postgresql/default.env}
+            - ${DATABASE_ENV_FILE:-./postgres/default.env}
         volumes:
-            - ${DATABASE_VOLUME_MOUNT:-./.docker-data/artemis-postgresql-data}:/var/lib/postgresql/data
+            - ${DATABASE_VOLUME_MOUNT:-./.docker-data/artemis-postgres-data}:/var/lib/postgresql/data
 
     nginx:
         extends:
