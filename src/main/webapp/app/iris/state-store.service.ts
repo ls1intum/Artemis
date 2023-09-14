@@ -107,6 +107,7 @@ export class IrisStateStore implements OnDestroy {
         return this.action.asObservable().pipe(map((resolvableAction: ResolvableAction) => resolvableAction.action));
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private static exhaustiveCheck(_: never): void {
         // typescript will detect any new unhandled action types using its inference system, this method should never be called
     }

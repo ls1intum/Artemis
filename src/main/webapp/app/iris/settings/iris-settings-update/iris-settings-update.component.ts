@@ -43,7 +43,10 @@ export class IrisSettingsUpdateComponent implements OnInit {
     GLOBAL = IrisSettingsType.GLOBAL;
     PROGRAMMING_EXERCISE = IrisSettingsType.PROGRAMMING_EXERCISE;
 
-    constructor(private irisSettingsService: IrisSettingsService, private alertService: AlertService) {}
+    constructor(
+        private irisSettingsService: IrisSettingsService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.loadIrisSettings();
