@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 import lectureTemplate from '../../fixtures/lecture/template.json';
-import { BASE_API, COURSE_ADMIN_BASE, COURSE_BASE, DELETE, POST } from '../constants';
+import { COURSE_ADMIN_BASE, COURSE_BASE, DELETE, LECTURE_BASE_API, POST } from '../constants';
 import { CypressCredentials } from '../users';
 import { generateUUID, titleLowercase } from '../utils';
 
@@ -150,7 +150,7 @@ export class CourseManagementAPIRequests {
      */
     deleteLecture(lectureId: number) {
         return cy.request({
-            url: `${BASE_API}lectures/${lectureId}`,
+            url: `${LECTURE_BASE_API}lectures/${lectureId}`,
             method: DELETE,
         });
     }
@@ -174,7 +174,7 @@ export class CourseManagementAPIRequests {
             channelName: 'lecture-' + titleLowercase(title),
         };
         return cy.request({
-            url: `${BASE_API}lectures`,
+            url: `${LECTURE_BASE_API}lectures`,
             method: POST,
             body,
         });

@@ -11,6 +11,7 @@ export const GET = 'GET';
 export const PUT = 'PUT';
 export const PATCH = 'PATCH';
 export const BASE_API = 'api/';
+export const LECTURE_BASE_API = 'api-lecture/';
 export const EXERCISE_BASE = BASE_API + 'exercises/';
 
 export const COURSE_BASE = BASE_API + 'courses/';
