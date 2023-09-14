@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 
 /**
  * DTO containing {@link Result} information.
@@ -30,14 +29,6 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
                     feedback.isPositive(), feedback.getType(), feedback.getVisibility());
 
         }
-    }
-
-    public record ParticipationDTO(Long id, boolean testRun, String type) {
-
-        public static ParticipationDTO of(Participation participation) {
-            return new ParticipationDTO(participation.getId(), participation.isTestRun(), participation.getType());
-        }
-
     }
 
     public static ResultDTO of(Result result) {

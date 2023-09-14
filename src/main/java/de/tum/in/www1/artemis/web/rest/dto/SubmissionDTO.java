@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boolean exampleSubmission, ZonedDateTime submissionDate, String commitHash, Boolean buildFailed,
-        Boolean buildArtifact, DomainObjectIdDTO participation, String submissionExerciseType) {
+        Boolean buildArtifact, ParticipationDTO participation, String submissionExerciseType) {
 
     /**
      * Converts a Submission into a SubmissionDTO.
@@ -27,10 +27,10 @@ public record SubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boo
             // For programming submissions we need to extract additional information (e.g. the commit hash) and send it to the client
             return new SubmissionDTO(programmingSubmission.getId(), programmingSubmission.isSubmitted(), programmingSubmission.getType(),
                     programmingSubmission.isExampleSubmission(), programmingSubmission.getSubmissionDate(), programmingSubmission.getCommitHash(),
-                    programmingSubmission.isBuildFailed(), programmingSubmission.isBuildArtifact(), new DomainObjectIdDTO(programmingSubmission.getParticipation()),
+                    programmingSubmission.isBuildFailed(), programmingSubmission.isBuildArtifact(), ParticipationDTO.of(programmingSubmission.getParticipation()),
                     programmingSubmission.getSubmissionExerciseType());
         }
         return new SubmissionDTO(submission.getId(), submission.isSubmitted(), submission.getType(), submission.isExampleSubmission(), submission.getSubmissionDate(), null, null,
-                null, new DomainObjectIdDTO(submission.getParticipation()), submission.getSubmissionExerciseType());
+                null, ParticipationDTO.of(submission.getParticipation()), submission.getSubmissionExerciseType());
     }
 }
