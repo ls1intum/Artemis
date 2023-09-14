@@ -224,7 +224,7 @@ public class ProgrammingTriggerService {
                 }
                 continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
-                programmingMessagingService.notifyUserAboutSubmission(submission.get());
+                programmingMessagingService.notifyUserAboutSubmission(submission.get(), participation.getProgrammingExercise().getId());
             }
             catch (Exception e) {
                 log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
@@ -253,7 +253,7 @@ public class ProgrammingTriggerService {
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
             continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExerciseParticipation);
-            programmingMessagingService.notifyUserAboutSubmission(submission);
+            programmingMessagingService.notifyUserAboutSubmission(submission, programmingExerciseParticipation.getExercise().getId());
         }
         catch (Exception e) {
             log.error("Trigger build failed for {} with the exception {}", programmingExerciseParticipation.getBuildPlanId(), e.getMessage());
@@ -289,7 +289,7 @@ public class ProgrammingTriggerService {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
             continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
-            programmingMessagingService.notifyUserAboutSubmission(submission);
+            programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
         }
         catch (Exception e) {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());

@@ -16,13 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
@@ -32,6 +33,8 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
+
+    private static final String TEST_PREFIX = "chtest";
 
     @Autowired
     TutorialGroupRepository tutorialGroupRepository;
@@ -45,10 +48,17 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Autowired
     private LectureRepository lectureRepository;
 
-    private static final String TEST_PREFIX = "chtest";
-
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
 
     @BeforeEach
     void setupTestScenario() throws Exception {
@@ -234,8 +244,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "instructor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE);
     }
 
     @ParameterizedTest
@@ -273,8 +281,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "tutor1");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE);
     }
 
     @ParameterizedTest
@@ -508,6 +514,31 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void grantChannelModeratorRoleToUserWhoIsNotAParticipantInCourseWideChannel() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+
+        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/channels/" + channel.getId() + "/grant-channel-moderator",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        assertUsersAreChannelModerators(channel.getId(), "student1", "student2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void revokeChannelModeratorRoleToUserWhoIsNotAParticipantInCourseWideChannel() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+
+        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/channels/" + channel.getId() + "/revoke-channel-moderator",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        assertUserAreNotChannelModerators(channel.getId(), "student1", "student2");
+        assertUserAreNotConversationMembers(channel.getId(), "student1", "student2");
     }
 
     @ParameterizedTest
@@ -786,6 +817,35 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
+        Course course = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(course);
+        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+
+        Channel returnedLectureChannel = request.get("/api/courses/" + course.getId() + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
+
+        assertThat(returnedLectureChannel).isNotNull();
+        assertThat(returnedLectureChannel.getId()).isEqualTo(lectureChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getExerciseChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
+        Course course = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(course);
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(1));
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(exercise);
+
+        Channel returnedExerciseChannel = request.get("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
+
+        assertThat(returnedExerciseChannel).isNotNull();
+        assertThat(returnedExerciseChannel.getId()).isEqualTo(exerciseChannel.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLectureChannel_asCourseStudent_shouldGetLectureChannel() throws Exception {
         Course course = courseRepository.findById(exampleCourseId).orElseThrow();
@@ -862,11 +922,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // prepare channel in db
         if (shouldGrant) {
             this.revokeChannelModeratorRole(channel.getId(), "student1");
-            this.revokeChannelModeratorRole(channel.getId(), "student1");
+            this.revokeChannelModeratorRole(channel.getId(), "student2");
         }
         else {
             this.grantChannelModeratorRole(channel.getId(), "student1");
-            this.grantChannelModeratorRole(channel.getId(), "student1");
+            this.grantChannelModeratorRole(channel.getId(), "student2");
         }
         var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
 

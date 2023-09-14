@@ -85,7 +85,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
     }
 
     @Test
@@ -102,14 +102,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetTemplateFile() throws Exception {
-        String javaReadme = request.get("/api/files/templates/JAVA/PLAIN_MAVEN/readme", HttpStatus.OK, String.class);
+        String javaReadme = request.get("/api/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
-        String cReadme = request.get("/api/files/templates/C/GCC/readme", HttpStatus.OK, String.class);
+        String cReadme = request.get("/api/files/templates/C/GCC", HttpStatus.OK, String.class);
         assertThat(cReadme).isNotEmpty();
-        String pythonReadme = request.get("/api/files/templates/PYTHON/readme", HttpStatus.OK, String.class);
+        String pythonReadme = request.get("/api/files/templates/PYTHON", HttpStatus.OK, String.class);
         assertThat(pythonReadme).isNotEmpty();
-
-        request.get("/api/files/templates/randomnonexistingfile", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test

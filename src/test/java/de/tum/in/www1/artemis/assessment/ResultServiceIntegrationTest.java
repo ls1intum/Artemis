@@ -131,11 +131,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private StudentParticipation studentParticipation;
 
-    private final int numberOfStudents = 4;
+    private final int NUMBER_OF_STUDENTS = 3;
 
     @BeforeEach
     void setupTest() {
-        userUtilService.addUsers(TEST_PREFIX, numberOfStudents, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
@@ -219,41 +219,65 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
-        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
-                .submissionDate(ZonedDateTime.now());
-        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
+    void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate,
+            ZonedDateTime submissionDate) {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExercise.setDueDate(dueDate);
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
-        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission, programmingSubmission.getParticipation());
+        ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
+                .submissionDate(submissionDate);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
+
+        result.setRatedIfNotAfterDueDate();
         assertThat(result.isRated()).isSameAs(shouldBeRated);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestRunsNonRated() {
+        programmingExerciseStudentParticipation.setTestRun(true);
+        programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
+
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToParticipation(programmingExerciseStudentParticipation, submission);
+
+        result.setRatedIfNotAfterDueDate();
+        // The participation is a test run -> should not be rated
+        assertThat(result.isRated()).isFalse();
+    }
+
     private static Stream<Arguments> setResultRatedPermutations() {
-        ZonedDateTime dateInFuture = ZonedDateTime.now().plusHours(1);
-        ZonedDateTime dateInPast = ZonedDateTime.now().minusHours(1);
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime dateInFuture = now.plusHours(1);
+        ZonedDateTime dateInPast = now.minusHours(1);
+        ZonedDateTime dateClosePast = now.minusSeconds(5);
         return Stream.of(
+                // The result was created shortly after the due date and should still be considered rated
+                Arguments.of(true, dateInPast, SubmissionType.MANUAL, dateClosePast, now),
                 // The due date has not passed, normal student submission => rated result.
-                Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture),
+                Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture, now),
                 // The due date is not set, normal student submission => rated result.
-                Arguments.of(true, null, SubmissionType.MANUAL, null),
+                Arguments.of(true, null, SubmissionType.MANUAL, null, now),
                 // The due date has passed, normal student submission => unrated result.
-                Arguments.of(false, null, SubmissionType.MANUAL, dateInPast),
+                Arguments.of(false, null, SubmissionType.MANUAL, dateInPast, now),
                 // The result was generated by an instructor => rated result.
-                Arguments.of(true, null, SubmissionType.INSTRUCTOR, dateInPast),
+                Arguments.of(true, null, SubmissionType.INSTRUCTOR, dateInPast, now),
                 // The result was generated by test update => rated result.
-                Arguments.of(true, null, SubmissionType.TEST, dateInPast),
+                Arguments.of(true, null, SubmissionType.TEST, dateInPast, now),
                 // The build and test date has passed, the due date has passed, the result is generated by a test update => rated result.
-                Arguments.of(true, dateInPast, SubmissionType.TEST, dateInPast),
+                Arguments.of(true, dateInPast, SubmissionType.TEST, dateInPast, now),
                 // The build and test date has passed, the due date has passed, the result is generated by an instructor => rated result.
-                Arguments.of(true, dateInPast, SubmissionType.INSTRUCTOR, dateInPast),
+                Arguments.of(true, dateInPast, SubmissionType.INSTRUCTOR, dateInPast, now),
                 // The build and test date has not passed, due date has not passed, normal student submission => rated result.
-                Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture),
+                Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture, now),
                 // The build and test date has not passed, due date has passed, normal student submission => unrated result.
-                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
+                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now),
+                // Any illegal submission should not be rated
+                Arguments.of(false, null, SubmissionType.ILLEGAL, dateInPast, now), Arguments.of(false, null, SubmissionType.ILLEGAL, dateInFuture, now));
     }
 
     @Test
@@ -267,7 +291,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents / 2);
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
@@ -290,7 +314,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents / 2);
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
@@ -323,7 +347,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         course.addExercises(fileUploadExercise);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        for (int i = 1; i <= numberOfStudents; i++) {
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.submitted(true);
             fileUploadSubmission.submissionDate(now.minusHours(3));
@@ -421,7 +445,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents);
+        assertThat(results).hasSize(NUMBER_OF_STUDENTS);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
@@ -442,7 +466,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private List<Result> setupExamModelingExerciseWithResults() {
         List<Result> results = new ArrayList<>();
         var now = ZonedDateTime.now();
-        for (int i = 1; i <= numberOfStudents; i++) {
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
             modelingSubmission.model("TestingSubmission");
             modelingSubmission.submitted(true);

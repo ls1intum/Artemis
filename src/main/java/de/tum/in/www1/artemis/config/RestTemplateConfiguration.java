@@ -12,7 +12,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.config.auth.AtheneAuthorizationInterceptor;
+import de.tum.in.www1.artemis.config.auth.AthenaAuthorizationInterceptor;
 import de.tum.in.www1.artemis.config.auth.IrisAuthorizationInterceptor;
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
@@ -30,6 +30,10 @@ public class RestTemplateConfiguration {
     private static final int SHORT_CONNECTION_TIMEOUT = 10 * 1000;
 
     private static final int SHORT_READ_TIMEOUT = 10 * 1000;
+
+    private static final int VERY_SHORT_CONNECTION_TIMEOUT = 1000;
+
+    private static final int VERY_SHORT_READ_TIMEOUT = 1000;
 
     @Bean
     @Profile("gitlab | gitlabci")
@@ -65,9 +69,9 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("athene")
-    public RestTemplate atheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createRestTemplate());
+    @Profile("athena")
+    public RestTemplate athenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
@@ -119,15 +123,24 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("athene")
-    public RestTemplate shortTimeoutAtheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    @Profile("athena")
+    public RestTemplate shortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
     @Profile("apollon")
     public RestTemplate shortTimeoutApollonRestTemplate() {
         return createShortTimeoutRestTemplate();
+    }
+
+    // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.
+    // Therefore, we need additional rest templates. It is recommended to keep the timeout settings constant per rest template.
+
+    @Bean
+    @Profile("athena")
+    public RestTemplate veryShortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createVeryShortTimeoutRestTemplate());
     }
 
     @Bean
@@ -164,6 +177,10 @@ public class RestTemplateConfiguration {
         return createRestTemplate();
     }
 
+    private RestTemplate createRestTemplate() {
+        return new RestTemplate();
+    }
+
     private RestTemplate createShortTimeoutRestTemplate() {
         var requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setReadTimeout(SHORT_READ_TIMEOUT);
@@ -171,7 +188,10 @@ public class RestTemplateConfiguration {
         return new RestTemplate(requestFactory);
     }
 
-    private RestTemplate createRestTemplate() {
-        return new RestTemplate();
+    private RestTemplate createVeryShortTimeoutRestTemplate() {
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setReadTimeout(VERY_SHORT_READ_TIMEOUT);
+        requestFactory.setConnectTimeout(VERY_SHORT_CONNECTION_TIMEOUT);
+        return new RestTemplate(requestFactory);
     }
 }

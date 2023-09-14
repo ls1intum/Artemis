@@ -100,6 +100,9 @@ public class ExamUtilService {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ExamSessionRepository examSessionRepository;
+
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
         Course course = courseUtilService.createCourse();
         Exam exam = addExamWithUser(course, user, false, visible, start, end);
@@ -350,7 +353,7 @@ public class ExamUtilService {
     }
 
     public Channel addExamChannel(Exam exam, String channelName) {
-        Channel channel = ConversationFactory.generateChannel(exam.getCourse(), channelName);
+        Channel channel = ConversationFactory.generatePublicChannel(exam.getCourse(), channelName, true);
         channel.setExam(exam);
         return conversationRepository.save(channel);
     }
@@ -440,6 +443,32 @@ public class ExamUtilService {
         studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
+    }
+
+    /**
+     * Adds an exam session with the given parameters to the given student exam, associates the exam session with the given student exam and saves both entities in the database.
+     *
+     * @param studentExam        the student exam to which the exam session should be added
+     * @param sessionToken       the session token of the exam session
+     * @param ipAddress          the IP address of the exam session
+     * @param browserFingerprint the browser fingerprint hash of the exam session
+     * @param instanceId         the instance id of the exam session
+     * @param userAgent          the user agent of the exam session
+     * @return the exam session that was added to the student exam
+     */
+    public ExamSession addExamSessionToStudentExam(StudentExam studentExam, String sessionToken, String ipAddress, String browserFingerprint, String instanceId, String userAgent) {
+        ExamSession examSession = new ExamSession();
+        examSession.setSessionToken(sessionToken);
+        examSession.setIpAddress(ipAddress);
+        examSession.setBrowserFingerprintHash(browserFingerprint);
+        examSession.setInstanceId(instanceId);
+        examSession.setStudentExam(studentExam);
+        examSession.setUserAgent(userAgent);
+        examSession.setStudentExam(studentExam);
+        examSession = examSessionRepository.save(examSession);
+        studentExam = studentExam.addExamSession(examSession);
+        studentExamRepository.save(studentExam);
+        return examSession;
     }
 
     public StudentExam addStudentExamForActiveExamWithUser(String user) {
