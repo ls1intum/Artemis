@@ -12,10 +12,8 @@ import {
     faTrash,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { LocalStorageService } from 'ngx-webstorage';
-import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
@@ -41,8 +39,6 @@ import {
 } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
-import { ResizeSensor } from 'css-element-queries';
-import { Overlay } from '@angular/cdk/overlay';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
@@ -50,6 +46,8 @@ import dayjs from 'dayjs';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
+import interact from 'interactjs';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -89,7 +87,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     faRedo = faRedo;
 
     // ViewChilds
-    @ViewChild('chatWidget') chatWidget!: ElementRef;
     @ViewChild('chatBody') chatBody!: ElementRef;
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef<HTMLTextAreaElement>;
@@ -125,26 +122,21 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     rows = 1;
     initialWidth = 330;
     initialHeight = 430;
-    fullWidth = '93vw';
-    fullHeight = '85vh';
-    fullSize = localStorage.getItem('fullSize') === 'true';
-    widgetWidth = localStorage.getItem('widgetWidth') || `${this.initialWidth}px`;
-    widgetHeight = localStorage.getItem('widgetHeight') || `${this.initialHeight}px`;
+    fullWidthFactor = 0.93;
+    fullHeightFactor = 0.85;
+    fullSize = false;
     public ButtonType = ButtonType;
     private navigationSubscription: Subscription;
 
     constructor(
         private dialog: MatDialog,
-        private route: ActivatedRoute,
-        private localStorage: LocalStorageService,
-        private accountService: AccountService,
         @Inject(MAT_DIALOG_DATA) public data: any,
         private httpMessageService: IrisHttpMessageService,
         private userService: UserService,
-        private overlay: Overlay,
         private router: Router,
         private sharedService: SharedService,
         private modalService: NgbModal,
+        @Inject(DOCUMENT) private document: Document,
     ) {
         this.stateStore = data.stateStore;
         this.exerciseId = data.exerciseId;
@@ -154,6 +146,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.dialog.closeAll();
             }
         });
+        this.fullSize = data.fullSize ?? false;
     }
 
     ngOnInit() {
@@ -177,7 +170,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 this.shouldShowEmptyMessageError = true;
                 this.fadeState = 'start';
             }
-            if (this.error) this.getConvertedErrorMap();
+            if (this.error) {
+                this.getConvertedErrorMap();
+            }
         });
 
         // Focus on message textarea
@@ -195,15 +190,103 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.scrollToBottom('auto');
         }
 
-        // Add a resize sensor to the chat widget to store the new width and height in local storage
-        const chatWidget: HTMLElement = this.chatWidget.nativeElement;
-        new ResizeSensor(chatWidget, () => {
-            localStorage.setItem('widgetWidth', chatWidget.style.width);
-            localStorage.setItem('widgetHeight', chatWidget.style.height);
-        });
+        interact('.chat-widget')
+            .resizable({
+                // resize from all edges and corners
+                edges: { left: true, right: true, bottom: true, top: true },
+
+                listeners: {
+                    move: (event) => {
+                        const target = event.target;
+                        let x = parseFloat(target.getAttribute('data-x')) || 0;
+                        let y = parseFloat(target.getAttribute('data-y')) || 0;
+
+                        // update the element's style
+                        target.style.width = event.rect.width + 'px';
+                        target.style.height = event.rect.height + 'px';
+
+                        // Reset fullsize if widget smaller than the full size factors times the overlay container size
+                        const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement).getBoundingClientRect();
+                        this.fullSize = !(event.rect.width < cntRect.width * this.fullWidthFactor || event.rect.height < cntRect.height * this.fullHeightFactor);
+
+                        // translate when resizing from top or left edges
+                        x += event.deltaRect.left;
+                        y += event.deltaRect.top;
+
+                        target.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+
+                        target.setAttribute('data-x', x);
+                        target.setAttribute('data-y', y);
+                    },
+                },
+                modifiers: [
+                    // keep the edges inside the parent
+                    interact.modifiers.restrictEdges({
+                        outer: '.cdk-overlay-container',
+                    }),
+
+                    // minimum size
+                    interact.modifiers.restrictSize({
+                        min: { width: this.initialWidth, height: this.initialHeight },
+                    }),
+                ],
+
+                inertia: true,
+            })
+            .draggable({
+                listeners: {
+                    move: (event: any) => {
+                        const target = event.target,
+                            // keep the dragged position in the data-x/data-y attributes
+                            x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+                            y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                        // translate the element
+                        target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+                        // update the posiion attributes
+                        target.setAttribute('data-x', x);
+                        target.setAttribute('data-y', y);
+                    },
+                },
+                inertia: true,
+                modifiers: [
+                    interact.modifiers.restrictRect({
+                        restriction: '.cdk-overlay-container',
+                        endOnly: true,
+                    }),
+                ],
+            });
+        this.setPositionAndScale();
     }
+
+    setPositionAndScale() {
+        const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement)?.getBoundingClientRect();
+        if (!cntRect) {
+            return;
+        }
+
+        const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 50;
+        const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 100;
+
+        const nE = this.document.querySelector('.chat-widget') as HTMLElement;
+        nE.style.transform = `translate(${initX}px, ${initY}px)`;
+        nE.setAttribute('data-x', String(initX));
+        nE.setAttribute('data-y', String(initY));
+
+        // Set width and height
+        if (this.fullSize) {
+            nE.style.width = `${cntRect.width * this.fullWidthFactor}px`;
+            nE.style.height = `${cntRect.height * this.fullHeightFactor}px`;
+        } else {
+            nE.style.width = `${this.initialWidth}px`;
+            nE.style.height = `${this.initialHeight}px`;
+        }
+    }
+
     ngOnDestroy() {
         this.stateSubscription.unsubscribe();
+        this.navigationSubscription.unsubscribe();
         this.toggleScrollLock(false);
     }
 
@@ -257,7 +340,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
-        if (this.error?.fatal) return;
+        if (this.error?.fatal) {
+            return;
+        }
         if (this.newMessageTextContent.trim() === '') {
             this.stateStore.dispatchAndThen(new ConversationErrorOccurredAction(IrisErrorMessageKey.EMPTY_MESSAGE)).catch(() => this.scrollToBottom('smooth'));
             return;
@@ -341,46 +426,19 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     /**
-     * Resets the screen by closing and reopening the chat widget.
-     */
-    resetScreen() {
-        setTimeout(() => {
-            this.dialog.closeAll();
-        }, 50);
-        setTimeout(() => {
-            this.dialog.open(ExerciseChatWidgetComponent, {
-                hasBackdrop: false,
-                scrollStrategy: this.overlay.scrollStrategies.noop(),
-                position: { bottom: '0px', right: '0px' },
-                disableClose: true,
-                data: {
-                    stateStore: this.stateStore,
-                    widgetWidth: localStorage.getItem('widgetWidth') || `${this.initialWidth}px`,
-                    widgetHeight: localStorage.getItem('widgetHeight') || `${this.initialHeight}px`,
-                    fullSize: localStorage.getItem('fullSize') === 'true',
-                },
-            });
-        }, 140);
-    }
-
-    /**
      * Maximizes the chat widget screen.
      */
     maximizeScreen() {
-        this.resetScreen();
-        localStorage.setItem('widgetWidth', this.fullWidth);
-        localStorage.setItem('widgetHeight', this.fullHeight);
-        localStorage.setItem('fullSize', 'true');
+        this.fullSize = true;
+        this.setPositionAndScale();
     }
 
     /**
      * Minimizes the chat widget screen.
      */
     minimizeScreen() {
-        this.resetScreen();
-        localStorage.setItem('widgetWidth', `${this.initialWidth}px`);
-        localStorage.setItem('widgetHeight', `${this.initialHeight}px`);
-        localStorage.setItem('fullSize', 'false');
+        this.fullSize = false;
+        this.setPositionAndScale();
     }
 
     /**
@@ -564,7 +622,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 } else {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
                 }
-                this.triggerShake();
             })
             .finally(() => {
                 this.resendAnimationActive = false;
@@ -574,13 +631,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     isSendMessageFailedError(): boolean {
         return this.error?.key == IrisErrorMessageKey.SEND_MESSAGE_FAILED || this.error?.key == IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT;
-    }
-
-    triggerShake() {
-        this.shakeErrorField = true;
-        setTimeout(() => {
-            this.shakeErrorField = false;
-        }, 1000);
     }
 
     toggleScrollLock(lockParent: boolean): void {

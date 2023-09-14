@@ -19,7 +19,11 @@ export class IrisSessionService {
      * @param httpSessionService The IrisHttpSessionService for HTTP operations related to sessions.
      * @param httpMessageService The IrisHttpMessageService for HTTP operations related to messages.
      */
-    constructor(private readonly stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService, private httpMessageService: IrisHttpMessageService) {}
+    constructor(
+        private readonly stateStore: IrisStateStore,
+        private httpSessionService: IrisHttpSessionService,
+        private httpMessageService: IrisHttpMessageService,
+    ) {}
 
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.

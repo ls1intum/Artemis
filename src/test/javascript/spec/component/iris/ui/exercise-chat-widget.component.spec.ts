@@ -102,6 +102,7 @@ describe('ExerciseChatWidgetComponent', () => {
                 component = fixture.componentInstance;
                 component.shouldLoadGreetingMessage = false;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
+
                 fixture.detectChanges();
             });
     });
@@ -305,28 +306,6 @@ describe('ExerciseChatWidgetComponent', () => {
         expect(stateStore.dispatch).toHaveBeenCalledWith(new NumNewMessagesResetAction());
     });
 
-    it('should call resetScreen and update localStorage for maximizeScreen', () => {
-        const localStorageSetItemSpy = jest.spyOn(localStorage, 'setItem');
-
-        component.maximizeScreen();
-
-        expect(localStorageSetItemSpy).toHaveBeenCalledTimes(3);
-        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetWidth', component.fullWidth);
-        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetHeight', component.fullHeight);
-        expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'true');
-    });
-
-    it('should call resetScreen and update localStorage for minimizeScreen', () => {
-        const localStorageSetItemSpy = jest.spyOn(localStorage, 'setItem');
-
-        component.minimizeScreen();
-
-        expect(localStorageSetItemSpy).toHaveBeenCalledTimes(6);
-        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetWidth', `${component.initialWidth}px`);
-        expect(localStorageSetItemSpy).toHaveBeenCalledWith('widgetHeight', `${component.initialHeight}px`);
-        expect(localStorageSetItemSpy).toHaveBeenCalledWith('fullSize', 'false');
-    });
-
     it('should disable enter key if deactivateSubmitButton is true', () => {
         jest.spyOn(component, 'deactivateSubmitButton').mockReturnValue(true);
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
@@ -386,7 +365,7 @@ describe('ExerciseChatWidgetComponent', () => {
             () =>
                 ({
                     lineHeight: '20px',
-                } as Partial<CSSStyleDeclaration> as any),
+                }) as Partial<CSSStyleDeclaration> as any,
         );
 
         jest.spyOn(component, 'adjustChatBodyHeight');
@@ -445,20 +424,6 @@ describe('ExerciseChatWidgetComponent', () => {
     it('should return false if there is no error', () => {
         component.error = null;
         expect(component.isSendMessageFailedError()).toBeFalsy();
-    });
-
-    it('should set shakeErrorField to true and then false after 1 second', () => {
-        jest.useFakeTimers();
-        component.triggerShake();
-        expect(component.shakeErrorField).toBeTruthy();
-
-        jest.advanceTimersByTime(500);
-        expect(component.shakeErrorField).toBeTruthy();
-
-        jest.advanceTimersByTime(500);
-        expect(component.shakeErrorField).toBeFalsy();
-
-        jest.clearAllTimers();
     });
 
     it('should return true if error key is EMPTY_MESSAGE', () => {

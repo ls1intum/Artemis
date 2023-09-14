@@ -8,7 +8,6 @@ import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
-import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -76,26 +75,6 @@ describe('ExerciseChatbotComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should open chat and set buttonDisabled and chatOpen flags', () => {
-        jest.spyOn(mockDialog, 'open');
-        component.buttonDisabled = false;
-
-        component.openChat();
-
-        expect(mockDialog.open).toHaveBeenCalledWith(ExerciseChatWidgetComponent, {
-            hasBackdrop: false,
-            disableClose: true,
-            position: { bottom: '0px', right: '0px' },
-            data: expect.objectContaining({
-                stateStore: stateStore,
-                fullSize: false,
-                widgetHeight: '430px',
-                widgetWidth: '330px',
-            }),
-            scrollStrategy: {},
-        });
     });
 
     it('should subscribe to route.params and call sessionService.getCurrentSessionOrCreate', waitForAsync(async () => {

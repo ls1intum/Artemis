@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faExclamation, faExclamationTriangle, faQuestionCircle, faRobot, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-assessment-detail',
@@ -16,7 +17,9 @@ export class AssessmentDetailComponent {
     @Input() public readOnly: boolean;
     @Input() highlightDifferences: boolean;
 
-    public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
+    readonly FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
+    readonly ButtonSize = ButtonSize;
+
     // Icons
     faTrashAlt = faTrashAlt;
     faRobot = faRobot;
@@ -24,10 +27,10 @@ export class AssessmentDetailComponent {
     faExclamation = faExclamation;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(
-        private translateService: TranslateService,
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-    ) {}
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
      * Emits assessment changes to parent component
@@ -42,11 +45,8 @@ export class AssessmentDetailComponent {
      * Emits the deletion of an assessment
      */
     public delete() {
-        const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.assessment.id ?? '' });
-        const confirmation = confirm(text);
-        if (confirmation) {
-            this.deleteAssessment.emit(this.assessment);
-        }
+        this.deleteAssessment.emit(this.assessment);
+        this.dialogErrorSource.next('');
     }
 
     updateAssessmentOnDrop(event: Event) {

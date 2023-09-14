@@ -8,7 +8,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
-import { AngularDraggableModule } from 'angular2-draggable';
 import { RouterModule } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { IrisSettingsUpdateComponent } from './settings/iris-settings-update/iris-settings-update.component';
@@ -30,17 +29,7 @@ import { IrisLogoComponent } from './iris-logo/iris-logo.component';
         IrisSubSettingsUpdateComponent,
         IrisLogoComponent,
     ],
-    imports: [
-        CommonModule,
-        MatDialogModule,
-        FormsModule,
-        FontAwesomeModule,
-        ArtemisSharedModule,
-        ArtemisMarkdownModule,
-        ArtemisSharedComponentModule,
-        AngularDraggableModule,
-        RouterModule,
-    ],
+    imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
     providers: [],
     exports: [ExerciseChatbotComponent],
 })

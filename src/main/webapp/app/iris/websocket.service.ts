@@ -44,7 +44,10 @@ export class IrisWebsocketService implements OnDestroy {
      * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
      * @param stateStore The IrisStateStore for managing the state of the application.
      */
-    constructor(private jhiWebsocketService: JhiWebsocketService, private stateStore: IrisStateStore) {
+    constructor(
+        private jhiWebsocketService: JhiWebsocketService,
+        private stateStore: IrisStateStore,
+    ) {
         // Subscribe to changes in the session ID
         this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
             if (!isSessionReceivedAction(newAction)) return;

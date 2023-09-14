@@ -40,7 +40,7 @@ class ApollonConversionServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @BeforeEach
     void init() {
-        // Create atheneService and inject @Value fields
+        // Create apollonConversionService and inject @Value fields
         apollonConversionService = new ApollonConversionService(restTemplate);
         ReflectionTestUtils.setField(apollonConversionService, "apollonConversionUrl", apollonConversionUrl);
 

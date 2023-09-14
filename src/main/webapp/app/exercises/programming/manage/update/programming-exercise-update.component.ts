@@ -389,8 +389,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                            this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                                this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
                             // we need the course id  to make the request to the server if it's an import from file
@@ -399,8 +399,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             }
                         } else if (params['courseId']) {
                             this.courseId = params['courseId'];
+                            this.isExamMode = false;
                             this.courseService.find(this.courseId).subscribe((res) => {
-                                this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
                                 if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
@@ -737,7 +737,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;

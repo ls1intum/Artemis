@@ -24,7 +24,11 @@ export class IrisHeartbeatService implements OnDestroy {
      * @param stateStore The IrisStateStore for managing the state of the application.
      * @param httpSessionService The IrisHttpSessionService for HTTP operations related to sessions.
      */
-    constructor(private websocketService: JhiWebsocketService, private stateStore: IrisStateStore, private httpSessionService: IrisHttpSessionService) {
+    constructor(
+        private websocketService: JhiWebsocketService,
+        private stateStore: IrisStateStore,
+        private httpSessionService: IrisHttpSessionService,
+    ) {
         // Subscribe to changes in the session ID
         this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
             if (!isSessionReceivedAction(newAction)) return;

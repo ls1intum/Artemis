@@ -188,7 +188,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 this.programmingExercise.solutionParticipation.buildPlanId,
                             );
                         }
-                        this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                         this.irisEnabled = profileInfo.activeProfiles.includes('iris');
                     }
@@ -200,9 +202,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
                 this.loadGitDiffReport();
 
-                this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
-                    this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
-                });
+                // the build logs endpoint requires at least editor privileges
+                if (this.programmingExercise.isAtLeastEditor) {
+                    this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
+                        this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
+                    });
+                }
 
                 this.setLatestCoveredLineRatio();
 

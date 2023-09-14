@@ -43,17 +43,18 @@ public class ConversationFactory {
         return post;
     }
 
-    public static Channel generateChannel(Course course) {
-        return generateChannel(course, "test");
+    public static Channel generateCourseWideChannel(Course course) {
+        return generatePublicChannel(course, "test", true);
     }
 
-    public static Channel generateChannel(Course course, String channelName) {
+    public static Channel generatePublicChannel(Course course, String channelName, boolean isCourseWide) {
         Channel channel = new Channel();
         channel.setCourse(course);
         channel.setName(channelName);
         channel.setIsPublic(true);
         channel.setIsAnnouncementChannel(false);
         channel.setIsArchived(false);
+        channel.setIsCourseWide(isCourseWide);
         channel.setDescription("Test channel");
         return channel;
     }

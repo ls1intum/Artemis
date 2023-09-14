@@ -14,8 +14,8 @@
 
 .chat-widget {
     position: fixed;
-    bottom: 100px;
-    right: 60px;
+    top: 0;
+    left: 0;
     width: 330px;
     height: 430px;
     background-color: var(--iris-chat-widget-background);
