@@ -745,8 +745,8 @@ public class ProgrammingExerciseExportService {
             if (repositoryExportOptions.isNormalizeCodeStyle()) {
                 try {
                     log.debug("Normalizing code style for participation {}", participation);
-                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath().toString());
-                    fileService.convertToUTF8Directory(repository.getLocalPath().toString());
+                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath());
+                    fileService.convertToUTF8Directory(repository.getLocalPath());
                 }
                 catch (IOException ex) {
                     log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
