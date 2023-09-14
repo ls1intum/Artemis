@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     protected CourseRepository courseRepository;
@@ -105,7 +105,7 @@ public class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws InterruptedException if the thread is interrupted
      */
     protected void waitForIrisMessageToBeProcessed() throws InterruptedException {
-        Thread.sleep(500);
+        Thread.sleep(100);
     }
 
     /**
