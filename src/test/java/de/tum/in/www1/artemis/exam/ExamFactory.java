@@ -3,11 +3,12 @@ package de.tum.in.www1.artemis.exam;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 
 /**
  * Factory for creating Exams and related objects.
@@ -199,5 +200,30 @@ public class ExamFactory {
         generateExerciseGroup(mandatory, exam);
 
         return exam;
+    }
+
+    /**
+     * creates exam session DTOs
+     *
+     * @param session1 firts exam session
+     * @param session2 second exam session
+     * @return set of exam session DTOs
+     */
+    public static Set<ExamSessionDTO> createExpectedExamSessionDTOs(ExamSession session1, ExamSession session2) {
+        var expectedDTOs = new HashSet<ExamSessionDTO>();
+        var firstStudentExamDTO = new StudentExamWithIdAndExamAndUserDTO(session1.getStudentExam().getId(),
+                new ExamWithIdAndCourseDTO(session1.getStudentExam().getExam().getId(), new CourseWithIdDTO(session1.getStudentExam().getExam().getCourse().getId())),
+                new UserWithIdAndLoginDTO(session1.getStudentExam().getUser().getId(), session1.getStudentExam().getUser().getLogin()));
+        var secondStudentExamDTO = new StudentExamWithIdAndExamAndUserDTO(session2.getStudentExam().getId(),
+                new ExamWithIdAndCourseDTO(session2.getStudentExam().getExam().getId(), new CourseWithIdDTO(session2.getStudentExam().getExam().getCourse().getId())),
+                new UserWithIdAndLoginDTO(session2.getStudentExam().getUser().getId(), session2.getStudentExam().getUser().getLogin()));
+        var firstExamSessionDTO = new ExamSessionDTO(session1.getId(), session1.getBrowserFingerprintHash(), session1.getIpAddress(), session1.getSuspiciousReasons(),
+                session1.getCreatedDate(), firstStudentExamDTO);
+        var secondExamSessionDTO = new ExamSessionDTO(session2.getId(), session2.getBrowserFingerprintHash(), session2.getIpAddress(), session2.getSuspiciousReasons(),
+                session2.getCreatedDate(), secondStudentExamDTO);
+        expectedDTOs.add(firstExamSessionDTO);
+        expectedDTOs.add(secondExamSessionDTO);
+        return expectedDTOs;
+
     }
 }

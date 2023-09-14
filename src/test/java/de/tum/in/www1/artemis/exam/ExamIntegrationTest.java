@@ -26,11 +26,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -43,7 +39,6 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -1412,4 +1407,83 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExercisesWithPotentialPlagiarismAsTutor_forbidden() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetSuspiciousSessionsAsTutor_forbidden() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExercisesWithPotentialPlagiarismAsInstructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course1, "");
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course1, "");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSuspiciousSessionsAsInstructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course1, "");
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, Set.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course1, "");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExercisesWithPotentialPlagiarismAsInstructor() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        List<ExerciseForPlagiarismCasesOverviewDTO> expectedExercises = new ArrayList<>();
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
+        exam.getExerciseGroups().forEach(exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+            if (exercise.getExerciseType() != ExerciseType.QUIZ && exercise.getExerciseType() != ExerciseType.FILE_UPLOAD) {
+                var courseDTO = new CourseWithIdDTO(course1.getId());
+                var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
+                var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
+                expectedExercises.add(new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exerciseGroupDTO));
+            }
+        }));
+
+        List<ExerciseForPlagiarismCasesOverviewDTO> exercises = request.getList(
+                "/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.OK, ExerciseForPlagiarismCasesOverviewDTO.class);
+        assertThat(exercises).hasSize(5);
+        assertThat(exercises).containsExactlyInAnyOrderElementsOf(expectedExercises);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSuspiciousSessionsAsInstructor() throws Exception {
+        final String userAgent1 = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15";
+        final String ipAddress1 = "192.0.2.235";
+        final String browserFingerprint1 = "5b2cc274f6eaf3a71647e1f85358ce32";
+        final String sessionToken1 = "abc";
+        final String userAgent2 = "Mozilla/5.0 (Linux; Android 10; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile Safari/537.36";
+        final String ipAddress2 = "172.168.0.0";
+        final String browserFingerprint2 = "5b2cc274f6eaf3a71647e1f85358ce31";
+        final String sessionToken2 = "def";
+        Exam exam = examUtilService.addExam(course1);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        StudentExam studentExam2 = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        ExamSession firstExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
+        examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken2, ipAddress2, browserFingerprint2, "instance2Id", userAgent2);
+        ExamSession secondExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
+        Set<SuspiciousSessionReason> suspiciousReasons = Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_IP_ADDRESS);
+        firstExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
+        secondExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
+        Set<SuspiciousExamSessionsDTO> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/suspicious-sessions",
+                HttpStatus.OK, SuspiciousExamSessionsDTO.class);
+        assertThat(suspiciousSessionTuples).hasSize(1);
+        var suspiciousSessions = suspiciousSessionTuples.stream().findFirst().get();
+        assertThat(suspiciousSessions.examSessions()).hasSize(2);
+        assertThat(suspiciousSessions.examSessions()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("createdDate")
+                .containsExactlyInAnyOrderElementsOf(ExamFactory.createExpectedExamSessionDTOs(firstExamSessionStudent1, secondExamSessionStudent1));
+    }
+
 }

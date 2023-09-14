@@ -4,6 +4,7 @@ import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
+import java.net.URI;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +20,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -108,10 +111,16 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testCreateTestExam_asInstructor() throws Exception {
         // Test the creation of a test exam
         Exam examA = ExamFactory.generateTestExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
 
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
+        Channel channelFromDB = channelRepository.findChannelByExamId(savedExam.getId());
+        assertThat(channelFromDB).isNotNull();
     }
+
+    @Autowired
+    ChannelRepository channelRepository;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -160,7 +169,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         exam.setNumberOfCorrectionRoundsInExam(3);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
-
     }
 
     @Test
