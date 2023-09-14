@@ -216,7 +216,6 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Copies the files that are embedded with html syntax to the embedded files' directory.
-     * <p>
      *
      * @param exercise                    the programming exercise that is exported
      * @param exportErrors                List of failures that occurred during the export
@@ -233,7 +232,6 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Extracts the filename from the matched string and copies the file to the embedded files' directory.
-     * <p>
      *
      * @param exercise         the programming exercise that is exported
      * @param exportErrors     List of failures that occurred during the export
@@ -258,7 +256,6 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Checks for matches in the problem statement and creates a directory for the embedded files.
-     * <p>
      *
      * @param outputDir       the directory where the content of the export is stored
      * @param pathsToBeZipped the paths that should be included in the zip file
