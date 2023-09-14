@@ -371,21 +371,18 @@ public class CourseExamExportService {
                 continue;
             }
 
-            // Export programming exercise
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                // Download the repositories' template, solution, tests and students' repositories
-                exportedExercises
-                        .add(programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData));
-                continue;
-            }
-
-            // Export the other exercises types
-
             // Export options
             var submissionsExportOptions = new SubmissionExportOptionsDTO();
             submissionsExportOptions.setExportAllParticipants(true);
             try {
-                if (exercise instanceof FileUploadExercise) {
+                // Export programming exercise
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
+                    // Download the repositories' template, solution, tests and students' repositories
+                    exportedExercises.add(
+                            programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData));
+                }
+                // Export the other exercises types
+                else if (exercise instanceof FileUploadExercise) {
                     exportedExercises.add(fileUploadExerciseWithSubmissionsExportService.exportFileUploadExerciseWithSubmissions(exercise, submissionsExportOptions,
                             exerciseExportDir, exportErrors, reportData));
                 }
