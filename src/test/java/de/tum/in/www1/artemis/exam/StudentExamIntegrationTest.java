@@ -1385,7 +1385,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
         });
-        QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
+        QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api-quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
                 HttpStatus.OK);
         // check the submission
         assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull().isNotEmpty();
@@ -2698,7 +2698,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             final List<Integer> selectedOptionIndices = List.of(0, 1);
             List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
 
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api-quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // load Quiz Submissions Submitted Answers (for comparison) * 3
             final int quizQueryCount = 3;
@@ -2818,7 +2818,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         void testChangedAndNotSubmittedShortAnswerQuestionSubmission() throws Exception {
             // Given
             getChangedShortAnswerSubmittedText("First changed and submitted answer", 0);
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api-quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
             quizSubmission.removeSubmittedAnswers(quizSubmission.getSubmittedAnswers().iterator().next());
 
             final String text = "Changed short answer text";

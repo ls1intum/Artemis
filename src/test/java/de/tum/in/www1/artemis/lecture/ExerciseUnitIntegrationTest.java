@@ -180,7 +180,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
+        request.delete("/api-quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
         request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
 

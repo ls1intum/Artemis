@@ -108,14 +108,15 @@ public class QuizExerciseUtilService {
             }
             case BATCHED -> {
                 SecurityContextHolder.getContext().setAuthentication(tutor);
-                var batch = requestUtilService.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
-                requestUtilService.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
+                var batch = requestUtilService.putWithResponseBody("/api-quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
+                requestUtilService.put("/api-quiz/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
                 SecurityContextHolder.getContext().setAuthentication(student);
-                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), HttpStatus.OK, null);
+                requestUtilService.postWithoutLocation("/api-quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), HttpStatus.OK,
+                        null);
             }
             case INDIVIDUAL -> {
                 SecurityContextHolder.getContext().setAuthentication(student);
-                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(null), HttpStatus.OK, null);
+                requestUtilService.postWithoutLocation("/api-quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(null), HttpStatus.OK, null);
             }
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
