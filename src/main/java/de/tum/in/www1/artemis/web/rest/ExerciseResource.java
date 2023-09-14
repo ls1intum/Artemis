@@ -300,7 +300,7 @@ public class ExerciseResource {
         }
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // TODO: instead fetch the policy without programming exercise, should be faster
-            SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
+            SubmissionPolicy policy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(programmingExercise.getId()).getSubmissionPolicy();
             programmingExercise.setSubmissionPolicy(policy);
         }
         // TODO: we should also check that the submissions do not contain sensitive data

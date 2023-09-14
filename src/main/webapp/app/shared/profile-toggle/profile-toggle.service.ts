@@ -30,7 +30,12 @@ export class ProfileToggleService {
     private profileForCurrentRoute: ProfileToggle | undefined = undefined;
     private errorShownForCurrentRoute = false;
 
-    constructor(private websocketService: JhiWebsocketService, private alertService: AlertService, private router: Router, private http: HttpClient) {
+    constructor(
+        private websocketService: JhiWebsocketService,
+        private alertService: AlertService,
+        private router: Router,
+        private http: HttpClient,
+    ) {
         this.websocketService.onWebSocketConnected().subscribe(() => {
             this.reloadActiveProfileTogglesFromServer();
         });

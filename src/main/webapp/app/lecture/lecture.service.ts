@@ -14,7 +14,7 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
-    public resourceUrl = 'api/lectures';
+    public resourceUrl = 'api-lecture/lectures';
 
     constructor(
         protected http: HttpClient,
@@ -89,7 +89,7 @@ export class LectureService {
     findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
         const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
         return this.http
-            .get<Lecture[]>(`api/courses/${courseId}/lectures`, {
+            .get<Lecture[]>(`api-lecture/courses/${courseId}/lectures`, {
                 params,
                 observe: 'response',
             })
@@ -102,7 +102,7 @@ export class LectureService {
 
     findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Lecture[]>(`api/courses/${courseId}/lectures-with-slides`, {
+            .get<Lecture[]>(`api-lecture/courses/${courseId}/lectures-with-slides`, {
                 observe: 'response',
             })
             .pipe(

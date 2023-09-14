@@ -11,7 +11,10 @@ export type ResultResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizParticipationService {
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(
+        private http: HttpClient,
+        private submissionService: SubmissionService,
+    ) {}
 
     submitForPractice(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.submissionService.convert(quizSubmission);

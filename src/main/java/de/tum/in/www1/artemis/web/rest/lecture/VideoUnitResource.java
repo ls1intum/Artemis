@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api-lecture")
 @Profile("!decoupling || lecture")
 public class VideoUnitResource {
 

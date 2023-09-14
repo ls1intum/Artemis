@@ -9,7 +9,10 @@ import { AlertService } from 'app/core/util/alert.service';
 export class DeleteDialogService {
     modalRef: NgbModalRef | null;
 
-    constructor(private modalService: NgbModal, public alertService: AlertService) {}
+    constructor(
+        private modalService: NgbModal,
+        public alertService: AlertService,
+    ) {}
 
     /**
      * Opens delete dialog
@@ -21,6 +24,7 @@ export class DeleteDialogService {
         this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static', animation });
         this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
         this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
+        this.modalRef.componentInstance.translateValues = { ...deleteDialogData.translateValues, title: deleteDialogData.entityTitle };
         this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
         this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
         this.modalRef.componentInstance.actionType = deleteDialogData.actionType;

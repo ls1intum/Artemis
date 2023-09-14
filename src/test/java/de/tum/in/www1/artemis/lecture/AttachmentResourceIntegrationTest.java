@@ -114,7 +114,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAttachmentsForLecture() throws Exception {
         attachment = attachmentRepository.save(attachment);
-        var actualAttachments = request.getList("/api/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, Attachment.class);
+        var actualAttachments = request.getList("/api-lecture/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, Attachment.class);
         assertThat(actualAttachments).hasSize(1);
         assertThat(actualAttachments.stream().findFirst()).contains(attachment);
     }

@@ -29,13 +29,7 @@
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
                 </div>
-                <jhi-title-channel-name
-                    [(title)]="lecture.title"
-                    [(channelName)]="lecture.channelName"
-                    channelNamePrefix="lecture-"
-                    [hideChannelName]="lecture.id !== undefined && lecture.channelName === undefined"
-                    [initChannelName]="lecture.id === undefined"
-                ></jhi-title-channel-name>
+                <jhi-lecture-title-channel-name [lecture]="lecture"></jhi-lecture-title-channel-name>
                 <div class="form-group" id="field_description">
                     <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
                     <jhi-markdown-editor
@@ -100,7 +94,7 @@
                 <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
                 <fa-icon
                     [icon]="faQuestionCircle"
-                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate : { extensions: allowedFileExtensions }"
+                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                 ></fa-icon>
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">

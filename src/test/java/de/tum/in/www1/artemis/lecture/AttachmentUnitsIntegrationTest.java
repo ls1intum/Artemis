@@ -56,7 +56,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
-        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, true, false);
+        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -88,8 +88,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
         var filePart = createLectureFile(true);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePart, LectureUnitInformationDTO.class, HttpStatus.OK);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
@@ -100,15 +100,15 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
         var filePart = createLectureFile(true);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePart, LectureUnitInformationDTO.class, HttpStatus.OK);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false, false);
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "");
 
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
+        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
 
         assertThat(attachmentUnits).hasSize(2);
@@ -126,7 +126,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldThrowError() throws Exception {
         var filePartWord = createLectureFile(false);
         // if trying to process not the right pdf file then it should throw server error
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartWord, LectureUnitInformationDTO.class,
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartWord, LectureUnitInformationDTO.class,
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -136,42 +136,12 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var filePartPDF = createLectureFile(true);
         var filePartWord = createLectureFile(false);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartPDF,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePartPDF, LectureUnitInformationDTO.class, HttpStatus.OK);
 
         // if trying to create multiple units with not the right pdf file then it should throw error
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
                 AttachmentUnit[].class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-        var filePart = createLectureFile(true);
-
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
-        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, false);
-
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
-                "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
-        assertThat(attachmentUnits).hasSize(2);
-        assertThat(slideRepository.findAll()).hasSize(19); // 19 slides should be created for 2 attachment units (1 break slide is removed)
-
-        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
-        List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
-        String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
-        byte[] fileBytes = request.get(attachmentPath, HttpStatus.OK, byte[].class);
-
-        try (PDDocument document = PDDocument.load(fileBytes)) {
-            // 6 is the number of pages for the first unit without the break slides
-            assertThat(document.getNumberOfPages()).isEqualTo(6);
-            document.close();
-        }
-        assertThat(attachmentUnitList).hasSize(2);
-        assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
     }
 
     @Test
@@ -179,13 +149,15 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldRemoveSolutionSlides_and_removeBreakSlides() throws Exception {
         var filePart = createLectureFile(true);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units",
+                filePart, LectureUnitInformationDTO.class, HttpStatus.OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, true);
 
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
+        var commaSeparatedKeyPhrases = String.join(",", new String[] { "Break", "Example solution" });
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
+
+        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
         assertThat(attachmentUnits).hasSize(2);
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment units (1 break slide is removed and 1 solution slide is removed)
@@ -218,10 +190,10 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLectureFile(true), LectureUnitInformationDTO.class,
-                HttpStatus.FORBIDDEN);
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO", createLectureFile(true),
-                AttachmentUnit[].class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLectureFile(true),
+                LectureUnitInformationDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api-lecture/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO",
+                createLectureFile(true), AttachmentUnit[].class, HttpStatus.FORBIDDEN);
     }
 
     /**

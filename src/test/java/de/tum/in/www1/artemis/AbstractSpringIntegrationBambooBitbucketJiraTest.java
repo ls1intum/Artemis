@@ -61,7 +61,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ExtendWith(SpringExtension.class)
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athena", "apollon" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
 
     @SpyBean
@@ -237,8 +237,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         }
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
-
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject) throws IOException, URISyntaxException {
@@ -264,7 +262,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             throws Exception {
 
         mockImportRepositories(sourceExercise, exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
         bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         if (!recreateBuildPlans) {
@@ -283,7 +280,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(sourceExercise, exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
     }

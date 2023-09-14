@@ -18,7 +18,10 @@ export class MetricsComponent implements OnInit {
     // Icons
     faSync = faSync;
 
-    constructor(private metricsService: MetricsService, private changeDetector: ChangeDetectorRef) {}
+    constructor(
+        private metricsService: MetricsService,
+        private changeDetector: ChangeDetectorRef,
+    ) {}
 
     /**
      * Calls the refresh method on init

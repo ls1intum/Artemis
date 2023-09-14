@@ -84,8 +84,8 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private void testAllPreAuthorize() throws Exception {
         ExerciseUnit exerciseUnit = new ExerciseUnit();
-        request.post("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, HttpStatus.FORBIDDEN);
-        request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.FORBIDDEN, ExerciseUnit.class);
+        request.post("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, HttpStatus.FORBIDDEN);
+        request.getList("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.FORBIDDEN, ExerciseUnit.class);
     }
 
     @Test
@@ -109,7 +109,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (Exercise exerciseOfCourse : exercisesOfCourse) {
             ExerciseUnit exerciseUnit = new ExerciseUnit();
             exerciseUnit.setExercise(exerciseOfCourse);
-            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                     HttpStatus.CREATED);
             persistedExerciseUnits.add(persistedExerciseUnit);
         }
@@ -121,7 +121,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             assertThat(exercisesOfCourse).contains(exerciseUnit.getExercise());
         }
 
-        List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
+        List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
         assertThat(exerciseUnitsOfLecture).containsAll(persistedExerciseUnits);
     }
 
@@ -132,7 +132,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -142,7 +142,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -151,7 +151,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api-lecture/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -160,7 +160,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -172,7 +172,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (Exercise exerciseOfCourse : exercisesOfCourse) {
             ExerciseUnit exerciseUnit = new ExerciseUnit();
             exerciseUnit.setExercise(exerciseOfCourse);
-            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                     HttpStatus.CREATED);
             persistedExerciseUnits.add(persistedExerciseUnit);
         }
@@ -184,7 +184,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
         request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
 
-        List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
+        List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
         assertThat(exerciseUnitsOfLecture).isEmpty();
 
     }
@@ -198,14 +198,14 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (Exercise exerciseOfCourse : exercisesOfCourse) {
             ExerciseUnit exerciseUnit = new ExerciseUnit();
             exerciseUnit.setExercise(exerciseOfCourse);
-            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api-lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                     HttpStatus.CREATED);
             persistedExerciseUnits.add(persistedExerciseUnit);
         }
         assertThat(persistedExerciseUnits).hasSameSizeAs(exercisesOfCourse);
 
         for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
-            request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
+            request.delete("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
         }
 
         for (Exercise exercise : exercisesOfCourse) {

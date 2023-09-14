@@ -100,15 +100,15 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/0", HttpStatus.FORBIDDEN);
+        request.put("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+        request.delete("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/0", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
+        request.delete("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
     }
@@ -124,7 +124,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits().get(0).getCompetencies()).isNotEmpty();
 
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
+        request.delete("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
     }
@@ -143,7 +143,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isPresent();
 
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
+        request.delete("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
 
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
@@ -154,14 +154,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLectureUnit_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.FORBIDDEN);
+        request.delete("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_notPartOfLecture_shouldReturnNotFound() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
-        request.delete("/api/lectures/" + Integer.MAX_VALUE + "/lecture-units/" + lectureUnitId, HttpStatus.CONFLICT);
+        request.delete("/api-lecture/lectures/" + Integer.MAX_VALUE + "/lecture-units/" + lectureUnitId, HttpStatus.CONFLICT);
     }
 
     /**
@@ -174,7 +174,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(3);
         LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().orElseThrow();
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
+        request.delete("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
         lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(2).noneMatch(Objects::isNull);
     }
@@ -184,7 +184,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void updateLectureUnitOrder_asInstructor_shouldUpdateLectureUnitOrder() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
         Collections.swap(newlyOrderedList, 0, 1);
-        List<LectureUnit> returnedList = request.putWithResponseBodyList("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, LectureUnit.class,
+        List<LectureUnit> returnedList = request.putWithResponseBodyList("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, LectureUnit.class,
                 HttpStatus.OK);
         assertThat(returnedList.get(0).getId()).isEqualTo(newlyOrderedList.get(0));
         assertThat(returnedList.get(1).getId()).isEqualTo(newlyOrderedList.get(1));
@@ -194,7 +194,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_wrongSizeOfIds_shouldReturnConflict() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).skip(1).toList();
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
+        request.put("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -203,27 +203,27 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
         // textUnit3 is not in specified lecture
         newlyOrderedList.set(1, this.textUnit3.getId());
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
+        request.put("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_asInstructorWithWrongLectureId_shouldReturnNotFound() throws Exception {
-        request.put("/api/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.NOT_FOUND);
+        request.put("/api-lecture/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_notInstructorInCourse_shouldReturnForbidden() throws Exception {
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+        request.put("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion() throws Exception {
         // Set lecture unit as completed for current user
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
-                HttpStatus.OK, null);
+        request.postWithoutLocation("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true",
+                null, HttpStatus.OK, null);
 
         this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
@@ -233,8 +233,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isNotNull();
 
         // Set lecture unit as uncompleted for user
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
-                HttpStatus.OK, null);
+        request.postWithoutLocation("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false",
+                null, HttpStatus.OK, null);
 
         this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1.getId());
         lectureUnit = this.lecture1.getLectureUnits().get(0);
@@ -247,15 +247,15 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion_lectureUnitNotPartOfLecture_shouldReturnConflict() throws Exception {
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit2.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
-                null);
+        request.postWithoutLocation("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit2.getId() + "/completion?completed=true", null,
+                HttpStatus.CONFLICT, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion_withoutLecture_shouldReturnConflict() throws Exception {
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
-                null);
+        request.postWithoutLocation("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null,
+                HttpStatus.CONFLICT, null);
     }
 
     @Test
@@ -263,16 +263,16 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void setLectureUnitCompletion_lectureUnitNotVisible_shouldReturnConflict() throws Exception {
         this.textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
         textUnitRepository.save(this.textUnit);
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
-                null);
+        request.postWithoutLocation("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit.getId() + "/completion?completed=true", null,
+                HttpStatus.CONFLICT, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void setLectureUnitCompletion_shouldReturnForbidden() throws Exception {
         // User is not in same course as lecture unit
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
-                HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api-lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true",
+                null, HttpStatus.FORBIDDEN, null);
     }
 
 }

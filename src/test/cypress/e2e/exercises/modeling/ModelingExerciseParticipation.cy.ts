@@ -1,8 +1,9 @@
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../../../support/artemis';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+
+import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, modelingExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Modeling Exercise Participation', () => {
     let course: Course;
@@ -10,10 +11,10 @@ describe('Modeling Exercise Participation', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response: Cypress.Response<Course>) => {
+        courseManagementAPIRequest.createCourse().then((response: Cypress.Response<Course>) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            exerciseAPIRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
         });
@@ -30,6 +31,6 @@ describe('Modeling Exercise Participation', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

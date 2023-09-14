@@ -119,7 +119,8 @@ PostgreSQL Setup
 
 No special PostgreSQL settings are required.
 You can either use your package manager’s version, or set it up using a container.
-An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_ is provided in ``src/main/docker/postgresql.yml``.
+An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_
+is provided in ``src/main/docker/postgres.yml``.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
@@ -221,10 +222,9 @@ You can override the following configuration options in this file.
        git:
            name: Artemis
            email: artemis@in.tum.de
-       athene:
-           url: http://localhost
-           base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-           token-validity-in-seconds: 10800
+       athena:
+           url: http://localhost:5000
+           secret: abcdef12345
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
@@ -416,8 +416,8 @@ Other run / debug configurations
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
 * **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as the local CI system uses it to run build jobs.
-* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
-  (see `Athene Service <#athene-service>`__).
+* **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
+  (see `Athena Service <#athena-service>`__).
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -646,23 +646,24 @@ HTTPS. We need to extend the Artemis configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
-Athene Service
+
+Athena Service
 --------------
 
-The semi-automatic text assessment relies on the Athene_ service.
+The semi-automatic text assessment relies on the Athena_ service.
 To enable automatic text assessments, special configuration is required:
 
-Enable the ``athene`` Spring profile:
+Enable the ``athena`` Spring profile:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athena
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Athene service is running on a dedicated machine and is addressed via
+The Athena service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
@@ -670,12 +671,14 @@ HTTP. We need to extend the configuration in the file
 
    artemis:
      # ...
-     athene:
-       url: http://localhost
-       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-       token-validity-in-seconds: 10800
+     athena:
+         url: http://localhost:5000
+         secret: abcdef12345
 
-.. _Athene: https://github.com/ls1intum/Athene
+The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the Athena documentation_.
+
+.. _Athena: https://github.com/ls1intum/Athena
+.. _documentation: https://ls1intum.github.io/Athena
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -717,6 +720,8 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
+.. _docker_compose_setup_dev:
+
 Alternative: Docker Compose Setup
 ---------------------------------
 
@@ -755,7 +760,7 @@ Other Docker Compose Setups
 
 .. figure:: setup/artemis-docker-file-structure.drawio.png
    :align: center
-   :target: ../../_images/artemis-docker-file-structure.drawio.png
+   :target: ../_images/artemis-docker-file-structure.drawio.png
 
    Overview of the Artemis Docker / Docker Compose structure
 
@@ -763,7 +768,11 @@ The easiest way to configure a local deployment via Docker is a deployment with 
 In the directory ``docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+* ``artemis-dev-postgres.yml``: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and
+  a PostgreSQL DB
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
+* ``artemis-prod-postgres.yml``: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and
+  a PostgreSQL DB
 * ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
   (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
   for the configuration of this setup)
@@ -773,14 +782,15 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
 * ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
-* ``postgresql.yml``: **PostgreSQL** Setup containing a PostgreSQL DB instance
+* ``postgres.yml``: **Postgres** Setup containing a PostgreSQL DB instance
 
-Two example commands to run such setups:
+Three example commands to run such setups:
 
 .. code:: bash
 
   docker compose -f docker/atlassian.yml up
   docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
+  docker compose -f docker/artemis-dev-postgres.yml up
 
 .. tip::
   There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
@@ -794,7 +804,7 @@ is defined in the following files:
 * ``artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
 * ``nginx.yml``: **Nginx Service**
-* ``postgresql.yml``: **PostgreSQL DB Service**
+* ``postgres.yml``: **PostgreSQL DB Service**
 * ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 

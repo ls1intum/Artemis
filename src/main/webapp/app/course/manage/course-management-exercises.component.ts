@@ -42,7 +42,11 @@ export class CourseManagementExercisesComponent implements OnInit {
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
-    constructor(private courseService: CourseManagementService, private router: Router, private route: ActivatedRoute) {}
+    constructor(
+        private courseService: CourseManagementService,
+        private router: Router,
+        private route: ActivatedRoute,
+    ) {}
 
     /**
      * initializes course

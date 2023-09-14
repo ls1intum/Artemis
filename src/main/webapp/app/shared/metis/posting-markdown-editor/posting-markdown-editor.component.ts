@@ -36,7 +36,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     content?: string;
     previewMode = false;
 
-    constructor(private cdref: ChangeDetectorRef, private metisService: MetisService, private lectureService: LectureService, private profileToggleService: ProfileToggleService) {}
+    constructor(
+        private cdref: ChangeDetectorRef,
+        private metisService: MetisService,
+        private lectureService: LectureService,
+        private profileToggleService: ProfileToggleService,
+    ) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings

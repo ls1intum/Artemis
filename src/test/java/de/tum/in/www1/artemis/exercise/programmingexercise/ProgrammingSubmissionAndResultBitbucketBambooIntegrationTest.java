@@ -6,12 +6,14 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -881,6 +883,17 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // set the author name to "Artemis"
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
+        doAnswer(answer((u, topic, arg) -> {
+            // Verify that the passed result is minimal
+            // We cannot use an ArgumentCaptor since the passed object gets modified afterwards, but we want to verify that state when calling the method.
+            assertThat(arg).isInstanceOf(Result.class);
+            Result result = (Result) arg;
+            assertThat(result.getSubmission().getResults()).isNull();
+            assertThat(result.getSubmission().getParticipation()).isNull();
+            assertThat(result.getParticipation().getExercise()).isNull();
+            return CompletableFuture.completedFuture(null);
+        })).when(websocketMessagingService).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
+
         // Mock result from bamboo
         assertThat(examDateService.getLatestIndividualExamEndDateWithGracePeriod(studentExam.getExam())).isAfter(ZonedDateTime.now());
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
@@ -931,6 +944,68 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
         // Bamboo Setup -> Gradle Feedback is duplicated and should be cut in half
         assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("abc\nmultiline\nfeedback");
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("testSubmissionAfterDueDateValues")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmissionAfterDueDate(ZonedDateTime dueDate, SubmissionType expectedType, boolean expectedRated, boolean testRun) throws Exception {
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise.setDueDate(dueDate); // shortly after the due date
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // Add a participation for the programming exercise
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+        if (testRun) {
+            participation.setTestRun(testRun);
+            participation = participationRepository.save(participation);
+        }
+
+        // mock request for fetchCommitInfo()
+        final String projectKey = "test201904bprogrammingexercise6";
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+        // push date after the due date
+        // bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
+
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
+
+        // Check that the result was created successfully and is linked to the participation and submission.
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).hasSize(1);
+        Result createdResult = results.get(0);
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).orElseThrow();
+
+        // Assert that the submission is illegal
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).orElseThrow();
+        assertThat(illegalSubmission.getType()).isEqualTo(expectedType);
+        assertThat(illegalSubmission.isSubmitted()).isTrue();
+        assertThat(illegalSubmission.getLatestResult().isRated()).isEqualTo(expectedRated);
+        assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
+
+        // Check that the result belongs to the participation
+        Participation updatedParticipation = participationRepository.findByIdWithResultsAndSubmissionsResults(participation.getId()).orElseThrow();
+        assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
+    }
+
+    private static Stream<Arguments> testSubmissionAfterDueDateValues() {
+        ZonedDateTime now = ZonedDateTime.now();
+        return Stream.of(
+                // short after due date -> grace period active, type manual + rated
+                Arguments.of(now.minusSeconds(10), SubmissionType.MANUAL, true, false),
+                // long after due date -> grace period not active, illegal + non rated
+                Arguments.of(now.minusMinutes(2), SubmissionType.ILLEGAL, false, false),
+                // After grace period but a practice submission and therefore ok
+                Arguments.of(now.minusMinutes(2), SubmissionType.MANUAL, false, true));
     }
 
     private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
@@ -987,7 +1062,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     /**
      * Simulate a commit to the test repository, this executes a http request from the VCS to Artemis.
      */
-    @SuppressWarnings("unchecked")
     private void postTestRepositorySubmissionWithoutCommit(HttpStatus status) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);

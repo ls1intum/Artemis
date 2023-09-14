@@ -104,7 +104,12 @@ export class CompetencyFormComponent implements OnInit, OnChanges {
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private fb: FormBuilder, private competencyService: CompetencyService, private translateService: TranslateService, public lectureUnitService: LectureUnitService) {}
+    constructor(
+        private fb: FormBuilder,
+        private competencyService: CompetencyService,
+        private translateService: TranslateService,
+        public lectureUnitService: LectureUnitService,
+    ) {}
 
     get titleControl() {
         return this.form.get('title');

@@ -55,6 +55,8 @@ import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/m
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
+import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
+import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
 
@@ -214,6 +216,24 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.bonus.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/suspicious-behavior',
+        component: SuspiciousBehaviorComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.examManagement.suspiciousBehavior.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/suspicious-behavior/suspicious-sessions',
+        component: SuspiciousSessionsOverviewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -788,10 +808,6 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
         loadChildren: () => import('../../exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/text-cluster-statistics',
-        loadChildren: () => import('../../exercises/text/manage/cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions',

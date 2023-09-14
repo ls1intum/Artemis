@@ -9,7 +9,12 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable()
 export class AuthExpiredInterceptor implements HttpInterceptor {
-    constructor(private loginService: LoginService, private stateStorageService: StateStorageService, private router: Router, private accountService: AccountService) {}
+    constructor(
+        private loginService: LoginService,
+        private stateStorageService: StateStorageService,
+        private router: Router,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is 401, the current user will be logged out.

@@ -7,7 +7,7 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { BuildPlan } from 'app/entities/build-plan.model';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockBuildPlanService } from '../../helpers/mocks/service/mock-build-plan.service';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
@@ -17,12 +17,15 @@ import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-re
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('Build Plan Editor', () => {
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
     let comp: BuildPlanEditorComponent;
 
     let activatedRoute: MockActivatedRoute;
+    let alertService: MockAlertService;
     let buildPlanService: BuildPlanService;
     let programmingExerciseService: ProgrammingExerciseService;
 
@@ -34,6 +37,7 @@ describe('Build Plan Editor', () => {
             declarations: [BuildPlanEditorComponent, TranslatePipeMock, MockComponent(CodeEditorHeaderComponent), MockComponent(UpdatingResultComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: AlertService, useValue: new MockAlertService() },
                 { provide: BuildPlanService, useValue: new MockBuildPlanService() },
                 { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
             ],
@@ -44,6 +48,7 @@ describe('Build Plan Editor', () => {
                 comp = fixture.componentInstance;
 
                 activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
+                alertService = fixture.debugElement.injector.get(AlertService) as MockAlertService;
                 buildPlanService = fixture.debugElement.injector.get(BuildPlanService);
                 programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
 
@@ -131,4 +136,32 @@ describe('Build Plan Editor', () => {
         flush();
         discardPeriodicTasks();
     }));
+
+    it.each([
+        [404, 'artemisApp.programmingExercise.buildPlanFetchError'],
+        [405, 'error.http.405'],
+    ])(
+        'should show an error message if fetching the build plan failed',
+        fakeAsync((status: number, expectedError: string) => {
+            activatedRoute.snapshot = {
+                params: { exerciseId: 3 },
+            } as unknown as ActivatedRouteSnapshot;
+            const getBuildPlanStub = jest.spyOn(buildPlanService, 'getBuildPlan').mockReturnValue(throwError(new HttpResponse<BuildPlan>({ status })));
+
+            const alertStub = jest.spyOn(alertService, 'error');
+
+            comp.ngAfterViewInit();
+            tick();
+
+            expect(getBuildPlanStub).toHaveBeenCalledWith(3);
+            expect(comp.isLoading).toBeFalse();
+            expect(comp.buildPlan).toBeUndefined();
+
+            expect(alertStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledWith(expectedError);
+
+            flush();
+            discardPeriodicTasks();
+        }),
+    );
 });

@@ -9,6 +9,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
+    @Input() translateValues: { [key: string]: unknown } = {};
     @Input() deleteConfirmationText: string;
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
     @Input() additionalChecks?: { [key: string]: string };
@@ -23,7 +24,12 @@ export class DeleteButtonDirective implements OnInit {
 
     deleteTextSpan: HTMLElement;
 
-    constructor(private deleteDialogService: DeleteDialogService, private renderer: Renderer2, private elementRef: ElementRef, private translateService: TranslateService) {}
+    constructor(
+        private deleteDialogService: DeleteDialogService,
+        private renderer: Renderer2,
+        private elementRef: ElementRef,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.
@@ -64,6 +70,7 @@ export class DeleteButtonDirective implements OnInit {
         const deleteDialogData: DeleteDialogData = {
             entityTitle: this.entityTitle,
             deleteQuestion: this.deleteQuestion,
+            translateValues: this.translateValues,
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
             actionType: this.actionType,

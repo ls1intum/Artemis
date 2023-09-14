@@ -25,7 +25,10 @@ export class TextExerciseRowButtonsComponent {
     faTable = faTable;
     farListAlt = faListAlt;
 
-    constructor(private textExerciseService: TextExerciseService, private eventManager: EventManager) {}
+    constructor(
+        private textExerciseService: TextExerciseService,
+        private eventManager: EventManager,
+    ) {}
 
     deleteExercise() {
         this.textExerciseService.delete(this.exercise.id!).subscribe({

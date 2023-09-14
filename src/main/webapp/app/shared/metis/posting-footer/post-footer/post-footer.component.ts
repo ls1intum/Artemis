@@ -36,7 +36,10 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
 
-    constructor(private metisService: MetisService, protected changeDetector: ChangeDetectorRef) {
+    constructor(
+        private metisService: MetisService,
+        protected changeDetector: ChangeDetectorRef,
+    ) {
         super();
     }
 

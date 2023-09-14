@@ -12,7 +12,10 @@ export class ProfileToggleLinkDirective implements OnInit, OnDestroy {
 
     private profileToggleActiveSubscription: Subscription;
 
-    constructor(@SkipSelf() protected cdRef: ChangeDetectorRef, private profileToggleService: ProfileToggleService) {}
+    constructor(
+        @SkipSelf() protected cdRef: ChangeDetectorRef,
+        private profileToggleService: ProfileToggleService,
+    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
