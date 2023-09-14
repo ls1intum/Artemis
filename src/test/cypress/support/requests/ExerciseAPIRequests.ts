@@ -452,7 +452,7 @@ export class ExerciseAPIRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: QUIZ_EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
             body: multipleChoiceSubmission,
         });
@@ -489,7 +489,7 @@ export class ExerciseAPIRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: QUIZ_EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
             body: shortAnswerSubmission,
         });

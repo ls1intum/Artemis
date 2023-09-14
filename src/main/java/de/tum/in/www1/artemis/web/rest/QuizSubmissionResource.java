@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing QuizSubmission.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api-quiz")
 @Profile("!decoupling || quiz")
 public class QuizSubmissionResource {
 

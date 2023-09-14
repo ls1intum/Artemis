@@ -1,4 +1,4 @@
-import { EXERCISE_BASE, MODELING_EDITOR_CANVAS, POST } from '../../../constants';
+import { MODELING_EDITOR_CANVAS, POST, QUIZ_EXERCISE_BASE } from '../../../constants';
 
 export class DragAndDropQuiz {
     createDnDQuiz(title: string) {
@@ -69,7 +69,7 @@ export class DragAndDropQuiz {
     }
 
     submit() {
-        cy.intercept(POST, EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
+        cy.intercept(POST, QUIZ_EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
         cy.get('#submit-quiz').contains('Submit').click();
         return cy.wait('@createQuizExercise');
     }

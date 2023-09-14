@@ -12,13 +12,15 @@ export const PUT = 'PUT';
 export const PATCH = 'PATCH';
 export const BASE_API = 'api/';
 export const LECTURE_BASE_API = 'api-lecture/';
+export const QUIZ_BASE_API = 'api-quiz/';
 export const EXERCISE_BASE = BASE_API + 'exercises/';
+export const QUIZ_API_EXERCISE_BASE = QUIZ_BASE_API + 'exercises/';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
 
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
-export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
+export const QUIZ_EXERCISE_BASE = QUIZ_BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export const UPLOAD_EXERCISE_BASE = BASE_API + 'file-upload-exercises/';
