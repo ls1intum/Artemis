@@ -61,13 +61,17 @@ public class LectureUnitProcessingService {
             Splitter pdfSplitter = new Splitter();
 
             for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
+                // make sure output stream doesn't contain old data
+                outputStream.reset();
+
                 AttachmentUnit attachmentUnit = new AttachmentUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
 
                 pdfSplitter.setStartPage(lectureUnit.startPage());
                 pdfSplitter.setEndPage(lectureUnit.endPage());
-                pdfSplitter.setSplitAtPage(lectureUnit.endPage());
+                // split only based on start and end page
+                pdfSplitter.setSplitAtPage(document.getNumberOfPages());
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());

@@ -177,7 +177,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         try (PDDocument document = Loader.loadPDF(fileBytesFirst)) {
             // 5 is the number of pages for the first unit (after break and solution are removed)
             assertThat(document.getNumberOfPages()).isEqualTo(5);
-            document.close();
         }
 
         // second unit
@@ -187,7 +186,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         try (PDDocument document = Loader.loadPDF(fileBytesSecond)) {
             // 13 is the number of pages for the second unit
             assertThat(document.getNumberOfPages()).isEqualTo(13);
-            document.close();
         }
     }
 
@@ -223,6 +221,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
                         contentStream.showText("Break");
                         contentStream.newLineAtOffset(0, -15);
                         contentStream.showText("Have fun");
+                        contentStream.endText();
                         contentStream.close();
                         continue;
                     }
