@@ -142,7 +142,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_reschedule_startDateChanged() throws Exception {
+    void testUpdateExam_rescheduleProgramming_startDateChanged() throws Exception {
         var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
