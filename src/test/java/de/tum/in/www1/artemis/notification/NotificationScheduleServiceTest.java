@@ -12,7 +12,6 @@ import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -66,6 +65,11 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
 
     private long sizeBefore;
 
+    // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
+    private static final long DELAY_MS = 200;
+
+    private static final long TIMEOUT_MS = 5000;
+
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
@@ -78,21 +82,19 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @Timeout(10)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
-        exercise.setReleaseDate(now().plus(200, ChronoUnit.MILLIS));
+        notificationSettingRepository.saveAndFlush(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
+        exercise.setReleaseDate(now().plus(DELAY_MS, ChronoUnit.MILLIS));
         exerciseRepository.saveAndFlush(exercise);
 
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > sizeBefore);
-        verify(groupNotificationService, timeout(4000)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(mailService, timeout(4000).atLeastOnce()).sendNotification(any(), anySet(), any());
+        verify(groupNotificationService, timeout(TIMEOUT_MS)).notifyAllGroupsAboutReleasedExercise(exercise);
+        verify(mailService, timeout(TIMEOUT_MS).atLeastOnce()).sendNotification(any(), anySet(), any());
     }
 
     @Test
-    @Timeout(10)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtAssessmentDueDate() {
         TextSubmission textSubmission = new TextSubmission();
@@ -103,15 +105,15 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         Result manualResult = participationUtilService.createParticipationSubmissionAndResult(exercise.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1"), 10.0,
                 10.0, 50, true);
         manualResult.setAssessmentType(AssessmentType.MANUAL);
-        resultRepository.save(manualResult);
+        resultRepository.saveAndFlush(manualResult);
 
-        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
-        exercise.setAssessmentDueDate(now().plus(200, ChronoUnit.MILLIS));
+        notificationSettingRepository.saveAndFlush(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
+        exercise.setAssessmentDueDate(now().plus(DELAY_MS, ChronoUnit.MILLIS));
         exerciseRepository.saveAndFlush(exercise);
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
         await().until(() -> notificationRepository.count() > sizeBefore);
-        verify(singleUserNotificationService, timeout(4000)).notifyUsersAboutAssessedExerciseSubmission(exercise);
-        verify(javaMailSender, timeout(4000)).send(any(MimeMessage.class));
+        verify(singleUserNotificationService, timeout(TIMEOUT_MS)).notifyUsersAboutAssessedExerciseSubmission(exercise);
+        verify(javaMailSender, timeout(TIMEOUT_MS)).send(any(MimeMessage.class));
     }
 }
