@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -236,6 +238,7 @@ public class ProgrammingExerciseExportService {
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
             var exportOptions = new RepositoryExportOptionsDTO();
             exportOptions.setAnonymizeRepository(false);
+            exportOptions.setExportAllParticipants(true);
 
             // Export student repositories and add them to list
             var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, outputDir, exportErrors).stream()
@@ -528,27 +531,36 @@ public class ProgrammingExerciseExportService {
             RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.isExportAllParticipants()) {
-            log.info("Request to export all student or team repositories of programming exercise {} with title '{}'", programmingExerciseId, programmingExercise.getTitle());
+            log.info("Request to export all {} student or team repositories of programming exercise {} with title '{}'", participations.size(), programmingExerciseId,
+                    programmingExercise.getTitle());
         }
         else {
-            log.info("Request to export the repositories of programming exercise {} with title '{}' of the following students or teams: {}", programmingExerciseId,
-                    programmingExercise.getTitle(), participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
+            log.info("Request to export the repositories of programming exercise {} with title '{}' of {} students or teams", programmingExerciseId, programmingExercise.getTitle(),
+                    participations.size());
+            log.debug("Export repositories for students or teams: {}",
+                    participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
-        List<Path> exportedStudentRepositories = new ArrayList<>();
-        participations.forEach(participation -> {
+        List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
+
+        log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
             try {
+                log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
                 Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir);
                 if (zipFile != null) {
                     exportedStudentRepositories.add(zipFile);
                 }
             }
-            catch (Exception e) {
+            catch (Exception exception) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportErrors.add(error);
             }
-        });
+        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+        // wait until all operations finish
+        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
         return exportedStudentRepositories;
     }
 
@@ -633,6 +645,7 @@ public class ProgrammingExerciseExportService {
                 return null;
             }
 
+            // TODO: this operation is only necessary if the repo was not newly cloned
             gitService.resetToOriginHead(repository);
 
             if (repositoryExportOptions.isFilterLateSubmissions()) {
@@ -657,8 +670,8 @@ public class ProgrammingExerciseExportService {
             if (repositoryExportOptions.isNormalizeCodeStyle()) {
                 try {
                     log.debug("Normalizing code style for participation {}", participation);
-                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath().toString());
-                    fileService.convertToUTF8Directory(repository.getLocalPath().toString());
+                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath());
+                    fileService.convertToUTF8Directory(repository.getLocalPath());
                 }
                 catch (IOException ex) {
                     log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -712,7 +725,8 @@ public class ProgrammingExerciseExportService {
 
         if (latestAllowedDate.isPresent()) {
             Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.naturalOrder());
+                    .filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(latestAllowedDate.get()))
+                    .max(Comparator.naturalOrder());
             gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
         }
     }

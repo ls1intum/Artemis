@@ -119,7 +119,8 @@ PostgreSQL Setup
 
 No special PostgreSQL settings are required.
 You can either use your package manager’s version, or set it up using a container.
-An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_ is provided in ``src/main/docker/postgresql.yml``.
+An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_
+is provided in ``src/main/docker/postgres.yml``.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
@@ -645,51 +646,6 @@ HTTPS. We need to extend the Artemis configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
-Hermes Service
---------------
-
-Push notifications for the mobile Android and iOS clients rely on the Hermes_ service.
-To enable push notifications the Hermes service needs to be started separately and the configuration of the Artemis instance must be extended.
-
-Configure and start Hermes
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To run Hermes, you need to clone the `repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
-
-The following environment variables need to be updated for push notifications to Apple devices:
-
-* ``APNS_CERTIFICATE_PATH``: String - Path to the APNs certificate .p12 file as described `here <https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns>`_
-* ``APNS_CERTIFICATE_PWD``: String - The APNS certificate password
-* ``APNS_PROD_ENVIRONMENT``: Bool - True if it should use the Production APNS Server (Default false)
-
-Furthermore, the <APNS_Key>.p12 needs to be mounted into the Docker under the above specified path.
-
-To run the services for Android support the following environment variable is required:
-
-* ``GOOGLE_APPLICATION_CREDENTIALS``: String - Path to the firebase.json
-
-Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
-
-To run both APNS and Firebase, configure the environment variables for both.
-
-To start Hermes, run the ``docker compose up`` command in the folder where the ``docker-compose`` file is located.
-
-Artemis Configuration
-^^^^^^^^^^^^^^^^^^^^^
-
-The Hermes service is running on a dedicated machine and is addressed via
-HTTPS. We need to extend the Artemis configuration in the file
-``src/main/resources/config/application-artemis.yml`` like:
-
-.. code:: yaml
-
-   artemis:
-     # ...
-    push-notification-relay: <url>
-
-.. _Hermes: https://github.com/ls1intum/Hermes
-
-------------------------------------------------------------------------------------------------------------------------
 
 Athena Service
 --------------
@@ -764,6 +720,8 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
+.. _docker_compose_setup_dev:
+
 Alternative: Docker Compose Setup
 ---------------------------------
 
@@ -802,7 +760,7 @@ Other Docker Compose Setups
 
 .. figure:: setup/artemis-docker-file-structure.drawio.png
    :align: center
-   :target: ../../_images/artemis-docker-file-structure.drawio.png
+   :target: ../_images/artemis-docker-file-structure.drawio.png
 
    Overview of the Artemis Docker / Docker Compose structure
 
@@ -810,7 +768,11 @@ The easiest way to configure a local deployment via Docker is a deployment with 
 In the directory ``docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+* ``artemis-dev-postgres.yml``: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and
+  a PostgreSQL DB
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
+* ``artemis-prod-postgres.yml``: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and
+  a PostgreSQL DB
 * ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
   (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
   for the configuration of this setup)
@@ -820,14 +782,15 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
 * ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
-* ``postgresql.yml``: **PostgreSQL** Setup containing a PostgreSQL DB instance
+* ``postgres.yml``: **Postgres** Setup containing a PostgreSQL DB instance
 
-Two example commands to run such setups:
+Three example commands to run such setups:
 
 .. code:: bash
 
   docker compose -f docker/atlassian.yml up
   docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
+  docker compose -f docker/artemis-dev-postgres.yml up
 
 .. tip::
   There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
@@ -841,7 +804,7 @@ is defined in the following files:
 * ``artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
 * ``nginx.yml``: **Nginx Service**
-* ``postgresql.yml``: **PostgreSQL DB Service**
+* ``postgres.yml``: **PostgreSQL DB Service**
 * ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 

@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -96,8 +98,8 @@ public class ChannelResource extends ConversationManagementResource {
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var channels = channelRepository.findChannelsByCourseId(courseId).stream();
 
-        var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
-        var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
+        var filteredChannelSummaries = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
+        var channelDTOs = filteredChannelSummaries.map(summary -> conversationDTOService.convertChannelToDto(requestingUser, summary));
 
         // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
@@ -127,7 +129,7 @@ public class ChannelResource extends ConversationManagementResource {
             channel.hideDetails();
         }
 
-        checkChannelMembership(channel, requestingUser.getId());
+        checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(channel);
     }
@@ -152,7 +154,7 @@ public class ChannelResource extends ConversationManagementResource {
             channel.hideDetails();
         }
 
-        checkChannelMembership(channel, requestingUser.getId());
+        checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(channel);
     }
@@ -432,11 +434,13 @@ public class ChannelResource extends ConversationManagementResource {
         return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
     }
 
-    private void checkChannelMembership(Channel channel, Long userId) {
-        if (channel != null && !conversationService.isMember(channel.getId(), userId)) {
-            // suppress error alert with skipAlert: true so that the client can display a custom error message
-            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel", "noAccessButCouldJoin",
-                    true);
+    private void checkChannelMembership(Channel channel, @NotNull User user) {
+        if (channel == null || channel.getIsCourseWide() || conversationService.isMember(channel.getId(), user.getId())) {
+            return;
         }
+
+        // suppress error alert with skipAlert: true so that the client can display a custom error message
+        throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this channel, but you could join it.", "channel", "noAccessButCouldJoin",
+                true);
     }
 }

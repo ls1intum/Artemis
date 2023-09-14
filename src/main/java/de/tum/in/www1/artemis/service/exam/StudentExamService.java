@@ -150,8 +150,8 @@ public class StudentExamService {
         // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
         if (!studentExamFromClient.isTestRun()) {
             try {
-                // lock the programming exercise repository access (important in case of early exam submissions), only when the student hands in early
-                lockStudentRepositories(currentUser, existingStudentExam);
+                // lock the programming exercise repository access (important in case of early exam submissions), only when the student hands in early (asynchronously)
+                programmingExerciseParticipationService.lockStudentRepositories(currentUser, existingStudentExam);
             }
             catch (Exception e) {
                 log.error("lockStudentRepositories threw an exception", e);
@@ -543,26 +543,6 @@ public class StudentExamService {
         return latestSubmission;
     }
 
-    private void lockStudentRepositories(User currentUser, StudentExam studentExam) {
-        // Only lock programming exercises when the student submitted early in real exams. Otherwise, the lock operations were already scheduled/executed.
-        // Always lock test exams since there is no locking operation scheduled (also see StudentExamService:457)
-        if (studentExam.isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
-            // Use the programming exercises in the DB to lock the repositories (for safety)
-            for (Exercise exercise : studentExam.getExercises()) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    try {
-                        log.debug("lock student repositories for {}", currentUser);
-                        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
-                    }
-                    catch (Exception e) {
-                        log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
      * Calls {@link StudentExamService#generateTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
@@ -703,6 +683,7 @@ public class StudentExamService {
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
         sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
+
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = studentExams.stream()
                 .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
@@ -714,7 +695,7 @@ public class StudentExamService {
                                     generatedParticipations.size(), startedAt, lock);
                             return null;
                         }))
-                .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
+                .toArray(CompletableFuture[]::new);
         return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
             threadPool.shutdown();
             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,
