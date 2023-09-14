@@ -46,7 +46,7 @@ services:
         environment:
             CYPRESS_DB_TYPE: "Postgres"
             SORRY_CYPRESS_PROJECT_ID: "artemis-postgres"
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:setup && (npm run cypress:record:postgres & sleep 60 && npm run cypress:record:postgres & wait)"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:setup && npm run cypress:record:postgres & pid1=$!; sleep 60 && npm run cypress:record:postgres & pid[2]=$!; wait $pid1; return1=$?; wait $pid2; return2=$?; echo $(($return1+$return2))"
 
 networks:
     artemis:
