@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -209,6 +208,9 @@ public class CourseTestService {
 
     @Autowired
     private TeamUtilService teamUtilService;
+
+    @Autowired
+    private LearningPathRepository learningPathRepository;
 
     private static final int numberOfStudents = 8;
 
@@ -549,11 +551,6 @@ public class CourseTestService {
             var channels = channelRepository.findChannelsByCourseId(course2.getId());
             assertThat(channels).hasSize(DefaultChannelType.values().length);
             channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
-            // Check if newly added instructor and student was added to default channels
-            channels.forEach(channel -> {
-                var participants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-                assertThat(participants).hasSize(2); // 1 instructor and 1 student
-            });
         });
 
     }
@@ -873,19 +870,7 @@ public class CourseTestService {
         for (int i = 0; i < courses.length; i++) {
             courses[i] = courseRepo.save(courses[i]);
             Exam examRegistered = ExamFactory.generateExam(courses[i]);
-            Channel channel = new Channel();
-            channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
-            channel.setIsAnnouncementChannel(false);
-            channel.setIsPublic(false);
-            channel.setIsArchived(false);
-            channelRepository.save(channel);
             Exam examUnregistered = ExamFactory.generateExam(courses[i]);
-            Channel channel1 = new Channel();
-            channel1.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
-            channel1.setIsAnnouncementChannel(false);
-            channel1.setIsPublic(false);
-            channel1.setIsArchived(false);
-            channelRepository.save(channel1);
             Exam testExam = ExamFactory.generateTestExam(courses[i]);
             if (i == 0) {
                 examRegistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
@@ -950,13 +935,7 @@ public class CourseTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
-        Channel channel = new Channel();
-        channel.setName("test-" + UUID.randomUUID().toString().substring(0, 8));
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsPublic(true);
-        channel.setIsArchived(false);
 
-        channelRepository.save(channel);
         programmingExerciseRepository.save(programmingExercise);
         Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
@@ -1733,9 +1712,11 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
                 userPrefix + "instructor");
+        course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
-
+        course = courseRepo.findWithEagerLearningPathsByIdElseThrow(course.getId());
+        assertThat(course.getLearningPaths()).isNotEmpty();
         // TODO check that the roles have changed accordingly
     }
 
@@ -2121,7 +2102,7 @@ public class CourseTestService {
     }
 
     private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
         assertThat(exportedCourse).isNotEmpty();
 
@@ -2137,7 +2118,7 @@ public class CourseTestService {
 
     public void testExportCourse_cannotCreateTmpDir() throws Exception {
         Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectories(argThat(path -> path.toString().contains("exports")))).thenThrow(IOException.class);
@@ -2149,7 +2130,7 @@ public class CourseTestService {
 
     public void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
         Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("course-exercises")))).thenThrow(IOException.class);
@@ -2161,7 +2142,7 @@ public class CourseTestService {
 
     public void testExportCourseExam_cannotCreateTmpDir() throws Exception {
         Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         Optional<Exam> exam = examRepo.findByCourseId(course.getId()).stream().findFirst();
         assertThat(exam).isPresent();
@@ -2176,7 +2157,7 @@ public class CourseTestService {
 
     public void testExportCourseExam_cannotCreateExamsDir() throws Exception {
         Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         course = courseRepo.findWithEagerExercisesById(course.getId());
 
@@ -3125,5 +3106,24 @@ public class CourseTestService {
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
         return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+    }
+
+    // Test
+    public void testUpdateCourseEnableLearningPaths() throws Exception {
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "editlearningpathenabledcourse",
+                "tutor", "editor", "instructor");
+        course.setLearningPathsEnabled(false);
+        courseRepo.save(course);
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+        student.setGroups(Set.of("editlearningpathenabledcourse"));
+        userRepo.save(student);
+
+        course.setLearningPathsEnabled(true);
+
+        MvcResult result = request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        assertThat(updatedCourse.getLearningPathsEnabled()).isTrue();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
+        assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
     }
 }

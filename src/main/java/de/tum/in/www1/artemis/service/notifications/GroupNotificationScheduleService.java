@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
@@ -140,7 +141,8 @@ public class GroupNotificationScheduleService {
      * @param exercise that is created
      */
     @Async
-    public void checkNotificationsForNewExercise(Exercise exercise) {
+    public void checkNotificationsForNewExerciseAsync(Exercise exercise) {
+        SecurityUtils.setAuthorizationObject(); // required for async
         // TODO: in a course with 2000 participants, this can take really long, we should optimize this
         checkNotificationForExerciseRelease(exercise);
         checkNotificationForAssessmentDueDate(exercise);

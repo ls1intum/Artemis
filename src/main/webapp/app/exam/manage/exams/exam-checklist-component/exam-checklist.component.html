@@ -354,6 +354,26 @@
                     <tr>
                         <td>1</td>
                         <td>
+                            <span>{{ 'artemisApp.examManagement.checklist.tableItem.suspiciousBehavior' | artemisTranslate }}</span>
+                        </td>
+                        <td>
+                            <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.suspiciousBehavior' | artemisTranslate }}</span>
+
+                            <hr />
+
+                            <br />
+                        </td>
+                        <td>
+                            <a [routerLink]="['suspicious-behavior']" class="btn btn-info">
+                                <fa-icon [icon]="faChartBar"></fa-icon>
+                                <span>{{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}</span>
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>2</td>
+                        <td>
                             <span>{{ 'artemisApp.examManagement.checklist.tableItem.assessAllSubmissions' | artemisTranslate }}</span>
                         </td>
                         <td>
@@ -389,7 +409,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>2</td>
+                        <td>3</td>
                         <td>
                             <span>{{ 'artemisApp.examManagement.checklist.tableItem.publishResults' | artemisTranslate }}</span>
                         </td>
@@ -413,7 +433,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>3</td>
+                        <td>4</td>
                         <td>
                             <span>{{ 'artemisApp.examManagement.checklist.tableItem.examReview' | artemisTranslate }}</span>
                         </td>
@@ -443,7 +463,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>4</td>
+                        <td>5</td>
                         <td>
                             <span>{{ 'artemisApp.examManagement.checklist.tableItem.resolveComplaints' | artemisTranslate }}</span>
                         </td>
@@ -473,7 +493,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>5</td>
+                        <td>6</td>
                         <td>
                             <span>{{ 'artemisApp.examManagement.checklist.tableItem.exportResults' | artemisTranslate }}</span>
                         </td>

@@ -969,7 +969,7 @@ public class GitService {
 
     /**
      * Removes all author information from the commits on the currently active branch.
-     * Also removes all remotes since they contain data about the student.
+     * Also removes all remotes and FETCH_HEAD since they contain data about the student.
      * Also deletes the .git/logs folder to prevent restoring commits from reflogs
      *
      * @param repository          Local Repository Object.
@@ -1031,6 +1031,10 @@ public class GitService {
             // Delete .git/logs/ folder to delete git reflogs
             Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
             FileUtils.deleteDirectory(logsPath.toFile());
+
+            // Delete FETCH_HEAD containing the url of the last fetch
+            Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
+            Files.deleteIfExists(fetchHeadPath);
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
             log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
