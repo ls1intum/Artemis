@@ -109,6 +109,11 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'isCodeOfConductPresented$', {
                 get: () => new BehaviorSubject(false).asObservable(),
             });
+            Object.defineProperty(metisConversationService, 'checkIsCodeOfConductAccepted', {
+                get: () => {
+                    return () => {};
+                },
+            });
             Object.defineProperty(metisService, 'posts', {
                 get: () => postsSubject.asObservable(),
             });
