@@ -63,7 +63,7 @@ import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.ExerciseExportService;
+import de.tum.in.www1.artemis.service.ExerciseWithSubmissionsExportService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
@@ -71,7 +71,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 @Service
-public class ProgrammingExerciseExportService extends ExerciseExportService {
+public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
 
@@ -94,7 +94,8 @@ public class ProgrammingExerciseExportService extends ExerciseExportService {
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
-        super(fileService, springMvcJacksonConverter);
+        // Programming exercises do not have a submission export service
+        super(fileService, springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;

@@ -345,8 +345,8 @@ public class FileService implements DisposableBean {
      * Convert the given public file url to its corresponding local path
      *
      * @param publicPath the public file url to convert
-     * @throws FilePathParsingException if the path is unknown
      * @return the actual path to that file in the local filesystem
+     * @throws FilePathParsingException if the path is unknown
      */
     public String actualPathForPublicPathOrThrow(String publicPath) {
         String actualPath = actualPathForPublicPath(publicPath);
@@ -426,8 +426,8 @@ public class FileService implements DisposableBean {
      *
      * @param actualPathString the path to the file in the local filesystem
      * @param entityId         the id of the entity associated with the file
-     * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
+     * @throws FilePathParsingException if the path is unknown
      */
     public String publicPathForActualPathOrThrow(String actualPathString, @Nullable Long entityId) {
         String publicPath = publicPathForActualPath(actualPathString, entityId);
@@ -1084,7 +1084,7 @@ public class FileService implements DisposableBean {
      */
     private Path getUniquePath(Path path) {
         var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
+        if (!Files.exists(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);
             }
@@ -1150,13 +1150,8 @@ public class FileService implements DisposableBean {
      * @param path         The path where the file will be written to
      * @return Path to the written file
      */
-    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
-        try {
-            objectMapper.writeValue(path.toFile(), object);
-        }
-        catch (IOException e) {
-            log.warn("Could not write given object in file {}", path);
-        }
+    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) throws IOException {
+        objectMapper.writeValue(path.toFile(), object);
         return path;
     }
 

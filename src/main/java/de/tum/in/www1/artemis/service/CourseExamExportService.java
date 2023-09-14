@@ -77,7 +77,7 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return Path to the zip file
      */
-    public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
+    public Optional<Path> exportCourse(Course course, Path outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));
@@ -116,13 +116,14 @@ public class CourseExamExportService {
         Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir, exportedFiles);
 
         log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
+        fileService.scheduleForDirectoryDeletion(tmpCourseDir, 10);
         return exportedCourse;
     }
 
-    private Optional<Path> zipExportedExercises(String outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir, List<Path> filesToZip) {
+    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir, List<Path> filesToZip) {
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
-        Path courseZip = Path.of(outputDir, tmpDir.getFileName() + ".zip");
+        Path courseZip = outputDir.resolve(tmpDir.getFileName() + ".zip");
         var exportedCourse = createCourseZipFile(courseZip, filesToZip, exportErrors);
 
         // Delete temporary directory used for zipping
@@ -142,7 +143,7 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return Path to the zip file
      */
-    public Optional<Path> exportExam(Exam exam, String outputDir, List<String> exportErrors) {
+    public Optional<Path> exportExam(Exam exam, Path outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));

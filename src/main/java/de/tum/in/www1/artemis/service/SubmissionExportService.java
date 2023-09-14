@@ -80,13 +80,7 @@ public abstract class SubmissionExportService {
      */
     public List<Path> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         Path outputDir = fileService.getTemporaryUniquePath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
-        try {
-            return exportStudentSubmissions(exerciseId, submissionExportOptions, true, outputDir, new ArrayList<>(), new ArrayList<>());
-        }
-        catch (IOException e) {
-            log.error("Failed to export student submissions for exercise {} to {}: {}", exerciseId, outputDir, e);
-            return List.of();
-        }
+        return exportStudentSubmissions(exerciseId, submissionExportOptions, true, outputDir, new ArrayList<>(), new ArrayList<>());
     }
 
     /**
@@ -104,7 +98,7 @@ public abstract class SubmissionExportService {
      * @throws IOException if an error occurred while zipping
      */
     public List<Path> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, boolean zipSubmissions, Path outputDir,
-            List<String> exportErrors, List<ArchivalReportEntry> reportData) throws IOException {
+            List<String> exportErrors, List<ArchivalReportEntry> reportData) {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
@@ -159,11 +153,9 @@ public abstract class SubmissionExportService {
      * @param exportErrors             a list of errors for submissions that couldn't be exported and are not included in the file
      * @param reportData               a list of all exercises and their statistics
      * @return paths of the exported submissions
-     * @throws IOException if an error occurred while zipping
      */
     private List<Path> exportSubmissionsFromParticipationsOptionallyZipped(Exercise exercise, List<StudentParticipation> participations, boolean enableFilterAfterDueDate,
-            @Nullable ZonedDateTime lateSubmissionFilter, boolean zipSubmissions, Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData)
-            throws IOException {
+            @Nullable ZonedDateTime lateSubmissionFilter, boolean zipSubmissions, Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
@@ -173,7 +165,7 @@ public abstract class SubmissionExportService {
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         // Create directory
-        Path zipFilePath = Path.of(outputDir.toString(), "zippedSubmissions", zipFileName);
+        Path zipFilePath = Path.of(outputDir.toString(), zipFileName);
 
         // Create counter for log entry
         MutableInt skippedEntries = new MutableInt();
@@ -217,6 +209,10 @@ public abstract class SubmissionExportService {
             try {
                 zipFileService.createZipFile(zipFilePath, submissionFilePaths);
                 return List.of(zipFilePath);
+            }
+            catch (IOException e) {
+                log.error("Failed to zip submissions for exercise {} to {}: {}", exercise.getId(), zipFilePath, e);
+                return List.of();
             }
             finally {
                 log.debug("Delete all temporary files");

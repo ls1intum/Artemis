@@ -71,7 +71,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public class CourseService {
 
     @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
+    private Path courseArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
@@ -753,7 +753,7 @@ public class CourseService {
 
         try {
             // Create course archives directory if it doesn't exist
-            Files.createDirectories(Path.of(courseArchivesDirPath));
+            Files.createDirectories(courseArchivesDirPath);
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
             // Export the course to the archives' directory.

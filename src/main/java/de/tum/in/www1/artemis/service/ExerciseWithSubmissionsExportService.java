@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,9 +15,11 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 @Service
-public abstract class ExerciseExportService {
+public abstract class ExerciseWithSubmissionsExportService {
 
     public static final String EXPORTED_EXERCISE_DETAILS_FILE_PREFIX = "Exercise-Details";
 
@@ -29,15 +29,19 @@ public abstract class ExerciseExportService {
 
     private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseExportService.class);
+    private final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
     private final FileService fileService;
 
     private final ObjectMapper objectMapper;
 
-    protected ExerciseExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+    private final SubmissionExportService submissionExportService;
+
+    protected ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+            SubmissionExportService submissionExportService) {
         this.fileService = fileService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.submissionExportService = submissionExportService;
     }
 
     /**
@@ -57,7 +61,7 @@ public abstract class ExerciseExportService {
 
     private void exportProblemStatementWithEmbeddedFiles(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
         var problemStatementFileExtension = ".md";
-        String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
+        String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getSanitizedExerciseTitle() + problemStatementFileExtension;
         String cleanProblemStatementFileName = FileService.sanitizeFilename(problemStatementFileName);
         var problemStatementExportPath = exportDir.resolve(cleanProblemStatementFileName);
         if (exercise.getProblemStatement() != null) {
@@ -78,7 +82,7 @@ public abstract class ExerciseExportService {
      * @param exportDir       the directory where the content of the export is stored
      * @param pathsToBeZipped the paths that should be included in the zip file
      */
-    private void exportExerciseDetails(Exercise exercise, Path exportDir, List<Path> pathsToBeZipped) {
+    private void exportExerciseDetails(Exercise exercise, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         String cleanExerciseDetailsFileName = FileService.sanitizeFilename(exerciseDetailsFileName);
@@ -137,6 +141,20 @@ public abstract class ExerciseExportService {
                 }
             }
         }
+    }
+
+    protected Path exportExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
+            List<ArchivalReportEntry> reportEntries) {
+        List<Path> pathsToBeZipped = new ArrayList<>();
+        try {
+            exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
+        }
+        catch (IOException e) {
+            exportErrors.add("Failed to export problem statement and embedded files and exercise details for exercise " + exercise.getId() + ": " + e.getMessage());
+
+        }
+        submissionExportService.exportStudentSubmissions(exercise.getId(), optionsDTO, false, exportDir, exportErrors, reportEntries);
+        return exportDir;
     }
 
 }
