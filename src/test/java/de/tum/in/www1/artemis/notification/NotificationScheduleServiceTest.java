@@ -66,7 +66,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     private long sizeBefore;
 
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private static final long DELAY_MS = 200;
+    private static final long DELAY_MS = 400;
 
     private static final long TIMEOUT_MS = 5000;
 
