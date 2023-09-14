@@ -259,7 +259,9 @@ public class ExamResource {
         }
 
         var now = now();
-        Exam exam = examRepository.findByIdElseThrow(examId);
+
+        // We have to get exercise groups as `scheduleModelingExercises` needs them
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         var originalExamDuration = exam.getDuration();
 
         // 1. Update the end date & working time of the exam
