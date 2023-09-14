@@ -455,10 +455,11 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 3.4 Exam Timeline
 ^^^^^^^^^^^^^^^^^
-- As a instructor you have the possibility to view all submissions a student has submitted during an exam using the exam timeline.
+- Artemis stores the current state of a submission for text, modeling, and quiz exercises every 30s or whenever the student clicks on the save button.
+- As a instructor you have the possibility to view all those states as well as the submissions for file-upload or programming exercises using the exam timeline.
 - The exam timeline is available on the details page of a student exam when the student exam has been submitted.
-- The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigating between different exercises using the navigation bar below the timeline.possibility
-- For programming exercises you can view a git diff between your currently selected submission and the previous submission or the template of this exercise.
+- The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigating between different exercises using the navigation bar below the timeline
+- For programming exercises you can view a git diff between the currently selected submission and the previous submission or the template of this exercise.
 
 .. figure:: instructor/submissions.png
     :alt: Submissions
