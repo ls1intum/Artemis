@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 
 import { Lecture } from 'app/entities/lecture.model';
 
-import { BASE_API, DELETE, POST } from '../../constants';
+import { DELETE, LECTURE_BASE_API, POST } from '../../constants';
 
 export class LectureManagementPage {
     clickCreateLecture() {
@@ -13,7 +13,7 @@ export class LectureManagementPage {
         this.getLecture(lecture.id!).find('#delete-lecture').click();
         cy.get('#delete').should('be.disabled');
         cy.get('#confirm-exercise-name').type(lecture.title!);
-        cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
+        cy.intercept(DELETE, `${LECTURE_BASE_API}lectures/*`).as('deleteLecture');
         cy.get('#delete').click();
         return cy.wait('@deleteLecture');
     }
@@ -59,7 +59,7 @@ export class LectureManagementPage {
     }
 
     submitUnit(buttonId = '#submitButton') {
-        cy.intercept(POST, BASE_API + 'lectures/*/*').as('createUnit');
+        cy.intercept(POST, LECTURE_BASE_API + 'lectures/*/*').as('createUnit');
         cy.get(buttonId).click();
         return cy.wait('@createUnit');
     }
