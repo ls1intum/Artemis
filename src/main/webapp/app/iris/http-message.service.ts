@@ -52,7 +52,7 @@ export class IrisHttpMessageService {
      */
     resendMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
         message.messageDifferentiator = message.messageDifferentiator ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
-        return this.httpClient.post<IrisServerMessage>(`${this.resourceUrl}/${sessionId}/messages/${message.id}/resend`, message, { observe: 'response' }).pipe(
+        return this.httpClient.post<IrisServerMessage>(`${this.resourceUrl}/${sessionId}/messages/${message.id}/resend`, undefined, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
                     message.id = response.body.id;
