@@ -1,21 +1,23 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Cypress Setup PostgreSQL
+# Cypress Setup Postgres
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    postgresql:
+    postgres:
         extends:
-            file: ./postgresql.yml
-            service: postgresql
+            file: ./postgres.yml
+            service: postgres
 
     artemis-app:
         extends:
             file: ./artemis.yml
             service: artemis-app
         depends_on:
-            postgresql:
+            postgres:
                 condition: service_healthy
         env_file:
+            - ./artemis/config/postgres.env
+            - ./artemis/config/cypress.env
             - ./artemis/config/cypress-postgres.env
 
     nginx:
@@ -51,7 +53,7 @@ networks:
         driver: "bridge"
         name: artemis
 volumes:
-    artemis-postgresql-data:
-        name: artemis-postgresql-data
+    artemis-postgres-data:
+        name: artemis-postgres-data
     artemis-data:
         name: artemis-data
