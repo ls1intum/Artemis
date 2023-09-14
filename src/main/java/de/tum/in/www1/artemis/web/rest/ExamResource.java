@@ -258,6 +258,7 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
+        var now = now();
         Exam exam = examRepository.findByIdElseThrow(examId);
         var originalExamDuration = exam.getDuration();
 
@@ -282,18 +283,18 @@ public class ExamResource {
             }
             var savedStudentExam = studentExamRepository.save(studentExam);
             // NOTE: if the exam already started, notify the student about the working time change
-            if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
+            if (now.isAfter(exam.getVisibleDate())) {
                 websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
         }
 
         // NOTE: if the exam already started, notify instances about the working time change
-        if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
+        if (now.isAfter(exam.getVisibleDate())) {
             instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(exam.getId());
         }
 
-        if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
-                && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTimeChange))) {
+        if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+            // potentially re-schedule clustering of modeling submissions (in case Compass is active)
             examService.scheduleModelingExercises(exam);
         }
 

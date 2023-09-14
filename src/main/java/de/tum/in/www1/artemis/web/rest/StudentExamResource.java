@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.config.Constants.STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -195,6 +196,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
+        var now = now();
         if (workingTime <= 0) {
             throw new BadRequestException();
         }
@@ -204,12 +206,12 @@ public class StudentExamResource {
 
         if (!savedStudentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
-            if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
+            if (now.isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamWorkingTimeChangeDuringConduction(studentExamId);
                 websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
-            if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
-                    && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
+            if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+                // potentially re-schedule clustering of modeling submissions (in case Compass is active)
                 examService.scheduleModelingExercises(exam);
             }
         }
@@ -253,8 +255,8 @@ public class StudentExamResource {
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
-        if (!existingStudentExam.isTestRun() && (existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate())
-                || existingStudentExam.getIndividualEndDate() != null && !ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
+        if (!existingStudentExam.isTestRun() && (existingStudentExam.getExam().getStartDate() != null && !now().isAfter(existingStudentExam.getExam().getStartDate())
+                || existingStudentExam.getIndividualEndDate() != null && !now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
@@ -305,7 +307,7 @@ public class StudentExamResource {
         }
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
-        if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
+        if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
             throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
         }
 
@@ -633,7 +635,7 @@ public class StudentExamResource {
             if (setupTestExamNeeded) {
                 // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
                 // (initializationDate is stored with ms)
-                ZonedDateTime startedDate = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+                ZonedDateTime startedDate = now().truncatedTo(ChronoUnit.SECONDS);
 
                 // Set up new participations for the Exercises and set initialisationDate to the startedDate
                 studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
@@ -642,7 +644,7 @@ public class StudentExamResource {
 
         if (!Boolean.TRUE.equals(studentExam.isStarted()) || studentExam.getStartedDate() == null) {
             // Mark the student exam as started with now as the start date if it was not started before
-            var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : ZonedDateTime.now();
+            var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : now();
             studentExam.setStartedAndStartDate(startDate);
             // send those changes in a modifying query to the database
             studentExamRepository.startStudentExam(studentExam.getId(), startDate);
@@ -715,11 +717,11 @@ public class StudentExamResource {
         if (studentExam.isSubmitted()) {
             throw new BadRequestException();
         }
-        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
             throw new AccessForbiddenException("Exam", examId);
         }
 
-        ZonedDateTime submissionTime = ZonedDateTime.now();
+        ZonedDateTime submissionTime = now();
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
 
@@ -752,7 +754,7 @@ public class StudentExamResource {
         if (!studentExam.isSubmitted()) {
             throw new BadRequestException();
         }
-        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
             throw new AccessForbiddenException("Exam", examId);
         }
 
