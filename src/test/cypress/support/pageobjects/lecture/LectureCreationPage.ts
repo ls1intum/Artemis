@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs/esm';
 
-import { BASE_API, POST } from '../../constants';
+import { LECTURE_BASE_API, POST } from '../../constants';
 
 export class LectureCreationPage {
     setTitle(title: string) {
@@ -8,7 +8,7 @@ export class LectureCreationPage {
     }
 
     save() {
-        cy.intercept(POST, BASE_API + 'lectures').as('createLecture');
+        cy.intercept(POST, LECTURE_BASE_API + 'lectures').as('createLecture');
         cy.get('#save-entity').click();
         return cy.wait('@createLecture');
     }
