@@ -451,10 +451,22 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
+.. _exam_timeline
+
+3.4 Exam Timeline
+^^^^^^^^^^^^^^^^^
+- As a instructor you have the possibility to view all submissions a student has submitted during an exam using the exam timeline.
+- The exam timeline is available on the details page of a student exam when the student exam has been submitted.
+- The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigating between different exercises using the navigation bar below the timeline.possibility
+- For programming exercises you can view a git diff between your currently selected submission and the previous submission or the template of this exercise.
+
+.. figure:: instructor/submissions.png
+    :alt: Submissions
+    :align: center
 
 .. _exam_grading_key:
 
-3.4 Grading Key
+3.5 Grading Key
 ^^^^^^^^^^^^^^^
 - Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
 - Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
