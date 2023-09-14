@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 describe('ExamExerciseUpdateHighlighterComponent', () => {
     let fixture: ComponentFixture<ExamExerciseUpdateHighlighterComponent>;
@@ -22,10 +21,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     beforeAll(() => {
         return TestBed.configureTestingModule({
             declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
-            providers: [
-                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
-                { provide: ThemeService, useValue: { getCurrentThemeObservable: () => of(Theme.LIGHT) } },
-            ],
+            providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
         })
             .compileComponents()
             .then(() => {
@@ -74,10 +70,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         beforeAll(() => {
             return TestBed.configureTestingModule({
                 declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
-                providers: [
-                    { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
-                    { provide: ThemeService, useValue: { getCurrentThemeObservable: () => of(Theme.LIGHT) } },
-                ],
+                providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
             })
                 .compileComponents()
                 .then(() => {

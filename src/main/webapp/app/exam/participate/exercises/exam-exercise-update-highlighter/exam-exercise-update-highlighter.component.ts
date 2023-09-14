@@ -1,9 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Diff, DiffMatchPatch, DiffOperation } from 'diff-match-patch-typescript';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
@@ -17,23 +16,15 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     updatedProblemStatementWithHighlightedDifferences: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
-    isDark = false;
-
     @Input() exercise: Exercise;
 
     @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
 
-    constructor(
-        private examExerciseUpdateService: ExamExerciseUpdateService,
-        private themeService: ThemeService,
-    ) {}
+    constructor(private examExerciseUpdateService: ExamExerciseUpdateService) {}
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
-        });
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.isDark = theme === Theme.DARK;
         });
     }
 
@@ -95,7 +86,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         this.previousProblemStatementUpdate = this.updatedProblemStatement;
         let removedDiagrams: string[] = [];
         let diff: Diff[];
-        if (this.exercise.type === 'programming') {
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const updatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(this.updatedProblemStatement);
             const outdatedProblemStatementAndRemovedDiagrams = this.removeAnyPlantUmlDiagramsInProblemStatement(outdatedProblemStatement);
             const updatedProblemStatementWithoutDiagrams = updatedProblemStatementAndRemovedDiagrams.problemStatementWithoutPlantUmlDiagrams;
@@ -109,7 +100,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
         dmp.diff_cleanupEfficiency(diff);
         this.updatedProblemStatementWithHighlightedDifferences = this.diffPrettyHtml(diff);
 
-        if (this.exercise.type === 'programming') {
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.addPlantUmlToProblemStatementWithDiffHighlightAgain(removedDiagrams);
         }
         return this.updatedProblemStatementWithHighlightedDifferences;
@@ -149,17 +140,15 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
      */
     private diffPrettyHtml(diffs: Diff[]): string {
         const html: any[] = [];
-        const colorForAddedText = this.isDark ? '#006400' : '#e6ffe6';
-        const colorForDeletedText = this.isDark ? '#a22' : '#ffe6e6';
         diffs.forEach((diff: Diff, index: number) => {
             const op = diffs[index][0]; // Operation (insert, delete, equal)
             const text = diffs[index][1]; // Text of change.
             switch (op) {
                 case DiffOperation.DIFF_INSERT:
-                    html[index] = '<ins style="background:' + colorForAddedText + '">' + text + '</ins>';
+                    html[index] = '<ins class="bg-success" ">' + text + '</ins>';
                     break;
                 case DiffOperation.DIFF_DELETE:
-                    html[index] = '<del style="background:' + colorForDeletedText + '">' + text + '</del>';
+                    html[index] = '<del class="bg-danger">' + text + '</del>';
                     break;
                 case DiffOperation.DIFF_EQUAL:
                     html[index] = text;
