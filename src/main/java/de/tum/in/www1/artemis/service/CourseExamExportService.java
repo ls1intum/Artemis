@@ -116,7 +116,6 @@ public class CourseExamExportService {
         Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir, exportedFiles);
 
         log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
-        fileService.scheduleForDirectoryDeletion(tmpCourseDir, 10);
         return exportedCourse;
     }
 
