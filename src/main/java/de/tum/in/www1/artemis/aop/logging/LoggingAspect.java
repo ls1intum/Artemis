@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import tech.jhipster.config.JHipsterConstants;
 
 /**
@@ -53,10 +54,14 @@ public class LoggingAspect {
      */
     @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
+        if (AbstractVersionControlService.isReadFullyShortReadOfBlockException(e)) {
+            // ignore
+            return;
+        }
+
         if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
             log.error("Exception in {}.{}() with cause = \'{}\' and exception = \'{}\'", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),
                     e.getCause() != null ? e.getCause() : "NULL", e.getMessage(), e);
-
         }
         else {
             log.error("Exception in {}.{}() with cause = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),
@@ -86,7 +91,6 @@ public class LoggingAspect {
         }
         catch (IllegalArgumentException e) {
             log.error("Illegal argument: {} in {}.{}()", Arrays.toString(joinPoint.getArgs()), joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName());
-
             throw e;
         }
     }
