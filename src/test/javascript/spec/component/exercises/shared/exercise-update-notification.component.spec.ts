@@ -18,10 +18,13 @@ describe('ExerciseUpdateNotificationComponent', () => {
         component = fixture.componentInstance;
         component.exercise = { id: 1 } as Exercise;
         component.isImport = false;
+        component.notificationText = 'notificationText';
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    it('should emit event on inputChange', () => {
+        const emitSpy = jest.spyOn(component.notificationTextChange, 'emit');
+        component.onInputChanged();
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith(component.notificationText);
     });
 });
