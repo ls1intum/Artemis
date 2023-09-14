@@ -428,6 +428,21 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         assertThat(unreadMessages).isTrue();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void codeOfConduct_isAccepted() throws Exception {
+        var agreement = request.get("/api/courses/" + exampleCourseId + "/code-of-conduct-agreement", HttpStatus.OK, Boolean.class);
+        assertThat(agreement).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void codeOfConduct_accept() throws Exception {
+        var agreement = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/code-of-conduct-agreement", HttpStatus.OK, Boolean.class);
+        assertThat(agreement).isTrue();
+
+    }
+
     private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelModerationRights,
             Boolean isChannelModerator) {
         assertThat(conversationDTO.getIsCreator()).isEqualTo(isCreator);
