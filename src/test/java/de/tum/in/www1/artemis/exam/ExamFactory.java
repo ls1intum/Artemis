@@ -224,6 +224,5 @@ public class ExamFactory {
         expectedDTOs.add(firstExamSessionDTO);
         expectedDTOs.add(secondExamSessionDTO);
         return expectedDTOs;
-
     }
 }

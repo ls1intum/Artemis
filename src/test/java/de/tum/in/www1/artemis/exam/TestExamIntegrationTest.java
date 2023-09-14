@@ -55,6 +55,9 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ExamUtilService examUtilService;
 
+    @Autowired
+    ChannelRepository channelRepository;
+
     private Course course1;
 
     private Course course2;
@@ -119,9 +122,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(channelFromDB).isNotNull();
     }
 
-    @Autowired
-    ChannelRepository channelRepository;
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTestExam_asInstructor_withVisibleDateEqualsStartDate() throws Exception {
@@ -149,7 +149,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         Exam examD = ExamFactory.generateTestExam(course1);
         examD.setWorkingTime(0);
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
-
     }
 
     @Test

@@ -233,7 +233,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
             participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
         }
         assertThat(participationList).hasSize(12);
-
     }
 
     @Test
@@ -314,7 +313,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // Start the exam to create participations
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        ;
 
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Get the student exam of student2
@@ -378,6 +376,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).hasSize(12);
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -398,7 +399,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // Start the exam to create participations
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        ;
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
