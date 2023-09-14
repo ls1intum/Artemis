@@ -356,6 +356,17 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('updateCourseInformationSharingMessagingCodeOfConduct', () => {
+        it('should update course information sharing code of conduct', () => {
+            comp.course = new Course();
+            comp.courseForm = new FormGroup({
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(),
+            });
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('# Code of Conduct');
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
+        });
+    });
+
     describe('changeComplaintsEnabled', () => {
         it('should initialize values if enabled and reset if disabled', () => {
             comp.courseForm = new FormGroup({
