@@ -35,6 +35,7 @@ import {
     PUT,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
+    QUIZ_API_EXERCISE_BASE,
     QUIZ_EXERCISE_BASE,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
@@ -452,7 +453,7 @@ export class ExerciseAPIRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: QUIZ_EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: QUIZ_API_EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
             body: multipleChoiceSubmission,
         });
@@ -489,7 +490,7 @@ export class ExerciseAPIRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: QUIZ_EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: QUIZ_API_EXERCISE_BASE + quizExercise.id + '/submissions/live',
             method: POST,
             body: shortAnswerSubmission,
         });

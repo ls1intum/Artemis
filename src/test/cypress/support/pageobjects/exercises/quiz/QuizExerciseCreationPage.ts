@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs/esm';
 
-import { BASE_API, POST } from '../../../constants';
+import { BASE_API, POST, QUIZ_BASE_API } from '../../../constants';
 import { enterDate } from '../../../utils';
 
 export class QuizExerciseCreationPage {
@@ -60,13 +60,13 @@ export class QuizExerciseCreationPage {
      * @return <Chainable>  the response of the request
      */
     saveQuiz() {
-        cy.intercept(POST, BASE_API + 'quiz-exercises').as('createQuizExercise');
+        cy.intercept(POST, QUIZ_BASE_API + 'quiz-exercises').as('createQuizExercise');
         cy.get('#quiz-save').click();
         return cy.wait('@createQuizExercise');
     }
 
     import() {
-        cy.intercept(POST, BASE_API + 'quiz-exercises/import/*').as('quizExerciseImport');
+        cy.intercept(POST, QUIZ_BASE_API + 'quiz-exercises/import/*').as('quizExerciseImport');
         cy.get('#quiz-save').click();
         return cy.wait('@quizExerciseImport');
     }
