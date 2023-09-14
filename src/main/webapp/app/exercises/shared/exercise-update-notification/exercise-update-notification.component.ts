@@ -4,7 +4,6 @@ import { Exercise } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-exercise-update-notification',
     templateUrl: './exercise-update-notification.component.html',
-    styleUrls: ['./exercise-update-notification.component.scss'],
 })
 export class ExerciseUpdateNotificationComponent {
     @Input() exercise: Exercise;
