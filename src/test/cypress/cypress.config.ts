@@ -1,5 +1,6 @@
 import { defineConfig } from 'cypress';
 import { cloudPlugin } from 'cypress-cloud/plugin';
+import fs from 'fs';
 
 export default defineConfig({
     clientCertificates: [
@@ -38,7 +39,6 @@ export default defineConfig({
     screenshotsFolder: 'screenshots',
     videosFolder: 'videos',
     video: true,
-    videoUploadOnPasses: false,
     screenshotOnRunFailure: true,
     viewportWidth: 1920,
     viewportHeight: 1080,
@@ -64,6 +64,14 @@ export default defineConfig({
                     console.log('\x1b[37m', 'LOG: ', message, '\x1b[0m');
                     return null;
                 },
+            });
+            on('after:spec', (spec: Cypress.Spec, results: CypressCommandLine.RunResult) => {
+                if (results && results.video) {
+                    const failures = results.tests.some((test) => test.attempts.some((attempt) => attempt.state === 'failed'));
+                    if (!failures) {
+                        fs.unlinkSync(results.video);
+                    }
+                }
             });
             on('before:browser:launch', (browser, launchOptions) => {
                 launchOptions.args.push('--lang=en');
