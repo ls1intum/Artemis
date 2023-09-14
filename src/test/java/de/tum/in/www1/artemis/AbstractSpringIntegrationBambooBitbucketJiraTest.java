@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -60,7 +59,6 @@ import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
-@Order(1)
 @SpringBootTest
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)

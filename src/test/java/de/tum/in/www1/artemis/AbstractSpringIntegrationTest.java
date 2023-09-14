@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -30,7 +29,6 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
  */
-@Order(3)
 @SpringBootTest
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
