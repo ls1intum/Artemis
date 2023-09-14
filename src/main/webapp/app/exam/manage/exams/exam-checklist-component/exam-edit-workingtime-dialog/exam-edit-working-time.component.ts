@@ -20,7 +20,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     workingTimeChangeAllowed = false;
 
     private modalRef: NgbModalRef | null;
-    private intervalRef: any;
+    private timeoutRef: any;
     private subscription: Subscription;
 
     constructor(
@@ -30,16 +30,19 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.checkWorkingTimeChangeAllowed();
-        this.intervalRef = setInterval(this.checkWorkingTimeChangeAllowed.bind(this), 1000);
     }
 
     ngOnDestroy() {
-        this.intervalRef && clearInterval(this.intervalRef);
+        this.timeoutRef && clearTimeout(this.timeoutRef);
         this.subscription && this.subscription.unsubscribe();
     }
 
     private checkWorkingTimeChangeAllowed() {
         this.workingTimeChangeAllowed = dayjs().isBetween(this.exam.startDate, this.exam.endDate?.subtract(5, 'minutes'));
+
+        // Run the check again when the exam starts or ends
+        const nextCheckTimeout = Math.min(dayjs().diff(this.exam.startDate), dayjs().diff(this.exam.endDate?.subtract(5, 'minutes')));
+        this.timeoutRef = setTimeout(this.checkWorkingTimeChangeAllowed.bind(this), nextCheckTimeout);
     }
 
     openDialog(event: MouseEvent) {
