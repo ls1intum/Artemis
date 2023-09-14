@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Artemis-Migration-Check-Postgres Setup
+# Artemis-Dev-Postgres Setup
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
@@ -7,27 +7,26 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
+        # just add this linux workaround for docker compose in a development version of artemis as developers
+        # might want to access external services on the docker host
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "8080:8080"
+            - "5005:5005" # Java Remote Debugging port declared in the java cmd options
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "5005"
         env_file:
+            - ./artemis/config/dev.env
             - ./artemis/config/postgres.env
-            - ./artemis/config/cypress.env
-            - ./artemis/config/cypress-postgres.env
-            - ./artemis/config/migration-check.env
         depends_on:
-            postgresql:
+            postgres:
                 condition: service_healthy
-    postgresql:
+    postgres:
         extends:
             file: ./postgres.yml
             service: postgres
-    migration-check:
-        image: alpine
-        container_name: migration-check
-        command: /bin/sh -c "exit 0"
-        depends_on:
-            artemis-app:
-                condition: service_healthy
-        networks:
-            - artemis
 
 networks:
     artemis:
