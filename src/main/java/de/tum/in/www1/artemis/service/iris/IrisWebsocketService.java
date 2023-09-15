@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.iris;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
@@ -109,6 +110,30 @@ public class IrisWebsocketService {
 
         public enum IrisWebsocketMessageType {
             MESSAGE, ERROR
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            IrisWebsocketDTO that = (IrisWebsocketDTO) other;
+            return type == that.type && Objects.equals(message, that.message) && Objects.equals(errorMessage, that.errorMessage)
+                    && Objects.equals(errorTranslationKey, that.errorTranslationKey) && Objects.equals(translationParams, that.translationParams);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, message, errorMessage, errorTranslationKey, translationParams);
+        }
+
+        @Override
+        public String toString() {
+            return "IrisWebsocketDTO{" + "type=" + type + ", message=" + message + ", errorMessage='" + errorMessage + '\'' + ", errorTranslationKey='" + errorTranslationKey + '\''
+                    + ", translationParams=" + translationParams + '}';
         }
     }
 }

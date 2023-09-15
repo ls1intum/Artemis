@@ -121,19 +121,6 @@ public class IrisSettingsResource {
     }
 
     /**
-     * PUT iris/global-iris-settings: Update the global iris settings.
-     *
-     * @param settings the settings to update
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings.
-     */
-    @PutMapping("iris/global-iris-settings")
-    @EnforceAdmin
-    public ResponseEntity<IrisSettings> updateGlobalSettings(@RequestBody IrisSettings settings) {
-        var updatedSettings = irisSettingsService.saveGlobalIrisSettings(settings);
-        return ResponseEntity.ok(updatedSettings);
-    }
-
-    /**
      * PUT courses/{courseId}/raw-iris-settings: Update the raw iris settings for the course.
      *
      * @param courseId of the course
