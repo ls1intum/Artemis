@@ -966,7 +966,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testSubmissionAfterDueDateValues")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmissionAfterDueDate(ZonedDateTime dueDate, SubmissionType expectedType, boolean expectedRated, boolean testRun) throws Exception {
+    void testSubmissionAfterDueDate(ZonedDateTime dueDate, SubmissionType expectedType, boolean expectedRated, boolean practiceMode) throws Exception {
         var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
 
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -976,8 +976,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Add a participation for the programming exercise
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
-        if (testRun) {
-            participation.setTestRun(testRun);
+        if (practiceMode) {
+            participation.setPracticeMode(practiceMode);
             participation = participationRepository.save(participation);
         }
 

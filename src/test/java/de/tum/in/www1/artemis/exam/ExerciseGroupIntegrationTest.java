@@ -4,9 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -54,6 +53,9 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     private Course course1;
 
@@ -275,5 +277,54 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group", List.of(programmingGroup), ExerciseGroup.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateOrderOfExerciseGroups() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1);
+        ExerciseGroup exerciseGroup1 = ExamFactory.generateExerciseGroupWithTitle(true, exam, "first");
+        ExerciseGroup exerciseGroup2 = ExamFactory.generateExerciseGroupWithTitle(true, exam, "second");
+        ExerciseGroup exerciseGroup3 = ExamFactory.generateExerciseGroupWithTitle(true, exam, "third");
+        examRepository.save(exam);
+
+        TextExercise exercise1_1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise1_2 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup1);
+        TextExercise exercise2_1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup2);
+        TextExercise exercise3_1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_2 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup3);
+        TextExercise exercise3_3 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup3);
+
+        List<ExerciseGroup> orderedExerciseGroups = new ArrayList<>(List.of(exerciseGroup2, exerciseGroup3, exerciseGroup1));
+        // Should save new order
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.OK);
+        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
+
+        List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).orElseThrow().getExerciseGroups();
+        assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
+        assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
+        assertThat(savedExerciseGroups.get(2).getTitle()).isEqualTo("first");
+
+        // Exercises should be preserved
+        Exam savedExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
+        ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
+        ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
+        ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
+        assertThat(savedExerciseGroup1.getExercises()).containsExactlyInAnyOrder(exercise1_1, exercise1_2);
+        assertThat(savedExerciseGroup2.getExercises()).containsExactlyInAnyOrder(exercise2_1);
+        assertThat(savedExerciseGroup3.getExercises()).containsExactlyInAnyOrder(exercise3_1, exercise3_2, exercise3_3);
+
+        // Should fail with too many exercise groups
+        orderedExerciseGroups.add(exerciseGroup1);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+
+        // Should fail with too few exercise groups
+        orderedExerciseGroups.remove(3);
+        orderedExerciseGroups.remove(2);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+
+        // Should fail with different exercise group
+        orderedExerciseGroups = Arrays.asList(exerciseGroup2, exerciseGroup3, ExamFactory.generateExerciseGroup(true, exam));
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
     }
 }

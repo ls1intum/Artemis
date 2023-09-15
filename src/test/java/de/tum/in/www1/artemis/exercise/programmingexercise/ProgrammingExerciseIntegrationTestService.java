@@ -306,8 +306,8 @@ class ProgrammingExerciseIntegrationTestService {
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         // Set one of the participations to practice mode
-        participation1.setTestRun(false);
-        participation2.setTestRun(true);
+        participation1.setPracticeMode(false);
+        participation2.setPracticeMode(true);
         final var participations = List.of(participation1, participation2);
         programmingExerciseStudentParticipationRepository.saveAll(participations);
 
