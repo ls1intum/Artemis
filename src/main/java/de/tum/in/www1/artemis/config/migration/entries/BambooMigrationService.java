@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
-import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.net.URL;
 import java.util.*;
@@ -173,7 +173,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
         Optional<Long> repositoryId = getConnectedRepositoryId(buildPlanId, name);
 
         if (repositoryId.isEmpty()) {
-            if (name.equals("solution")) {
+            if (name.equals(SOLUTION_REPO_NAME)) {
                 // if we do not find the edge case "solution" repository in the build plan, we simply continue
                 return;
             }
@@ -236,9 +236,9 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     @Override
     public void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList) {
-        Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, "tests");
-        Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, "assignment");
-        Optional<Long> solutionRepositoryId = getConnectedRepositoryId(buildPlanKey, "solution");
+        Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, TEST_REPO_NAME);
+        Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, ASSIGNMENT_REPO_NAME);
+        Optional<Long> solutionRepositoryId = getConnectedRepositoryId(buildPlanKey, SOLUTION_REPO_NAME);
 
         if (testRepositoryId.isEmpty()) {
             log.error("Repository tests not found for build plan {}", buildPlanKey);
@@ -265,8 +265,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
                 // Note: we do not throw
             }
         }
-        // TODO: add solutionRepositoryId
-        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get(), auxiliaryRepositoryIds, auxiliaryRepositoryList);
+        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get(), solutionRepositoryId, auxiliaryRepositoryIds, auxiliaryRepositoryList);
     }
 
     @Override
@@ -421,12 +420,13 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * @param buildPlanId             The key of the build plan, e.g. 'EIST16W1-BASE'.
      * @param testsRepositoryId       The id of the repository for the tests checked out in the root folder
      * @param assignmentRepositoryId  The id of the repository for the assignment, checked out in the folder 'assignment'
+     * @param solutionRepositoryId    The id of the repository for the solution, checked out in the folder 'solution'
      * @param assignmentRepositoryIds The ids of the auxiliary repositories, checked out in the folder specified in the AuxiliaryRepository object
      * @param auxiliaryRepositories   The auxiliary repositories to be checked out
      */
     // TODO: add the solution repository! in case it exists, handle it, otherwise ignore
-    private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId, Map<String, Long> assignmentRepositoryIds,
-            List<AuxiliaryRepository> auxiliaryRepositories) {
+    private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId, Optional<Long> solutionRepositoryId,
+            Map<String, Long> assignmentRepositoryIds, List<AuxiliaryRepository> auxiliaryRepositories) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanId + "-JOB1");
 
@@ -459,8 +459,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
             parameters.add("checkoutDir_" + index, auxiliaryRepo.getCheckoutDirectory());
             index++;
         }
-
-        // TODO: add solution if available
+        if (solutionRepositoryId.isPresent()) {
+            parameters.add("selectedRepository_" + index, solutionRepositoryId.get().toString());
+            parameters.add("selectFields", "selectedRepository_" + index);
+            parameters.add("checkoutDir_" + index, "solution");
+        }
 
         parameters.add("checkBoxFields", "cleanCheckout");
         parameters.add("taskId", "1");

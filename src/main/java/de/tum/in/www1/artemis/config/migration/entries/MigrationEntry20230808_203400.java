@@ -1,7 +1,12 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -13,15 +18,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import com.hazelcast.spi.exception.RestClientException;
+import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
@@ -33,7 +37,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private static final int MAX_THREAD_COUNT = 10;
 
-    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within three hours. Aborting migration.";
+    private static final String ERROR_MESSAGE = "Failed to migrate programming exercises within nine hours. Aborting migration.";
 
     private static final int TIMEOUT_IN_HOURS = 9;
 
@@ -54,6 +58,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
     private final AbstractVersionControlService versionControlService;
 
     private final UrlService urlService = new UrlService();
+
+    private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
     public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -85,41 +91,59 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
         log.info("Migrating {} programming exercises", exerciseCount);
 
-        // Maps exercise to a boolean indicating whether the exercise had an issue with the template (true) or
-        // solution (false) build plan
-        // Didn't use an enum for simplicity of the migration
-        Map<ProgrammingExercise, Boolean> errorMap = new HashMap<>();
-
         // Number of full batches. The last batch might be smaller
         long totalFullBatchCount = exerciseCount / BATCH_SIZE;
-        long threadCount = Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
-        long batchCountPerThread = totalFullBatchCount / threadCount;
+        int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
-        ExecutorService executorService = Executors.newFixedThreadPool((int) threadCount);
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
-        long lastBatchEnd = totalFullBatchCount + 1;
-        long lastBatchExerciseCount = batchCountPerThread * BATCH_SIZE + exerciseCount % BATCH_SIZE;
+        /*
+         * migrate the solution participations first, then the template participations, then the student participations
+         */
+        var count = solutionProgrammingExerciseParticipationRepository.count();
+        log.info("Found {} solution programming exercises to migrate", count);
+        for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
+            Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
+            var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
+            log.info("Found {} solution programming exercises to migrate in batch", solutionParticipationPage.getNumberOfElements());
+            var partitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
+            for (var partition : partitions) {
+                executorService.submit(() -> migrateSolutions(partition));
+            }
+        }
 
-        // TODO: maybe parallelize within the page instead of around the pages
+        log.info("Submitted all solution programming exercises");
+        /*
+         * migrate the template participations
+         */
+        count = templateProgrammingExerciseParticipationRepository.count();
+        log.info("Found {} template programming exercises to migrate", count);
+        for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
+            Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
+            var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
+            log.info("Found {} template programming exercises to migrate in batch", templateParticipationPage.getNumberOfElements());
+            var partitions = Lists.partition(templateParticipationPage.toList(), threadCount);
+            for (var partition : partitions) {
+                executorService.submit(() -> migrateTemplates(partition));
+            }
+        }
 
-        for (int tc = 0; tc < threadCount; tc++) {
-            boolean isLastThread = tc == threadCount - 1;
-            long start = tc * batchCountPerThread;
-            long end = (tc + 1) * batchCountPerThread;
-            long exerciseCountForThread = batchCountPerThread * BATCH_SIZE;
-            executorService.submit(() -> {
-                Map<ProgrammingExercise, Boolean> threadErrorMap = new HashMap<>();
-                if (isLastThread) {
-                    executeBatchedMigration(start, lastBatchEnd, lastBatchExerciseCount, threadErrorMap);
-                }
-                else {
-                    executeBatchedMigration(start, end, exerciseCountForThread, threadErrorMap);
-                }
-                synchronized (errorMap) {
-                    errorMap.putAll(threadErrorMap);
-                }
-            });
+        log.info("Submitted all template programming exercises");
+        /*
+         * migrate the student participations
+         */
+        count = programmingExerciseStudentParticipationRepository.count();
+        log.info("Found {} student programming exercises to migrate", count);
+        for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
+            Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
+            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
+                    .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
+            log.info("Found {} student programming exercises to migrate in batch", studentParticipationPage.getNumberOfElements());
+            var partitions = Lists.partition(studentParticipationPage.toList(), threadCount);
+            for (var partition : partitions) {
+                executorService.submit(() -> migrateStudents(partition));
+            }
         }
 
         // Wait for all threads to finish
@@ -142,138 +166,148 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             throw new RuntimeException(e);
         }
 
-        evaluateErrorMap(errorMap);
+        log.info("Migrated student programming exercises");
+        evaluateErrorList();
     }
 
     /**
-     * Executes the migration for a batch of programming exercises. Expected to be in a separate thread.
+     * Executes the migration for a batch of participations.
      *
-     * @param start         The start index of the batch page
-     * @param end           The end index of the batch page
-     * @param exerciseCount The total number of exercises for this thread
-     * @param errorMap      The error map to write errors to
+     * @param participations The participations to migrate
      */
-    private void executeBatchedMigration(long start, long end, long exerciseCount, Map<ProgrammingExercise, Boolean> errorMap) {
-        // do batches
-        for (int batchStartIndex = (int) start, batch = 0; batchStartIndex < end; batchStartIndex++, batch = batch + BATCH_SIZE) {
-            var batchStart = System.currentTimeMillis();
-            Pageable pageable = PageRequest.of(batchStartIndex, BATCH_SIZE);
-
-            // TODO: create your own page based on the count of templateProgrammingExerciseParticipationRepository
-            var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} template programming exercises to migrate in batch", templateParticipationPage.getTotalElements());
-            templateParticipationPage.forEach(templateParticipation -> {
-
-                // TODO: add useful generic try catch
-                try {
-                    // 1st step: TODO
-                    boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(templateParticipation.getProgrammingExercise().getProjectKey(),
-                            templateParticipation.getProgrammingExercise().getTemplateBuildPlanId());
-                    if (!buildPlanExists) {
-                        log.warn("Build plan {} does not exist for exercise {}", templateParticipation.getProgrammingExercise().getTemplateBuildPlanId(),
-                                templateParticipation.getProgrammingExercise().getId());
-                        log.info("Skipping migration for template of exercise {} and setting build_plan_id to null", templateParticipation.getProgrammingExercise().getId());
-                        templateParticipation.setBuildPlanId(null);
-                        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-                        // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
-                        return;
-                    }
-                    log.info("Migrating build plan with name {} for exercise {}",
-                            templateParticipation.getProgrammingExercise().getProjectKey() + "-" + templateParticipation.getBuildPlanId(),
-                            templateParticipation.getProgrammingExercise().getId());
-
-                    // 2nd step: TODO
-                    String branch = versionControlService.getOrRetrieveBranchOfExercise(templateParticipation.getProgrammingExercise());
-                    if (branch == null || branch.isEmpty()) {
-                        log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                                templateParticipation.getProgrammingExercise().getId(), templateParticipation.getBuildPlanId());
-                        // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
-                        return;
-                    }
-
-                    // 3rd step: TODO
-                    var startMs = System.currentTimeMillis();
-                    List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(templateParticipation.getProgrammingExercise().getId());
-
-                    migrateTemplateBuildPlan(templateParticipation.getProgrammingExercise(), auxiliaryRepositories, errorMap);
-
-                    migrateTestRepository(templateParticipation.getProgrammingExercise(), errorMap);
-                    log.info("Migrated template build plan for exercise {} in {}ms", templateParticipation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
-                }
-                catch (Exception ex) {
-                    // TODO: meaningful logging
-
-                    // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
-                }
-            });
-
-            // TODO: create your own page based on the count of solutionProgrammingExerciseParticipationRepository
-            var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} solution programming exercises to migrate in batch", solutionParticipationPage.getTotalElements());
-            solutionParticipationPage.map(solutionParticipation -> {
-                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(solutionParticipation.getProgrammingExercise().getProjectKey(),
-                        solutionParticipation.getBuildPlanId());
+    private void migrateSolutions(List<SolutionProgrammingExerciseParticipation> participations) {
+        for (var participation : participations) {
+            try {
+                // 1st step: check if the build plan exists, this cleans up the database a bit
+                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
                 if (!buildPlanExists) {
-                    log.warn("Build plan {} does not exist for exercise {}", solutionParticipation.getBuildPlanId(), solutionParticipation.getProgrammingExercise().getId());
-                    log.info("Skipping migration for exercise {} and setting build_plan_id to null", solutionParticipation.getProgrammingExercise().getId());
-                    solutionParticipation.setBuildPlanId(null);
-                    solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-                    return null;
+                    log.warn("Build plan {} does not exist for exercise {}", participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
+                    log.info("Skipping migration for exercise {} and setting build_plan_id to null", participation.getProgrammingExercise().getId());
+                    participation.setBuildPlanId(null);
+                    solutionProgrammingExerciseParticipationRepository.save(participation);
+                    return;
                 }
-                return solutionParticipation;
-            }).filter(Objects::nonNull).map(solutionParticipation -> {
-                String branch = versionControlService.getOrRetrieveBranchOfExercise(solutionParticipation.getProgrammingExercise());
+
+                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
+                // we had in the past
+                // note: this method calls directly saves the participation in the database with the updated branch
+                String branch = versionControlService.getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
                 if (branch == null || branch.isEmpty()) {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                            solutionParticipation.getProgrammingExercise().getId(), solutionParticipation.getBuildPlanId());
-                    return null;
+                            participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
+                    return;
                 }
-                return solutionParticipation;
-            }).filter(Objects::nonNull).forEach(solutionParticipation -> {
+
+                log.info("Migrating solution build plan with name {} for exercise {}",
+                        participation.getProgrammingExercise().getProjectKey() + "-" + participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
+
                 var startMs = System.currentTimeMillis();
-                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(solutionParticipation.getProgrammingExercise().getId());
+                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(participation.getProgrammingExercise().getId());
 
-                migrateSolutionBuildPlan(solutionParticipation.getProgrammingExercise(), auxiliaryRepositories, errorMap);
+                migrateSolutionBuildPlan(participation, auxiliaryRepositories);
 
-                migrateTestRepository(solutionParticipation.getProgrammingExercise(), errorMap);
-                log.info("Migrated solution build plan for exercise {} in {}ms", solutionParticipation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
-            });
-
-            // TODO: create your own page based on the count of programmingExerciseStudentParticipationRepository
-            Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
-                    .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
-            log.info("Found {} student programming exercises to migrate in batch", studentParticipationPage.getTotalElements());
-            studentParticipationPage.map(studentParticipation -> {
-                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(studentParticipation.getProgrammingExercise().getProjectKey(),
-                        studentParticipation.getBuildPlanId());
-                if (!buildPlanExists) {
-                    log.warn("Build plan {} does not exist for exercise {}", studentParticipation.getBuildPlanId(), studentParticipation.getProgrammingExercise().getId());
-                    log.info("Skipping migration for exercise {} and setting build_plan_id to null", studentParticipation.getProgrammingExercise().getId());
-                    studentParticipation.setBuildPlanId(null);
-                    programmingExerciseStudentParticipationRepository.save(studentParticipation);
-                    return null;
-                }
-                return studentParticipation;
-            }).filter(Objects::nonNull).map(studentParticipation -> {
-                String branch = versionControlService.getOrRetrieveBranchOfStudentParticipation(studentParticipation);
-                if (branch == null || branch.isEmpty()) {
-                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                            studentParticipation.getProgrammingExercise().getId(), studentParticipation.getBuildPlanId());
-                    return null;
-                }
-                return studentParticipation;
-            }).filter(Objects::nonNull).forEach(studentParticipation -> {
-                var startMs = System.currentTimeMillis();
-                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(studentParticipation.getProgrammingExercise().getId());
-
-                migrateStudentBuildPlan(studentParticipation.getProgrammingExercise(), studentParticipation, auxiliaryRepositories, errorMap);
-                log.info("Migrated student build plan for exercise {} in {}ms", studentParticipation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
-            });
-
-            log.info("Migrated {} / {} programming exercises in current thread", Math.min(exerciseCount, batch + 1), exerciseCount);
-            log.info("Migrated batch in {}ms", System.currentTimeMillis() - batchStart);
+                migrateTestRepository(participation);
+                log.info("Migrated template build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
+            }
+            catch (Exception e) {
+                log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
+                        participation.getBuildPlanId(), e);
+                errorList.add(participation);
+            }
         }
+    }
 
+    /**
+     * Migrates the build plans of the given participations.
+     *
+     * @param participations The participations to migrate
+     */
+    private void migrateTemplates(List<TemplateProgrammingExerciseParticipation> participations) {
+        for (var participation : participations) {
+            try {
+                // 1st step: check if the build plan exists, this cleans up the database a bit
+                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(participation.getProgrammingExercise().getProjectKey(),
+                        participation.getProgrammingExercise().getTemplateBuildPlanId());
+                if (!buildPlanExists) {
+                    log.warn("Build plan {} does not exist for exercise {}", participation.getProgrammingExercise().getTemplateBuildPlanId(),
+                            participation.getProgrammingExercise().getId());
+                    log.info("Skipping migration for template of exercise {} and setting build_plan_id to null", participation.getProgrammingExercise().getId());
+                    participation.setBuildPlanId(null);
+                    templateProgrammingExerciseParticipationRepository.save(participation);
+                    // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
+                    return;
+                }
+
+                log.info("Migrating build plan with name {} for exercise {}", participation.getProgrammingExercise().getProjectKey() + "-" + participation.getBuildPlanId(),
+                        participation.getProgrammingExercise().getId());
+
+                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
+                // we had in the past
+                // note: this method calls directly saves the participation in the database with the updated branch
+                String branch = versionControlService.getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                if (branch == null || branch.isEmpty()) {
+                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                            participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
+                    // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
+                    return;
+                }
+                var startMs = System.currentTimeMillis();
+                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(participation.getProgrammingExercise().getId());
+
+                migrateTemplateBuildPlan(participation, auxiliaryRepositories);
+
+                migrateTestRepository(participation);
+                log.info("Migrated template build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
+            }
+            catch (Exception e) {
+                log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
+                        participation.getBuildPlanId(), e);
+                errorList.add(participation);
+            }
+        }
+    }
+
+    /**
+     * Migrates the build plans of the given participations.
+     *
+     * @param participations The participations to migrate
+     */
+    private void migrateStudents(List<ProgrammingExerciseStudentParticipation> participations) {
+        for (var participation : participations) {
+            try {
+                // 1st step: check if the build plan exists, this cleans up the database a bit
+                boolean buildPlanExists = ciMigrationService.orElseThrow().buildPlanExists(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+                if (!buildPlanExists) {
+                    log.warn("Build plan {} does not exist for exercise {}", participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
+                    log.info("Skipping migration for exercise {} and setting build_plan_id to null", participation.getProgrammingExercise().getId());
+                    participation.setBuildPlanId(null);
+                    programmingExerciseStudentParticipationRepository.save(participation);
+                }
+
+                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
+                // we had in the past
+                // note: this method calls directly saves the participation in the database with the updated branch
+                String branch = versionControlService.getOrRetrieveBranchOfStudentParticipation(participation);
+                if (branch == null || branch.isEmpty()) {
+                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
+                            participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
+                    return;
+                }
+
+                log.info("Migrating student participation with buildPlanId {} for exercise {}", participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
+
+                var startMs = System.currentTimeMillis();
+                List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(participation.getProgrammingExercise().getId());
+
+                migrateStudentBuildPlan(participation, auxiliaryRepositories);
+                log.info("Migrated student build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
+            }
+            catch (Exception e) {
+                log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
+                        participation.getBuildPlanId(), e);
+                errorList.add(participation);
+            }
+        }
     }
 
     /**
@@ -292,10 +326,10 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
     /**
      * Migrates a single test repository. This method is idempotent, i.e. if you invoke it multiple times, it would still work fine
      *
-     * @param exercise The exercise to migrate
-     * @param errorMap The error map to write errors to
+     * @param participation The participation to migrate, needed so we can map the error to the participation
      */
-    private void migrateTestRepository(ProgrammingExercise exercise, Map<ProgrammingExercise, Boolean> errorMap) {
+    private void migrateTestRepository(AbstractBaseProgrammingExerciseParticipation participation) {
+        var exercise = participation.getProgrammingExercise();
         if (exercise.getTestRepositoryUrl() == null) {
             /*
              * when the test repository url is null, we don't have to migrate the test build plan, saving multiple API calls
@@ -307,186 +341,210 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             ciMigrationService.orElseThrow().removeWebHook(exercise.getVcsTestRepositoryUrl());
         }
         catch (Exception e) {
-            log.warn("Failed to delete test build triggers for exercise {} with test repository {}", exercise.getId(), exercise.getVcsTestRepositoryUrl(), e);
-            errorMap.put(exercise, true);
+            log.warn("Failed to delete build triggers in test repository for exercise {} with test repository {}", exercise.getId(), exercise.getVcsTestRepositoryUrl(), e);
+            errorList.add(participation);
         }
     }
 
     /**
      * Migrates a single solution build plan.
      *
-     * @param exercise The exercise to migrate
-     * @param errorMap The error map to write errors to
+     * @param participation         The participation to migrate
+     * @param auxiliaryRepositories The auxiliary repositories to migrate
      */
-    private void migrateStudentBuildPlan(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation,
-            List<AuxiliaryRepository> auxiliaryRepositories, Map<ProgrammingExercise, Boolean> errorMap) {
+    private void migrateStudentBuildPlan(ProgrammingExerciseStudentParticipation participation, List<AuxiliaryRepository> auxiliaryRepositories) {
         VcsRepositoryUrl repositoryUrl;
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
-            repositoryUrl = new VcsRepositoryUrl(urlService.getPlainUrlFromRepositoryUrl(studentParticipation.getVcsRepositoryUrl()));
+            repositoryUrl = new VcsRepositoryUrl(urlService.getPlainUrlFromRepositoryUrl(participation.getVcsRepositoryUrl()));
         }
         catch (URISyntaxException e) {
             log.warn("Failed to convert git url {} for studentParticipationId {} exerciseId {} with buildPlanId {}, will abort migration for this Participation",
-                    studentParticipation.getVcsRepositoryUrl(), studentParticipation.getId(), exercise.getId(), studentParticipation.getBuildPlanId(), e);
-            errorMap.put(exercise, false);
+                    participation.getVcsRepositoryUrl(), participation.getId(), exercise.getId(), participation.getBuildPlanId(), e);
+            errorList.add(participation);
             return;
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), studentParticipation.getBuildPlanId(), repositoryUrl);
+            ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUrl);
         }
         catch (Exception e) {
-            log.warn("Failed to migrate build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
-                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
-            errorMap.put(exercise, false);
+            log.warn("Failed to migrate build plan notifications for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
+                    participation.getBuildPlanId(), exercise.getId(), e);
+            errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), studentParticipation.getBuildPlanId(), repositoryUrl);
+            ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), participation.getBuildPlanId(), repositoryUrl);
         }
         catch (Exception e) {
-            log.warn("Failed to delete build triggers for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
-                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
-            errorMap.put(exercise, false);
+            log.warn("Failed to delete build triggers for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(), participation.getBuildPlanId(),
+                    exercise.getId(), e);
+            errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "assignment", String.valueOf(repositoryUrl),
-                    studentParticipation.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, String.valueOf(repositoryUrl),
+                    participation.getBranch());
         }
         catch (Exception e) {
-            log.warn("Failed to replace solution repository in template build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ",
-                    studentParticipation.getId(), studentParticipation.getBuildPlanId(), exercise.getId(), e);
-            errorMap.put(exercise, false);
+            log.warn("Failed to replace assignment repository in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
+                    participation.getBuildPlanId(), exercise.getId(), e);
+            errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "tests", exercise.getTestRepositoryUrl(),
-                    studentParticipation.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUrl(),
+                    participation.getBranch());
         }
         catch (Exception e) {
-            log.warn("Failed to replace tests repository in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
-                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
-            errorMap.put(exercise, false);
+            log.warn("Failed to replace tests repository in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
+                    participation.getBuildPlanId(), exercise.getId(), e);
+            errorList.add(participation);
         }
-        // NOTE: this handles an edge case
-        // TODO: invoke this in the other cases as well
+        // NOTE: this handles an edge case with HASKELL exercises, where the solution repository is checked out in the student build plan
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), "solution", exercise.getSolutionRepositoryUrl(),
-                    studentParticipation.getBranch());
+            // we dont have the solution repository url in the student participation, so we have to get it from the repository service
+            var solutionRepositoryUrl = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get().getVcsRepositoryUrl();
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME,
+                    urlService.getPlainUrlFromRepositoryUrl(solutionRepositoryUrl), participation.getBranch());
         }
         catch (Exception e) {
-            log.warn("Failed to replace tests repository in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
-                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
-            errorMap.put(exercise, false);
+            log.warn("Failed to replace solution repository in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
+                    participation.getBuildPlanId(), exercise.getId(), e);
+            errorList.add(participation);
         }
         for (var auxiliary : auxiliaryRepositories) {
             try {
-                ciMigrationService.orElseThrow().overrideBuildPlanRepository(studentParticipation.getBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUrl(),
-                        studentParticipation.getBranch());
+                ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUrl(),
+                        participation.getBranch());
             }
             catch (Exception e) {
-                log.warn("Failed to replace {} repository in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", auxiliary.getName(),
-                        studentParticipation.getId(), studentParticipation.getBuildPlanId(), exercise.getId(), e);
-                errorMap.put(exercise, false);
+                log.warn("Failed to replace {} repository in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", auxiliary.getName(),
+                        participation.getId(), participation.getBuildPlanId(), exercise.getId(), e);
+                errorList.add(participation);
             }
         }
         try {
-            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(studentParticipation.getBuildPlanId(), auxiliaryRepositories);
+            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(participation.getBuildPlanId(), auxiliaryRepositories);
         }
         catch (Exception e) {
-            log.warn("Failed to replace repositories in solution build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", studentParticipation.getId(),
-                    studentParticipation.getBuildPlanId(), exercise.getId(), e);
-            errorMap.put(exercise, false);
+            log.warn("Failed to replace repositories in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
+                    participation.getBuildPlanId(), exercise.getId(), e);
+            errorList.add(participation);
         }
     }
 
     /**
      * Migrates a single solution build plan.
      *
-     * @param exercise The exercise to migrate
-     * @param errorMap The error map to write errors to
+     * @param participation         The participation to migrate
+     * @param auxiliaryRepositories The auxiliary repositories to migrate
      */
-    private void migrateSolutionBuildPlan(ProgrammingExercise exercise, List<AuxiliaryRepository> auxiliaryRepositories, Map<ProgrammingExercise, Boolean> errorMap) {
+    private void migrateSolutionBuildPlan(AbstractBaseProgrammingExerciseParticipation participation, List<AuxiliaryRepository> auxiliaryRepositories) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
             ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
         }
-        catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
+        catch (Exception e) {
             log.warn("Failed to migrate solution build plan for exercise id {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
-            errorMap.put(exercise, false);
+            errorList.add(participation);
         }
         try {
             ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), exercise.getVcsSolutionRepositoryUrl());
         }
-        catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
+        catch (Exception e) {
             log.warn("Failed to delete solution build triggers for exercise {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
-            errorMap.put(exercise, false);
+            errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), "assignment", exercise.getSolutionRepositoryUrl(),
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), ASSIGNMENT_REPO_NAME, exercise.getSolutionRepositoryUrl(),
                     exercise.getBranch());
         }
-        catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
+        catch (Exception e) {
             log.warn("Failed to replace solution repository in template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
-            errorMap.put(exercise, false);
+            errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), "tests", exercise.getTestRepositoryUrl(), exercise.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUrl(), exercise.getBranch());
         }
-        catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
+        catch (Exception e) {
             log.warn("Failed to replace tests repository in solution build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
-            errorMap.put(exercise, false);
+            errorList.add(participation);
+        }
+        try {
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME, exercise.getSolutionRepositoryUrl(),
+                    exercise.getBranch());
+        }
+        catch (Exception e) {
+            log.warn("Failed to replace solution repository in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
+                    participation.getBuildPlanId(), exercise.getId(), e);
+            errorList.add(participation);
         }
         for (var auxiliary : auxiliaryRepositories) {
             try {
                 ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getSolutionBuildPlanId(), auxiliary.getName(), auxiliary.getRepositoryUrl(),
                         exercise.getBranch());
             }
-            catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
+            catch (Exception e) {
                 log.warn("Failed to replace {} repository in solution build plan for exercise {}  with buildPlanId {}", auxiliary.getName(), exercise.getId(),
                         exercise.getSolutionBuildPlanId(), e);
-                errorMap.put(exercise, false);
+                errorList.add(participation);
             }
         }
         try {
             ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getSolutionBuildPlanId(), auxiliaryRepositories);
         }
-        catch (VersionControlException | ContinuousIntegrationException | NoSuchElementException | RestClientException e) {
+        catch (Exception e) {
             log.warn("Failed to replace repositories in solution build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
-            errorMap.put(exercise, false);
+            errorList.add(participation);
         }
     }
 
     /**
      * Migrates a single template build plan.
      *
-     * @param exercise The exercise to migrate
-     * @param errorMap The error map to write errors to
+     * @param participation         The participation to migrate
+     * @param auxiliaryRepositories The auxiliary repositories to migrate
      */
-    private void migrateTemplateBuildPlan(ProgrammingExercise exercise, List<AuxiliaryRepository> auxiliaryRepositories, Map<ProgrammingExercise, Boolean> errorMap) {
+    private void migrateTemplateBuildPlan(AbstractBaseProgrammingExerciseParticipation participation, List<AuxiliaryRepository> auxiliaryRepositories) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
         try {
             ciMigrationService.orElseThrow().overrideBuildPlanNotification(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
         }
         catch (Exception e) {
             log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
-            errorMap.put(exercise, true);
+            errorList.add(participation);
         }
         try {
             ciMigrationService.orElseThrow().deleteBuildTriggers(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), exercise.getVcsTemplateRepositoryUrl());
         }
         catch (Exception e) {
             log.warn("Failed to delete template build triggers for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
-            errorMap.put(exercise, true);
+            errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), "assignment", exercise.getTemplateRepositoryUrl(),
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), ASSIGNMENT_REPO_NAME, exercise.getTemplateRepositoryUrl(),
                     exercise.getBranch());
         }
         catch (Exception e) {
             log.warn("Failed to replace template repository for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
-            errorMap.put(exercise, true);
+            errorList.add(participation);
         }
         try {
-            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), "tests", exercise.getTestRepositoryUrl(), exercise.getBranch());
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(exercise.getTemplateBuildPlanId(), TEST_REPO_NAME, exercise.getTestRepositoryUrl(), exercise.getBranch());
         }
         catch (Exception e) {
             log.warn("Failed to replace tests repository in template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
-            errorMap.put(exercise, true);
+            errorList.add(participation);
+        }
+        // NOTE: this handles an edge case with HASKELL exercises, where the solution repository is checked out in the student build plan
+        try {
+            // we dont have the solution repository url in the template participation, so we have to get it from the repository service
+            var solutionRepositoryUrl = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get().getVcsRepositoryUrl();
+            ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME,
+                    urlService.getPlainUrlFromRepositoryUrl(solutionRepositoryUrl), exercise.getBranch());
+        }
+        catch (Exception e) {
+            log.warn("Failed to replace solution repository in template build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
+                    participation.getBuildPlanId(), exercise.getId(), e);
+            errorList.add(participation);
         }
         for (var auxiliary : auxiliaryRepositories) {
             try {
@@ -496,7 +554,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             catch (Exception e) {
                 log.warn("Failed to replace auxiliary repository {} in template build plan for exercise {} with buildPlanId {}", auxiliary.getName(), exercise.getId(),
                         exercise.getTemplateBuildPlanId(), e);
-                errorMap.put(exercise, true);
+                errorList.add(participation);
             }
         }
         try {
@@ -504,22 +562,30 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         }
         catch (Exception e) {
             log.error("Failed to replace repositories in template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
-            errorMap.put(exercise, true);
+            errorList.add(participation);
         }
     }
 
-    private void evaluateErrorMap(Map<ProgrammingExercise, Boolean> errorMap) {
-        if (errorMap.isEmpty()) {
+    /**
+     * Evaluates the error map and prints the errors to the log.
+     */
+    private void evaluateErrorList() {
+        if (errorList.isEmpty()) {
+            log.info("Successfully migrated all programming exercises");
             return;
         }
 
-        List<Long> failedExerciseIdsForTemplates = errorMap.entrySet().stream().filter(entry -> Boolean.TRUE.equals(entry.getValue())).map(entry -> entry.getKey().getId())
-                .toList();
-        List<Long> failedExerciseIdsForSolutions = errorMap.entrySet().stream().filter(entry -> Boolean.FALSE.equals(entry.getValue())).map(entry -> entry.getKey().getId())
-                .toList();
-        log.error("Failed to migrate {} programming exercises", errorMap.size());
-        log.error("Failed to migrate template build plan for exercises: {}", failedExerciseIdsForTemplates);
-        log.error("Failed to migrate solution build plan for exercises: {}", failedExerciseIdsForSolutions);
+        List<Long> failedTemplates = errorList.stream().filter(participation -> participation instanceof TemplateProgrammingExerciseParticipation)
+                .map(participation -> participation.getProgrammingExercise().getId()).toList();
+        List<Long> failedSolutions = errorList.stream().filter(participation -> participation instanceof SolutionProgrammingExerciseParticipation)
+                .map(participation -> participation.getProgrammingExercise().getId()).toList();
+        List<Long> failedStudents = errorList.stream().filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation)
+                .map(participation -> participation.getProgrammingExercise().getId()).toList();
+
+        log.error("Failed to migrate {} programming exercises", errorList);
+        log.error("Failed to migrate template build plan for exercises: {}", failedTemplates);
+        log.error("Failed to migrate solution build plan for exercises: {}", failedSolutions);
+        log.error("Failed to migrate students build plan for exercises: {}", failedStudents);
         log.warn("Please check the logs for more information. Then either fix the issues and rerun the migration or "
                 + "fix the build plans yourself and mark the migration as run.");
     }
