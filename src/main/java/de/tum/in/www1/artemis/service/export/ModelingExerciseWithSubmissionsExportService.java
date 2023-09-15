@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 @Service
 public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    ModelingExerciseWithSubmissionsExportService(FileService fileService, ModelingSubmissionExportService modelingSubmissionExportService,
+    public ModelingExerciseWithSubmissionsExportService(FileService fileService, ModelingSubmissionExportService modelingSubmissionExportService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         super(fileService, springMvcJacksonConverter, modelingSubmissionExportService);
     }

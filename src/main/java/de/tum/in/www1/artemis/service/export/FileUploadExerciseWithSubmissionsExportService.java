@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.export;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -18,7 +17,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 @Service
 public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    FileUploadExerciseWithSubmissionsExportService(FileService fileService, FileUploadSubmissionExportService fileUploadSubmissionExportService,
+    public FileUploadExerciseWithSubmissionsExportService(FileService fileService, FileUploadSubmissionExportService fileUploadSubmissionExportService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         super(fileService, springMvcJacksonConverter, fileUploadSubmissionExportService);
     }
@@ -32,10 +31,9 @@ public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWith
      * @param exportErrors  a list of errors that occurred during the export
      * @param reportEntries report entries that are added during the export
      * @return the path to the exported file upload exercise
-     * @throws IOException
      */
     public Path exportFileUploadExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
-            List<ArchivalReportEntry> reportEntries) throws IOException {
+            List<ArchivalReportEntry> reportEntries) {
         return exportExerciseWithSubmissions(exercise, optionsDTO, exportDir, exportErrors, reportEntries);
     }
 }
