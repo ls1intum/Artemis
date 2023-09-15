@@ -22,10 +22,13 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
+ * This service is responsible for downloading, deleting data exports and checking if a data export can be requested.
+ * For creating data exports, see {@link DataExportCreationService}.
  */
 @Service
 public class DataExportService {
@@ -109,8 +112,7 @@ public class DataExportService {
     public DataExportDTO canDownloadAnyDataExport() {
         var noDataExport = new DataExportDTO(null, null, null, null);
         var user = userRepository.getUser();
-        var dataExportsFromUser = dataExportRepository.findAllDataExportsByUserId(user.getId());
-        Optional<DataExport> latestDataExport = dataExportsFromUser.stream().max(Comparator.comparing(DataExport::getCreatedDate));
+        var dataExportsFromUser = dataExportRepository.findAllDataExportsByUserIdOrderByRequestDateDesc(user.getId());
         if (dataExportsFromUser.isEmpty()) {
             return noDataExport;
         }
@@ -120,10 +122,21 @@ public class DataExportService {
                 return new DataExportDTO(dataExport.getId(), dataExport.getDataExportState(), dataExport.getCreatedDate().atZone(ZoneId.systemDefault()), nextRequestDate);
             }
         }
-        return new DataExportDTO(null, latestDataExport.get().getDataExportState(), latestDataExport.get().getCreatedDate().atZone(ZoneId.systemDefault()),
-                retrieveNextRequestDate(latestDataExport.get()));
+        var latestDataExport = dataExportsFromUser.get(0);
+        return new DataExportDTO(null, latestDataExport.getDataExportState(), latestDataExport.getCreatedDate().atZone(ZoneId.systemDefault()),
+                retrieveNextRequestDate(latestDataExport));
     }
 
+    /**
+     * Calculates the next date when the user can request a data export.
+     * <p>
+     * This is the date when the last data export was requested (stored in the createdDate) + the constant DAYS_BETWEEN_DATA_EXPORTS.
+     * By default, DAYS_BETWEEN_DATA_EXPORTS is set to 14 days.
+     * This can be changed by setting the property artemis.data-export.days-between-data-exports in the application.yml file.
+     *
+     * @param dataExport the data export for which the next request date should be calculated
+     * @return the next date when the user can request a data export
+     */
     @NotNull
     private ZonedDateTime retrieveNextRequestDate(DataExport dataExport) {
         return dataExport.getCreatedDate().atZone(ZoneId.systemDefault()).plusDays(DAYS_BETWEEN_DATA_EXPORTS);
@@ -146,6 +159,20 @@ public class DataExportService {
             dataExport.setDataExportState(DataExportState.DELETED);
         }
         dataExportRepository.save(dataExport);
+    }
+
+    /**
+     * Checks if the data export can be downloaded.
+     * <p>
+     * The data export can be downloaded if its state is either EMAIL_SENT or DOWNLOADED.
+     *
+     * @param dataExport the data export to check
+     * @throws AccessForbiddenException if the data export is not in a downloadable state
+     */
+    public void checkDataExportCanBeDownloadedElseThrow(DataExport dataExport) {
+        if (!dataExport.getDataExportState().isDownloadable()) {
+            throw new AccessForbiddenException("Data export has either not been created or already been deleted");
+        }
     }
 
 }

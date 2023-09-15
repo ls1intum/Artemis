@@ -7,7 +7,7 @@ import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { ArtemisExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
+import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -31,7 +31,6 @@ import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/pr
         CommonModule,
         ArtemisSharedModule,
         ArtemisMarkdownModule,
-        ArtemisExamExerciseUpdateHighlighterModule,
         ArtemisSharedComponentModule,
         ArtemisQuizQuestionTypesModule,
         SubmissionResultStatusModule,
@@ -42,6 +41,7 @@ import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/pr
         ArtemisFullscreenModule,
         ArtemisModelingEditorModule,
         ArtemisProgrammingSubmissionPolicyStatusModule,
+        ExamExerciseUpdateHighlighterModule,
     ],
     exports: [FileUploadExamSubmissionComponent, QuizExamSubmissionComponent, ProgrammingExamSubmissionComponent, TextExamSubmissionComponent, ModelingExamSubmissionComponent],
 })
