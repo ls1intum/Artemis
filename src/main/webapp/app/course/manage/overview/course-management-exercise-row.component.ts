@@ -6,6 +6,7 @@ import { Course } from 'app/entities/course.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { faBook, faExclamationTriangle, faFileSignature, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -79,4 +80,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
             this.icon = getIcon(exerciseType);
         }
     }
+
+    protected readonly ProfileToggle = ProfileToggle;
 }
