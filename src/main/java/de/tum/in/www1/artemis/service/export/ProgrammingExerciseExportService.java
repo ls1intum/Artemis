@@ -129,13 +129,20 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         // Add the exported zip folder containing template, solution, and tests repositories
-        var repoExportsPaths = exportProgrammingExerciseRepositories(exercise, includeStudentRepos, shouldZipZipFiles, repoDownloadClonePath, exportDir.orElseThrow(), exportErrors,
-                archivalReportEntries);
-        repoExportsPaths.forEach(path -> {
-            if (path != null) {
-                pathsToBeZipped.add(path);
-            }
-        });
+        // wrap this in a try catch block to prevent the problem statement and exercise details not being exported if the repositories fail to export
+        try {
+            var repoExportsPaths = exportProgrammingExerciseRepositories(exercise, includeStudentRepos, shouldZipZipFiles, repoDownloadClonePath, exportDir.orElseThrow(),
+                    exportErrors, archivalReportEntries);
+            repoExportsPaths.forEach(path -> {
+                if (path != null) {
+                    pathsToBeZipped.add(path);
+                }
+            });
+        }
+        catch (Exception e) {
+            exportErrors.add("Failed to export programming exercise repositories: " + e.getMessage());
+
+        }
         // Add problem statement as .md file
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
 
@@ -577,7 +584,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         Path localRepoPath;
 
         // Checkout the repository
-        try (Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, true)) {
+        try (Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, false)) {
             gitService.resetToOriginHead(repository);
             localRepoPath = repository.getLocalPath();
         }

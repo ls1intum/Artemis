@@ -115,17 +115,17 @@ public class CourseExamExportService {
             log.error("Could not write report file for course {} due to the exception ", course.getId(), ex);
         }
 
-        Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir, exportedFiles);
+        Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
 
         log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
         return exportedCourse;
     }
 
-    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir, List<Path> filesToZip) {
+    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir) {
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
         Path courseZip = outputDir.resolve(tmpDir.getFileName() + ".zip");
-        var exportedCourse = createCourseZipFile(courseZip, filesToZip, exportErrors);
+        var exportedCourse = createCourseZipFile(courseZip, List.of(tmpDir), exportErrors);
 
         // Delete temporary directory used for zipping
         fileService.scheduleForDirectoryDeletion(tmpDir, 1);
@@ -178,7 +178,7 @@ public class CourseExamExportService {
             log.error("Could not write report file for exam {} due to the exception ", exam.getId(), ex);
         }
 
-        Optional<Path> exportedExamPath = zipExportedExercises(outputDir, exportErrors, notificationTopic, tempExamsDir, exportedExercises);
+        Optional<Path> exportedExamPath = zipExportedExercises(outputDir, exportErrors, notificationTopic, tempExamsDir);
 
         log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath.orElse(null));
         return exportedExamPath;
