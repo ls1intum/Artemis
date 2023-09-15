@@ -125,7 +125,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             if (!Files.exists(repoDownloadClonePath)) {
                 Files.createDirectories(repoDownloadClonePath);
             }
-            exportDir = Optional.of(fileService.getTemporaryUniquePath(repoDownloadClonePath, 5));
+            exportDir = Optional.of(fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5));
         }
 
         // Add the exported zip folder containing template, solution, and tests repositories
@@ -294,7 +294,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return a zipped file
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
-        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
         return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, outputDir, exportErrors);
     }
 
@@ -309,7 +309,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return a zipped file
      */
     public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
-        Path uniquePath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        Path uniquePath = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
         return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
     }
 
@@ -324,7 +324,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return a zipped file
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
-        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
+        Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
         return exportInstructorAuxiliaryRepositoryForExercise(exerciseId, auxiliaryRepository, outputDir, outputDir, exportErrors);
     }
 
@@ -506,7 +506,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow();
 
-        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 10);
+        Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
         var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
         try {
@@ -580,7 +580,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path workingDir, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
-        var repositoryDir = fileService.getTemporaryUniquePath(workingDir, 5);
+        var repositoryDir = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
         Path localRepoPath;
 
         // Checkout the repository
@@ -641,7 +641,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            var repositoryDir = fileService.getTemporaryUniquePath(workingDir, 5);
+            var repositoryDir = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
             // Checkout the repository
             Repository repository = gitService.getOrCheckoutRepository(participation, repositoryDir.toString());
             if (repository == null) {

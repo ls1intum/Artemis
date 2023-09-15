@@ -1108,15 +1108,14 @@ public class FileService implements DisposableBean {
      */
     private Path getUniquePath(Path path) {
         var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
+        if (!Files.exists(uniquePath) && Files.isDirectory(path)) {
             try {
-                Files.createDirectories(uniquePath);
+                return Files.createDirectories(uniquePath);
             }
             catch (IOException e) {
                 log.warn("could not create the directories for the path {}", uniquePath);
             }
         }
-
         return uniquePath;
     }
 
@@ -1129,6 +1128,21 @@ public class FileService implements DisposableBean {
      */
     public Path getTemporaryUniquePath(Path path, long deleteDelayInMinutes) {
         var temporaryPath = getUniquePath(path);
+        scheduleForDirectoryDeletion(temporaryPath, deleteDelayInMinutes);
+        return temporaryPath;
+    }
+
+    /**
+     * Create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system but does not create the folder.
+     * This is used when cloning the programming exercises into a new temporary directory because if we already create the directory, the git clone does not work anymore.
+     * The directory will be scheduled for deletion.
+     *
+     * @param path                 the original path, e.g. /opt/artemis/repos-download
+     * @param deleteDelayInMinutes the delay in minutes after which the path should be deleted
+     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
+     */
+    public Path getTemporaryUniquePathWithoutPathCreation(Path path, long deleteDelayInMinutes) {
+        var temporaryPath = path.resolve(String.valueOf(System.currentTimeMillis()));
         scheduleForDirectoryDeletion(temporaryPath, deleteDelayInMinutes);
         return temporaryPath;
     }
