@@ -689,6 +689,10 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
+        // This would otherwise try to connect to Jenkins in case the continuousIntegrationService is of type JenkinsService,
+        // which is behavior that is already tested elsewhere anyway
+        doNothing().when(continuousIntegrationService).updateBuildPlanURL(any(), any(), any());
+
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
@@ -740,7 +744,6 @@ public class ProgrammingExerciseTestService {
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
-
     }
 
     // TEST
