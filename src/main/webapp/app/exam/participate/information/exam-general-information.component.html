@@ -66,10 +66,15 @@
                 </div>
             </ng-template>
         </div>
-        <div *ngIf="exam && studentExam.ended" class="mb-2 mx-2">
+        <div *ngIf="exam && studentExam.ended && (exam.examStudentReviewStart || exam.examStudentReviewEnd)" class="mb-2 mx-2">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewTimespan' | artemisTranslate }}:</strong>
             <span *ngIf="exam.examStudentReviewStart"> {{ exam.examStudentReviewStart | artemisDate }} </span>
-            <span *ngIf="exam.examStudentReviewEnd"> - {{ exam.examStudentReviewEnd | artemisDate }}</span>
+            <span *ngIf="exam.examStudentReviewStart && exam.examStudentReviewEnd"> - </span>
+            <span *ngIf="exam.examStudentReviewEnd">{{ exam.examStudentReviewEnd | artemisDate }}</span>
+        </div>
+        <div *ngIf="studentExam?.user?.name">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.examinedStudent' | artemisTranslate }}:</strong>
+            <span> {{ studentExam!.user!.name }} </span>
         </div>
     </div>
 </div>
