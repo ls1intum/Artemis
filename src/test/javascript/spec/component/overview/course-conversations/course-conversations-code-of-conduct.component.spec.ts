@@ -34,7 +34,7 @@ describe('Course Conversations Code Of Conduct Component', () => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 courseManagementServiceStub = jest
                     .spyOn(courseManagementService, 'searchUsers')
-                    .mockReturnValue(of({ body: [{ firstName: '', lastName: '', email: '' }] }) as Observable<HttpResponse<UserPublicInfoDTO[]>>);
+                    .mockReturnValue(of({ body: [{ firstName: 'Alice', lastName: 'Appleseed', email: 'alice@example.com' }] }) as Observable<HttpResponse<UserPublicInfoDTO[]>>);
             });
     });
 
