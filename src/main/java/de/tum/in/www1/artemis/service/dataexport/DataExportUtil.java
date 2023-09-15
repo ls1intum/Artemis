@@ -17,12 +17,25 @@ final class DataExportUtil {
         // Utility class
     }
 
+    /**
+     * Creates the given directory if it does not exist yet.
+     *
+     * @param directory the directory to create
+     * @throws IOException if an error occurs while accessing the file system
+     */
     static void createDirectoryIfNotExistent(Path directory) throws IOException {
         if (!Files.exists(directory)) {
-            Files.createDirectory(directory);
+            Files.createDirectories(directory);
         }
     }
 
+    /**
+     * Retrieves the path to the directory for the given course within the data export.
+     *
+     * @param workingDirectory the working directory where the data export is created
+     * @param course           the course for which the directory should be retrieved
+     * @return the path to the directory for the given course
+     */
     static Path retrieveCourseDirPath(Path workingDirectory, Course course) {
         return workingDirectory.resolve(COURSE_DIRECTORY_PREFIX + course.getShortName());
     }
