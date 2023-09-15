@@ -9,9 +9,6 @@
         </button>
     </h2>
 </div>
-<h3 id="general-information-title">
-    {{ 'artemisApp.exam.examSummary.generalInformation' | artemisTranslate }}
-</h3>
 <jhi-exam-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
 <div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun">
     <div class="row justify-content-center">
