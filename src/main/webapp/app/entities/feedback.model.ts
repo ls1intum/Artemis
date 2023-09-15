@@ -171,13 +171,13 @@ export class Feedback implements BaseEntity {
      * Example output in this case: 13
      */
     public static getReferenceLine(feedback: Feedback): number | undefined {
-        if (!feedback?.reference?.startsWith(this.programmingReferencePrefix)) {
+        if (!feedback.reference?.startsWith(this.programmingReferencePrefix)) {
             // Find "file:" prefix
             // No programming feedback
             return undefined;
         }
-        const indexOfLine = feedback.reference?.lastIndexOf(this.programmingReferenceLineSeparator); // Split before "_line:"
-        const line = parseInt(feedback.reference?.substring(indexOfLine + this.programmingReferenceLineSeparator.length));
+        const indexOfLine = feedback.reference.lastIndexOf(this.programmingReferenceLineSeparator); // Split before "_line:"
+        const line = parseInt(feedback.reference.substring(indexOfLine + this.programmingReferenceLineSeparator.length));
         if (isNaN(line)) {
             return undefined;
         }
