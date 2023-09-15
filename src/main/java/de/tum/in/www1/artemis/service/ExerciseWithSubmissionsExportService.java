@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
  * Service for exporting Exercises with the student submissions.
  */
 @Service
-public abstract class ExerciseWithSubmissionsExportService {
+public class ExerciseWithSubmissionsExportService {
 
     public static final String EXPORTED_EXERCISE_DETAILS_FILE_PREFIX = "Exercise-Details";
 

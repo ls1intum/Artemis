@@ -65,6 +65,9 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
+/**
+ * Service for exporting programming exercises.
+ */
 @Service
 public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExportService {
 
@@ -125,8 +128,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
             exportDir = Optional.of(fileService.getTemporaryUniquePath(repoDownloadClonePath, 5));
         }
-        // List to add paths of files that should be contained in the zip folder of exported programming exercise:
-        // i.e., problem statement, exercise details, instructor repositories
 
         // Add the exported zip folder containing template, solution, and tests repositories
         var repoExportsPaths = exportProgrammingExerciseRepositories(exercise, includeStudentRepos, shouldZipZipFiles, repoDownloadClonePath, exportDir.orElseThrow(), exportErrors,
@@ -140,21 +141,38 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
 
         return exportDir.orElseThrow();
-
     }
 
-    public Path exportProgrammingExerciseForArchival(ProgrammingExercise exercise, List<String> exportErrors, Optional<Path> exportDir,
+    /**
+     * Exports a programming exercise for archival purposes. This includes the instructor repositories, the student repositories, the problem statement, and the exercise details.
+     *
+     * @param exercise              the programming exercise
+     * @param exportErrors          List of failures that occurred during the export
+     * @param exportDir             the directory used to store the exported exercise
+     * @param archivalReportEntries List of all exercises and their statistics
+     * @return the path to the exported exercise
+     */
+    public Optional<Path> exportProgrammingExerciseForArchival(ProgrammingExercise exercise, List<String> exportErrors, Optional<Path> exportDir,
             List<ArchivalReportEntry> archivalReportEntries) {
         try {
-            return exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, true, false, exportDir, archivalReportEntries, new ArrayList<>());
+            return Optional.of(exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, true, false, exportDir, archivalReportEntries, new ArrayList<>()));
         }
         catch (IOException e) {
             // this should actually never happen because all operations that throw an IOException are not executed when calling the method with an exportDir
             log.error("Failed to export programming exercise for archival: {}", e.getMessage());
+            exportErrors.add("Failed to export programming exercise for archival: " + e.getMessage());
         }
-        return null;
+        return Optional.empty();
     }
 
+    /**
+     * Exports a programming exercise for download purposes. This includes the instructor repositories, the problem statement, and the exercise details.
+     *
+     * @param exercise     the programming exercise to export
+     * @param exportErrors List of failures that occurred during the export
+     * @return the path to the exported exercise
+     * @throws IOException if an error occurs while accessing the file system
+     */
     public Path exportProgrammingExerciseForDownload(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         List<Path> pathsToBeZipped = new ArrayList<>();
         var exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
@@ -178,6 +196,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param exercise              the programming exercise
      * @param includingStudentRepos flag for including the students repos as well
      * @param shouldZipZipFiles     flag for zipping the zip files again
+     * @param workingDir            the directory used to clone the repository
      * @param outputDir             the path to a directory that will be used to store the zipped programming exercise.
      * @param exportErrors          List of failures that occurred during the export
      * @param reportData            List of all exercises and their statistics
@@ -309,6 +328,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      *
      * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType The type of repository to export
+     * @param workingDir     The directory used to clone the repository
      * @param outputDir      The directory used for store the zip file
      * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
@@ -329,6 +349,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      *
      * @param exerciseId          The id of the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
+     * @param workingDir          The directory used to clone the repository
      * @param outputDir           The directory used for storing the zip file
      * @param exportErrors        List of failures that occurred during the export
      * @return the zipped file containing the auxiliary repository
@@ -394,6 +415,16 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         return FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 
+    /**
+     * Exports a given repository and stores it in a zip file.
+     *
+     * @param repositoryUrl  the url of the repository
+     * @param zippedRepoName the name of the zip file
+     * @param workingDir     the directory used to clone the repository
+     * @param outputDir      the directory used for store the zip file
+     * @param contentFilter  a filter for the content of the zip file
+     * @return an optional containing the path to the zip file if the export was successful
+     */
     private Optional<File> exportRepository(VcsRepositoryUrl repositoryUrl, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path workingDir,
             Path outputDir, @Nullable Predicate<Path> contentFilter, List<String> exportErrors) {
         try {

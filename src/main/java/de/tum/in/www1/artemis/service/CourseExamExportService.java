@@ -378,8 +378,8 @@ public class CourseExamExportService {
                 // Export programming exercise
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     // Download the repositories' template, solution, tests and students' repositories
-                    exportedExercises.add(
-                            programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData));
+                    programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData)
+                            .ifPresent(exportedExercises::add);
                 }
                 // Export the other exercises types
                 else if (exercise instanceof FileUploadExercise) {

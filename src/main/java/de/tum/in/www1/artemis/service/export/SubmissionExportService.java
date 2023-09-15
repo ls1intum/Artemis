@@ -94,11 +94,11 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId              the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
+     * @param zipSubmissions          true, if the submissions should be zipped
      * @param outputDir               directory to store the temporary files in
      * @param exportErrors            a list of errors for submissions that couldn't be exported and are not included in the file
      * @param reportData              a list of all exercises and their statistics
-     * @return a reference to the zipped file
-     * @throws IOException if an error occurred while zipping
+     * @return paths of the exported submissions
      */
     public List<Path> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, boolean zipSubmissions, Path outputDir,
             List<String> exportErrors, List<ArchivalReportEntry> reportData) {
