@@ -25,6 +25,7 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
 
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;
+    isPracticeMode: boolean | undefined;
 
     // Icons
     faFolderOpen = faFolderOpen;
@@ -38,6 +39,7 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
     }
 
     switchPracticeMode() {
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !this.activeParticipation.testRun)!;
+        this.isPracticeMode = !this.isPracticeMode;
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
     }
 }

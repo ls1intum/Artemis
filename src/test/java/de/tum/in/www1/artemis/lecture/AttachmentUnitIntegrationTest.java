@@ -14,6 +14,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,6 +126,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationTest {
      */
     private MockMultipartFile createAttachmentUnitPdf() throws IOException {
 
+        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
 
             for (int i = 1; i <= SLIDE_COUNT; i++) {
@@ -133,7 +136,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationTest {
 
                 if (i == 2) {
                     contentStream.beginText();
-                    contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                    contentStream.setFont(font, 12);
                     contentStream.newLineAtOffset(25, -15);
                     contentStream.showText("itp20..");
                     contentStream.newLineAtOffset(25, 500);
@@ -144,7 +147,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationTest {
                     continue;
                 }
                 contentStream.beginText();
-                contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                contentStream.setFont(font, 12);
                 contentStream.newLineAtOffset(25, 500);
                 String text = "This is the sample document";
                 contentStream.showText(text);
