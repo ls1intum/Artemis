@@ -14,7 +14,7 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
+import { ExamGeneralInformationComponent } from 'app/exam/participate/information/exam-general-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
@@ -53,11 +53,11 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         FileUploadExamSummaryComponent,
         TextExamSummaryComponent,
         QuizExamSummaryComponent,
-        ExamInformationComponent,
+        ExamGeneralInformationComponent,
         ExamPointsSummaryComponent,
         TestRunRibbonComponent,
         ExampleSolutionComponent,
     ],
-    exports: [ExamParticipationSummaryComponent, ExamInformationComponent, TestRunRibbonComponent],
+    exports: [ExamParticipationSummaryComponent, ExamGeneralInformationComponent, TestRunRibbonComponent],
 })
 export class ArtemisParticipationSummaryModule {}

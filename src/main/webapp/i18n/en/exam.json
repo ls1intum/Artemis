@@ -118,6 +118,7 @@
             "startDate": "Start Date",
             "endDate": "End Date",
             "publishResultsDate": "Release Date of Results",
+            "examStudentReviewTimespan": "Review Timespan",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "studentReviewEnabled": "Review is open",

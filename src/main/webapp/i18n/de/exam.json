@@ -118,6 +118,7 @@
             "startDate": "Beginn",
             "endDate": "Ende",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
+            "examStudentReviewTimespan": "Zeitraum der Klausureinsicht",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",

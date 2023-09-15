@@ -3,7 +3,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
+import { ExamGeneralInformationComponent } from 'app/exam/participate/information/exam-general-information.component';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -11,8 +11,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe } from 'ng-mocks';
 
-let fixture: ComponentFixture<ExamInformationComponent>;
-let component: ExamInformationComponent;
+let fixture: ComponentFixture<ExamGeneralInformationComponent>;
+let component: ExamGeneralInformationComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -37,7 +37,7 @@ describe('ExamInformationComponent', () => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
             declarations: [
-                ExamInformationComponent,
+                ExamGeneralInformationComponent,
                 MockComponent(StudentExamWorkingTimeComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
@@ -46,7 +46,7 @@ describe('ExamInformationComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ExamInformationComponent);
+                fixture = TestBed.createComponent(ExamGeneralInformationComponent);
                 component = fixture.componentInstance;
             });
     });

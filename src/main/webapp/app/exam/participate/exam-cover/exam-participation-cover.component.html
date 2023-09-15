@@ -27,7 +27,7 @@
         </span>
         <br />
     </h2>
-    <jhi-exam-information *ngIf="startView" [exam]="exam" [studentExam]="studentExam"></jhi-exam-information>
+    <jhi-exam-general-information *ngIf="startView" [exam]="exam" [studentExam]="studentExam"></jhi-exam-general-information>
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     <div *ngIf="studentFailedToSubmit" class="mb-2 font-weight-bold text-danger">
         {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}

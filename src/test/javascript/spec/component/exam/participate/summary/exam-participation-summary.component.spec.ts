@@ -27,7 +27,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
+import { ExamGeneralInformationComponent } from 'app/exam/participate/information/exam-general-information.component';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
@@ -139,7 +139,7 @@ function sharedSetup(url: string[]) {
                 ExamParticipationSummaryComponent,
                 MockComponent(TestRunRibbonComponent),
                 MockComponent(ExamPointsSummaryComponent),
-                MockComponent(ExamInformationComponent),
+                MockComponent(ExamGeneralInformationComponent),
                 MockComponent(ResultComponent),
                 MockComponent(UpdatingResultComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
