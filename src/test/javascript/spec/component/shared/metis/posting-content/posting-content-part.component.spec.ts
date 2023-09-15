@@ -13,6 +13,7 @@ import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
 
 describe('PostingContentPartComponent', () => {
@@ -217,6 +218,26 @@ describe('PostingContentPartComponent', () => {
             referenceLink.click();
             expect(enlargeImageSpy).toHaveBeenCalledOnce();
             expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
+        });
+
+        it('should trigger userReferenceClicked event for different user logins', () => {
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ login: 'user1' } as User);
+            const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
+
+            component.onClickUserReference('user2');
+
+            expect(outputEmitter).toHaveBeenCalledWith('user2');
+        });
+
+        it('should not trigger userReferenceClicked event for same user logins', () => {
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ login: 'user1' } as User);
+            const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
+
+            component.onClickUserReference('user1');
+
+            expect(outputEmitter).not.toHaveBeenCalled();
         });
     });
 });
