@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.mail.internet.MimeMessage;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
@@ -665,6 +666,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<Post> returnedPosts = getPosts(params);
         // get amount of posts with that certain exercise context
         assertThat(returnedPosts).hasSameSizeAs(postsBelongingToFirstExercise);
+        // TODO check for email in tests where it is actually sent. Test with afterEach
+        verify(javaMailSender, timeout(3000)).send(any(MimeMessage.class));
     }
 
     @Test
