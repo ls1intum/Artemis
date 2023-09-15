@@ -280,8 +280,10 @@ public class ExamResource {
             }
             else {
                 double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
-                int adjustedTimeExtension = Math.toIntExact(Math.round(relativeTimeExtension * workingTimeChange));
-                studentExam.setWorkingTime(originalStudentWorkingTime + adjustedTimeExtension);
+                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
+                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
+                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
+                studentExam.setWorkingTime(adjustedWorkingTime);
             }
             var savedStudentExam = studentExamRepository.save(studentExam);
             // NOTE: if the exam already started, notify the student about the working time change
