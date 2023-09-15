@@ -641,8 +641,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
+            var repositoryDir = fileService.getTemporaryUniquePath(workingDir, 5);
             // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, workingDir.toString());
+            Repository repository = gitService.getOrCheckoutRepository(participation, repositoryDir.toString());
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;

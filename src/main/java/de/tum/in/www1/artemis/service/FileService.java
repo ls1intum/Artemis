@@ -1108,7 +1108,7 @@ public class FileService implements DisposableBean {
      */
     private Path getUniquePath(Path path) {
         var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        if (!Files.exists(uniquePath)) {
+        if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);
             }
