@@ -219,7 +219,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         gradedParticipationFinished.setInitializationState(InitializationState.FINISHED);
         gradedParticipationFinished.setExercise(exercise);
         StudentParticipation practiceParticipation = new StudentParticipation();
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         practiceParticipation.setExercise(exercise);
         List<StudentParticipation> allParticipations = List.of(gradedParticipationInitialized, gradedParticipationFinished, practiceParticipation);
 
