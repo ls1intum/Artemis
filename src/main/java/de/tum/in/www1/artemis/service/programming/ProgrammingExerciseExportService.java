@@ -707,7 +707,7 @@ public class ProgrammingExerciseExportService {
             return null;
         }
 
-        if (repositoryExportOptions.isExcludePracticeSubmissions() && participation.isTestRun()) {
+        if (repositoryExportOptions.isExcludePracticeSubmissions() && participation.isPracticeMode()) {
             log.debug("Ignoring practice participation {}", participation);
             return null;
         }
