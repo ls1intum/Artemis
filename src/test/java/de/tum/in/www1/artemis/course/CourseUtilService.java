@@ -290,7 +290,7 @@ public class CourseUtilService {
             StudentParticipation participation3 = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
             StudentParticipation participation4 = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.FINISHED, programmingExercise, user);
             StudentParticipation participation5 = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, user);
-            participation5.setTestRun(true);
+            participation5.setPracticeMode(true);
 
             Submission modelingSubmission1 = ParticipationFactory.generateModelingSubmission("model1", true);
             Submission modelingSubmission2 = ParticipationFactory.generateModelingSubmission("model2", true);

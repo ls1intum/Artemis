@@ -942,7 +942,7 @@ public class CourseTestService {
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
         StudentParticipation practiceParticipation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
                 student1);
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
         Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
         practiceResult.setRated(false);

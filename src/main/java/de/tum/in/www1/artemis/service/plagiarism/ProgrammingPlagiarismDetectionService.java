@@ -330,7 +330,7 @@ public class ProgrammingPlagiarismDetectionService {
     public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
-        return studentParticipations.parallelStream().filter(participation -> !participation.isTestRun())
+        return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
                 .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
                 .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
                     Submission submission = participation.findLatestSubmission().orElse(null);
