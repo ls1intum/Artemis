@@ -89,7 +89,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             return;
         }
 
-        log.info("Migrating {} programming exercises", exerciseCount);
+        log.info("Migrating {} programming exercises.", exerciseCount);
 
         // Number of full batches. The last batch might be smaller
         long totalFullBatchCount = exerciseCount / BATCH_SIZE;
@@ -102,18 +102,18 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
          * migrate the solution participations first, then the template participations, then the student participations
          */
         var count = solutionProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} solution programming exercises to migrate", count);
+        log.info("Found {} solution programming exercises to migrate.", count);
         for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} solution programming exercises to migrate in batch", solutionParticipationPage.getNumberOfElements());
+            log.info("Found {} solution programming exercises to migrate in batch.", solutionParticipationPage.getNumberOfElements());
             var partitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
             for (var partition : partitions) {
                 executorService.submit(() -> migrateSolutions(partition));
             }
         }
 
-        log.info("Submitted all solution programming exercises");
+        log.info("Submitted all solution programming exercises to thread pool.");
         /*
          * migrate the template participations
          */
@@ -122,24 +122,24 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} template programming exercises to migrate in batch", templateParticipationPage.getNumberOfElements());
+            log.info("Found {} template programming exercises to migrate in batch.", templateParticipationPage.getNumberOfElements());
             var partitions = Lists.partition(templateParticipationPage.toList(), threadCount);
             for (var partition : partitions) {
                 executorService.submit(() -> migrateTemplates(partition));
             }
         }
 
-        log.info("Submitted all template programming exercises");
+        log.info("Submitted all template programming exercises to thread pool.");
         /*
          * migrate the student participations
          */
-        count = programmingExerciseStudentParticipationRepository.count();
-        log.info("Found {} student programming exercises to migrate", count);
+        count = ciMigrationService.orElseThrow().getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, Pageable.unpaged()).getTotalElements();
+        log.info("Found {} student programming exercises with build plans to migrate.", count);
         for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
                     .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
-            log.info("Found {} student programming exercises to migrate in batch", studentParticipationPage.getNumberOfElements());
+            log.info("Found {} student programming exercises to migrate in batch.", studentParticipationPage.getNumberOfElements());
             var partitions = Lists.partition(studentParticipationPage.toList(), threadCount);
             for (var partition : partitions) {
                 executorService.submit(() -> migrateStudents(partition));
