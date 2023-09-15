@@ -67,6 +67,7 @@
             },
             "examSummary": {
                 "examResults": "Prüfungsergebnisse",
+                "generalInformation": "Allgemeine Informationen",
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",

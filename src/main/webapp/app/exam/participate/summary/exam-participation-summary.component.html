@@ -9,6 +9,9 @@
         </button>
     </h2>
 </div>
+<h3 id="general-information-title">
+    {{ 'artemisApp.exam.examSummary.generalInformation' | artemisTranslate }}
+</h3>
 <jhi-exam-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
 <div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun">
     <div class="row justify-content-center">
@@ -88,7 +91,7 @@
                 </span>
                 <!-- prettier-ignore -->
                 <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
-                [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
+                    [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
                         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                     <jhi-included-in-score-badge
                         *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
