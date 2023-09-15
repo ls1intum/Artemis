@@ -66,7 +66,7 @@
                 }
             },
             "examSummary": {
-                "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
+                "examResults": "Exam Results",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "lastCommitHash": "Last Commit Hash",
