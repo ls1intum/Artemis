@@ -495,13 +495,14 @@ public class BambooMigrationService implements CIVCSMigrationService {
         Elements entries = Jsoup.parse(html).select("table#sharedCredentialsTable tbody");
 
         for (Element entry : entries) {
-            Elements row = entry.select("tr");
-            Element name = entry.selectFirst("td");
-            if (name != null && name.text().equals(gitUser)) {
-                var id = row.attr("id");
-                return Optional.of(Long.parseLong(id.replace("item-", "")));
+            Elements rows = entry.select("tr");
+            for (Element row : rows) {
+                Element name = row.selectFirst("td");
+                if (name != null && name.text().equals(gitUser)) {
+                    var id = row.attr("id");
+                    return Optional.of(Long.parseLong(id.replace("item-", "")));
+                }
             }
-
         }
         return Optional.empty();
     }
