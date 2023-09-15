@@ -26,7 +26,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -1180,7 +1179,7 @@ public class FileService implements DisposableBean {
             for (String path : paths) {
                 File file = new File(path);
                 if (file.exists()) {
-                    pdfMerger.addSource(new File(path));
+                    pdfMerger.addSource(file);
                 }
             }
 
@@ -1189,7 +1188,7 @@ public class FileService implements DisposableBean {
             pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
 
             pdfMerger.setDestinationStream(outputStream);
-            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+            pdfMerger.mergeDocuments(null);
 
         }
         catch (IOException e) {
