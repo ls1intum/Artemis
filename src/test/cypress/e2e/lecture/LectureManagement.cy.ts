@@ -71,7 +71,7 @@ describe('Lecture management', () => {
             cy.fixture('loremIpsum-short.txt').then((text) => {
                 lectureManagement.addTextUnit('Text unit', text);
             });
-            cy.contains('Text units').should('be.visible');
+            cy.contains('Text unit').should('be.visible');
         });
 
         it('Adds a exercise unit to the lecture', () => {
