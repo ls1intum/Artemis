@@ -12,6 +12,8 @@ import { MockFileService } from '../../../../helpers/mocks/service/mock-file.ser
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -36,10 +38,7 @@ describe('PostingContentPartComponent', () => {
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
-            providers: [
-                { provide: FileService, useClass: MockFileService },
-                { provide: Router, useClass: MockRouter },
-            ],
+            providers: [{ provide: FileService, useClass: MockFileService }, { provide: Router, useClass: MockRouter }, MockProvider(AccountService)],
         })
             .compileComponents()
             .then(() => {
