@@ -74,7 +74,7 @@ export class ExamUpdateComponent implements OnInit {
                 next: (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
-                    this.hideChannelNameInput = exam.testExam || (exam.id !== undefined && exam.channelName === undefined) || !isMessagingEnabled(this.course);
+                    this.hideChannelNameInput = (exam.id !== undefined && exam.channelName === undefined) || !isMessagingEnabled(this.course);
                 },
                 error: (err: HttpErrorResponse) => onError(this.alertService, err),
             });
