@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.service.user.UserService;
 
 /**
  * A service to create data exports for users
+ * This service is responsible for creating the data export, delegating most tasks to the {@link DataExportExerciseCreationService} and {@link DataExportExamCreationService}
+ * and notifying the user about the creation.
  */
 @Service
 public class DataExportCreationService {
@@ -88,7 +90,7 @@ public class DataExportCreationService {
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
         var workingDirectory = prepareDataExport(dataExport);
-        dataExportExerciseCreationService.createExercisesExport(workingDirectory, userId);
+        dataExportExerciseCreationService.createExercisesExport(workingDirectory, user);
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
@@ -97,6 +99,17 @@ public class DataExportCreationService {
         return finishDataExportCreation(dataExport, dataExportPath);
     }
 
+    /**
+     * Adds a markdown file with the title README.md to the data export.
+     * <p>
+     * This file contains information Art. 15 GDPR requires us to provide to the user.
+     * The file is retrieved from the resources folder.
+     * The file is added to the root of the data export.
+     *
+     * @param workingDirectory the directory in which the data export is created
+     * @throws IOException        if the file could not be copied
+     * @throws URISyntaxException if the resource file path is invalid
+     */
     private void addReadmeFile(Path workingDirectory) throws IOException, URISyntaxException {
         var readmeInDataExportPath = workingDirectory.resolve("README.md");
         var readmeTemplatePath = Path.of("templates", "dataexport", "README.md");
@@ -105,6 +118,8 @@ public class DataExportCreationService {
 
     /**
      * Creates the data export for the given user.
+     * <p>
+     * This includes creation of the export and notifying the user about the creation.
      *
      * @param dataExport the data export to be created
      * @return true if the export was successful, false otherwise
@@ -129,6 +144,15 @@ public class DataExportCreationService {
         return true;
     }
 
+    /**
+     * Handles the case of a failed data export creation.
+     * <p>
+     * This includes setting the state of the data export to failed, notifying the user about the failure and sending an email to the admin with the exception why the export
+     * failed.
+     *
+     * @param dataExport the data export that failed to be created
+     * @param exception  the exception that occurred during the creation
+     */
     private void handleCreationFailure(DataExport dataExport, Exception exception) {
         dataExport.setDataExportState(DataExportState.FAILED);
         dataExport = dataExportRepository.save(dataExport);
@@ -141,6 +165,13 @@ public class DataExportCreationService {
         mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, exception);
     }
 
+    /**
+     * Finishes the creation of the data export by setting the file path to the zip file, the state to EMAIL_SENT and the creation finished date.
+     *
+     * @param dataExport     the data export whose creation is finished
+     * @param dataExportPath the path to the zip file containing the data export
+     * @return the updated data export from the database
+     */
     private DataExport finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
         dataExport.setFilePath(dataExportPath.toString());
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
@@ -149,6 +180,15 @@ public class DataExportCreationService {
         return dataExportRepository.save(dataExport);
     }
 
+    /**
+     * Prepares the data export by creating the working directory, scheduling it for deletion and setting the state to IN_CREATION.
+     * <p>
+     * If the path where the data exports are stored does not exist yet, it will be created.
+     *
+     * @param dataExport the data export to be prepared
+     * @return the path to the working directory
+     * @throws IOException if the working directory could not be created
+     */
     private Path prepareDataExport(DataExport dataExport) throws IOException {
         if (!Files.exists(dataExportsPath)) {
             Files.createDirectories(dataExportsPath);
@@ -161,6 +201,14 @@ public class DataExportCreationService {
         return workingDirectory;
     }
 
+    /**
+     * Adds the general user information to the data export.
+     * <p>
+     * This includes the login, name, email, and registration number (matriculation number).
+     *
+     * @param user             the user for which the information should be added
+     * @param workingDirectory the directory in which the information should be stored
+     */
     private void addGeneralUserInformation(User user, Path workingDirectory) throws IOException {
         String[] headers = { "login", "name", "email", "registration number" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
@@ -171,11 +219,18 @@ public class DataExportCreationService {
         }
     }
 
+    /**
+     * Creates the zip file containing the data export.
+     *
+     * @param userLogin        the login of the user for which the data export was created
+     * @param workingDirectory the directory containing the data export
+     * @return the path to the zip file
+     * @throws IOException if the zip file could not be created
+     */
     private Path createDataExportZipFile(String userLogin, Path workingDirectory) throws IOException {
         // There should actually never exist more than one data export for a user at a time (once the feature is fully implemented), but to be sure the name is unique, we add the
         // current timestamp
         return zipFileService.createZipFileWithFolderContent(dataExportsPath.resolve("data-export_" + userLogin + ZonedDateTime.now().toEpochSecond() + ZIP_FILE_EXTENSION),
                 workingDirectory, null);
-
     }
 }
