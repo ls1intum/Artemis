@@ -126,7 +126,7 @@ export class ConversationService {
         return this.http.post<boolean>(`${this.resourceUrl}${courseId}/code-of-conduct-agreement`, null, { observe: 'response' });
     }
 
-    checkIfCodeOfConductIsAccepted(courseId: number): Observable<HttpResponse<boolean>> {
+    checkIsCodeOfConductAccepted(courseId: number): Observable<HttpResponse<boolean>> {
         return this.http.get<boolean>(`${this.resourceUrl}${courseId}/code-of-conduct-agreement`, { observe: 'response' });
     }
 
