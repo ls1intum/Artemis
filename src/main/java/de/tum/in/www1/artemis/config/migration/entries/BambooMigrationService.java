@@ -428,7 +428,6 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * @param auxiliaryRepositories   The auxiliary repositories to be checked out
      * @param programmingLanguage     the programming language of the exercise to be migrated, needed for the checkout directory
      */
-    // TODO: add the solution repository! in case it exists, handle it, otherwise ignore
     private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId, Optional<Long> solutionRepositoryId,
             Map<String, Long> assignmentRepositoryIds, List<AuxiliaryRepository> auxiliaryRepositories, ProgrammingLanguage programmingLanguage) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
