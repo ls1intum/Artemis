@@ -1,8 +1,7 @@
 <div class="mt-3 mb-4 text-center">
-    <div class="mb-2">
+    <div *ngIf="isTestExam" class="mb-2">
         <strong class="font-weight-bold">{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</strong>
-        <div *ngIf="!isTestExam" class="mx-2 badge bg-success">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</div>
-        <div *ngIf="isTestExam" class="mx-2 badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
+        <div class="mx-2 badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
     </div>
     <!-- For test exams, the currentDate (analogous to the real exam) and the workingTime should be displayed -->
     <div class="mb-2" *ngIf="exam && isTestExam">
