@@ -156,6 +156,7 @@ export class CourseUpdateComponent implements OnInit {
                 editorGroupName: new FormControl(this.course.editorGroupName),
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
                 organizations: new FormControl(this.courseOrganizations),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
@@ -518,6 +519,14 @@ export class CourseUpdateComponent implements OnInit {
      */
     updateRegistrationConfirmationMessage(message: string) {
         this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
+    }
+
+    /**
+     * Updates courseInformationSharingMessagingCodeOfConduct on markdown change
+     * @param message new courseInformationSharingMessagingCodeOfConduct
+     */
+    updateCourseInformationSharingMessagingCodeOfConduct(message: string) {
+        this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(message);
     }
 
     /**
