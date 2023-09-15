@@ -8,6 +8,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -48,7 +49,7 @@ public class SlideSplitterService {
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
         String attachmentPath = fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink());
         File file = new File(attachmentPath);
-        try (PDDocument document = PDDocument.load(file)) {
+        try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
             splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename);
         }

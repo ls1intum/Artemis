@@ -283,9 +283,6 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createExamChannel(Exam exam, Optional<String> channelName) {
-        if (exam.isTestExam()) {
-            return null;
-        }
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);

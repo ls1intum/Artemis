@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 
 /**
  * A service to create the communication data export for users
+ * This includes messages (posts), thread replies (answer posts) and reactions to posts and answer posts
+ * All communication data is exported per course and stored in a CSV file.
  */
 @Service
 public class DataExportCommunicationDataService {
@@ -67,6 +69,12 @@ public class DataExportCommunicationDataService {
         createCommunicationDataExportIfReactionsToAnswerPostsExist(workingDirectory, reactionsToAnswerPostsPerCourse);
     }
 
+    /**
+     * Creates the communication data export for a course if only reactions to answer posts exist
+     *
+     * @param workingDirectory                the directory where the export is stored
+     * @param reactionsToAnswerPostsPerCourse the reactions to answer posts grouped by course
+     */
     private void createCommunicationDataExportIfReactionsToAnswerPostsExist(Path workingDirectory, Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
         // it can happen that only answer post reactions exist in a course but neither posts, nor answer posts nor reactions to posts
         for (var entry : reactionsToAnswerPostsPerCourse.entrySet()) {
@@ -78,6 +86,13 @@ public class DataExportCommunicationDataService {
         }
     }
 
+    /**
+     * Creates the communication data export for a course if only reactions to posts (and potentially to answer posts) exist
+     *
+     * @param workingDirectory                the directory where the export is stored
+     * @param reactionsToPostsPerCourse       the reactions to posts grouped by course
+     * @param reactionsToAnswerPostsPerCourse the reactions to answer posts grouped by course
+     */
     private void createCommunicationDataExportIfReactionsToPostsExist(Path workingDirectory, Map<Course, List<Reaction>> reactionsToPostsPerCourse,
             Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
         // it can happen that only reactions exist in a course but no post or answer post
@@ -91,6 +106,14 @@ public class DataExportCommunicationDataService {
         }
     }
 
+    /**
+     * Creates the communication data export for a course if only answer posts (and potentially reactions to post and answer posts) exist
+     *
+     * @param workingDirectory                the directory where the export is stored
+     * @param answerPostsPerCourse            the answer posts grouped by course
+     * @param reactionsToPostsPerCourse       the reactions to posts grouped by course
+     * @param reactionsToAnswerPostsPerCourse the reactions to answer posts grouped by course
+     */
     private void createCommunicationDataExportIfAnswerPostsExist(Path workingDirectory, Map<Course, List<AnswerPost>> answerPostsPerCourse,
             Map<Course, List<Reaction>> reactionsToPostsPerCourse, Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
         // it can happen that an answer post and reactions exist in a course but no post
@@ -105,6 +128,15 @@ public class DataExportCommunicationDataService {
         }
     }
 
+    /**
+     * Creates the communication data export for a course if posts exist
+     *
+     * @param workingDirectory                the directory where the export is stored
+     * @param postsPerCourse                  the posts grouped by course
+     * @param answerPostsPerCourse            the answer posts grouped by course
+     * @param reactionsToPostsPerCourse       the reactions to posts grouped by course
+     * @param reactionsToAnswerPostsPerCourse the reactions to answer posts grouped by course
+     */
     private void createCommunicationDataExportIfPostsExist(Path workingDirectory, Map<Course, List<Post>> postsPerCourse, Map<Course, List<AnswerPost>> answerPostsPerCourse,
             Map<Course, List<Reaction>> reactionsToPostsPerCourse, Map<Course, List<Reaction>> reactionsToAnswerPostsPerCourse) throws IOException {
         // this covers all cases where at least one post in a course exists
@@ -121,6 +153,15 @@ public class DataExportCommunicationDataService {
         }
     }
 
+    /**
+     * Creates the actual CSV file containing the communication data for a course
+     *
+     * @param courseDir                   the directory where the CSV file is stored
+     * @param postsInCourse               the posts in the course
+     * @param answerPostsInCourse         the answer posts in the course
+     * @param postReactionsInCourse       the reactions to posts in the course
+     * @param answerPostReactionsInCourse the reactions to answer posts in the course
+     */
     private void createCommunicationDataCsvFile(Path courseDir, List<Post> postsInCourse, List<AnswerPost> answerPostsInCourse, List<Reaction> postReactionsInCourse,
             List<Reaction> answerPostReactionsInCourse) throws IOException {
 

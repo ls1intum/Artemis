@@ -17,6 +17,8 @@ public class JWTCookieService {
 
     private static final String CYPRESS_PROFILE = "cypress";
 
+    private static final String DEVELOPMENT_PROFILE = "dev";
+
     private final TokenProvider tokenProvider;
 
     private final Environment environment;
@@ -56,12 +58,13 @@ public class JWTCookieService {
      */
     private ResponseCookie buildJWTCookie(String jwt, Duration duration) {
 
+        // TODO - Remove cypress workaround once cypress uses https and find a better solution for testing locally in Safari
         Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-        boolean isCypress = activeProfiles.contains(CYPRESS_PROFILE);
+        boolean isSecure = !activeProfiles.contains(CYPRESS_PROFILE) && !activeProfiles.contains(DEVELOPMENT_PROFILE);
 
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
                 .sameSite("Lax") // Must be Lax to allow navigation links to Artemis to work
-                .secure(!isCypress) // Must be secure - TODO - Remove cypress workaround once cypress uses https
+                .secure(isSecure) // Must be secure
                 .path("/") // Must be "/" to be sent in ALL request
                 .maxAge(duration) // Duration should match the duration of the jwt
                 .build(); // Build cookie
