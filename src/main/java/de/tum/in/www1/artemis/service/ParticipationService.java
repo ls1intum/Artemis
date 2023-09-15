@@ -118,7 +118,7 @@ public class ParticipationService {
     public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isTestRun() && exercise.isCourseExercise()) {
+        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
             // In case there is already a practice participation, set it to inactive
             optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
             studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
@@ -285,7 +285,7 @@ public class ParticipationService {
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
-            participation.setTestRun(true);
+            participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
         }
         else {
@@ -394,7 +394,7 @@ public class ParticipationService {
 
         // If a graded participation gets reset after the due date set the state back to finished. Otherwise, the participation is initialized
         var dueDate = ExerciseDateService.getDueDate(participation);
-        if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+        if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
             participation.setInitializationState(InitializationState.FINISHED);
         }
         else {
@@ -646,7 +646,7 @@ public class ParticipationService {
 
             // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
             var dueDate = ExerciseDateService.getDueDate(participation);
-            if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+            if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
                 participation.setInitializationState(InitializationState.FINISHED);
             }
             else {
