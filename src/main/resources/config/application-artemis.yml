@@ -7,6 +7,7 @@ artemis:
     legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
     repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
+    data-export-path: ./data-exports                # a folder in which data exports are stored
     bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
                             # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
     user-management:
@@ -93,9 +94,15 @@ artemis:
     git:
         name: Artemis
         email: artemis.in@tum.de
-    athene:
-        url: http://localhost
-        base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-        token-validity-in-seconds: 10800
+    athena:
+        url: http://localhost:5000
+        secret: abcdef12345
     apollon:
         conversion-service-url: http://localhost:8080
+
+    scheduling:  # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
+        programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
+        data-export-creation-time: 0 0 4 * * * # every day at 4am
+
+    data-export:
+        days-between-data-exports: 14

@@ -112,10 +112,8 @@ public class AssessmentService {
      * @return true if the given user can override a potentially existing result
      */
     public boolean isAllowedToCreateOrOverrideResult(Result existingResult, Exercise exercise, StudentParticipation participation, User user, boolean isAtLeastInstructor) {
-
         final boolean isExamMode = exercise.isExamExercise();
         ZonedDateTime assessmentDueDate;
-
         // For exam exercises, tutors cannot override submissions when the publishing result date is in the past (assessmentDueDate)
         if (isExamMode) {
             assessmentDueDate = exercise.getExerciseGroup().getExam().getPublishResultsDate();
@@ -209,15 +207,13 @@ public class AssessmentService {
      * <p>
      * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(long)})}
      *
-     * @param resultId       the id of the result that should be submitted
-     * @param exercise       the exercise the assessment belongs to
-     * @param submissionDate the date manual assessment was submitted
+     * @param resultId the id of the result that should be submitted
+     * @param exercise the exercise the assessment belongs to
      * @return the ResponseEntity with result as body
      */
-    public Result submitManualAssessment(long resultId, Exercise exercise, ZonedDateTime submissionDate) {
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
-                .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        result.setRatedIfNotExceeded(ExerciseDateService.getDueDate(result.getParticipation()).orElse(null), submissionDate);
+    public Result submitManualAssessment(long resultId, Exercise exercise) {
+        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
+        result.setRatedIfNotAfterDueDate();
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system

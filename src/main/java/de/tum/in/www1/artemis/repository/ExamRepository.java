@@ -97,6 +97,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.studentParticipations",
+            "exerciseGroups.exercises.studentParticipations.submissions" })
+    Optional<Exam> findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(long examId);
+
     @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
     Optional<Exam> findWithExamUsersById(long examId);
 

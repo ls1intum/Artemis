@@ -16,7 +16,10 @@ export class OrganizationManagementUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
 
-    constructor(private route: ActivatedRoute, private organizationService: OrganizationManagementService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private organizationService: OrganizationManagementService,
+    ) {}
 
     /**
      * Enable subscriptions to retrieve the organization based on the activated route on init

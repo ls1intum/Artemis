@@ -21,7 +21,10 @@ export class DiffGenerationStepComponent implements OnInit {
     templateFileContentByPath: Map<string, string>;
     solutionFileContentByPath: Map<string, string>;
 
-    constructor(private exerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
+    constructor(
+        private exerciseService: ProgrammingExerciseService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         this.isLoading = true;

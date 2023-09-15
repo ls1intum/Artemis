@@ -1,17 +1,18 @@
 <div [id]="'exercise-' + textExercise?.id">
     <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
         <span pagetitle>
-            {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
+            {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
+            <span class="font-weight-normal">{{ examMode ? textExercise.exerciseGroup?.title : textExercise?.title }}</span>
         </span>
         <jhi-button
             id="submit"
             *ngIf="isOwnerOfParticipation"
             submitbutton
-            [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+            [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
             (onClick)="submit()"
             [disabled]="!isActive || !submission"
             [isLoading]="isSaving"
-            [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
+            [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
             [tooltip]="submitButtonTooltip"
         >
         </jhi-button>
@@ -33,10 +34,10 @@
             <div class="grid-area-main">
                 <div>
                     <span class="badge bg-primary mb-2" id="word-count">
-                        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate : { count: wordCount } }}
+                        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                     </span>
                     <span class="badge bg-primary mb-2" id="character-count">
-                        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate : { count: characterCount } }}
+                        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                     </span>
                 </div>
 

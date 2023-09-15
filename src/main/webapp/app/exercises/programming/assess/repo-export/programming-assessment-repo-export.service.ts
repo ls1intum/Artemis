@@ -10,9 +10,8 @@ export type RepositoryExportOptions = {
     excludePracticeSubmissions: boolean;
     addParticipantName: boolean;
     combineStudentCommits: boolean;
-    anonymizeStudentCommits: boolean;
+    anonymizeRepository: boolean;
     normalizeCodeStyle: boolean;
-    hideStudentNameInZippedFolder: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

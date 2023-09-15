@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { Location } from '@angular/common';
+import { RouterTestingModule } from '@angular/router/testing';
 import { ConversationSidebarEntryComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-entry/conversation-sidebar-entry.component';
 import { NgbDropdownMocksModule } from '../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -19,22 +21,43 @@ import {
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../../../../../helpers/mocks/service/mock-metis-service.service';
+import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 
-const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDto[] = [
+    generateOneToOneChatDTO({}),
+    generateExampleGroupChatDTO({}),
+    generateExampleChannelDTO({}),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXERCISE, subTypeReferenceId: 1 }),
+    generateExampleChannelDTO({ subType: ChannelSubType.LECTURE, subTypeReferenceId: 1 }),
+    generateExampleChannelDTO({ subType: ChannelSubType.EXAM, subTypeReferenceId: 1 }),
+];
 
 examples.forEach((conversation) => {
-    describe('ConversationSidebarEntryComponent with ' + conversation.type, () => {
+    describe('ConversationSidebarEntryComponent with ' + (conversation instanceof ChannelDTO ? conversation.subType + ' ' : '') + conversation.type, () => {
         let component: ConversationSidebarEntryComponent;
         let fixture: ComponentFixture<ConversationSidebarEntryComponent>;
         let conversationService: ConversationService;
         let changeHiddenStatusSpy: jest.SpyInstance;
         let changeFavoriteStatusSpy: jest.SpyInstance;
+        let location: Location;
         const course = { id: 1 } as any;
         const activeConversation = generateExampleGroupChatDTO({ id: 99 });
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbDropdownMocksModule],
+                imports: [
+                    NgbDropdownMocksModule,
+                    RouterTestingModule.withRoutes([
+                        { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
+                        { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
+                        { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
+                    ]),
+                ],
                 declarations: [
                     ConversationSidebarEntryComponent,
                     MockPipe(ArtemisTranslatePipe),
@@ -42,7 +65,7 @@ examples.forEach((conversation) => {
                     MockComponent(ChannelIconComponent),
                     MockComponent(GroupChatIconComponent),
                 ],
-                providers: [MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal)],
+                providers: [MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal), { provide: MetisService, useClass: MockMetisService }],
             }).compileComponents();
         }));
 
@@ -51,6 +74,8 @@ examples.forEach((conversation) => {
             conversationService = TestBed.inject(ConversationService);
             changeHiddenStatusSpy = jest.spyOn(conversationService, 'changeHiddenStatus').mockReturnValue(of(new HttpResponse<void>()));
             changeFavoriteStatusSpy = jest.spyOn(conversationService, 'changeFavoriteStatus').mockReturnValue(of(new HttpResponse<void>()));
+
+            location = TestBed.inject(Location);
 
             component = fixture.componentInstance;
             component.conversation = conversation;
@@ -110,5 +135,19 @@ examples.forEach((conversation) => {
                 });
             }
         }));
+
+        if (conversation instanceof ChannelDTO && conversation.subType !== ChannelSubType.GENERAL) {
+            it(
+                'should navigate to ' + conversation.subType,
+                fakeAsync(() => {
+                    const button = fixture.debugElement.nativeElement.querySelector('.sub-type-reference');
+                    button.click();
+                    tick();
+
+                    // Assert that the router has navigated to the correct link
+                    expect(location.path()).toBe('/courses/1/' + conversation.subType + 's/1');
+                }),
+            );
+        }
     });
 });

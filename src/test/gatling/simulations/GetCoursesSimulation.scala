@@ -30,7 +30,7 @@ class GetCoursesSimulation extends Simulation {
 
     val scn = scenario("Test Getting all Course entities, creating and deleting a course")
         .exec(http("First unauthenticated request")
-            .get("/api/account")
+            .get("/api/public/account")
             .headers(headers_http)
             .check(status.is(401))
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
@@ -45,7 +45,7 @@ class GetCoursesSimulation extends Simulation {
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
         .pause(1)
         .exec(http("Authenticated request")
-            .get("/api/account")
+            .get("/api/public/account")
             .headers(headers_http_authenticated)
             .check(status.is(200)))
         .pause(2)

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { InfoStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -8,12 +8,10 @@ import { InfoStepInputs } from 'app/exercises/programming/manage/update/wizard-m
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseInformationComponent {
-    @Input() isImportFromExistingExercise: boolean;
+    @Input() isImport: boolean;
     @Input() isExamMode: boolean;
-    @Input() isEdit: boolean;
     @Input() programmingExercise: ProgrammingExercise;
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
-    @Input() shouldHidePreview = false;
-    @Input() infoInputs: InfoStepInputs;
-    @Input() auxiliaryRepositoriesSupported = false;
+    protected readonly ProjectType = ProjectType;
 }

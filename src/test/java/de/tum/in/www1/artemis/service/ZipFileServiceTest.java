@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -42,4 +44,13 @@ class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(rootDirPathInZip).isDirectoryContaining(Predicate.isEqual(rootDirPathInZip.resolve(file1.getFileName())));
 
     }
+
+    @Test
+    void testCreateTemporaryZipFileSchedulesFileForDeletion() throws IOException {
+        var tempZipFile = Files.createTempFile("test", ".zip");
+        zipFileService.createTemporaryZipFile(tempZipFile, List.of(), 5);
+        assertThat(tempZipFile).exists();
+        verify(fileService).scheduleForDeletion(tempZipFile, 5L);
+    }
+
 }

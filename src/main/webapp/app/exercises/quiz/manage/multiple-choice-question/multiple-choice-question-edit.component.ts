@@ -64,7 +64,11 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private modalService: NgbModal,
+        private changeDetector: ChangeDetectorRef,
+    ) {}
 
     /**
      * Init the question editor text by parsing the markdown.

@@ -8,9 +8,9 @@ import javax.validation.constraints.NotNull;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Competency;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
@@ -49,7 +49,7 @@ public class LectureUnitService {
     public void setLectureUnitCompletion(@NotNull LectureUnit lectureUnit, @NotNull User user, boolean completed) {
         Optional<LectureUnitCompletion> existingCompletion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
         if (completed) {
-            if (!existingCompletion.isPresent()) {
+            if (existingCompletion.isEmpty()) {
                 // Create a completion status for this lecture unit (only if it does not exist)
                 LectureUnitCompletion completion = new LectureUnitCompletion();
                 completion.setLectureUnit(lectureUnit);

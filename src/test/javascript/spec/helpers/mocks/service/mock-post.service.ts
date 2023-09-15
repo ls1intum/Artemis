@@ -32,7 +32,7 @@ export class MockPostService {
     }
 
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<HttpResponse<Post[]>> {
-        if (postContextFilter.courseWideContext === CourseWideContext.TECH_SUPPORT) {
+        if (postContextFilter.courseWideContexts?.[0] === CourseWideContext.TECH_SUPPORT) {
             return of({
                 body: [metisPostTechSupport],
                 headers: new HttpHeaders({
@@ -40,7 +40,7 @@ export class MockPostService {
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         }
-        if (postContextFilter.courseWideContext === CourseWideContext.RANDOM) {
+        if (postContextFilter.courseWideContexts?.[0] === CourseWideContext.RANDOM) {
             return of({
                 body: [metisPostRandom],
                 headers: new HttpHeaders({
@@ -48,7 +48,7 @@ export class MockPostService {
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         }
-        if (postContextFilter.courseWideContext === CourseWideContext.ORGANIZATION) {
+        if (postContextFilter.courseWideContexts?.[0] === CourseWideContext.ORGANIZATION) {
             return of({
                 body: [metisPostOrganization],
                 headers: new HttpHeaders({
@@ -56,7 +56,7 @@ export class MockPostService {
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         }
-        if (postContextFilter.exerciseId) {
+        if (postContextFilter.exerciseIds?.length) {
             return of({
                 body: metisExercisePosts,
                 headers: new HttpHeaders({
@@ -64,7 +64,7 @@ export class MockPostService {
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         }
-        if (postContextFilter.lectureId) {
+        if (postContextFilter.lectureIds?.length) {
             return of({
                 body: metisLecturePosts,
                 headers: new HttpHeaders({

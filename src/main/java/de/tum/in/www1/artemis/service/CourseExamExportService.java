@@ -84,7 +84,7 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
-        String cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
+        String cleanCourseDirName = FileService.sanitizeFilename(courseDirName);
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
@@ -115,7 +115,7 @@ public class CourseExamExportService {
 
         Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir, exportedFiles);
 
-        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse);
+        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
         return exportedCourse;
     }
 
@@ -149,7 +149,7 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
-        var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
+        var cleanExamDirName = FileService.sanitizeFilename(examDirName);
         List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
@@ -178,7 +178,7 @@ public class CourseExamExportService {
 
         Optional<Path> exportedExamPath = zipExportedExercises(outputDir, exportErrors, notificationTopic, tempExamsDir, exportedExercises);
 
-        log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
+        log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath.orElse(null));
         return exportedExamPath;
     }
 
@@ -318,7 +318,7 @@ public class CourseExamExportService {
         Path examDir = null;
         try {
             // Create exam directory.
-            String cleanExamTitle = fileService.removeIllegalCharacters(exam.getId() + "-" + exam.getTitle());
+            String cleanExamTitle = FileService.sanitizeFilename(exam.getId() + "-" + exam.getTitle());
             examDir = Path.of(outputDir, cleanExamTitle);
             Files.createDirectory(examDir);
 
@@ -356,7 +356,7 @@ public class CourseExamExportService {
 
         // Export exercises
         for (var exercise : sortedExercises) {
-            log.info("Exporting exercise {} with id {} ", exercise.getTitle(), exercise.getId());
+            log.info("Exporting {} exercise {} with id {} ", exercise.getType(), exercise.getTitle(), exercise.getId());
 
             // Notify the user after the progress
             currentProgress++;

@@ -27,6 +27,13 @@
             <span class="colon-suffix no-flex-shrink">{{
                 isExam ? ('artemisApp.examManagement.maxPoints.title' | artemisTranslate) : ('artemisApp.course.maxPoints.title' | artemisTranslate)
             }}</span>
+            <jhi-help-icon *ngIf="!isExam" text="artemisApp.course.maxPoints.info"></jhi-help-icon>
+            <fa-icon
+                *ngIf="isExam"
+                [icon]="faExclamationTriangle"
+                class="text-warning"
+                ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"
+            ></fa-icon>
             <input type="number" class="form-control" [(ngModel)]="childComponent.maxPoints" min="1" (change)="childComponent.onChangeMaxPoints(childComponent.maxPoints)" />
         </div>
         <div class="form-group">

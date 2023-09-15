@@ -3,16 +3,18 @@ import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Outpu
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
+    @Input() translateValues: { [key: string]: unknown } = {};
     @Input() deleteConfirmationText: string;
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
+    @Input() buttonType: ButtonType = ButtonType.ERROR;
     @Input() renderButtonStyle = true;
     @Input() renderButtonText = true;
     @Input() requireConfirmationOnlyForAdditionalChecks = false;
@@ -22,7 +24,12 @@ export class DeleteButtonDirective implements OnInit {
 
     deleteTextSpan: HTMLElement;
 
-    constructor(private deleteDialogService: DeleteDialogService, private renderer: Renderer2, private elementRef: ElementRef, private translateService: TranslateService) {}
+    constructor(
+        private deleteDialogService: DeleteDialogService,
+        private renderer: Renderer2,
+        private elementRef: ElementRef,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.
@@ -32,7 +39,7 @@ export class DeleteButtonDirective implements OnInit {
         // set button classes and submit property
         if (this.renderButtonStyle) {
             this.renderer.addClass(this.elementRef.nativeElement, 'btn');
-            this.renderer.addClass(this.elementRef.nativeElement, 'btn-danger');
+            this.renderer.addClass(this.elementRef.nativeElement, this.buttonType);
             this.renderer.addClass(this.elementRef.nativeElement, this.buttonSize);
             this.renderer.addClass(this.elementRef.nativeElement, 'me-1');
         }
@@ -41,7 +48,10 @@ export class DeleteButtonDirective implements OnInit {
         // create a span with delete text
         if (this.renderButtonText) {
             this.deleteTextSpan = this.renderer.createElement('span');
-            this.renderer.addClass(this.deleteTextSpan, 'd-none');
+            if (this.buttonType === ButtonType.ERROR) {
+                this.renderer.addClass(this.deleteTextSpan, 'd-none');
+            }
+            this.renderer.addClass(this.deleteTextSpan, 'text-white');
             this.renderer.addClass(this.deleteTextSpan, 'd-xl-inline');
             this.setTextContent();
             this.renderer.appendChild(this.elementRef.nativeElement, this.deleteTextSpan);
@@ -60,9 +70,11 @@ export class DeleteButtonDirective implements OnInit {
         const deleteDialogData: DeleteDialogData = {
             entityTitle: this.entityTitle,
             deleteQuestion: this.deleteQuestion,
+            translateValues: this.translateValues,
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
             actionType: this.actionType,
+            buttonType: this.buttonType,
             delete: this.delete,
             dialogError: this.dialogError,
             requireConfirmationOnlyForAdditionalChecks: this.requireConfirmationOnlyForAdditionalChecks,

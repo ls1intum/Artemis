@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.http.client.HttpResponseException;
+import org.hamcrest.Matchers;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -338,6 +340,11 @@ public class JenkinsRequestMockProvider {
         else {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
         }
+    }
+
+    public void mockGetAnyUser(boolean shouldFail, int requestCount) throws URISyntaxException, JsonProcessingException {
+        final var httpStatus = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
+        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("api/json"))).andRespond(withStatus(httpStatus));
     }
 
     public void mockRemoveUserFromGroups(Set<String> groupsToRemove, boolean shouldFail) throws IOException {

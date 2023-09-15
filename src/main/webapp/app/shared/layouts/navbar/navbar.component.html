@@ -71,7 +71,7 @@
     </div>
 </ng-template>
 
-<nav class="navbar navbar-dark jh-navbar" [class.expanded]="!isCollapsed">
+<nav class="navbar jh-navbar" [class.expanded]="!isCollapsed">
     <div class="jh-logo-container">
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
             <img [src]="'public/images/logo.png'" height="30" alt="" />
@@ -196,6 +196,12 @@
                         <a class="dropdown-item" routerLink="/admin/privacy-statement" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.privacyStatement">Privacy statement</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="/admin/imprint" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faStamp" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.imprint">Imprint</span>
                         </a>
                     </li>
                     <li>

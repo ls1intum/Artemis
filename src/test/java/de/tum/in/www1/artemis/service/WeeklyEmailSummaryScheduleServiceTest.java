@@ -62,7 +62,7 @@ class WeeklyEmailSummaryScheduleServiceTest {
 
         weeklyEmailSummaryService.scheduleEmailSummariesOnStartUp();
 
-        verify(schedulerSpy, times(1)).scheduleAtFixedRate(any(), instantCaptor.capture(), eq(Duration.ofDays(7)));
+        verify(schedulerSpy).scheduleAtFixedRate(any(), instantCaptor.capture(), eq(Duration.ofDays(7)));
         LocalDateTime capturedTriggerTime = LocalDateTime.ofInstant(instantCaptor.getValue(), zoneOffset);
         assertThat(capturedTriggerTime).as("The initial trigger for weekly summaries should be on the soonest Friday. (I.e. next Friday or today (if Friday))")
                 .isAfterOrEqualTo(LocalDateTime.now());

@@ -4,8 +4,8 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
-@JsonTypeName("text")
 @SecondaryTable(name = "text_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
@@ -28,8 +27,6 @@ public class TextExercise extends Exercise {
     @Column(name = "example_solution")
     private String exampleSolution;
 
-    // TODO: we should add a OneToMany to TextCluster with delete cascade
-
     public String getExampleSolution() {
         return exampleSolution;
     }
@@ -38,8 +35,19 @@ public class TextExercise extends Exercise {
         this.exampleSolution = exampleSolution;
     }
 
-    public boolean isAutomaticAssessmentEnabled() {
+    @JsonIgnore
+    public boolean isFeedbackSuggestionsEnabled() {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
+    }
+
+    /**
+     * Disable feedback suggestions for this exercise by setting the assessment type to MANUAL.
+     * Only changes the assessment type if feedback suggestions are currently enabled.
+     */
+    public void disableFeedbackSuggestions() {
+        if (isFeedbackSuggestionsEnabled()) {
+            setAssessmentType(AssessmentType.MANUAL);
+        }
     }
 
     /**

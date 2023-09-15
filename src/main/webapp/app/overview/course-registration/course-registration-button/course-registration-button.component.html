@@ -1,14 +1,14 @@
 <jhi-confirm-button
     *ngIf="course.enrollmentConfirmationMessage!"
     (onConfirm)="registerForCourse(course.id!)"
-    title="artemisApp.studentDashboard.register.registerForCourse"
+    title="artemisApp.studentDashboard.enroll.enrollInCourse"
     confirmationText="{{ course.enrollmentConfirmationMessage! }}"
-    confirmationTitle="artemisApp.studentDashboard.register.courseSignupConfirmationTitle"
+    confirmationTitle="artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle"
     [disabled]="loading"
     [translateText]="false"
     [textIsMarkdown]="true"
 >
 </jhi-confirm-button>
 <button *ngIf="!course.enrollmentConfirmationMessage!" class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading">
-    {{ 'artemisApp.studentDashboard.register.registerForCourse' | artemisTranslate }}
+    {{ 'artemisApp.studentDashboard.enroll.enrollInCourse' | artemisTranslate }}
 </button>

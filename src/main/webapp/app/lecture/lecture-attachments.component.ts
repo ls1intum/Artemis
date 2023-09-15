@@ -197,13 +197,17 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
      * @function setLectureAttachment
      * @param event {object} Event object which contains the uploaded file
      */
-    setLectureAttachment(event: any): void {
-        if (event.target.files.length) {
-            this.erroredFile = undefined;
-            const fileList: FileList = event.target.files;
-            const attachmentFile = fileList[0];
-            this.attachmentFile = attachmentFile;
-            this.attachmentToBeCreated!.link = attachmentFile.name;
+    setLectureAttachment(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
+            return;
+        }
+        const attachmentFile = input.files[0];
+        this.attachmentFile = attachmentFile;
+        this.attachmentToBeCreated!.link = attachmentFile.name;
+        // automatically set the name in case it is not yet specified
+        if (this.attachmentToBeCreated!.name == undefined || this.attachmentToBeCreated!.name == '') {
+            this.attachmentToBeCreated!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
         }
     }
 }

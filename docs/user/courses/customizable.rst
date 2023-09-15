@@ -33,7 +33,6 @@ Administrators can then specify options in the creation form, Instructors can la
 - **Enable postings by students**: Whether the posting sections should be enabled for lectures and exercises. More details regarding this can be found :ref:`here <communication>`.
 - **Online Course**: Whether this course should be part of an external online course using the LTI interface (e.g. on edX). This requires additional setup by administrators. **Note:** Online Course and Student Course Registration Enabled are mutually exclusive.
 - **Student Course Registration Enabled**: Whether students should be able to register themselves. If enabled, students can register for the course by clicking |course_register| in their |course_overview|. An optional confirmation message can be specified, it will be shown to students during the registration and can be used e.g. to inform students about examination rules. **Note:** Online Course and Student Course Registration Enabled are mutually exclusive.
-- **Presentation Score**: Whether students have to hold presentations in this course, e.g. to be eligible for an exam bonus. The required minimum number of presentations can be defined if this option is enabled. Note that you can define for every exercise whether it should be eligible for the presentation score within the exercise settings.
 
 .. figure:: customizable/course_settings.png
     :align: center

@@ -46,12 +46,12 @@ class ConflictSimulation extends Simulation {
 
     val firstModel = scenario("Submit and assess 1. Model")
         .exec(http("First unauthenticated request")
-            .get("/api/account")
+            .get("/api/public/account")
             .headers(headers_http)
             .check(status.is(401))
             .check(headerRegex("set-cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
         .exec(http("Authentication of 1. User")
-            .post("/api/authenticate")
+            .post("/api/public/authenticate")
             .headers(headers_http_authentication)
             .body(StringBody("""{"username":"""" + userCredentials(0)._1 + """", "password":"""" + userCredentials(0)._2 + """"}""")).asJson
             .check(status.is(200))
@@ -95,12 +95,12 @@ class ConflictSimulation extends Simulation {
     val secondModel = scenario("Submit 2nd. Model")
         .exec(flushSessionCookies)
         .exec(http("First unauthenticated request")
-            .get("/api/account")
+            .get("/api/public/account")
             .headers(headers_http)
             .check(status.is(401))
             .check(headerRegex("set-cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
         .exec(http("Authentication of 2nd User")
-            .post("/api/authenticate")
+            .post("/api/public/authenticate")
             .headers(headers_http_authentication)
             .body(StringBody("""{"username":"""" + userCredentials(1)._1 + """", "password":"""" + userCredentials(1)._2 + """"}""")).asJson
             .check(status.is(200))

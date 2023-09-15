@@ -25,6 +25,10 @@ public class ProfileService {
         return isProfileActive(Constants.PROFILE_LOCALVC) || isProfileActive(Constants.PROFILE_LOCALCI);
     }
 
+    public boolean isBamboo() {
+        return isProfileActive("bamboo");
+    }
+
     private boolean isProfileActive(String profile) {
         return Set.of(this.environment.getActiveProfiles()).contains(profile);
     }

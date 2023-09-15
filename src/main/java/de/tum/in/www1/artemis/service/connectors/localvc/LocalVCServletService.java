@@ -29,6 +29,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -38,6 +40,8 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.programming.AuxiliaryRepositoryService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
@@ -66,6 +70,10 @@ public class LocalVCServletService {
 
     private final Optional<LocalCIConnectorService> localCIConnectorService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final AuxiliaryRepositoryService auxiliaryRepositoryService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -83,13 +91,16 @@ public class LocalVCServletService {
 
     public LocalVCServletService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
-            Optional<LocalCIConnectorService> localCIConnectorService) {
+            Optional<LocalCIConnectorService> localCIConnectorService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
         this.authorizationCheckService = authorizationCheckService;
         this.localCIConnectorService = localCIConnectorService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.auxiliaryRepositoryService = auxiliaryRepositoryService;
     }
 
     /**
@@ -225,10 +236,10 @@ public class LocalVCServletService {
     private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType, boolean isPracticeRepository)
             throws LocalVCAuthException, LocalVCForbiddenException {
 
-        if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
+            // Test and auxiliary repositories are only accessible by instructors and higher.
             try {
-                // Only editors and higher are able push. Teaching assistants can only fetch.
-                repositoryAccessService.checkAccessTestRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user);
+                repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
             }
             catch (AccessForbiddenException e) {
                 throw new LocalVCAuthException(e);
@@ -237,9 +248,8 @@ public class LocalVCServletService {
         }
 
         ProgrammingExerciseParticipation participation;
-
         try {
-            participation = localCIConnectorService.orElseThrow().getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);
+            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
@@ -275,5 +285,17 @@ public class LocalVCServletService {
             log.error("Internal server error while trying to access repository {}: {}", repositoryUrl, exception.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
+    }
+
+    /**
+     * Call the local CI system to process the new push there.
+     *
+     * @param commitHash the hash of the last commit.
+     * @param repository the remote repository which was pushed to.
+     * @throws LocalCIException        if something goes wrong preparing the queueing of the build job.
+     * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
+     */
+    public void processNewPush(String commitHash, Repository repository) {
+        localCIConnectorService.orElseThrow().processNewPush(commitHash, repository);
     }
 }

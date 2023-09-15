@@ -13,7 +13,17 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 export class CourseAdminService {
     private resourceUrl = 'api/admin/courses';
 
-    constructor(private http: HttpClient, private courseManagementService: CourseManagementService) {}
+    constructor(
+        private http: HttpClient,
+        private courseManagementService: CourseManagementService,
+    ) {}
+
+    /**
+     * finds all groups for all courses using a GET request
+     */
+    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
+    }
 
     /**
      * creates a course using a POST request

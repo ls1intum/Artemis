@@ -7,21 +7,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.io.FileInputStream;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -31,13 +26,17 @@ import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
@@ -62,6 +61,15 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course1;
 
     private Exam exam1;
@@ -76,36 +84,40 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 1);
         // Add users that are not in the course
 
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
-        var student3 = database.getUserByLogin(TEST_PREFIX + "student3");
-        var student4 = database.getUserByLogin(TEST_PREFIX + "student4");
-        course1 = database.addEmptyCourse();
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var student3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var student4 = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+        course1 = courseUtilService.addEmptyCourse();
 
         // same registration number as in test pdf file
-        student1.setGroups(Set.of(course1.getStudentGroupName()));
         student1.setRegistrationNumber("03756882");
         userRepo.save(student1);
-        student2.setGroups(Set.of(course1.getStudentGroupName()));
+
         student2.setRegistrationNumber("03756883");
         userRepo.save(student2);
-        student3.setGroups(Set.of(course1.getStudentGroupName()));
+
         student3.setRegistrationNumber("03756884");
         userRepo.save(student3);
-        student4.setGroups(Set.of(course1.getStudentGroupName()));
+
         student4.setRegistrationNumber("03756885");
         userRepo.save(student4);
 
-        exam1 = database.addActiveExamWithRegisteredUser(course1, student2);
-        exam1 = database.addExerciseGroupsAndExercisesToExam(exam1, false);
+        exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student2);
+        exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
         exam1 = examRepository.save(exam1);
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        programmingExerciseTestService.tearDown();
     }
 
     @Test
@@ -203,18 +215,18 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
-            database.changeUser(user.getLogin());
+            userUtilService.changeUser(user.getLogin());
             var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
 
-            assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
+            assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
         }
 
         // change back to instructor user
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // update exam user attendance
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "");
         var examUserResponse = request.getMvc().perform(buildUpdateExamUser(examUserDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
@@ -285,7 +297,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         // all registered students
         Set<User> registeredStudents = new HashSet<>();
         for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
-            registeredStudents.add(database.getUserByLogin(TEST_PREFIX + "student" + i));
+            registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "student" + i));
         }
 
         var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);

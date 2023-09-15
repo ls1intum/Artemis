@@ -1,50 +1,53 @@
-import { ExamDetailsPage } from './exam/ExamDetailsPage';
 import { LoginPage } from './LoginPage';
-import { ExamExerciseGroupCreationPage } from './exam/ExamExerciseGroupCreationPage';
-import { ExamExerciseGroupsPage } from './exam/ExamExerciseGroupsPage';
-import { ProgrammingExerciseFeedbackPage } from './exercises/programming/ProgrammingExerciseFeedbackPage';
-import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
-import { ExerciseResultPage } from './exercises/ExerciseResultPage';
-import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
+import { NavigationBar } from './NavigationBar';
 import { CourseAssessmentDashboardPage } from './assessment/CourseAssessmentDashboardPage';
-import { ScaFeedbackModal } from './exercises/programming/ScaFeedbackModal';
-import { CodeAnalysisGradingPage } from './exercises/programming/CodeAnalysisGradingPage';
-import { TextEditorPage } from './exercises/text/TextEditorPage';
-import { ExamNavigationBar } from './exam/ExamNavigationBar';
+import { ExamAssessmentPage } from './assessment/ExamAssessmentPage';
+import { ExerciseAssessmentDashboardPage } from './assessment/ExerciseAssessmentDashboardPage';
+import { FileUploadExerciseAssessmentPage } from './assessment/FileUploadExerciseAssessmentPage';
+import { ModelingExerciseAssessmentEditor } from './assessment/ModelingExerciseAssessmentEditor';
+import { ProgrammingExerciseAssessmentPage } from './assessment/ProgrammingExerciseAssessmentPage';
+import { StudentAssessmentPage } from './assessment/StudentAssessmentPage';
+import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
+import { CourseCommunicationPage } from './course/CourseCommunication';
+import { CourseCreationPage } from './course/CourseCreationPage';
+import { CourseManagementExercisesPage } from './course/CourseManagementExercisesPage';
+import { CourseManagementPage } from './course/CourseManagementPage';
+import { CourseMessagesPage } from './course/CourseMessages';
 import { CourseOverviewPage } from './course/CourseOverviewPage';
 import { CoursesPage } from './course/CoursesPage';
-import { CourseManagementExercisesPage } from './course/CourseManagementExercisesPage';
-import { ProgrammingExerciseCreationPage } from './exercises/programming/ProgrammingExerciseCreationPage';
-import { ExamManagementPage } from './exam/ExamManagementPage';
 import { ExamCreationPage } from './exam/ExamCreationPage';
-import { CourseManagementPage } from './course/CourseManagementPage';
-import { NavigationBar } from './NavigationBar';
-import { OnlineEditorPage } from './exercises/programming/OnlineEditorPage';
-import { CreateModelingExercisePage } from './exercises/modeling/CreateModelingExercisePage';
-import { ModelingExerciseAssessmentEditor } from './assessment/ModelingExerciseAssessmentEditor';
-import { MultipleChoiceQuiz } from './exercises/quiz/MultipleChoiceQuiz';
-import { ModelingEditor } from './exercises/modeling/ModelingEditor';
-import { ShortAnswerQuiz } from './exercises/quiz/ShortAnswerQuiz';
-import { DragAndDropQuiz } from './exercises/quiz/DragAndDropQuiz';
-import { TextExerciseAssessmentPage } from './assessment/TextExerciseAssessmentPage';
-import { TextExerciseFeedbackPage } from './exercises/text/TextExerciseFeedbackPage';
-import { ExamStartEndPage } from './exam/ExamStartEndPage';
-import { QuizExerciseCreationPage } from './exercises/quiz/QuizExerciseCreationPage';
-import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
-import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
-import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
-import { ExamAssessmentPage } from './assessment/ExamAssessmentPage';
-import { ModelingExerciseFeedbackPage } from './exercises/modeling/ModelingExerciseFeedbackPage';
-import { LectureManagementPage } from './lecture/LectureManagementPage';
-import { LectureCreationPage } from './lecture/LectureCreationPage';
-import { StudentExamManagementPage } from './exam/StudentExamManagementPage';
-import { CourseExercisePage } from './course/CourseExercisePage';
-import { CourseCreationPage } from './course/CourseCreationPage';
+import { ExamDetailsPage } from './exam/ExamDetailsPage';
+import { ExamExerciseGroupCreationPage } from './exam/ExamExerciseGroupCreationPage';
+import { ExamExerciseGroupsPage } from './exam/ExamExerciseGroupsPage';
+import { ExamManagementPage } from './exam/ExamManagementPage';
+import { ExamNavigationBar } from './exam/ExamNavigationBar';
 import { ExamParticipation } from './exam/ExamParticipation';
-import { StudentAssessmentPage } from './assessment/StudentAssessmentPage';
+import { ExamStartEndPage } from './exam/ExamStartEndPage';
 import { ExamTestRunPage } from './exam/ExamTestRunPage';
-import { CourseCommunicationPage } from './course/CourseCommunication';
-import { CourseMessagesPage } from './course/CourseMessages';
+import { StudentExamManagementPage } from './exam/StudentExamManagementPage';
+import { ExerciseResultPage } from './exercises/ExerciseResultPage';
+import { FileUploadEditorPage } from './exercises/file-upload/FileUploadEditorPage';
+import { FileUploadExerciseCreationPage } from './exercises/file-upload/FileUploadExerciseCreationPage';
+import { FileUploadExerciseFeedbackPage } from './exercises/file-upload/FileUploadExerciseFeedbackPage';
+import { CreateModelingExercisePage } from './exercises/modeling/CreateModelingExercisePage';
+import { ModelingEditor } from './exercises/modeling/ModelingEditor';
+import { ModelingExerciseFeedbackPage } from './exercises/modeling/ModelingExerciseFeedbackPage';
+import { CodeAnalysisGradingPage } from './exercises/programming/CodeAnalysisGradingPage';
+import { OnlineEditorPage } from './exercises/programming/OnlineEditorPage';
+import { ProgrammingExerciseCreationPage } from './exercises/programming/ProgrammingExerciseCreationPage';
+import { ProgrammingExerciseFeedbackPage } from './exercises/programming/ProgrammingExerciseFeedbackPage';
+import { ScaFeedbackModal } from './exercises/programming/ScaFeedbackModal';
+import { DragAndDropQuiz } from './exercises/quiz/DragAndDropQuiz';
+import { MultipleChoiceQuiz } from './exercises/quiz/MultipleChoiceQuiz';
+import { QuizExerciseCreationPage } from './exercises/quiz/QuizExerciseCreationPage';
+import { ShortAnswerQuiz } from './exercises/quiz/ShortAnswerQuiz';
+import { TextEditorPage } from './exercises/text/TextEditorPage';
+import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
+import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
+import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
+import { TextExerciseFeedbackPage } from './exercises/text/TextExerciseFeedbackPage';
+import { LectureCreationPage } from './lecture/LectureCreationPage';
+import { LectureManagementPage } from './lecture/LectureManagementPage';
 
 /**
  * A class which encapsulates all pageobjects, which can be used to automate the Artemis UI.
@@ -58,7 +61,6 @@ export class ArtemisPageobjects {
         managementExercises: new CourseManagementExercisesPage(),
         list: new CoursesPage(),
         overview: new CourseOverviewPage(),
-        exercise: new CourseExercisePage(),
         communication: new CourseCommunicationPage(),
         messages: new CourseMessagesPage(),
     };
@@ -101,6 +103,11 @@ export class ArtemisPageobjects {
             shortAnswer: new ShortAnswerQuiz(),
             dragAndDrop: new DragAndDropQuiz(),
         },
+        fileUpload: {
+            creation: new FileUploadExerciseCreationPage(),
+            editor: new FileUploadEditorPage(),
+            feedback: new FileUploadExerciseFeedbackPage(),
+        },
     };
     assessment = {
         exam: new ExamAssessmentPage(),
@@ -109,6 +116,7 @@ export class ArtemisPageobjects {
         text: new TextExerciseAssessmentPage(),
         programming: new ProgrammingExerciseAssessmentPage(),
         modeling: new ModelingExerciseAssessmentEditor(),
+        fileUpload: new FileUploadExerciseAssessmentPage(),
         student: new StudentAssessmentPage(),
     };
     lecture = {

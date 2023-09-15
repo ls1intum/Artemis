@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -11,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -139,7 +138,23 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @return true if the user is a member of the channel, false otherwise
      */
     public boolean isMember(Long channelId, Long userId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
+        if (conversationParticipantRepository.existsByConversationIdAndUserId(channelId, userId)) {
+            return true;
+        }
+
+        Channel channel = channelRepository.findByIdElseThrow(channelId);
+        return channel.getIsCourseWide();
+    }
+
+    /**
+     * Checks if a user is a member of a channel
+     *
+     * @param channel     the channel
+     * @param participant optional participant for the user
+     * @return true if the user is a member of the channel, false otherwise
+     */
+    public boolean isMember(Channel channel, Optional<ConversationParticipantSettingsView> participant) {
+        return channel.getIsCourseWide() || participant.isPresent();
     }
 
     /**
@@ -165,7 +180,21 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     public boolean hasChannelModerationRights(@NotNull Long channelId, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         var channel = channelRepository.findById(channelId);
-        return isChannelModerator(channelId, userToCheck.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.get().getCourse(), userToCheck);
+        return isChannelModerator(channelId, userToCheck.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.orElseThrow().getCourse(), userToCheck);
+    }
+
+    /**
+     * Checks if a user has channel moderation rights to a channel
+     * <p>
+     * Note: Either the user is a course instructor or a channel moderator to have moderation rights
+     *
+     * @param channel     the channel
+     * @param user        the user
+     * @param participant optional participant for the user
+     * @return true if the user has moderation rights, false otherwise
+     */
+    public boolean hasChannelModerationRights(@NotNull Channel channel, @NotNull User user, Optional<ConversationParticipantSettingsView> participant) {
+        return participant.map(ConversationParticipantSettingsView::isModerator).orElse(false) || authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
     }
 
     /**
@@ -180,7 +209,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         var userToCheck = getUserIfNecessary(user);
         var isJoinRequest = userLoginsToCheck.size() == 1 && userLoginsToCheck.get(0).equals(userToCheck.getLogin());
         var channelFromDb = channelRepository.findById(channel.getId());
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.get().getCourse(), userToCheck);
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.orElseThrow().getCourse(), userToCheck);
         var isChannelModerator = isChannelModerator(channel.getId(), userToCheck.getId());
 
         var isPrivateChannel = Boolean.FALSE.equals(channel.getIsPublic());
@@ -271,5 +300,4 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
             throw new AccessForbiddenException("You are not allowed to archive/unarchive this channel");
         }
     }
-
 }

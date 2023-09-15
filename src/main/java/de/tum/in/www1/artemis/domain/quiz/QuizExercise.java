@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
-@JsonTypeName("quiz")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizExercise extends Exercise implements QuizConfiguration {
 

@@ -2,6 +2,11 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.regex.Pattern;
 
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+
 /**
  * Application constants.
  */
@@ -31,31 +36,28 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
+    /**
+     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
+     * Submissions after the grace period exceeded will be flagged as illegal.
+     * <p>
+     * This is needed because locking programming exercise repositories might take up to 60 seconds,
+     * especially for exercises with many participants.
+     * If the student was able to successfully push their solution, this solution should still be graded, even if
+     * the push was a few seconds late.
+     *
+     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
+     */
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
+
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_PATH = "programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/" + NEW_RESULT_RESOURCE_PATH;
-
-    public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed/";
-
-    public static final String TEST_CASE_CHANGED_API_PATH = "/api" + TEST_CASE_CHANGED_PATH;
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
-
-    public static final String ATHENE_RESULT_PATH = "/athene-result/";
-
-    public static final String ATHENE_RESULT_API_PATH = "/api" + ATHENE_RESULT_PATH;
-
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
-
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";
+    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -76,6 +78,8 @@ public final class Constants {
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
+    public static final String TUM_LDAP_EMAIL = "imHauptEMail";
+
     // NOTE: the following values for programming exercises are hard-coded at the moment
     public static final String TEST_REPO_NAME = "tests";
 
@@ -88,6 +92,12 @@ public final class Constants {
 
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
+
+    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Deleted";
+
+    public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
+
+    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.deleted";
 
     // TODO: the following numbers should be configurable in the yml files
 
@@ -163,6 +173,8 @@ public final class Constants {
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
+
+    public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
@@ -245,14 +257,6 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
-    public static final long MONITORING_CACHE_RESET_DELAY = 60 * 30; // 30 minutes in seconds
-
-    public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
-
-    public static final String HAZELCAST_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "activity-cache";
-
-    public static final int HAZELCAST_MONITORING_CACHE_SERIALIZER_ID = 2;
-
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
     public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
@@ -275,6 +279,8 @@ public final class Constants {
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
 
+    public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
+
     /**
      * The name of the Spring profile used to choose the local VC system instead of Bitbucket or GitLab.
      */
@@ -289,6 +295,11 @@ public final class Constants {
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
+
+    /**
+     * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
+     */
+    public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
 
     private Constants() {
     }

@@ -1,5 +1,6 @@
 .group-tag-list {
     width: 100%;
+    color: var(--bs-border-color);
 
     .group-tag {
         padding: 0 !important;
@@ -27,4 +28,10 @@
         height: 30px !important;
         color: var(--text-editor-color);
     }
+}
+
+::ng-deep .group-panel {
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border: 1px solid var(--bs-gray-400);
 }

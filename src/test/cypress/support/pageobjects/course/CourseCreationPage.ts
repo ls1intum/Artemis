@@ -1,6 +1,7 @@
 import dayjs from 'dayjs/esm';
-import { enterDate } from '../../utils';
+
 import { BASE_API, POST, PUT } from '../../constants';
+import { enterDate } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course creation page.
@@ -218,26 +219,6 @@ export class CourseCreationPage {
         } else {
             cy.get('#field_registrationEnabled').uncheck();
         }
-    }
-
-    /**
-     * Sets if presentation score is enabled for this course
-     * @param presentationScore if presentationScore should be enabled
-     */
-    setPresentationScoreEnabled(presentationScore: boolean) {
-        if (presentationScore) {
-            cy.get('#changePresentationScoreInput').check();
-        } else {
-            cy.get('#changePresentationScoreInput').uncheck();
-        }
-    }
-
-    /**
-     * Sets the maximal request more feedback time in days
-     * @param presentationScore maximal request more feedback time in days
-     */
-    setPresentationScore(presentationScore: number) {
-        cy.get('#field_presentationScore').clear().type(presentationScore.toString());
     }
 
     /**

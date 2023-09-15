@@ -22,7 +22,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     @Input() showCreationCard = true;
-    @Input() showLearningGoals = true;
+    @Input() showCompetencies = true;
     @Input() emitEditEvents = false;
 
     @Input() lectureId: number | undefined;

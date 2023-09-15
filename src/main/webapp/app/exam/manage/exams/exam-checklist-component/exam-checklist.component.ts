@@ -3,7 +3,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
@@ -37,9 +36,10 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     faThList = faThList;
     faChartBar = faChartBar;
 
-    readonly FeatureToggle = FeatureToggle;
-
-    constructor(private examChecklistService: ExamChecklistService, private websocketService: JhiWebsocketService) {}
+    constructor(
+        private examChecklistService: ExamChecklistService,
+        private websocketService: JhiWebsocketService,
+    ) {}
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);

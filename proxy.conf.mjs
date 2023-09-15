@@ -1,3 +1,4 @@
+
 export default [
     {
         context: [
@@ -9,7 +10,6 @@ export default [
             "/h2-console",
             "/auth",
             "/health",
-            "/time",
             "/public",
             "/.well-known"
         ],

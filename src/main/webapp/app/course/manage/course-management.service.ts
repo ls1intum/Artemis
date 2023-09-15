@@ -160,7 +160,8 @@ export class CourseManagementService {
     }
 
     /**
-     * finds one course using a GET request
+     * Finds one course using a GET request.
+     * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
      * @param userRefresh whether this is a user-initiated refresh (default: false)
      */
@@ -262,9 +263,25 @@ export class CourseManagementService {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
+    registerForCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
+                if (res.body != undefined) {
+                    this.accountService.syncGroups(res.body);
+                }
+                return res;
+            }),
+        );
+    }
+
+    /**
+     * unenroll from course with the provided unique identifier using a POST request
+     * NB: the body is null, because the server can identify the user anyway
+     * @param courseId - the id of the course
+     */
+    unenrollFromCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
                 }
@@ -485,13 +502,12 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course EntityResponses.
      * @param courseRes
-     * @private
      */
     processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
-        this.setLearningGoalsIfNone(courseRes);
+        this.setCompetenciesIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
         this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
@@ -501,7 +517,6 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course processCourseEntityArrayResponseType.
      * @param courseRes
-     * @private
      */
     private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
         this.convertTutorialGroupsDatesFromServer(courseRes);
@@ -526,6 +541,9 @@ export class CourseManagementService {
         return Object.assign({}, course, {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
+            enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
+            enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
+            unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
         });
     }
 
@@ -586,7 +604,6 @@ export class CourseManagementService {
     /**
      * Converts the exercise category json string into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body && res.body.exercises) {
@@ -598,7 +615,6 @@ export class CourseManagementService {
     /**
      * Converts an array of exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
@@ -623,7 +639,7 @@ export class CourseManagementService {
      * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
      * @param res The server response containing a course object
      */
-    private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
+    private setCompetenciesIfNone(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.competencies = res.body.competencies || [];
             res.body.prerequisites = res.body.prerequisites || [];

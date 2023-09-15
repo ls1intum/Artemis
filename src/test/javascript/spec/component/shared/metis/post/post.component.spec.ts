@@ -85,6 +85,7 @@ describe('PostComponent', () => {
     it('should contain a title with referencable id', () => {
         metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
         metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
+        component.isCommunicationPage = true;
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();

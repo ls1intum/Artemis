@@ -38,6 +38,7 @@ import {
     faList,
     faLock,
     faSignOutAlt,
+    faStamp,
     faTachometerAlt,
     faTasks,
     faThLarge,
@@ -95,6 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faCog = faCog;
     faWrench = faWrench;
     faLock = faLock;
+    faStamp = faStamp;
     faFlag = faFlag;
     faBook = faBook;
     faTasks = faTasks;
@@ -266,7 +268,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
-        competency_management: 'artemisApp.learningGoal.manageLearningGoals.title',
+        competency_management: 'artemisApp.competency.manageCompetencies.title',
+        learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
         communication: 'artemisApp.metis.communication.label',
@@ -284,7 +287,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         example_solution: 'artemisApp.modelingExercise.exampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
         example_submission_editor: 'artemisApp.exampleSubmission.home.editor',
-        text_feedback_conflict: 'artemisApp.textAssessment.title',
         grading: 'artemisApp.programmingExercise.configureGrading.shortTitle',
         test: 'artemisApp.editor.home.title',
         ide: 'artemisApp.editor.home.title',
@@ -297,9 +299,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutors: 'artemisApp.course.tutors',
         instructors: 'artemisApp.course.instructors',
         test_runs: 'artemisApp.examManagement.testRun.testRun',
-        monitoring: 'artemisApp.examMonitoring.title',
-        overview: 'artemisApp.examMonitoring.menu.overview.title',
-        activity_log: 'artemisApp.examMonitoring.menu.activity-log.title',
         assess: 'artemisApp.examManagement.assessmentDashboard',
         summary: 'artemisApp.exam.summary',
         conduction: 'artemisApp.exam.title',
@@ -313,7 +312,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         grading_key: 'artemisApp.gradingSystem.title',
         exercise_statistics: 'exercise-statistics.title',
         tutor_effort_statistics: 'artemisApp.textExercise.tutorEffortStatistics.title',
-        text_cluster_statistics: 'artemisApp.textExercise.clusterStatistics.title',
         user_settings: 'artemisApp.userSettings.title',
         detailed: 'artemisApp.gradingSystem.detailedTab.title',
         interval: 'artemisApp.gradingSystem.intervalTab.title',
@@ -326,7 +324,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
-        privacy_statement: 'artemisApp.privacyStatement.title',
+        privacy_statement: 'artemisApp.legal.privacyStatement.title',
+        imprint: 'artemisApp.legal.imprint.title',
+        edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
+        suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
+        suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -334,7 +336,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
-        competencies: 'artemisApp.courseOverview.menu.learningGoals',
+        competencies: 'artemisApp.courseOverview.menu.competencies',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
         messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
@@ -457,7 +459,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                 break;
             case 'competencies':
-                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.COMPETENCY, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);
@@ -477,13 +479,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'import-from-file':
                 this.addTranslationAsCrumb(currentPath, 'import-from-file');
                 break;
+            case 'suspicious-behavior':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-behavior');
+                break;
+            case 'suspicious-sessions':
+                this.addTranslationAsCrumb(currentPath, 'suspicious-sessions');
+                break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
-                break;
-            case 'text-feedback-conflict':
-                // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                this.addTranslationAsCrumb(currentPath, 'text-feedback-conflict');
                 break;
             // No breadcrumbs for those segments
             case 'competency-management':
@@ -529,7 +533,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exercise-units':
             case 'attachment-units':
             case 'video-units':
-            case 'text-feedback-conflict':
             case 'grading':
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
@@ -543,6 +546,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR])) {
                     this.addTranslationAsCrumb(currentPath, segment);
                 }
+                break;
+            case 'submissions':
+                // only a scores list exists, no special one for submissions
+                const updatedLink = currentPath.replace('/submissions/', '/scores/');
+                this.addTranslationAsCrumb(updatedLink, 'submissions');
                 break;
             default:
                 // Special cases:
@@ -634,7 +642,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Adds a link to an exercise to the breadcrumbs array. The link depends on the type of the exercise, so we need to fetch it first
      * @param exerciseId the id of the exercise
      * @param currentPath the initial path for the breadcrumb
-     * @private
      */
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb

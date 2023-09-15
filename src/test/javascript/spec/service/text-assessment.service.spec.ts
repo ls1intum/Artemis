@@ -4,9 +4,6 @@ import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
@@ -16,7 +13,7 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { FeedbackConflictResolver, NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment.route';
+import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { of } from 'rxjs';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
@@ -192,17 +189,6 @@ describe('TextAssessment Service', () => {
         httpMock.verify();
     });
 
-    it('should not send feedback', () => {
-        service.trackAssessment();
-        httpMock.expectNone({ method: 'POST' });
-    });
-
-    it('should send feedback', async () => {
-        textSubmission.atheneTextAssessmentTrackingToken = '12345';
-        service.trackAssessment(textSubmission);
-        httpMock.expectOne({ url: 'athene-tracking/text-exercise-assessment', method: 'POST' });
-    });
-
     it('should send assessment event to analytics', fakeAsync(() => {
         const assessmentEvent: TextAssessmentEvent = new TextAssessmentEvent();
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
@@ -213,36 +199,15 @@ describe('TextAssessment Service', () => {
         tick();
     }));
 
-    it('should not parse jwt from header', fakeAsync(() => {
-        service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {
-            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeUndefined();
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse);
-        tick();
-    }));
-
-    it('should parse jwt from header', fakeAsync(() => {
-        service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {
-            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBe('12345');
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
-        tick();
-    }));
-
     it('should get feedback data for submission', fakeAsync(() => {
         const submissionId = 42;
-        const participationId = 42;
         service
-            .getFeedbackDataForExerciseSubmission(participationId, submissionId)
+            .getFeedbackDataForExerciseSubmission(submissionId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
-            url: `api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?correction-round=0`,
+            url: `api/text-submissions/${submissionId}/for-assessment?correction-round=0`,
             method: 'GET',
         });
         req.flush(mockResponse);
@@ -251,58 +216,18 @@ describe('TextAssessment Service', () => {
 
     it('should get feedback data with resultId set', fakeAsync(() => {
         const submissionId = 42;
-        const participationId = 42;
         const resultId = result.id;
 
         service
-            .getFeedbackDataForExerciseSubmission(participationId, submissionId, undefined, resultId)
+            .getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
-            url: `api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?resultId=6`,
+            url: `api/text-submissions/${submissionId}/for-assessment?resultId=6`,
             method: 'GET',
         });
         req.flush(mockResponse);
-        tick();
-    }));
-
-    it('should get conflicting text submissions', fakeAsync(() => {
-        const submissionId = 42;
-        const feedbackId = 42;
-        const participationId = 42;
-        const submission = {
-            id: 1,
-            submitted: true,
-            type: 'AUTOMATIC',
-            text: 'Test\n\nTest\n\nTest',
-        } as unknown as TextSubmission;
-        submission.results = [
-            {
-                id: 2374,
-                score: 8,
-                rated: true,
-                hasComplaint: false,
-            } as unknown as Result,
-        ];
-        getLatestSubmissionResult(submission)!.feedbacks = [
-            {
-                id: 2,
-                detailText: 'Feedback',
-                credits: 1,
-            } as Feedback,
-        ];
-        const returnedFromService = [...[submission]];
-        service
-            .getConflictingTextSubmissions(participationId, submissionId, feedbackId)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual([submission]));
-
-        const req = httpMock.expectOne({
-            url: `api/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`,
-            method: 'GET',
-        });
-        req.flush(returnedFromService);
         tick();
     }));
 
@@ -318,28 +243,6 @@ describe('TextAssessment Service', () => {
         req.flush(mockResponse);
         expect(actualResponse).toEqual(mockResponse);
     });
-
-    it('should solve feedback conflicts', fakeAsync(() => {
-        const exerciseId = 1;
-        const feedbackConflict = {
-            id: 1,
-            conflict: false,
-            type: 'INCONSISTENT_COMMENT',
-            firstFeedback: new Feedback(),
-            secondFeedback: new Feedback(),
-        } as unknown as FeedbackConflict;
-        service
-            .solveFeedbackConflict(exerciseId, feedbackConflict.id!)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(feedbackConflict));
-
-        const req = httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/feedback-conflicts/${feedbackConflict.id}/solve`,
-            method: 'POST',
-        });
-        req.flush(feedbackConflict);
-        tick();
-    }));
 
     it('should get number of tutors involved in assessment', fakeAsync(() => {
         const responseNumberOfTutors = 5;
@@ -393,22 +296,7 @@ describe('TextAssessment Service', () => {
         resolver.resolve(snapshot);
 
         expect(studentParticipationSpy).toHaveBeenCalledOnce();
-        expect(studentParticipationSpy).toHaveBeenCalledWith(1, 2, undefined, 1);
-    });
-
-    it('should resolve the needed textSubmissions for TextFeedbackConflictsComponent', () => {
-        const resolver = TestBed.inject(FeedbackConflictResolver);
-        const feedbackConflictSpy = jest.spyOn(service, 'getConflictingTextSubmissions');
-
-        const snapshot = {
-            paramMap: convertToParamMap({ participationId: 1, submissionId: 2, feedbackId: 3 }),
-            queryParamMap: convertToParamMap({ correctionRound: 0 }),
-        } as unknown as ActivatedRouteSnapshot;
-
-        resolver.resolve(snapshot);
-
-        expect(feedbackConflictSpy).toHaveBeenCalledOnce();
-        expect(feedbackConflictSpy).toHaveBeenCalledWith(1, 2, 3);
+        expect(studentParticipationSpy).toHaveBeenCalledWith(2, undefined, 1);
     });
 
     afterEach(() => {

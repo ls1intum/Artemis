@@ -22,7 +22,9 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -65,6 +67,26 @@ public class AdminCourseResource {
     }
 
     /**
+     * GET /courses/groups : get all groups for all courses for administration purposes.
+     *
+     * @return the list of groups (the user has access to)
+     */
+    @GetMapping("courses/groups")
+    @EnforceAdmin
+    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
+        log.debug("REST request to get all Groups for all Courses");
+        List<Course> courses = courseRepository.findAll();
+        Set<String> groups = new LinkedHashSet<>();
+        for (Course course : courses) {
+            groups.add(course.getInstructorGroupName());
+            groups.add(course.getEditorGroupName());
+            groups.add(course.getTeachingAssistantGroupName());
+            groups.add(course.getStudentGroupName());
+        }
+        return ResponseEntity.ok().body(groups);
+    }
+
+    /**
      * POST /courses : create a new course.
      *
      * @param course the course to create
@@ -93,9 +115,7 @@ public class AdminCourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndEnrollmentEnabled();
         course.validateAccuracyOfScores();
-        if (!course.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
+        course.validateStartAndEndDate();
 
         if (course.isOnlineCourse()) {
             onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
@@ -145,10 +165,10 @@ public class AdminCourseResource {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelType.getName());
         channelToCreate.setIsPublic(true);
+        channelToCreate.setIsCourseWide(true);
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
-        channelService.registerUsersToChannel(true, true, true, List.of(), course, createdChannel);
+        channelService.createChannel(course, channelToCreate, Optional.empty());
     }
 }

@@ -35,7 +35,7 @@
             <div class="row">
                 <div class="col-12">
                     <td class="table-responsive" *ngIf="attachments && attachments.length > 0">
-                        <table class="table table-striped">
+                        <table class="table table-striped position-relative">
                             <thead>
                                 <tr>
                                     <th><span jhiTranslate="global.field.id">ID</span></th>
@@ -49,12 +49,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let attachment of attachments; trackBy: trackId" class="position-relative">
+                                <tr *ngFor="let attachment of attachments; trackBy: trackId" [ngClass]="{ 'edit-overlay-container': attachmentToBeCreated?.id === attachment?.id }">
                                     <td>
                                         {{ attachment.id }}
-                                        <div *ngIf="attachmentToBeCreated?.id === attachment?.id" class="edit-overlay">
-                                            {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
-                                        </div>
                                     </td>
                                     <td>{{ attachment.name }}</td>
                                     <td>{{ attachment.attachmentType }}</td>
@@ -73,12 +70,18 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="flex-btn-group-container">
-                                            <button type="submit" (click)="editAttachment(attachment)" class="btn btn-primary btn-sm me-1">
+                                            <button
+                                                [disabled]="attachmentToBeCreated?.id === attachment?.id"
+                                                type="submit"
+                                                (click)="editAttachment(attachment)"
+                                                class="btn btn-primary btn-sm me-1"
+                                            >
                                                 <fa-icon [icon]="faPencilAlt"></fa-icon>
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </button>
                                             <button
                                                 *ngIf="lecture.isAtLeastInstructor"
+                                                [disabled]="attachmentToBeCreated?.id === attachment?.id"
                                                 jhiDeleteButton
                                                 [entityTitle]="attachment?.name || ''"
                                                 deleteQuestion="artemisApp.attachment.deleteQuestion"
@@ -87,6 +90,9 @@
                                             ></button>
                                         </div>
                                     </td>
+                                    <div *ngIf="attachmentToBeCreated?.id === attachment?.id" class="edit-overlay">
+                                        {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
+                                    </div>
                                 </tr>
                             </tbody>
                         </table>
@@ -111,10 +117,10 @@
                             <label for="lectureAttachmentInput{{ attachmentToBeCreated.name }}" class="form-control-label" jhiTranslate="artemisApp.lecture.attachments.file"
                                 >File</label
                             >
-                            <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
+                            <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
                             <fa-icon
                                 [icon]="faQuestionCircle"
-                                [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate : { extensions: allowedFileExtensions }"
+                                [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                             ></fa-icon>
                             <div class="input-group background-file">
                                 <div class="custom-file overflow-ellipsis">
@@ -126,6 +132,7 @@
                                         [accept]="acceptedFileExtensionsFileBrowser"
                                         [placeholder]="'artemisApp.lecture.attachments.chooseFile' | artemisTranslate"
                                         (change)="setLectureAttachment($event)"
+                                        aria-describedby="fileHelp"
                                     />
                                 </div>
                             </div>

@@ -34,7 +34,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { By } from '@angular/platform-browser';
@@ -221,7 +221,8 @@ describe('ExamParticipationComponent', () => {
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
         const loadTestRunWithExercisesForConductionSpy = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
-        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         comp.ngOnInit();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
@@ -513,7 +514,7 @@ describe('ExamParticipationComponent', () => {
             textExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [textExercise];
             textSubmissionUpdateSpy = jest.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
-            comp.triggerSave(false, false);
+            comp.triggerSave(false);
             expect(textSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
             expect(textSubmissionUpdateSpy).not.toHaveBeenCalledWith(syncedSubmission, 5);
             expectSyncedSubmissions(submission, syncedSubmission);
@@ -530,7 +531,7 @@ describe('ExamParticipationComponent', () => {
             modelingExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [modelingExercise];
             modelingSubmissionUpdateSpy = jest.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
-            comp.triggerSave(false, false);
+            comp.triggerSave(false);
             expect(modelingSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
             expect(modelingSubmissionUpdateSpy).not.toHaveBeenCalledWith(syncedSubmission, 5);
             expectSyncedSubmissions(submission, syncedSubmission);
@@ -547,7 +548,7 @@ describe('ExamParticipationComponent', () => {
             quizExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [quizExercise];
             quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
-            comp.triggerSave(false, false);
+            comp.triggerSave(false);
             tick(500);
             expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
             expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
@@ -556,12 +557,13 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should submit exam when end confirmed', () => {
-        const studentExam = new StudentExam();
-        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        comp.studentExam = new StudentExam();
+        comp.studentExam.submitted = false;
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
         comp.exam = new Exam();
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.studentExam?.submitted).toBeTrue();
     });
 
     it('should show error', () => {
@@ -693,7 +695,7 @@ describe('ExamParticipationComponent', () => {
         const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
         comp.exam = new Exam();
         comp.onPageChange(exerciseChange);
-        expect(triggerSpy).toHaveBeenCalledWith(true, false);
+        expect(triggerSpy).toHaveBeenCalledWith(true);
         expect(comp.exerciseIndex).toBe(1);
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
@@ -730,7 +732,7 @@ describe('ExamParticipationComponent', () => {
             comp.toggleHandInEarly();
 
             // Verify that resetPageComponentVisited has been called with the correct index
-            expect(resetPageComponentVisitedSpy).toHaveBeenCalledOnceWith(1);
+            expect(resetPageComponentVisitedSpy).toHaveBeenCalledExactlyOnceWith(1);
 
             // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
             expect(comp.pageComponentVisited).toEqual([false, true, false]);

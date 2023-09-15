@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementComponent } from './course-management.component';
@@ -7,9 +6,9 @@ import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
-import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
-import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
-import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learning-goal/edit-learning-goal.component';
+import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
+import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
+import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
@@ -22,6 +21,7 @@ import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 
 export const courseManagementState: Routes = [
     {
@@ -185,39 +185,48 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'competency-management',
-                        component: LearningGoalManagementComponent,
+                        component: CompetencyManagementComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        // Create a new path without a component defined to prevent the LearningGoalManagementComponent from being always rendered
+                        // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
                         path: 'competency-management',
                         data: {
-                            pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
                         },
                         children: [
                             {
                                 path: 'create',
-                                component: CreateLearningGoalComponent,
+                                component: CreateCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',
+                                    pageTitle: 'artemisApp.competency.createCompetency.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
                             {
                                 path: ':competencyId/edit',
-                                component: EditLearningGoalComponent,
+                                component: EditCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
+                                    pageTitle: 'artemisApp.competency.editCompetency.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
                         ],
+                    },
+                    {
+                        path: 'learning-path-management',
+                        component: LearningPathManagementComponent,
+                        data: {
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
+                        },
+                        canActivate: [UserRouteAccessService],
                     },
                 ],
             },

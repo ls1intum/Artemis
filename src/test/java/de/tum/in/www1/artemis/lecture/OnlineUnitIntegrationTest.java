@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -38,6 +39,12 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
     private Lecture lecture1;
 
     private OnlineUnit onlineUnit;
@@ -46,17 +53,17 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() {
-        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.lecture1 = this.database.createCourseWithLecture(true);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.onlineUnit = new OnlineUnit();
         this.onlineUnit.setDescription("LoremIpsum");
         this.onlineUnit.setName("LoremIpsum");
         this.onlineUnit.setSource("oHg5SJYRHA0");
 
         // Add users that are not in the course
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         jsoupMock = mockStatic(Jsoup.class);
     }
@@ -118,7 +125,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
@@ -131,7 +138,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         persistOnlineUnitWithLecture();
 
         // Add a second lecture unit
-        OnlineUnit onlineUnit = database.createOnlineUnit();
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
         lecture1.addLectureUnit(onlineUnit);
         lectureRepository.save(lecture1);
 
@@ -140,7 +147,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.OK);
 
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
@@ -148,7 +155,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         this.onlineUnit = onlineUnitRepository.save(this.onlineUnit);
         lecture1.addLectureUnit(this.onlineUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test
@@ -156,7 +163,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.FORBIDDEN);
@@ -167,7 +174,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void updateOnlineUnit_noId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setId(null);
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.BAD_REQUEST);
     }
@@ -177,7 +184,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void updateOnlineUnit_noLecture_shouldReturnConflict() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setLecture(null);
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.CONFLICT);
     }
@@ -187,7 +194,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         OnlineUnit onlineUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK, OnlineUnit.class);
         assertThat(this.onlineUnit.getId()).isEqualTo(onlineUnitFromRequest.getId());
     }
@@ -197,7 +204,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void getOnlineUnit_incorrectId_shouldReturnConflict() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         request.get("/api/lectures/" + "999" + "/online-units/" + this.onlineUnit.getId(), HttpStatus.CONFLICT, OnlineUnit.class);
     }
 
@@ -234,7 +241,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);

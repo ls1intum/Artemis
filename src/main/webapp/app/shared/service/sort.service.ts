@@ -87,7 +87,9 @@ export class SortService {
     }
 
     private static compareBasic(valueA: any, valueB: any) {
-        if (valueA === valueB) {
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+            return valueA.localeCompare(valueB);
+        } else if (valueA === valueB) {
             return 0;
         } else {
             return valueA < valueB ? -1 : 1;
@@ -95,7 +97,10 @@ export class SortService {
     }
 
     private static customGet(object: any, path: string, defaultValue: any) {
-        const pathArray = path.split('.').filter((key) => key);
+        // Get rid of all optional chainings as they are handled down below. After that split the path into all array and attribute accesses
+        // Example: path 'some?.path[0].x' will be split into pathArray ['some', 'path', '0', 'x']
+        path = path.replaceAll('?', '').replaceAll(']', '');
+        const pathArray = path.split(/\.|\[/).filter((key) => key);
         const value = pathArray.reduce((obj, key) => {
             if (!obj) {
                 return obj;

@@ -2,6 +2,11 @@
 Data Migration with Java
 *************************
 
+.. note::
+    This type of migration should only be used if the logic cannot be implemented in SQL as part of a Liquibase changelog.
+    The Java migrations are *significantly slower* since they need to load and convert the data from the DBMS into Java objects, apply the changes, and then write the new data back to the database.
+
+
 1. Changelog
 =============
 

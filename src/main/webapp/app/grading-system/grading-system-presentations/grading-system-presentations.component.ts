@@ -8,8 +8,13 @@ export enum PresentationType {
     GRADED = 'graded',
 }
 export interface PresentationsConfig {
+    // The type of presentations
     presentationType: PresentationType;
+    // The number of basic presentations
+    presentationScore?: number;
+    // The combined weight of graded presentations
     presentationsWeight?: number;
+    // The number of graded presentations
     presentationsNumber?: number;
 }
 
@@ -27,6 +32,11 @@ export class GradingSystemPresentationsComponent implements OnChanges {
         {
             value: PresentationType.NONE,
             labelKey: 'artemisApp.gradingSystem.presentationType.none',
+            btnClass: 'btn-secondary',
+        },
+        {
+            value: PresentationType.BASIC,
+            labelKey: 'artemisApp.gradingSystem.presentationType.basic',
             btnClass: 'btn-secondary',
         },
         {
@@ -49,6 +59,8 @@ export class GradingSystemPresentationsComponent implements OnChanges {
     private initializePresentationConfig() {
         if (this.isGradedPresentation()) {
             this.presentationsConfig.presentationType = PresentationType.GRADED;
+        } else if (this.isBasicPresentation()) {
+            this.presentationsConfig.presentationType = PresentationType.BASIC;
         } else {
             this.presentationsConfig.presentationType = PresentationType.NONE;
         }
@@ -73,18 +85,41 @@ export class GradingSystemPresentationsComponent implements OnChanges {
      */
     onPresentationTypeChange(presentationType: PresentationType) {
         this.presentationsConfig.presentationType = presentationType;
-        if (presentationType === PresentationType.NONE) {
-            this.updatePresentationsNumber(undefined);
-            this.updatePresentationsWeight(undefined);
-        }
-        if (presentationType === PresentationType.GRADED) {
-            this.updatePresentationsNumber(2); // default value
-            this.updatePresentationsWeight(20); // default value
+        switch (presentationType) {
+            case PresentationType.NONE: {
+                this.updatePresentationScore(undefined);
+                this.updatePresentationsNumber(undefined);
+                this.updatePresentationsWeight(undefined);
+                break;
+            }
+            case PresentationType.BASIC: {
+                this.updatePresentationScore(2); // default value
+                this.updatePresentationsNumber(undefined);
+                this.updatePresentationsWeight(undefined);
+                break;
+            }
+            case PresentationType.GRADED: {
+                this.updatePresentationScore(undefined);
+                this.updatePresentationsNumber(2); // default value
+                this.updatePresentationsWeight(20); // default value
+                break;
+            }
         }
     }
 
     /**
-     * Update number of presentations
+     * Update number of basic presentations
+     * @param presentationsNumber
+     */
+    updatePresentationScore(presentationsNumber?: number) {
+        if (this.gradingScale.course) {
+            this.presentationsConfig.presentationScore = (presentationsNumber ?? -1) > 0 ? presentationsNumber : undefined;
+            this.gradingScale.course.presentationScore = this.presentationsConfig.presentationScore;
+        }
+    }
+
+    /**
+     * Update number of graded presentations
      * @param presentationsNumber
      */
     updatePresentationsNumber(presentationsNumber?: number) {
@@ -93,7 +128,7 @@ export class GradingSystemPresentationsComponent implements OnChanges {
     }
 
     /**
-     * Update combined weight of presentations
+     * Update combined weight of graded presentations
      * @param presentationsWeight
      */
     updatePresentationsWeight(presentationsWeight?: number) {

@@ -89,7 +89,7 @@ describe('Exercise Scores Component', () => {
         participantName: 'participantName',
         results: [{ assessmentType: AssessmentType.MANUAL }],
     };
-    const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 99];
+    const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 100];
     let participationsToFilter: Participation[];
     const filterRanges = [
         new Range(0, 10),
@@ -114,7 +114,7 @@ describe('Exercise Scores Component', () => {
     beforeAll(() => {
         participationsToFilter = scoresToFilter.map((score: number) => {
             const studentParticipation = new StudentParticipation();
-            studentParticipation.results = [{ score }];
+            studentParticipation.results = [{ score, successful: score >= 100 }];
             return studentParticipation;
         });
     });
@@ -183,6 +183,13 @@ describe('Exercise Scores Component', () => {
         expect(getParticipationsMock).toHaveBeenCalledWith(2, true);
         expect(component.filteredParticipations).toEqual(participationsToFilter);
         expect(component.correctionRoundIndices).toEqual([0]);
+        expect(component.participationsPerFilter).toEqual(
+            new Map([
+                ['All', 10],
+                ['Successful', 1],
+                ['Unsuccessful', 9],
+            ]),
+        );
     }));
 
     it('should get exercise participation link for exercise without an exercise group', () => {
@@ -245,7 +252,31 @@ describe('Exercise Scores Component', () => {
         [FilterProp.LOCKED, { results: [{ completionDate: dayjs() }] } as Participation, false],
     ])('should filter participations correctly', (filter: FilterProp, participation: Participation, expected: boolean) => {
         component.resultCriteria.filterProp = filter;
-        expect(component.filterParticipationsByProp(participation)).toEqual(expected);
+        expect(component.filterParticipationsByProp(participation)).toBe(expected);
+    });
+
+    it.each([
+        [FilterProp.ALL, { type: ExerciseType.PROGRAMMING } as Exercise, false, true],
+        [FilterProp.ALL, { type: ExerciseType.TEXT }, true, true],
+        [FilterProp.SUCCESSFUL, { type: ExerciseType.PROGRAMMING }, false, true],
+        [FilterProp.SUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
+        [FilterProp.UNSUCCESSFUL, { type: ExerciseType.PROGRAMMING }, false, true],
+        [FilterProp.UNSUCCESSFUL, { type: ExerciseType.TEXT }, true, true],
+        [FilterProp.BUILD_FAILED, { type: ExerciseType.PROGRAMMING }, false, true],
+        [FilterProp.BUILD_FAILED, { type: ExerciseType.TEXT }, true, false],
+        [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
+        [FilterProp.MANUAL, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+        [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
+        [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: true }, false, true],
+        [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, false],
+        [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
+        [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
+        [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
+        [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
+    ])('should determine if filter is relevant for exercise configuration', (filter: FilterProp, exercise: Exercise, newManualResultsAllowed: boolean, expected: boolean) => {
+        component.exercise = exercise;
+        component.newManualResultAllowed = newManualResultsAllowed;
+        expect(component.isFilterRelevantForConfiguration(filter)).toBe(expected);
     });
 
     it('should return build plan id', () => {

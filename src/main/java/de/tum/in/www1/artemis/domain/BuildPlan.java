@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -42,6 +43,6 @@ public class BuildPlan extends DomainObject {
     }
 
     public Optional<ProgrammingExercise> getProgrammingExerciseById(Long exerciseId) {
-        return programmingExercises.stream().filter(programmingExercise -> programmingExercise.getId() == exerciseId).findFirst();
+        return programmingExercises.stream().filter(programmingExercise -> Objects.equals(programmingExercise.getId(), exerciseId)).findFirst();
     }
 }

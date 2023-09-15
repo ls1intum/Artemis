@@ -1,7 +1,7 @@
 <!--resizable container-->
 <jhi-resizeable-container *ngIf="exercise">
     <!--region Left Panel-->
-    <span class="exercise-title" left-header *ngIf="exercise.title">{{ exercise.title }}</span>
+    <span class="exercise-title" left-header>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
     <!-- prettier-ignore -->
     <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
@@ -19,7 +19,7 @@
                             <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
                         </div>
                         <div class="col-4">
-                            <button class="btn btn-primary" (click)="saveUploadedFile()">
+                            <button class="btn btn-primary" id="file-upload-submit" (click)="saveUploadedFile()">
                                 {{ 'artemisApp.examParticipation.uploadFile' | artemisTranslate }}
                             </button>
                         </div>
@@ -36,7 +36,7 @@
 
         <div *ngIf="submittedFileName && studentSubmission?.filePath" class="card-text">
             <h6>
-                {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate : { filename: submittedFileName } }}
+                {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
             </h6>
             <a class="text-primary" (click)="downloadFile(studentSubmission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
             <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
@@ -47,7 +47,7 @@
     <!--endregion-->
     <!--region Right Panel-->
     <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
-    <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+    <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
 
     <!-- problem statement update & difference highlighter -->
     <jhi-exam-exercise-update-highlighter *ngIf="exercise" [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)">

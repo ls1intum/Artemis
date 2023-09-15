@@ -1,12 +1,12 @@
-<h3>{{ 'artemisApp.studentDashboard.register.title' | artemisTranslate }}</h3>
+<h3>{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</h3>
 
 <div *ngIf="loading; else courseLoaded">
-    <span>{{ 'artemisApp.studentDashboard.register.courseLoading' | artemisTranslate }}</span>
+    <span>{{ 'artemisApp.studentDashboard.enroll.courseLoading' | artemisTranslate }}</span>
 </div>
 <ng-template #courseLoaded>
     <h4>{{ course?.title }}</h4>
     <p>
-        {{ 'artemisApp.studentDashboard.register.notInCourseButCanRegister' | artemisTranslate }}
+        {{ 'artemisApp.studentDashboard.enroll.notInCourseButCanEnroll' | artemisTranslate }}
     </p>
     <jhi-course-prerequisites-button [course]="course!"></jhi-course-prerequisites-button>
     <jhi-course-registration-button [course]="course!" (onRegistration)="redirectToCoursePage()"></jhi-course-registration-button>

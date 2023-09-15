@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,7 +50,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -68,7 +71,7 @@ public class ProgrammingExerciseExportService {
 
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
+    private Path repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -88,7 +91,9 @@ public class ProgrammingExerciseExportService {
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
-    private static final String EMBEDDED_FILE_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
+    private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
+
+    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"/api/files/markdown/.*\" .*>";
 
     private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
 
@@ -113,7 +118,10 @@ public class ProgrammingExerciseExportService {
      */
     public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         // Create export directory for programming exercises
-        var exportDir = Files.createTempDirectory(Path.of(repoDownloadClonePath), "programming-exercise-material");
+        if (!Files.exists(repoDownloadClonePath)) {
+            Files.createDirectories(repoDownloadClonePath);
+        }
+        Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
 
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories
@@ -123,43 +131,45 @@ public class ProgrammingExerciseExportService {
         // Ignore report data
         pathsToBeZipped.add(exportProgrammingExerciseRepositories(exercise, false, exportDir, exportErrors, new ArrayList<>()));
 
-        // Add problem statement as .md file
-        var problemStatementFileExtension = ".md";
-        String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
-        String cleanProblemStatementFileName = fileService.removeIllegalCharacters(problemStatementFileName);
-        var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
-        pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
-        copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped);
+        // Add problem statement as .md file if it is not null
+        if (exercise.getProblemStatement() != null) {
+            exportProblemStatementAndEmbeddedFiles(exercise, exportErrors, exportDir, pathsToBeZipped);
+        }
 
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
-        String cleanExerciseDetailsFileName = fileService.removeIllegalCharacters(exerciseDetailsFileName);
-        var exerciseDetailsExportPath = Path.of(exportDir.toString(), cleanExerciseDetailsFileName);
+        String cleanExerciseDetailsFileName = FileService.sanitizeFilename(exerciseDetailsFileName);
+        var exerciseDetailsExportPath = exportDir.resolve(cleanExerciseDetailsFileName);
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
 
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
                 + "-" + timestamp + ".zip";
-        String cleanFilename = fileService.removeIllegalCharacters(exportedExerciseZipFileName);
-        Path pathToZippedExercise = Path.of(exportDir.toString(), cleanFilename);
+        String cleanFilename = FileService.sanitizeFilename(exportedExerciseZipFileName);
+        Path pathToZippedExercise = exportDir.resolve(cleanFilename);
 
         // Create the zip folder of the exported programming exercise and return the path to the created folder
-        try {
-            zipFileService.createZipFile(pathToZippedExercise, pathsToBeZipped);
-            return pathToZippedExercise;
-        }
-        catch (IOException e) {
-            var error = "Failed to export programming exercise because the zip file " + pathToZippedExercise + " could not be created: " + e.getMessage();
-            log.info(error);
-            exportErrors.add(error);
-            return null;
-        }
-        finally {
-            // Delete the export directory
-            fileService.scheduleForDirectoryDeletion(exportDir, 5);
-        }
+        zipFileService.createTemporaryZipFile(pathToZippedExercise, pathsToBeZipped, 5);
+        return pathToZippedExercise;
+    }
+
+    /**
+     * Export problem statement and embedded files for a given programming exercise.
+     *
+     * @param exercise        the programming exercise that is exported
+     * @param exportErrors    List of failures that occurred during the export
+     * @param exportDir       the directory where the content of the export is stored
+     * @param pathsToBeZipped the paths that should be included in the zip file
+     */
+    private void exportProblemStatementAndEmbeddedFiles(ProgrammingExercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) {
+        var problemStatementFileExtension = ".md";
+        String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
+        String cleanProblemStatementFileName = FileService.sanitizeFilename(problemStatementFileName);
+        var problemStatementExportPath = Path.of(exportDir.toString(), cleanProblemStatementFileName);
+        pathsToBeZipped.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath));
+        copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped, exportErrors);
     }
 
     /**
@@ -169,35 +179,112 @@ public class ProgrammingExerciseExportService {
      * @param outputDir       the directory where the content of the export is stored
      * @param pathsToBeZipped the paths that should be included in the zip file
      */
+    private void copyEmbeddedFiles(ProgrammingExercise exercise, Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors) {
+        Set<String> embeddedFilesWithMarkdownSyntax = new HashSet<>();
+        Set<String> embeddedFilesWithHtmlSyntax = new HashSet<>();
 
-    private void copyEmbeddedFiles(ProgrammingExercise exercise, Path outputDir, List<Path> pathsToBeZipped) throws IOException {
-        Set<String> embeddedFiles = new HashSet<>();
+        Matcher matcherForMarkdownSyntax = Pattern.compile(EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX).matcher(exercise.getProblemStatement());
+        Matcher matcherForHtmlSyntax = Pattern.compile(EMBEDDED_FILE_HTML_SYNTAX_REGEX).matcher(exercise.getProblemStatement());
+        checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithMarkdownSyntax, matcherForMarkdownSyntax);
+        Path embeddedFilesDir = checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithHtmlSyntax,
+                matcherForHtmlSyntax);
+        // if the returned path is null the directory could not be created
+        if (embeddedFilesDir == null) {
+            return;
+        }
+        copyFilesEmbeddedWithMarkdownSyntax(exercise, exportErrors, embeddedFilesWithMarkdownSyntax, embeddedFilesDir);
+        copyFilesEmbeddedWithHtmlSyntax(exercise, exportErrors, embeddedFilesWithHtmlSyntax, embeddedFilesDir);
 
-        Matcher matcher = Pattern.compile(EMBEDDED_FILE_REGEX).matcher(exercise.getProblemStatement());
-        while (matcher.find()) {
-            embeddedFiles.add(matcher.group());
-        }
-        log.debug("Found embedded files:{} ", embeddedFiles);
-        Path embeddedFilesDir = outputDir.resolve("files");
-        if (!embeddedFiles.isEmpty()) {
-            if (!Files.exists(embeddedFilesDir)) {
-                Files.createDirectory(embeddedFilesDir);
-            }
-            pathsToBeZipped.add(embeddedFilesDir);
-        }
-        for (String embeddedFile : embeddedFiles) {
+    }
+
+    /**
+     * Copies the files that are embedded with Markdown syntax to the embedded files' directory.
+     *
+     * @param exercise                        the programming exercise that is exported
+     * @param exportErrors                    List of failures that occurred during the export
+     * @param embeddedFilesWithMarkdownSyntax the files that are embedded with Markdown syntax
+     * @param embeddedFilesDir                the directory where the embedded files are stored
+     */
+    private void copyFilesEmbeddedWithMarkdownSyntax(ProgrammingExercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithMarkdownSyntax, Path embeddedFilesDir) {
+        for (String embeddedFile : embeddedFilesWithMarkdownSyntax) {
             // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
             String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
             String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
-            String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
-            Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
-            Path imageExportPath = embeddedFilesDir.resolve(fileName);
-            // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
-            if (!Files.exists(imageExportPath)) {
+            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
+        }
+    }
+
+    /**
+     * Copies the files that are embedded with html syntax to the embedded files' directory.
+     *
+     * @param exercise                    the programming exercise that is exported
+     * @param exportErrors                List of failures that occurred during the export
+     * @param embeddedFilesWithHtmlSyntax the files that are embedded with html syntax
+     * @param embeddedFilesDir            the directory where the embedded files are stored
+     */
+    private void copyFilesEmbeddedWithHtmlSyntax(ProgrammingExercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithHtmlSyntax, Path embeddedFilesDir) {
+        for (String embeddedFile : embeddedFilesWithHtmlSyntax) {
+            int indexOfFirstQuotationMark = embeddedFile.indexOf('"');
+            String filePath = embeddedFile.substring(embeddedFile.indexOf("src=") + 5, embeddedFile.indexOf('"', indexOfFirstQuotationMark + 1));
+            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
+        }
+    }
+
+    /**
+     * Extracts the filename from the matched string and copies the file to the embedded files' directory.
+     *
+     * @param exercise         the programming exercise that is exported
+     * @param exportErrors     List of failures that occurred during the export
+     * @param embeddedFilesDir the directory where the embedded files are stored
+     * @param filePath         the path of the file that should be copied
+     */
+    private void constructFilenameAndCopyFile(ProgrammingExercise exercise, List<String> exportErrors, Path embeddedFilesDir, String filePath) {
+        String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
+        Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
+        Path imageExportPath = embeddedFilesDir.resolve(fileName);
+        // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
+        if (!Files.exists(imageExportPath)) {
+            try {
                 Files.copy(imageFilePath, imageExportPath);
             }
+            catch (IOException e) {
+                exportErrors.add("Failed to copy embedded files: " + e.getMessage());
+                log.warn("Could not copy embedded file {} for exercise with id {}", fileName, exercise.getId());
+            }
         }
+    }
 
+    /**
+     * Checks for matches in the problem statement and creates a directory for the embedded files.
+     *
+     * @param outputDir       the directory where the content of the export is stored
+     * @param pathsToBeZipped the paths that should be included in the zip file
+     * @param exportErrors    List of failures that occurred during the export
+     * @param embeddedFiles   the files that are embedded in the problem statement
+     * @param matcher         the matcher that is used to find the embedded files
+     * @return the path to the embedded files directory or null if the directory could not be created
+     */
+    private Path checkForMatchesInProblemStatementAndCreateDirectoryForFiles(Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors, Set<String> embeddedFiles,
+            Matcher matcher) {
+        while (matcher.find()) {
+            embeddedFiles.add(matcher.group());
+        }
+        log.debug("Found embedded files: {} ", embeddedFiles);
+        Path embeddedFilesDir = outputDir.resolve("files");
+        if (!embeddedFiles.isEmpty()) {
+            if (!Files.exists(embeddedFilesDir)) {
+                try {
+                    Files.createDirectory(embeddedFilesDir);
+                }
+                catch (IOException e) {
+                    exportErrors.add("Could not create directory for embedded files: " + e.getMessage());
+                    log.warn("Could not create directory for embedded files. Won't include embedded files: " + e.getMessage());
+                    return null;
+                }
+            }
+            pathsToBeZipped.add(embeddedFilesDir);
+        }
+        return embeddedFilesDir;
     }
 
     /**
@@ -225,10 +312,11 @@ public class ProgrammingExerciseExportService {
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
             var exportOptions = new RepositoryExportOptionsDTO();
-            exportOptions.setHideStudentNameInZippedFolder(false);
+            exportOptions.setAnonymizeRepository(false);
+            exportOptions.setExportAllParticipants(true);
 
             // Export student repositories and add them to list
-            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, exportErrors).stream()
+            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, outputDir, exportErrors).stream()
                     .filter(Objects::nonNull).toList();
             pathsToBeZipped.addAll(exportedStudentRepositoryFiles);
         }
@@ -248,13 +336,13 @@ public class ProgrammingExerciseExportService {
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
-        String cleanFilename = fileService.removeIllegalCharacters(filename);
+        String cleanFilename = FileService.sanitizeFilename(filename);
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
         List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).toList();
 
-        String cleanProjectName = fileService.removeIllegalCharacters(exercise.getProjectName());
+        String cleanProjectName = FileService.sanitizeFilename(exercise.getProjectName());
         // Add report entry, programming repositories cannot be skipped
         reportData.add(new ArchivalReportEntry(exercise, cleanProjectName, pathsToBeZipped.size(), includedFilePathsNotNull.size(), 0));
 
@@ -291,7 +379,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
-        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
         return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, exportErrors);
     }
 
@@ -306,7 +394,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
-        Path uniquePath = fileService.getUniquePath(repoDownloadClonePath);
+        Path uniquePath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
         return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
     }
 
@@ -321,7 +409,7 @@ public class ProgrammingExerciseExportService {
      * @return a zipped file
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
-        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
         return exportInstructorAuxiliaryRepositoryForExercise(exerciseId, auxiliaryRepository, outputDir, exportErrors);
     }
 
@@ -412,7 +500,7 @@ public class ProgrammingExerciseExportService {
 
     private String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        return fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
+        return FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 
     private Optional<File> exportRepository(VcsRepositoryUrl repositoryUrl, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path outputDir,
@@ -488,10 +576,10 @@ public class ProgrammingExerciseExportService {
     public File exportStudentRepositoriesToZipFile(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .get();
+                .orElseThrow();
 
-        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
-        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, new ArrayList<>());
+        Path outputDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 10);
+        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
         try {
             // Create a zip folder containing the zipped repositories.
@@ -501,46 +589,53 @@ public class ProgrammingExerciseExportService {
             log.error("Creating zip file for programming exercise {} did not work correctly: {} ", programmingExercise.getTitle(), ex.getMessage());
             return null;
         }
-        finally {
-            fileService.scheduleForDirectoryDeletion(outputDir, 5);
-        }
     }
 
     /**
      * Zip the participations of programming exercises of a requested list of students separately.
      *
-     * @param programmingExercise     The programming exercise
-     * @param participations          Participations that should be exported
-     * @param repositoryExportOptions The options that should be used for the export
-     * @param outputDir               The directory used to store the zip file
+     * @param programmingExercise     the programming exercise
+     * @param participations          participations that should be exported
+     * @param repositoryExportOptions the options that should be used for the export
+     * @param workingDir              The directory used to clone the repositories
+     * @param outputDir               The directory used for store the zip file
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
      * @return List of zip file paths
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions, Path outputDir, List<String> exportErrors) {
+            RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.isExportAllParticipants()) {
-            log.info("Request to export all student or team repositories of programming exercise {} with title '{}'", programmingExerciseId, programmingExercise.getTitle());
+            log.info("Request to export all {} student or team repositories of programming exercise {} with title '{}'", participations.size(), programmingExerciseId,
+                    programmingExercise.getTitle());
         }
         else {
-            log.info("Request to export the repositories of programming exercise {} with title '{}' of the following students or teams: {}", programmingExerciseId,
-                    programmingExercise.getTitle(), participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
+            log.info("Request to export the repositories of programming exercise {} with title '{}' of {} students or teams", programmingExerciseId, programmingExercise.getTitle(),
+                    participations.size());
+            log.debug("Export repositories for students or teams: {}",
+                    participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
-        List<Path> exportedStudentRepositories = new ArrayList<>();
-        participations.forEach(participation -> {
+        List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
+
+        log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
             try {
-                Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, outputDir);
+                log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
+                Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir);
                 if (zipFile != null) {
                     exportedStudentRepositories.add(zipFile);
                 }
             }
-            catch (Exception e) {
+            catch (Exception exception) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportErrors.add(error);
             }
-        });
+        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+        // wait until all operations finish
+        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
         return exportedStudentRepositories;
     }
 
@@ -557,7 +652,7 @@ public class ProgrammingExerciseExportService {
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
-        var repositoryDir = fileService.getUniquePathString(outputDir.toString());
+        var repositoryDir = fileService.getTemporaryUniquePath(outputDir, 5);
         Path localRepoPath;
 
         // Checkout the repository
@@ -600,30 +695,32 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
-     * @param outputDir               The directory used for storing the zip file
+     * @param workingDir              The directory used to clone the repository
+     * @param outputDir               The directory where the zip file is stored
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */
     private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, Path outputDir) throws IOException, UncheckedIOException {
+            final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
             return null;
         }
 
-        if (repositoryExportOptions.isExcludePracticeSubmissions() && participation.isTestRun()) {
+        if (repositoryExportOptions.isExcludePracticeSubmissions() && participation.isPracticeMode()) {
             log.debug("Ignoring practice participation {}", participation);
             return null;
         }
 
         try {
             // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, outputDir.toString());
+            Repository repository = gitService.getOrCheckoutRepository(participation, workingDir.toString());
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;
             }
 
+            // TODO: this operation is only necessary if the repo was not newly cloned
             gitService.resetToOriginHead(repository);
 
             if (repositoryExportOptions.isFilterLateSubmissions()) {
@@ -637,10 +734,10 @@ public class ProgrammingExerciseExportService {
 
             if (repositoryExportOptions.isCombineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeStudentCommits());
+                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeRepository());
             }
 
-            if (repositoryExportOptions.isAnonymizeStudentCommits()) {
+            if (repositoryExportOptions.isAnonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
@@ -648,8 +745,8 @@ public class ProgrammingExerciseExportService {
             if (repositoryExportOptions.isNormalizeCodeStyle()) {
                 try {
                     log.debug("Normalizing code style for participation {}", participation);
-                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath().toString());
-                    fileService.convertToUTF8Directory(repository.getLocalPath().toString());
+                    fileService.normalizeLineEndingsDirectory(repository.getLocalPath());
+                    fileService.convertToUTF8Directory(repository.getLocalPath());
                 }
                 catch (IOException ex) {
                     log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -657,7 +754,7 @@ public class ProgrammingExerciseExportService {
             }
 
             log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
-            return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isHideStudentNameInZippedFolder());
+            return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isAnonymizeRepository());
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
@@ -672,9 +769,9 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise the programming exercise for which repos have been downloaded
      * @param targetPath          the path in which the repositories have been downloaded
      */
-    public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
+    public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, Path targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
-        Path projectPath = Path.of(targetPath, projectDirName);
+        Path projectPath = targetPath.resolve(projectDirName);
         try {
             log.info("Delete project root directory {}", projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());
@@ -703,7 +800,8 @@ public class ProgrammingExerciseExportService {
 
         if (latestAllowedDate.isPresent()) {
             Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.naturalOrder());
+                    .filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(latestAllowedDate.get()))
+                    .max(Comparator.naturalOrder());
             gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
         }
     }

@@ -6,7 +6,7 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/ex
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { hasDueDatePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/entities/submission.model';
@@ -56,14 +56,14 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasParticipationChanged(changes)) {
-            // The identification of manual results is only relevant when the deadline was passed, otherwise they could be overridden anyway.
-            if (hasDeadlinePassed(this.exercise)) {
+            // The identification of manual results is only relevant when the due date was passed, otherwise they could be overridden anyway.
+            if (hasDueDatePassed(this.exercise)) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
                 const newestResult = !!this.participation.results && head(orderBy(this.participation.results, ['id'], ['desc']));
                 this.lastResultIsManual = !!newestResult && Result.isManualResult(newestResult);
             }
             // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)
-            // or the deadline is finished.
+            // or the due date is over.
             this.participationBuildCanBeTriggered =
                 !!this.participation.initializationState &&
                 [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED].includes(this.participation.initializationState);

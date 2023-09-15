@@ -16,7 +16,10 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
 
     // unique index, even if multiple plant uml diagrams are shown from different problem statements on the same page (in different tabs)
     private plantUmlIndex = 0;
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private plantUmlService: ProgrammingExercisePlantUmlService) {}
+    constructor(
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private plantUmlService: ProgrammingExercisePlantUmlService,
+    ) {}
 
     /**
      * Sets latest result according to parameter.
@@ -73,7 +76,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // E.g. Implement BubbleSort, testBubbleSort
                 const plantUmlContainer = `<div class="mb-4" id="plantUml-${idPlaceholder}"></div>`;
                 // Replace test status markers.
-                const plantUmls = text.match(plantUmlRegex) || [];
+                const plantUmls = text.match(plantUmlRegex) ?? [];
                 // Assign unique ids to uml data structure at the beginning.
                 const plantUmlsIndexed = plantUmls.map((plantUml) => {
                     const nextIndex = this.plantUmlIndex;
@@ -89,7 +92,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // before we send the plantUml to the server for rendering, we need to inject the current test status so that the colors can be adapted
                 // (green == implemented, red == not yet implemented, grey == unknown)
                 const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { plantUmlId: number; plantUml: string }) => {
-                    plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(/testsColor\(((?:[^()]+\([^()]+\))*[^()]*)\)/g, (match: any, capture: string) => {
+                    plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(/testsColor\(((?:[^()]+\([^()]*\))*[^()]*)\)/g, (match: any, capture: string) => {
                         // split the names by "," only when there is not a closing bracket without a previous opening bracket
                         const tests = capture.split(/,(?![^(]*?\))/);
                         const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);

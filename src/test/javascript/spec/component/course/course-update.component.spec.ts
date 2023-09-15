@@ -14,6 +14,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -35,6 +36,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -84,6 +86,7 @@ describe('Course Management Update Component', () => {
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
         course.timeZone = 'Europe/London';
+        course.learningPathsEnabled = true;
 
         const parentRoute = {
             data: of({ course }),
@@ -105,12 +108,14 @@ describe('Course Management Update Component', () => {
             declarations: [
                 CourseUpdateComponent,
                 MarkdownEditorStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(SecuredImageComponent),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveKeysPipe),
             ],
         })
@@ -147,7 +152,6 @@ describe('Course Management Update Component', () => {
             comp.ngOnInit();
             expect(comp.course).toEqual(course);
             expect(comp.courseOrganizations).toEqual([organization]);
-            expect(comp.presentationScoreEnabled).toBeTrue();
             expect(getOrganizationsStub).toHaveBeenCalledOnce();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
             expect(getProfileStub).toHaveBeenCalledOnce();
@@ -181,9 +185,9 @@ describe('Course Management Update Component', () => {
             expect(comp.communicationEnabled).toBe(isCommunicationEnabled(course));
             expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.enrollmentEnabled);
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
-            expect(comp.courseForm.get(['presentationScore'])?.value).toBe(course.presentationScore);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
+            expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
         }));
     });
 
@@ -316,31 +320,6 @@ describe('Course Management Update Component', () => {
         });
     });
 
-    describe('changePresentationScoreInput', () => {
-        it('should enabled if control is disabled', () => {
-            const control = new FormControl(12);
-            control.disable();
-            comp.courseForm = new FormGroup({
-                presentationScore: control,
-            });
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeTrue();
-            comp.changePresentationScoreInput();
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeFalse();
-            expect(comp.presentationScoreEnabled).toBeTrue();
-        });
-        it('should reset if control has value', () => {
-            const control = new FormControl(12);
-            comp.courseForm = new FormGroup({
-                presentationScore: control,
-            });
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeFalse();
-            comp.changePresentationScoreInput();
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeTrue();
-            expect(comp.courseForm.controls['presentationScore'].value).toBe(0);
-            expect(comp.presentationScoreEnabled).toBeFalse();
-        });
-    });
-
     describe('changeOnlineCourse', () => {
         it('should disable registration enabled if course becomes online', () => {
             comp.course = new Course();
@@ -365,6 +344,8 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 registrationEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
+                enrollmentStartDate: new FormControl(),
+                enrollmentEndDate: new FormControl(),
             });
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
@@ -396,8 +377,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
-            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(0);
-            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(0);
+            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
+            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
             expect(comp.complaintsEnabled).toBeFalse();
         });
     });
@@ -478,6 +459,145 @@ describe('Course Management Update Component', () => {
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = dayjs().subtract(1, 'day');
             expect(comp.isValidDate).toBeFalse();
+        });
+    });
+
+    describe('isValidEnrollmentPeriod', () => {
+        it('should handle valid dates', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeTrue();
+        });
+
+        it('should not be valid if course start and end date are not set', () => {
+            comp.course = new Course();
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should not be valid if course start date is not set', () => {
+            comp.course = new Course();
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should not be valid if course end date is not set', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should not be valid if course start and end date are not valid', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should handle invalid enrollment end date before enrollment start date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs().subtract(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should handle invalid enrollment start date after course start date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(2, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(1, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should handle invalid enrollment end date after course end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(2, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+    });
+
+    describe('isValidUnenrollmentEndDate', () => {
+        it('should handle valid dates', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeTrue();
+        });
+
+        it('should not be valid if enrollment start and end date are not set', () => {
+            comp.course = new Course();
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should not be valid if enrollment start date is not set', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should not be valid if enrollment end date is not set', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should not be valid if enrollemnt start and end date are not valid', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs();
+            comp.course.enrollmentEndDate = dayjs().subtract(2, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should handle invalid unenrollment end date before enrollment end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.unenrollmentEndDate = dayjs();
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should handle invalid unenrollment end date after course end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            comp.course.unenrollmentEndDate = dayjs().add(2, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
         });
     });
 

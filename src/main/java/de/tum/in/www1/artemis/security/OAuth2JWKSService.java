@@ -70,7 +70,7 @@ public class OAuth2JWKSService {
         List<JWK> keys = new ArrayList<>(jwkSet.getKeys());
 
         if (jwkToRemove != null) {
-            keys = keys.stream().filter(jwk -> jwk != jwkToRemove).collect(Collectors.toList());
+            keys = keys.stream().filter(jwk -> jwk != jwkToRemove).collect(Collectors.toCollection(ArrayList::new));
         }
 
         generateAndAddKey(clientRegistration, keys);

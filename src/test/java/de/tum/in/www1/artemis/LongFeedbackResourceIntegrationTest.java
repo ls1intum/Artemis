@@ -4,26 +4,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "longfeedbackintegration";
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Result resultStudent1;
 
     @BeforeEach
     void setUp() {
-        database.addUsers(TEST_PREFIX, 2, 1, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 0);
 
-        final Course course = database.addCourseWithOneProgrammingExercise();
-        final ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        final ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
-        resultStudent1 = database.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
+        resultStudent1 = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
     }
 
     @Test
@@ -67,7 +84,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambo
     void notFoundIfOnlyShortFeedback() throws Exception {
         final Feedback feedback = new Feedback();
         feedback.setDetailText("short text");
-        database.addFeedbackToResult(feedback, resultStudent1);
+        participationUtilService.addFeedbackToResult(feedback, resultStudent1);
 
         final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.NOT_FOUND, LongFeedbackText.class);
         assertThat(longFeedbackText).isNull();
@@ -90,7 +107,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambo
         final Feedback feedback = new Feedback();
         feedback.setDetailText("a".repeat(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10));
 
-        database.addFeedbackToResult(feedback, result);
+        participationUtilService.addFeedbackToResult(feedback, result);
 
         return feedback;
     }

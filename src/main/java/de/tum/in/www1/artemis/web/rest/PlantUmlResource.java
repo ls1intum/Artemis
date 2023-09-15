@@ -5,9 +5,9 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.PlantUmlService;
 
 /**
@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 
 @RestController
 @RequestMapping(PlantUmlResource.Endpoints.ROOT)
-@PreAuthorize("hasRole('USER')")
 public class PlantUmlResource {
 
     private final Logger log = LoggerFactory.getLogger(PlantUmlResource.class);
@@ -36,6 +35,7 @@ public class PlantUmlResource {
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping(value = Endpoints.GENERATE_PNG)
+    @EnforceAtLeastStudent
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.currentTimeMillis();
@@ -55,6 +55,7 @@ public class PlantUmlResource {
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping(Endpoints.GENERATE_SVG)
+    @EnforceAtLeastStudent
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.currentTimeMillis();

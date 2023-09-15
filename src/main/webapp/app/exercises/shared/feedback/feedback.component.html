@@ -1,6 +1,6 @@
 <div class="modal-header feedback-header">
     <h3 class="modal-title">
-        <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate : { taskName } }}</ng-container>
+        <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}</ng-container>
         <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
     </h3>
 
@@ -13,11 +13,11 @@
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
     <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
-        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate : { date: latestDueDate }"></h6>
+        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestDueDate }"></h6>
     </div>
 
     <!-- Loading state -->
-    <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
+    <div *ngIf="isLoading; else feedbackContainer" class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
     </div>
 
@@ -28,7 +28,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <h4>
                         <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">
-                            {{ 'artemisApp.result.score' | artemisTranslate : { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
+                            {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
                         </span>
                         <ng-template #scoreWithPoints>
                             <span *ngIf="exercise && exercise.maxPoints">
@@ -107,7 +107,7 @@
             <dl class="buildoutput dl-horizontal">
                 <ng-container *ngFor="let logEntry of buildLogs; let i = index">
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | artemisDate : 'short' : true }}</dt>
+                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
                     <dd
                         [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                         [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"

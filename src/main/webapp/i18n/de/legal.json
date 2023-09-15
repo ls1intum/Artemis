@@ -1,10 +1,26 @@
 {
-    "legal": {
-        "imprint": {
-            "title": "Impressum"
-        },
-        "privacy": {
-            "title": "Datenschutz"
+    "artemisApp": {
+        "legal": {
+            "language": {
+                "de": "Deutsch",
+                "en": "Englisch"
+            },
+            "privacyStatement": {
+                "title": "Datenschutzerklärung",
+                "updatePrivacyStatement": "Datenschutzerklärung aktualisieren",
+                "unsavedChangesWarning": "Die Datenschutzerklärung enthält ungespeicherte Änderungen. Möchtest du wirklich die Sprache wechseln und alle ungespeicherten Änderungen verwerfen?"
+            },
+            "imprint": {
+                "title": "Impressum",
+                "updateImprint": "Impressum aktualisieren",
+                "unsavedChangesWarning": "Das Impressum enthält ungespeicherte Änderungen. Möchtest du wirklich die Sprache wechseln und alle ungespeicherten Änderungen verwerfen?"
+            },
+            "unsaved": "Ungespeichert",
+            "saved": "Gespeichert",
+            "saving": "Wird gespeichert",
+            "unsavedTooltip": "Die Änderungen wurden noch nicht gespeichert. Bitte speichere deine Änderungen, bevor du die Sprache wechselst oder die Seite verlässt.",
+            "savedTooltip": "Die Änderungen sind gespeichert.",
+            "savingTooltip": "Die Änderungen werden gespeichert."
         }
     }
 }

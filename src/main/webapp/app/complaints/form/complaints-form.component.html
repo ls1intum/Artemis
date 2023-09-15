@@ -32,8 +32,8 @@
             </p>
 
             <div class="d-flex flex-column">
-                <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.course!.maxComplaintTextLimit!" [(ngModel)]="complaintText"> </textarea>
-                <jhi-textarea-counter [maxLength]="this.course!.maxComplaintTextLimit!" [content]="complaintText" [visible]="true"> </jhi-textarea-counter>
+                <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.maxComplaintTextLimit" [(ngModel)]="complaintText"> </textarea>
+                <jhi-textarea-counter [maxLength]="this.maxComplaintTextLimit" [content]="complaintText" [visible]="true"> </jhi-textarea-counter>
             </div>
 
             <div class="row">
@@ -41,7 +41,7 @@
                     <button
                         id="submit-complaint"
                         class="btn btn-primary"
-                        [disabled]="!complaintText || complaintTextLength() > this.course!.maxComplaintTextLimit!"
+                        [disabled]="!complaintText || complaintTextLength() > this.maxComplaintTextLimit"
                         (click)="createComplaint()"
                     >
                         {{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.submit' | artemisTranslate) : ('artemisApp.moreFeedback.button' | artemisTranslate) }}

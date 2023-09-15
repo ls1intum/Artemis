@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,11 +17,18 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "plagiarismcheck";
+
+    @Autowired
+    private PlagiarismUtilService plagiarismUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
 
     private Course course;
 
@@ -30,14 +38,14 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitb
         String submissionModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         int studentAmount = 5;
 
-        course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(TEST_PREFIX, submissionText, studentAmount);
-        database.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, submissionModel, studentAmount, course);
+        course = plagiarismUtilService.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(TEST_PREFIX, submissionText, studentAmount);
+        plagiarismUtilService.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, submissionModel, studentAmount, course);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCheckPlagiarismResultForTextExercise() throws Exception {
-        var textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        var textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         String path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         createAndTestPlagiarismResult(path);
     }
@@ -45,7 +53,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismResultForModelingExercise() throws Exception {
-        var modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
+        var modelingExercise = exerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         String path = "/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism";
         createAndTestPlagiarismResult(path);
     }

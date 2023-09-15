@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
+
 import java.net.URL;
 import java.util.Comparator;
 import java.util.List;
@@ -17,7 +19,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -71,8 +72,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final BuildPlanRepository buildPlanRepository;
 
     private final GitLabCIBuildPlanService buildPlanService;
@@ -98,13 +97,12 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository, BuildPlanRepository buildPlanRepository,
-            GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+            GitLabApi gitlab, UrlService urlService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.gitlab = gitlab;
         this.urlService = urlService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -128,7 +126,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             project.setSharedRunnersEnabled(true);
             project.setAutoDevopsEnabled(false);
 
-            project.setCiConfigPath(generateBuildPlanURL(exercise));
+            final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise);
+            project.setCiConfigPath(buildPlanUrl);
 
             projectApi.updateProject(project);
         }
@@ -147,7 +146,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             updateVariable(repositoryPath, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO");
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage);
             updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue);
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + Constants.NEW_RESULT_RESOURCE_API_PATH);
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
             updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch());
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch());
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()));
@@ -322,12 +321,5 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
         return Optional.empty();
-    }
-
-    private String generateBuildPlanURL(ProgrammingExercise exercise) {
-        programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
-        // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
-        // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
-        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 }

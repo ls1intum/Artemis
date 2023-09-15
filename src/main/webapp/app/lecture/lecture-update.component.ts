@@ -12,9 +12,8 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { faBan, faHandshakeAngle, faPuzzlePiece, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 @Component({
@@ -35,8 +34,6 @@ export class LectureUpdateComponent implements OnInit {
     isShowingWizardMode: boolean;
 
     courses: Course[];
-    startDate: string;
-    endDate: string;
 
     domainCommandsDescription = [new KatexCommand()];
     file: File;
@@ -79,7 +76,6 @@ export class LectureUpdateComponent implements OnInit {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
             this.lecture = lecture ?? new Lecture();
-
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
@@ -112,6 +108,7 @@ export class LectureUpdateComponent implements OnInit {
         if (this.lecture.id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
         } else {
+            // Newly created lectures must have a channel name, which cannot be undefined
             this.subscribeToSaveResponse(this.lectureService.create(this.lecture));
         }
     }
@@ -136,14 +133,14 @@ export class LectureUpdateComponent implements OnInit {
         this.processUnitMode = !this.processUnitMode;
     }
 
-    onFileChange(event: any): void {
-        if (event.target.files.length) {
-            const fileList = event.target.files;
-            this.file = fileList[0];
-            this.fileName = this.file.name;
-        } else {
+    onFileChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
             this.fileName = '';
+            return;
         }
+        this.file = input.files[0];
+        this.fileName = this.file.name;
     }
 
     /**
@@ -185,22 +182,30 @@ export class LectureUpdateComponent implements OnInit {
 
     /**
      * Action on unsuccessful lecture creation or edit
-     * @param error the error handed to the alert service
+     * @param errorRes the errorRes handed to the alert service
      */
-    protected onSaveError(error: HttpErrorResponse) {
+    protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
-        onError(this.alertService, error);
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
     }
 
     onDatesValuesChanged() {
-        if (this.lecture.startDate === undefined || this.lecture.endDate === undefined) {
-            return;
+        const startDate = this.lecture.startDate;
+        const endDate = this.lecture.endDate;
+        const visibleDate = this.lecture.visibleDate;
+
+        // Prevent endDate from being before startDate, if both dates are set
+        if (endDate && startDate?.isAfter(endDate)) {
+            this.lecture.endDate = startDate.clone();
         }
 
-        if (this.lecture.startDate.isSameOrBefore(this.lecture.endDate)) {
-            return;
+        // Prevent visibleDate from being after startDate, if both dates are set
+        if (visibleDate && startDate?.isBefore(visibleDate)) {
+            this.lecture.visibleDate = startDate.clone();
         }
-
-        this.lecture.endDate = this.lecture.startDate;
     }
 }

@@ -11,6 +11,9 @@ git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
 git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
 # Fetch and checkout the commit defined in an environment variable, if it is available.
 cd assignment-repository
+
+# Do another fetch for the commit hash as it might be older and not part of the shallow clone.
+# TODO: Optimize this by only running this additional fetch if the $ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH is not part of the shallow clone.
 if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
     git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
     git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"

@@ -1,25 +1,29 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
@@ -30,7 +34,7 @@ public class ChannelService {
 
     public static final String CHANNEL_ENTITY_NAME = "messages.channel";
 
-    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$]{1}[a-z0-9-]{0,20}$";
+    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$][a-z0-9-]{0,30}$";
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
@@ -38,14 +42,14 @@ public class ChannelService {
 
     private final ConversationService conversationService;
 
-    private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
 
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            CourseRepository courseRepository) {
+            UserRepository userRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
-        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -59,6 +63,16 @@ public class ChannelService {
                 usersToGrant.stream().map(User::getId).collect(Collectors.toSet()));
         for (ConversationParticipant conversationParticipant : matchingParticipants) {
             conversationParticipant.setIsModerator(true);
+        }
+        // If the channel is course-wide, there might not be a participant entry for some users yet. They are created here.
+        if (channel.getIsCourseWide()) {
+            var matchingParticipantIds = matchingParticipants.stream().map(participant -> participant.getUser().getId()).collect(Collectors.toSet());
+            var missingUsers = usersToGrant.stream().filter(user -> !matchingParticipantIds.contains(user.getId()));
+            missingUsers.forEach(user -> {
+                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+                conversationParticipant.setIsModerator(true);
+                matchingParticipants.add(conversationParticipant);
+            });
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
         conversationService.notifyAllConversationMembersAboutUpdate(channel);
@@ -118,6 +132,7 @@ public class ChannelService {
         if (StringUtils.hasText(channel.getName())) {
             channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
         }
+
         channel.setCreator(creator.orElse(null));
         channel.setCourse(course);
         channel.setIsArchived(false);
@@ -162,29 +177,13 @@ public class ChannelService {
     }
 
     /**
-     * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
+     * Deletes the channel if it exists
      *
-     * @param userToAddToGroup the user to be added
-     * @param group            the group of the user
-     * @param role             the role of the user
+     * @param channel the channel to delete
      */
-    @Async
-    public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
-        final Set<String> channelNames = Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName).collect(Collectors.toSet());
-
-        List<Course> courses = switch (role) {
-            case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
-            case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
-            case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
-            default -> List.of();
-        };
-
-        for (Course c : courses) {
-            // set the security context because the async methods use multiple threads
-            SecurityUtils.setAuthorizationObject();
-            channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
-                conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-            });
+    public void deleteChannel(@Nullable Channel channel) {
+        if (channel != null) {
+            conversationService.deleteConversation(channel);
         }
     }
 
@@ -198,16 +197,21 @@ public class ChannelService {
         if (channel.getName() != null && !channel.getName().matches(CHANNEL_NAME_REGEX)) {
             throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
         }
-        Optional<Channel> channelWithSameName;
+
+        if (this.allowDuplicateChannelName(channel)) {
+            return;
+        }
+
+        Set<Channel> channelsWithSameName;
         if (channel.getId() != null) {
-            channelWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
+            channelsWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
         }
         else {
-            channelWithSameName = channelRepository.findChannelByCourseIdAndName(courseId, channel.getName());
+            channelsWithSameName = channelRepository.findChannelByCourseIdAndName(courseId, channel.getName());
         }
-        channelWithSameName.ifPresent(existingChannel -> {
-            throw new ChannelNameDuplicateException(existingChannel.getName());
-        });
+        if (!channelsWithSameName.isEmpty()) {
+            throw new ChannelNameDuplicateException(channel.getName());
+        }
     }
 
     /**
@@ -240,4 +244,163 @@ public class ChannelService {
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
+    /**
+     * Creates a channel for a lecture and sets the channel name of the lecture accordingly.
+     *
+     * @param lecture     the lecture to create the channel for
+     * @param channelName the name of the channel
+     * @return the created channel
+     */
+    public Channel createLectureChannel(Lecture lecture, Optional<String> channelName) {
+        Channel channelToCreate = createDefaultChannel(channelName, "lecture-", lecture.getTitle());
+        channelToCreate.setLecture(lecture);
+        Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        lecture.setChannelName(createdChannel.getName());
+        return createdChannel;
+    }
+
+    /**
+     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly.
+     *
+     * @param exercise    the exercise to create the channel for
+     * @param channelName the name of the channel
+     * @return the created channel
+     */
+    public Channel createExerciseChannel(Exercise exercise, Optional<String> channelName) {
+        if (!exercise.isCourseExercise()) {
+            return null;
+        }
+        Channel channelToCreate = createDefaultChannel(channelName, "exercise-", exercise.getTitle());
+        channelToCreate.setExercise(exercise);
+        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+    }
+
+    /**
+     * Creates a channel for a real exam and sets the channel name of the exam accordingly.
+     *
+     * @param exam        the exam to create the channel for
+     * @param channelName the name of the channel
+     * @return the created channel
+     */
+    public Channel createExamChannel(Exam exam, Optional<String> channelName) {
+        Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
+        channelToCreate.setIsPublic(false);
+        channelToCreate.setExam(exam);
+        Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        exam.setChannelName(createdChannel.getName());
+        return createdChannel;
+    }
+
+    /**
+     * Update the channel of a lecture
+     *
+     * @param originalLecture the original lecture
+     * @param channelName     the new channel name
+     * @return the updated channel
+     */
+    public Channel updateLectureChannel(Lecture originalLecture, String channelName) {
+        if (channelName == null) {
+            return null;
+        }
+        Channel channel = channelRepository.findChannelByLectureId(originalLecture.getId());
+        return updateChannelName(channel, channelName);
+    }
+
+    /**
+     * Update the channel of an exercise
+     *
+     * @param originalExercise the original exercise
+     * @param updatedExercise  the updated exercise
+     * @return the updated channel
+     */
+    public Channel updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
+        if (updatedExercise.getChannelName() == null) {
+            return null;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(originalExercise.getId());
+        if (channel == null) {
+            return null;
+        }
+        return updateChannelName(channel, updatedExercise.getChannelName());
+    }
+
+    /**
+     * Update the channel of an exam
+     *
+     * @param originalExam the original exam
+     * @param updatedExam  the updated exam
+     * @return the updated channel
+     */
+    public Channel updateExamChannel(Exam originalExam, Exam updatedExam) {
+        if (updatedExam.getChannelName() == null) {
+            return null;
+        }
+        Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
+        return updateChannelName(channel, updatedExam.getChannelName());
+    }
+
+    private Channel updateChannelName(Channel channel, String newChannelName) {
+
+        // Update channel name if necessary
+        if (!newChannelName.equals(channel.getName())) {
+            channel.setName(newChannelName);
+            this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
+            return channelRepository.save(channel);
+        }
+        else {
+            return channel;
+        }
+    }
+
+    /**
+     * Creates a channel object with the provided name.
+     * The resulting channel is public, not an announcement channel and not archived.
+     *
+     * @param channelNameOptional the desired name of the channel wrapped in an Optional
+     * @param prefix              the prefix for the channel name
+     * @param backupTitle         used as a basis for the resulting channel name if the provided channel name is empty
+     * @return a default channel with the given name
+     */
+    private static Channel createDefaultChannel(Optional<String> channelNameOptional, @NotNull String prefix, String backupTitle) {
+        String channelName = channelNameOptional.filter(s -> !s.isEmpty()).orElse(generateChannelNameFromTitle(prefix, Optional.ofNullable(backupTitle)));
+        Channel defaultChannel = new Channel();
+        defaultChannel.setName(channelName);
+        defaultChannel.setIsPublic(true);
+        defaultChannel.setIsCourseWide(true);
+        defaultChannel.setIsAnnouncementChannel(false);
+        defaultChannel.setIsArchived(false);
+        return defaultChannel;
+    }
+
+    /**
+     * Determines whether duplicate channel names are allowed for the given channel
+     *
+     * @return true if the channel does belong to a lecture/exercise/exam
+     */
+    private boolean allowDuplicateChannelName(Channel channel) {
+        return channel.getExercise() != null || channel.getLecture() != null || channel.getExam() != null;
+    }
+
+    /**
+     * Generates the channel name based on the associated lecture/exercise/exam title and a corresponding prefix.
+     * The resulting name only contains lower case letters, digits and hyphens and has a maximum length of 30 characters.
+     * Upper case letters are transformed to lower case and special characters are replaced with a hyphen, while avoiding
+     * consecutive hyphens, e.g. "Example(%)name" becomes "example-name".
+     *
+     * @param prefix prefix for the channel
+     * @param title  title of the lecture/exercise/exam to derive the channel name from
+     * @return the generated channel name
+     */
+    private static String generateChannelNameFromTitle(@NotNull String prefix, Optional<String> title) {
+        String channelName = prefix + title.orElse("");
+        // [^a-z0-9]+ matches all occurrences of single or consecutive characters that are no digits and letters
+        String specialCharacters = "[^a-z0-9]+";
+        // -+$ matches a trailing hyphen at the end of a string
+        String leadingTrailingHyphens = "-$";
+        channelName = channelName.toLowerCase().replaceAll(specialCharacters, "-").replaceFirst(leadingTrailingHyphens, "");
+        if (channelName.length() > 30) {
+            channelName = channelName.substring(0, 30);
+        }
+        return channelName;
+    }
 }

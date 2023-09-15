@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
@@ -57,7 +57,10 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
+      run: set -o pipefail && ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+    - name: Print failed tests
+      if: failure()
+      run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -71,12 +74,6 @@ jobs:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
         numFailures: 99
-    - name: Upload Code Coverage
-      uses: codecov/codecov-action@v3
-      with:
-        files: build/reports/jacoco/test/jacocoTestReport.xml
-        name: artemis-server
-        flags: server
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: success() || failure()    # run this step even if previous step failed
@@ -84,6 +81,9 @@ jobs:
         name: H2 Tests
         path: build/test-results/test/*.xml
         reporter: java-junit
+    - name: Number of Server Starts
+      if: success() || failure()
+      run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-mysql:
       needs: [ server-tests ]
@@ -93,7 +93,7 @@ jobs:
       concurrency:
           group: server-tests-mysql
       steps:
-          - uses: actions/checkout@v3
+          - uses: actions/checkout@v4
           - name: Setup Java
             uses: actions/setup-java@v3
             with:
@@ -104,18 +104,28 @@ jobs:
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
-            if: success() || failure()
-            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+            if: failure()
+            run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
           - name: Count failed tests
             id: failedTestCounter
-            if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
-          - name: Report action
+            if: failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.* FAILED" | wc -l)" >> $GITHUB_OUTPUT
+          - name: Report action failure
+            if: failure()
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - MySQL'
-                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
+                state: 'failure'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
+          - name: Report action success
+            if: success()
+            uses: Sibz/github-status-action@v1
+            with:
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - MySQL'
+                description: '✅ Test succeeded'
                 state: 'success'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Test Report
@@ -125,6 +135,9 @@ jobs:
                 name: MySQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-postgres:
       needs: [ server-tests ]
@@ -134,7 +147,7 @@ jobs:
       concurrency:
           group: server-tests-postgres
       steps:
-          - uses: actions/checkout@v3
+          - uses: actions/checkout@v4
           - name: Setup Java
             uses: actions/setup-java@v3
             with:
@@ -145,18 +158,28 @@ jobs:
             id: tests
             run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
-            if: success() || failure()
-            run: cat tests.log | grep "Test >.*FAILED" || [[ $? == 1 ]]
+            if: failure()
+            run: cat tests.log | grep "Test >.* FAILED" || [[ $? == 1 ]]
           - name: Count failed tests
             id: failedTestCounter
-            if: success() || failure()
-            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
-          - name: Report action
+            if: failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.* FAILED" | wc -l)" >> $GITHUB_OUTPUT
+          - name: Report action failure
+            if: failure()
             uses: Sibz/github-status-action@v1
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - PostgreSQL'
-                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
+                state: 'failure'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
+          - name: Report action success
+            if: success()
+            uses: Sibz/github-status-action@v1
+            with:
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - PostgreSQL'
+                description: '✅ Test succeeded'
                 state: 'success'
                 sha: ${{github.event.pull_request.head.sha || github.sha}}
           - name: Test Report
@@ -166,12 +189,15 @@ jobs:
                 name: PostgreSQL Tests
                 path: build/test-results/test/*.xml
                 reporter: java-junit
+          - name: Number of Server Starts
+            if: success() || failure()
+            run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
@@ -183,12 +209,22 @@ jobs:
     - name: Java Documentation
       run: ./gradlew checkstyleMain -x webapp
       if: success() || failure()
+    - name: Java Architecture Tests
+      run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
+      if: success() || failure()
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        name: Java Architecture Tests
+        path: build/test-results/test/*.xml
+        reporter: java-junit
 
   client-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         # It seems like there is some memory issue with these tests with the project-wide default node option
         # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
         - name: remove project-wide node options set in .npmrc just for this test
@@ -204,18 +240,12 @@ jobs:
           run: npm run compile:ts:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
-        - name: Upload Code Coverage
-          uses: codecov/codecov-action@v3
-          with:
-            files: build/test-results/clover.xml
-            name: artemis-client
-            flags: client
 
   client-tests-selected:
       runs-on: ubuntu-latest
       timeout-minutes: 30
       steps:
-          - uses: actions/checkout@v3
+          - uses: actions/checkout@v4
             with:
                 fetch-depth: 0
           - name: Setup Node.js
@@ -234,7 +264,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
@@ -252,7 +282,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:

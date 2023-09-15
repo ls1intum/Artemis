@@ -1,7 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
-import { ActivatedRoute } from '@angular/router';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
@@ -15,7 +14,6 @@ import {
     RenameFileChange,
     ResizeType,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -25,6 +23,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
+import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -97,9 +96,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     annotations: Array<Annotation> = [];
 
     constructor(
-        private participationService: ParticipationService,
         private translateService: TranslateService,
-        private route: ActivatedRoute,
         private alertService: AlertService,
         private fileService: CodeEditorFileService,
     ) {
@@ -216,10 +213,18 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     /**
      * Show an error as an alert in the top of the editor html.
      * Used by other components to display errors.
-     * The error must already be provided translated by the emitting component.
+     * @param error the translation key of the error that should be displayed
      */
     onError(error: any) {
-        this.alertService.error(`artemisApp.editor.errors.${error as string}`);
+        let errorTranslationKey: string;
+        const translationParams = { connectionIssue: '' };
+        if (!error.includes(ConnectionError.message)) {
+            errorTranslationKey = error;
+        } else {
+            translationParams.connectionIssue = this.translateService.instant(`artemisApp.editor.errors.${ConnectionError.message}`);
+            errorTranslationKey = error.replaceAll(ConnectionError.message, '');
+        }
+        this.alertService.error(`artemisApp.editor.errors.${errorTranslationKey}`, translationParams);
     }
 
     /**

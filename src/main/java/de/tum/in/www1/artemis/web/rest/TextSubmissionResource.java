@@ -9,21 +9,20 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
-import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -54,19 +53,15 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final Optional<AtheneScheduleService> atheneScheduleService;
-
     private final ExamSubmissionService examSubmissionService;
 
     private final PlagiarismService plagiarismService;
 
-    private final Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider;
-
     public TextSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, TextSubmissionRepository textSubmissionRepository,
             ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService,
             TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
-            ExamSubmissionService examSubmissionService, PlagiarismService plagiarismService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
+            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, ExamSubmissionService examSubmissionService,
+            PlagiarismService plagiarismService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -75,11 +70,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userRepository = userRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.atheneScheduleService = atheneScheduleService;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
         this.plagiarismService = plagiarismService;
-        this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
     }
 
     /**
@@ -90,7 +83,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/text-submissions")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save text submission : {}", textSubmission);
         if (textSubmission.getId() != null) {
@@ -110,7 +103,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      *         500 (Internal Server Error) if the textSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update text submission: {}", textSubmission);
         if (textSubmission.getId() == null) {
@@ -147,7 +140,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/text-submissions/{submissionId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get text submission: {}", submissionId);
         var textSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
@@ -158,14 +151,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.ok(textSubmission);
         }
 
-        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-        if (textSubmission.getLatestResult() != null) {
-            this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
-        }
-
-        return bodyBuilder.body(textSubmission);
+        return ResponseEntity.ok().body(textSubmission);
     }
 
     /**
@@ -180,7 +166,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<Submission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all TextSubmissions");
@@ -198,7 +184,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -211,11 +197,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         // Check if tutors can start assessing the students submission
         this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
-
-        // Tutors cannot start assessing submissions if Athene is currently processing automatic feedback
-        if (atheneScheduleService.isPresent() && atheneScheduleService.get().currentlyProcessing((TextExercise) exercise)) {
-            throw new EntityNotFoundException("Athene is currently processing automatic feedback.");
-        }
 
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -245,13 +226,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
 
-        final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
-
-        // Add the jwt token as a header to the response for tutor-assessment tracking to the request if the athene profile is set
-        if (textSubmission.getLatestResult() != null) {
-            this.atheneTrackingTokenProvider
-                    .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
-        }
-        return bodyBuilder.body(textSubmission);
+        return ResponseEntity.ok().body(textSubmission);
     }
 }

@@ -16,11 +16,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
@@ -28,8 +32,8 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -56,6 +60,15 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ModelingExercise modelingExercise;
 
     private TextExercise textExercise;
@@ -66,8 +79,8 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 0, 1, 0, 0);
-        Course course = database.addCourseWithModelingAndTextExercise();
+        userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 0);
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
@@ -108,13 +121,13 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -128,13 +141,13 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -149,13 +162,13 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -169,13 +182,13 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmissionService.save(exampleSubmission);
 
-        exampleSubmission.getSubmission().getLatestResult().addFeedback(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
+        exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
         var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
@@ -183,7 +196,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
     @NotNull
     private ExampleSubmission prepareTextExampleSubmission(boolean usedForTutorial) throws Exception {
         var exampleSubmissionText = "This is first sentence:This is second sentence.";
-        ExampleSubmission exampleSubmission = database.generateExampleSubmission(exampleSubmissionText, textExercise, false, usedForTutorial);
+        ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(exampleSubmissionText, textExercise, false, usedForTutorial);
         TextSubmission textSubmission = (TextSubmission) exampleSubmission.getSubmission();
 
         for (var sentence : exampleSubmissionText.split(":")) {
@@ -204,11 +217,11 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
             var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
             result.setExampleResult(true);
 
-            var feedback = ModelFactory.createManualTextFeedback(1D, textBlockIds.get(0));
-            var gradingCriterion = ModelFactory.generateGradingCriterion("criterion");
+            var feedback = ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(0));
+            var gradingCriterion = ExerciseFactory.generateGradingCriterion("criterion");
             gradingCriterionRepository.save(gradingCriterion);
 
-            var instructions = ModelFactory.generateGradingInstructions(gradingCriterion, 1, 1);
+            var instructions = ExerciseFactory.generateGradingInstructions(gradingCriterion, 1, 1);
             gradingInstructionRepository.saveAll(instructions);
             instructions.forEach(feedback::setGradingInstruction);
             result.addFeedback(feedback);
@@ -222,7 +235,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
     @NotNull
     private ExampleSubmission prepareModelingExampleSubmission(boolean usedForTutorial) throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        ExampleSubmission exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
+        ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmissionService.save(exampleSubmission);
         if (usedForTutorial) {
             var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());

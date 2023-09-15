@@ -8,17 +8,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * Service Implementation for managing Exercise.
@@ -52,13 +57,15 @@ public class ExerciseDeletionService {
 
     private final TextExerciseService textExerciseService;
 
-    private final TextClusterRepository textClusterRepository;
+    private final ChannelRepository channelRepository;
+
+    private final ChannelService channelService;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            TextClusterRepository textClusterRepository) {
+            ChannelRepository channelRepository, ChannelService channelService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -71,7 +78,8 @@ public class ExerciseDeletionService {
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textExerciseService = textExerciseService;
-        this.textClusterRepository = textClusterRepository;
+        this.channelRepository = channelRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -116,6 +124,11 @@ public class ExerciseDeletionService {
         var exercise = exerciseRepository.findByIdWithCompetenciesElseThrow(exerciseId);
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
+        long start = System.nanoTime();
+        Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
+        channelService.deleteChannel(exreciseChannel);
+        log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
+
         if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
 
@@ -124,8 +137,7 @@ public class ExerciseDeletionService {
         }
 
         if (exercise instanceof TextExercise) {
-            log.info("Deleting clusters, blocks and cancel scheduled operations of exercise {}", exercise.getId());
-            textClusterRepository.deleteByExercise_Id(exerciseId);
+            log.info("Cancel scheduled operations of exercise {}", exercise.getId());
             textExerciseService.cancelScheduledOperations(exerciseId);
         }
 
@@ -142,7 +154,7 @@ public class ExerciseDeletionService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
-        exercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
         exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmissionService.deleteById(exampleSubmission.getId()));
         exercise.setExampleSubmissions(new HashSet<>());
 

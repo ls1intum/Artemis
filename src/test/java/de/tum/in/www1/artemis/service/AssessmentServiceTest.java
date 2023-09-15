@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -23,11 +24,17 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -48,6 +55,18 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Autowired
     private AssessmentService assessmentService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
 
     private final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -58,16 +77,16 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
+        course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course1.setEnrollmentEnabled(true);
         courseRepository.save(course1);
     }
 
     private TextExercise createTextExerciseWithSGI(Course course) {
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(7.0);
-        database.addGradingInstructionsToExercise(textExercise);
+        exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         exerciseRepository.save(textExercise);
         textExercise.getCategories().add("Text");
         course.addExercises(textExercise);
@@ -75,9 +94,10 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     private ModelingExercise createModelingExerciseWithSGI(Course course) {
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
+                course);
         modelingExercise.setMaxPoints(7.0);
-        database.addGradingInstructionsToExercise(modelingExercise);
+        exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
         exerciseRepository.save(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         course.addExercises(modelingExercise);
@@ -85,9 +105,9 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     private FileUploadExercise createFileuploadExerciseWithSGI(Course course) {
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
+        FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
         fileUploadExercise.setMaxPoints(7.0);
-        database.addGradingInstructionsToExercise(fileUploadExercise);
+        exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         exerciseRepository.save(fileUploadExercise);
         course.addExercises(fileUploadExercise);
@@ -146,8 +166,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         FileUploadExercise exercise = createFileuploadExerciseWithSGI(course1);
         Submission submissionWithoutResult = new FileUploadSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -168,8 +188,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -190,8 +210,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         ModelingExercise exercise = createModelingExerciseWithSGI(course1);
         Submission submissionWithoutResult = new ModelingSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -214,8 +234,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         Submission submissionWithoutResult = new TextSubmission();
         // comparison of dates including nanos would make this test flaky
         submissionWithoutResult.setSubmissionDate(futureTimestamp.truncatedTo(ChronoUnit.MILLIS));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -251,8 +271,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(futureFutureTimestamp);
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -273,8 +293,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp);
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = participationUtilService.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        participationUtilService.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -296,8 +316,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         ZonedDateTime startDate = ZonedDateTime.now().minusHours(1);
         ZonedDateTime endDate = ZonedDateTime.now().plusHours(1);
 
-        Exam exam = database.addExam(course1, visibleDate, startDate, endDate);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        Exam exam = examUtilService.addExam(course1, visibleDate, startDate, endDate);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);
@@ -312,8 +332,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         ZonedDateTime endDate = ZonedDateTime.now().minusHours(1);
         ZonedDateTime publishResultDate = ZonedDateTime.now().minusMinutes(1);
 
-        Exam exam = database.addExam(course1, visibleDate, startDate, endDate, publishResultDate);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        Exam exam = examUtilService.addExam(course1, visibleDate, startDate, endDate, publishResultDate);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var exercise = exam.getExerciseGroups().get(0).getExercises().iterator().next();
 
         boolean isAllowed = assessmentService.isAllowedToCreateOrOverrideResult(null, exercise, null, null, false);

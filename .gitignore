@@ -159,6 +159,7 @@ local-vcs-repos
 /coverage
 /exports
 /legal/server-integration-test
+data-exports/
 
 ######################
 # Gradle Wrapper
@@ -184,6 +185,8 @@ local-vcs-repos
 !/docker/.docker-data/artemis-data/.gitkeep
 /docker/.docker-data/artemis-mysql-data/*
 !/docker/.docker-data/artemis-mysql-data/.gitkeep
+/docker/.docker-data/artemis-postgres-data/*
+!/docker/.docker-data/artemis-postgres-data/.gitkeep
 
 ######################
 # Cypress
@@ -199,7 +202,7 @@ local-vcs-repos
 /src/main/webapp/i18n/*.json
 
 ######################
-# Artemis configs
+# Artemis resources
 ######################
 /src/main/resources/config/application-local*.yml
 !/src/main/resources/config/application-localvc.yml

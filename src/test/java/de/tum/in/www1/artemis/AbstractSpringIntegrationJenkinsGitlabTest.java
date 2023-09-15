@@ -43,10 +43,10 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ExtendWith(SpringExtension.class)
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athene", "scheduling" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athena", "scheduling" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
-        "artemis.user-management.use-external=false" })
+        "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$" })
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
@@ -91,16 +91,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
-
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-
         if (!recreateBuildPlans) {
             mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
             mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
@@ -124,7 +120,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
         mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
     }
@@ -193,7 +188,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        // Step 1b)
+        // Step 1c)
         gitlabRequestMockProvider.mockConfigureRepository(exercise, users, ltiUserExists);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);

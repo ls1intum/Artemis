@@ -267,10 +267,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     validateDate() {
         this.exerciseService.validateDate(this.quizExercise);
-        const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
+        const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? undefined : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
+            // validate release < start and start + duration > due
             const startTime = dayjs(batch.startTime);
-            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(dueDate ?? null);
+            const endTime = startTime.add(dayjs.duration(this.duration.minutes, 'minutes')).add(dayjs.duration(this.duration.seconds, 'seconds'));
+            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || (dueDate != undefined && endTime.isAfter(dueDate));
         });
     }
 
@@ -410,7 +412,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.onSaveError();
                         }
                     },
-                    error: () => this.onSaveError(),
+                    error: (error) => this.onSaveError(error),
                 });
             } else {
                 const requestOptions = {} as any;
@@ -426,7 +428,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.onSaveError();
                         }
                     },
-                    error: () => this.onSaveError(),
+                    error: (error) => this.onSaveError(error),
                 });
             }
         } else {
@@ -438,7 +440,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.onSaveError();
                     }
                 },
-                error: () => this.onSaveError(),
+                error: (error) => this.onSaveError(error),
             });
         }
     }
@@ -474,7 +476,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /**
      * Callback function for when the save fails
      */
-    private onSaveError = (): void => {
+    private onSaveError = (errorRes?: HttpErrorResponse): void => {
+        if (errorRes?.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        }
         console.error('Saving Quiz Failed! Please try again later.');
         this.alertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;
@@ -498,7 +503,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     onDurationChange(): void {
         if (!this.isExamMode) {
-            const duration = dayjs.duration(this.duration);
+            const duration = dayjs.duration(this.duration.minutes, 'minutes').add(this.duration.seconds, 'seconds');
             this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
             this.updateDuration();
             this.cacheValidation();
@@ -574,7 +579,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        // eslint-disable-next-line max-len
         return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
     }
 

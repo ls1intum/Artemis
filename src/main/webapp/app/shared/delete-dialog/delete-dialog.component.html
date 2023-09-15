@@ -12,7 +12,7 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <p [jhiTranslate]="deleteQuestion" [translateValues]="{ title: entityTitle }">Are you sure you want to delete?</p>
+        <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">Are you sure you want to delete?</p>
         <div *ngIf="additionalChecks">
             <div *ngFor="let checkKey of objectKeys(additionalChecks); let i = index">
                 <div class="checkbox" *ngIf="additionalChecks[checkKey]">
@@ -24,7 +24,7 @@
             </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
-            <label for="confirm-exercise-name" class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
+            <label for="confirm-exercise-name" [ngClass]="warningTextColor" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
             <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
         </div>
     </div>
@@ -35,12 +35,13 @@
         <button
             id="delete"
             type="submit"
-            class="btn btn-danger"
+            [ngClass]="['btn', buttonType]"
             [style.cursor]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled ? 'not-allowed' : 'pointer'"
             [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled"
             [ngSwitch]="actionType"
         >
-            <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faTimes"></fa-icon>&nbsp;
+            <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+            <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>&nbsp;
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>

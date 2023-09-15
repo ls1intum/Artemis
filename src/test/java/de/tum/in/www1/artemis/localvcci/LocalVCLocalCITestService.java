@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Fail.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -49,8 +49,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -61,10 +65,16 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 public class LocalVCLocalCITestService {
 
     @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -77,6 +87,28 @@ public class LocalVCLocalCITestService {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public String getRepositorySlug(String projectKey, String repositoryTypeOrUserName) {
+        return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase();
+    }
+
+    /**
+     * Create a participation for a given user in a given programming exercise.
+     *
+     * @param programmingExercise the programming exercise.
+     * @param userLogin           the user login.
+     * @return the participation.
+     */
+    public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, String userLogin) {
+        String projectKey = programmingExercise.getProjectKey();
+        String repositorySlug = getRepositorySlug(projectKey, userLogin);
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
+        participation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
+        participation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(participation);
+
+        return participation;
     }
 
     /**
@@ -333,7 +365,7 @@ public class LocalVCLocalCITestService {
         Path testFilePath = localRepositoryFolder.resolve(fileName);
         Files.createFile(testFilePath);
         localGit.add().addFilepattern(".").call();
-        RevCommit commit = localGit.commit().setMessage("Add " + fileName).call();
+        RevCommit commit = GitService.commit(localGit).setMessage("Add " + fileName).call();
         return commit.getId().getName();
     }
 
@@ -408,8 +440,8 @@ public class LocalVCLocalCITestService {
      */
     public <T extends Exception> void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug,
             Class<T> expectedException, String expectedMessage) {
-        T exception = assertThrows(expectedException, () -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug));
-        assertThat(exception.getMessage()).contains(expectedMessage);
+        assertThatExceptionOfType(expectedException).isThrownBy(() -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug))
+                .withMessageContaining(expectedMessage);
     }
 
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
@@ -486,8 +518,8 @@ public class LocalVCLocalCITestService {
      * @param expectedMessage  the expected message of the exception.
      */
     public void testPushReturnsError(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
-        TransportException exception = assertThrows(TransportException.class, () -> performPush(repositoryHandle, username, password, projectKey, repositorySlug));
-        assertThat(exception.getMessage()).contains(expectedMessage);
+        assertThatExceptionOfType(TransportException.class).isThrownBy(() -> performPush(repositoryHandle, username, password, projectKey, repositorySlug))
+                .withMessageContaining(expectedMessage);
     }
 
     private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
@@ -507,10 +539,10 @@ public class LocalVCLocalCITestService {
      */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
         LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        assertThat(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath)).exists();
     }
 }

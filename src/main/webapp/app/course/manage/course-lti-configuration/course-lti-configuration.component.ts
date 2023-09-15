@@ -26,7 +26,11 @@ export class CourseLtiConfigurationComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
 
-    constructor(private route: ActivatedRoute, private sortService: SortService, private courseManagementService: CourseManagementService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private sortService: SortService,
+        private courseManagementService: CourseManagementService,
+    ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises
@@ -103,7 +107,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
      * Gets the LTI 1.0 launch url for an exercise
      */
     getExerciseLti10LaunchUrl(exercise: Exercise): string {
-        return `${location.origin}/api/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
+        return `${location.origin}/api/public/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
     }
 
     /**

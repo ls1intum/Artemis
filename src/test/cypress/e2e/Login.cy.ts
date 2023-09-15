@@ -1,4 +1,4 @@
-import { loginPage } from '../support/artemis';
+import { loginPage, navigationBar } from '../support/artemis';
 import { studentOne } from '../support/users';
 
 describe('Login page tests', () => {
@@ -16,7 +16,7 @@ describe('Login page tests', () => {
     it('Logs in programmatically and logs out via the UI', () => {
         cy.login(studentOne, '/courses');
         cy.url().should('include', '/courses');
-        cy.get('#account-menu').click().get('#logout').click();
+        navigationBar.logout();
         cy.url().should('equal', Cypress.config().baseUrl + '/');
         cy.getCookie('jwt').should('not.exist');
     });

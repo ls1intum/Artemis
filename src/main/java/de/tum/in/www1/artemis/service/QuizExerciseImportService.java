@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
@@ -22,11 +23,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final FileService fileService;
 
+    private final ChannelService channelService;
+
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
+        this.channelService = channelService;
     }
 
     /**
@@ -45,7 +49,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise);
         copyQuizBatches(importedExercise, newExercise);
-        return quizExerciseService.save(newExercise);
+
+        QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
+
+        channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
+        return newQuizExercise;
     }
 
     /**

@@ -1,36 +1,36 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import dayjs from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
-import { BASE_API } from '../../../support/constants';
+import { TextExercise } from 'app/entities/text-exercise.model';
+
 import {
     courseManagement,
+    courseManagementAPIRequest,
     courseManagementExercises,
-    courseManagementRequest,
+    exerciseAPIRequest,
     navigationBar,
     textExerciseCreation,
     textExerciseExampleSubmissionCreation,
     textExerciseExampleSubmissions,
 } from '../../../support/artemis';
-import { DELETE } from '../../../support/constants';
-import { generateUUID } from '../../../support/utils';
-import dayjs from 'dayjs/esm';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 describe('Text exercise management', () => {
     let course: Course;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+        courseManagementAPIRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
         });
     });
 
     it('Creates a text exercise in the UI', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagement.openExercisesOfCourse(course.shortName!);
+        courseManagement.openExercisesOfCourse(course.id!);
         courseManagementExercises.createTextExercise();
 
         // Fill out text exercise form
@@ -51,7 +51,7 @@ describe('Text exercise management', () => {
         });
 
         // Create an example submission
-        cy.get('#example-submissions-button').click();
+        courseManagementExercises.clickExampleSubmissionsButton();
         textExerciseExampleSubmissions.clickCreateExampleSubmission();
         textExerciseExampleSubmissionCreation.showsExerciseTitle(exerciseTitle);
         textExerciseExampleSubmissionCreation.showsProblemStatement(problemStatement);
@@ -65,36 +65,30 @@ describe('Text exercise management', () => {
 
         // Make sure text exercise is shown in exercises list
         cy.visit(`course-management/${course.id}/exercises`).then(() => {
-            courseManagementExercises.getExerciseRowRootElement(exercise.id!).should('be.visible');
+            courseManagementExercises.getExercise(exercise.id!).should('be.visible');
         });
     });
 
     describe('Text exercise deletion', () => {
         let exercise: TextExercise;
 
-        beforeEach(() => {
+        before('Create text exercise', () => {
             cy.login(admin, '/');
-            courseManagementRequest.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
+            exerciseAPIRequest.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
                 exercise = response.body;
             });
         });
 
         it('Deletes an existing text exercise', () => {
+            cy.login(admin, '/');
             navigationBar.openCourseManagement();
-            courseManagement.openExercisesOfCourse(course.shortName!);
-            courseManagementExercises.clickDeleteExercise(exercise.id!);
-            cy.get('#confirm-exercise-name').type(exercise.title!);
-            cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
-            cy.get('#delete').click();
-            cy.wait('@deleteTextExercise');
-            courseManagementExercises.getExerciseRowRootElement(exercise.id!).should('not.exist');
+            courseManagement.openExercisesOfCourse(course.id!);
+            courseManagementExercises.deleteTextExercise(exercise);
+            courseManagementExercises.getExercise(exercise.id!).should('not.exist');
         });
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

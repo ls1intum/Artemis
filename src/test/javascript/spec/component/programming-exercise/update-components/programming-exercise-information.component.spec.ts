@@ -11,6 +11,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
+import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
+import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -24,6 +26,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 DefaultValueAccessor,
                 NgModel,
                 MockComponent(HelpIconComponent),
+                MockComponent(ExerciseTitleChannelNameComponent),
                 MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
                 MockComponent(CategorySelectorComponent),
                 MockComponent(AddAuxiliaryRepositoryButtonComponent),
@@ -43,28 +46,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInformationComponent);
                 comp = fixture.componentInstance;
 
-                comp.infoInputs = {
-                    auxiliaryRepositoryDuplicateDirectories: false,
-                    auxiliaryRepositoryDuplicateNames: false,
-                    exerciseCategories: [],
-                    existingCategories: [],
-                    invalidDirectoryNamePattern: new RegExp(''),
-                    invalidRepositoryNamePattern: new RegExp(''),
-                    refreshAuxiliaryRepositoryChecks(): void {},
-                    shortNamePattern: new RegExp(''),
-                    updateCategories(): void {},
-                    updateCheckoutDirectory(): (newValue: any) => string | undefined {
-                        return function () {
-                            return undefined;
-                        };
-                    },
-                    updateRepositoryName(): (newValue: any) => string | undefined {
-                        return function () {
-                            return undefined;
-                        };
-                    },
-                    titleNamePattern: '',
-                };
+                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
             });

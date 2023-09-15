@@ -30,8 +30,8 @@
                 "headline": "Course information",
                 "content": "This box displays general course information, such as the number of exercises and the time frame of the course."
             },
-            "upcomingDeadlines": {
-                "headline": "Upcoming deadlines",
+            "upcomingDueDates": {
+                "headline": "Upcoming due dates",
                 "content": "Here you can see which exercises are due in the next few days."
             },
             "lectures": {

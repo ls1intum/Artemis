@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.repository.metis;
 import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.transaction.Transactional;
 
@@ -18,20 +17,33 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Post entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
-    List<Post> findPostsByAuthorLogin(String login);
+    List<Post> findPostsByAuthorId(long authorId);
+
+    /**
+     * find all posts of a user in a course
+     * currently only used for testing
+     *
+     * @param authorId id of the user
+     * @param courseId id of the course
+     * @return a list of posts
+     */
+    @Query("""
+            SELECT p
+            FROM Post p
+            WHERE p.author.id =:authorId
+                  AND p.conversation.course.id =:courseId
+            """)
+    List<Post> findPostsByAuthorIdAndCourseId(long authorId, long courseId);
 
     /**
      * Generates SQL Query via specifications to filter and sort Posts
@@ -43,14 +55,13 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
      * @return returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
      */
     default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
-        Specification<Post> specification = Specification.where(distinct())
-                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
-                        .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
-                                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
-                                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
-                        .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
-                        .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+        Specification<Post> specification = Specification.where(distinct()).and(getCourseSpecification(postContextFilter.getCourseId()))
+                .and(getLectureSpecification(postContextFilter.getLectureIds()).or(getExerciseSpecification(postContextFilter.getExerciseIds()))
+                        .or(getCourseWideContextSpecification(postContextFilter.getCourseWideContexts())))
+                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
+                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
         if (pagingEnabled) {
             return findAll(specification, pageable);
@@ -62,19 +73,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByConversationIn(Set<OneToOneChat> oneToOneChats);
-
-    @Transactional // ok because of delete
-    @Modifying
     void deleteAllByConversationId(Long conversationId);
-
-    @Transactional // ok because of delete
-    @Modifying
-    void deleteAllByConversationCreator(User user);
-
-    @Transactional // ok because of delete
-    @Modifying
-    void deleteAllByAuthor(User author);
 
     @Query("""
             SELECT DISTINCT tag FROM Post post

@@ -15,9 +15,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.lecture.LectureFactory;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -34,6 +37,15 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     private Course course;
 
     private Lecture lecture;
@@ -46,44 +58,57 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 0, 1, 0);
-        student = database.getUserByLogin(TEST_PREFIX + "student1");
-        editor = database.getUserByLogin(TEST_PREFIX + "editor1");
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 1, 0);
+        student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
 
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
-        // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
-        course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).get().getId());
-        lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
+        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
+        // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
+        course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
+        lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
+        Lecture hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
+
+        // Set one lecture only visible in the future for filtering tests
+        ZonedDateTime future = ZonedDateTime.now().plusDays(3);
+        hiddenLecture.setVisibleDate(future);
+        hiddenLecture.setStartDate(future.plusDays(1));
+        hiddenLecture.setEndDate(future.plusWeeks(1));
+        lectureRepository.save(hiddenLecture);
 
         // Add a custom attachment for filtering tests
-        testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
+        testAttachment = LectureFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
         lecture.addAttachments(testAttachment);
         lectureRepository.save(lecture);
 
         assertThat(lecture).isNotNull();
         assertThat(lecture.getLectureUnits()).isNotEmpty();
         assertThat(lecture.getAttachments()).isNotEmpty();
+        assertThat(lecture.getId()).isLessThan(hiddenLecture.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testFilterActiveAttachments_editor() {
-        Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), editor);
-        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
+        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), editor);
+        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).containsExactlyElementsOf(lecture.getAttachments());
+        // Ensure that the hidden lecture is not filtered out
+        assertThat(testLectures.size()).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testFilterActiveAttachments_student() {
-        Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), student);
-        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
+        Set<Lecture> testLectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), student);
+        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().orElseThrow();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).isNotEmpty();
         assertThat(testLecture.getAttachments()).containsOnlyOnceElementsOf(lecture.getAttachments());
         // Ensure that the attachment with future release date was filtered
         assertThat(testLecture.getAttachments()).doesNotContain(testAttachment);
+        // Ensure that hidden lecture is filtered out for students
+        assertThat(testLectures.size()).isEqualTo(1);
     }
 
     @Test
@@ -97,7 +122,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         lectureRepository.saveAll(course.getLectures());
         lecture = lectureRepository.findByIdElseThrow(lecture.getId());
 
-        PageableSearchDTO<String> pageable = database.configureLectureSearch(lecture.getTitle());
+        PageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(lecture.getTitle());
         pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
         pageable.setPageSize(1);
 
@@ -111,7 +136,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     private SearchResultPageDTO<Lecture> searchQueryWithUser(String query, User user) {
-        PageableSearchDTO<String> pageable = database.configureLectureSearch(query);
+        PageableSearchDTO<String> pageable = pageableSearchUtilService.configureLectureSearch(query);
         return lectureService.getAllOnPageWithSize(pageable, user);
     }
 

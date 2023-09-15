@@ -13,6 +13,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
@@ -44,9 +46,11 @@ public class CompetencyProgressService {
 
     private final UserRepository userRepository;
 
+    private final LearningPathService learningPathService;
+
     public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository,
-            LectureUnitRepository lectureUnitRepository, UserRepository userRepository) {
+            LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService) {
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.studentScoreRepository = studentScoreRepository;
@@ -54,6 +58,7 @@ public class CompetencyProgressService {
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.userRepository = userRepository;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -86,7 +91,7 @@ public class CompetencyProgressService {
         else {
             throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         }
-        updateProgressByLearningObject(learningObject, new HashSet<>(userRepository.getStudents(course)));
+        updateProgressByLearningObject(learningObject, userRepository.getStudents(course));
     }
 
     /**
@@ -216,6 +221,8 @@ public class CompetencyProgressService {
 
         logger.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), competency.getId(), studentProgress.getProgress(),
                 studentProgress.getConfidence());
+
+        learningPathService.updateLearningPathProgress(competency.getCourse().getId(), user.getId());
         return studentProgress;
     }
 
@@ -227,8 +234,7 @@ public class CompetencyProgressService {
      * @return The percentage of completed learning objects by the user
      */
     private double calculateProgress(@NotNull List<LearningObject> learningObjects, @NotNull User user) {
-        var completions = learningObjects.stream().map(learningObject -> hasUserCompleted(user, learningObject)).toList();
-        return completions.stream().mapToInt(completed -> completed ? 100 : 0).summaryStatistics().getAverage();
+        return learningObjects.stream().map(learningObject -> hasUserCompleted(user, learningObject)).mapToInt(completed -> completed ? 100 : 0).average().orElse(0.);
     }
 
     /**
@@ -261,6 +267,19 @@ public class CompetencyProgressService {
             return Stream.concat(studentScores.stream(), teamScores.stream()).findAny().isPresent();
         }
         throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+    }
+
+    /**
+     * Checks if the user associated to this {@code CompetencyProgress} has mastered the associated {@code Competency}.
+     *
+     * @param competencyProgress The user's progress
+     * @return True if the user mastered the competency, false otherwise
+     */
+    public static boolean isMastered(@NotNull CompetencyProgress competencyProgress) {
+        // mastery as a weighted function of progress and confidence (consistent with client)
+        final double weight = 2.0 / 3.0;
+        final double mastery = (1 - weight) * competencyProgress.getProgress() + weight * competencyProgress.getConfidence();
+        return mastery >= competencyProgress.getCompetency().getMasteryThreshold();
     }
 
 }

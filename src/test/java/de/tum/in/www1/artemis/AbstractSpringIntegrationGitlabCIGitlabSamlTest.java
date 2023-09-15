@@ -103,8 +103,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
             doThrow(new ContinuousIntegrationException()).when(continuousIntegrationService).createBuildPlanForExercise(any(), any(), any(), any(), any());
         }
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-
         // saml2-specific mocks
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
         doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
@@ -114,7 +112,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
@@ -126,7 +123,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws GitLabApiException {
@@ -155,7 +151,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws GitLabApiException {
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        // Step 1b)
+        // Step 1c)
         gitlabRequestMockProvider.mockConfigureRepository(exercise, users, ltiUserExists);
         // Step 1c)
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();

@@ -38,7 +38,7 @@ describe('CourseRegistrationButtonComponent', () => {
                 profileService = TestBed.inject(ProfileService);
                 onRegistrationSpy = jest.spyOn(component.onRegistration, 'emit');
 
-                registerForCourseStub = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
+                registerForCourseStub = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
                 identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'ga12tes' } as User));
                 getProfileInfoStub = jest
                     .spyOn(profileService, 'getProfileInfo')

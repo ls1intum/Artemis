@@ -71,11 +71,10 @@ public class ExamRegistrationService {
 
     /**
      * Add multiple users to the students of the exam so that they can access the exam
-     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
-     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
@@ -84,18 +83,17 @@ public class ExamRegistrationService {
      */
     public List<ExamUserDTO> registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
-            var registrationNumber = examUserDto.registrationNumber();
-            var login = examUserDto.login();
-            var email = examUserDto.email();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login, email);
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(),
+                    course.getStudentGroupName(), Role.STUDENT);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
             }
@@ -117,6 +115,7 @@ public class ExamRegistrationService {
                     }
                     registeredExamUser = examUserRepository.save(registeredExamUser);
                     exam.addExamUser(registeredExamUser);
+                    usersAddedToExam.add(registeredExamUser.getUser().getLogin());
                 }
 
                 if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
@@ -125,8 +124,8 @@ public class ExamRegistrationService {
                     examUser.setPlannedSeat(examUserDto.seat());
                     examUser = examUserRepository.save(examUser);
                     exam.addExamUser(examUser);
+                    usersAddedToExam.add(examUser.getUser().getLogin());
                 }
-
             }
         }
         examRepository.save(exam);
@@ -316,7 +315,7 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var students = userRepository.getStudents(course);
+        var students = new ArrayList<>(userRepository.getStudents(course));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

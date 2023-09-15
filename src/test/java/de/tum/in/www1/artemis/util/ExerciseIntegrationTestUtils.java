@@ -20,34 +20,34 @@ import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 public class ExerciseIntegrationTestUtils {
 
     @Autowired
-    protected DatabaseUtilService database;
+    protected PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
     protected RequestUtilService request;
 
     public void testCourseAndExamFilters(String apiPath, String searchTerm) throws Exception {
-        var search = database.configureSearch(searchTerm);
+        var search = pageableSearchUtilService.configureSearch(searchTerm);
 
         // no filter explicitly set -> should default to all filters active and show both exercises
-        final var resultWithoutFiltersSet = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, database.searchMapping(search));
+        final var resultWithoutFiltersSet = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(resultWithoutFiltersSet.getResultsOnPage()).hasSize(2);
 
         // both filter explicitly set -> should show both exercises
-        final MultiValueMap<String, String> courseAndExamFilterParams = database.searchMapping(search);
+        final MultiValueMap<String, String> courseAndExamFilterParams = pageableSearchUtilService.searchMapping(search);
         courseAndExamFilterParams.add("isCourseFilter", "true");
         courseAndExamFilterParams.add("isExamFilter", "true");
         final var resultWithCourseAndExamFiltersActive = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, courseAndExamFilterParams);
         assertThat(resultWithCourseAndExamFiltersActive.getResultsOnPage()).hasSize(2);
 
         // both filter explicitly deactivated -> should show no exercises
-        final MultiValueMap<String, String> allFiltersInactiveParams = database.searchMapping(search);
+        final MultiValueMap<String, String> allFiltersInactiveParams = pageableSearchUtilService.searchMapping(search);
         allFiltersInactiveParams.add("isCourseFilter", "false");
         allFiltersInactiveParams.add("isExamFilter", "false");
         final var resultWithNoFiltersActive = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, allFiltersInactiveParams);
         assertThat(resultWithNoFiltersActive.getResultsOnPage()).isEmpty();
 
         // only course filter set -> should show only the exercise course
-        final MultiValueMap<String, String> courseFilterParams = database.searchMapping(search);
+        final MultiValueMap<String, String> courseFilterParams = pageableSearchUtilService.searchMapping(search);
         courseFilterParams.add("isCourseFilter", "true");
         courseFilterParams.add("isExamFilter", "false");
         final var resultWithOnlyCoursesFilterActive = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, courseFilterParams);
@@ -56,7 +56,7 @@ public class ExerciseIntegrationTestUtils {
         assertThat(courseFilterExerciseTitle).isEqualTo(searchTerm);
 
         // only exam filter set -> should show only the exercise course
-        final MultiValueMap<String, String> examFilterParams = database.searchMapping(search);
+        final MultiValueMap<String, String> examFilterParams = pageableSearchUtilService.searchMapping(search);
         examFilterParams.add("isCourseFilter", "false");
         examFilterParams.add("isExamFilter", "true");
         final var resultWithOnlyExamFilterActive = request.getSearchResult(apiPath, HttpStatus.OK, Exercise.class, examFilterParams);
@@ -69,10 +69,10 @@ public class ExerciseIntegrationTestUtils {
                 continue;
             }
             for (var order : List.of(SortingOrder.ASCENDING, SortingOrder.DESCENDING)) {
-                search = database.configureSearch(searchTerm);
+                search = pageableSearchUtilService.configureSearch(searchTerm);
                 search.setSortedColumn(sort.toString());
                 search.setSortingOrder(order);
-                var params = database.searchMapping(search);
+                var params = pageableSearchUtilService.searchMapping(search);
 
                 if (sort == Exercise.ExerciseSearchColumn.EXAM_TITLE) {
                     params.add("isCourseFilter", "false");

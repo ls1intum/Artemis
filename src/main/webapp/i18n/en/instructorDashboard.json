@@ -13,6 +13,7 @@
             "modelingPoints": "Modeling Points (%)",
             "textPoints": "Text Points (%)",
             "file-uploadPoints": "File Upload Points (%)",
+            "presentationPoints": "Presentation Points (%)",
             "overallScore": "Overall Points (%)",
             "max": "Max",
             "average": "Average",

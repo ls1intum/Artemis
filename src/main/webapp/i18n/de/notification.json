@@ -75,7 +75,7 @@
                 "liveExamExerciseUpdate": "Die Klausuraufgabe \"{{ placeholderValues.1 }}\" wurde aktualisiert.",
                 "exerciseUpdated": "Die Aufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde aktualisiert.",
                 "programmingTestCasesChanged": "Die Testfälle der Programmieraufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurden aktualisiert. Die Abgaben der Studenten sollten erneut gebaut und getestet werden, um neue Ergebnisse zu erstellen.",
-                "newManualFeedbackRequest": "Die Programmieraufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue manuelle Feedbackanfrage. Bitte bewerte das Feedback vor der Deadline.",
+                "newManualFeedbackRequest": "Die Programmieraufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue manuelle Feedbackanfrage. Bitte bewerte das Feedback vor der Einreichungsfrist.",
                 "illegalSubmission": "Die Aufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat illegale Abgaben von Studenten.",
                 "newExercisePost": "Die Aufgabe \"{{ placeholderValues.5 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\"",
                 "newLecturePost": "Die Vorlesung \"{{ placeholderValues.5 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\".",
@@ -113,7 +113,9 @@
                 "addUserChannel": "Du wurdest zu einem Kanal hinzugefügt",
                 "removeUserGroupChat": "Du wurdest aus einem Gruppenchat entfernt",
                 "addUserGroupChat": "Du wurdest zu einem Gruppenchat hinzugefügt",
-                "createGroupChat": "Neuer Gruppenchat"
+                "createGroupChat": "Neuer Gruppenchat",
+                "dataExportCreated": "Datenexport erstellt",
+                "dataExportFailed": "Datenexport fehlgeschlagen"
             },
             "text": {
                 "newReplyForExercisePost": "Auf deinen Beitrag zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
@@ -136,7 +138,9 @@
                 "addUserChannel": "Du wurdest dem Kanal {{ placeholderValues.1 }} von {{ placeholderValues.2 }} im Kurs {{ placeholderValues.0 }} hinzugefügt.",
                 "removeUserGroupChat": "Du wurdest von {{ placeholderValues.1 }} im Kurs {{ placeholderValues.0 }} aus dem Gruppenchat entfernt.",
                 "addUserGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt.",
-                "createGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt."
+                "createGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt.",
+                "dataExportCreated": "Dein Datenexport wurde erstellt und kann nun heruntergeladen werden.",
+                "dataExportFailed": "Dein Datenexport konnte nicht erstellt werden. Bitte versuche es später erneut."
             }
         },
         "tutorialGroupNotification": {

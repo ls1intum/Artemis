@@ -64,7 +64,6 @@ export class GitDiffFileComponent implements OnInit {
 
     /**
      * Determines the previous and current file path of the current file
-     * @private
      */
     private determineFilePaths() {
         this.filePath = this.diffEntries
@@ -80,7 +79,6 @@ export class GitDiffFileComponent implements OnInit {
 
     /**
      * Splits the content of the template and solution files into an array of lines
-     * @private
      */
     private createLineArrays() {
         this.templateLines = this.templateFileContent?.split('\n') ?? [];
@@ -97,7 +95,6 @@ export class GitDiffFileComponent implements OnInit {
     /**
      * Determines the first line that should be displayed.
      * Compares the previous and current start line and takes the minimum of both and offsets it by the number of context lines.
-     * @private
      */
     private determineActualStartLine() {
         this.actualStartLine = Math.max(
@@ -114,7 +111,6 @@ export class GitDiffFileComponent implements OnInit {
      * Determines the last line that should be displayed.
      * Compares the previous and current last line (extracted from the diff entries)
      * and takes the maximum of both and offsets it by the number of context lines.
-     * @private
      */
     private determineEndLines() {
         this.previousEndLine = Math.max(...this.diffEntries.map((entry) => (entry.previousStartLine ?? 0) + (entry.previousLineCount ?? 0))) + this.numberOfContextLines - 1;
@@ -123,7 +119,6 @@ export class GitDiffFileComponent implements OnInit {
 
     /**
      * Processes all git-diff entries by delegating to the appropriate processing method for each entry type.
-     * @private
      */
     private processEntries() {
         this.diffEntries.forEach((entry) => {
@@ -141,7 +136,6 @@ export class GitDiffFileComponent implements OnInit {
      * Processes a git-diff entry with a deletion. Counterpart of processEntryWithAddition.
      * Adds empty lines to the solution file to match the number of lines that are deleted in the template file.
      * Also, accordingly offsets the start line of the entries that come after the added empty lines.
-     * @private
      */
     private processEntryWithDeletion(entry: ProgrammingExerciseGitDiffEntry) {
         this.solutionLines = [
@@ -161,7 +155,6 @@ export class GitDiffFileComponent implements OnInit {
      * Processes a git-diff entries with an addition. Counterpart of processEntryWithDeletion.
      * Adds empty lines to the template file to match the number of lines that are added in the solution file.
      * Also, accordingly offsets the start line of the entries that come after the added empty lines.
-     * @private
      */
     private processEntryWithAddition(entry: ProgrammingExerciseGitDiffEntry) {
         this.templateLines = [...this.templateLines.slice(0, entry.startLine! - 1), ...Array(entry.lineCount).fill(undefined), ...this.templateLines.slice(entry.startLine! - 1)];
@@ -177,7 +170,6 @@ export class GitDiffFileComponent implements OnInit {
      * Processes a git-diff entry with a change (deletion and addition).
      * Adds empty lines to the template/solution file to match the number of lines that are added/removed in the solution/template file.
      * Also, accordingly offsets the start line of the entries that come after the added empty lines.
-     * @private
      */
     private processEntryWithChange(entry: ProgrammingExerciseGitDiffEntry) {
         if (entry.previousLineCount! < entry.lineCount!) {
@@ -210,7 +202,6 @@ export class GitDiffFileComponent implements OnInit {
     /**
      * Sets up an ace editor for the template or solution file.
      * @param editor The editor to set up.
-     * @private
      */
     private setupEditor(editor: AceEditorComponent): void {
         editor.getEditor().setOptions({
@@ -233,7 +224,6 @@ export class GitDiffFileComponent implements OnInit {
      * Renders the content of the template file in the template editor.
      * Sets the content of the editor and colors the lines that were removed red.
      * All empty lines added in the processEntries methods are colored gray.
-     * @private
      */
     private renderTemplateFile() {
         const session = this.editorPrevious.getEditor().getSession();
@@ -298,7 +288,6 @@ export class GitDiffFileComponent implements OnInit {
      * Renders the content of the solution file in the solution editor.
      * Sets the content of the editor and colors the lines that were added green.
      * All empty lines added in the processEntries methods are colored gray.
-     * @private
      */
     private renderSolutionFile() {
         const session = this.editorNow.getEditor().getSession();

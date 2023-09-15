@@ -53,7 +53,7 @@ import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picke
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
@@ -61,6 +61,7 @@ import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/m
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -103,7 +104,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
-                MockComponent(LearningGoalSelectionComponent),
+                MockComponent(CompetencySelectionComponent),
                 MockComponent(ProgrammingExerciseInformationComponent),
                 MockComponent(ProgrammingExerciseDifficultyComponent),
                 MockComponent(ProgrammingExerciseLanguageComponent),
@@ -116,6 +117,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockDirective(CustomMaxDirective),
                 MockDirective(TranslateDirective),
                 MockComponent(ModePickerComponent),
+                MockComponent(ExerciseUpdateNotificationComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -792,6 +794,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
         const entity = new ProgrammingExercise(new Course(), undefined);
         entity.id = 123;
+        entity.channelName = 'notificationText';
         comp.programmingExercise = entity;
         comp.programmingExercise.course = course;
         comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
@@ -845,7 +848,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         expect(comp.currentWizardModeStep).toBe(2);
     }));
 
-    it('should return the problem step inputs', fakeAsync(() => {
+    it('should return the exercise creation config', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
         route.url = of([{ path: 'new' } as UrlSegment]);
@@ -857,7 +860,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         fixture.detectChanges();
         tick();
 
-        const problemStepInputs = comp.getProblemStepInputs();
+        const problemStepInputs = comp.getProgrammingExerciseCreationConfig();
         expect(problemStepInputs).not.toBeNull();
     }));
 

@@ -49,6 +49,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
+            this.updateExams();
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
@@ -59,17 +60,25 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         if (this.course?.exams) {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
-            this.expandAttemptsMap = new Map(this.course!.exams!.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
+            this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
+            this.updateExams();
+        }
+    }
 
+    private updateExams(): void {
+        if (this.course?.exams) {
             // Loading the exams from the course
             const exams = this.course.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
+            // add new exams to the attempt map
+            exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
+
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
         }
     }
 
     /**
-     * unsubscribe from all unsubscriptions
+     * unsubscribe from all subscriptions
      */
     ngOnDestroy(): void {
         if (this.paramSubscription) {

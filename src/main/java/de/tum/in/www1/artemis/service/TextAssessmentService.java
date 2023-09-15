@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -20,25 +19,18 @@ public class TextAssessmentService extends AssessmentService {
 
     private final TextBlockService textBlockService;
 
-    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
-
-    private final FeedbackConflictRepository feedbackConflictRepository;
-
     public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
-            ExamDateService examDateService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionRepository gradingCriterionRepository,
+            SubmissionRepository submissionRepository, TextBlockService textBlockService, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository,
             SubmissionService submissionService, LtiNewResultService ltiNewResultService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService);
         this.textBlockService = textBlockService;
-        this.automaticTextFeedbackService = automaticTextFeedbackService;
-        this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
     /**
      * Load entities from database needed for text assessment, set potential feedback impact count & compute
-     * Feedback suggestions (Athene):
+     * Feedback suggestions (Athena):
      * 1. Create or load the result
      * 2. Set potential Feedback impact
      * 3. Compute Feedback Suggestions
@@ -50,17 +42,11 @@ public class TextAssessmentService extends AssessmentService {
      */
     public void prepareSubmissionForAssessment(TextSubmission textSubmission, @Nullable Result result) {
         final Participation participation = textSubmission.getParticipation();
-        final TextExercise exercise = (TextExercise) participation.getExercise();
-
-        final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
         if (result != null) {
             // Load Feedback already created for this assessment
             final List<Feedback> assessments = feedbackRepository.findByResult(result);
             result.setFeedbacks(assessments);
-            if (assessments.isEmpty() && computeFeedbackSuggestions) {
-                automaticTextFeedbackService.get().suggestFeedback(result);
-            }
             result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
         }
         else {
@@ -68,24 +54,17 @@ public class TextAssessmentService extends AssessmentService {
             result = new Result();
             result.setParticipation(participation);
 
-            resultService.createNewRatedManualResult(result, false);
+            resultService.createNewRatedManualResult(result);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
             result.setSubmission(textSubmission);
             textSubmission.addResult(result);
             submissionRepository.save(textSubmission);
-
-            // If enabled, we want to compute feedback suggestions using Athene.
-            if (computeFeedbackSuggestions) {
-                automaticTextFeedbackService.get().suggestFeedback(result);
-            }
         }
 
-        // If we did not call AutomaticTextFeedbackService::suggestFeedback, we need to fetch them now.
-        if (!result.getFeedbacks().isEmpty() || !computeFeedbackSuggestions) {
-            final var textBlocks = textBlockService.findAllBySubmissionId(textSubmission.getId());
-            textSubmission.setBlocks(textBlocks);
-        }
+        // Fetch feedback text blocks
+        final var textBlocks = textBlockService.findAllBySubmissionId(textSubmission.getId());
+        textSubmission.setBlocks(textBlocks);
 
         // If we did not fetch blocks from the database before, we fall back to computing them based on syntax.
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
@@ -94,11 +73,5 @@ public class TextAssessmentService extends AssessmentService {
 
         // Remove participation after storing in database because submission already has the participation set
         result.setParticipation(null);
-
-        // Set each block's impact on other submissions for the current 'textSubmission'
-        if (computeFeedbackSuggestions) {
-            textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
-            result.setSubmission(textSubmission);
-        }
     }
 }

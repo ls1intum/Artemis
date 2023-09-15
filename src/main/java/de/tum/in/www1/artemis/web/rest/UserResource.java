@@ -10,7 +10,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -18,6 +17,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
@@ -74,7 +76,7 @@ public class UserResource {
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("users/search")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<UserDTO>> searchAllUsers(@RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search all Users for {}", loginOrName);
         // restrict result size by only allowing reasonable searches
@@ -103,7 +105,7 @@ public class UserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the "login" user, or with status 404 (Not Found)
      */
     @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
         log.debug("REST request to get User : {}", login);
         return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
@@ -113,7 +115,7 @@ public class UserResource {
     }
 
     @PutMapping("users/notification-date")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> updateUserNotificationDate() {
         log.debug("REST request to update notification date for logged-in user");
         User user = userRepository.getUser();
@@ -128,7 +130,7 @@ public class UserResource {
      * @return void
      */
     @PutMapping("users/notification-visibility")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> updateUserNotificationVisibility(@RequestBody boolean showAllNotifications) {
         log.debug("REST request to update notification visibility for logged-in user");
         User user = userRepository.getUser();
@@ -144,7 +146,7 @@ public class UserResource {
      * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
      */
     @PutMapping("users/initialize")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.getActivated()) {

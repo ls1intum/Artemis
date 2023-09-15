@@ -55,6 +55,8 @@ import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/m
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
+import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
+import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -120,10 +122,6 @@ export const examManagementRoute: Routes = [
             },
         },
         canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/monitoring',
-        loadChildren: () => import('../monitoring/exam-monitoring.module').then((m) => m.ArtemisExamMonitoringModule),
     },
     {
         path: ':examId/exercise-groups',
@@ -216,6 +214,24 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.bonus.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/suspicious-behavior',
+        component: SuspiciousBehaviorComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.examManagement.suspiciousBehavior.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/suspicious-behavior/suspicious-sessions',
+        component: SuspiciousSessionsOverviewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -756,15 +772,6 @@ export const examManagementRoute: Routes = [
         };
     }),
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: FileUploadAssessmentComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.fileUploadExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions',
         component: ExampleSubmissionsComponent,
         resolve: {
@@ -789,10 +796,6 @@ export const examManagementRoute: Routes = [
         loadChildren: () => import('../../exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/text-cluster-statistics',
-        loadChildren: () => import('../../exercises/text/manage/cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions',
         component: ExampleSubmissionsComponent,
         resolve: {
@@ -814,11 +817,20 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: ModelingAssessmentEditorComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
+        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -828,6 +840,15 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
+        component: FileUploadAssessmentComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

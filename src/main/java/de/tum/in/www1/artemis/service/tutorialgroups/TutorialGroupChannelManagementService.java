@@ -263,7 +263,7 @@ public class TutorialGroupChannelManagementService {
         if (channelName.length() == 20) {
             channelName = channelName.substring(0, 17);
         }
-        while (channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isPresent() && channelName.length() <= 20) {
+        while (!channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isEmpty() && channelName.length() <= 20) {
             channelName += ThreadLocalRandom.current().nextInt(0, 10);
         }
 

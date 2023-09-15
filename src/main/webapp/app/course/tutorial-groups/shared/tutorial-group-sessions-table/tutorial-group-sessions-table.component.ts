@@ -62,7 +62,10 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
         return numberOfColumns;
     }
 
-    constructor(private sortService: SortService, private changeDetectorRef: ChangeDetectorRef) {}
+    constructor(
+        private sortService: SortService,
+        private changeDetectorRef: ChangeDetectorRef,
+    ) {}
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {

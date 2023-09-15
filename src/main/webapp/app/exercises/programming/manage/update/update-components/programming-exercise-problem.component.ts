@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Observable } from 'rxjs';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -16,24 +16,7 @@ export class ProgrammingExerciseProblemComponent {
 
     programmingExercise: ProgrammingExercise;
 
-    @Input() isImportFromExistingExercise: boolean;
-    @Input() isImportFromFile: boolean;
-    @Input() isExamMode: boolean;
-    @Input() problemStatementLoaded: boolean;
-    @Input() templateParticipationResultLoaded: boolean;
-    @Input() hasUnsavedChanges: boolean;
-    @Input() rerenderSubject: Observable<void>;
-    @Input() sequentialTestRunsAllowed: boolean;
-    @Input() checkoutSolutionRepositoryAllowed: boolean;
-    @Input() publishBuildPlanUrlAllowed: boolean;
-    @Input() testwiseCoverageAnalysisSupported: boolean;
-    @Input() validIdeSelection: () => boolean | undefined;
-    @Input() selectedProjectType: ProjectType;
-    @Input() inProductionEnvironment: boolean;
-    @Input() recreateBuildPlans: boolean;
-    @Input() recreateBuildPlanOrUpdateTemplateChange: () => void;
-    @Input() updateTemplate: boolean;
-
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 
     @Input()

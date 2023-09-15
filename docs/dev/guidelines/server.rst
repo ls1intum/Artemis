@@ -106,6 +106,7 @@ It gets activated when a particular jar file is detected on the classpath. The s
 * RestControllers should not execute business logic but rely on delegation.
 * RestControllers should deal with the HTTP layer of the application.
 * RestControllers should be oriented around a use-case/business-capability.
+* RestControllers should return DTOs that are as small as possible
 
 Route naming conventions:
 
@@ -124,7 +125,7 @@ Additional notes on the controller methods:
 * POST should return the newly created entity.
 * POST should be used to trigger remote methods (e.g. ".../{participationId}/submit" should be triggered with a POST).
 * Verify that API endpoints perform appropriate authorization and authentication consistent with the rest of the code base.
-    * Always use ``@PreAuthorize`` to only allow certain roles to access the method.
+    * Always use the Authorization enforcement logic described down below to only allow certain roles to access the method.
     * Perform additional security checks using the ``AuthorizationCheckService``.
 * Check for other common weaknesses, e.g., weak configuration, malicious user input, missing log events, etc.
 * Never trust user input and check if the passed data exists in the database.
@@ -137,14 +138,143 @@ Additional notes on the controller methods:
     * Bad Request - the request was wrong.
     * Not Found - can't find the requested data or it should be not accessible yet.
 
-12. Dependency injection
+.. _server-guideline-dto-usage:
+
+12. Use DTOs for data transfer
+==============================
+
+Use data transfer objects (DTOs) to send data from the server to the client, i.e. responses of RestControllers and WebSocket messages.
+
+Definition and Characteristics of DTOs:
+
+1. Java Records: DTOs are implemented as Java records. Records do not support inheritance, so duplication for DTOs is ok.
+2. No Entity Objects: DTOs must not contain entity objects, but only primitive types (or the corresponding wrapper classes), enums or other DTOs.
+3. Minimal Data: DTOs should only include the minimum amount of data required by the client application. Avoid adding any unnecessary or redundant information.
+4. Single Responsibility: Keep DTOs focused on specific tasks and data subsets to maintain a clear and concise data representation. Avoid using a single DTO for multiple payloads unless the data transferred is exactly the same. Create separate records for new or updated payloads.
+5. Avoid Adding Methods: Refrain from adding methods to DTOs. They should only serve as simple data containers without any business logic.
+
+Not utilizing DTOs can result in accidentally sending excessive data to clients, leading to unnecessary load on the underlying systems.
+In the worst-case scenario, this might lead to the inadvertent exposure of sensitive data.
+For instance, in a direct message chat, without employing DTOs, the following amount of information is transmitted via WebSocket for just one new message:
+
+.. code-block:: json
+
+    {
+        "notificationType": "conversation",
+        "id": 90,
+        "title": "artemisApp.conversationNotification.title.newMessage",
+        "text": "artemisApp.conversationNotification.text.newMessageDirect",
+        "textIsPlaceholder": true,
+        "placeholderValues": "[\"PR Testing Course\",\"Test\",\"2023-07-24T03:07:59.299591+02:00[Europe/Berlin]\",\"artemis_test_user_1 artemis_test_user_1\",\"artemis_test_user_1 artemis_test_user_1\",\"oneToOneChat\"]",
+        "notificationDate": "2023-07-24T03:07:59.416129+02:00",
+        "target": "{\"message\":\"new-message\",\"entity\":\"message\",\"mainPage\":\"courses\",\"id\":31,\"course\":2,\"conversation\":31}",
+        "priority": "MEDIUM",
+        "outdated": false,
+        "author": {
+            "id": 2,
+            "createdDate": "2023-06-20T17:32:21.249Z",
+            "login": "artemis_test_user_1",
+            "firstName": "artemis_test_user_1",
+            "lastName": "artemis_test_user_1",
+            "email": "artemis_test_user_1@example.com",
+            "activated": true,
+            "langKey": "en",
+            "resetDate": "2023-06-20T17:32:21.214Z",
+            "groups": ["artemis-athena-students", "artemis-students"],
+            "authorities": [{
+                "name": "ROLE_USER"
+            }],
+            "name": "artemis_test_user_1 artemis_test_user_1",
+            "participantIdentifier": "artemis_test_user_1",
+            "internal": true,
+            "deleted": false
+        },
+        "message": {
+            "id": 31,
+            "author": {
+                "id": 2,
+                "name": "artemis_test_user_1 artemis_test_user_1"
+            },
+            "creationDate": "2023-07-24T03:07:59.299591+02:00",
+            "content": "Test",
+            "visibleForStudents": true,
+            "conversation": {
+                "type": "oneToOneChat",
+                "id": 31,
+                "creator": {
+                    "id": 1,
+                    "createdDate": "2023-06-20T17:30:31.555Z",
+                    "login": "artemis_admin",
+                    "firstName": "Administrator",
+                    "lastName": "Administrator",
+                    "email": "admin@localhost",
+                    "activated": true,
+                    "langKey": "en",
+                    "resetDate": "2023-06-20T17:30:31.495Z",
+                    "name": "Administrator Administrator",
+                    "participantIdentifier": "artemis_admin",
+                    "internal": true,
+                    "deleted": false
+                },
+                "creationDate": "2023-07-24T02:43:54.791+02:00",
+                "lastMessageDate": "2023-07-24T03:07:59.372553+02:00"
+            },
+            "displayPriority": "NONE",
+            "resolved": false,
+            "answerCount": 0,
+            "voteCount": 0
+        },
+        "conversation": {
+            "type": "oneToOneChat",
+            "id": 31,
+            "creator": {
+                "id": 1,
+                "createdDate": "2023-06-20T17:30:31.555Z",
+                "login": "artemis_admin",
+                "firstName": "Administrator",
+                "lastName": "Administrator",
+                "email": "admin@localhost",
+                "activated": true,
+                "langKey": "en",
+                "resetDate": "2023-06-20T17:30:31.495Z",
+                "name": "Administrator Administrator",
+                "participantIdentifier": "artemis_admin",
+                "internal": true,
+                "deleted": false
+            },
+            "creationDate": "2023-07-24T02:43:54.791+02:00",
+            "lastMessageDate": "2023-07-24T03:07:59.372553+02:00"
+        },
+        "targetTransient": {
+            "message": "new-message",
+            "entity": "message",
+            "mainPage": "courses",
+            "id": 31,
+            "course": 2,
+            "conversation": 31
+        }
+    }
+
+Hence, entity objects must not be included in DTOs. This is a bad example for a DTO, since it contains the entity object ``Post``:
+
+.. code-block:: java
+
+    public record PostDTO(Post post, MetisCrudAction action) {}
+
+This is a good example for a DTO, because it only contains very little information in the form of boxed primitive types and an enum value:
+
+.. code-block:: java
+
+    public record GradeDTO(String gradeName, Boolean isPassingGrade, GradeType gradeType) {}
+
+13. Dependency injection
 ========================
 
 * Some of you may argue with this, but by favoring constructor injection you can keep your business logic free from Spring. Not only is the @Autowired annotation optional on constructors, you also get the benefit of being able to easily instantiate your bean without Spring.
 * Use setter based DI only for optional dependencies.
 * Avoid circular dependencies, try constructor and setter based DI for such cases.
 
-13. Keep it simple and stupid
+14. Keep it simple and stupid
 =============================
 
 * Don't write complex code.
@@ -153,14 +283,14 @@ Additional notes on the controller methods:
 * Commit messages should describe both what the commit changes and how it does it.
 * ARCHITECTURE FIRST: writing code without thinking of the system's architecture is useless, in the same way as dreaming about your desires without a plan of achieving them.
 
-14. File handling
+15. File handling
 =================
 
 * Never use operating system (OS) specific file paths such as "test/test". Always use OS independent paths.
 * Do not deal with File.separator manually. Instead use the Path.of(firstPart, secondPart, ...) method which deals with separators automatically.
 * Existing paths can easily be appended with a new folder using ``existingPath.resolve(subfolder)``
 
-15. General best practices
+16. General best practices
 ==========================
 
 * Always use the least possible access level, prefer using private over public access modifier (package-private or protected can be used as well).
@@ -172,7 +302,7 @@ Additional notes on the controller methods:
 * Use ``./gradlew spotlessCheck`` and ``./gradlew spotlessApply`` to check Java code style and to automatically fix it.
 * Don't use ``.collect(Collectors.toList())``. Instead use only ``.toList()`` for an unmodifiable list or ``.collect(Collectors.toCollection(ArrayList::new))`` to explicitly create a new ArrayList.
 
-16. Avoid service dependencies
+17. Avoid service dependencies
 ==============================
 
 In order to achieve low coupling and high cohesion, services should have as few dependencies on other services as possible:
@@ -210,7 +340,7 @@ Another approach is moving objects into the domain classes, but be aware that yo
         return false;
     }
 
-17. Proper annotation of SQL query parameters
+18. Proper annotation of SQL query parameters
 =============================================
 
 Query parameters for SQL must be annotated with ``@Param("variable")``!
@@ -220,8 +350,9 @@ Do **not** write
 .. code-block:: java
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(Long resultId);
@@ -231,15 +362,16 @@ but instead annotate the parameter with @Param:
 .. code-block:: java
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
 The string name inside must match the name of the variable exactly!
 
-18. SQL statement formatting
+19. SQL statement formatting
 ============================
 
 We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
@@ -247,13 +379,14 @@ We prefer to write SQL statements all in upper case. Split queries onto multiple
 .. code-block:: java
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
-19. Avoid the usage of Sub-queries
+20. Avoid the usage of Sub-queries
 ==================================
 
 SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
@@ -262,11 +395,14 @@ So instead of:
 .. code-block:: java
 
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
-                WHERE p.exercise.id = :#{#exerciseId}
-                AND EXISTS (SELECT s FROM Submission s
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND EXISTS (SELECT s
+                    FROM Submission s
                     WHERE s.participation.id = p.id
-                    AND s.submitted = TRUE
+                        AND s.submitted = TRUE
+                    )
             """)
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
@@ -276,21 +412,23 @@ you should use:
 .. code-block:: java
 
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p JOIN p.submissions s
-                WHERE p.exercise.id = :#{#exerciseId}
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+            WHERE p.exercise.id = :exerciseId
                 AND s.submitted = TRUE
             """)
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
 Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
 
-20. Criteria Builder
+21. Criteria Builder
 ==================================================
 
 For more details, please visit the :doc:`./criteria-builder` page.
 
 
-21. REST endpoint best practices for authorization
+22. REST endpoint best practices for authorization
 ==================================================
 
 To reject unauthorized requests as early as possible, Artemis employs a two-step system:
@@ -303,7 +441,7 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
 
 .. code-block:: java
 
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         var exercise = programmingExerciseRepository.findById(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -314,23 +452,25 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
 Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
 
-The table contains all annotations for the corresponding minimum role. Different annotations get used during migration.
+The table contains all annotations for the corresponding minimum role including the required path prefix for all their endpoints and the package they should reside in. Different annotations get used during migration.
 
-+------------------+----------------------------------------+
-| **Minimum Role** | **Endpoint Annotation**                |
-+------------------+----------------------------------------+
-| ADMIN            | @EnforceAdmin                          |
-+------------------+----------------------------------------+
-| INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") |
-+------------------+----------------------------------------+
-| EDITOR           | @PreAuthorize("hasRole('EDITOR')")     |
-+------------------+----------------------------------------+
-| TA               | @PreAuthorize("hasRole('TA')")         |
-+------------------+----------------------------------------+
-| USER             | @PreAuthorize("hasRole('USER')")       |
-+------------------+----------------------------------------+
-| ANONYMOUS        | @PreAuthorize("permitAll()")           |
-+------------------+----------------------------------------+
++------------------+----------------------------------------+-----------------+----------------+
+| **Minimum Role** | **Endpoint Annotation**                | **Path Prefix** | **Package**    |
++------------------+----------------------------------------+-----------------+----------------+
+| ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
++------------------+----------------------------------------+-----------------+----------------+
+| INSTRUCTOR       | @EnforceAtLeastInstructor              | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| EDITOR           | @EnforceAtLeastEditor                  | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| TA               | @EnforceAtLeastTutor                   | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| USER             | @EnforceAtLeastStudent                 | /api/           | web.rest       |
++------------------+----------------------------------------+-----------------+----------------+
+| ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
++------------------+----------------------------------------+-----------------+----------------+
+
+If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
 If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
@@ -346,7 +486,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 .. code-block:: java
 
     @GetMapping(Endpoints.GET_FOR_COURSE)
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
@@ -359,7 +499,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
 
 
-22. Assert using the most specific overload method
+23. Assert using the most specific overload method
 ==================================================
 
 When expecting results use ``assertThat`` for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
@@ -391,7 +531,7 @@ Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-c
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
 
-23. General Testing Tips
+24. General Testing Tips
 ========================
 
 Write meaningful comments for your tests.
@@ -440,7 +580,7 @@ https://www.baeldung.com/spring-tests
 
 If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
-24. Counting database query calls within tests
+25. Counting database query calls within tests
 ==============================================
 
 It's possible to write tests that check how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
@@ -463,7 +603,7 @@ add any other assertions to the test, as shown below.
         }
     }
 
-25. Avoid using @MockBean
+26. Avoid using @MockBean
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.

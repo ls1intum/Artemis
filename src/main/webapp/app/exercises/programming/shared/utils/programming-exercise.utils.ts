@@ -10,6 +10,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
@@ -42,6 +43,9 @@ export const createCommitUrl = (
         const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
         if (studentParticipation.repositoryUrl) {
             repoSlugPostfix = studentParticipation.participantIdentifier;
+            if (isPracticeMode(studentParticipation)) {
+                repoSlugPostfix = 'practice-' + repoSlugPostfix;
+            }
         }
     } else if (participation?.type === ParticipationType.TEMPLATE) {
         // In case of a test submisson, we need to use the test repository
@@ -72,7 +76,7 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (!programmingExercise) {
         return false;
     }
-    if (latestResult.participation?.type === ParticipationType.PROGRAMMING && (latestResult.participation as ProgrammingExerciseStudentParticipation).testRun) {
+    if (latestResult.participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(latestResult.participation)) {
         return false;
     }
 
@@ -115,13 +119,13 @@ export const isProgrammingExerciseParticipation = (participation: Participation 
 };
 
 /**
- * The deadline has passed if:
+ * The due date has passed if:
  * - The dueDate is set and the buildAndTestAfterDueDate is not set and the dueDate has passed.
  * - The dueDate is set and the buildAndTestAfterDueDate is set and the buildAndTestAfterDueDate has passed.
  *
  * @param exercise
  */
-export const hasDeadlinePassed = (exercise: ProgrammingExercise) => {
+export const hasDueDatePassed = (exercise: ProgrammingExercise) => {
     // If there is no due date, the due date can't pass.
     if (!exercise.dueDate && !exercise.buildAndTestStudentSubmissionsAfterDueDate) {
         return false;

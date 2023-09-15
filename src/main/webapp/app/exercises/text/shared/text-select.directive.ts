@@ -36,7 +36,10 @@ export class TextSelectDirective implements OnInit, OnDestroy {
     public jhiTextSelect = new EventEmitter<TextSelectEvent>();
     private hasSelection = false;
 
-    constructor(private elementRef: ElementRef, private zone: NgZone) {}
+    constructor(
+        private elementRef: ElementRef,
+        private zone: NgZone,
+    ) {}
 
     /**
      * Init text select directive by adding event listenes mouseDown and selectionChange event listeners to element.

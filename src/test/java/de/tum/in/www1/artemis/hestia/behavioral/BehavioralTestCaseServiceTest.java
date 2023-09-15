@@ -17,11 +17,14 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.*;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralTestCaseService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -58,13 +61,22 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setTestwiseCoverageEnabled(true);
     }
 
@@ -101,7 +113,7 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private CoverageReport newCoverageReport() {
         var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElseThrow();
-        var solutionSubmission = database.createProgrammingSubmission(solutionParticipation, false);
+        var solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, false);
 
         var coverageReport = new CoverageReport();
         coverageReport.setFileReports(new HashSet<>());

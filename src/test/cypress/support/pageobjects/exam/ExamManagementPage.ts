@@ -83,6 +83,10 @@ export class ExamManagementPage {
         cy.get('#result-score').contains(score);
     }
 
+    clickEdit() {
+        cy.get('#editButton').click();
+    }
+
     /**
      * helper methods to get information of course
      * */

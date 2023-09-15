@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [course]="exercise?.exerciseGroup?.exam?.course">
-        <span pagetitle>{{ exercise.title }}</span>
+    <jhi-header-exercise-page-with-details [exercise]="exercise!" [course]="exercise?.exerciseGroup?.exam?.course">
+        <span pagetitle>{{ exercise?.exerciseGroup ? exercise.exerciseGroup!.title : exercise!.title }}</span>
     </jhi-header-exercise-page-with-details>
     <div class="row">
         <div class="col pe-0 flex-grow-1">

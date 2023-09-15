@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.team.TeamImportStrategy;
@@ -90,8 +91,8 @@ public class TeamService {
             // Users in the updated team that were not yet part of the existing team need to be added
             Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
             usersToAdd.removeAll(existingTeam.getStudents());
-            usersToAdd.forEach(user -> versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUrl(), user,
-                    VersionControlService.RepositoryPermissions.READ_WRITE));
+            usersToAdd.forEach(
+                    user -> versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUrl(), user, VersionControlRepositoryPermission.REPO_WRITE));
         });
     }
 

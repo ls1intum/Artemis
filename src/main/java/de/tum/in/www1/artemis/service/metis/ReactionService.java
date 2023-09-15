@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
@@ -69,7 +68,7 @@ public class ReactionService {
         Reaction savedReaction;
         if (posting instanceof Post) {
             Post post = postService.findPostOrMessagePostById(posting.getId());
-            post.setConversation(mayInteractWithConversationIfConversationMessage(user, post));
+            mayInteractWithConversationIfConversationMessageElseThrow(user, post);
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -84,7 +83,7 @@ public class ReactionService {
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
-            answerPost.getPost().setConversation(mayInteractWithConversationIfConversationMessage(user, answerPost.getPost()));
+            mayInteractWithConversationIfConversationMessageElseThrow(user, answerPost.getPost());
             reaction.setAnswerPost(answerPost);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -114,7 +113,7 @@ public class ReactionService {
         Post updatedPost;
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
-            updatedPost.setConversation(mayInteractWithConversationIfConversationMessage(user, updatedPost));
+            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedPost);
 
             if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
                 // decrease voteCount of post needed for sorting
@@ -126,7 +125,7 @@ public class ReactionService {
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
-            updatedAnswerPost.getPost().setConversation(mayInteractWithConversationIfConversationMessage(user, updatedAnswerPost.getPost()));
+            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedAnswerPost.getPost());
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
@@ -134,16 +133,13 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
         reactionRepository.deleteById(reactionId);
     }
 
-    private Conversation mayInteractWithConversationIfConversationMessage(User user, Post post) {
+    private void mayInteractWithConversationIfConversationMessageElseThrow(User user, Post post) {
         if (post.getConversation() != null) {
-            return conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
-        }
-        else {
-            return null;
+            conversationService.isMemberElseThrow(post.getConversation().getId(), user.getId());
         }
     }
 }

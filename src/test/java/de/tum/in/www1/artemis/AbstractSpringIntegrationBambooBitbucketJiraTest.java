@@ -61,7 +61,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ExtendWith(SpringExtension.class)
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athena", "apollon" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
 
     @SpyBean
@@ -121,7 +121,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             throws IOException, URISyntaxException {
         // Step 1a)
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        // Step 1b)
+        // Step 1c)
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
@@ -139,7 +139,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             throws IOException, URISyntaxException {
         // Step 1a)
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, true);
-        // Step 1b)
+        // Step 1c)
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists, true);
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username, true);
@@ -237,8 +237,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         }
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
-
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject) throws IOException, URISyntaxException {
@@ -264,7 +262,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             throws Exception {
 
         mockImportRepositories(sourceExercise, exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
         bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         if (!recreateBuildPlans) {
@@ -283,7 +280,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(sourceExercise, exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
     }
@@ -296,9 +292,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         // take the latest participationId because we assume that it increases in the database for the participations in the imported exercises
         var nextParticipationId = Math.max(sourceExercise.getSolutionParticipation().getId(), sourceExercise.getTemplateParticipation().getId()) + 1;
-        final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
-        final var artemisTestsHookPath = artemisServerUrl + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
+        final var artemisTemplateHookPath = artemisServerUrl + "/api/public/programming-submissions/" + nextParticipationId++;
+        final var artemisSolutionHookPath = artemisServerUrl + "/api/public/programming-submissions/" + nextParticipationId;
+        final var artemisTestsHookPath = artemisServerUrl + "/api/public/programming-exercises/test-cases-changed/" + (sourceExercise.getId() + 1);
 
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
@@ -341,8 +337,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         }
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
-        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName());
+        bambooRequestMockProvider.mockTriggerBuild(projectKey + "-" + TEMPLATE.getName());
+        bambooRequestMockProvider.mockTriggerBuild(projectKey + "-" + SOLUTION.getName());
     }
 
     @Override

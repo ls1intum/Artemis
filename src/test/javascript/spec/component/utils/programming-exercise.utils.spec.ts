@@ -5,7 +5,7 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import {
     createBuildPlanUrl,
     createCommitUrl,
-    hasDeadlinePassed,
+    hasDueDatePassed,
     isLegacyResult,
     isProgrammingExerciseParticipation,
     isProgrammingExerciseStudentParticipation,
@@ -252,6 +252,21 @@ describe('ProgrammingExerciseUtils', () => {
             expect(url).toBe(expectedUrl);
         });
 
+        it('creates a commit url for a student submission in practice mode', () => {
+            const participantID = 'PID';
+            const participation = new ProgrammingExerciseStudentParticipation();
+            participation.repositoryUrl = 'repositoryUrl';
+            participation.testRun = true;
+            participation.participantIdentifier = participantID;
+            const submission = new ProgrammingSubmission();
+            submission.commitHash = commitHash;
+
+            const url = createCommitUrl(template, projectKey, participation, submission);
+
+            const expectedUrl = '/projects/pk/repos/pk-practice-' + participantID + '/commits/' + commitHash;
+            expect(url).toBe(expectedUrl);
+        });
+
         it('creates a commit url for a template submission', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
             const submission = new ProgrammingSubmission();
@@ -351,7 +366,7 @@ describe('ProgrammingExerciseUtils', () => {
         });
     });
 
-    describe('hasDeadlinePassed', () => {
+    describe('hasDueDatePassed', () => {
         let exercise: ProgrammingExercise;
 
         beforeEach(() => {
@@ -359,23 +374,23 @@ describe('ProgrammingExerciseUtils', () => {
         });
 
         it('returns false if no due date is set', () => {
-            expect(hasDeadlinePassed(exercise)).toBeFalse();
+            expect(hasDueDatePassed(exercise)).toBeFalse();
         });
 
         it('buildAndTestDate takes precedence over normal exercise due date', () => {
             exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
             exercise.dueDate = dayjs().subtract(5, 'hours');
-            expect(hasDeadlinePassed(exercise)).toBeFalse();
+            expect(hasDueDatePassed(exercise)).toBeFalse();
         });
 
         it('returns true on date in the past', () => {
             exercise.dueDate = dayjs().subtract(1, 'hour');
-            expect(hasDeadlinePassed(exercise)).toBeTrue();
+            expect(hasDueDatePassed(exercise)).toBeTrue();
         });
 
         it('returns false on date in the future', () => {
             exercise.dueDate = dayjs().add(1, 'hour');
-            expect(hasDeadlinePassed(exercise)).toBeFalse();
+            expect(hasDueDatePassed(exercise)).toBeFalse();
         });
     });
 

@@ -34,7 +34,6 @@ import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/prog
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import dayjs from 'dayjs/esm';
@@ -210,7 +209,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
                 MockPipe(RemoveKeysPipe),
-                MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
                 MockDirective(TranslateDirective),
             ],

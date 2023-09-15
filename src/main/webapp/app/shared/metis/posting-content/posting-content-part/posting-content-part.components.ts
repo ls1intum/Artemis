@@ -24,7 +24,10 @@ export class PostingContentPartComponent {
     faFile = faFile;
     faBan = faBan;
 
-    constructor(private fileService: FileService, private dialog: MatDialog) {}
+    constructor(
+        private fileService: FileService,
+        private dialog: MatDialog,
+    ) {}
 
     /**
      * Opens an attachment with the given URL in a new window

@@ -1,7 +1,7 @@
 Setup Guide
 ===========
 
-In this guide you learn how to setup the development environment of
+In this guide, you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
 development on the application server using Java 17, and TypeScript
@@ -22,7 +22,7 @@ following dependencies/tools on your machine:
 1. `Java
    JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
    We use Java (JDK 17) to develop and run the Artemis application
-   server which is based on `Spring
+   server, which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
@@ -42,7 +42,8 @@ following dependencies/tools on your machine:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
    * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
-   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
+   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
+   * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -52,6 +53,8 @@ following dependencies/tools on your machine:
 
 ------------------------------------------------------------------------------------------------------------------------
 
+
+.. _Database Setup:
 
 Database Setup
 --------------
@@ -67,7 +70,7 @@ MySQL Setup
 
 You have to run a database on your local machine to be able to start Artemis.
 
-We recommend to start the database in a docker container. You can run the MySQL Database Server
+We recommend starting the database in a docker container. You can run the MySQL Database Server
 using e.g. ``docker compose -f docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
@@ -92,7 +95,7 @@ You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/optio
 Users for MySQL
 """""""""""""""
 
-| For the development environment the default MySQL user is ‘root’ with an empty password.
+| For the development environment, the default MySQL user is ‘root’ with an empty password.
 | (In case you want to use a different password, make sure to change the value in
   ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle``
   *(within the 'liquibaseCommand' as argument password)*).
@@ -116,7 +119,8 @@ PostgreSQL Setup
 
 No special PostgreSQL settings are required.
 You can either use your package manager’s version, or set it up using a container.
-An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_ is provided in ``src/main/docker/postgresql.yml``.
+An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_
+is provided in ``src/main/docker/postgres.yml``.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
@@ -218,10 +222,9 @@ You can override the following configuration options in this file.
        git:
            name: Artemis
            email: artemis@in.tum.de
-       athene:
-           url: http://localhost
-           base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-           token-validity-in-seconds: 10800
+       athena:
+           url: http://localhost:5000
+           secret: abcdef12345
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,
@@ -253,7 +256,7 @@ Run the server via a service configuration
 
 This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting
 of Artemis after the VM running Artemis has been restarted.
-As alternative you could take a look at the section below about
+Alternatively, you could look at the section below about
 `deploying artemis as docker container <#run-the-server-via-docker>`__.
 For development setups, see the other guides below.
 
@@ -329,8 +332,8 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
 
     * **/opt/artemis/config:**
 
-      This can be used to store additional configuration of Artemis in YAML files.
-      The usage is optional and we recommend using the environment files for overriding your custom configurations
+      This can be used to store additional configurations of Artemis in YAML files.
+      The usage is optional, and we recommend using the environment files for overriding your custom configurations
       instead of using ``src/main/resources/application-local.yml`` as such an additional configuration file.
       The other configurations like ``src/main/resources/application.yml``, ... are built into the ``.war`` file and
       therefore are not needed in this directory.
@@ -358,7 +361,7 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
     * **/opt/artemis/public/content:**
 
       This directory will be used for branding.
-      You can specify a favicon and ``imprint.html`` here.
+      You can specify a favicon here.
 
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
   (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
@@ -367,23 +370,27 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
     * LANG ``en_US.UTF-8``
     * LANGUAGE ``en_US.UTF-8``
 
+.. warning::
+  **ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space.
+  On a *Apple M1* we had to set the **Docker Desktop** memory limit to 12GB or more.
+
 .. _Docker Debugging:
 
 Debugging with Docker
 """""""""""""""""""""
 
 | The Docker containers have the possibility to enable Java Remote Debugging via Java environment variables.
-| Java Remote Debugging allows you to use your preferred debugger connected to port 5005.
-  For IntelliJ you can use the `Remote Java Debugging for Docker` profile being shipped in the git repository.
+| Java Remote Debugging lets you use your preferred debugger connected to port 5005.
+  For IntelliJ, you can use the `Remote Java Debugging for Docker` profile shipped in the git repository.
 
-With the following Java environment variable you can configure the Remote Java Debugging inside a container:
+With the following Java environment variable, you can configure the Remote Java Debugging inside a container:
 
 ::
 
    _JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
-| This is already preset in the Docker Compose **Artemis-Dev-MySQL** Setup.
-| For issues at the startup you might have to suspend the java command until a Debugger connected.
+| This is already pre-set in the Docker Compose **Artemis-Dev-MySQL** Setup.
+| For issues at the startup, you might have to suspend the java command until a Debugger is connected.
   This is possible by setting ``suspend=y``.
 
 
@@ -393,7 +400,7 @@ Run the server via a run configuration in IntelliJ
 The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
 When you import the project into IntelliJ the run configurations will also be imported.
 
-The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot
+The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot
 module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
@@ -408,8 +415,9 @@ Other run / debug configurations
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
   ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
-* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
-  (see `Athene Service <#athene-service>`__).
+* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``. To use this configuration, Docker needs to be running on your system as the local CI system uses it to run build jobs.
+* **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
+  (see `Athena Service <#athena-service>`__).
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -473,12 +481,9 @@ assessment process. Certain assessment events are tracked:
 1. Adding new feedback on a manually selected block
 2. Adding new feedback on an automatically selected block
 3. Deleting a feedback
-4. Clicking to resolve feedback conflicts
-5. Clicking to view origin submission of automatically generated feedback
-6. Hovering over the text assessment feedback impact warning
-7. Editing/Discarding an automatically generated feedback
-8. Clicking the Submit button when assessing a text submission
-9. Clicking the Assess Next button when assessing a text submission
+4. Editing/Discarding an automatically generated feedback
+5. Clicking the Submit button when assessing a text submission
+6. Clicking the Assess Next button when assessing a text submission
 
 These events are tracked by attaching a POST call to the respective DOM elements on the client side.
 The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table.
@@ -566,15 +571,13 @@ instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/logo/favicon.svg``
-* The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/privacy-statement.rst
+.. include:: setup/legal-documents.rst
 
-
-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/programming-exercises.rst
 
@@ -592,24 +595,75 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
+.. include:: setup/localci-localvc.rst
 
-Athene Service
+------------------------------------------------------------------------------------------------------------------------
+
+
+Hermes Service
 --------------
 
-The semi-automatic text assessment relies on the Athene_ service.
+Push notifications for the mobile Android and iOS clients rely on the Hermes_ service.
+To enable push notifications the Hermes service needs to be started separately and the configuration of the Artemis instance must be extended.
+
+Configure and start Hermes
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To run Hermes, you need to clone the `repository <https://github.com/ls1intum/Hermes>`_ and replace the placeholders within the ``docker-compose`` file.
+
+The following environment variables need to be updated for push notifications to Apple devices:
+
+* ``APNS_CERTIFICATE_PATH``: String - Path to the APNs certificate .p12 file as described `here <https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns>`_
+* ``APNS_CERTIFICATE_PWD``: String - The APNS certificate password
+* ``APNS_PROD_ENVIRONMENT``: Bool - True if it should use the Production APNS Server (Default false)
+
+Furthermore, the <APNS_Key>.p12 needs to be mounted into the Docker under the above specified path.
+
+To run the services for Android support the following environment variable is required:
+
+* ``GOOGLE_APPLICATION_CREDENTIALS``: String - Path to the firebase.json
+
+Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
+
+To run both APNS and Firebase, configure the environment variables for both.
+
+To start Hermes, run the ``docker compose up`` command in the folder where the ``docker-compose`` file is located.
+
+Artemis Configuration
+^^^^^^^^^^^^^^^^^^^^^
+
+The Hermes service is running on a dedicated machine and is addressed via
+HTTPS. We need to extend the Artemis configuration in the file
+``src/main/resources/config/application-artemis.yml`` like:
+
+.. code:: yaml
+
+   artemis:
+     # ...
+    push-notification-relay: <url>
+
+.. _Hermes: https://github.com/ls1intum/Hermes
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+Athena Service
+--------------
+
+The semi-automatic text assessment relies on the Athena_ service.
 To enable automatic text assessments, special configuration is required:
 
-Enable the ``athene`` Spring profile:
+Enable the ``athena`` Spring profile:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athena
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Athene service is running on a dedicated machine and is addressed via
+The Athena service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
@@ -617,12 +671,14 @@ HTTP. We need to extend the configuration in the file
 
    artemis:
      # ...
-     athene:
-       url: http://localhost
-       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-       token-validity-in-seconds: 10800
+     athena:
+         url: http://localhost:5000
+         secret: abcdef12345
 
-.. _Athene: https://github.com/ls1intum/Athene
+The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the Athena documentation_.
+
+.. _Athena: https://github.com/ls1intum/Athena
+.. _documentation: https://ls1intum.github.io/Athena
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -664,6 +720,8 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
+.. _docker_compose_setup_dev:
+
 Alternative: Docker Compose Setup
 ---------------------------------
 
@@ -691,10 +749,10 @@ Getting Started with Docker Compose
 5. Run ``docker compose down`` in the directory ``docker/`` to stop and remove the docker containers
 
 .. tip::
-  | The first ``docker compose pull`` command is just necessary the first time as an extra step,
-    as otherwise Artemis will be built from source as you don't already have an Artemis Image locally.
+  | The first ``docker compose pull`` command is just necessary the first time as an extra step;
+    otherwise, Artemis will be built from source as you don't already have an Artemis Image locally.
   |
-  | For Arm-based Macs, Dev boards, etc. you will have to build the Artemis Docker Image first as we currently do not
+  | For Arm-based Macs, Dev boards, etc., you will have to build the Artemis Docker Image first, as we currently do not
     distribute Docker Images for these architectures.
 
 Other Docker Compose Setups
@@ -702,7 +760,7 @@ Other Docker Compose Setups
 
 .. figure:: setup/artemis-docker-file-structure.drawio.png
    :align: center
-   :target: ../../_images/artemis-docker-file-structure.drawio.png
+   :target: ../_images/artemis-docker-file-structure.drawio.png
 
    Overview of the Artemis Docker / Docker Compose structure
 
@@ -710,7 +768,11 @@ The easiest way to configure a local deployment via Docker is a deployment with 
 In the directory ``docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+* ``artemis-dev-postgres.yml``: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and
+  a PostgreSQL DB
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
+* ``artemis-prod-postgres.yml``: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and
+  a PostgreSQL DB
 * ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
   (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
   for the configuration of this setup)
@@ -720,32 +782,33 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
 * ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
-* ``postgresql.yml``: **PostgreSQL** Setup containing a PostgreSQL DB instance
+* ``postgres.yml``: **Postgres** Setup containing a PostgreSQL DB instance
 
-Two example commands to run such setups:
+Three example commands to run such setups:
 
 .. code:: bash
 
   docker compose -f docker/atlassian.yml up
   docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
+  docker compose -f docker/artemis-dev-postgres.yml up
 
 .. tip::
   There is also a single ``docker-compose.yml`` in the directory ``docker/`` which mirrors the setup of ``artemis-prod-mysql.yml``.
   This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
   If the documentation just mentions to run ``docker compose`` without a ``-f <file.yml>`` argument, it's
-  assumed you are running the command from the ``docker/`` directory.F
+  assumed you are running the command from the ``docker/`` directory.
 
-For each service being used in these *docker compose* files a **base service** (containing similar settings)
+For each service being used in these *docker compose* files, a **base service** (containing similar settings)
 is defined in the following files:
 
 * ``artemis.yml``: **Artemis Service**
 * ``mysql.yml``: **MySQL DB Service**
 * ``nginx.yml``: **Nginx Service**
-* ``postgresql.yml``: **PostgreSQL DB Service**
+* ``postgres.yml``: **PostgreSQL DB Service**
 * ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 
-For testing mails or SAML logins you can append the following services to any setup with an artemis container:
+For testing mails or SAML logins, you can append the following services to any setup with an artemis container:
 
 * ``mailhog.yml``: **Mailhog Service** (email testing tool)
 * ``saml-test.yml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
@@ -757,8 +820,8 @@ An example command to run such an extended setup:
   docker compose -f docker/artemis-dev-mysql.yml -f docker/mailhog.yml up
 
 .. warning::
-  If you want to run multiple *docker compose* setups in parallel on one host you might have to modify
-  volume, container and network names!
+  If you want to run multiple *docker compose* setups in parallel on one host, you might have to modify
+  volume, container, and network names!
 
 Folder structure
 """"""""""""""""
@@ -773,11 +836,11 @@ Artemis Base Service
 
 Everything related to the Docker Image of Artemis (built by the Dockerfile) can be found
 `in the Server Setup section <#run-the-server-via-docker>`__.
-All Artemis related settings changed in Docker compose files are described here.
+All Artemis-related settings changed in Docker Compose files are described here.
 
 | The ``artemis.yml`` **base service** (e.g. in the ``artemis-prod-mysql.yml`` setup) defaults to the latest
   Artemis Docker Image tag in your local docker registry.
-| If you want to build the checked out version run ``docker compose build artemis-app`` before starting Artemis.
+| If you want to build the checked-out version run ``docker compose build artemis-app`` before starting Artemis.
 | If you want a specific version from the GitHub container registry change the ``image:`` value to the desired image
   for the ``artemis-app`` service and run ``docker compose pull artemis-app``.
 
@@ -818,7 +881,7 @@ Other useful commands
 - Start a setup in the background: ``docker compose up -d``
 - Stop and remove containers of a setup: ``docker compose down``
 - Stop, remove containers and volumes: ``docker compose down -v``
-- Remove artemis related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
+- Remove Artemis-related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
 
   This is helpful in setups where you just want to delete the state of artemis
   but not of Jenkins and GitLab for instance.

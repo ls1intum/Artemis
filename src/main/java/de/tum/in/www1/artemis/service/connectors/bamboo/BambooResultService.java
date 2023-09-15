@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNot
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationResultService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseFeedbackCreationService;
 
 @Service
 @Profile("bamboo")
@@ -30,8 +31,9 @@ public class BambooResultService extends AbstractContinuousIntegrationResultServ
     private final ObjectMapper mapper;
 
     public BambooResultService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ObjectMapper mapper) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ObjectMapper mapper,
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService, feedbackCreationService);
         this.mapper = mapper;
     }
 

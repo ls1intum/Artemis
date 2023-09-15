@@ -13,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 
 @Entity
 @Table(name = "lecture_unit")
@@ -37,12 +38,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Column(name = "release_date")
     protected ZonedDateTime releaseDate;
 
-    // This is explicitly required by Hibernate for the indexed collection (OrderColumn)
-    // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
-    @Column(name = "lecture_unit_order")
-    @Transient
-    private int order;
-
     @ManyToOne
     @JoinColumn(name = "lecture_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -65,10 +60,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     public void setName(String name) {
         this.name = name != null ? name.strip() : null;
-    }
-
-    public int getOrder() {
-        return order;
     }
 
     public Lecture getLecture() {

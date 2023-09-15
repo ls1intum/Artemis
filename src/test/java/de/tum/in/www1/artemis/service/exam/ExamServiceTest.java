@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -41,6 +43,12 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Autowired
     private ExerciseRepository exerciseRepository;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Exam exam1;
 
     private Exam examInThePast;
@@ -54,10 +62,10 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @BeforeEach
     void init() {
         countExamsBeforeTests = examRepository.findAllCurrentAndUpcomingExams().size();
-        Course course1 = database.addEmptyCourse();
-        exam1 = database.addExamWithExerciseGroup(course1, true);
-        examInThePast = database.addExam(course1, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
-        examInTheFuture = database.addExam(course1, ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(1));
+        Course course1 = courseUtilService.addEmptyCourse();
+        exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
+        examInThePast = examUtilService.addExam(course1, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
+        examInTheFuture = examUtilService.addExam(course1, ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(1));
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
         examRepository.save(exam1);
     }
@@ -119,10 +127,9 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         exerciseGroup.setExercises(Set.of(includedTextExercise, notIncludedTextExercise));
 
-        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
-                "Expected to throw bad request alert exception, but it didn't");
-
-        assertThat(thrown).hasMessageContaining("All exercises in an exercise group must have the same meaning for the exam score");
+        assertThatExceptionOfType(BadRequestAlertException.class).as("Expected to throw bad request alert exception, but it didn't")
+                .isThrownBy(() -> examService.validateForStudentExamGeneration(exam))
+                .withMessageContaining("All exercises in an exercise group must have the same meaning for the exam score");
     }
 
     @Test
@@ -135,10 +142,9 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         exerciseGroup.setExercises(Set.of(exercise1, exercise2));
 
-        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
-                "Expected to throw bad request alert exception, but it didn't");
-
-        assertThat(thrown).hasMessageContaining("All exercises in an exercise group need to give the same amount of points");
+        assertThatExceptionOfType(BadRequestAlertException.class).as("Expected to throw bad request alert exception, but it didn't")
+                .isThrownBy(() -> examService.validateForStudentExamGeneration(exam))
+                .withMessageContaining("All exercises in an exercise group need to give the same amount of points");
     }
 
     @Test
@@ -151,10 +157,9 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         exerciseGroup.setExercises(Set.of(exercise1, exercise2));
 
-        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
-                "Expected to throw bad request alert exception, but it didn't");
-
-        assertThat(thrown).hasMessageContaining("All exercises in an exercise group need to give the same amount of points");
+        assertThatExceptionOfType(BadRequestAlertException.class).as("Expected to throw bad request alert exception, but it didn't")
+                .isThrownBy(() -> examService.validateForStudentExamGeneration(exam))
+                .withMessageContaining("All exercises in an exercise group need to give the same amount of points");
     }
 
     @Test
@@ -167,10 +172,9 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         exerciseGroup.setExercises(Set.of(exercise1, exercise2));
 
-        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
-                "Expected to throw bad request alert exception, but it didn't");
-
-        assertThat(thrown).hasMessageContaining("Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big");
+        assertThatExceptionOfType(BadRequestAlertException.class).as("Expected to throw bad request alert exception, but it didn't")
+                .isThrownBy(() -> examService.validateForStudentExamGeneration(exam))
+                .withMessageContaining("Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big");
     }
 
     @Test
@@ -183,10 +187,9 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         exerciseGroup.setExercises(Set.of(exercise1, exercise2));
 
-        BadRequestAlertException thrown = assertThrows(BadRequestAlertException.class, () -> examService.validateForStudentExamGeneration(exam),
-                "Expected to throw bad request alert exception, but it didn't");
-
-        assertThat(thrown).hasMessageContaining("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low");
+        assertThatExceptionOfType(BadRequestAlertException.class).as("Expected to throw bad request alert exception, but it didn't")
+                .isThrownBy(() -> examService.validateForStudentExamGeneration(exam))
+                .withMessageContaining("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low");
     }
 
     @Test

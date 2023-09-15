@@ -154,7 +154,7 @@ describe('BonusComponent', () => {
                 lowerBoundInclusive: false,
                 upperBoundPercentage: 200,
                 upperBoundInclusive: true,
-                gradeName: '1.0+',
+                gradeName: '1.0',
                 isPassingGrade: true,
             },
             {

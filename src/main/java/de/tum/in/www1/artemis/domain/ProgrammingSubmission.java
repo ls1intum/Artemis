@@ -13,7 +13,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -24,7 +23,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
  */
 @Entity
 @DiscriminatorValue(value = "P")
-@JsonTypeName("programming")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingSubmission extends Submission {
 
@@ -121,7 +119,7 @@ public class ProgrammingSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + ", type=" + getType() + '}';
     }
 
     @Override

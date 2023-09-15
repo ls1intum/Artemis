@@ -11,12 +11,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -45,7 +45,7 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Course course = new Course();
         course.setId(1L);
         courseRepository.save(course);
-        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
+        OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
         onlineCourseConfiguration.setRegistrationId("registrationId");
         onlineCourseConfiguration.setClientId("clientId");
         onlineCourseConfiguration.setAuthorizationUri("authUri");

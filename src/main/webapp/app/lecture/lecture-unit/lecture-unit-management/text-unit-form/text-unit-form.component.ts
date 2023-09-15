@@ -6,13 +6,13 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 
 export interface TextUnitFormData {
     name?: string;
     releaseDate?: dayjs.Dayjs;
     content?: string;
-    learningGoals?: LearningGoal[];
+    competencies?: Competency[];
 }
 
 @Component({
@@ -43,7 +43,11 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
 
-    constructor(private fb: FormBuilder, private router: Router, private translateService: TranslateService) {}
+    constructor(
+        private fb: FormBuilder,
+        private router: Router,
+        private translateService: TranslateService,
+    ) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -91,7 +95,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         this.form = this.fb.group({
             name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
             releaseDate: [undefined as dayjs.Dayjs | undefined],
-            learningGoals: [undefined as LearningGoal[] | undefined],
+            competencies: [undefined as Competency[] | undefined],
         });
     }
 

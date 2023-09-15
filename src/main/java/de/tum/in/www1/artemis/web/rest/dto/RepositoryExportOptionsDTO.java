@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * This is a dto for the repository export options.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// TODO: we should convert this into a Record
 public class RepositoryExportOptionsDTO {
 
     private boolean exportAllParticipants;
@@ -24,11 +25,9 @@ public class RepositoryExportOptionsDTO {
 
     private boolean combineStudentCommits;
 
-    private boolean anonymizeStudentCommits;
+    private boolean anonymizeRepository;
 
     private boolean normalizeCodeStyle;
-
-    private boolean hideStudentNameInZippedFolder;
 
     public boolean isExportAllParticipants() {
         return exportAllParticipants;
@@ -86,12 +85,12 @@ public class RepositoryExportOptionsDTO {
         this.combineStudentCommits = combineStudentCommits;
     }
 
-    public boolean isAnonymizeStudentCommits() {
-        return anonymizeStudentCommits;
+    public boolean isAnonymizeRepository() {
+        return anonymizeRepository;
     }
 
-    public void setAnonymizeStudentCommits(boolean anonymizeStudentCommits) {
-        this.anonymizeStudentCommits = anonymizeStudentCommits;
+    public void setAnonymizeRepository(boolean anonymizeRepository) {
+        this.anonymizeRepository = anonymizeRepository;
     }
 
     public boolean isNormalizeCodeStyle() {
@@ -100,13 +99,5 @@ public class RepositoryExportOptionsDTO {
 
     public void setNormalizeCodeStyle(boolean normalizeCodeStyle) {
         this.normalizeCodeStyle = normalizeCodeStyle;
-    }
-
-    public boolean isHideStudentNameInZippedFolder() {
-        return this.hideStudentNameInZippedFolder;
-    }
-
-    public void setHideStudentNameInZippedFolder(boolean hideStudentNameInZippedFolder) {
-        this.hideStudentNameInZippedFolder = hideStudentNameInZippedFolder;
     }
 }

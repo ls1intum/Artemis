@@ -146,7 +146,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Sets value of the testcases
      * @param testCases the test cases which should be set
      */
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set testCases(testCases: ProgrammingExerciseTestCase[]) {
         this.testCasesValue = testCases;
         this.updateTestCaseFilter();
@@ -670,7 +669,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     /**
      * Load the static code analysis categories
-     * @private
      */
     private loadStaticCodeAnalysisCategories() {
         this.gradingService
@@ -689,7 +687,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Load the statistics for this exercise and calculate the
      * maximum number of issues in one category
      * @param exerciseId The current exercise id
-     * @private
      */
     private loadStatistics(exerciseId: number) {
         this.gradingStatisticsObservable = this.gradingService.getGradingStatistics(exerciseId);
@@ -739,7 +736,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param editedTestCase the edited test case
      * @param field the field that is edited
      * @param newValue the newly inserted value
-     * @private
      */
     private updateAllTestCaseViewsAfterEditing(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: any): void {
         const testCaseDisplayTypes = [TestCaseView.TABLE, TestCaseView.CHART, TestCaseView.BACKUP, TestCaseView.SAVE_VALUES];
@@ -752,7 +748,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param field the field that is edited
      * @param newValue the newly inserted value
      * @param displayType enum indicating which view is updated
-     * @private
      */
     private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: any, displayType: TestCaseView): void {
         const mapFunction = (testCase: ProgrammingExerciseTestCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue });
@@ -777,7 +772,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param editedCategory the edited category
      * @param field the field that is edited
      * @param newValue the newly inserted value
-     * @private
      */
     private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: any): void {
         const filterFunction = (category: StaticCodeAnalysisCategory) => (category.id !== editedCategory.id ? category : { ...category, [field]: newValue });
@@ -789,7 +783,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     /**
      * Auxiliary method that sets the chart and backup view on the static code analysis categories
-     * @private
      */
     private setChartAndBackupCategoryView(): void {
         this.staticCodeAnalysisCategoriesForCharts = this.staticCodeAnalysisCategoriesForTable;

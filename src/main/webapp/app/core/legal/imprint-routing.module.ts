@@ -5,7 +5,7 @@ import { ImprintComponent } from 'app/core/legal/imprint.component';
 
 const routes: Routes = [
     {
-        path: 'imprint',
+        path: '',
         children: [
             {
                 path: '',
@@ -13,7 +13,7 @@ const routes: Routes = [
                 component: ImprintComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'legal.imprint.title',
+                    pageTitle: 'artemisApp.legal.imprint.title',
                 },
             },
             {
@@ -21,7 +21,7 @@ const routes: Routes = [
                 component: ImprintComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'legal.imprint.title',
+                    pageTitle: 'artemisApp.legal.imprint.title',
                 },
             },
         ],

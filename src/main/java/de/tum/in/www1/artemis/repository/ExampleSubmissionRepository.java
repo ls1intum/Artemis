@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ExampleSubmission entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmission, Long> {
 

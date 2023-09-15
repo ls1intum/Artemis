@@ -1,0 +1,59 @@
+<div class="d-flex align-content-between flex-wrap mb-2">
+    <div *ngIf="!loadingResults" class="f-flex flex-column">
+        <div>
+            <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation">Template</span>
+            <jhi-updating-result
+                *ngIf="programmingExercise.templateParticipation"
+                [exercise]="programmingExercise"
+                [participation]="programmingExercise.templateParticipation!"
+                [showUngradedResults]="true"
+                [personalParticipation]="false"
+            ></jhi-updating-result>
+        </div>
+        <div>
+            <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation">Solution</span>
+            <jhi-updating-result
+                *ngIf="programmingExercise.solutionParticipation"
+                [exercise]="programmingExercise"
+                [participation]="programmingExercise.solutionParticipation!"
+                [showUngradedResults]="true"
+                [personalParticipation]="false"
+            ></jhi-updating-result>
+        </div>
+    </div>
+    <button
+        id="submit_button"
+        type="button"
+        class="guided-tour-submit-button btn btn-success navbar-btn ms-auto"
+        [disabled]="!this.buildPlan"
+        (click)="submit()"
+        [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+    >
+        <span>
+            <fa-icon [icon]="farPlayCircle"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.submit">Submit</span>
+        </span>
+    </button>
+</div>
+<div class="card build-plan-editor">
+    <jhi-code-editor-header
+        [filename]="'artemisApp.programmingExercise.buildplan' | artemisTranslate"
+        [isLoading]="isLoading"
+        (tabSizeChanged)="updateTabSize($event)"
+    ></jhi-code-editor-header>
+    <div class="card-body build-plan-editor__content">
+        <jhi-ace-editor
+            #editor
+            id="build-plan-editor"
+            [mode]="'ace/mode/text'"
+            [readOnly]="isLoading"
+            [hidden]="false"
+            [autoUpdateContent]="true"
+            [durationBeforeCallback]="200"
+            [tabSize]="tabSize"
+            (textChanged)="onTextChanged($event)"
+            class="build-plan-editor__content__editor"
+        >
+        </jhi-ace-editor>
+    </div>
+</div>

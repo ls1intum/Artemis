@@ -14,7 +14,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.user.*;
@@ -34,6 +33,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
@@ -42,7 +42,7 @@ public class ParticipationTeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationTeamWebsocketService.class);
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final SimpUserRegistry simpUserRegistry;
 
@@ -62,10 +62,10 @@ public class ParticipationTeamWebsocketService {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
+    public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -187,7 +187,7 @@ public class ParticipationTeamWebsocketService {
         sendOnlineTeamStudents(participationId);
 
         SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
-        messagingTemplate.convertAndSend(getDestination(participationId, topicPath), payload);
+        websocketMessagingService.sendMessage(getDestination(participationId, topicPath), payload);
     }
 
     /**
@@ -202,7 +202,7 @@ public class ParticipationTeamWebsocketService {
         final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
                 .map(login -> new OnlineTeamStudentDTO(login, getValue(lastTypingTracker, participationId, login), lastActionTracker.get(participationId + "-" + login))).toList();
 
-        messagingTemplate.convertAndSend(destination, onlineTeamStudents);
+        websocketMessagingService.sendMessage(destination, onlineTeamStudents);
     }
 
     private void sendOnlineTeamStudents(Long participationId) {

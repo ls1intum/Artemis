@@ -462,6 +462,9 @@ public class ExerciseService {
             participation.setSubmissions(submission != null ? Set.of(submission) : null);
 
             participation.setResults(results);
+            if (submission != null) {
+                submission.setResults(new ArrayList<>(results));
+            }
 
             // remove inner exercise from participation
             participation.setExercise(null);
@@ -603,17 +606,17 @@ public class ExerciseService {
      * @param exercise              the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
-        if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+            exerciseStatisticsDTO.setNoOfRatedAssessments(0L);
+            exerciseStatisticsDTO.setNoOfSubmissionsInTime(0L);
+            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(0D);
+        }
+        else {
             long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exercise.getId());
             long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
             exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
             exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
             exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
-        }
-        else {
-            exerciseStatisticsDTO.setNoOfRatedAssessments(0L);
-            exerciseStatisticsDTO.setNoOfSubmissionsInTime(0L);
-            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(0D);
         }
     }
 

@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Course entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
@@ -103,46 +102,27 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithLectures(@Param("now") ZonedDateTime now);
 
-    /**
-     * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
-     *
-     * @param courseId the id of the course to find
-     * @return Found course with lectures, their attachments and exams
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithLecturesAndExamsById(long courseId);
-
     @Query("""
-            SELECT DISTINCT c
-            FROM Course c
-                LEFT JOIN FETCH c.tutorialGroups tutorialGroups
-                LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
-                LEFT JOIN FETCH tutorialGroups.registrations registrations
-                LEFT JOIN FETCH registrations.student student
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
-                AND (student.id = :userId OR tutor.id = :userId)
+            SELECT DISTINCT c FROM Course c
+                LEFT JOIN FETCH c.organizations organizations
+                LEFT JOIN FETCH c.prerequisites prerequisites
+            WHERE (c.enrollmentEnabled = true)
+                AND (c.enrollmentStartDate <= :now)
+                AND (c.enrollmentEndDate >= :now)
             """)
-    List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
-
-    // Note: this is currently only used for testing purposes
-    @Query("""
-            SELECT DISTINCT c
-            FROM Course c
-                LEFT JOIN FETCH c.exercises exercises
-                LEFT JOIN FETCH c.lectures lectures
-                LEFT JOIN FETCH lectures.attachments
-                LEFT JOIN FETCH exercises.categories
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
-                """)
-    List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
+    List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
+    Optional<Course> findWithEagerLearningPathsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "learningPaths", "learningPaths.competencies" })
+    Optional<Course> findWithEagerLearningPathsAndCompetenciesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
@@ -169,24 +149,22 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findSingleWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
 
     @Query("""
-                SELECT DISTINCT course
+                SELECT course
                 FROM Course course
-                    LEFT JOIN FETCH course.organizations organizations
-                    LEFT JOIN FETCH course.prerequisites prerequisites
-                WHERE (course.startDate IS NULL OR course.startDate <= :now)
-                    AND (course.endDate IS NULL OR course.endDate >= :now)
-                    AND course.onlineCourse = false
-                    AND course.enrollmentEnabled = true
+                    LEFT JOIN FETCH course.organizations
+                WHERE course.id = :courseId
             """)
-    List<Course> findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
+    Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
 
     @Query("""
                 SELECT course
                 FROM Course course
-                    LEFT JOIN FETCH course.organizations co
+                    LEFT JOIN FETCH course.organizations
+                    LEFT JOIN FETCH course.competencies
+                    LEFT JOIN FETCH course.learningPaths
                 WHERE course.id = :courseId
             """)
-    Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
+    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndLearningPaths(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
@@ -233,19 +211,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findAllWithQuizExercisesWithEagerExercises();
 
     /**
-     * Returns the student group name of a single course
-     *
-     * @param courseId the course id of the course to get the name for
-     * @return the student group name
-     */
-    @Query("""
-            SELECT c.studentGroupName
-            FROM Course c
-            WHERE c.id = :courseId
-            """)
-    String findStudentGroupName(@Param("courseId") long courseId);
-
-    /**
      * Get active students in the timeframe from startDate to endDate for the exerciseIds
      *
      * @param exerciseIds exerciseIds from all exercises to get the statistics for
@@ -282,6 +247,22 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
+    /**
+     * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
+     * Users that are part of multiple groups are NOT counted multiple times.
+     *
+     * @param courseId id of the course to count the members for
+     * @return number of users in the course
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT ug.userId)
+            FROM Course c
+            JOIN UserGroup ug
+            ON c.studentGroupName = ug.group OR c.teachingAssistantGroupName = ug.group OR c.editorGroupName = ug.group OR c.instructorGroupName = ug.group
+            WHERE c.id = :courseId
+            """)
+    Integer countCourseMembers(@Param("courseId") Long courseId);
+
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
@@ -307,6 +288,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerOrganizationsElseThrow(long courseId) throws EntityNotFoundException {
         return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
+        return findWithEagerOrganizationsAndCompetenciesAndLearningPaths(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
@@ -339,16 +325,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     default Course findSingleWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
         return findSingleWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-    }
-
-    /**
-     * Get all the courses to enroll with eagerly loaded organizations and prerequisites.
-     * Online courses are not included, as they are not meant to be enrolled in.
-     *
-     * @return the list of course entities
-     */
-    default List<Course> findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites() {
-        return findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**
@@ -409,6 +385,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
+    @NotNull
+    default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
+        return findWithEagerLearningPathsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerLearningPathsAndCompetenciesByIdElseThrow(long courseId) {
+        return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
     /**
      * Checks if the messaging feature is enabled for a course.
      *
@@ -434,7 +420,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Utility method used to check whether a user is member of at least one organization of a given course
      *
-     * @param user   the user to check
+     * @param user   the user to check, organizations must NOT be lazily loaded
      * @param course the course to check
      * @return true if the user is member of at least one organization of the course. false otherwise
      */

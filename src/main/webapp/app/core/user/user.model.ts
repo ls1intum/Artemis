@@ -1,7 +1,6 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
 import { Organization } from 'app/entities/organization.model';
-import { TutorialGroupRegistration } from 'app/entities/tutorial-group/tutorial-group-registration.model';
 
 export class User extends Account {
     public id?: number;
@@ -15,7 +14,6 @@ export class User extends Account {
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
-    public tutorialGroupRegistrations?: TutorialGroupRegistration[];
 
     constructor(
         id?: number,
@@ -27,7 +25,6 @@ export class User extends Account {
         langKey?: string,
         authorities?: string[],
         groups?: string[],
-        organizations?: Organization[],
         createdBy?: string,
         createdDate?: Date,
         lastModifiedBy?: string,
@@ -63,4 +60,12 @@ export class UserPublicInfoDTO {
     public isEditor?: boolean;
     public isTeachingAssistant?: boolean;
     public isStudent?: boolean;
+}
+
+/**
+ * A DTO representing a user which contains only the name and login
+ */
+export class UserNameAndLoginDTO {
+    public name?: string;
+    public login?: string;
 }

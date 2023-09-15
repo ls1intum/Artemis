@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.math3.util.Precision;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Strings;
@@ -53,7 +53,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final ResultRepository resultRepository;
 
@@ -81,20 +81,22 @@ public class ProgrammingExerciseGradingService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    private final FeedbackService feedbackService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, SimpMessageSendingOperations messagingTemplate,
+            ProgrammingExerciseFeedbackService programmingExerciseFeedbackService, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackService feedbackService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
         this.programmingExerciseFeedbackService = programmingExerciseFeedbackService;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -107,6 +109,7 @@ public class ProgrammingExerciseGradingService {
         this.exerciseDateService = exerciseDateService;
         this.buildLogService = buildLogService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -116,17 +119,18 @@ public class ProgrammingExerciseGradingService {
      *
      * @param participation the participation for which the build was finished
      * @param requestBody   RequestBody containing the build result and its feedback items
-     * @return result after compilation
+     * @return result after compilation (can only be null in case an error occurs)
      */
-    public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
+    @Nullable
+    public Result processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
-        Result newResult = null;
         try {
-            var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
+            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+            var buildResult = ciResultService.convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
-            newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
+            Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -139,7 +143,7 @@ public class ProgrammingExerciseGradingService {
                 var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
 
-                continuousIntegrationResultService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
+                ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
@@ -152,14 +156,14 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            newResult.setRatedIfNotExceeded(ExerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
+            newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
+            return processNewProgrammingExerciseResult(participation, newResult);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
+            return null;
         }
-
-        return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
     }
 
     /**
@@ -261,21 +265,24 @@ public class ProgrammingExerciseGradingService {
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
         if (isStudentParticipation) {
-            // When a student receives a new result, we want to check whether we need to lock the participation
+            // When a student receives a new result, we want to check whether we need to lock the participation and the
             // repository when a lock repository policy is present. At this point, we know that the programming
-            // exercise exists.
+            // exercise exists and that the participation must be a ProgrammingExerciseStudentParticipation.
+            // Only lock the repository and the participation if the participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
+            // test run repository).
+            // Student test exam participations will still be locked by this.
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
-            if (submissionPolicy instanceof LockRepositoryPolicy policy) {
+            if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
-            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isTestRun()) {
+            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
-                resultRepository.save(updatedLatestSemiAutomaticResult);
+                updatedLatestSemiAutomaticResult = resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
             }
@@ -314,7 +321,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).toList();
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(feedbackService::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         latestSemiAutomaticResult.setTestCaseCount(newAutomaticResult.getTestCaseCount());
@@ -340,7 +347,7 @@ public class ProgrammingExerciseGradingService {
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
+            websocketMessagingService.sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
     }
 

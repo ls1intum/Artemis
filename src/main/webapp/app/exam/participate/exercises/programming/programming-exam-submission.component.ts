@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -7,11 +7,11 @@ import { CommitState, DomainType, EditorState } from 'app/exercises/programming/
 import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import dayjs from 'dayjs/esm';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import {
     CodeEditorBuildLogService,
     CodeEditorRepositoryFileService,
@@ -31,7 +31,7 @@ import {
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
@@ -43,10 +43,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     @Input()
     courseId: number;
 
-    repositoryIsLocked = false;
     showEditorInstructions = true;
     hasSubmittedOnce = false;
+    submissionCount?: number;
+    repositoryIsLocked = false;
 
+    readonly SubmissionPolicyType = SubmissionPolicyType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -64,7 +66,10 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
-    constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
+    constructor(
+        private domainService: DomainService,
+        changeDetectorReference: ChangeDetectorRef,
+    ) {
         super(changeDetectorReference);
     }
 
@@ -73,10 +78,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
-        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
-        const dueDateHasPassed = !this.exercise.dueDate || dayjs(this.exercise.dueDate).isBefore(dayjs());
-        this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
         this.updateDomain();
+        this.setSubmissionCountAndLockIfNeeded();
+    }
+
+    ngOnChanges(): void {
+        this.setSubmissionCountAndLockIfNeeded();
     }
 
     onActivate() {
@@ -91,6 +98,14 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     updateDomain() {
         const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
+    }
+
+    /**
+     * Sets the submission count and lock based on the student participation.
+     */
+    setSubmissionCountAndLockIfNeeded() {
+        this.submissionCount = this.studentParticipation.submissionCount ?? this.submissionCount;
+        this.repositoryIsLocked = this.studentParticipation.locked ?? this.repositoryIsLocked;
     }
 
     /**

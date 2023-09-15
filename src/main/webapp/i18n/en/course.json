@@ -29,8 +29,8 @@
                 "description": "Set the maximum number of complaints allowed per team. Accepted complaints do not count toward this quota. This limit applies only to team exercises."
             },
             "maxComplaintTimeDays": {
-                "title": "Complaint deadline in days after result date",
-                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this deadline."
+                "title": "Complaint due date in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this due date."
             },
             "maxComplaintTextLimit": {
                 "title": "Maximum number of characters per complaint",
@@ -49,8 +49,8 @@
                 "description": "This option allows students to request more feedback without complaining. Asking for further feedback will not count towards the number of complaints, but it will also not allow modification of the assessment. By default, this option is enabled, but it can be disabled if assessment corrections must always be possible."
             },
             "maxRequestMoreFeedbackTimeDays": {
-                "title": "More feedback request deadline in days after result date",
-                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this deadline."
+                "title": "More feedback request due date in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this due date."
             },
             "customizeGroupNames": {
                 "title": "Customize group names",
@@ -67,7 +67,7 @@
             "semester": "Semester",
             "maxPoints": {
                 "title": "Maximum number of points for course",
-                "warning": "Updating this field will update the grading key for the course if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+                "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course."
             },
             "accuracyOfScores": "Amount of decimal places used for calculating the scores",
             "defaultProgrammingLanguage": "Default Programming Language",
@@ -78,6 +78,10 @@
                 "plural": "Test Courses"
             },
             "accessGroups": "Access Groups",
+            "learningPaths": {
+                "label": "Learning Paths Enabled",
+                "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
+            },
             "onlineCourse": {
                 "title": "Online Course",
                 "description": "Activate this checkbox for external online courses (e.g. on edX/Moodle) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator. You can further configure this in the LTI Configuration page."
@@ -89,14 +93,25 @@
                 },
                 "messagingEnabled": {
                     "label": "Messaging Enabled",
-                    "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course."
+                    "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course.",
+                    "codeOfConduct": {
+                        "label": "Code of Conduct",
+                        "tooltip": "The Code of Conduct describes to users how best to communicate and which consequences might be raised if there is misconduct, as well as, contact information for reporting."
+                    }
                 }
             },
             "registrationEnabled": {
                 "title": "Student Course Registration Enabled",
                 "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
             },
+            "enrollmentStartDate": "Enrollment Start",
+            "enrollmentEndDate": "Enrollment End",
             "registrationConfirmationMessage": "Registration Confirmation Message",
+            "unenrollmentEnabled": {
+                "title": "Student Course Unenrollment Enabled",
+                "description": "Activate this checkbox to allow students to unenroll independently in the course. You can specify the latest date for unenrollment, otherwise the students can do so until the end of the course."
+            },
+            "unenrollmentEndDate": "Latest date to unenroll",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
@@ -151,15 +166,19 @@
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
                 },
+                "enrollmentStartDate": {
+                    "invalid": "Can't be after the start date of the course and must be before the enrollment end date"
+                },
+                "enrollmentEndDate": {
+                    "invalid": "Can't be after the end date of the course and must be after the enrollment start date"
+                },
+                "unenrollmentEndDate": {
+                    "invalid": "Must be after enrollment end date and can not be after the end date of the course"
+                },
                 "invalidForm": "Please fill in all required fields."
             },
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
-            "presentationScoreEnabled": {
-                "title": "Presentations",
-                "description": "Activate this checkbox to define the number of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise whether this feature should be activated."
-            },
-            "presentationScore": "Required Presentations",
             "courseGroup": {
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",

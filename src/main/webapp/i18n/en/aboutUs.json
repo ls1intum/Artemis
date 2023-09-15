@@ -50,6 +50,9 @@
             "learningAnalytics": {
                 "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and competencies."
             },
+            "adaptiveLearning": {
+                "text": "<a href={{ adaptiveLearningUrl }}>Adaptive learning:</a> Define competencies and learning goals. Track the progress of students and provide individual feedback."
+            },
             "tutorialGroups": {
                 "text": "<a href={{ tutorialGroupsUrl }}>Tutorial Groups:</a> Manage the tutorial groups of a course. Plan the sessions, assign responsible tutors, register students and track the attendance."
             },

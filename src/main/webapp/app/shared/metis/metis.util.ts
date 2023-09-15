@@ -49,9 +49,9 @@ export enum MetisPostAction {
 
 export interface PostContextFilter {
     courseId?: number;
-    courseWideContext?: CourseWideContext;
-    exerciseId?: number;
-    lectureId?: number;
+    courseWideContexts?: CourseWideContext[];
+    exerciseIds?: number[];
+    lectureIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
     conversationId?: number;

@@ -16,7 +16,6 @@ import javax.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +33,9 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificatio
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -97,19 +99,6 @@ public class TutorialGroupResource {
     }
 
     /**
-     * GET /tutorial-groups/for-notifications
-     *
-     * @return the list of tutorial groups for which the current user should receive notifications
-     */
-    @GetMapping("/tutorial-groups/for-notifications")
-    @PreAuthorize("hasRole('USER')")
-    public List<TutorialGroup> getAllTutorialGroupsForNotifications() {
-        log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        return tutorialGroupService.findAllForNotifications(user);
-    }
-
-    /**
      * GET /tutorial-groups/:tutorialGroupId/title : Returns the title of the tutorial-group with the given id
      * <p>
      * NOTE: Used by entity-title service in the client to resolve the title of a tutorial group for breadcrumbs
@@ -118,7 +107,7 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the title of the tutorial group
      */
     @GetMapping("/tutorial-groups/{tutorialGroupId}/title")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
         log.debug("REST request to get title of TutorialGroup : {}", tutorialGroupId);
@@ -134,7 +123,7 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the unique campus values of the tutorial groups of the course
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/campus-values")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<String>> getUniqueCampusValues(@PathVariable Long courseId) {
         log.debug("REST request to get unique campus values used for tutorial groups in course : {}", courseId);
@@ -151,7 +140,7 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the unique language values of the tutorial groups of the course
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/language-values")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<String>> getUniqueLanguageValues(@PathVariable Long courseId) {
         log.debug("REST request to get unique language values used for tutorial groups in course : {}", courseId);
@@ -167,7 +156,7 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the tutorial groups of the course
      */
     @GetMapping("/courses/{courseId}/tutorial-groups")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
@@ -187,7 +176,7 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
@@ -206,7 +195,7 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group
      */
     @PostMapping("/courses/{courseId}/tutorial-groups")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) throws URISyntaxException {
         log.debug("REST request to create TutorialGroup: {} in course: {}", tutorialGroup, courseId);
@@ -267,7 +256,7 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.info("REST request to delete a TutorialGroup: {} of course: {}", tutorialGroupId, courseId);
@@ -301,7 +290,7 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody @Valid TutorialGroupUpdateDTO tutorialGroupUpdateDTO) {
@@ -389,7 +378,7 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
@@ -411,7 +400,7 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
@@ -438,7 +427,7 @@ public class TutorialGroupResource {
      *         course
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody Set<StudentDTO> studentDtos) {
@@ -460,7 +449,7 @@ public class TutorialGroupResource {
      * @return the list of registrations with information about the success of the import sorted by tutorial group title
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/import")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,
             @RequestBody @Valid Set<TutorialGroupRegistrationImportDTO> importDTOs) {

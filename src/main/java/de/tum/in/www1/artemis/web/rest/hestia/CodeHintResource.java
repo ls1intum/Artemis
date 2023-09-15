@@ -7,7 +7,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -16,6 +15,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -56,7 +56,7 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the code hints for the exercise
      */
     @GetMapping("programming-exercises/{exerciseId}/code-hints")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Set<CodeHint>> getAllCodeHints(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
@@ -73,7 +73,7 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints
      */
     @PostMapping("programming-exercises/{exerciseId}/code-hints")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<List<CodeHint>> generateCodeHintsForExercise(@PathVariable Long exerciseId,
             @RequestParam(value = "deleteOldCodeHints", defaultValue = "true") boolean deleteOldCodeHints) {
         log.debug("REST request to generate CodeHints for ProgrammingExercise: {}", exerciseId);
@@ -100,7 +100,7 @@ public class CodeHintResource {
      * @return 204 No Content
      */
     @DeleteMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/solution-entries/{solutionEntryId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> removeSolutionEntryFromCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to remove SolutionEntry {} from CodeHint {} in ProgrammingExercise {}", solutionEntryId, codeHintId, exerciseId);
 

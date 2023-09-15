@@ -1,7 +1,7 @@
 import { Dayjs } from 'dayjs/esm';
-import { MODELING_EXERCISE_BASE } from '../../../requests/CourseManagementRequests';
+
+import { BASE_API, MODELING_EXERCISE_BASE, POST } from '../../../constants';
 import { enterDate } from '../../../utils';
-import { BASE_API, POST } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the Modeling Exercise Creation Page.

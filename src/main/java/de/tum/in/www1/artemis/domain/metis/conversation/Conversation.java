@@ -32,6 +32,7 @@ public abstract class Conversation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
+    @JsonIncludeProperties({ "id", "name" })
     private User creator;
 
     @JsonIgnoreProperties("conversation")
@@ -99,5 +100,22 @@ public abstract class Conversation extends DomainObject {
 
     public void setPosts(Set<Post> posts) {
         this.posts = posts;
+    }
+
+    /**
+     * @param sender the sender of the message
+     * @return returns a human-readable name for this conversation, which can be used in notifications or emails.
+     */
+    public abstract String getHumanReadableNameForReceiver(User sender);
+
+    /**
+     * hide the details of the object, can be invoked before sending it as payload in a REST response or websocket message
+     */
+    public void hideDetails() {
+        // the following values are sometimes not needed when sending payloads to the client, so we allow to remove them
+        setConversationParticipants(new HashSet<>());
+        setPosts(new HashSet<>());
+        // TODO: this information is still needed in some places, we need to identify those and then set it to null
+        // setCourse(null);
     }
 }

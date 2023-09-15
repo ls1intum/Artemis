@@ -9,14 +9,12 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * A MultipleChoiceQuestionStatistic.
  */
 @Entity
 @DiscriminatorValue(value = "MC")
-@JsonTypeName("multiple-choice")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 

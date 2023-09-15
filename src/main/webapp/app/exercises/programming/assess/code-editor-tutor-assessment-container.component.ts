@@ -33,6 +33,7 @@ import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/ex
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { breakCircularResultBackReferences } from 'app/exercises/shared/result/result.utils';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -161,9 +162,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             submissionObservable
                 .pipe(
                     tap({
-                        next: (submission: ProgrammingSubmission) => {
+                        next: (submission?: ProgrammingSubmission) => {
                             if (!submission) {
-                                // there are no unassessed submission, nothing we have to worry about
+                                // there are no unassessed submissions
+                                this.submission = submission;
                                 return;
                             }
 
@@ -213,7 +215,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
-    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
+    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission | undefined> {
         return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound);
     }
 
@@ -242,7 +244,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
          *       This problem reoccurs in {@link FileUploadAssessmentComponent#initializePropertiesFromSubmission}
          */
         this.accountService.setAccessRightsForExercise(this.exercise);
-        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && dayjs(this.exercise!.assessmentDueDate).isBefore(dayjs());
+        this.hasAssessmentDueDatePassed = !!this.exercise?.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
 
         this.checkPermissions();
         this.handleFeedback();
@@ -356,13 +358,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.loadingParticipation = true;
         this.submission = undefined;
         this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
-            next: (response: ProgrammingSubmission) => {
-                // there are no unassessed submission, nothing we have to worry about
+            next: (response?: ProgrammingSubmission) => {
+                this.loadingParticipation = false;
+
+                // there are no unassessed submissions
                 if (!response) {
+                    this.submission = undefined;
                     return;
                 }
-
-                this.loadingParticipation = false;
 
                 // if override set, skip navigation
                 if (this.overrideNextSubmission) {
@@ -517,7 +520,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!this.participation.results) {
             this.participation.results = [];
         }
-        this.participation.results![0] = this.manualResult = response.body!;
+        this.participation.results[0] = this.manualResult = response.body!;
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
@@ -526,7 +529,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     /**
      * Checks if there is a manual result and the user is the assessor. If there is no manual result, then the user is the assessor.
      * Checks if the user is at least instructor in course.
-     * @private
      */
     private checkPermissions() {
         if (this.manualResult?.assessor) {
@@ -554,7 +556,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleFeedback(): void {
-        const feedbacks = this.manualResult?.feedbacks || [];
+        const feedbacks = this.manualResult?.feedbacks ?? [];
         this.totalScoreBeforeAssessment = this.calculateTotalScoreOfFeedbacks(feedbacks);
         this.automaticFeedback = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC);
         // When manual result only contains automatic feedback elements (when assessing for the first time), no manual assessment was yet saved or submitted.
@@ -595,11 +597,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private avoidCircularStructure() {
-        if (this.manualResult?.participation?.results) {
-            this.manualResult.participation.results = [];
-        }
-        if (this.manualResult?.submission?.participation?.results) {
-            this.manualResult.submission.participation.results = [];
+        if (this.manualResult) {
+            breakCircularResultBackReferences(this.manualResult);
         }
     }
 

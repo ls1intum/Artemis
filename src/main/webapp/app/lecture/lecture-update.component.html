@@ -7,8 +7,6 @@
             [validateDatesFunction]="onDatesValuesChanged"
             [lecture]="lecture"
             [isSaving]="isSaving"
-            [startDate]="startDate"
-            [endDate]="endDate"
         ></jhi-lecture-update-wizard>
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isShowingWizardMode">
             <div class="d-flex">
@@ -31,10 +29,7 @@
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
                 </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-                    <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
-                </div>
+                <jhi-lecture-title-channel-name [lecture]="lecture"></jhi-lecture-title-channel-name>
                 <div class="form-group" id="field_description">
                     <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
                     <jhi-markdown-editor
@@ -46,6 +41,15 @@
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
+                            [(ngModel)]="lecture.visibleDate"
+                            (valueChange)="onDatesValuesChanged()"
+                            name="visibleDate"
+                            id="visible-date"
+                        ></jhi-date-time-picker>
+                    </div>
+                    <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"
@@ -87,10 +91,10 @@
 
             <div *ngIf="processUnitMode" class="form-group">
                 <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
+                <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
                 <fa-icon
                     [icon]="faQuestionCircle"
-                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate : { extensions: allowedFileExtensions }"
+                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                 ></fa-icon>
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">

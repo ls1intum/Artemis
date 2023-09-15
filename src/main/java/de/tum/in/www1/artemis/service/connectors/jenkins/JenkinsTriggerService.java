@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 
 @Profile("jenkins")
 @Service

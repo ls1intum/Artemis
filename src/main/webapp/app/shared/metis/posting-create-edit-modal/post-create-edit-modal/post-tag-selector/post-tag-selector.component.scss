@@ -30,9 +30,9 @@
 }
 
 .tag-option {
-    background: var(--metis-post-tag-selector-tag-option-background);
+    background: var(--metis-selection-option-background);
 
     &:hover {
-        background: var(--metis-post-tag-selector-tag-option-hover-background);
+        background: var(--metis-selection-option-hover-background);
     }
 }

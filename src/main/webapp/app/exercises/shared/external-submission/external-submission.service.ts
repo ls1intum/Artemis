@@ -11,7 +11,10 @@ import { map } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {
     // TODO: It would be good to refactor the convertDate methods into a separate service, so that we don't have to import the result service here.
-    constructor(private http: HttpClient, private resultService: ResultService) {}
+    constructor(
+        private http: HttpClient,
+        private resultService: ResultService,
+    ) {}
 
     /**
      * Persist a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)

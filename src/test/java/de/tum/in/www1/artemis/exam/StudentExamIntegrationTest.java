@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exam;
 import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
@@ -12,15 +11,16 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.json.JSONException;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +30,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
+import de.tum.in.www1.artemis.bonus.BonusFactory;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -47,7 +53,11 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -55,8 +65,9 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -123,6 +134,27 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private GradingScaleUtilService gradingScaleUtilService;
+
     private User student1;
 
     private Course course1;
@@ -147,41 +179,41 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
-    private static final int NUMBER_OF_STUDENTS = 5;
+    private static final int NUMBER_OF_STUDENTS = 2;
 
     @BeforeEach
     void initTestCase() throws Exception {
-        // the service already creates 5 students, 1 tutor, 1 editor, 1 instructor
-        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 1);
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
-        course1 = database.addEmptyCourse();
-        exam1 = database.addActiveExamWithRegisteredUser(course1, student2);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 2);
+
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        course1 = courseUtilService.addEmptyCourse();
+        exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student2);
         exam1 = examRepository.save(exam1);
 
-        exam2 = database.addExam(course1);
+        exam2 = examUtilService.addExam(course1);
 
-        studentExam1 = database.addStudentExam(exam1);
+        studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam1.setWorkingTime(7200);
         studentExam1.setUser(student1);
         studentExamRepository.save(studentExam1);
-        database.addStudentExam(exam2);
+        examUtilService.addStudentExam(exam2);
 
-        testExam1 = database.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, student1);
-        studentExamForTestExam1 = database.addStudentExamForTestExam(testExam1, student1);
+        testExam1 = examUtilService.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, student1);
+        studentExamForTestExam1 = examUtilService.addStudentExamForTestExam(testExam1, student1);
 
-        testExam2 = database.addTestExamWithRegisteredUser(course1, student1);
+        testExam2 = examUtilService.addTestExamWithRegisteredUser(course1, student1);
         testExam2.setVisibleDate(ZonedDateTime.now().minusHours(3));
         testExam2.setStartDate(ZonedDateTime.now().minusHours(2));
         testExam2.setEndDate(ZonedDateTime.now().minusHours(1));
         testExam2 = examRepository.save(testExam2);
-        testExam2 = database.addTextModelingProgrammingExercisesToExam(testExam2, false, true);
-        studentExamForTestExam2 = database.addStudentExamForTestExam(testExam2, student1);
+        testExam2 = examUtilService.addTextModelingProgrammingExercisesToExam(testExam2, false, true);
+        studentExamForTestExam2 = examUtilService.addStudentExamForTestExam(testExam2, student1);
         studentExamForTestExam2.setSubmitted(true);
         studentExamForTestExam2.setSubmissionDate(ZonedDateTime.now().minusMinutes(65));
         studentExamRepository.save(studentExamForTestExam2);
 
-        database.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
 
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
@@ -203,7 +235,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindOne() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamRepository.findByIdElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> studentExamRepository.findByIdElseThrow(Long.MAX_VALUE));
         assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId())).isEqualTo(studentExam1);
     }
 
@@ -226,13 +258,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindMaxWorkingTimeById() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(Long.MAX_VALUE));
+
         assertThat(studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
     }
 
     private void deleteExamWithInstructor(Exam exam) throws Exception {
         // change back to instructor user
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // Clean up to prevent exceptions during reset database
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
@@ -270,16 +303,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithMultipleTestRuns() throws Exception {
-        prepareStudentExamsForConduction(false, true);
+        prepareStudentExamsForConduction(false, true, 1);
 
-        assertThat(studentExamRepository.findByExamId(exam2.getId())).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(studentExamRepository.findByExamId(exam2.getId())).hasSize(1);
 
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         exam2 = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam2.getId());
         var usersOfExam = exam2.getRegisteredUsers();
         usersOfExam.add(instructor);
 
-        var programmingExercise = database.getFirstExerciseWithType(exam2, ProgrammingExercise.class);
+        var programmingExercise = exerciseUtilService.getFirstExerciseWithType(exam2, ProgrammingExercise.class);
 
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
@@ -294,11 +327,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // create multiple test runs for the same user (i.e. instructor1), login again because "createTestRun" invokes a server method with changes the authorization
         createTestRun(exam2);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         createTestRun(exam2);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         createTestRun(exam2);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(3);
 
@@ -312,8 +345,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamRepository.findByExamId(exam2.getId())).isEmpty();
     }
 
-    private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
-        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+    private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields, int numberOfStudents) throws Exception {
+        for (int i = 1; i <= numberOfStudents; i++) {
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
         }
 
@@ -333,7 +366,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         visibleDate = ZonedDateTime.now().minusMinutes(15);
         // --> 2 min = 120s working time
 
-        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
+        Set<User> registeredStudents = getRegisteredStudents(numberOfStudents);
         var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
         Exam exam = examRepository.findByIdElseThrow(studentExams.get(0).getExam().getId());
         Course course = exam.getCourse();
@@ -357,7 +390,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private Set<User> getRegisteredStudents(int numberOfRegisteredStudents) {
         Set<User> registeredStudents = new HashSet<>();
         for (int i = 1; i <= numberOfRegisteredStudents; i++) {
-            registeredStudents.add(database.getUserByLogin(TEST_PREFIX + "student" + i));
+            registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "student" + i));
         }
         return registeredStudents;
     }
@@ -371,19 +404,23 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamForConduction() throws Exception {
-        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
+        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
-            database.changeUser(user.getLogin());
+            userUtilService.changeUser(user.getLogin());
             final HttpHeaders headers = getHttpHeadersForExamSession();
             var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
-
-            assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
+            for (Exercise exercise : response.getExercises()) {
+                assertThat(exercise.getExerciseGroup()).isNotNull();
+                assertThat(exercise.getExerciseGroup().getExercises()).isEmpty();
+                assertThat(exercise.getExerciseGroup().getExam()).isNull();
+            }
+            assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
             assertParticipationAndSubmissions(response, user);
         }
 
@@ -404,8 +441,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
-        var exam = database.addExam(course1, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        var exam = examUtilService.addExam(course1, examVisibleDate, examStartDate, examEndDate);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
         exam.setTestExam(true);
         var examUser5 = new ExamUser();
         examUser5.setExam(exam);
@@ -433,7 +470,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class, headers);
         assertThat(response).isEqualTo(studentExamForStart);
-        assertThat(studentExamRepository.findById(studentExamForStart.getId()).get().isStarted()).isTrue();
+        assertThat(studentExamRepository.findById(studentExamForStart.getId()).orElseThrow().isStarted()).isTrue();
         assertParticipationAndSubmissions(response, student1);
 
         // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
@@ -498,20 +535,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ValueSource(booleans = { true, false })
     void testGetTestRunForConduction(boolean isTestExam) throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         // --> 2 min = 120s working time
 
-        course2 = database.addEmptyCourse();
-        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        course2 = courseUtilService.addEmptyCourse();
+        exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
 
         exam2.setTestExam(isTestExam);
         exam2 = examRepository.save(exam2);
 
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
-        final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
+        final var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         assertThat(testRun.isTestRun()).isTrue();
 
         var response = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
@@ -524,24 +561,24 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exercise.getStudentParticipations()).hasSize(1);
         }
         // Ensure that student exam was marked as started
-        assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
+        assertThat(studentExamRepository.findById(testRun.getId()).orElseThrow().isStarted()).isTrue();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindAllTestRunsForExam() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        var instructor2 = database.getUserByLogin(TEST_PREFIX + "instructor2");
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         // --> 2 min = 120s working time
 
-        course2 = database.addEmptyCourse();
-        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
-        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
+        course2 = courseUtilService.addEmptyCourse();
+        exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
+        examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
         List<StudentExam> response = request.getList("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/", HttpStatus.OK, StudentExam.class);
         assertThat(response).hasSize(2);
@@ -550,14 +587,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        course2 = database.addEmptyCourse();
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course2 = courseUtilService.addEmptyCourse();
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
-        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
-        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
         assertThat(response).isNotEmpty();
         assertThat((response.get(0).getParticipation()).isTestRun()).isTrue();
@@ -566,35 +603,35 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
-        course2 = database.addEmptyCourse();
-        var exercise = database.addProgrammingExerciseToCourse(course2, false);
+        course2 = courseUtilService.addEmptyCourse();
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course2, false);
         request.getList("/api/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_notInstructor() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        course2 = database.addEmptyCourse();
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course2 = courseUtilService.addEmptyCourse();
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
-        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
-        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        database.changeUser(TEST_PREFIX + "student2");
+        exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        userUtilService.changeUser(TEST_PREFIX + "student2");
         request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_noTestRunSubmissions() throws Exception {
-        course2 = database.addEmptyCourse();
+        course2 = courseUtilService.addEmptyCourse();
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
-        exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
+        exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         final var latestSubmissions = request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions",
                 HttpStatus.OK, Submission.class);
         assertThat(latestSubmissions).isEmpty();
@@ -607,9 +644,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
-        Course course = database.addEmptyCourse();
-        Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
@@ -638,9 +675,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
-        Course course = database.addEmptyCourse();
-        Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
@@ -688,7 +725,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
     }
 
     @Test
@@ -700,14 +737,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
                 StudentExam.class, HttpStatus.BAD_REQUEST);
         // working time did not change
-        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        var studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
 
         newWorkingTime = -10;
         request.patchWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
                 StudentExam.class, HttpStatus.BAD_REQUEST);
         // working time did not change
-        studentExamDB = studentExamRepository.findById(studentExam1.getId()).get();
+        studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
     }
 
@@ -721,18 +758,58 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
-        assertThat(studentExamRepository.findById(studentExam1.getId()).get().getWorkingTime()).isEqualTo(newWorkingTime);
-        verify(messagingTemplate, times(1)).convertAndSend("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+        assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
+        verify(websocketMessagingService, timeout(2000)).sendMessage("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam_alreadySubmitted() throws Exception {
-        studentExam1.setSubmitted(true);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.CONFLICT);
+        // Set up an exercise
+        exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
+        var exercise = exam1.getExerciseGroups().get(0).getExercises().iterator().next();
+        var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, studentExam1.getUser());
+        var submission = ParticipationFactory.generateTextSubmission("Test1", Language.ENGLISH, true);
+        studentExam1.addExercise(exercise);
+        exercise.addParticipation(participation);
+        participation.addSubmission(submission);
+        studentParticipationRepository.save(participation);
+        submissionRepository.save(submission);
+        exerciseRepository.save(exercise);
         studentExamRepository.save(studentExam1);
+
+        // Change our submission
+        submission.setText("Test2");
+        submission.setSubmitted(false);
+
+        // if the submitted exam has the submitted flag set to true, the request should be ignored, but still return OK
+        studentExam1.setSubmitted(true);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
+
+        // Check that submission change is not saved
+        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test1", null);
+
+        // if the submitted exam has the submitted flag set to false, and the studentExam is not yet submitted, the request should be accepted ...
         studentExam1.setSubmitted(false);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.CONFLICT);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
+        // ... and the exam actually be submitted and the change be saved
+        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
+
+        // Change submission again
+        submission.setText("Test3");
+        submission.setSubmitted(false);
+
+        // Subsequent calls should still return OK, but not persist my new submission change
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
+        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
+    }
+
+    private void assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted(String content, Boolean submitted) {
+        var fromDB = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExam1.getId(), false).orElseThrow();
+        assertThat(fromDB.isSubmitted()).isEqualTo(submitted);
+        assertThat(fromDB.getExercises().get(0).getStudentParticipations().size()).isEqualTo(1);
+        assertThat(fromDB.getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().size()).isEqualTo(1);
+        assertThat(((TextSubmission) fromDB.getExercises().get(0).getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow()).getText()).isEqualTo(content);
     }
 
     @Test
@@ -756,7 +833,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentExam1.setSubmitted(false);
         studentExamRepository.save(studentExam1);
         // Forbidden because user object is wrong
-        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         studentExam1.setUser(student2);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.FORBIDDEN);
 
@@ -768,7 +845,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
-        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
+        StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         // Ensure that student exam has been marked as submitted
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
         // Ensure that student exam has been set
@@ -778,15 +855,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam_testExamTriggersBuilds() throws Exception {
-        ModelFactory.generateExerciseGroup(true, testExam1);
+        ExamFactory.generateExerciseGroup(true, testExam1);
         testExam1 = examRepository.save(testExam1);
-        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToExam(testExam1, 0);
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(testExam1, 0);
 
         studentExamForTestExam1.addExercise(programmingExercise);
         studentExamForTestExam1 = studentExamRepository.save(studentExamForTestExam1);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         ProgrammingSubmission submission = new ProgrammingSubmission();
-        database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 
         mockLockRepository(programmingExercise, participation);
 
@@ -802,20 +879,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitExamOtherUser_forbidden() throws Exception {
-        List<StudentExam> studentExamList = prepareStudentExamsForConduction(false, true);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
 
         // make sure the exam is generally accessible
         exam2.setStartDate(ZonedDateTime.now().plusMinutes(4));
         exam2 = examRepository.save(exam2);
 
-        database.changeUser(TEST_PREFIX + "student1");
-        // Important: we have to retrieve the specific exam, because the order in the list is not guaranteed, otherwise the test will be flaky
-        var studentExam1 = studentExamList.stream().filter(s -> s.getUser().getLogin().equals(TEST_PREFIX + "student1")).findFirst().get();
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
         studentExamResponse.setExercises(null);
         // use a different user
-        database.changeUser(TEST_PREFIX + "student2");
+        userUtilService.changeUser(TEST_PREFIX + "student2");
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
         deleteExamWithInstructor(exam1);
     }
@@ -823,25 +898,25 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testgetExamTooEarly_forbidden() throws Exception {
-        List<StudentExam> studentExamList = prepareStudentExamsForConduction(true, true);
+        StudentExam studentExam = prepareStudentExamsForConduction(true, true, 1).get(0);
 
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
 
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamList.get(0).getId() + "/conduction", HttpStatus.FORBIDDEN,
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExams() throws Exception {
-        prepareStudentExamsForConduction(false, true);
+        prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(8));
         exam2 = examRepository.save(exam2);
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
@@ -853,7 +928,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
                 }
@@ -867,7 +942,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExamsForMultipleCorrectionRounds() throws Exception {
-        prepareStudentExamsForConduction(false, true);
+        prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
         exam2.setNumberOfCorrectionRoundsInExam(2);
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(8));
@@ -876,7 +951,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
@@ -889,7 +964,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
                         assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
                     }
@@ -904,7 +979,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessEmptyExamSubmissions() throws Exception {
-        final var studentExams = prepareStudentExamsForConduction(false, true);
+        final var studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
         // submit student exam with empty submissions
         for (final var studentExam : studentExams) {
@@ -920,7 +995,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(new HashSet<>(studentExams));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
@@ -931,7 +1006,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                     assertThat(result.getFeedbacks()).isNotEmpty();
                     assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
                 }
@@ -945,7 +1020,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessEmptyExamSubmissionsForMultipleCorrectionRounds() throws Exception {
-        final var studentExams = prepareStudentExamsForConduction(false, true);
+        final var studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
         // submit student exam with empty submissions
         for (final var studentExam : studentExams) {
@@ -961,7 +1036,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(new HashSet<>(studentExams));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
@@ -973,7 +1048,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(result).isNotNull();
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                        result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
                         assertThat(result.getFeedbacks()).isNotEmpty();
                         assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("Empty submission");
                     }
@@ -988,12 +1063,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExams_forbidden() throws Exception {
-        prepareStudentExamsForConduction(false, true);
+        prepareStudentExamsForConduction(false, true, 1);
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
         exam2 = examRepository.save(exam2);
 
-        database.changeUser(TEST_PREFIX + "tutor1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", null,
                 HttpStatus.FORBIDDEN, null);
     }
@@ -1001,7 +1076,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessUnsubmittedStudentExams_badRequest() throws Exception {
-        prepareStudentExamsForConduction(false, true);
+        prepareStudentExamsForConduction(false, true, 1);
         exam2 = examRepository.save(exam2);
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", null,
@@ -1011,16 +1086,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessExamWithSubmissionResult() throws Exception {
-
-        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
 
         // this test should be after the end date of the exam
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
         examRepository.save(exam2);
 
-        database.changeUser(studentExams.get(0).getUser().getLogin());
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExams.get(0).getId() + "/conduction",
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
         for (var exercise : studentExamResponse.getExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
@@ -1045,15 +1119,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
         }
 
-        studentExamResponse = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse,
-                StudentExam.class, HttpStatus.OK);
-        assertThat(studentExamResponse.isSubmitted()).isTrue();
-        assertThat(studentExamResponse.getSubmissionDate()).isNotNull();
+        request.postWithoutResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
 
         // check that the result was not injected and that the student exam was still submitted correctly
 
-        var studentExamDatabase = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExams.get(0).getId() + "/conduction",
+        var studentExamDatabase = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamDatabase.isSubmitted()).isTrue();
+        assertThat(studentExamDatabase.getSubmissionDate()).isNotNull();
         for (var exercise : studentExamDatabase.getExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             var iterator = participation.getSubmissions().iterator();
@@ -1068,10 +1141,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitStudentExam_early() throws Exception {
-        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
 
-        database.changeUser(studentExams.get(0).getUser().getLogin());
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExams.get(0).getId() + "/conduction",
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
         final List<ProgrammingExercise> exercisesToBeLocked = new ArrayList<>();
         final List<ProgrammingExerciseStudentParticipation> studentProgrammingParticipations = new ArrayList<>();
@@ -1086,13 +1159,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         // submit early
-        var submittedStudentExam = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse,
-                StudentExam.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
+        var submittedStudentExam = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamResponse.getId() + "/summary",
+                HttpStatus.OK, StudentExam.class);
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
         assertThat(submittedStudentExam.getSubmissionDate()).isNotNull();
-
-        // assert that the user cannot submit again
-        request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.CONFLICT);
 
         // assert that all repositories of programming exercises have been locked
         assertThat(exercisesToBeLocked).hasSameSizeAs(studentProgrammingParticipations);
@@ -1110,11 +1181,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitStudentExam_realistic() throws Exception {
-        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true);
+        List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
         List<StudentExam> studentExamsAfterStart = new ArrayList<>();
         for (var studentExam : studentExams) {
-            database.changeUser(studentExam.getUser().getLogin());
+            userUtilService.changeUser(studentExam.getUser().getLogin());
             var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                     HttpStatus.OK, StudentExam.class);
 
@@ -1155,7 +1226,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     final var newText = "New Text";
                     textSubmission.setText(newText);
                     request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).get();
+                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
                     // check that the submission was saved
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
                     // check that a submitted version was created
@@ -1211,7 +1282,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     doReturn(newCommitHashObjectId).when(gitService).getLastCommitHash(any());
                     bambooRequestMockProvider.reset();
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
-                    database.changeUser(studentExam.getUser().getLogin());
+                    userUtilService.changeUser(studentExam.getUser().getLogin());
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     // do not add programming submission to participation, because we want to simulate, that the latest submission is not present
                 }
@@ -1220,15 +1291,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<StudentExam> studentExamsAfterFinish = new ArrayList<>();
         for (var studentExamAfterStart : studentExamsAfterStart) {
-            database.changeUser(studentExamAfterStart.getUser().getLogin());
-            var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamAfterStart,
-                    StudentExam.class, HttpStatus.OK);
+            userUtilService.changeUser(studentExamAfterStart.getUser().getLogin());
+            request.postWithoutResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamAfterStart, HttpStatus.OK);
+            var studentExamFinished = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamAfterStart.getId() + "/summary",
+                    HttpStatus.OK, StudentExam.class);
             // Check that all text/quiz/modeling submissions were saved and that submitted versions were created
             for (var exercise : studentExamFinished.getExercises()) {
                 var participationAfterFinish = exercise.getStudentParticipations().iterator().next();
                 var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
 
-                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
+                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst()
+                        .orElseThrow();
                 var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
                 var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
@@ -1270,7 +1343,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
         // The method lockStudentRepository will only be called if the student hands in early (see separate test)
-        verify(programmingExerciseParticipationService, never()).lockStudentRepository(any(), any());
+        verify(programmingExerciseParticipationService, never()).lockStudentRepositoryAndParticipation(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExamWithInstructor(exam1);
@@ -1354,22 +1427,41 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         else {
             assertThat(submission).isInstanceOf(QuizSubmission.class);
-            String submittedAnswersAsString;
+
+            /*
+             * When comparing the JSON of the submitted answers to the versioned submission,
+             * a direct string comparison may not always be accurate due to the following reasons:
+             * 1. The order of the submitted answers can change since they are stored as sets.
+             * 2. Data fetched from the server might occasionally contain IDs, while the data returned directly might not.
+             * To account for these discrepancies, we perform a non-strict (= order-agnostic) deep JSON comparison after removing any IDs.
+             * This ensures that the content is accurately matched, irrespective of the order or the presence of IDs.
+             */
             try {
-                submittedAnswersAsString = objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers());
+                var submittedAnswersAsJson = removeIdFieldsFromJSONString(objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers()));
+                var versionedSubmissionAsJson = removeIdFieldsFromJSONString(versionedSubmission.get().getContent());
+                JSONAssert.assertEquals(versionedSubmissionAsJson, submittedAnswersAsJson, false);
             }
-            catch (Exception e) {
-                submittedAnswersAsString = submission.toString();
+            catch (JsonProcessingException | JSONException e) {
+                fail("Exception thrown while serializing submitted answers", e);
             }
-            assertThat(submittedAnswersAsString).isEqualTo(versionedSubmission.get().getContent());
             assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
         }
+    }
+
+    /**
+     * Removes the id fields from the JSON string, so that the comparison between the submission and the versioned submission is easier.
+     *
+     * @param jsonString the JSON string to remove the id fields from
+     * @return the JSON string without the id fields
+     */
+    private String removeIdFieldsFromJSONString(String jsonString) {
+        return jsonString.replaceAll(" +\"id\"\\s*:\\s*[0-9]+,\n", "");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStudentExamSummaryAsStudentBeforePublishResults_doFilter() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
         StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin(), studentExam);
 
         // now we change to the point of time when the student exam needs to be submitted
@@ -1379,11 +1471,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2 = examRepository.save(exam2);
 
         // submitExam
-        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions,
-                StudentExam.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions, HttpStatus.OK);
+        var studentExamFinished = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamWithSubmissions.getId() + "/summary",
+                HttpStatus.OK, StudentExam.class);
 
         // Add results to all exercise submissions
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         for (var exercise : studentExamFinished.getExercises()) {
             if (exercise instanceof QuizExercise) {
                 continue;
@@ -1393,14 +1486,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            database.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         // evaluate quizzes
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
                 new HttpHeaders());
 
         // user tries to access exam summary
-        database.changeUser(studentExam.getUser().getLogin());
+        userUtilService.changeUser(studentExam.getUser().getLogin());
         var studentExamSummary = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
 
@@ -1444,6 +1537,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     }
                 });
             }
+            else {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getResults()).isEmpty();
+                assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
+            }
         }
         deleteExamWithInstructor(exam1);
     }
@@ -1451,10 +1549,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testStudentExamSummaryAsStudentAfterPublishResults_dontFilter() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         // users tries to access exam summary after results are published
-        database.changeUser(studentExam.getUser().getLogin());
+        userUtilService.changeUser(studentExam.getUser().getLogin());
         var studentExamSummary = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
 
@@ -1498,6 +1596,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     }
                 });
             }
+            else {
+                var participation = exercise.getStudentParticipations().iterator().next();
+                assertThat(participation.getResults()).hasSize(1);
+                var result = participation.getResults().iterator().next();
+                assertThat(result.getAssessor()).as("no sensitive inforation get leaked").isNull();
+            }
         }
         deleteExamWithInstructor(exam1);
     }
@@ -1505,10 +1609,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithoutGradingScaleAsStudentAfterPublishResults() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         // users tries to access exam summary after results are published
-        database.changeUser(studentExam.getUser().getLogin());
+        userUtilService.changeUser(studentExam.getUser().getLogin());
 
         var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
                 StudentExamWithGradeDTO.class);
@@ -1540,8 +1644,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @NotNull
-    private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields) throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, setFields).get(0);
+    private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).get(0);
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
         StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam, studentExam.getUser().getLogin(), studentExam);
 
@@ -1551,14 +1655,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = examRepository.save(exam);
 
         // submitExam
-        var studentExamFinished = request.postWithResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/student-exams/submit",
-                studentExamWithSubmissions, StudentExam.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/student-exams/submit", studentExamWithSubmissions, HttpStatus.OK);
+        var studentExamFinished = request.get(
+                "/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamWithSubmissions.getId() + "/summary", HttpStatus.OK,
+                StudentExam.class);
 
         exam.setEndDate(ZonedDateTime.now());
         exam = examRepository.save(exam);
 
         // Add results to all exercise submissions
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         for (var exercise : studentExamFinished.getExercises()) {
             if (exercise instanceof QuizExercise) {
                 continue;
@@ -1568,7 +1674,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            database.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         exam.setPublishResultsDate(ZonedDateTime.now());
         exam = examRepository.save(exam);
@@ -1582,11 +1688,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private GradingScale createGradeScale(boolean isBonus) {
         GradingScale gradingScale;
         if (isBonus) {
-            gradingScale = database.generateGradingScaleWithStickyStep(new double[] { 60, 40, 50 }, Optional.of(new String[] { "0", "0.3", "0.6" }), true, 1);
+            gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 40, 50 }, Optional.of(new String[] { "0", "0.3", "0.6" }), true, 1);
             gradingScale.setGradeType(GradeType.BONUS);
         }
         else {
-            gradingScale = database.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true, 1);
+            gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }),
+                    true, 1);
         }
         gradingScaleRepository.save(gradingScale);
         return gradingScale;
@@ -1595,14 +1702,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResults() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
-        database.changeUser(studentExam.getUser().getLogin());
+        userUtilService.changeUser(studentExam.getUser().getLogin());
 
         var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
                 StudentExamWithGradeDTO.class);
@@ -1635,7 +1742,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private StudentExam addExamExerciseSubmissionsForUser(Exam exam, String userLogin, StudentExam studentExam) throws Exception {
         if (userLogin != null) {
-            database.changeUser(userLogin);
+            userUtilService.changeUser(userLogin);
         }
         // start exam conduction for a user
         var studentExamFromServer = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
@@ -1677,7 +1784,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentBeforePublishResults() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         exam2.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
         exam2 = examRepository.save(exam2);
@@ -1687,7 +1794,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
-        database.changeUser(studentExam.getUser().getLogin());
+        userUtilService.changeUser(studentExam.getUser().getLogin());
 
         request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.FORBIDDEN, StudentExamWithGradeDTO.class);
     }
@@ -1695,14 +1802,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOwnUserId() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
-        database.changeUser(studentExam.getUser().getLogin());
+        userUtilService.changeUser(studentExam.getUser().getLogin());
 
         var studentExamGradeInfoFromServerForUserId = request.get(
                 "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK,
@@ -1722,25 +1829,25 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOtherUserId() throws Exception {
-        exam2 = createStudentExamWithResultsAndAssessments(true).getExam();
+        exam2 = createStudentExamWithResultsAndAssessments(true, 2).getExam();
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
         gradingScaleRepository.save(gradingScale);
 
-        // users tries to access exam summary after results are published
-        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
-        database.changeUser(student2.getLogin());
-        User student3 = database.getUserByLogin(TEST_PREFIX + "student3");
-        // Note: student2 cannot see the grade summary for student3
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student3.getId(), HttpStatus.FORBIDDEN,
+        // users try to access exam summary after results are published
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.changeUser(student1.getLogin());
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        // Note: student1 cannot see the grade summary for student2
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student2.getId(), HttpStatus.FORBIDDEN,
                 StudentExamWithGradeDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsInstructorAfterPublishResultsWithOtherUserId() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
         exam2 = studentExam.getExam();
 
         GradingScale gradingScale = createGradeScale(false);
@@ -1764,7 +1871,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleWithCorrectlyRoundedPoints() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true);
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
         GradingScale gradingScale = createGradeScale(false);
         gradingScale.setExam(exam2);
@@ -1800,7 +1907,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(sumOfResultScores).isNotEqualTo(expectedOverallPoints);
 
         // Assert actual computed result.
-        database.changeUser(studentExam.getUser().getLogin());
+        userUtilService.changeUser(studentExam.getUser().getLogin());
         var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
                 StudentExamWithGradeDTO.class);
 
@@ -1811,9 +1918,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithBonusExam(boolean asStudent) throws Exception {
-        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
         bambooRequestMockProvider.reset();
-        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
 
         BonusStrategy bonusStrategy = BonusStrategy.GRADES_CONTINUOUS;
 
@@ -1822,7 +1929,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String queryParam = "";
         if (asStudent) {
             // users tries to access exam summary after results are published
-            database.changeUser(finalStudentExam.getUser().getLogin());
+            userUtilService.changeUser(finalStudentExam.getUser().getLogin());
         }
         else {
             queryParam = "?userId=" + finalStudentExam.getUser().getId();
@@ -1863,7 +1970,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         gradingScaleRepository.save(bonusGradingScale);
 
         double weight = bonusStrategy == BonusStrategy.POINTS ? 1.0 : -1.0;
-        var bonus = ModelFactory.generateBonus(bonusStrategy, weight, bonusGradingScale.getId(), finalExamGradingScale.getId());
+        var bonus = BonusFactory.generateBonus(bonusStrategy, weight, bonusGradingScale.getId(), finalExamGradingScale.getId());
         bonusRepository.save(bonus);
 
         StudentParticipation participationWithLatestResult = studentParticipationRepository
@@ -1877,9 +1984,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithBonusExamAndPlagiarismAsStudent() throws Exception {
-        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
         bambooRequestMockProvider.reset();
-        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam bonusStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
 
         BonusStrategy bonusStrategy = BonusStrategy.POINTS;
 
@@ -1902,7 +2009,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         plagiarismCaseRepository.save(bonusPlagiarismCase);
 
         // users tries to access exam summary after results are published
-        database.changeUser(student.getLogin());
+        userUtilService.changeUser(student.getLogin());
 
         var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
                 HttpStatus.OK, StudentExamWithGradeDTO.class);
@@ -1928,7 +2035,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedFinalExamSummaryWithPlagiarismAndNotParticipatedBonusExamAsStudent() throws Exception {
-        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false, 1);
         bambooRequestMockProvider.reset();
 
         User student = finalStudentExam.getUser();
@@ -1954,7 +2061,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         gradingScaleRepository.save(bonusGradingScale);
 
         // users tries to access exam summary after results are published
-        database.changeUser(student.getLogin());
+        userUtilService.changeUser(student.getLogin());
 
         var studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), bonusGradingScale.getExam().getId());
         log.debug("Found {} student exams for student {} {} and exam {}", studentExams.size(), student.getId(), student.getLogin(), finalExam.getId());
@@ -1975,7 +2082,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithStudentExamsAfterConductionAndEvaluation() throws Exception {
-        StudentExam studentExam = prepareStudentExamsForConduction(false, true).get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
 
         final StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin(), studentExam);
 
@@ -1985,14 +2092,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2 = examRepository.save(exam2);
 
         // submitExam
-        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions,
-                StudentExam.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions, HttpStatus.OK);
+        var studentExamFinished = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamWithSubmissions.getId() + "/summary",
+                HttpStatus.OK, StudentExam.class);
 
         exam2.setEndDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);
 
         // Add results to all exercise submissions (evaluation)
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         for (var exercise : studentExamFinished.getExercises()) {
             if (exercise instanceof QuizExercise) {
                 continue;
@@ -2002,7 +2110,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-            database.addResultToParticipation(participation, latestSubmission.get());
+            participationUtilService.addResultToParticipation(participation, latestSubmission.orElseThrow());
         }
         exam2.setPublishResultsDate(ZonedDateTime.now());
         exam2 = examRepository.save(exam2);
@@ -2030,20 +2138,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTestRun() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTestRunWithReferencedParticipationsDeleteOneParticipation() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        var testRun1 = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var testRun2 = new StudentExam();
         testRun2.setTestRun(true);
         testRun2.setExam(testRun1.getExam());
@@ -2060,10 +2168,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTestRunWithReferencedParticipationsDeleteNoParticipation() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        var testRun1 = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var testRun2 = new StudentExam();
         testRun2.setTestRun(true);
         testRun2.setExam(testRun1.getExam());
@@ -2080,10 +2188,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteTestRunWithMissingParticipation() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationService.delete(participations.get(0).getId(), false, false, true);
@@ -2093,8 +2201,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteTestRunAsTutor() throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
-        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam1.getExerciseGroups());
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam1.getExerciseGroups());
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-run/" + testRun.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -2111,13 +2219,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      * @throws Exception if errors occur
      */
     private StudentExam createTestRun() throws Exception {
-        testRunExam = database.addExam(course1);
-        testRunExam = database.addTextModelingProgrammingExercisesToExam(testRunExam, false, true);
+        testRunExam = examUtilService.addExam(course1);
+        testRunExam = examUtilService.addTextModelingProgrammingExercisesToExam(testRunExam, false, true);
         return createTestRun(testRunExam);
     }
 
     private StudentExam createTestRun(Exam exam) throws Exception {
-        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
         StudentExam testRun = new StudentExam();
         testRun.setExercises(new ArrayList<>());
@@ -2142,7 +2250,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         var testRunResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
 
@@ -2160,8 +2268,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         assertThat(quizExercise).isNotNull();
-        testRunResponse = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse,
-                StudentExam.class, HttpStatus.OK, null);
+        request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+        testRunResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRunResponse.getId() + "/summary", HttpStatus.OK,
+                StudentExam.class);
+
         checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
 
         // reconnect references so that the following method works
@@ -2184,7 +2294,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
-        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).get();
+        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).orElseThrow();
         assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
         var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {
@@ -2204,14 +2314,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSubmitAndUnSubmitStudentExamAfterExamIsOver() throws Exception {
-        final var studentExams = prepareStudentExamsForConduction(false, true);
-        var studentExam = studentExams.get(0);
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).get(0);
 
         // now we change to the point of time when the student exam needs to be submitted
         // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
-        studentExam.setStarted(true);
-        studentExam.setStartedDate(ZonedDateTime.now().minusMinutes(8));
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(8));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(5));
         exam2 = examRepository.save(exam2);
         studentExam = studentExamRepository.save(studentExam);
@@ -2219,11 +2327,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExam.getSubmissionDate()).isNull();
 
         // submitting the exam, although the endDate is over
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.FORBIDDEN);
-        database.changeUser(TEST_PREFIX + "tutor1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.FORBIDDEN);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.OK);
         studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
@@ -2231,11 +2339,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExam.getSubmissionDate()).isNotNull();
 
         // setting the exam to unsubmitted again
-        database.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.FORBIDDEN);
-        database.changeUser(TEST_PREFIX + "tutor1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.FORBIDDEN);
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.OK);
         studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
@@ -2251,17 +2359,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
-    void testGetStudentExamForTestExamForConduction_NoCourseAccess() throws Exception {
-        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin(TEST_PREFIX + "student42"));
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
-                StudentExam.class);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExamForConduction_NoExamAccess() throws Exception {
-        StudentExam studentExam = database.addStudentExamForTestExam(testExam2, database.getUserByLogin(TEST_PREFIX + "student2"));
+        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam2, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
@@ -2269,10 +2369,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExamForConduction_NotVisible() throws Exception {
-        Exam exam = database.addTestExam(course1);
+        Exam exam = examUtilService.addTestExam(course1);
         exam.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
         examRepository.save(exam);
-        StudentExam studentExam = database.addStudentExamForTestExam(exam, database.getUserByLogin(TEST_PREFIX + "student1"));
+        StudentExam studentExam = examUtilService.addStudentExamForTestExam(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
@@ -2305,14 +2405,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetStudentExamsForCoursePerUser_NoCourseAccess() throws Exception {
-        database.addStudentExamForTestExam(testExam1, database.getUserByLogin(TEST_PREFIX + "student42"));
+        examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
         request.getList("/api/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamsForCoursePerUser_success() throws Exception {
-        database.addStudentExamForTestExam(exam2, database.getUserByLogin(TEST_PREFIX + "student2"));
+        examUtilService.addStudentExamForTestExam(exam2, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         List<StudentExam> studentExamListReceived = request.getList("/api/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamListReceived).hasSizeGreaterThanOrEqualTo(2);
         assertThat(studentExamListReceived).contains(studentExamForTestExam1, studentExamForTestExam2);
@@ -2321,7 +2421,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamsForCoursePerUser_success_noStudentExams() throws Exception {
-        course2 = database.addEmptyCourse();
+        course2 = courseUtilService.addEmptyCourse();
         List<StudentExam> studentExamListReceived = request.getList("/api/courses/" + course2.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamListReceived).isEmpty();
     }
@@ -2337,7 +2437,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoCourseAccess() throws Exception {
-        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin(TEST_PREFIX + "student42"));
+        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
@@ -2345,8 +2445,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoExamAccess() throws Exception {
-        Exam exam99 = database.addTestExam(course1);
-        StudentExam studentExam99 = database.addStudentExamForTestExam(exam99, database.getUserByLogin(TEST_PREFIX + "student42"));
+        Exam exam99 = examUtilService.addTestExam(course1);
+        StudentExam studentExam99 = examUtilService.addStudentExamForTestExam(exam99, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam99.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
@@ -2354,7 +2454,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExamForSummary_NotVisible() throws Exception {
-        Exam exam = database.addTestExam(course1);
+        Exam exam = examUtilService.addTestExam(course1);
         exam.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
         examRepository.save(exam);
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForTestExam2.getId() + "/summary", HttpStatus.FORBIDDEN,
@@ -2402,7 +2502,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForConduction_examIdNotMatching() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + 2 + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.NOT_FOUND,
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + 2 + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.CONFLICT,
                 StudentExam.class);
     }
 
@@ -2415,28 +2515,29 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForConduction_successful() throws Exception {
-        StudentExam studentExamRetrieved = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
-                HttpStatus.OK, StudentExam.class);
-        assertThat(studentExamRetrieved).isEqualTo(studentExam1);
+        StudentExam studentExamRetrieved = request.get(
+                "/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        assertThat(studentExamRetrieved).isEqualTo(studentExamForTestExam1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForConduction_notVisible() throws Exception {
-        Exam testExam = database.addTestExam(course1);
+        Exam testExam = examUtilService.addTestExam(course1);
         testExam.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
         testExam = examRepository.save(testExam);
-        StudentExam studentExam = database.addStudentExamWithUser(testExam, database.getUserByLogin(TEST_PREFIX + "student1"));
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(testExam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testConductionOfTestExam_successful() throws Exception {
-        Exam testExamWithExercises = database.addTestExam(course1);
-        testExamWithExercises = database.addTextModelingProgrammingExercisesToExam(testExamWithExercises, false, true);
+        Exam testExamWithExercises = examUtilService.addTestExam(course1);
+        testExamWithExercises = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithExercises, false, true);
         testExamWithExercises.setExamMaxPoints(19);
         testExamWithExercises.setVisibleDate(ZonedDateTime.now().minusHours(1));
         testExamWithExercises.setStartDate(ZonedDateTime.now().minusMinutes(30));
@@ -2486,10 +2587,353 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipation.getInitializationDate())).isTrue();
             // Compare started date and initialization Date
             studentExamForConduction
-                    .setStartedDate(ZonedDateTime.ofInstant(studentExamForConduction.getStartedDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+                    .setStartedAndStartDate(ZonedDateTime.ofInstant(studentExamForConduction.getStartedDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             studentParticipation
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-            assertThat(studentParticipation.getInitializationDate()).isEqualTo(studentExamForConduction.getStartedDate());
+            assertThat(studentParticipation.getInitializationDate()).isEqualToIgnoringSeconds(studentExamForConduction.getStartedDate());
+        }
+    }
+
+    @Nested
+    class ChangedAndUnchangedSubmissionsIntegrationTest {
+
+        // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
+        // + update Student Exam + find Student Participations By Student Exam With Submissions Result
+        private final int BASE_QUERY_COUNT = 5;
+
+        private TextExercise textExercise;
+
+        private ModelingExercise modeExercise;
+
+        private QuizExercise quizExercise;
+
+        private TextSubmission textSubmission;
+
+        private ModelingSubmission modeSubmission;
+
+        private QuizSubmission quizSubmission;
+
+        private DragAndDropQuestion dragAndDropQuestion;
+
+        private MultipleChoiceQuestion multipleChoiceQuestion;
+
+        private ShortAnswerQuestion shortAnswerQuestion;
+
+        private StudentExam studentExamForConduction;
+
+        @BeforeEach
+        void setUpStudentExamWithExercises() throws Exception {
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+            // Add exercises to active exam
+            exam1.setExamMaxPoints(19);
+            exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
+
+            // Generate student exam
+            List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
+                    Optional.empty(), StudentExam.class, HttpStatus.OK);
+            assertThat(studentExams).hasSize(exam1.getExamUsers().size());
+            assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
+
+            // Prepare student exam
+            ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
+            StudentExam studentExam = studentExams.get(0);
+            userUtilService.changeUser(studentExam.getUser().getLogin());
+            studentExamForConduction = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                    HttpStatus.OK, StudentExam.class);
+            assertThat(studentExamForConduction.isStarted()).isTrue();
+
+            // Get exercises for testing
+            textExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, TextExercise.class);
+            modeExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, ModelingExercise.class);
+            quizExercise = exerciseUtilService.getFirstExerciseWithType(studentExamForConduction, QuizExercise.class);
+
+            // Get quiz questions for testing
+            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+                if (quizQuestion instanceof DragAndDropQuestion && dragAndDropQuestion == null) {
+                    dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof MultipleChoiceQuestion && multipleChoiceQuestion == null) {
+                    multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
+                }
+                else if (quizQuestion instanceof ShortAnswerQuestion && shortAnswerQuestion == null) {
+                    shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                }
+            }
+            assertThat(dragAndDropQuestion).isNotNull();
+            assertThat(multipleChoiceQuestion).isNotNull();
+            assertThat(shortAnswerQuestion).isNotNull();
+
+            textSubmission = (TextSubmission) textExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            modeSubmission = (ModelingSubmission) modeExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            quizSubmission = (QuizSubmission) quizExercise.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
+            assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndSubmittedDoesNotChangeQueryCount() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed and submitted answer";
+            textSubmission.setText(changedAnswer);
+            request.put("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+
+            final String changedModel = "This is a changed and submitted model";
+            final String changedExplanation = "This is a changed and submitted explanation";
+            changeModelingSubmission(changedModel, changedExplanation);
+            request.put("/api/exercises/" + modeExercise.getId() + "/modeling-submissions", modeSubmission, HttpStatus.OK);
+
+            DragAndDropMapping changedMapping = getchangedDragAndDropMapping(1, 0);
+
+            final String text = "Changed and submitted short answer text";
+            final int spotIndex = 0;
+            ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);
+
+            final List<Integer> selectedOptionIndices = List.of(0, 1);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+
+            // load Quiz Submissions Submitted Answers (for comparison) * 3
+            final int quizQueryCount = 3;
+
+            // When
+            assertThatDb(() -> request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + quizQueryCount);
+            StudentExam submittedExam = request.get(
+                    "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+
+            // Then
+            TextExercise textExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission textSubmissionAfterExamSubmission = (TextSubmission) textExerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+            assertThat(textSubmissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(textSubmissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(textSubmissionAfterExamSubmission);
+
+            ModelingExercise modeExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission modeSubmissionAfterExamSubmission = (ModelingSubmission) modeExerciseAfterExamSubmission.getStudentParticipations().iterator().next()
+                    .findLatestSubmission().orElseThrow();
+            assertThat(modeSubmissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(modeSubmissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(modeSubmissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(modeSubmissionAfterExamSubmission);
+
+            QuizExercise quizExerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission quizSubmissionAfterExamSubmission = (QuizSubmission) quizExerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+            assertThat(quizSubmissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(quizSubmissionAfterExamSubmission);
+
+            verifyDragAndDropSubmission(changedMapping, quizSubmissionAfterExamSubmission);
+            verifyShortAnswerSubmission(changedText, quizSubmissionAfterExamSubmission);
+            verifyMultipleChoiceSubmission(changedAnswerOptions, quizSubmissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedTextSubmission() throws Exception {
+            // Given
+            final String changedAnswer = "This is a changed answer";
+            textSubmission.setText(changedAnswer);
+
+            // When
+            request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, StudentExam.class,
+                    HttpStatus.OK);
+            StudentExam submittedExam = request.get(
+                    "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            TextExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, TextExercise.class);
+            TextSubmission submissionAfterExamSubmission = (TextSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(textSubmission);
+            assertThat(submissionAfterExamSubmission.getText()).isEqualTo(changedAnswer);
+            assertVersionedSubmission(textSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedModelingSubmission() throws Exception {
+            // Given
+            final String changedModel = "This is a changed model";
+            final String changedExplanation = "This is a changed explanation";
+            changeModelingSubmission(changedModel, changedExplanation);
+
+            // When
+            request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, StudentExam.class,
+                    HttpStatus.OK);
+            StudentExam submittedExam = request.get(
+                    "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            ModelingExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, ModelingExercise.class);
+            ModelingSubmission submissionAfterExamSubmission = (ModelingSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(modeSubmission);
+            assertThat(submissionAfterExamSubmission.getModel()).isEqualTo(changedModel);
+            assertThat(submissionAfterExamSubmission.getExplanationText()).isEqualTo(changedExplanation);
+            assertVersionedSubmission(modeSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedDragAndDropQuestionSubmission() throws Exception {
+            // Given
+            DragAndDropMapping changedMapping = getchangedDragAndDropMapping(0, 1);
+
+            // When
+            request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, HttpStatus.OK);
+            StudentExam submittedExam = request.get(
+                    "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyDragAndDropSubmission(changedMapping, submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedShortAnswerQuestionSubmission() throws Exception {
+            // Given
+            getChangedShortAnswerSubmittedText("First changed and submitted answer", 0);
+            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            quizSubmission.removeSubmittedAnswers(quizSubmission.getSubmittedAnswers().iterator().next());
+
+            final String text = "Changed short answer text";
+            final int spotIndex = 1;
+            ShortAnswerSubmittedText changedText = getChangedShortAnswerSubmittedText(text, spotIndex);
+
+            // When
+            request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, HttpStatus.OK);
+            StudentExam submittedExam = request.get(
+                    "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyShortAnswerSubmission(changedText, submissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testChangedAndNotSubmittedMultipleChoiceQuestionSubmission() throws Exception {
+            // Given
+            final List<Integer> selectedOptionIndices = List.of(1);
+            List<AnswerOption> changedAnswerOptions = getChangedAnswerOptions(selectedOptionIndices);
+
+            // When
+            request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, HttpStatus.OK);
+            StudentExam submittedExam = request.get(
+                    "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            QuizExercise exerciseAfterExamSubmission = exerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class);
+            QuizSubmission submissionAfterExamSubmission = (QuizSubmission) exerciseAfterExamSubmission.getStudentParticipations().iterator().next().findLatestSubmission()
+                    .orElseThrow();
+
+            // Then
+            assertThat(submissionAfterExamSubmission).isEqualTo(quizSubmission);
+            assertVersionedSubmission(quizSubmission);
+            assertVersionedSubmission(submissionAfterExamSubmission);
+
+            verifyMultipleChoiceSubmission(changedAnswerOptions, submissionAfterExamSubmission);
+        }
+
+        private void changeModelingSubmission(String changedModel, String changedExplanation) {
+            modeSubmission.setModel(changedModel);
+            modeSubmission.setExplanationText(changedExplanation);
+        }
+
+        private DragAndDropMapping getchangedDragAndDropMapping(int dndDragItemIndex, int dndDropLocationIndex) {
+            DragAndDropMapping changedMapping = new DragAndDropMapping();
+
+            changedMapping.setDragItemIndex(dndDragItemIndex);
+            changedMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
+
+            changedMapping.setDropLocationIndex(dndDropLocationIndex);
+            changedMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndDropLocationIndex));
+
+            DragAndDropSubmittedAnswer changedAnswer = new DragAndDropSubmittedAnswer();
+            changedAnswer.getMappings().add(changedMapping);
+            changedAnswer.setQuizQuestion(dragAndDropQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return changedMapping;
+        }
+
+        private ShortAnswerSubmittedText getChangedShortAnswerSubmittedText(String text, int spotIndex) {
+            ShortAnswerSubmittedText changedText = new ShortAnswerSubmittedText();
+            changedText.setText(text);
+            changedText.setSpot(shortAnswerQuestion.getSpots().get(spotIndex));
+
+            ShortAnswerSubmittedAnswer changedAnswer = new ShortAnswerSubmittedAnswer();
+            changedAnswer.getSubmittedTexts().add(changedText);
+            changedAnswer.setQuizQuestion(shortAnswerQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return changedText;
+        }
+
+        private List<AnswerOption> getChangedAnswerOptions(List<Integer> selectedOptionIndices) {
+            List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
+
+            MultipleChoiceSubmittedAnswer changedAnswer = new MultipleChoiceSubmittedAnswer();
+            selectedOptionIndices.forEach(selectedOptionIndex -> changedAnswer.addSelectedOptions(answerOptions.get(selectedOptionIndex)));
+            changedAnswer.setQuizQuestion(multipleChoiceQuestion);
+
+            quizSubmission.getSubmittedAnswers().add(changedAnswer);
+            return selectedOptionIndices.stream().map(answerOptions::get).toList();
+        }
+
+        private void verifyDragAndDropSubmission(DragAndDropMapping changedMapping, QuizSubmission submissionAfterExamSubmission) {
+            DragAndDropSubmittedAnswer answerAfterSubmission = (DragAndDropSubmittedAnswer) submissionAfterExamSubmission.getSubmittedAnswerForQuestion(dragAndDropQuestion);
+            Comparator<DragAndDropMapping> dndMappingComparator = Comparator.comparing(DragAndDropMapping::getDragItemIndex)
+                    .thenComparing(DragAndDropMapping::getDropLocationIndex);
+
+            assertThat(answerAfterSubmission.getMappings()).hasSize(1);
+            assertThat(answerAfterSubmission.getMappings().iterator().next()).usingComparator(dndMappingComparator).isEqualTo(changedMapping);
+        }
+
+        private void verifyShortAnswerSubmission(ShortAnswerSubmittedText changedText, QuizSubmission submissionAfterExamSubmission) {
+            ShortAnswerSubmittedAnswer answerAfterSubmission = (ShortAnswerSubmittedAnswer) submissionAfterExamSubmission.getSubmittedAnswerForQuestion(shortAnswerQuestion);
+            Comparator<ShortAnswerSubmittedText> saMappingComparator = Comparator.comparing(ShortAnswerSubmittedText::getText).thenComparing(saText -> saText.getSpot().getId());
+
+            assertThat(answerAfterSubmission.getSubmittedTexts()).hasSize(1);
+            assertThat(answerAfterSubmission.getSubmittedTexts().iterator().next()).usingComparator(saMappingComparator).isEqualTo(changedText);
+        }
+
+        private void verifyMultipleChoiceSubmission(List<AnswerOption> changedAnswerOption, QuizSubmission submissionAfterExamSubmission) {
+            MultipleChoiceSubmittedAnswer answerAfterSubmission = (MultipleChoiceSubmittedAnswer) submissionAfterExamSubmission
+                    .getSubmittedAnswerForQuestion(multipleChoiceQuestion);
+
+            assertThat(answerAfterSubmission.toSelectedIds()).containsAll(changedAnswerOption.stream().map(AnswerOption::getId).collect(Collectors.toSet()));
         }
     }
 }

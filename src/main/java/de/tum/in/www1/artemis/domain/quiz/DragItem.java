@@ -62,6 +62,11 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         this.pictureFilePath = pictureFilePath;
     }
 
+    public DragItem pictureFilePath(String pictureFilePath) {
+        this.pictureFilePath = pictureFilePath;
+        return this;
+    }
+
     public String getText() {
         return text;
     }

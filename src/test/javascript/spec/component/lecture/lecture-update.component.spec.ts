@@ -22,6 +22,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -47,6 +48,7 @@ describe('LectureUpdateComponent', () => {
             imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 LectureUpdateComponent,
+                MockComponent(LectureTitleChannelNameComponent),
                 MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
@@ -96,7 +98,7 @@ describe('LectureUpdateComponent', () => {
     });
 
     it('should create lecture', fakeAsync(() => {
-        lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
+        lectureUpdateComponent.lecture = { title: 'test1', channelName: 'test1' } as Lecture;
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
@@ -121,11 +123,11 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
     }));
 
     it('should create lecture in wizard mode', () => {
-        lectureUpdateComponent.lecture = { title: '' } as Lecture;
+        lectureUpdateComponent.lecture = { title: '', channelName: '' } as Lecture;
         lectureUpdateComponent.isShowingWizardMode = true;
         lectureUpdateComponent.wizardComponent = lectureUpdateWizardComponent;
 
@@ -161,7 +163,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.save();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: '' });
+        expect(createSpy).toHaveBeenCalledWith({ title: '', channelName: '' });
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(onLectureCreationSucceededSpy).toHaveBeenCalledOnce();
@@ -171,7 +173,7 @@ describe('LectureUpdateComponent', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
 
         lectureUpdateComponentFixture.detectChanges();
-        lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
+        lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated', channelName: 'test1Updated' } as Lecture;
 
         const updateSpy = jest.spyOn(lectureService, 'update').mockReturnValue(
             of<HttpResponse<Lecture>>(
@@ -192,7 +194,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponentFixture.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledOnce();
-        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated' });
+        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
     }));
 
     it('should switch to wizard mode', fakeAsync(() => {
@@ -247,7 +249,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
         lectureUpdateComponent.fileName = 'testFile';
         lectureUpdateComponent.processUnitMode = true;
-        lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
+        lectureUpdateComponent.lecture = { title: 'test1', channelName: 'test1' } as Lecture;
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
@@ -269,7 +271,7 @@ describe('LectureUpdateComponent', () => {
         tick();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1' });
         expect(proceedToUnitSplitSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.processUnitMode).toBeTrue();
 
@@ -295,7 +297,7 @@ describe('LectureUpdateComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     }));
 
-    it('should set lecture start date and end date correctly', fakeAsync(() => {
+    it('should set lecture visible date, start date and end date correctly', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
 
@@ -304,6 +306,7 @@ describe('LectureUpdateComponent', () => {
 
         const setDatesSpy = jest.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
 
+        lectureUpdateComponent.lecture.visibleDate = dayjs().year(2022).month(3).date(7);
         lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(3).date(5);
         lectureUpdateComponent.lecture.endDate = dayjs().year(2022).month(3).date(1);
 
@@ -311,28 +314,33 @@ describe('LectureUpdateComponent', () => {
 
         expect(setDatesSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.lecture.startDate).toEqual(lectureUpdateComponent.lecture.endDate);
+        expect(lectureUpdateComponent.lecture.startDate).toEqual(lectureUpdateComponent.lecture.visibleDate);
 
         lectureUpdateComponentFixture.detectChanges();
         tick();
 
         lectureUpdateComponent.lecture.startDate = undefined;
         lectureUpdateComponent.lecture.endDate = undefined;
+        lectureUpdateComponent.lecture.visibleDate = undefined;
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(2);
         expect(lectureUpdateComponent.lecture.startDate).toBeUndefined();
         expect(lectureUpdateComponent.lecture.endDate).toBeUndefined();
+        expect(lectureUpdateComponent.lecture.visibleDate).toBeUndefined();
 
         lectureUpdateComponentFixture.detectChanges();
         tick();
 
-        lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(1).date(1);
+        lectureUpdateComponent.lecture.visibleDate = dayjs().year(2022).month(1).date(1);
+        lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(1).date(2);
         lectureUpdateComponent.lecture.endDate = dayjs().year(2022).month(1).date(3);
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
+        expect(lectureUpdateComponent.lecture.visibleDate.toDate()).toBeBefore(lectureUpdateComponent.lecture.startDate.toDate());
         expect(lectureUpdateComponent.lecture.startDate.toDate()).toBeBefore(lectureUpdateComponent.lecture.endDate.toDate());
     }));
 });

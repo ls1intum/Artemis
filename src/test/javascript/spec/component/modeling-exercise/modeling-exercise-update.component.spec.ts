@@ -59,6 +59,8 @@ describe('ModelingExercise Management Update Component', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             modelingExercise.course = course;
 
+            modelingExercise.channelName = 'test';
+
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
                 route.data = of({ modelingExercise });
@@ -87,6 +89,8 @@ describe('ModelingExercise Management Update Component', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             modelingExercise.course = course;
             modelingExercise.id = 123;
+
+            modelingExercise.channelName = 'test';
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -120,6 +124,7 @@ describe('ModelingExercise Management Update Component', () => {
         modelingExercise.releaseDate = dayjs();
         modelingExercise.dueDate = dayjs();
         modelingExercise.assessmentDueDate = dayjs();
+        modelingExercise.channelName = 'test';
         const courseId = 1;
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
@@ -154,6 +159,7 @@ describe('ModelingExercise Management Update Component', () => {
         modelingExercise.releaseDate = dayjs();
         modelingExercise.dueDate = dayjs();
         modelingExercise.assessmentDueDate = dayjs();
+        modelingExercise.channelName = 'test';
         const courseId = 1;
 
         beforeEach(() => {

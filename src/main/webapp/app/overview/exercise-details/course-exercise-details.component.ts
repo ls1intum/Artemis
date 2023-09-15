@@ -18,7 +18,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -43,13 +43,13 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
+    styleUrls: ['../course-overview.scss', './course-exercise-detail.component.scss'],
     providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
@@ -66,6 +66,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     private currentUser: User;
     private exerciseId: number;
@@ -90,7 +91,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
-    hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
@@ -198,7 +198,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
-        this.exerciseCategories = this.exercise.categories || [];
+        this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
 
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -209,21 +209,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
-                this.hasSubmissionPolicy = true;
             });
         }
 
         this.showIfExampleSolutionPresent(newExercise);
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
-
-        // Subscribe for late programming submissions to show the student a success message
-        if (this.exercise.type === ExerciseType.PROGRAMMING && hasExerciseDueDatePassed(this.exercise, this.gradedStudentParticipation)) {
-            this.subscribeForNewSubmissions();
-        }
 
         if (this.discussionComponent && this.exercise) {
             // We need to manually update the exercise property of the posts component
@@ -357,23 +350,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
     }
 
-    /**
-     * Subscribe for incoming (late) submissions to show a message if the student submitted after the due date.
-     */
-    subscribeForNewSubmissions() {
-        this.studentParticipations.forEach((participation) => {
-            this.submissionSubscription = this.submissionService
-                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                .getLatestPendingSubmissionByParticipationId(participation!.id!, this.exercise?.id!, true)
-                .subscribe(({ submission }) => {
-                    // Notify about received late submission
-                    if (submission && !participation.testRun && getExerciseDueDate(this.exercise!, participation)?.isBefore(submission.submissionDate)) {
-                        this.alertService.success('artemisApp.exercise.lateSubmissionReceived');
-                    }
-                });
-        });
-    }
-
     exerciseRatedBadge(result: Result): string {
         return result.rated ? 'bg-success' : 'bg-info';
     }
@@ -437,6 +413,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
+            instance.isCommunicationPage = false;
         }
     }
 

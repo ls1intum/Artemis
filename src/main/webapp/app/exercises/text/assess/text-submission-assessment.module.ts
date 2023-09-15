@@ -13,8 +13,6 @@ import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/text
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
-import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
-import { TextFeedbackConflictsHeaderComponent } from 'app/exercises/text/assess/conflicts/conflicts-header/text-feedback-conflicts-header.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -47,8 +45,6 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
         TextblockAssessmentCardComponent,
         TextblockFeedbackEditorComponent,
         ManualTextblockSelectionComponent,
-        TextFeedbackConflictsComponent,
-        TextFeedbackConflictsHeaderComponent,
         TextblockFeedbackDropdownComponent,
     ],
     exports: [TextAssessmentAreaComponent],

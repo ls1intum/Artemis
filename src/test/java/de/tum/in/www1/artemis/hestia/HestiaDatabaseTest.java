@@ -17,10 +17,13 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 /**
  * This class tests the database relations of the Hestia domain models.
@@ -46,13 +49,22 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Autowired
     private CodeHintRepository codeHintRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private Long programmingExerciseId;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
-        final Course course = database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     ProgrammingExerciseTask addTaskToProgrammingExercise(String taskName) {
@@ -92,7 +104,7 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     void addTestCasesWithSolutionEntriesToProgrammingExercise() {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
         for (ProgrammingExerciseTestCase testCase : testCases) {
@@ -112,7 +124,7 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     void deleteTaskWithTestCases() {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
         var task = addTaskToProgrammingExercise("Task 1");
@@ -125,7 +137,7 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     void addCodeHintToProgrammingExercise() {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
         var task = addTaskToProgrammingExercise("Task 1");

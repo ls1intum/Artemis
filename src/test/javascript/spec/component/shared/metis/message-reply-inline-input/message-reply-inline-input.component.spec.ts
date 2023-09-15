@@ -77,7 +77,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
         tick();
         expect(component.isLoading).toBeFalse();
-        expect(onCreateSpy).toHaveBeenCalledTimes(0);
+        expect(onCreateSpy).not.toHaveBeenCalled();
     }));
 
     it('should invoke metis service with edited message reply', fakeAsync(() => {
@@ -121,6 +121,6 @@ describe('MessageReplyInlineInputComponent', () => {
 
         tick();
         expect(component.isLoading).toBeFalse();
-        expect(onEditSpy).toHaveBeenCalledTimes(0);
+        expect(onEditSpy).not.toHaveBeenCalled();
     }));
 });

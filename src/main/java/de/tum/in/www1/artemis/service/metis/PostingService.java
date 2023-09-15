@@ -1,29 +1,19 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
-import de.tum.in.www1.artemis.domain.metis.UserRole;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -42,21 +32,21 @@ public abstract class PostingService {
 
     protected final AuthorizationCheckService authorizationCheckService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
+            AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             ConversationParticipantRepository conversationParticipantRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.messagingTemplate = messagingTemplate;
+        this.websocketMessagingService = websocketMessagingService;
         this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
@@ -73,35 +63,70 @@ public abstract class PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
     }
 
     /**
      * Broadcasts a posting related event in a course under a specific topic via websockets
      *
-     * @param postDTO object including the affected post as well as the action
-     * @param course  course the posting belongs to
+     * @param postDTO    object including the affected post as well as the action
+     * @param course     course the posting belongs to
+     * @param recipients the recipients for this broadcast, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Course course) {
+    protected void broadcastForPost(PostDTO postDTO, Course course, Set<User> recipients) {
+
+        // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
+        Conversation postConversation = postDTO.post().getConversation();
+        if (postConversation != null) {
+            postConversation.hideDetails();
+        }
+
         String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
         String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
 
         if (postDTO.post().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.post().getExercise().getId();
-            messagingTemplate.convertAndSend(specificTopicName, postDTO);
+            websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postDTO.post().getLecture() != null) {
             specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
-            messagingTemplate.convertAndSend(specificTopicName, postDTO);
+            websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
-        else if (postDTO.post().getConversation() != null) {
-            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
-            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                    genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
+        else if (postConversation != null) {
+            String conversationTopicName = genericTopicName + "/conversations/" + postConversation.getId();
+
+            if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
+                websocketMessagingService.sendMessage(conversationTopicName, postDTO);
+            }
+            else {
+                if (recipients == null) {
+                    // send to all participants of the conversation
+                    recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
+                            .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+                }
+                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), conversationTopicName, postDTO));
+            }
 
             return;
         }
-        messagingTemplate.convertAndSend(genericTopicName, postDTO);
+
+        websocketMessagingService.sendMessage(genericTopicName, postDTO);
+    }
+
+    /**
+     * Determines the participants of a conversation that should receive the new message.
+     *
+     * @param conversation conversation the participants are supposed be retrieved
+     * @return users that should receive the new message
+     */
+    protected Stream<ConversationWebSocketRecipientSummary> getWebSocketRecipients(Conversation conversation) {
+        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getCourse().getId(), conversation.getId()).stream();
+        }
+
+        return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
+                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
+                        authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
     /**

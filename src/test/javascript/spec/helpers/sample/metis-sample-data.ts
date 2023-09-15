@@ -12,11 +12,15 @@ import { ConversationParticipant } from 'app/entities/metis/conversation/convers
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { Exam } from 'app/entities/exam.model';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
 export const metisAttachmentUnit = { id: 1, name: 'Metis Attachment Unit', attachment: metisAttachment, slides: [metisSlide1] } as AttachmentUnit;
 export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment] } as Lecture;
+
+export const metisExam = { id: 1, title: 'Metis exam' } as Exam;
 export const metisLecture2 = { id: 2, title: 'Second Metis  Lecture' } as Lecture;
 export const metisLecture3 = { id: 3, title: 'Third Metis  Lecture 3', attachments: [metisAttachment], lectureUnits: [metisAttachmentUnit] } as Lecture;
 
@@ -269,3 +273,40 @@ export const directMessageUser2 = {
 } as Post;
 
 export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
+
+export const metisExerciseChannel = {
+    id: 14,
+    name: 'exercise-channel',
+    description: 'Channel for exercise related questions',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+} as Channel;
+
+export const metisLectureChannel = {
+    id: 15,
+    name: 'lecture-channel',
+    description: 'Channel for lecture related',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+} as Channel;
+
+export const metisChannel = {
+    id: 16,
+    name: 'example-channel',
+    description: 'Example course-wide channel',
+    isAnnouncementChannel: false,
+    isArchived: false,
+    isPublic: true,
+} as Channel;
+
+export const metisPostInChannel = {
+    id: 4,
+    author: metisUser1,
+    course: metisCourse,
+    title: 'title',
+    content: 'metisPostOrganization',
+    creationDate: undefined,
+    conversation: metisChannel,
+} as Post;

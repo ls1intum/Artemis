@@ -9,9 +9,10 @@ export function createQuizExercise(artemis, course, exerciseGroup = null, startQ
     const currentDate = new Date();
     const releaseDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Automatic release in one week -> Will be set to 'NOW' once set-visible is called
 
+    const exerciseName = nextAlphanumeric(10);
     // The actual exercise
     const exercise = {
-        title: 'Quiz K6' + nextAlphanumeric(10),
+        title: 'Quiz K6' + exerciseName,
         type: 'quiz',
         teamMode: false,
         releaseDate: setReleaseDate ? releaseDate : null,
@@ -30,6 +31,7 @@ export function createQuizExercise(artemis, course, exerciseGroup = null, startQ
         course: course,
         exerciseGroup: exerciseGroup,
         quizQuestions: generateQuizQuestions(10),
+        channelName: 'exercise-' + exerciseName,
     };
 
     res = artemis.post(QUIZ_EXERCISES, exercise);
@@ -203,15 +205,18 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout, curren
 
         for (let questionCount = 1; questionCount <= 50; questionCount++) {
             // submit new quiz answer
-            socket.setTimeout(function () {
-                if (questionCount === 50) {
-                    console.log('Submitting via REST for ' + currentUsername);
-                    submitRandomAnswerREST(10);
-                } else {
-                    console.log('Submitting via WS for ' + currentUsername);
-                    submitRandomAnswer(10);
-                }
-            }, (questionCount - 1) * 500 + 1000);
+            socket.setTimeout(
+                function () {
+                    if (questionCount === 50) {
+                        console.log('Submitting via REST for ' + currentUsername);
+                        submitRandomAnswerREST(10);
+                    } else {
+                        console.log('Submitting via WS for ' + currentUsername);
+                        submitRandomAnswer(10);
+                    }
+                },
+                (questionCount - 1) * 500 + 1000,
+            );
         }
 
         // Stop after timeout

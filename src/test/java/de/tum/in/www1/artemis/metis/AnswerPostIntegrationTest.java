@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -21,9 +22,11 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -37,6 +40,15 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -57,12 +69,12 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(TEST_PREFIX, 4, 4, 4, 1);
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
+        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
 
         existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
@@ -109,7 +121,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private void testAnswerPostCreation(AnswerPost answerPostToSave) throws Exception {
         var countBefore = answerPostRepository.count();
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         // should increment answer count
@@ -156,7 +168,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should increment answer count
         assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
@@ -169,7 +181,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should increment answer count
         assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
@@ -182,7 +194,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should increment answer count
         assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
@@ -213,7 +225,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToUnresolved", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
         List<Post> unresolvedPosts = existingPostsWithAnswers.stream()
                 .filter(post -> post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT)
@@ -232,7 +244,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToOwn", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         // get unresolved posts of current user and compare
         List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())
                 && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))).toList();
@@ -245,10 +257,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testGetPostsForCourseWithCourseWideContent() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())).toList();
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
@@ -260,10 +272,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
                 .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
@@ -278,10 +290,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToOwn", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
                 .filter(post -> student1.getId().equals(post.getAuthor().getId())
                         && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
@@ -298,10 +310,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
         params.add("filterToOwn", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         // get unresolved posts of current user and compare
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
                 .filter(post -> student1.getId().equals(post.getAuthor().getId())
@@ -326,7 +338,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("sortingOrder", SortingOrder.DESCENDING.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
 
         int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
         for (Post post : returnedPosts) {
@@ -349,7 +361,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("sortingOrder", SortingOrder.ASCENDING.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
 
         int numberOfMaxAnswersSeenOnAnyPost = 0;
         for (Post post : returnedPosts) {
@@ -366,7 +378,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToAnsweredOrReacted", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream()
                 .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
                         || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId())))
@@ -384,7 +396,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToOwn", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
                 post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
                         || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId()))))
@@ -402,7 +414,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToUnresolved", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream()
                 .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
@@ -422,7 +434,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToAnsweredOrReacted", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
                 post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
@@ -438,10 +450,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
                 .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
                         && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
@@ -458,10 +470,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
         params.add("filterToOwn", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
                 .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && student1.getId().equals(post.getAuthor().getId())
                         && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
@@ -478,10 +490,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
         params.add("filterToUnresolved", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
                 .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
                         && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
@@ -500,10 +512,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("filterToOwn", "true");
         params.add("filterToUnresolved", "true");
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideContext", "TECH_SUPPORT");
+        params.add("courseWideContexts", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
                 .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && student1.getId().equals(post.getAuthor().getId())
                         && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
@@ -523,7 +535,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
                 HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedAnswerPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedAnswerPost);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 
@@ -535,7 +547,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
                 HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedAnswerPost);
+        conversationUtilService.assertSensitiveInformationHidden(updatedAnswerPost);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 
@@ -564,7 +576,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
-        Course dummyCourse = database.createCourse();
+        Course dummyCourse = courseUtilService.createCourse();
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
                 AnswerPost.class, HttpStatus.BAD_REQUEST);

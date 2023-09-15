@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +16,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -121,7 +121,7 @@ public abstract class AssessmentResource {
 
         Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
         if (submit) {
-            result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            result = assessmentService.submitManualAssessment(result.getId(), exercise);
             Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
             if (optionalStudent.isPresent()) {
                 singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
@@ -132,7 +132,7 @@ public abstract class AssessmentResource {
         if (!isAtLeastInstructor) {
             participation.filterSensitiveInformation();
         }
-        if (submit && (participation.getExercise().getAssessmentDueDate() == null || participation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 
 /**
  * Spring Data JPA repository for the Competency Relation entity.

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
@@ -16,12 +15,12 @@ public class SystemNotificationService {
 
     private static final String ENTITY_NAME = "systemNotification";
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final SystemNotificationRepository systemNotificationRepository;
 
-    public SystemNotificationService(SimpMessageSendingOperations messagingTemplate, SystemNotificationRepository systemNotificationRepository) {
-        this.messagingTemplate = messagingTemplate;
+    public SystemNotificationService(WebsocketMessagingService websocketMessagingService, SystemNotificationRepository systemNotificationRepository) {
+        this.websocketMessagingService = websocketMessagingService;
         this.systemNotificationRepository = systemNotificationRepository;
     }
 
@@ -41,7 +40,7 @@ public class SystemNotificationService {
      * Call this method after changing any system notification.
      */
     public void distributeActiveAndFutureNotificationsToClients() {
-        messagingTemplate.convertAndSend("/topic/system-notification", findAllActiveAndFutureSystemNotifications());
+        websocketMessagingService.sendMessage("/topic/system-notification", findAllActiveAndFutureSystemNotifications());
     }
 
     /**

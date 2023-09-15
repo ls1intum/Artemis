@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = OneToOneChatDTO.class, name = "oneToOneChat"), @JsonSubTypes.Type(value = GroupChatDTO.class, name = "groupChat"),
         @JsonSubTypes.Type(value = ChannelDTO.class, name = "channel"), })
@@ -65,6 +67,7 @@ public class ConversationDTO {
         // default constructor
     }
 
+    // TODO: in json, this value is inserted twice, add @JsonIgnore
     public String getType() {
         return type;
     }

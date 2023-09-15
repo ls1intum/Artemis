@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -32,6 +34,9 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private JenkinsJobService jenkinsJobService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     private static MockedStatic<XmlFileUtils> mockedXmlFileUtils;
 
@@ -41,7 +46,7 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
@@ -78,26 +83,26 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         // This call shall not fail, since the job will be created ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
         // Create Job should be invoked on JenkinsServer
-        verify(jenkinsServer, times(1)).createJob(any(FolderJob.class), eq("JenkinsJob"), eq("JenkinsConfigStringMock"), any());
+        verify(jenkinsServer).createJob(any(FolderJob.class), eq("JenkinsJob"), eq("JenkinsConfigStringMock"), any());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob("JenkinsFolder", new FolderJob());
-        assertThrows(JenkinsException.class, () -> jenkinsJobService.createJobInFolder(invalidDocument, "JenkinsFolder", "JenkinsJob"));
+        assertThatExceptionOfType(JenkinsException.class).isThrownBy(() -> jenkinsJobService.createJobInFolder(invalidDocument, "JenkinsFolder", "JenkinsJob"));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testUpdateJobThrowIOExceptionOnXmlError() {
-        assertThrows(IOException.class, () -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
+        assertThatIOException().isThrownBy(() -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testUpdateFolderJobThrowIOExceptionOnXmlError() {
-        assertThrows(IOException.class, () -> jenkinsJobService.updateFolderJob("JenkinsFolder", invalidDocument));
+        assertThatIOException().isThrownBy(() -> jenkinsJobService.updateFolderJob("JenkinsFolder", invalidDocument));
     }
 
     private Document createEmptyDOMDocument() throws ParserConfigurationException {

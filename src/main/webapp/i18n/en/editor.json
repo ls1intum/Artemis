@@ -78,9 +78,10 @@
             "errors": {
                 "participationNotFound": "Your participation could not be found.",
                 "exerciseNotFound": "The exercise could not be found.",
-                "saveFailed": "One or more files could not be updated.",
-                "submitFailed": "One or more files could not be submitted.",
-                "refreshFailed": "Refresh has failed",
+                "saveFailed": "Saving failed. {{ connectionIssue }}",
+                "submitFailed": "Submitting failed. {{ connectionIssue }}",
+                "refreshFailed": "Refresh failed. {{ connectionIssue }}",
+                "loadingFailed": "Loading file failed. {{ connectionIssue }}",
                 "noPermissions": "You don't have the necessary permissions.",
                 "checkoutFailed": "The checkout of your git repository failed.",
                 "fileExists": "File/Directory name already exists. Please choose a different name.",
@@ -93,10 +94,11 @@
                 "failedToLoadBuildLogs": "The build logs could not be retrieved.",
                 "repositoryInConflict": "Your repository has entered a conflict state.",
                 "notAllowedExam": "You may not submit (anymore)",
-                "saveFailedInternetDisconnected": "Saving failed. Please make sure you have a stable internet connection and try again.",
-                "submitFailedInternetDisconnected": "Submit failed. Please make sure you have a stable internet connection and try again.",
-                "refreshFailedInternetDisconnected": "Refresh failed. Please make sure you have a stable internet connection and try again.",
-                "resetFailed": "Your repository could not be reset."
+                "resetFailed": "Your repository could not be reset.",
+                "submitBeforeStartDate": "You cannot submit before the start date of the exercise.",
+                "submitAfterDueDate": "You cannot submit after the due date of the exercise.",
+                "submitAfterReachingSubmissionLimit": "You reached the submission limit and cannot participate anymore.",
+                "InternetDisconnected": "Please make sure you have a stable internet connection and try again."
             },
             "testStatusLabels": {
                 "noResult": "No results",

@@ -47,7 +47,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
         comp.ngOnInit();
 
-        expect(taskServiceConfigureStub).toHaveBeenCalledOnceWith(exercise, course, gradingStatistics);
+        expect(taskServiceConfigureStub).toHaveBeenCalledExactlyOnceWith(exercise, course, gradingStatistics);
     });
 
     it('should update tasks through the service and set them in the component', () => {

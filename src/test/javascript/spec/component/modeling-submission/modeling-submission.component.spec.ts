@@ -138,7 +138,7 @@ describe('ModelingSubmission Management Component', () => {
         expect(comp.isActive).toBeTrue();
     });
 
-    it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', () => {
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -150,7 +150,7 @@ describe('ModelingSubmission Management Component', () => {
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
     });
 
-    it('should allow to submit after the deadline if the initialization date is after the due date and not submitted', () => {
+    it('should allow to submit after the due date if the initialization date is after the due date and not submitted', () => {
         submission.participation!.initializationDate = dayjs().add(1, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
         submission.submitted = false;

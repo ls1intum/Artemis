@@ -4,12 +4,6 @@
     border-bottom: 1px solid var(--programming-exercise-instruction-step-wizard-card-header-border);
 }
 
-.stepwizard-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-}
-
 .stepwizard {
     display: table;
     width: 100%;
@@ -18,7 +12,13 @@
 
 .stepwizard-title {
     display: table-cell;
-    align-items: center;
+    width: 1%;
+}
+
+.stepwizard-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
 }
 
 .stepwizard-step {

@@ -2,7 +2,7 @@
     <button class="guided-tour-notification notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
         <fa-icon [icon]="faBell"></fa-icon>
         <span class="badge bg-danger rounded-pill" *ngIf="recentNotificationCount > 0">
-            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
+            {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= sortedNotifications.length">+</span>
         </span>
     </button>
 </div>
@@ -39,8 +39,8 @@
                         <fa-icon class="ng-fa-icon" [icon]="faEye" [ngbTooltip]="'artemisApp.notification.showAllSavedNotifications' | artemisTranslate"> </fa-icon>
                     </ng-template>
                 </button>
-                <small class="text-muted">
-                    {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate : { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
+                <small class="text-body-secondary">
+                    {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
                 </small>
             </div>
         </div>
@@ -55,8 +55,8 @@
                         <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div class="notification-text mb-1 text-break" [innerHTML]="getNotificationTextTranslation(notification)"></div>
-                    <div class="info text-muted text-end">
-                        {{ notification.notificationDate?.toDate() | date : 'dd.MM.yy HH:mm' }}
+                    <div class="info text-body-secondary text-end">
+                        {{ notification.notificationDate?.toDate() | date: 'dd.MM.yy HH:mm' }}
                         {{ 'artemisApp.notification.by' | artemisTranslate }}
                         <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
                         <ng-template #noAuthor>
@@ -68,10 +68,10 @@
             <div class="loading-spinner text-center mx-3 my-2" style="font-size: large" *ngIf="loading">
                 <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>
-            <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
+            <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="sortedNotifications.length > 0 && sortedNotifications.length >= totalNotifications">
                 {{ 'artemisApp.notification.allLoaded' | artemisTranslate }}
             </small>
-            <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
+            <span class="no-notifications" *ngIf="sortedNotifications && sortedNotifications.length === 0">
                 {{ 'artemisApp.notification.noNotifications' | artemisTranslate }}
             </span>
         </div>

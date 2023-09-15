@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
@@ -9,10 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class FileUploadExerciseImportService extends ExerciseImportService {
@@ -21,10 +20,13 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
+    private final ChannelService channelService;
+
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -40,7 +42,12 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
     public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
-        return fileUploadExerciseRepository.save(newExercise);
+
+        FileUploadExercise newFileUploadExercise = fileUploadExerciseRepository.save(newExercise);
+
+        channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
+
+        return newFileUploadExercise;
     }
 
     /**

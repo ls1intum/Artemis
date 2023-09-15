@@ -22,7 +22,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -42,6 +42,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
+import { AthenaService } from 'app/assessment/athena.service';
+import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -49,12 +53,24 @@ describe('TextSubmissionAssessmentComponent', () => {
     let textAssessmentService: TextAssessmentService;
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
+    let athenaService: AthenaService;
     let router: Router;
 
     let exercise: TextExercise;
     let participation: StudentParticipation;
     let submission: TextSubmission;
     let mockActivatedRoute: ActivatedRoute;
+
+    function createTextBlockRefWithFeedbackFromTo(startIndex: number, endIndex: number): TextBlockRef {
+        const textBlock = new TextBlock();
+        textBlock.startIndex = startIndex;
+        textBlock.endIndex = endIndex;
+        const feedback = new Feedback();
+        feedback.type = FeedbackType.AUTOMATIC;
+        feedback.detailText = 'detail';
+        feedback.credits = 1;
+        return new TextBlockRef(textBlock, feedback);
+    }
 
     beforeEach(() => {
         exercise = {
@@ -105,15 +121,16 @@ describe('TextSubmissionAssessmentComponent', () => {
                 text: 'First text.',
                 startIndex: 0,
                 endIndex: 11,
-                submission,
-            } as TextBlock,
+                submissionId: submission.id,
+            } as any as TextBlock,
             {
                 id: 'second text id',
                 text: 'Second text.',
                 startIndex: 12,
                 endIndex: 24,
-                submission,
-            } as TextBlock,
+                type: TextBlockType.MANUAL,
+                submissionId: submission.id,
+            } as any as TextBlock,
         ];
         submission.participation!.submissions = [submission];
         submission.participation!.results = [getLatestSubmissionResult(submission)!];
@@ -148,6 +165,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AthenaService, useClass: MockAthenaService },
                 MockProvider(Router),
             ],
         }).compileComponents();
@@ -159,6 +177,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         submissionService = TestBed.inject(SubmissionService);
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
         textAssessmentService = TestBed.inject(TextAssessmentService);
+        athenaService = TestBed.inject(AthenaService);
         router = TestBed.inject(Router);
 
         fixture.detectChanges();
@@ -277,7 +296,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(onErrorCalled).toBeTrue();
     });
 
-    it.each([false, true])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
+    it.each([true, false])('should send update when complaint resolved and assessments are valid, serverReturnsError=%s', (serverReturnsError: boolean) => {
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.credits = 5;
         unreferencedFeedback.detailText = 'gj';
@@ -402,31 +421,215 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
 
-    it('should navigate to conflicting submission', () => {
-        const routerSpy = jest.spyOn(router, 'navigate');
+    it('should always let instructors override', () => {
+        component.exercise!.isAtLeastInstructor = true;
+        expect(component.canOverride).toBeTrue();
+    });
+
+    it('should not allow tutors to override after the assessment due date', () => {
+        component.exercise!.isAtLeastInstructor = false;
+        component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
+        component.complaint = undefined;
+        expect(component.canOverride).toBeFalse();
+    });
+
+    it('should recalculate text block refs correctly', () => {
+        jest.useFakeTimers();
+        component.recalculateTextBlockRefs();
+        fixture.detectChanges();
+        jest.advanceTimersByTime(300);
+
+        expect(component.textBlockRefs).toHaveLength(2);
+        expect(component.unusedTextBlockRefs).toHaveLength(0);
+    });
+
+    it('should handle overlapping manual text blocks correctly', () => {
+        const sortAndSetTextBlockRefsSpy = jest.spyOn(TextAssessmentBaseComponent.prototype as any, 'sortAndSetTextBlockRefs');
+
+        // BEGIN: Adding a new block (with feedback) that overlaps with an existing block
+        submission.blocks?.push({
+            id: 'third text id',
+            text: 'text.',
+            startIndex: 19,
+            endIndex: 24,
+            type: TextBlockType.MANUAL,
+            submissionId: submission.id,
+        } as any as TextBlock);
+
+        getLatestSubmissionResult(submission)?.feedbacks?.push({
+            id: 3,
+            detailText: 'Third Feedback',
+            credits: 0,
+            reference: 'third text id',
+        } as Feedback);
+        // END: Adding a new block (with feedback) that overlaps with an existing block
+
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
-        const feedback = getLatestSubmissionResult(submission)!.feedbacks!;
-        const url = [
-            '/course-management',
-            component.courseId,
-            'exams',
-            component.examId,
-            'exercise-groups',
-            component.exerciseGroupId,
-            'text-exercises',
-            component.exerciseId,
-            'participations',
-            submission.participation!.id,
-            'submissions',
-            component.submission!.id,
-            'text-feedback-conflict',
-            feedback[0].id,
-        ];
 
-        component.navigateToConflictingSubmissions(1);
+        expect(sortAndSetTextBlockRefsSpy).toHaveBeenCalled();
 
-        expect(routerSpy).toHaveBeenCalledOnce();
-        expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
+        expect(component.textBlockRefs).toEqual(
+            // Checking if sortAndSetTextBlockRefs selected the right TextBlockRef (the one having a feedback)
+            // Performing partial match for { block: { text: ...}, feedback: { id: ... } }
+            expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'text.' }), feedback: expect.objectContaining({ id: 3 }) })]),
+        );
+
+        // Checking if a new block was added to compensate for the loss of submitted text due to the overlap between blocks
+        // Performing partial match for { block: { text: ...} }
+        expect(component.textBlockRefs).toEqual(expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'Second ' }) })]));
     });
+
+    it('should load feedback suggestions', fakeAsync(() => {
+        // preparation already added an assessment, but we need to remove it to test the loading
+        component.textBlockRefs = [];
+        component.unreferencedFeedback = [];
+        const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
+        feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
+        const athenaServiceFeedbackSuggestionsStub = jest.spyOn(athenaService, 'getFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
+        component.loadFeedbackSuggestions();
+        tick();
+        expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
+        expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
+    }));
+
+    it.each([
+        // No existing blocks
+        { input: [], output: [] },
+        // Only one block, no possibility for overlap
+        { input: [[0, 10]], output: [[0, 10]] },
+        // Two blocks, no overlap
+        {
+            input: [
+                [0, 10],
+                [10, 20],
+            ],
+            output: [
+                [0, 10],
+                [10, 20],
+            ],
+        },
+        // Two blocks, no overlap
+        {
+            input: [
+                [0, 10],
+                [11, 20],
+            ],
+            output: [
+                [0, 10],
+                [11, 20],
+            ],
+        },
+        // Two blocks, overlap
+        {
+            input: [
+                [0, 10],
+                [5, 15],
+            ],
+            output: [
+                [0, 5],
+                [5, 15],
+            ],
+        },
+        // Two blocks, full overlap
+        {
+            input: [
+                [0, 10],
+                [5, 7],
+            ],
+            output: [
+                [0, 5],
+                [5, 7],
+                [7, 10],
+            ],
+        },
+        // Two blocks, wrong order
+        {
+            input: [
+                [10, 20],
+                [0, 5],
+            ],
+            output: [
+                [0, 5],
+                [10, 20],
+            ],
+        },
+        // Two blocks, same start index
+        {
+            input: [
+                [5, 15],
+                [5, 10],
+            ],
+            output: [
+                [5, 10],
+                [10, 15],
+            ],
+        },
+        // Two blocks, shifted
+        {
+            input: [
+                [6, 11],
+                [5, 10],
+            ],
+            output: [
+                [5, 10],
+                [10, 11],
+            ],
+        },
+        // Three blocks, overlap
+        {
+            input: [
+                [0, 10],
+                [5, 15],
+                [15, 20],
+            ],
+            output: [
+                [0, 5],
+                [5, 15],
+                [15, 20],
+            ],
+        },
+        // Two blocks with exact overlap
+        {
+            input: [
+                [3, 10],
+                [3, 10],
+            ],
+            output: [[3, 10]],
+        },
+    ])('should never create overlapping blocks even with overlapping feedback suggestions', ({ input, output }: { input: number[][]; output: number[][] }) => {
+        // preparation already added an assessment, but we need to remove it to test the loading
+        component.textBlockRefs = [];
+        component.unreferencedFeedback = [];
+
+        // Set up initial state with an existing text block that doesn't overlap
+        const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
+
+        jest.spyOn(athenaService, 'getFeedbackSuggestions').mockReturnValue(of(feedbackSuggestions));
+
+        component.loadFeedbackSuggestions();
+
+        // No block should overlap with any other block
+        const blocks = component.textBlockRefs.map((ref) => ref.block);
+        let lastEndIndex = 0;
+        for (const block of blocks) {
+            expect(block!.startIndex).toBeGreaterThanOrEqual(lastEndIndex);
+            lastEndIndex = block!.endIndex!;
+        }
+
+        // All blocks should be in the output
+        expect(blocks).toHaveLength(output.length);
+        for (const [index, block] of blocks.entries()) {
+            expect(block!.startIndex).toEqual(output[index][0]);
+            expect(block!.endIndex).toEqual(output[index][1]);
+        }
+    });
+
+    it('should not load feedback suggestions if there already are assessments', fakeAsync(() => {
+        // preparation already added an assessment
+        const athenaServiceFeedbackSuggestionsSpy = jest.spyOn(athenaService, 'getFeedbackSuggestions');
+        component.loadFeedbackSuggestions();
+        tick();
+        expect(athenaServiceFeedbackSuggestionsSpy).not.toHaveBeenCalled();
+    }));
 });

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -23,6 +22,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -35,6 +35,9 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
+    private final ExamDateService examDateService;
+
+    // TODO: we should move this into some kind of EnrollmentService
     @Deprecated(forRemoval = true)
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseRegistrationUsernamePattern;
@@ -42,9 +45,10 @@ public class AuthorizationCheckService {
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Pattern allowedCourseEnrollmentUsernamePattern;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.examDateService = examDateService;
 
         if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
@@ -202,14 +206,14 @@ public class AuthorizationCheckService {
      * or ALLOWED if the user is allowed to self enroll in the course.
      */
     private enum EnrollmentAuthorization {
-        ALLOWED, USERNAME_PATTERN, COURSE_STATUS, ENROLLMENT_STATUS, ONLINE, ORGANIZATIONS
+        ALLOWED, USERNAME_PATTERN, ENROLLMENT_STATUS, ENROLLMENT_PERIOD, ONLINE, ORGANIZATIONS
     }
 
     /**
      * Checks if the user is allowed to self enroll in the given course.
      * Returns `EnrollmentAuthorization.ALLOWED` if the user is allowed to self enroll in the course,
      * or the reason why the user is not allowed to self enroll in the course otherwise.
-     * See also: {@link #checkUserAllowedToSelfEnrollInCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToEnrollInCourseElseThrow(User, Course)}
      *
      * @param user   The user that wants to self enroll
      * @param course The course to which the user wants to self enroll
@@ -220,11 +224,11 @@ public class AuthorizationCheckService {
         if (allowedCourseEnrollmentUsernamePattern != null && !allowedCourseEnrollmentUsernamePattern.matcher(user.getLogin()).matches()) {
             return EnrollmentAuthorization.USERNAME_PATTERN;
         }
-        if (!course.isActive()) {
-            return EnrollmentAuthorization.COURSE_STATUS;
-        }
         if (!Boolean.TRUE.equals(course.isEnrollmentEnabled())) {
             return EnrollmentAuthorization.ENROLLMENT_STATUS;
+        }
+        if (!Boolean.TRUE.equals(course.enrollmentIsActive())) {
+            return EnrollmentAuthorization.ENROLLMENT_PERIOD;
         }
         Set<Organization> courseOrganizations = course.getOrganizations();
         if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
@@ -238,7 +242,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the user is allowed to self enroll in the given course.
-     * See also: {@link #checkUserAllowedToSelfEnrollInCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToEnrollInCourseElseThrow(User, Course)}
      *
      * @param user   The user that wants to self enroll
      * @param course The course to which the user wants to self enroll
@@ -256,14 +260,62 @@ public class AuthorizationCheckService {
      * @param user   The user that wants to self enroll
      * @param course The course to which the user wants to self enroll
      */
-    public void checkUserAllowedToSelfEnrollInCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+    public void checkUserAllowedToEnrollInCourseElseThrow(User user, Course course) throws AccessForbiddenException {
         EnrollmentAuthorization auth = getUserEnrollmentAuthorizationForCourse(user, course);
         switch (auth) {
             case USERNAME_PATTERN -> throw new AccessForbiddenException("Enrollment with this username is not allowed.");
-            case COURSE_STATUS -> throw new AccessForbiddenException("The course is not currently active.");
             case ENROLLMENT_STATUS -> throw new AccessForbiddenException("The course does not allow enrollment.");
+            case ENROLLMENT_PERIOD -> throw new AccessForbiddenException("The course does currently not allow enrollment.");
             case ORGANIZATIONS -> throw new AccessForbiddenException("User is not member of any organization of this course.");
             case ONLINE -> throw new AccessForbiddenException("Online courses cannot be enrolled in.");
+        }
+    }
+
+    /**
+     * An enum that represents the different reasons why a user is not allowed to unenroll from a course,
+     * or ALLOWED if the user is allowed to unenroll from the course.
+     */
+    private enum UnenrollmentAuthorization {
+        ALLOWED, UNENROLLMENT_STATUS, UNENROLLMENT_PERIOD, ONLINE
+    }
+
+    /**
+     * Checks if the user is allowed to unenroll from the given course.
+     * Returns `UnenrollmentAuthorization.ALLOWED` if the user is allowed to unenroll from the course,
+     * or the reason why the user is not allowed to unenroll from the course otherwise.
+     * See also: {@link #checkUserAllowedToUnenrollFromCourseElseThrow(User, Course)}
+     *
+     * @param user   The user that wants to unenroll
+     * @param course The course from which the user wants to unenroll
+     * @return `UnenrollmentAuthorization.ALLOWED` if the user is allowed to self unenroll from the course,
+     *         or the reason why the user is not allowed to self unenroll from the course otherwise
+     */
+    public UnenrollmentAuthorization getUserUnenrollmentAuthorizationForCourse(User user, Course course) {
+        if (!course.isUnenrollmentEnabled()) {
+            return UnenrollmentAuthorization.UNENROLLMENT_STATUS;
+        }
+        if (!course.unenrollmentIsActive()) {
+            return UnenrollmentAuthorization.UNENROLLMENT_PERIOD;
+        }
+        if (course.isOnlineCourse()) {
+            return UnenrollmentAuthorization.ONLINE;
+        }
+        return UnenrollmentAuthorization.ALLOWED;
+    }
+
+    /**
+     * Checks if the user is allowed to unenroll from the given course.
+     * Throws an AccessForbiddenException if the user is not allowed to unenroll from the course.
+     * See also: {@link #getUserUnenrollmentAuthorizationForCourse(User, Course)}
+     *
+     * @param user   The user that wants to unenroll
+     * @param course The course from which the user wants to unenroll
+     */
+    public void checkUserAllowedToUnenrollFromCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+        UnenrollmentAuthorization auth = getUserUnenrollmentAuthorizationForCourse(user, course);
+        switch (auth) {
+            case UNENROLLMENT_STATUS, UNENROLLMENT_PERIOD -> throw new AccessForbiddenException("The course does currently not allow unenrollment.");
+            case ONLINE -> throw new AccessForbiddenException("Online courses cannot be unenrolled from.");
         }
     }
 
@@ -444,7 +496,7 @@ public class AuthorizationCheckService {
             return false;
         }
         else {
-            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().get());
+            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().orElseThrow());
         }
     }
 
@@ -517,6 +569,25 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * checks if the passed user is allowed to see the given lecture
+     *
+     * @param lecture the lecture that needs to be checked
+     * @param user    the user whose permissions should be checked
+     */
+    public void checkIsAllowedToSeeLectureElseThrow(@NotNull Lecture lecture, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        if (isAdmin(user)) {
+            return;
+        }
+        Course course = lecture.getCourse();
+        if (isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lecture.isVisibleToStudents())) {
+            return;
+        }
+
+        throw new AccessForbiddenException();
+    }
+
+    /**
      * Determines if a user is allowed to see a lecture unit
      *
      * @param lectureUnit the lectureUnit for which to check permission
@@ -580,25 +651,36 @@ public class AuthorizationCheckService {
      */
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
-                && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) && result.getAssessor() != null
-                && result.getCompletionDate() != null;
+                && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
 
     /**
      * Checks if the user is allowed to see the exam result. Returns true if
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
-     * - OR if the exam has not ended
+     * - OR if the exam is a test exam
+     * - OR if the exam has not ended (including individual working time extensions)
      * - OR if the exam has already ended and the results were published
      *
-     * @param exercise - Exercise that the result is requested for
-     * @param user     - User that requests the result
+     * @param exercise             - Exercise that the result is requested for
+     * @param studentParticipation - used to retrieve the individual exam working time
+     * @param user                 - User that requests the result
      * @return true if user is allowed to see the result, false otherwise
      */
-    public boolean isAllowedToGetExamResult(Exercise exercise, User user) {
-        return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
-                || (exercise.isCourseExercise() || (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
-                        || exercise.getExerciseGroup().getExam().resultsPublished());
+    public boolean isAllowedToGetExamResult(Exercise exercise, StudentParticipation studentParticipation, User user) {
+        if (this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || exercise.isCourseExercise()) {
+            return true;
+        }
+        Exam exam = exercise.getExamViaExerciseGroupOrCourseMember();
+        if (!examDateService.isExerciseWorkingPeriodOver(exercise, studentParticipation)) {
+            // students can always see their results during the exam.
+            return true;
+        }
+        if (exam.isTestExam()) {
+            // results for test exams are always visible
+            return true;
+        }
+        return exam.resultsPublished();
     }
 
     /**

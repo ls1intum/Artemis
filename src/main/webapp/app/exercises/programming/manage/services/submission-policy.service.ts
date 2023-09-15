@@ -83,11 +83,14 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
         return this.http.patch<SubmissionPolicy>(this.requestUrl(exerciseId), submissionPolicy);
     }
 
+    getParticipationSubmissionCount(participationId: number): Observable<number> {
+        return this.http.get<number>(`api/participations/${participationId}/submission-count`);
+    }
+
     /**
      * Returns the appropriate request URL for a given exerciseId.
      *
      * @param exerciseId that is to be included in the request URL
-     * @private
      */
     private requestUrl(exerciseId: number): string {
         return this.baseResourceUrl.replace('{exerciseId}', exerciseId + '');

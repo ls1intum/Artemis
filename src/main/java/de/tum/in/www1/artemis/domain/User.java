@@ -28,9 +28,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 
 /**
@@ -78,6 +81,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @NotNull
     @Column(nullable = false)
     private boolean activated = false;
+
+    @NotNull
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false; // default value
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -161,10 +168,18 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<CompetencyProgress> competencyProgresses = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private Set<LearningPath> learningPaths = new HashSet<>();
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnore
     private Set<ExamUser> examUsers = new HashSet<>();
+
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -347,6 +362,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.competencyProgresses = competencyProgresses;
     }
 
+    public Set<LearningPath> getLearningPaths() {
+        return learningPaths;
+    }
+
+    public void setLearningPaths(Set<LearningPath> learningPaths) {
+        this.learningPaths = learningPaths;
+    }
+
     public Set<ExamUser> getExamUsers() {
         return examUsers;
     }
@@ -406,6 +429,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         isInternal = internal;
     }
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
     @Nullable
     public String getVcsAccessToken() {
         return vcsAccessToken;
@@ -421,5 +452,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setTutorialGroupRegistrations(Set<TutorialGroupRegistration> tutorialGroupRegistrations) {
         this.tutorialGroupRegistrations = tutorialGroupRegistrations;
+    }
+
+    public Set<PushNotificationDeviceConfiguration> getPushNotificationDeviceConfigurations() {
+        return pushNotificationDeviceConfigurations;
+    }
+
+    public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
+        this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
     }
 }

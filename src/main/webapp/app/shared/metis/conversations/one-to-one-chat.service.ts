@@ -9,7 +9,10 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 export class OneToOneChatService {
     public resourceUrl = '/api/courses/';
 
-    constructor(private http: HttpClient, private conversationService: ConversationService) {}
+    constructor(
+        private http: HttpClient,
+        private conversationService: ConversationService,
+    ) {}
 
     create(courseId: number, loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> {
         return this.http

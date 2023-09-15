@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 @Service
 public class FeatureToggleService {
@@ -17,23 +16,26 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
-
     private final Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, ExamMonitoringScheduleService examMonitoringScheduleService,
-            HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
 
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features are enabled once the system starts up
+        // This ensures that all features (except learning paths) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature)) {
-                features.put(feature, true);
+                if (feature == Feature.LearningPaths) {
+                    // disable learning paths per default
+                    // TODO: remove this once learning paths are deliverable
+                    features.put(feature, false);
+                }
+                else {
+                    features.put(feature, true);
+                }
             }
         }
     }
@@ -54,10 +56,6 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
-        if (feature == Feature.ExamLiveStatistics) {
-            // We want to clear all the data, but keep the settings.
-            examMonitoringScheduleService.clearAllExamMonitoringData();
-        }
         features.put(feature, false);
         sendUpdate();
     }
@@ -69,11 +67,6 @@ public class FeatureToggleService {
      * @param features A map of features (feature -> shouldBeActivated)
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
-        var examLiveStatistics = features.get(Feature.ExamLiveStatistics);
-        if (Boolean.FALSE.equals(examLiveStatistics)) {
-            // We want to clear all the data, but keep the settings.
-            examMonitoringScheduleService.clearAllExamMonitoringData();
-        }
         this.features.putAll(features);
         sendUpdate();
     }

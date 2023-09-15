@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -17,19 +18,13 @@ import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 
-// Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
-jest.mock('app/entities/exercise.model', () => ({
-    getCourseFromExercise: () => {
-        const course = new Course();
-        course.maxComplaintResponseTextLimit = 26;
-        return course;
-    },
-}));
-
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
     let complaintForTutorComponentFixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
+
+    let course: Course;
+    let exercise: Exercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -42,6 +37,12 @@ describe('ComplaintsForTutorComponent', () => {
                 complaintForTutorComponentFixture = TestBed.createComponent(ComplaintsForTutorComponent);
                 complaintsForTutorComponent = complaintForTutorComponentFixture.componentInstance;
                 injectedComplaintResponseService = complaintForTutorComponentFixture.debugElement.injector.get(ComplaintResponseService);
+
+                course = new Course();
+                course.maxComplaintResponseTextLimit = 26;
+
+                exercise = { id: 11, isAtLeastInstructor: true, course: course } as Exercise;
+                complaintsForTutorComponent.exercise = exercise;
             });
     });
 
@@ -237,7 +238,6 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.id = 1;
         unhandledComplaint.accepted = undefined;
         unhandledComplaint.complaintText = 'please check again';
-        unhandledComplaint.complaintResponse = undefined;
         unhandledComplaint.complaintResponse = new ComplaintResponse();
         unhandledComplaint.complaintResponse.id = 1;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
@@ -266,6 +266,7 @@ describe('ComplaintsForTutorComponent', () => {
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
         expect(responseTextArea.value).toHaveLength(26);
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(26);
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -288,7 +289,6 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.id = 1;
         unhandledComplaint.accepted = undefined;
         unhandledComplaint.complaintText = 'please check again';
-        unhandledComplaint.complaintResponse = undefined;
         unhandledComplaint.complaintResponse = new ComplaintResponse();
         unhandledComplaint.complaintResponse.id = 1;
         unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
@@ -318,6 +318,16 @@ describe('ComplaintsForTutorComponent', () => {
         expect(responseTextArea.maxLength).toBe(26);
     }));
 
+    it('should calculate the correct maximum text length for exam exercises', () => {
+        exercise.course = undefined;
+        exercise.exerciseGroup = { exam: { course: course } } as ExerciseGroup;
+
+        complaintForTutorComponentFixture.detectChanges();
+
+        // use the default value if the course would define a lower maximum for exam exercises
+        expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(2000);
+    });
+
     it.each(['success', 'failure'])(
         'should handle %s after updating assessment after complaint',
         fakeAsync((successOrFailure: string) => {
@@ -338,7 +348,6 @@ describe('ComplaintsForTutorComponent', () => {
 
             complaintsForTutorComponent.complaint = unhandledComplaint;
             complaintsForTutorComponent.complaintResponse = newComplaintResponse;
-            complaintsForTutorComponent.exercise = { id: 11, isAtLeastInstructor: true } as Exercise;
 
             complaintsForTutorComponent.isLoading = false;
             complaintsForTutorComponent.handled = false;

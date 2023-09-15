@@ -21,11 +21,10 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Result } from 'app/entities/result.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -34,18 +33,21 @@ describe('Course Management Service', () => {
     let httpMock: HttpTestingController;
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
+
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
     let isAtLeastInstructorInCourseSpy: jest.SpyInstance;
     let convertExercisesDateFromServerSpy: jest.SpyInstance;
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
+
     const resourceUrl = 'api/courses';
+
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
     let scoresPerExerciseType: ScoresPerExerciseType;
-    let participationResult: Result;
+    let participationResult: ParticipationResultDTO;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -86,17 +88,15 @@ describe('Course Management Service', () => {
 
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
-        courseScores = new CourseScores(0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
         courseForDashboard.programmingScores = courseScores;
         courseForDashboard.modelingScores = courseScores;
         courseForDashboard.quizScores = courseScores;
         courseForDashboard.textScores = courseScores;
         courseForDashboard.fileUploadScores = courseScores;
-        participationResult = new Result();
-        const participation = new StudentParticipation();
-        participation.id = 432;
-        participationResult.participation = participation;
+        participationResult = new ParticipationResultDTO();
+        participationResult.participationId = 432;
         courseForDashboard.participationResults = [participationResult];
 
         scoresPerExerciseType = new Map<ExerciseType, CourseScores>();
@@ -113,6 +113,11 @@ describe('Course Management Service', () => {
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        jest.restoreAllMocks();
     });
 
     const expectDateConversionToBeCalled = (courseForConversion: Course) => {
@@ -306,14 +311,26 @@ describe('Course Management Service', () => {
     }));
 
     it('should register for the course', fakeAsync(() => {
-        const user = new User(1, 'name');
+        const groups = ['student-group-name'];
         courseManagementService
             .registerForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(user));
+            .subscribe((res) => expect(res.body).toEqual(groups));
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
-        req.flush(user);
-        expect(syncGroupsSpy).toHaveBeenCalledWith(user);
+        req.flush(groups);
+        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
+        tick();
+    }));
+
+    it('should unenroll from the course', fakeAsync(() => {
+        const groups = ['student-group-name'];
+        courseManagementService
+            .unenrollFromCourse(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(groups));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
+        req.flush(groups);
+        expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
         tick();
     }));
 
@@ -489,9 +506,4 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
-
-    afterEach(() => {
-        httpMock.verify();
-        jest.restoreAllMocks();
-    });
 });

@@ -67,7 +67,7 @@ export class AccountService implements IAccountService {
     }
 
     private fetch(): Observable<HttpResponse<User>> {
-        return this.http.get<User>('api/account', { observe: 'response' });
+        return this.http.get<User>('api/public/account', { observe: 'response' });
     }
 
     save(user: User): Observable<HttpResponse<any>> {
@@ -78,8 +78,8 @@ export class AccountService implements IAccountService {
         this.userIdentity = identity;
     }
 
-    syncGroups(identity: User) {
-        this.userIdentity!.groups = identity.groups;
+    syncGroups(groups: string[]) {
+        this.userIdentity!.groups = groups;
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -291,7 +291,7 @@ export class AccountService implements IAccountService {
      * @param languageKey The new languageKey
      */
     updateLanguage(languageKey: string): Observable<void> {
-        return this.http.post<void>('api/account/change-language', languageKey);
+        return this.http.post<void>('api/public/account/change-language', languageKey);
     }
 
     /**

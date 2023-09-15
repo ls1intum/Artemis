@@ -6,13 +6,13 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 
 @Controller
@@ -20,12 +20,12 @@ public class TeamWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(TeamWebsocketService.class);
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final String assignmentTopic = "/topic/team-assignments";
 
-    public TeamWebsocketService(SimpMessageSendingOperations messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
+    public TeamWebsocketService(WebsocketMessagingService websocketMessagingService) {
+        this.websocketMessagingService = websocketMessagingService;
     }
 
     /**
@@ -47,7 +47,7 @@ public class TeamWebsocketService {
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, null, List.of());
             Set<User> unassignedUsers = new HashSet<>(existingTeam.getStudents());
             unassignedUsers.removeAll(Optional.ofNullable(updatedTeam).map(Team::getStudents).orElse(Set.of()));
-            unassignedUsers.forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), assignmentTopic, payload));
+            unassignedUsers.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), assignmentTopic, payload));
         }
 
         // Users in the updated team that were not yet part of the existing team were newly assigned => inform them
@@ -55,7 +55,7 @@ public class TeamWebsocketService {
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, updatedTeam, participationsOfUpdatedTeam);
             Set<User> assignedUsers = new HashSet<>(updatedTeam.getStudents());
             assignedUsers.removeAll(Optional.ofNullable(existingTeam).map(Team::getStudents).orElse(Set.of()));
-            assignedUsers.forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), assignmentTopic, payload));
+            assignedUsers.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), assignmentTopic, payload));
         }
     }
 

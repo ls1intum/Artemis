@@ -16,8 +16,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -32,6 +34,15 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private Attachment attachment;
 
     private Lecture lecture;
@@ -40,13 +51,13 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 0, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
-        attachment = ModelFactory.generateAttachment(null);
+        attachment = LectureFactory.generateAttachment(null);
         attachment.setLink("files/temp/example.txt");
 
-        var course = database.addCourseWithOneReleasedTextExercise();
-        textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         lecture = new Lecture();
         lecture.setTitle("test");
         lecture.setDescription("test");

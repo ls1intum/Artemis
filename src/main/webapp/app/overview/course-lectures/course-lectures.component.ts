@@ -8,7 +8,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { faAngleDown, faAngleUp, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 export enum LectureSortingOrder {

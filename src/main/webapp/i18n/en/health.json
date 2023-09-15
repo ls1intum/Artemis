@@ -27,7 +27,7 @@
             "userManagement": "User Management",
             "hazelcast": "Hazelcast",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
-            "athene": "Athene",
+            "athena": "Athena",
             "apollon": "Apollon Conversion Server"
         },
         "table": {

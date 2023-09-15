@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the Result entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
@@ -46,9 +45,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "participation" })
-    List<Result> findWithEagerSubmissionAndFeedbackAndParticipationByParticipationExerciseId(Long exerciseId);
 
     /**
      * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
@@ -82,9 +78,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = "assessor")
-    Optional<Result> findDistinctWithAssessorBySubmissionId(Long submissionId);
-
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
@@ -94,14 +87,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
-
-    @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.submission
-            LEFT JOIN FETCH r.feedbacks
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT r FROM Result r
@@ -225,7 +210,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
-    List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
+    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
 
     @Query("""
             SELECT COUNT(DISTINCT p) FROM Participation p JOIN p.results r
@@ -249,8 +234,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.submission.submissionDate > p.exercise.dueDate
             """)
     long countNumberOfAssessmentsByTypeForExerciseAfterDueDate(@Param("exerciseId") Long exerciseId, @Param("types") List<AssessmentType> types);
-
-    long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 
     @Query("""
             SELECT r
@@ -527,7 +510,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return the ResponseEntity with result as body
      */
     default Result submitManualAssessment(long resultId) {
-        Result result = findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        Result result = findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
         result.setCompletionDate(ZonedDateTime.now());
         save(result);
         return result;
@@ -550,7 +533,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             result.setRated(true);
         }
         else {
-            result.setRatedIfNotExceeded(dueDate.orElse(null), result.getSubmission().getSubmissionDate());
+            result.setRatedIfNotAfterDueDate();
         }
 
         result.setCompletionDate(ZonedDateTime.now());
@@ -665,6 +648,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
         return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
+    }
+
+    default Result findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(long resultId) {
+        return findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**

@@ -1,77 +1,64 @@
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
-import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest } from '../../../support/artemis';
+import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
+import { courseManagementAPIRequest, exerciseAPIRequest, exerciseResult } from '../../../support/artemis';
 import { admin, studentOne, tutor } from '../../../support/users';
-
-// Common primitives
-let course: Course;
-let quizExercise: QuizExercise;
-
-const resultSelector = '#submission-result-graded';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Quiz Exercise Assessment', () => {
-    before('Set up course', () => {
+    let course: Course;
+    let quizExercise: QuizExercise;
+
+    before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
+        courseManagementAPIRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
         });
-    });
-
-    afterEach('Delete Quiz', () => {
-        deleteQuiz();
-    });
-
-    after('Delete Course', () => {
-        cy.login(admin);
-        courseManagementRequest.deleteCourse(course.id!);
     });
 
     describe('MC Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
-            createQuiz();
+            cy.login(admin);
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
+                quizExercise = quizResponse.body;
+                exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+                exerciseAPIRequest.startQuizNow(quizExercise.id!);
+            });
         });
 
         it('Assesses a mc quiz submission automatically', () => {
             cy.login(studentOne);
-            courseManagementRequest.startExerciseParticipation(quizExercise.id!);
-            courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
+            exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
+            exerciseAPIRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            cy.reloadUntilFound(resultSelector);
-            cy.contains('50%').should('be.visible');
+            exerciseResult.shouldShowScore(50);
         });
     });
 
     describe('SA Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
-            createQuiz(shortAnswerQuizTemplate);
+            cy.login(admin);
+            exerciseAPIRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
+                quizExercise = quizResponse.body;
+                exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+                exerciseAPIRequest.startQuizNow(quizExercise.id!);
+            });
         });
 
         it('Assesses a sa quiz submission automatically', () => {
             cy.login(studentOne);
-            courseManagementRequest.startExerciseParticipation(quizExercise.id!);
-            courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
+            exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
+            exerciseAPIRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            cy.reloadUntilFound(resultSelector);
-            cy.contains('66.7%').should('be.visible');
+            exerciseResult.shouldShowScore(66.7);
         });
     });
-});
 
-function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
-    cy.login(admin);
-    courseManagementRequest.createQuizExercise({ course }, [quizQuestions], undefined, undefined, 1).then((quizResponse) => {
-        quizExercise = quizResponse.body;
-        courseManagementRequest.setQuizVisible(quizExercise.id!);
-        courseManagementRequest.startQuizNow(quizExercise.id!);
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
-}
-
-function deleteQuiz() {
-    cy.login(admin);
-    courseManagementRequest.deleteQuizExercise(quizExercise.id!);
-}
+});

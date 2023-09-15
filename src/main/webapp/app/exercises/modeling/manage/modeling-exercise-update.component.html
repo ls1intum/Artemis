@@ -16,10 +16,12 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
         </div>
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-            <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="modelingExercise.title" />
-        </div>
+        <jhi-exercise-title-channel-name
+            [exercise]="modelingExercise"
+            [course]="modelingExercise.course"
+            [isExamMode]="isExamMode"
+            [isImport]="isImport"
+        ></jhi-exercise-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
@@ -225,18 +227,15 @@
             }}</span>
         </div>
         <div class="form-group" *ngIf="!isExamMode">
-            <jhi-learning-goal-selection
-                id="learning-goals"
-                [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
-                [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+            <jhi-competency-selection
+                id="competencies"
+                [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
                 [(ngModel)]="modelingExercise.competencies"
-                name="learningGoals"
-            ></jhi-learning-goal-selection>
+                name="competencies"
+            ></jhi-competency-selection>
         </div>
-        <div class="form-group" *ngIf="modelingExercise.id && !isImport">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-            <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
-        </div>
+        <jhi-exercise-update-notification [exercise]="modelingExercise" [isImport]="isImport" [(notificationText)]="notificationText"> </jhi-exercise-update-notification>
     </div>
     <div>
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">

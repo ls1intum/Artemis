@@ -1,0 +1,45 @@
+<div>
+    <h1>
+        {{ this.titleKey | artemisTranslate }}
+    </h1>
+
+    <p>
+        {{ this.description | artemisTranslate }}
+    </p>
+
+    <div class="column d-flex justify-content-center align-content-center">
+        <button
+            *ngIf="!downloadMode"
+            jhiDataExportRequestButton
+            [adminDialog]="isAdmin"
+            [expectedLogin]="currentLogin!"
+            [dialogError]="dialogError$"
+            (dataExportRequest)="requestExport()"
+            (dataExportRequestForAnotherUser)="requestExportForAnotherUser($event)"
+            class="mb-1"
+            [disabled]="!canRequestDataExport && !isAdmin"
+        ></button>
+        <jhi-button
+            *ngIf="canDownload"
+            id="download-data-export-btn"
+            [btnSize]="ButtonSize.LARGE"
+            [disabled]="!canDownload"
+            [tooltip]="'artemisApp.dataExport.download'"
+            [title]="'artemisApp.dataExport.download'"
+            (onClick)="downloadDataExport()"
+        ></jhi-button>
+    </div>
+    <div class="mt-3 d-flex-column align-content-center">
+        <p *ngIf="dataExport?.createdDate && state !== DataExportState.FAILED">
+            <span> {{ 'artemisApp.dataExport.lastRequestDate' | artemisTranslate }}</span>
+            <span class="bold">{{ dataExport?.createdDate | artemisDate: 'long-date' }}</span>
+        </p>
+        <p *ngIf="dataExport?.nextRequestDate && (state === DataExportState.DELETED || state === DataExportState.DOWNLOADED_DELETED) && !canRequestDataExport">
+            <span> {{ 'artemisApp.dataExport.nextRequestDate' | artemisTranslate }}</span>
+            <span class="bold">{{ dataExport?.nextRequestDate | artemisDate: 'long-date' }}</span>
+        </p>
+        <p *ngIf="state == DataExportState.REQUESTED || state === DataExportState.IN_CREATION">
+            <span> {{ 'artemisApp.dataExport.isBeingCreated' | artemisTranslate }}</span>
+        </p>
+    </div>
+</div>

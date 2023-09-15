@@ -12,7 +12,10 @@ export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
-    constructor(private http: HttpClient, private submissionService: SubmissionService) {}
+    constructor(
+        private http: HttpClient,
+        private submissionService: SubmissionService,
+    ) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(textSubmission);
@@ -59,7 +62,7 @@ export class TextSubmissionService {
      * @param option 'head': Do not optimize assessment order. Only used to check if assessments available.
      * @param correctionRound: The correction round for which we want to get a new assessment
      */
-    getSubmissionWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission> {
+    getSubmissionWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission | undefined> {
         const url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
@@ -69,16 +72,16 @@ export class TextSubmissionService {
             params = params.set(option, 'true');
         }
 
-        return this.http.get<TextSubmission>(url, { observe: 'response', params }).pipe(
+        return this.http.get<TextSubmission | undefined>(url, { observe: 'response', params }).pipe(
             map((response) => {
-                const submission = response.body!;
+                const submission = response.body;
+                if (!submission) {
+                    return undefined;
+                }
                 setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
 
-                if (submission) {
-                    submission.participation!.submissions = [submission];
-                    submission.participation!.results = [submission.latestResult!];
-                    submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
-                }
+                submission.participation!.submissions = [submission];
+                submission.participation!.results = [submission.latestResult!];
 
                 return submission;
             }),

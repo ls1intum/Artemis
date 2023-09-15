@@ -16,6 +16,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { Course } from 'app/entities/course.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { Submission } from 'app/entities/submission.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -102,13 +104,52 @@ describe('ProgrammingExercise Service', () => {
             };
             const expected = Object.assign({}, returnedFromService);
             service
-                .findWithTemplateAndSolutionParticipation(expected.id, true)
+                .findWithTemplateAndSolutionParticipationAndLatestResults(expected.id)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
             tick();
         }));
+
+        it('should not find a latest result if none exists', () => {
+            const participation = new TemplateProgrammingExerciseParticipation();
+            expect(service.getLatestResult(participation)).toBeUndefined();
+
+            participation.submissions = [];
+            expect(service.getLatestResult(participation)).toBeUndefined();
+
+            const submission = new ProgrammingSubmission();
+            participation.submissions = [submission];
+            expect(service.getLatestResult(participation)).toBeUndefined();
+
+            submission.results = [];
+            expect(service.getLatestResult(participation)).toBeUndefined();
+        });
+
+        it('should find the latest result if multiple exist', () => {
+            const participation = new SolutionProgrammingExerciseParticipation();
+
+            const submission1 = {
+                submissionDate: dayjs().subtract(1, 'minute'),
+                results: [new Result(), new Result()],
+            } as Submission;
+
+            const result1 = new Result();
+            result1.id = 1;
+            const result2 = new Result();
+            result2.id = 2;
+
+            const submission2 = {
+                submissionDate: dayjs(),
+                results: [result1, result2],
+            } as Submission;
+
+            // service should find latest submission according to submission date, not order in list
+            participation.submissions = [submission2, submission1];
+
+            expect(service.getLatestResult(participation)).toEqual(result2);
+        });
 
         it('should update a ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = {
@@ -213,6 +254,7 @@ describe('ProgrammingExercise Service', () => {
         req.flush(expected);
         tick();
     }));
+
     it('should make post request for import from file', fakeAsync(() => {
         const course = new Course();
         course.id = 1;

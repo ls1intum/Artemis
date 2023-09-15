@@ -24,7 +24,6 @@ public class ChannelNameDuplicateException extends BadRequestAlertException {
         Map<String, String> params = new HashMap<>();
         params.put("channelName", channelName);
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("skipAlert", true);
         parameters.put("message", "artemisApp.errors." + ERROR_KEY);
         parameters.put("params", params);
         return parameters;

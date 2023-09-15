@@ -14,9 +14,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.service.RatingService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -28,6 +32,18 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private RatingRepository ratingRepo;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Result result;
 
     private Rating rating;
@@ -36,22 +52,22 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise exercise = database.getFirstExerciseWithType(course, TextExercise.class);
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        database.createAndSaveParticipationForExercise(exercise, student1.getLogin());
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        TextExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
-        TextSubmission submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        submission = database.saveTextSubmission(exercise, submission, student1.getLogin());
-        submission = (TextSubmission) database.addResultToSubmission(submission, null, null, 0D, true);
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmission(exercise, submission, student1.getLogin());
+        submission = (TextSubmission) participationUtilService.addResultToSubmission(submission, null, null, 0D, true);
         result = submission.getLatestResult();
         rating = new Rating();
         rating.setResult(submission.getLatestResult());
         rating.setRating(2);
 
         // add instructor of other course
-        database.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @AfterEach
@@ -63,7 +79,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateRating_asUser() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
-        Rating savedRating = ratingService.findRatingByResultId(result.getId()).get();
+        Rating savedRating = ratingService.findRatingByResultId(result.getId()).orElseThrow();
         assertThat(savedRating.getRating()).isEqualTo(2);
         assertThat(savedRating.getResult().getId()).isEqualTo(result.getId());
     }
@@ -109,7 +125,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testUpdateRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.OK);
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isEqualTo(5);
     }
 
@@ -118,7 +134,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testUpdateInvalidRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 7, null, HttpStatus.BAD_REQUEST);
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isNotEqualTo(7);
         assertThat(updatedRating.getRating()).isEqualTo(2);
     }
@@ -130,7 +146,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
 
         // check that rating is not updated
-        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).get();
+        Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();
         assertThat(updatedRating.getRating()).isNotEqualTo(5);
     }
 

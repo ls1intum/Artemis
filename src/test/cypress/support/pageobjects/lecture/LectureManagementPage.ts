@@ -1,36 +1,37 @@
+import dayjs from 'dayjs/esm';
+
+import { Lecture } from 'app/entities/lecture.model';
+
 import { BASE_API, DELETE, POST } from '../../constants';
-import day from 'dayjs/esm';
 
 export class LectureManagementPage {
     clickCreateLecture() {
         cy.get('#jh-create-entity').click();
     }
 
-    deleteLecture(lectureTitle: string, lectureIndex: number) {
-        this.getLectureRow(lectureIndex).find('#delete-lecture').click();
+    deleteLecture(lecture: Lecture) {
+        this.getLecture(lecture.id!).find('#delete-lecture').click();
         cy.get('#delete').should('be.disabled');
-        cy.get('#confirm-exercise-name').type(lectureTitle);
+        cy.get('#confirm-exercise-name').type(lecture.title!);
         cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
         cy.get('#delete').click();
         return cy.wait('@deleteLecture');
     }
 
-    getLectureRow(lectureIndex: number) {
-        const selector = '#lecture-row-' + lectureIndex;
-        cy.reloadUntilFound(selector);
-        return cy.get(selector);
+    getLectures() {
+        return cy.get('#lectures');
     }
 
-    getLectureSelector(lectureTitle: string) {
-        return this.getLectureContainer().contains(lectureTitle);
+    getLecture(lectureId: number) {
+        return cy.get(`#lecture-${lectureId}`);
     }
 
     getLectureContainer() {
         return cy.get('#lecture-preview');
     }
 
-    openUnitsPage(lectureIndex: number) {
-        this.getLectureRow(lectureIndex).find('#units').click();
+    openUnitsPage(lectureId: number) {
+        this.getLecture(lectureId).find('#units').click();
     }
 
     openCreateUnit(type: UnitType) {
@@ -41,7 +42,7 @@ export class LectureManagementPage {
         return cy.get('#unit-creation');
     }
 
-    addTextUnit(name: string, text: string, releaseDate = day()) {
+    addTextUnit(name: string, text: string, releaseDate = dayjs()) {
         this.openCreateUnit(UnitType.TEXT);
         cy.get('#name').type(name);
         cy.get('#pick-releaseDate').find('#date-input-field').type(releaseDate.toString());

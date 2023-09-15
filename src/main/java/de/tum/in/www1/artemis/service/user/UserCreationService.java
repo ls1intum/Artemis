@@ -126,7 +126,7 @@ public class UserCreationService {
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         newUser.setInternal(isInternal);
 
-        final var authority = authorityRepository.findById(STUDENT.getAuthority()).get();
+        final var authority = authorityRepository.findById(STUDENT.getAuthority()).orElseThrow();
         // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);

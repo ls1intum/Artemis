@@ -36,6 +36,9 @@ public class Lecture extends DomainObject {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
+    @Column(name = "visible_date")
+    private ZonedDateTime visibleDate;
+
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
@@ -54,6 +57,12 @@ public class Lecture extends DomainObject {
     @ManyToOne
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
+
+    /**
+     * Used for receiving the value from client.
+     */
+    @Transient
+    private String channelNameTransient;
 
     public String getTitle() {
         return title;
@@ -85,6 +94,14 @@ public class Lecture extends DomainObject {
 
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    public ZonedDateTime getVisibleDate() {
+        return visibleDate;
+    }
+
+    public void setVisibleDate(ZonedDateTime visibleDate) {
+        this.visibleDate = visibleDate;
     }
 
     public Set<Attachment> getAttachments() {
@@ -131,8 +148,8 @@ public class Lecture extends DomainObject {
 
     @Override
     public String toString() {
-        return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='"
-                + getEndDate() + "'" + "}";
+        return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", visibleDate='" + getVisibleDate() + "'"
+                + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + "}";
     }
 
     public enum LectureSearchColumn {
@@ -148,5 +165,25 @@ public class Lecture extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+    }
+
+    public String getChannelName() {
+        return channelNameTransient;
+    }
+
+    public void setChannelName(String channelNameTransient) {
+        this.channelNameTransient = channelNameTransient;
+    }
+
+    /**
+     * check if students are allowed to see this lecture
+     *
+     * @return true, if students are allowed to see this lecture, otherwise false
+     */
+    public boolean isVisibleToStudents() {
+        if (visibleDate == null) {  // no visible date means the lecture is visible to students
+            return true;
+        }
+        return visibleDate.isBefore(ZonedDateTime.now());
     }
 }

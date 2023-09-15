@@ -2,8 +2,11 @@ package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GroupChatDTO extends ConversationDTO {
 
     private String name;

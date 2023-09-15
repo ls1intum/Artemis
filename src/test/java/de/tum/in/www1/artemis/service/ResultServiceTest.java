@@ -22,10 +22,14 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -43,6 +47,18 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository participationRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -51,166 +67,166 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @BeforeEach
     void reset() {
-        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        Course course = database.addCourseWithOneProgrammingExercise();
-        this.programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        this.programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
-        this.programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
+        this.programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
 
-        ProgrammingExercise examProgrammingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        this.examStudentParticipation = database.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
+        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        this.examStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFeedbacksForResultAsTA() {
-        this.testGetFeedbacksForResultAsCurrentUser();
+    void testFilterFeedbacksForClientAsTA() {
+        this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetFeedbacksForResultAsEditor() {
-        this.testGetFeedbacksForResultAsCurrentUser();
+    void testFilterFeedbacksForClientAsEditor() {
+        this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFeedbacksForResultAsInstructor() {
-        this.testGetFeedbacksForResultAsCurrentUser();
+    void testFilterFeedbacksForClientAsInstructor() {
+        this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
-    private void testGetFeedbacksForResultAsCurrentUser() {
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
+    private void testFilterFeedbacksForClientAsCurrentUser() {
+        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksAreSortedWithManualFirst() {
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addVariousFeedbackTypeFeedbacksToResult(result);
+    void testFilterFeedbacksForClientAreSortedWithManualFirst() {
+        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
 
         // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
-        assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(result.getFeedbacks());
+        assertThat(resultService.filterFeedbackForClient(result)).isEqualTo(result.getFeedbacks());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInExamsBeforePublish() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsBeforePublish() {
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
         examRepository.save(exam);
-        Result result = database.addResultToParticipation(null, null, examStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInExamsAfterPublish() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsAfterPublish() {
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
         examRepository.save(exam);
-        Result result = database.addResultToParticipation(null, null, examStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, examStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseBeforeDueDate() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterDueDate() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
+        Result result = participationUtilService.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseBeforeAssessmentDueDateWithNonAutomaticResult() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
-        result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isInvisible() && feedback.getType() != null && feedback.getType().equals(FeedbackType.AUTOMATIC)).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithNonAutomaticResult() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
-        result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithAutomaticResult() {
+    void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
-        result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
+    void testFilterFeedbacksForClientAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        final var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusDays(2));
         participationRepository.save(participation2);
 
-        Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
-        result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        Result result = participationUtilService.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks;
         if (AssessmentType.AUTOMATIC == assessmentType) {
@@ -221,28 +237,28 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
             expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
             assertThat(expectedFeedbacks).hasSize(3);
         }
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbacksForResultAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
+    void testFilterFeedbacksForClientAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        final var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
         participationRepository.save(participation2);
 
-        Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
-        result = database.addVariousVisibilityFeedbackToResult(result);
-        result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
+        Result result = participationUtilService.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+        result = participationUtilService.addFeedbackToResult(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks;
         expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
         assertThat(expectedFeedbacks).hasSize(3);
-        assertThat(resultService.getFeedbacksForResult(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 }

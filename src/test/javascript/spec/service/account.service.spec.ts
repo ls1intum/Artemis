@@ -22,8 +22,8 @@ describe('AccountService', () => {
     let postStub: jest.SpyInstance;
     let translateService: TranslateService;
 
-    const getUserUrl = 'api/account';
-    const updateLanguageUrl = 'api/account/change-language';
+    const getUserUrl = 'api/public/account';
+    const updateLanguageUrl = 'api/public/account/change-language';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
     const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
@@ -108,7 +108,7 @@ describe('AccountService', () => {
     it('should sync user groups', () => {
         accountService.userIdentity = user;
 
-        accountService.syncGroups(user3);
+        accountService.syncGroups(user3.groups!);
 
         expect(accountService.userIdentity.groups).toEqual(['USER', 'TA']);
     });

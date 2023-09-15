@@ -11,14 +11,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -33,14 +36,23 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Exercise exercise;
 
     private Course course1;
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 5, 0, 1);
-        var courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
+        userUtilService.addUsers(TEST_PREFIX, 1, 5, 0, 1);
+        var courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         course1 = courses.get(0);
         exercise = course1.getExercises().iterator().next();
     }
@@ -51,12 +63,12 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
         var tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course(course1);
         assertThat(tutorParticipations).hasSize(5);
 
-        User tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         TutorParticipation tutorParticipation = tutorParticipations.get(0);
         tutorParticipation.tutor(tutor).assessedExercise(exercise);
         tutorParticipationRepository.save(tutorParticipation);
 
-        ExampleSubmission exampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("", exercise, true));
+        ExampleSubmission exampleSubmission = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("", exercise, true));
         exampleSubmission.addTutorParticipations(tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, tutor));
         exampleSubmissionRepository.save(exampleSubmission);
 

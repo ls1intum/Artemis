@@ -1,0 +1,28 @@
+.course-competency-card {
+    width: 100%;
+    min-width: 350px;
+    max-width: 440px;
+    height: 100%;
+    min-height: 200px;
+    border-radius: 10px;
+}
+
+.course-competency-card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.course-competency-card-footer {
+    border-radius: 0 0 10px 10px !important;
+}
+
+.course-competency-card:hover {
+    box-shadow: rgba(100, 100, 111, 0.2) 0 7px 29px 0;
+}
+
+.grow {
+    transition: all 0.2s ease-in-out;
+}
+
+.grow:hover {
+    transform: scale(1.05);
+}

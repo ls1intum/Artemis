@@ -4,7 +4,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Component } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-check/exam-checklist-check.component';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -75,7 +75,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
-                ExamChecklistCheckComponent,
+                ChecklistCheckComponent,
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
                 MockComponent(FaIconComponent),

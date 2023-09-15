@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the ApollonDiagram entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, Long> {
 

@@ -23,7 +23,11 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     latestDueDate?: dayjs.Dayjs;
 
-    constructor(public route: ActivatedRoute, private exerciseService: ExerciseService, @Optional() private exerciseCacheService: ExerciseCacheService) {}
+    constructor(
+        public route: ActivatedRoute,
+        private exerciseService: ExerciseService,
+        @Optional() private exerciseCacheService: ExerciseCacheService,
+    ) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -45,7 +49,7 @@ export class StandaloneFeedbackComponent implements OnInit {
 
                 this.result = relevantResult;
 
-                // We set isBuilding here to false. It is the native applications responsibility to make the user aware if a participation is being built
+                // We set isBuilding here to false. It is the mobile applications responsibility to make the user aware if a participation is being built
                 const templateStatus = evaluateTemplateStatus(exerciseResponse.body!, participation, relevantResult, false);
                 if (templateStatus == ResultTemplateStatus.MISSING) {
                     this.messageKey = 'artemisApp.result.notLatestSubmission';

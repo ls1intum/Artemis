@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -21,9 +24,15 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService) {
+    private final ChannelRepository channelRepository;
+
+    private final ChannelService channelService;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
+        this.channelRepository = channelRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -53,9 +62,8 @@ public class LectureService {
      * Lecture with only active attachment units
      *
      * @param lectureWithAttachmentUnits lecture that has attachment units
-     * @return lecture with filtered attachments
      */
-    public Lecture filterActiveAttachmentUnits(Lecture lectureWithAttachmentUnits) {
+    public void filterActiveAttachmentUnits(Lecture lectureWithAttachmentUnits) {
 
         List<LectureUnit> filteredAttachmentUnits = new ArrayList<>();
         for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
@@ -65,20 +73,26 @@ public class LectureService {
             }
         }
         lectureWithAttachmentUnits.setLectureUnits(filteredAttachmentUnits);
-        return lectureWithAttachmentUnits;
     }
 
     /**
-     * Filter active attachments for a set of lectures.
+     * Filter active attachments for a set of lectures. All lectures must be from the same course.
      *
+     * @param course                  course all the lectures are from
      * @param lecturesWithAttachments lectures that have attachments
      * @param user                    the user for which this call should filter
      * @return lectures with filtered attachments
      */
-    public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
+    public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return lecturesWithAttachments;
+        }
+
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
+            if (lecture.isVisibleToStudents()) {
+                lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
+            }
         }
         return lecturesWithFilteredAttachments;
     }
@@ -109,6 +123,8 @@ public class LectureService {
      * @param lecture the lecture to be deleted
      */
     public void delete(Lecture lecture) {
+        Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
+        channelService.deleteChannel(lectureChannel);
         lectureRepository.deleteById(lecture.getId());
     }
 

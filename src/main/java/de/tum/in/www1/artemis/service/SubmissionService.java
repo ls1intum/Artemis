@@ -57,10 +57,12 @@ public class SubmissionService {
 
     protected final ComplaintRepository complaintRepository;
 
+    protected final FeedbackService feedbackService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -73,6 +75,7 @@ public class SubmissionService {
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -131,7 +134,7 @@ public class SubmissionService {
      * Get simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
      *
      * @param courseId the id of the course
-     * @return number of locked submissions for the current user in the given course
+     * @return the locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
         return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
@@ -165,7 +168,7 @@ public class SubmissionService {
         return submissions;
     }
 
-    private List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
+    protected List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
@@ -227,7 +230,16 @@ public class SubmissionService {
      */
     public Optional<Submission> getRandomAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
+        return getRandomAssessableSubmission(assessableSubmissions);
+    }
 
+    /**
+     * Given a list of submissions, find a random one.
+     *
+     * @param assessableSubmissions the list of submissions to choose from
+     * @return a random submission or an empty Optional if no submission was passed
+     */
+    public Optional<Submission> getRandomAssessableSubmission(List<Submission> assessableSubmissions) {
         return assessableSubmissions.isEmpty() ? Optional.empty() : Optional.of(assessableSubmissions.get(ThreadLocalRandom.current().nextInt(assessableSubmissions.size())));
     }
 
@@ -320,7 +332,7 @@ public class SubmissionService {
      */
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
         feedbacks.forEach(feedback -> {
-            Feedback newFeedback = feedback.copyFeedback();
+            Feedback newFeedback = feedbackService.copyFeedback(feedback);
             result.addFeedback(newFeedback);
         });
         resultRepository.save(result);

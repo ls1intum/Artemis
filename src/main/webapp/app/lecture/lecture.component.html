@@ -16,7 +16,7 @@
                         id="filter-dropdown-button"
                     >
                         <fa-icon [icon]="faFilter"></fa-icon>
-                        <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate : { num: activeFilters.size } }}</span>
+                        <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
                     </button>
                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                         <li>
@@ -86,18 +86,36 @@
     <div class="table-responsive" *ngIf="filteredLectures">
         <table class="table table-striped">
             <thead>
-                <tr>
-                    <th><span jhiTranslate="global.field.id">ID</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.title">Title</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.description">Description</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.course">Course</span></th>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                    <th class="d-md-table-cell" jhiSortBy="id">
+                        <span jhiTranslate="global.field.id">ID</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="title">
+                        <span jhiTranslate="artemisApp.lecture.title">Title</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="description">
+                        <span jhiTranslate="artemisApp.lecture.description">Description</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="visibleDate">
+                        <span jhiTranslate="artemisApp.lecture.visibleDate">Visible from</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="startDate">
+                        <span jhiTranslate="artemisApp.lecture.startDate">Start Date</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="endDate">
+                        <span jhiTranslate="artemisApp.lecture.endDate">End Date</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody class="markdown-preview" id="lecture-preview">
-                <tr *ngFor="let lecture of filteredLectures; trackBy: trackId; let i = index" id="lecture-row-{{ i }}">
+                <tr *ngFor="let lecture of filteredLectures; trackBy: trackId; let i = index" id="lecture-{{ lecture.id }}">
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>
@@ -105,13 +123,9 @@
                         <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
                     </td>
                     <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
+                    <td>{{ lecture.visibleDate | artemisDate }}</td>
                     <td>{{ lecture.startDate | artemisDate }}</td>
                     <td>{{ lecture.endDate | artemisDate }}</td>
-                    <td>
-                        <div *ngIf="lecture.course">
-                            <a [routerLink]="['..']">{{ lecture.course?.title }}</a>
-                        </div>
-                    </td>
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">

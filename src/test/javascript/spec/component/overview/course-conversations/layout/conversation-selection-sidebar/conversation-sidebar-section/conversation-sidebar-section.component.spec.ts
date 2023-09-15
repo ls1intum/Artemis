@@ -82,5 +82,24 @@ examples.forEach((activeConversation) => {
             component.toggleCollapsed();
             expect(component.localStorageService.retrieve(component.storageKey)).toBeTrue();
         });
+
+        it('should hide if empty only if hideIfEmpty is set', () => {
+            component.allConversations = [];
+            expect(component.hide()).toBeTrue();
+
+            component.hideIfEmpty = false;
+            expect(component.hide()).toBeFalse();
+        });
+
+        it('should hide if search term is entered and conversations are empty and ignore hideIfEmpty flag', () => {
+            component.allConversations = [];
+            component.hideIfEmpty = false;
+
+            component.searchTerm = 'test';
+            expect(component.hide()).toBeTrue();
+
+            component.searchTerm = '';
+            expect(component.hide()).toBeFalse();
+        });
     });
 });

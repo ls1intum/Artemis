@@ -1,0 +1,28 @@
+<div *ngIf="isLoading || (competencies && competencies.length)">
+    <label for="competency-input-field" class="form-control-label col" *ngIf="labelName">
+        {{ labelName }}
+    </label>
+    <fa-stack *ngIf="labelTooltip" class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
+        <fa-icon [icon]="faQuestionCircle" stackItemSize="1x"></fa-icon>
+    </fa-stack>
+    <div *ngIf="isLoading">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <select
+        *ngIf="!isLoading"
+        class="form-select"
+        id="competency-input-field"
+        [ngClass]="{ 'is-invalid': error }"
+        [ngModel]="value"
+        [disabled]="disabled"
+        (ngModelChange)="updateField($event)"
+        multiple
+    >
+        <option *ngFor="let competency of competencies" [ngValue]="competency">
+            <fa-icon *ngIf="competency.taxonomy" [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true"></fa-icon>
+            {{ competency.title }}
+        </option>
+    </select>
+</div>

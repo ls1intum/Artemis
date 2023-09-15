@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -21,6 +20,9 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralTestCaseService;
@@ -80,7 +82,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId or solutionEntryId are not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-entries/{solutionEntryId}")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingExerciseSolutionEntry> getSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to retrieve SolutionEntry : {}", solutionEntryId);
         // Reload the exercise from the database as we can't trust data from the client
@@ -102,7 +104,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries with test cases.
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-entries")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getAllSolutionEntries(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
@@ -120,7 +122,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId or codeHintId are not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/solution-entries")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getSolutionEntriesForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
         log.debug("REST request to retrieve SolutionEntry for CodeHint with id : {}", codeHintId);
         // Reload the exercise from the database as we can't trust data from the client
@@ -145,7 +147,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId or testCaseId are not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getSolutionEntriesForTestCase(@PathVariable Long exerciseId, @PathVariable Long testCaseId) {
         log.debug("REST request to retrieve SolutionEntry for ProgrammingExerciseTestCase with id : {}", testCaseId);
         // Reload the exercise from the database as we can't trust data from the client
@@ -171,7 +173,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solution entry are not valid.
      */
     @PostMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExerciseSolutionEntry> createSolutionEntryForTestCase(@PathVariable Long exerciseId, @PathVariable Long testCaseId,
             @RequestBody ProgrammingExerciseSolutionEntry programmingExerciseSolutionEntry) throws URISyntaxException {
         log.debug("REST request to create SolutionEntry : {}", programmingExerciseSolutionEntry);
@@ -197,7 +199,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, solutionEntryId, or solution entry are not valid.
      */
     @PutMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExerciseSolutionEntry> updateSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long testCaseId, @PathVariable Long solutionEntryId,
             @RequestBody ProgrammingExerciseSolutionEntry solutionEntry) {
         log.debug("REST request to update SolutionEntry : {}", solutionEntry);
@@ -228,7 +230,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      *         or with status {@code 409 (Conflict)} if the exerciseId, testcaseId, or solutionEntryId are not valid.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/test-cases/{testCaseId}/solution-entries/{solutionEntryId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteSolutionEntry(@PathVariable Long exerciseId, @PathVariable Long testCaseId, @PathVariable Long solutionEntryId) {
         log.debug("REST request to delete SolutionEntry with id : {}", solutionEntryId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -252,7 +254,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      *         or with status {@code 404} if the exerciseId is not valid.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/solution-entries")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> deleteAllSolutionEntriesForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to delete all SolutionEntries for exercise with id: {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -271,7 +273,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entries,
      */
     @PostMapping("programming-exercises/{exerciseId}/structural-solution-entries")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<List<ProgrammingExerciseSolutionEntry>> createStructuralSolutionEntries(@PathVariable Long exerciseId) {
         log.debug("REST request to create structural solution entries");
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
@@ -294,7 +296,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entries,
      */
     @PostMapping("programming-exercises/{exerciseId}/behavioral-solution-entries")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<List<ProgrammingExerciseSolutionEntry>> createBehavioralSolutionEntries(@PathVariable Long exerciseId) {
         log.debug("REST request to create behavioral solution entries");
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);

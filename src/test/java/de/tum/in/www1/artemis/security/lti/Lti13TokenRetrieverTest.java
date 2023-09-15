@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.security.lti;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.*;
 
 import java.security.KeyPair;
@@ -74,14 +75,14 @@ class Lti13TokenRetrieverTest {
 
     @Test
     void getTokenNoScopes() {
-        assertThrows(IllegalArgumentException.class, () -> lti13TokenRetriever.getToken(clientRegistration));
+        assertThatIllegalArgumentException().isThrownBy(() -> lti13TokenRetriever.getToken(clientRegistration));
 
         verifyNoInteractions(restTemplate);
     }
 
     @Test
     void getTokenNoRegistrationId() {
-        assertThrows(NullPointerException.class, () -> lti13TokenRetriever.getToken(null, Scopes.AGS_SCORE));
+        assertThatNullPointerException().isThrownBy(() -> lti13TokenRetriever.getToken(null, Scopes.AGS_SCORE));
 
         verifyNoInteractions(restTemplate);
     }
@@ -90,7 +91,7 @@ class Lti13TokenRetrieverTest {
     void getTokenNoJWK() {
         when(oAuth2JWKSService.getJWK(any())).thenReturn(null);
 
-        assertThrows(IllegalArgumentException.class, () -> lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE));
+        assertThatIllegalArgumentException().isThrownBy(() -> lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE));
 
         verifyNoInteractions(restTemplate);
     }
@@ -121,8 +122,8 @@ class Lti13TokenRetrieverTest {
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
 
-        verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
-        verify(restTemplate, times(1)).exchange(any(), eq(String.class));
+        verify(oAuth2JWKSService).getJWK(clientRegistration.getRegistrationId());
+        verify(restTemplate).exchange(any(), eq(String.class));
 
         assertThat(token).isNull();
     }
@@ -137,8 +138,8 @@ class Lti13TokenRetrieverTest {
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
 
-        verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
-        verify(restTemplate, times(1)).exchange(any(), eq(String.class));
+        verify(oAuth2JWKSService).getJWK(clientRegistration.getRegistrationId());
+        verify(restTemplate).exchange(any(), eq(String.class));
 
         assertThat(token).isNull();
     }
@@ -155,8 +156,8 @@ class Lti13TokenRetrieverTest {
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
 
-        verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
-        verify(restTemplate, times(1)).exchange(any(), eq(String.class));
+        verify(oAuth2JWKSService).getJWK(clientRegistration.getRegistrationId());
+        verify(restTemplate).exchange(any(), eq(String.class));
 
         assertThat(token).isEqualTo("result");
     }

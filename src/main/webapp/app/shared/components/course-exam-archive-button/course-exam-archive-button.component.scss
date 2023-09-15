@@ -1,8 +1,3 @@
-#archiveButton[data-mode='Course'] {
-    margin-bottom: 11px !important;
-}
-
-#archiveButton[data-mode='Exam'] {
-    margin-top: 0.25rem !important;
-    margin-bottom: 0 !important;
+button[data-mode='Exam'] {
+    margin-top: 0.25rem;
 }

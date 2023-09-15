@@ -55,22 +55,23 @@
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Information",
-                    "difficultyStepTitle": "Difficulty",
+                    "difficultyStepTitle": "Mode",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem",
+                    "infrastructureStepTitle": "Infrastructure"
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "General Information",
-                    "generalInfoStepMessage": "Add some general information about the new exercise.",
-                    "difficultyStepTitle": "Difficulty",
-                    "difficultyStepMessage": "Set the difficulty for the new exercise.",
+                    "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
+                    "difficultyStepTitle": "Mode",
+                    "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Programming Language",
-                    "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
-                    "gradingStepTitle": "Grading",
-                    "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
+                    "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
                     "problemStepTitle": "Problem Statement",
-                    "problemStepMessage": "Specify the problem statement for the new exercise."
+                    "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
+                    "gradingStepTitle": "Grading",
+                    "gradingStepMessage": "Specify how this exercise is graded and how its outcome contributes to the overall course score."
                 },
                 "gradingLabels": {
                     "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",
@@ -102,6 +103,9 @@
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
             "buildplans": "Build Plans",
+            "buildplan": "Build Plan",
+            "buildPlanEditor": "Build Plan Editor",
+            "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
@@ -333,9 +337,9 @@
                     "title": "Combine changes into one commit",
                     "tooltip": "Squashes all commits of a student into a single commit for easier review"
                 },
-                "anonymizeStudentCommits": {
-                    "title": "Anonymize all of the student's commits",
-                    "tooltip": "Hide student names in commit messages for unbiased evaluation"
+                "anonymizeRepository": {
+                    "title": "Anonymize repository",
+                    "tooltip": "Hide student names in commit messages and directory name for unbiased evaluation"
                 },
                 "normalizeCodeStyle": {
                     "title": "Normalize code style",
@@ -348,7 +352,7 @@
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
             "resubmitSingle": "Trigger new build for this participant",
             "resubmitConfirmManualResultOverride": "The latest result for this participant is manual, which means the submission was assessed by a tutor. If you trigger the build for this submission again, the newly generated automatic result will be shown to the student instead.",
-            "resubmitAllConfirmAfterDeadline": "The deadline has passed, some of the student submissions may already have been assessed by tutors. Newly generated automatic results would replace these manual assessments as the latest results.",
+            "resubmitAllConfirmAfterDueDate": "The due date has passed, some of the student submissions may already have been assessed by tutors. Newly generated automatic results would replace these manual assessments as the latest results.",
             "resubmitUnsuccessful": "Resubmitting the last submission failed. Please contact your tutor.",
             "resubmitAll": "Trigger all",
             "resubmitAllTooltip": "Trigger all participants' last submission again. The results will be marked as graded.",
@@ -360,6 +364,7 @@
             "resultETA": "Result ETA: {{eta}}",
             "resultETATooltip": "Shows how long an average submission must wait for its result. Depends on the current utilization of the build system.",
             "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
+            "channelNameTooltip": "A course-wide channel will be created automatically with this name. The name can be changed any time.",
             "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
             "projectTypeTooltip": "This value defines the project type of the template and solution repositories.",
             "testRepositoryProjectTypeTooltip": "This value defines the project type of the test repository.",
@@ -374,31 +379,31 @@
                 "timelineTooltip": "The entire lifecycle of the programming exercise. You can specify different critical dates and decide when which kind of tests should be run on all submissions",
                 "automaticTestsMandatoryTooltip": "Every commit from a participant triggers all tests in the test repository. This does not include tests specified only to be run after the due date.",
                 "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
-                "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the deadline: No manual assessment",
-                "assessmentTypeTooltipManualAssessment": "The type of assessment after the deadline: Manual assessment by a tutors and complaints allowed if possible",
+                "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the due date: No manual assessment",
+                "assessmentTypeTooltipManualAssessment": "The type of assessment after the due date: Manual assessment by a tutors and complaints allowed if possible",
                 "releaseDateTooltip": "The release date of the exercise. Students will be able to see the exercise starting on the specified date. If no start date is defined, students can also start their participation after this date.",
                 "startDateTooltip": "The start date of the exercise. If this date is set, students can only see the exercise before but only participate after this date.",
-                "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students.",
+                "dueDateTooltip": "The due date, upon which submitting and committing new code will be deactivated for all students.",
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
                 "alertNewExampleSolutionPublicationDateAsReleaseDate": "The example solution publication date has been set to the release date!",
                 "alertNewExampleSolutionPublicationDateAsDueDate": "The example solution publication date has been set to the due date!",
                 "assessmentDueDate": "Assessment Due Date",
-                "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
+                "assessmentDueDateTooltip": "The due date for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
                 "allowFeedbackRequests": "Allow feedback requests",
                 "manualFeedbackRequests": "Manual feedback requests",
-                "manualFeedbackRequestsTooltip": "Students can request manual feedback before the deadline to receive feedback.",
+                "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
-                "releaseTestsWithExampleSolution": "Publish tests",
-                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the deadline."
+                "releaseTestsWithExampleSolution": "Include tests into example solution",
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "You are outside of the participation timeframe, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
             },
             "preview": {
                 "label": "Preview",
@@ -464,7 +469,7 @@
                 "created": "The submission policy was created successfully!",
                 "updated": "The submission policy was updated successfully!",
                 "deleted": "The submission policy was deleted successfully!",
-                "submissionsAllowed": "allowed Submissions",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} allowed Submissions",
                 "none": {
                     "optionLabel": "None"
                 },
@@ -499,6 +504,7 @@
                 "submissionLimitTitle": "Submission limit",
                 "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
+                "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
                 "submissionLimitWarning": {
                     "pattern": "The submission limit must be and integer between 1 and 500!",
                     "required": "The submission limit must be set!"

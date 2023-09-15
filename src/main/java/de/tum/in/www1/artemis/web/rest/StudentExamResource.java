@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -20,7 +21,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -84,6 +86,8 @@ public class StudentExamResource {
 
     private final WebsocketMessagingService messagingService;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -97,7 +101,7 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService messagingService) {
+            WebsocketMessagingService messagingService, SubmissionPolicyRepository submissionPolicyRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -114,6 +118,7 @@ public class StudentExamResource {
         this.examService = examService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.messagingService = messagingService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     /**
@@ -127,7 +132,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
 
@@ -164,7 +169,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and a set of student exams. The set can be empty
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
@@ -185,7 +190,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
     @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody Integer workingTime) {
         log.debug("REST request to update the working time of student exam : {}", studentExamId);
@@ -211,8 +216,6 @@ public class StudentExamResource {
             }
         }
 
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
-
         return ResponseEntity.ok(savedStudentExam);
     }
 
@@ -221,30 +224,34 @@ public class StudentExamResource {
      * Updates all submissions and marks student exam as submitted according to given student exam
      * NOTE: the studentExam has to be sent with all exercises, participations and submissions
      *
-     * @param courseId    the course to which the student exams belong to
-     * @param examId      the exam to which the student exams belong to
-     * @param studentExam the student exam with exercises, participations and submissions
+     * @param courseId              the course to which the student exams belong to
+     * @param examId                the exam to which the student exams belong to
+     * @param studentExamFromClient the student exam with exercises, participations and submissions
      * @return empty response with status code:
      *         200 if successful
      *         400 if student exam was in an illegal state
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/submit")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
-        log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExamFromClient) {
+        long start = System.nanoTime();
+        log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.getId());
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        // 1. DB Call: read
+        User currentUser = userRepository.getUser();
         // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
-        if (!Objects.equals(studentExam.getUser().getId(), currentUser.getId())) {
-            throw new AccessForbiddenException();
+        if (!Objects.equals(studentExamFromClient.getUser().getId(), currentUser.getId())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
 
-        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId());
-        this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, existingStudentExam, currentUser);
+        // 2. DB Call: read
+        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
+        validateExamRequestParametersElseThrow(studentExamFromClient, examId, courseId);
 
-        if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
-            log.error("Student exam with id {} for user {} is already submitted.", studentExam.getId(), currentUser.getLogin());
-            throw new ConflictException("You have already submitted.", "studentExam", "alreadySubmitted");
+        if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+            log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
+            // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
+            return ResponseEntity.ok().build();
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
@@ -253,9 +260,15 @@ public class StudentExamResource {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
+        log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
+
+        studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
+
         messagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
-        return studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
+        log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
+                formatDurationFrom(start));
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -271,37 +284,53 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
-        if (!user.equals(studentExam.getUser())) {
+        if (!currentUser.equals(studentExam.getUser())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
+
+        if (studentExam.isTestRun()) {
+            // this check is quite expensive, so we only so it for test runs
+            studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
+        else {
+            // those checks are good enough and less expensive, because they do not involve additional database queries
+            validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        }
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
         if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
             throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
         }
 
-        if (!user.getId().equals(studentExam.getUser().getId())) {
-            throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
-        }
-
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
             messagingService.sendMessage("/topic/exam/" + examId + "/started", "");
         }
 
-        prepareStudentExamForConduction(request, user, studentExam);
+        prepareStudentExamForConduction(request, currentUser, studentExam);
 
-        log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
+        log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
+                currentUser.getLogin());
         return ResponseEntity.ok(studentExam);
+    }
+
+    private void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
+        var exam = studentExam.getExam();
+        if (!Objects.equals(exam.getId(), examId)) {
+            log.error("examId of studentExam {} does not match the path variable {}", studentExam.getExam().getId(), examId);
+            throw new ConflictException("The student exam does not belong to the exam", "StudentExam", "studentExamExamConflict");
+        }
+        if (!Objects.equals(exam.getCourse().getId(), courseId)) {
+            throw new ConflictException("The exam does not belong to the course", "Exam", "examCourseConflict");
+        }
     }
 
     /**
@@ -318,7 +347,7 @@ public class StudentExamResource {
      */
     // TODO: use the same REST call as for real exams and test exams
     @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
@@ -355,7 +384,7 @@ public class StudentExamResource {
      * @return all StudentExams for test exam for the specified course and user
      */
     @GetMapping("courses/{courseId}/test-exams-per-user")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
@@ -376,7 +405,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -422,7 +451,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
@@ -451,7 +480,7 @@ public class StudentExamResource {
      * @return the list of test runs
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<StudentExam>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to find all test runs for exam {}", examId);
 
@@ -470,7 +499,7 @@ public class StudentExamResource {
      * @return the created test run student exam
      */
     @PostMapping("courses/{courseId}/exams/{examId}/test-run")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
         if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
@@ -496,7 +525,7 @@ public class StudentExamResource {
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> assessUnsubmittedStudentExamsAndEmptySubmissions(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to automatically assess the not submitted student exams of the exam with id {}", examId);
 
@@ -531,7 +560,7 @@ public class StudentExamResource {
      * @return the deleted test run student exam
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);
 
@@ -550,7 +579,7 @@ public class StudentExamResource {
      * @return ResponseEntity containing the list of generated participations
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -581,7 +610,7 @@ public class StudentExamResource {
      * @return ResponseEntity containing the status
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<ExamExerciseStartPreparationStatus> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -610,23 +639,32 @@ public class StudentExamResource {
 
                 // Set up new participations for the Exercises and set initialisationDate to the startedDate
                 studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
-
-                // Mark the student exam as started and save it
-                studentExam.setStarted(true);
-                studentExam.setStartedDate(startedDate);
-                studentExamRepository.save(studentExam);
             }
         }
-        else {
-            // Mark the student exam as started and save it
-            studentExam.setStarted(true);
-            if (studentExam.getStartedDate() == null) {
-                studentExam.setStartedDate(ZonedDateTime.now());
-            }
-            studentExamRepository.save(studentExam);
+
+        if (!Boolean.TRUE.equals(studentExam.isStarted()) || studentExam.getStartedDate() == null) {
+            // Mark the student exam as started with now as the start date if it was not started before
+            var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : ZonedDateTime.now();
+            studentExam.setStartedAndStartDate(startDate);
+            // send those changes in a modifying query to the database
+            studentExamRepository.startStudentExam(studentExam.getId(), startDate);
         }
 
-        // Load quizzes
+        var programmingExercises = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise)
+                .collect(Collectors.toSet());
+        if (!programmingExercises.isEmpty()) {
+            // Load all potential submission policies from the database
+            var submissionPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet()));
+            // Add the policy to their respective programming exercise
+            if (!submissionPolicies.isEmpty()) {
+                for (var programmingExercise : programmingExercises) {
+                    programmingExercise.setSubmissionPolicy(
+                            submissionPolicies.stream().filter(policy -> policy.getProgrammingExercise().getId().equals(programmingExercise.getId())).findFirst().orElse(null));
+                }
+            }
+        }
+
+        // Load quizzes from database, because they include lazy relationships
         examService.loadQuizExercisesForStudentExam(studentExam);
 
         // Fetch participations, submissions and results and connect them to the studentExam
@@ -670,7 +708,7 @@ public class StudentExamResource {
      *         200 if successful
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -706,7 +744,7 @@ public class StudentExamResource {
      *         200 if successful
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
 

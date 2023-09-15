@@ -248,4 +248,17 @@ public class UserSpecs {
             return null;
         };
     }
+
+    /**
+     * Creates the specification to get results that were not soft-deleted.
+     *
+     * @return specification used to chain database operations
+     */
+    public static Specification<User> notSoftDeleted() {
+        return (root, query, criteriaBuilder) -> {
+            Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.IS_DELETED), false);
+
+            return criteriaBuilder.and(notDeletedPredicate);
+        };
+    }
 }

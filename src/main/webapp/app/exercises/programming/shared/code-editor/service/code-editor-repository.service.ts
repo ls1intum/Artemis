@@ -70,7 +70,7 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
             if (err.status === 409) {
                 conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
             }
-            if (err.status === 0) {
+            if (err.status === 0 || err.status === 504) {
                 return throwError(() => new ConnectionError());
             }
             return throwError(() => err);
@@ -79,7 +79,12 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryService extends DomainDependentEndpointService implements ICodeEditorRepositoryService {
-    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
+    constructor(
+        http: HttpClient,
+        jhiWebsocketService: JhiWebsocketService,
+        domainService: DomainService,
+        private conflictService: CodeEditorConflictStateService,
+    ) {
         super(http, jhiWebsocketService, domainService);
     }
 
@@ -113,7 +118,12 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
 
 @Injectable({ providedIn: 'root' })
 export class CodeEditorBuildLogService extends DomainDependentEndpointService {
-    constructor(private buildLogService: BuildLogService, http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+    constructor(
+        private buildLogService: BuildLogService,
+        http: HttpClient,
+        jhiWebsocketService: JhiWebsocketService,
+        domainService: DomainService,
+    ) {
         super(http, jhiWebsocketService, domainService);
     }
 
@@ -129,7 +139,12 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 @Injectable({ providedIn: 'root' })
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     fileUpdateSubject = new Subject<FileSubmission>();
-    constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
+    constructor(
+        http: HttpClient,
+        jhiWebsocketService: JhiWebsocketService,
+        domainService: DomainService,
+        private conflictService: CodeEditorConflictStateService,
+    ) {
         super(http, jhiWebsocketService, domainService);
     }
 

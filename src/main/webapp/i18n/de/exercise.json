@@ -7,7 +7,6 @@
             },
             "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
-            "resultCount": "{{resultsLength}} Ergebnisse",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
             "showAllResults": "Zeige alle Ergebnisse",
             "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
@@ -101,8 +100,8 @@
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonuspunkte",
             "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
-            "includedInOverallScoreCourseLabel": "Soll diese Aufgabe bei der Berechnung des Kursergebnis miteinbezogen werden?",
-            "includedInOverallScoreExamLabel": "Soll diese Aufgabe bei der Berechnung des Klausurergebnisses miteinbezogen werden?",
+            "includedInOverallScoreCourseLabel": "Diese Aufgabe bei der Berechnung des Kursergebnisses einbeziehen",
+            "includedInOverallScoreExamLabel": "Diese Aufgabe bei der Berechnung des Klausurergebnisses einbeziehen",
             "includedInOverallScore": "Miteinbezogen in Ergebnis",
             "includedCompletely": "Miteinbezogen",
             "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind.",
@@ -132,6 +131,7 @@
             },
             "categories": "Kategorien",
             "noCategory": "Keine Kategorie",
+            "participation": "Teilnahme",
             "participations": "Teilnahmen",
             "submissions": "Einreichungen",
             "teams": "Teams",
@@ -180,6 +180,7 @@
             "showNoSubmissions": "Nur ohne Einreichungen anzeigen",
             "showNoPracticeMode": "Nur bewertete Abgaben anzeigen",
             "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
+            "showingOfResults": "Zeigt {{ filtered }} von {{ total }} ({{ percent }}%) Bewertungen",
             "tagPlaceholder": "+ Kategorie",
             "isProgramming": "Das ist eine Programmieraufgabe",
             "isModeling": "Das ist eine Modellierungsaufgabe",
@@ -189,7 +190,6 @@
             "notificationText": "Optional: Mitteilung über die Änderung",
             "submissionSuccessful": "Die Einreichung war erfolgreich",
             "submissionUnsuccessful": "Die Einreichung war nicht erfolgreich",
-            "lateSubmissionReceived": "Artemis hat eine verspätete Einreichung erhalten. Bitte warte auf das Ergebnis und scrolle dann nach unten zur Ergebnishistorie, um weitere Details zu sehen.",
             "lateSubmissionResultReceived": "Artemis hat ein unbewertetes Ergebnis für eine verspätete Einreichung erhalten. Bitte scrolle nach unten zur Ergebnishistorie, um deine Punktzahl zu sehen.",
             "resultCreationSuccessful": "Das Ergebnis wurde erfolgreich erzeugt",
             "resultCreationUnsuccessful": "Das Ergebnis wurde nicht erzeugt",
@@ -204,6 +204,9 @@
                 "title": {
                     "undefined": "Der Titel wurde nicht ausgefüllt!",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
+                },
+                "channelName": {
+                    "empty": "Der Kanalname wurde nicht ausgefüllt!"
                 },
                 "shortName": {
                     "undefined": "Der Kurzname wurde nicht ausgefüllt!",
@@ -249,7 +252,8 @@
                 }
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
-            "action": "Aktion"
+            "action": "Aktion",
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
         }
     }
 }

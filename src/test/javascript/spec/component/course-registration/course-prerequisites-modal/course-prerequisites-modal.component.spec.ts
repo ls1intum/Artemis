@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalCardStubComponent } from '../../learning-goals/learning-goal-card-stub.component';
+import { CompetencyCardStubComponent } from '../../competencies/competency-card-stub.component';
 
 describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
     let coursePrerequisitesModalComponent: CoursePrerequisitesModalComponent;
-    let learningGoalService: LearningGoalService;
+    let competencyService: CompetencyService;
 
     const activeModalStub = {
         close: () => {},
@@ -24,10 +24,10 @@ describe('CoursePrerequisitesModal', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [CoursePrerequisitesModalComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CoursePrerequisitesModalComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(LearningGoalService),
+                MockProvider(CompetencyService),
                 {
                     provide: NgbActiveModal,
                     useValue: activeModalStub,
@@ -40,7 +40,7 @@ describe('CoursePrerequisitesModal', () => {
                 coursePrerequisitesModalComponentFixture = TestBed.createComponent(CoursePrerequisitesModalComponent);
                 coursePrerequisitesModalComponent = coursePrerequisitesModalComponentFixture.componentInstance;
                 coursePrerequisitesModalComponentFixture.componentInstance.courseId = 1;
-                learningGoalService = TestBed.inject(LearningGoalService);
+                competencyService = TestBed.inject(CompetencyService);
             });
     });
 
@@ -49,17 +49,17 @@ describe('CoursePrerequisitesModal', () => {
     });
 
     it('should load prerequisites and display a card for each of them', () => {
-        const prerequisitesOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
-            body: [new LearningGoal(), new LearningGoal()],
+        const prerequisitesOfCourseResponse: HttpResponse<Competency[]> = new HttpResponse({
+            body: [new Competency(), new Competency()],
             status: 200,
         });
 
-        const getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(competencyService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
 
         coursePrerequisitesModalComponentFixture.detectChanges();
 
-        const learningGoalCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(learningGoalCards).toHaveLength(2);
+        const competencyCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardStubComponent));
+        expect(competencyCards).toHaveLength(2);
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);
     });

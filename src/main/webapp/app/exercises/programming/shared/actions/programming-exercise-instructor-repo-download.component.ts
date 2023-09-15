@@ -30,7 +30,10 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     // Icons
     faDownload = faDownload;
 
-    constructor(protected programmingExerciseService: ProgrammingExerciseService, protected alertService: AlertService) {}
+    constructor(
+        protected programmingExerciseService: ProgrammingExerciseService,
+        protected alertService: AlertService,
+    ) {}
 
     exportRepository() {
         if (this.exerciseId && this.repositoryType) {

@@ -71,7 +71,6 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * Auxiliary method that sets the comparison dtos for the different chart buckets. These are used for the chart tooltips
      * to show the number of confirmed, denied and open plagiarism cases
      * @param comparisons the pairs identified by the detection tool
-     * @private
      */
     private setBucketDTOs(comparisons: PlagiarismComparison<any>[]): void {
         this.bucketDTOs = [];

@@ -9,13 +9,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Tests for the ProgrammingExerciseGitDiffReportResource
@@ -23,6 +25,12 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "progexgitdiffreport";
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     private static final String FILE_NAME = "test.java";
 
@@ -40,9 +48,9 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
 
     @BeforeEach
     void initTestCase() throws Exception {
-        Course course = database.addEmptyCourse();
-        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        Course course = courseUtilService.addEmptyCourse();
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
     }
 
     @Test

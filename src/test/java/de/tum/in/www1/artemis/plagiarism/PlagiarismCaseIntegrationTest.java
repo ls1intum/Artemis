@@ -14,15 +14,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 
@@ -42,6 +46,18 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -58,15 +74,15 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void initTestCase() {
         // Per case, we have always 2 students
         int numberOfPlagiarismCases = 5;
-        database.addUsers(TEST_PREFIX, numberOfPlagiarismCases * 2, 1, 1, 1);
-        course = database.addCourseWithOneFinishedTextExercise();
+        userUtilService.addUsers(TEST_PREFIX, numberOfPlagiarismCases * 2, 1, 1, 1);
+        course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
 
         // We need at least 3 cases
-        textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
         plagiarismCase1 = coursePlagiarismCases.get(0);
 
-        examTextExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
     }
 
@@ -81,8 +97,8 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         for (int i = 0; i < numberOfPlagiarismCases; i++) {
             PlagiarismCase plagiarismCase = new PlagiarismCase();
-            User student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
-            PlagiarismResult<TextSubmissionElement> textPlagiarismResult = database.createTextPlagiarismResultForExercise(exercise);
+            User student = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
+            PlagiarismResult<TextSubmissionElement> textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(exercise);
             PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
 
             PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = new PlagiarismSubmission<>();
@@ -373,5 +389,26 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         teamPlagiarismCase.setTeam(team);
 
         assertThat(teamPlagiarismCase.getStudents()).as("should get the set of all students in the team if it is a team plagiarism case").isEqualTo(teamStudents);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismCasesForExercise_instructor_correct() throws Exception {
+        var cases = request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.OK, Long.class);
+        assertThat(cases).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNumberOfPlagiarismResultsForExercise_tutor_forbidden() throws Exception {
+        request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.FORBIDDEN, Long.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course, "");
+        request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.FORBIDDEN, Long.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }
