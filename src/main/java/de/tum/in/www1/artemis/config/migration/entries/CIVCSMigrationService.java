@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -50,8 +51,9 @@ public interface CIVCSMigrationService {
      *
      * @param buildPlanKey            The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-BASE'.
      * @param auxiliaryRepositoryList the list of auxiliary repositories
+     * @param programmingLanguage     the programming language of the exercise to be migrated
      */
-    void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList);
+    void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList, ProgrammingLanguage programmingLanguage);
 
     /**
      * Jenkins and Bamboo need different results, this method is used to get the correct participations.
@@ -71,6 +73,11 @@ public interface CIVCSMigrationService {
      */
     boolean supportsAuxiliaryRepositories();
 
+    /**
+     * Remove the web hooks for the given repository.
+     *
+     * @param repositoryUrl
+     */
     void removeWebHook(VcsRepositoryUrl repositoryUrl);
 
     /**

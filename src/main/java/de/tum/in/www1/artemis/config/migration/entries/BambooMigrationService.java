@@ -27,11 +27,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 /**
  * Services for executing migration tasks for Bamboo.
@@ -235,7 +237,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     }
 
     @Override
-    public void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList) {
+    public void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList, ProgrammingLanguage programmingLanguage) {
         Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, TEST_REPO_NAME);
         Optional<Long> assignmentRepositoryId = getConnectedRepositoryId(buildPlanKey, ASSIGNMENT_REPO_NAME);
         Optional<Long> solutionRepositoryId = getConnectedRepositoryId(buildPlanKey, SOLUTION_REPO_NAME);
@@ -265,7 +267,8 @@ public class BambooMigrationService implements CIVCSMigrationService {
                 // Note: we do not throw
             }
         }
-        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get(), solutionRepositoryId, auxiliaryRepositoryIds, auxiliaryRepositoryList);
+        setRepositoriesToCheckout(buildPlanKey, testRepositoryId.get(), assignmentRepositoryId.get(), solutionRepositoryId, auxiliaryRepositoryIds, auxiliaryRepositoryList,
+                programmingLanguage);
     }
 
     @Override
@@ -423,10 +426,11 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * @param solutionRepositoryId    The id of the repository for the solution, checked out in the folder 'solution'
      * @param assignmentRepositoryIds The ids of the auxiliary repositories, checked out in the folder specified in the AuxiliaryRepository object
      * @param auxiliaryRepositories   The auxiliary repositories to be checked out
+     * @param programmingLanguage     the programming language of the exercise to be migrated, needed for the checkout directory
      */
     // TODO: add the solution repository! in case it exists, handle it, otherwise ignore
     private void setRepositoriesToCheckout(String buildPlanId, Long testsRepositoryId, Long assignmentRepositoryId, Optional<Long> solutionRepositoryId,
-            Map<String, Long> assignmentRepositoryIds, List<AuxiliaryRepository> auxiliaryRepositories) {
+            Map<String, Long> assignmentRepositoryIds, List<AuxiliaryRepository> auxiliaryRepositories, ProgrammingLanguage programmingLanguage) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanId + "-JOB1");
 
@@ -443,10 +447,10 @@ public class BambooMigrationService implements CIVCSMigrationService {
          */
         parameters.add("selectedRepository_0", testsRepositoryId.toString());
         parameters.add("selectFields", "selectedRepository_0");
-        parameters.add("checkoutDir_0", "");
+        parameters.add("checkoutDir_0", ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage));
         parameters.add("selectedRepository_1", assignmentRepositoryId.toString());
         parameters.add("selectFields", "selectedRepository_1");
-        parameters.add("checkoutDir_1", "assignment");
+        parameters.add("checkoutDir_1", ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage));
         int index = 2;
         for (var auxiliaryRepo : auxiliaryRepositories) {
             Long id = assignmentRepositoryIds.get(auxiliaryRepo.getName());
@@ -462,7 +466,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
         if (solutionRepositoryId.isPresent()) {
             parameters.add("selectedRepository_" + index, solutionRepositoryId.get().toString());
             parameters.add("selectFields", "selectedRepository_" + index);
-            parameters.add("checkoutDir_" + index, "solution");
+            parameters.add("checkoutDir_" + index, ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage));
         }
 
         parameters.add("checkBoxFields", "cleanCheckout");

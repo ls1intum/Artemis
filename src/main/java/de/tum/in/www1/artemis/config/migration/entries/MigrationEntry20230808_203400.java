@@ -422,7 +422,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             }
         }
         try {
-            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(participation.getBuildPlanId(), auxiliaryRepositories);
+            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(participation.getBuildPlanId(), auxiliaryRepositories, exercise.getProgrammingLanguage());
         }
         catch (Exception e) {
             log.warn("Failed to replace repositories in student build plan for studentParticipationId {} with buildPlanId {} of exerciseId {} ", participation.getId(),
@@ -489,7 +489,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             }
         }
         try {
-            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getSolutionBuildPlanId(), auxiliaryRepositories);
+            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getSolutionBuildPlanId(), auxiliaryRepositories, exercise.getProgrammingLanguage());
         }
         catch (Exception e) {
             log.warn("Failed to replace repositories in solution build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getSolutionBuildPlanId(), e);
@@ -558,7 +558,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             }
         }
         try {
-            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getTemplateBuildPlanId(), auxiliaryRepositories);
+            ciMigrationService.orElseThrow().overrideRepositoriesToCheckout(exercise.getTemplateBuildPlanId(), auxiliaryRepositories, exercise.getProgrammingLanguage());
         }
         catch (Exception e) {
             log.error("Failed to replace repositories in template build plan for exercise {} with buildPlanId {}", exercise.getId(), exercise.getTemplateBuildPlanId(), e);
