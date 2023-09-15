@@ -8,18 +8,24 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import com.opencsv.CSVReader;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.
  */
 @Service
 public class GradingScaleUtilService {
+
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
 
     @NotNull
     public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
@@ -62,6 +68,24 @@ public class GradingScaleUtilService {
         gradingScale.setPresentationsNumber(presentationsNumber);
         gradingScale.setPresentationsWeight(presentationsWeight);
         return gradingScale;
+    }
+
+    /**
+     * Generates a grading scale with the given parameters and saves it to the database.
+     *
+     * @param gradeStepCount        The number of grade steps to generate.
+     * @param intervals             The intervals to use for the grade steps. The length of this array must be gradeStepCount + 1.
+     * @param lowerBoundInclusivity Whether the lower bound of the first grade step should be inclusive.
+     * @param firstPassingIndex     The index of the first passing grade step.
+     * @param gradeNames            The names of the grade steps.
+     * @param exam                  The exam to which the grading scale belongs.
+     * @return The generated and saved grading scale.
+     */
+    public GradingScale generateAndSaveGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
+            Exam exam) {
+        GradingScale gradingScale = generateGradingScale(gradeStepCount, intervals, lowerBoundInclusivity, firstPassingIndex, gradeNames);
+        gradingScale.setExam(exam);
+        return gradingScaleRepository.save(gradingScale);
     }
 
     public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames) {

@@ -16,7 +16,10 @@ import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.service.DragAndDropQuizAnswerConversionService;
 
 /**
- * A service to create the data export for quiz exercise participations
+ * A service to create the data export for quiz exercise participations.
+ * This includes creating a pdf highlighting the submitted answers for drag and drop questions and
+ * txt files containing the submitted answers for multiple choice and short answer questions.
+ * Additionally, the results can be included in the export if the due date is over.
  */
 @Service
 public class DataExportQuizExerciseCreationService {
@@ -80,6 +83,13 @@ public class DataExportQuizExerciseCreationService {
 
     }
 
+    /**
+     * Creates a txt file containing the submitted answers for a multiple choice question and information if the answer was correct or not if includeResults is true.
+     *
+     * @param multipleChoiceSubmittedAnswer the submitted answer to a multiple choice question that should be included in the export
+     * @param includeResults                true if the results should be included in the export (if the assessment due date or result publication date is over)
+     * @return the content for the txt file as a string
+     */
     private String createExportForMultipleChoiceAnswerQuestion(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, boolean includeResults) {
         StringBuilder stringBuilder = new StringBuilder();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) multipleChoiceSubmittedAnswer.getQuizQuestion();
@@ -105,6 +115,15 @@ public class DataExportQuizExerciseCreationService {
         return stringBuilder.toString();
     }
 
+    /**
+     * Adds an explanation to the answer option if no result should be included in the export.
+     * <p>
+     * The explanation contains information if the answer option was selected or not or if it is invalid.
+     *
+     * @param multipleChoiceSubmittedAnswer the submitted answer to a multiple choice question that should be included in the export
+     * @param stringBuilder                 the string builder user to create the txt file content
+     * @param answerOption                  the answer option for which the explanation should be added
+     */
     private void addExplanationToAnswerOptionWithoutResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOption answerOption) {
         if (answerOption.isInvalid()) {
             stringBuilder.append("Invalid answer option: ");
@@ -117,6 +136,15 @@ public class DataExportQuizExerciseCreationService {
         }
     }
 
+    /**
+     * Adds an explanation to the answer option if a result should be included in the export.
+     * <p>
+     * The explanation contains information if the answer option was selected or not or it is invalid and if the answer option is correct or not.
+     *
+     * @param multipleChoiceSubmittedAnswer the submitted answer to a multiple choice question that should be included in the export
+     * @param stringBuilder                 the string builder user to create the txt file content
+     * @param answerOption                  the answer option for which the explanation should be added
+     */
     private void addExplanationToAnswerOptionWithResult(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer, StringBuilder stringBuilder, AnswerOption answerOption) {
         if (answerOption.isInvalid()) {
             stringBuilder.append("Invalid answer option: ");
@@ -135,6 +163,13 @@ public class DataExportQuizExerciseCreationService {
         }
     }
 
+    /**
+     * Creates a txt file containing the submitted answers for a short answer question and information if the answer was correct or not if includeResults is true.
+     *
+     * @param shortAnswerSubmittedAnswer the submitted answer to a short answer question that should be included in the export
+     * @param includeResults             true if the results should be included in the export (if the assessment due date or result publication date is over)
+     * @return the content for the txt file as a string
+     */
     private String createExportForShortAnswerQuestion(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, boolean includeResults) {
         StringBuilder stringBuilder = new StringBuilder();
         ShortAnswerQuestion question = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
@@ -145,6 +180,14 @@ public class DataExportQuizExerciseCreationService {
         return replaceSpotWithSubmittedAnswer(shortAnswerSubmittedAnswer, stringBuilder, includeResults);
     }
 
+    /**
+     * Replaces the spots (the gaps that indicate where an answer should be entered) in the text of a short answer question with the submitted answers.
+     *
+     * @param shortAnswerSubmittedAnswer the submitted answer to a short answer question that should be included in the export
+     * @param submittedAnswer            the string builder user to create the txt file content
+     * @param includeResults             true if the results should be included in the export (if the assessment due date or result publication date is over)
+     * @return the string containing the question text with the answers of the user
+     */
     private String replaceSpotWithSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, StringBuilder submittedAnswer, boolean includeResults) {
         var spotToSubmittedTextMap = buildMapFromSpotsToSubmittedAnswers(shortAnswerSubmittedAnswer);
         submittedAnswer.append("Your answer: ").append("\n");
@@ -160,30 +203,39 @@ public class DataExportQuizExerciseCreationService {
         return submittedAnswer.toString();
     }
 
+    /**
+     * Adds the submitted answer to the string builder if the answer is correct or incorrect.
+     *
+     * @param submittedAnswer the string builder user to create the txt file content
+     * @param includeResults  true if the results should be included in the export (if the assessment due date or result publication date is over)
+     * @param submittedText   the question text of a short answer question that should be included in the export
+     * @param pattern         the pattern used to find the spot in the question text
+     * @param matcher         the matcher used to find the spot in the question text
+     * @param replacement     the string builder used to create the replacement (the submitted answer text) for the spot
+     * @return the matcher used to find the next spot in the question text
+     */
     private Matcher addSubmittedAnswerWithResult(StringBuilder submittedAnswer, boolean includeResults, ShortAnswerSubmittedText submittedText, Pattern pattern, Matcher matcher,
             StringBuilder replacement) {
         int start = matcher.start();
         int end = matcher.end();
-        if (submittedText.isIsCorrect() != null && submittedText.isIsCorrect()) {
-            replacement.append(submittedText.getText());
-            if (includeResults) {
-                replacement.append(" (Correct)");
-            }
+        replacement.append(submittedText.getText());
+        if (submittedText.isIsCorrect() != null && submittedText.isIsCorrect() && includeResults) {
+            replacement.append(" (Correct)");
         }
-        else if (submittedText.isIsCorrect() != null && !submittedText.isIsCorrect()) {
-            replacement.append(submittedText.getText());
-            if (includeResults) {
-                replacement.append(" (Incorrect)");
-            }
-            else {
-                replacement.append(submittedText.getText());
-            }
-            submittedAnswer.replace(start, end, replacement.toString());
-            matcher = pattern.matcher(submittedAnswer);
+        else if (submittedText.isIsCorrect() != null && !submittedText.isIsCorrect() && includeResults) {
+            replacement.append(" (Incorrect)");
         }
+        submittedAnswer.replace(start, end, replacement.toString());
+        matcher = pattern.matcher(submittedAnswer);
         return matcher;
     }
 
+    /**
+     * Builds a map from the spots (the gaps that indicate where an answer should be entered) in the text of a short answer question to the submitted answers.
+     *
+     * @param shortAnswerSubmittedAnswer the submitted answer to a short answer question that should be included in the export
+     * @return a map from the spots (represented as the string in text) to the submitted answers
+     */
     private Map<String, ShortAnswerSubmittedText> buildMapFromSpotsToSubmittedAnswers(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
         Map<String, ShortAnswerSubmittedText> spotsToSubmittedAnswers = new HashMap<>();
         for (var submittedText : shortAnswerSubmittedAnswer.getSubmittedTexts()) {
