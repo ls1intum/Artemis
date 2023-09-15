@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.export;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -9,6 +9,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 
 @Service
 public class TextSubmissionExportService extends SubmissionExportService {

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.programming;
+package de.tum.in.www1.artemis.service.export;
 
 import static de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
