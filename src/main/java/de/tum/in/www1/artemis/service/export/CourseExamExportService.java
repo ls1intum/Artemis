@@ -363,8 +363,9 @@ public class CourseExamExportService {
             // Notify the user after the progress
             currentProgress++;
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(currentProgress + "/" + totalExerciseCount + " done"));
-
-            var exerciseExportDir = outputDir.resolve(exercise.getSanitizedExerciseTitle());
+            // add the id because the exercise title might not be unique, leading to the same directory
+            // name for two exercises and the second exercise overriding the first one
+            var exerciseExportDir = outputDir.resolve(exercise.getSanitizedExerciseTitle() + "_" + exercise.getId());
             try {
                 Files.createDirectory(exerciseExportDir);
             }
