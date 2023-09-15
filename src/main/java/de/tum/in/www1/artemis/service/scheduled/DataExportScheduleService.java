@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,24 +57,31 @@ public class DataExportScheduleService {
      * Deleted will be all data exports that have a creation date older than seven days
      */
     @Scheduled(cron = "${artemis.scheduling.data-export-creation-time: 0 0 4 * * *}")
-    public void createDataExportsAndDeleteOldOnes() {
+    public void createDataExportsAndDeleteOldOnes() throws InterruptedException {
         if (profileService.isDev()) {
             // do not execute this in a development environment
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
-
         checkSecurityUtils();
         log.info("Creating data exports and deleting old ones");
-        Set<DataExport> successfulDataExports = new HashSet<>();
+        Set<DataExport> successfulDataExports = Collections.synchronizedSet(new HashSet<>());
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
-        dataExportsToBeCreated.forEach(dataExport -> createDataExport(dataExport, successfulDataExports));
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
+        executor.shutdown();
         var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted();
         dataExportsToBeDeleted.forEach(this::deleteDataExport);
         Optional<User> admin = userService.findInternalAdminUser();
         if (admin.isEmpty()) {
             log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
             return;
+        }
+        // This job runs at 4 am by default and the next scheduled job runs at 5 am, so we should allow 60 minutes for the creation.
+        // If the creation doesn't finish within 60 minutes, all pending exports will be picked up when the job runs the next time.
+        if (!executor.awaitTermination(60, java.util.concurrent.TimeUnit.MINUTES)) {
+            log.info("Not all pending data exports could be created within 60 minutes.");
+            executor.shutdownNow();
         }
         if (!successfulDataExports.isEmpty()) {
             mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);
@@ -87,6 +94,7 @@ public class DataExportScheduleService {
      * @param dataExport the data export to be created
      */
     private void createDataExport(DataExport dataExport, Set<DataExport> successfulDataExports) {
+        checkSecurityUtils();
         log.info("Creating data export for {}", dataExport.getUser().getLogin());
         var successful = dataExportCreationService.createDataExport(dataExport);
         if (successful) {
