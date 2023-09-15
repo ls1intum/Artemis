@@ -274,7 +274,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
         var dueDate = ExerciseDateService.getDueDate(participation);
-        if (dueDate.isEmpty() || participation.isTestRun()) {
+        // Without a due date or in the practice mode, the student can always submit
+        if (dueDate.isEmpty() || participation.isPracticeMode()) {
             return true;
         }
         return dueDate.get().plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
