@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -12,10 +12,26 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
+import {
+    metisCourse,
+    metisExercise,
+    metisLecture,
+    metisPostExerciseUser1,
+    metisPostLectureUser1,
+    metisPostTechSupport,
+    metisUser1,
+} from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { Router, RouterState } from '@angular/router';
+import { of } from 'rxjs';
+import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { HttpResponse } from '@angular/common/http';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -25,11 +41,17 @@ describe('PostComponent', () => {
     let metisServiceGetLinkSpy: jest.SpyInstance;
     let metisServiceGetQueryParamsSpy: jest.SpyInstance;
     let metisServiceGetPageTypeStub: jest.SpyInstance;
+    let router: MockRouter;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule, MockDirective(NgbTooltip)],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(OneToOneChatService),
+            ],
             declarations: [
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
@@ -46,9 +68,17 @@ describe('PostComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostComponent);
                 metisService = TestBed.inject(MetisService);
+
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisServiceGetPageTypeStub = jest.spyOn(metisService, 'getPageType');
+                router = TestBed.inject<MockRouter>(Router as any);
+                const mockRouterState = {
+                    snapshot: {
+                        root: { firstChild: {}, data: {} },
+                    },
+                } as RouterState;
+                router.setRouterState(mockRouterState);
             });
     });
 
@@ -173,5 +203,20 @@ describe('PostComponent', () => {
         const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
+    });
+
+    it('should navigate to oneToOneChat', () => {
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        const oneToOneChatService = TestBed.inject(OneToOneChatService);
+        const createChatSpy = jest.spyOn(oneToOneChatService, 'create').mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
+
+        component.onUserReferenceClicked(metisUser1.login!);
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'messages'], {
+            queryParams: {
+                conversationId: 1,
+            },
+        });
+        expect(createChatSpy).toHaveBeenCalledWith(metisCourse.id, metisUser1.login);
     });
 });

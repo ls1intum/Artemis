@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { isMessagingEnabled } from 'app/entities/course.model';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
@@ -45,7 +45,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
         private router: Router,
-        private activatedRoute: ActivatedRoute,
     ) {
         super();
     }
