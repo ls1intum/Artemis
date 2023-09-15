@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import java.util.Optional;
+
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,7 +21,7 @@ public interface IrisSessionRepository extends JpaRepository<IrisSession, Long> 
             LEFT JOIN FETCH s.messages m
             WHERE s.id = :sessionId
             """)
-    IrisSession findByIdWithMessages(long sessionId);
+    Optional<IrisSession> findByIdWithMessages(long sessionId);
 
     @Query("""
             SELECT s
@@ -33,5 +35,10 @@ public interface IrisSessionRepository extends JpaRepository<IrisSession, Long> 
     @NotNull
     default IrisSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
         return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
+    }
+
+    @NotNull
+    default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {
+        return findByIdWithMessages(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
     }
 }

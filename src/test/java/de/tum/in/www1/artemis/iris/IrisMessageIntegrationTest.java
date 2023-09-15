@@ -82,7 +82,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
-        var irisSessionFromDb = irisSessionRepository.findByIdWithMessages(irisSession.getId());
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
@@ -130,7 +130,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage1.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getTextContent).toList());
-        var irisSessionFromDb = irisSessionRepository.findByIdWithMessages(irisSession.getId());
+        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage1));
 
         var messageToSend2 = new IrisMessage();
@@ -143,7 +143,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage2.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getTextContent).toList());
-        irisSessionFromDb = irisSessionRepository.findByIdWithMessages(irisSession.getId());
+        irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(2).isEqualTo(List.of(irisMessage1, irisMessage2));
     }
 

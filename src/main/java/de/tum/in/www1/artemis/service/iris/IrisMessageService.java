@@ -55,7 +55,7 @@ public class IrisMessageService {
         var contents = message.getContent();
         message.setContent(new ArrayList<>());
         var savedMessage = irisMessageRepository.saveAndFlush(message);
-        var sessionWithMessages = irisSessionRepository.findByIdWithMessages(session.getId());
+        var sessionWithMessages = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
         message.setSession(sessionWithMessages);
         sessionWithMessages.getMessages().add(savedMessage);
         irisSessionRepository.save(sessionWithMessages);

@@ -59,7 +59,7 @@
                                 style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
                                 (click)="resendMessage(message)"
                                 [disabled]="resendAnimationActive"
-                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && isSendMessageFailedError()"
+                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && !this.isLoading"
                             >
                                 <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
                             </button>

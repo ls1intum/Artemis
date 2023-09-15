@@ -126,6 +126,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     fullHeightFactor = 0.85;
     fullSize = false;
     public ButtonType = ButtonType;
+    readonly IrisLogoSize = IrisLogoSize;
     private navigationSubscription: Subscription;
 
     constructor(
@@ -604,6 +605,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     resendMessage(message: IrisClientMessage) {
         this.resendAnimationActive = true;
+        message.messageDifferentiator = message.id;
 
         const timeoutId = setTimeout(() => {
             // will be cleared by the store automatically
@@ -612,7 +614,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }, 20000);
         this.stateStore
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-            .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
+            .then(() => this.httpMessageService.resendMessage(<number>this.sessionId, message).toPromise())
             .then(() => {
                 this.scrollToBottom('smooth');
             })
@@ -672,6 +674,4 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
     }
-
-    protected readonly IrisLogoSize = IrisLogoSize;
 }
