@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.export;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,15 +15,17 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
-import de.tum.in.www1.artemis.service.export.SubmissionExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 /**
  * Service for exporting Exercises with the student submissions.
  */
+// We cannot remove the abstract as this breaks the Spring Dependency Injection because then Spring doesn't know which bean to inject
 @Service
-public class ExerciseWithSubmissionsExportService {
+public abstract class ExerciseWithSubmissionsExportService {
 
     public static final String EXPORTED_EXERCISE_DETAILS_FILE_PREFIX = "Exercise-Details";
 
@@ -43,8 +45,7 @@ public class ExerciseWithSubmissionsExportService {
 
     private final SubmissionExportService submissionExportService;
 
-    protected ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            SubmissionExportService submissionExportService) {
+    ExerciseWithSubmissionsExportService(FileService fileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter, SubmissionExportService submissionExportService) {
         this.fileService = fileService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.submissionExportService = submissionExportService;
@@ -58,8 +59,7 @@ public class ExerciseWithSubmissionsExportService {
      * @param exportDir       the directory where the content of the export is stored
      * @param pathsToBeZipped the paths that should be included in the zip file
      */
-    protected void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped)
-            throws IOException {
+    void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
         exportProblemStatementWithEmbeddedFiles(exercise, exportErrors, exportDir, pathsToBeZipped);
         exportExerciseDetails(exercise, exportDir, pathsToBeZipped);
 
@@ -214,7 +214,7 @@ public class ExerciseWithSubmissionsExportService {
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
     }
 
-    protected Path exportExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
+    Path exportExerciseWithSubmissions(Exercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
             List<ArchivalReportEntry> reportEntries) {
         List<Path> pathsToBeZipped = new ArrayList<>();
         try {

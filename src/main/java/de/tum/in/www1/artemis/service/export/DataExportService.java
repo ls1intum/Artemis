@@ -1,11 +1,10 @@
-package de.tum.in.www1.artemis.service.dataexport;
+package de.tum.in.www1.artemis.service.export;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
 
 import javax.validation.constraints.NotNull;
 

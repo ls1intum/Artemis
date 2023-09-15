@@ -8,7 +8,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.service.ExerciseWithSubmissionsExportService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
@@ -19,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 @Service
 public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    protected FileUploadExerciseWithSubmissionsExportService(FileService fileService, FileUploadSubmissionExportService fileUploadSubmissionExportService,
+    FileUploadExerciseWithSubmissionsExportService(FileService fileService, FileUploadSubmissionExportService fileUploadSubmissionExportService,
             MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         super(fileService, springMvcJacksonConverter, fileUploadSubmissionExportService);
     }
