@@ -6,13 +6,22 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body d-flex flex-column">
-        <jhi-working-time-control
-            name="workingTimeSeconds"
-            durationLabelText="artemisApp.examManagement.editWorkingTime.label"
-            [(ngModel)]="workingTimeSeconds"
-            [showRelative]="false"
-            [disabled]="isLoading"
-        />
+        <div class="d-flex flex-column gap-4 align-items-start">
+            <jhi-working-time-control
+                name="workingTimeSeconds"
+                durationLabelText="artemisApp.examManagement.editWorkingTime.label"
+                [(ngModel)]="workingTimeSeconds"
+                [showRelative]="false"
+                [disabled]="isLoading"
+            />
+
+            <p
+                class="mb-0"
+                *ngIf="absoluteWorkingTimeDuration"
+                jhiTranslate="artemisApp.examManagement.editWorkingTime.duration"
+                [translateValues]="{ duration: absoluteWorkingTimeDuration }"
+            ></p>
+        </div>
 
         <hr />
 

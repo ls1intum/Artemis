@@ -5,6 +5,8 @@ import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { normalWorkingTime } from 'app/exam/participate/exam.utils';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-edit-working-time-dialog',
@@ -25,6 +27,13 @@ export class ExamEditWorkingTimeDialogComponent {
 
     workingTimeSeconds = 0;
 
+    get absoluteWorkingTimeDuration() {
+        const currentWorkingTimeSeconds = normalWorkingTime(this.exam);
+        if (!currentWorkingTimeSeconds) return undefined;
+        const duration = dayjs.duration(currentWorkingTimeSeconds + this.workingTimeSeconds, 'seconds');
+        return [duration.asHours() >= 1 ? `${Math.floor(duration.asHours())} h` : null, duration.format('m [min] s [s]')].filter(Boolean).join(' ');
+    }
+
     constructor(
         private activeModal: NgbActiveModal,
         private examManagementService: ExamManagementService,
@@ -44,8 +53,8 @@ export class ExamEditWorkingTimeDialogComponent {
                 this.clear();
             },
             error: () => {
+                // If an error happens, the alert service takes care of displaying an error message
                 this.isLoading = false;
-                // TODO: error handling
             },
         });
     }
