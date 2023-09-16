@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.assessment.ComplaintUtilService;
+import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -137,6 +138,9 @@ public class CourseUtilService {
 
     @Autowired
     private ComplaintUtilService complaintUtilService;
+
+    @Autowired
+    private GradingScaleUtilService gradingScaleUtilService;
 
     public Course createCourse() {
         return createCourse(null);
@@ -878,11 +882,12 @@ public class CourseUtilService {
         courseRepo.save(course);
     }
 
-    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(User user, String studentGroupName, String shortName, boolean withProgrammingExercise,
-            boolean withAllQuizQuestionTypes) {
+    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(User user, String studentGroupName, String shortName,
+            boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
         Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName);
         Exam exam = examUtilService.addExam(course, user, ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
                 ZonedDateTime.now().minusMinutes(1));
+        gradingScaleUtilService.generateAndSaveGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), exam);
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
         return courseRepo.save(course);
