@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextSubmission extends Submission {
 
-    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getSubmissionExerciseType() {
         return "text";
     }

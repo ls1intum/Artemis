@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
+import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -53,10 +54,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    getSubmission() {
-        if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
+    getSubmission(): Submission | undefined {
+        if (this.studentParticipation?.submissions?.length) {
             return this.studentParticipation.submissions[0];
         }
+        return undefined;
     }
 
     getExercise(): Exercise {
