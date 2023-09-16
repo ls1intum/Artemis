@@ -60,7 +60,7 @@ describe('ProfileToggleHideDirective', () => {
 
         let lectureButton = fixture.debugElement.query(By.directive(ProfileToggleHideDirective));
         // Not hidden because 'DECOUPLING' is not activated
-        expect(lectureButton.classes['d-none']).toBeNull();
+        expect(lectureButton.classes['d-none']).toBeUndefined();
 
         profileToggleService.initializeProfileToggles([ProfileToggle.LECTURE]);
 
@@ -69,7 +69,7 @@ describe('ProfileToggleHideDirective', () => {
 
         lectureButton = fixture.debugElement.query(By.directive(ProfileToggleHideDirective));
         // Not hidden because 'DECOUPLING' is not activated - independent of LECTURE
-        expect(lectureButton.classes['d-none']).toBeNull();
+        expect(lectureButton.classes['d-none']).toBeUndefined();
     });
 
     it('should always be disabled if decoupling is enabled', () => {
@@ -80,7 +80,7 @@ describe('ProfileToggleHideDirective', () => {
 
         const lectureButton = fixture.debugElement.query(By.directive(ProfileToggleHideDirective));
         // Hidden because DECOUPLING is present but LECTURE is not
-        expect(lectureButton.classes['d-none']).not.toBeNull();
+        expect(lectureButton.classes['d-none']).toBeDefined();
     });
 
     it('should toggle correctly if decoupling is enabled', () => {
@@ -91,7 +91,7 @@ describe('ProfileToggleHideDirective', () => {
 
         let lectureButton = fixture.debugElement.query(By.directive(ProfileToggleHideDirective));
         // Hidden because DECOUPLING is present but LECTURE is not
-        expect(lectureButton.classes['d-none']).not.toBeNull();
+        expect(lectureButton.classes['d-none']).toBeDefined();
 
         profileToggleService.initializeProfileToggles([ProfileToggle.DECOUPLING, ProfileToggle.LECTURE]);
 
@@ -100,6 +100,6 @@ describe('ProfileToggleHideDirective', () => {
 
         lectureButton = fixture.debugElement.query(By.directive(ProfileToggleHideDirective));
         // Not hidden because LECTURE is present
-        expect(lectureButton.classes['d-none']).toBeNull();
+        expect(lectureButton.classes['d-none']).toBeUndefined();
     });
 });
