@@ -286,7 +286,7 @@ public class ExamResource {
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
             var savedStudentExam = studentExamRepository.save(studentExam);
-            // NOTE: if the exam already started, notify the student about the working time change
+            // NOTE: if the exam is already visible, notify the student about the working time change
             if (now.isAfter(exam.getVisibleDate())) {
                 websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
             }
