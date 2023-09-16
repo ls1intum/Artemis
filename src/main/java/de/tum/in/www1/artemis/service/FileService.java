@@ -26,7 +26,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -64,7 +63,7 @@ public class FileService implements DisposableBean {
      * Extensions must be lower-case without leading dots.
      */
     private static final Set<String> binaryFileExtensions = Set.of("png", "jpg", "jpeg", "heic", "gif", "tiff", "psd", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "pages",
-            "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar");
+            "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar", "bin", "so", "dll");
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
@@ -1203,7 +1202,7 @@ public class FileService implements DisposableBean {
             for (String path : paths) {
                 File file = new File(path);
                 if (file.exists()) {
-                    pdfMerger.addSource(new File(path));
+                    pdfMerger.addSource(file);
                 }
             }
 
@@ -1212,7 +1211,7 @@ public class FileService implements DisposableBean {
             pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
 
             pdfMerger.setDestinationStream(outputStream);
-            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+            pdfMerger.mergeDocuments(null);
 
         }
         catch (IOException e) {
