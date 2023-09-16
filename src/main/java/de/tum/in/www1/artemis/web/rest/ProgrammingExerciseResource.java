@@ -271,6 +271,9 @@ public class ProgrammingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
+        // Ignore changes to the default branch
+        updatedProgrammingExercise.setBranch(programmingExerciseBeforeUpdate.getBranch());
+
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             // make sure the default value is set properly
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());

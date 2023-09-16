@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -80,6 +80,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
     }
@@ -224,7 +225,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
         this.injectableContentForMarkdownCallbacks = [];
         this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);
         // Wait a tick for the template to render before injecting the content.
-        setTimeout(() => this.injectableContentForMarkdownCallbacks.forEach((callback) => callback()), 0);
+        setTimeout(
+            () =>
+                this.injectableContentForMarkdownCallbacks.forEach((callback) => {
+                    callback();
+                }),
+            0,
+        );
+    }
+
+    renderUpdatedProblemStatement() {
+        this.problemStatement = this.exercise.problemStatement!;
+        this.updateMarkdown();
     }
 
     /**

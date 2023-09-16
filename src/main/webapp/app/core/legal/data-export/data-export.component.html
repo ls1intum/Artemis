@@ -24,7 +24,8 @@
             id="download-data-export-btn"
             [btnSize]="ButtonSize.LARGE"
             [disabled]="!canDownload"
-            title="artemisApp.dataExport.download"
+            [tooltip]="'artemisApp.dataExport.download'"
+            [title]="'artemisApp.dataExport.download'"
             (onClick)="downloadDataExport()"
         ></jhi-button>
     </div>
@@ -33,7 +34,7 @@
             <span> {{ 'artemisApp.dataExport.lastRequestDate' | artemisTranslate }}</span>
             <span class="bold">{{ dataExport?.createdDate | artemisDate: 'long-date' }}</span>
         </p>
-        <p *ngIf="dataExport?.nextRequestDate && (state === DataExportState.DELETED || state === DataExportState.DOWNLOADED_DELETED)">
+        <p *ngIf="dataExport?.nextRequestDate && (state === DataExportState.DELETED || state === DataExportState.DOWNLOADED_DELETED) && !canRequestDataExport">
             <span> {{ 'artemisApp.dataExport.nextRequestDate' | artemisTranslate }}</span>
             <span class="bold">{{ dataExport?.nextRequestDate | artemisDate: 'long-date' }}</span>
         </p>

@@ -17,6 +17,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,9 +29,11 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -54,6 +57,8 @@ public class LocalCIBuildJobExecutionService {
 
     private final LocalCIContainerService localCIContainerService;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     /**
      * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
      */
@@ -66,16 +71,17 @@ public class LocalCIBuildJobExecutionService {
     private String localVCBasePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
-            LocalCIContainerService localCIContainerService, XMLInputFactory localCIXMLInputFactory) {
+            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
     public enum LocalCIBuildJobRepositoryType {
 
-        ASSIGNMENT("assignment"), TEST("test");
+        ASSIGNMENT("assignment"), TEST("test"), AUXILIARY("auxiliary");
 
         private final String name;
 
@@ -104,14 +110,47 @@ public class LocalCIBuildJobExecutionService {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
+        List<AuxiliaryRepository> auxiliaryRepositories;
+
+        // If the auxiliary repositories are not initialized, we need to fetch them from the database.
+        if (Hibernate.isInitialized(participation.getProgrammingExercise().getAuxiliaryRepositories())) {
+            auxiliaryRepositories = participation.getProgrammingExercise().getAuxiliaryRepositories();
+        }
+        else {
+            auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
+        }
+
+        // Prepare script
+        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise(), auxiliaryRepositories);
+
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
         // the tests to be executed.
         LocalVCRepositoryUrl assignmentRepositoryUrl;
         LocalVCRepositoryUrl testsRepositoryUrl;
+        LocalVCRepositoryUrl[] auxiliaryRepositoriesUrls;
+        Path[] auxiliaryRepositoriesPaths;
+        String[] auxiliaryRepositoryNames;
+
         try {
             assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
             testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+
+            if (!auxiliaryRepositories.isEmpty()) {
+                auxiliaryRepositoriesUrls = new LocalVCRepositoryUrl[auxiliaryRepositories.size()];
+                auxiliaryRepositoriesPaths = new Path[auxiliaryRepositories.size()];
+                auxiliaryRepositoryNames = new String[auxiliaryRepositories.size()];
+
+                for (int i = 0; i < auxiliaryRepositories.size(); i++) {
+                    auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
+                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+                    auxiliaryRepositoryNames[i] = auxiliaryRepositories.get(i).getName();
+                }
+            }
+            else {
+                auxiliaryRepositoriesPaths = new Path[0];
+                auxiliaryRepositoryNames = new String[0];
+            }
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
@@ -130,7 +169,8 @@ public class LocalCIBuildJobExecutionService {
 
         // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
         // the build job.
-        HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
+        HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
+                buildScriptPath);
 
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
         // container information about the branch and commit hash to be used.
@@ -182,6 +222,8 @@ public class LocalCIBuildJobExecutionService {
             // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and
             // empty list for successful tests).
             localCIContainerService.stopContainer(containerName);
+            // Delete script file from host system
+            localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
@@ -198,10 +240,15 @@ public class LocalCIBuildJobExecutionService {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             // Stop the container and return a build results that indicates that the build failed.
             localCIContainerService.stopContainer(containerName);
+            // Delete script file from host system
+            localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
         localCIContainerService.stopContainer(containerName);
+
+        // Delete script file from host system
+        localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
 
         LocalCIBuildResult buildResult;
         try {

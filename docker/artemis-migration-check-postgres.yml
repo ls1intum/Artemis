@@ -8,6 +8,8 @@ services:
             file: ./artemis.yml
             service: artemis-app
         env_file:
+            - ./artemis/config/postgres.env
+            - ./artemis/config/cypress.env
             - ./artemis/config/cypress-postgres.env
             - ./artemis/config/migration-check.env
         depends_on:
@@ -15,8 +17,8 @@ services:
                 condition: service_healthy
     postgresql:
         extends:
-            file: ./postgresql.yml
-            service: postgresql
+            file: ./postgres.yml
+            service: postgres
     migration-check:
         image: alpine
         container_name: migration-check
@@ -32,7 +34,7 @@ networks:
         driver: "bridge"
         name: artemis
 volumes:
-    artemis-postgresql-data:
-        name: artemis-postgresql-data
+    artemis-postgres-data:
+        name: artemis-postgres-data
     artemis-data:
         name: artemis-data
