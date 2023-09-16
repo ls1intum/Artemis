@@ -26,30 +26,34 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
 
         profileToggleService.getProfileToggleActive(ProfileToggle.LECTURE).subscribe((lecturesEnabled) => {
             if (lecturesEnabled) {
-                lectureService
-                    .findAllByCourseIdWithSlides(this.metisService.getCourse().id!)
-                    .pipe(map((response: HttpResponse<Lecture[]>) => response.body!))
-                    .subscribe((lectures: Lecture[]) => {
-                        lectures.map((lecture) => {
-                            this.setValues(
-                                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                                [
-                                    ...this.values,
-                                    {
-                                        id: lecture.id!.toString(),
-                                        value: lecture.title!,
-                                        type: ReferenceType.LECTURE,
-                                        elements: this.lectureAttachments(lecture.attachments!),
-                                        attachmentUnits: this.attachmentUnitsWithSlides(lecture.lectureUnits!),
-                                    },
-                                ],
-                            );
-                        });
-                    });
+                this.loadLectures();
             } else {
                 this.setValues([]);
             }
         });
+    }
+
+    private loadLectures(): void {
+        this.lectureService
+            .findAllByCourseIdWithSlides(this.metisService.getCourse().id!)
+            .pipe(map((response: HttpResponse<Lecture[]>) => response.body!))
+            .subscribe((lectures: Lecture[]) => {
+                lectures.map((lecture) => {
+                    this.setValues(
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                        [
+                            ...this.values,
+                            {
+                                id: lecture.id!.toString(),
+                                value: lecture.title!,
+                                type: ReferenceType.LECTURE,
+                                elements: this.lectureAttachments(lecture.attachments!),
+                                attachmentUnits: this.attachmentUnitsWithSlides(lecture.lectureUnits!),
+                            },
+                        ],
+                    );
+                });
+            });
     }
 
     /**

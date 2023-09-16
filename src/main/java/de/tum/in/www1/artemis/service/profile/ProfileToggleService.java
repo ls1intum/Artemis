@@ -96,7 +96,7 @@ public class ProfileToggleService {
     }
 
     private void sendUpdate(Set<Member> members) {
-        log.debug("Sending membership update " + enabledProfiles(members));
+        log.debug("Sending membership update {}", enabledProfiles(members));
         websocketMessagingService.sendMessage(TOPIC_PROFILE_TOGGLES, enabledProfiles(members));
     }
 

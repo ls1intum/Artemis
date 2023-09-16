@@ -1,13 +1,12 @@
 import { Directive, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
-import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
 @Directive({
     selector: '[jhiProfileToggleHide]',
 })
 export class ProfileToggleHideDirective implements OnInit, OnDestroy {
-    @Input('jhiProfileToggleHide') profile: ProfileToggle | undefined;
+    @Input('jhiProfileToggleHide') profile?: ProfileToggle;
 
     private profileActive = true;
 
@@ -21,14 +20,7 @@ export class ProfileToggleHideDirective implements OnInit, OnDestroy {
     ngOnInit() {
         // If no profile is set for the toggle, the directive does nothing.
         if (this.profile) {
-            this.profileToggleActiveSubscription = this.profileToggleService
-                .getProfileToggleActive(this.profile)
-                .pipe(
-                    tap((active) => {
-                        this.profileActive = active;
-                    }),
-                )
-                .subscribe();
+            this.profileToggleActiveSubscription = this.profileToggleService.getProfileToggleActive(this.profile).subscribe((active) => (this.profileActive = active));
         }
     }
 

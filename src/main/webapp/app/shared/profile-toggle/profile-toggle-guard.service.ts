@@ -21,7 +21,7 @@ export class ProfileToggleGuard implements CanActivate {
             tap((activated: boolean) => {
                 if (!activated) {
                     this.router.navigate(['/courses']);
-                    this.alertService.addErrorAlert('This functionality is currently not available', 'artemisApp.profileToggle.alerts.routeFunctionalityNotAvailable');
+                    this.alertService.addErrorAlert('This functionality is currently not available.', 'artemisApp.profileToggle.alerts.routeFunctionalityNotAvailable');
                 }
             }),
         );
