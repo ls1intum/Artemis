@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
- * This service is responsible for sending websocket notifications when a new results got created.
+ * This service is responsible for sending websocket notifications when a new result got created.
  */
 @Service
 public class ResultWebsocketService {
