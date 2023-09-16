@@ -12,7 +12,7 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result">
             <fa-icon *ngIf="showIcon" class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
-            <a
+            <span
                 [ngClass]="textColorClass"
                 class="guided-tour result"
                 [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ"
@@ -26,7 +26,7 @@
                     <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle"></fa-icon>
                 </span>
                 <span [ngbTooltip]="result.completionDate | artemisDate"> ({{ result.completionDate | artemisTimeAgo }}) </span>
-            </a>
+            </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
                     &nbsp; <fa-icon [icon]="faFile"></fa-icon>
