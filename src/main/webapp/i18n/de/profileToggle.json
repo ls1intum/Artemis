@@ -2,7 +2,7 @@
     "artemisApp": {
         "profileToggle": {
             "alerts": {
-                "routeFunctionalityNotAvailable": "Die gewünschte Funktionalität ist derzeit nicht verfügbar",
+                "routeFunctionalityNotAvailable": "Die gewünschte Funktionalität ist derzeit nicht verfügbar.",
                 "pageFunctionalityNotAvailable": "Nicht alle angezeigten Funktionen sind derzeit verfügbar. Kontaktiere einen Admin falls das Problem weiterhin besteht.",
                 "pageFunctionalityAvailable": "Vorrübergehend nicht verfügbare Funktionen sind wieder verfügbar."
             }

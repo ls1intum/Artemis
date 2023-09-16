@@ -26,7 +26,7 @@ export class ProfileToggleService {
     private subject: BehaviorSubject<ActiveProfileToggles | undefined> = new BehaviorSubject<ActiveProfileToggles | undefined>(undefined);
     private subscriptionInitialized = false;
 
-    private profileForCurrentRoute: ProfileToggle | undefined = undefined;
+    private profileForCurrentRoute?: ProfileToggle;
     private errorShownForCurrentRoute = false;
 
     constructor(

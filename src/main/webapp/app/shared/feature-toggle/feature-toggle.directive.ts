@@ -12,7 +12,7 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
      * This input must be used to overwrite the disabled state given that the feature toggle is inactive.
      * If the normal [disabled] directive of Angular would be used, the HostBinding in this directive would always enable the element if the feature is active.
      */
-    @Input() overwriteDisabled: boolean | null;
+    @Input() overwriteDisabled?: boolean;
     /**
      * Condition to check even before checking for the feature toggle. If true, the feature toggle won't get checked.
      * This can be useful e.g. if you use the same button for different features (like our delete button) and only want

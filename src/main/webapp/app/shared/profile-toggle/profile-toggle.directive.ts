@@ -1,5 +1,4 @@
 import { Directive, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
@@ -7,12 +6,12 @@ import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/p
     selector: '[jhiProfileToggle]',
 })
 export class ProfileToggleDirective implements OnInit, OnDestroy {
-    @Input('jhiProfileToggle') profiles: ProfileToggle | ProfileToggle[];
+    @Input('jhiProfileToggle') profiles?: ProfileToggle | ProfileToggle[];
     /**
      * This input must be used to overwrite the disabled state given that the profile toggle is inactive.
      * If the normal [disabled] directive of Angular would be used, the HostBinding in this directive would always enable the element if the profile is active.
      */
-    @Input() overwriteDisabled: boolean | null;
+    @Input() overwriteDisabled?: boolean;
     /**
      * Condition to check even before checking for the profile toggle. If true, the profile toggle won't get checked.
      * This can be useful e.g. if you use the same button for different profiles (like our delete button) and only want
@@ -39,13 +38,7 @@ export class ProfileToggleDirective implements OnInit, OnDestroy {
         }
         this.profileToggleActiveSubscription = this.profileToggleService
             .getProfileTogglesActive(profileArray)
-            .pipe(
-                // Disable the element if any of the profiles is inactive.
-                tap((active) => {
-                    this.profileActive = this.skipProfileToggle || active;
-                }),
-            )
-            .subscribe();
+            .subscribe((active) => (this.profileActive = this.skipProfileToggle || active));
     }
 
     /**
