@@ -495,29 +495,19 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param exercise             the exercise related to this result. Used to determine if test case names should be removed.
      */
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
-        var filteredFeedback = createFilteredFeedbacks(removeHiddenFeedback);
+        var filteredFeedback = createFilteredFeedbacks(removeHiddenFeedback, exercise);
         setFeedbacks(filteredFeedback);
 
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            filterTestCaseFeedback(programmingExercise);
+        if (exercise instanceof ProgrammingExercise) {
+            updateTestCaseCount();
         }
     }
 
     /**
-     * Removes the test names from all feedback if it should not be shown to the student.
-     * Also updates the testCaseCount and passedTestCaseCount attributes.
-     *
-     * @param programmingExercise used to check if students can see the test case names
+     * Updates the testCaseCount and passedTestCaseCount attributes after filtering the feedback.
      */
-    private void filterTestCaseFeedback(ProgrammingExercise programmingExercise) {
+    private void updateTestCaseCount() {
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
-        if (!Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
-            testCaseFeedback.forEach(feedback -> {
-                if (feedback.getTestCase() != null) {
-                    feedback.getTestCase().setTestName(null);
-                }
-            });
-        }
 
         // TODO: this is not good code!
         setTestCaseCount(testCaseFeedback.size());
@@ -527,15 +517,27 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Returns a new list that only contains feedback that should be passed to the student.
      * Does not change the feedbacks attribute of this entity.
+     * Also removes the test names from all feedback if it should not be shown to the student.
      *
      * @see ResultDTO
      *
      * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
+     * @param exercise             used to check if students can see the test case names
      * @return the new filtered list
      */
-    public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback) {
-        return feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
+    public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
+        var filteredFeedback = feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
                 .collect(Collectors.toCollection(ArrayList::new));
+
+        if (exercise instanceof ProgrammingExercise programmingExercise && !Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
+            filteredFeedback.stream().filter(Feedback::isTestFeedback).forEach(feedback -> {
+                if (feedback.getTestCase() != null) {
+                    feedback.getTestCase().setTestName(null);
+                }
+            });
+
+        }
+        return filteredFeedback;
     }
 
     /**
