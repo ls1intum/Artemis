@@ -51,7 +51,7 @@ public class TestRepositoryResource extends RepositoryResource {
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
         final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        repositoryAccessService.checkAccessTestRepositoryElseThrow(false, exercise, user);
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
         final var repoUrl = exercise.getVcsTestRepositoryUrl();
         return gitService.getOrCheckoutRepository(repoUrl, pullOnGet);
     }
@@ -65,8 +65,8 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     boolean canAccessRepository(Long exerciseId) {
         try {
-            repositoryAccessService.checkAccessTestRepositoryElseThrow(true, programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId),
-                    userRepository.getUserWithGroupsAndAuthorities());
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId),
+                    userRepository.getUserWithGroupsAndAuthorities(), "test");
         }
         catch (AccessForbiddenException e) {
             return false;
@@ -178,7 +178,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
         Repository repository;
         try {
-            repositoryAccessService.checkAccessTestRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()));
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
             repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), true);
         }
         catch (AccessForbiddenException e) {
