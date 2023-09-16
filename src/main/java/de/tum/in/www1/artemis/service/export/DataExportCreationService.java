@@ -1,6 +1,6 @@
-package de.tum.in.www1.artemis.service.dataexport;
+package de.tum.in.www1.artemis.service.export;
 
-import static de.tum.in.www1.artemis.service.dataexport.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
+import static de.tum.in.www1.artemis.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

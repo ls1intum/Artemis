@@ -66,18 +66,6 @@ public class ZipFileService {
     }
 
     /**
-     * Create a zip file of the given paths and save it in the zipFilePath
-     *
-     * @param zipFilePath path where the zip file should be saved
-     * @param paths       multiple paths that should be zipped
-     * @param pathsRoot   the root path relative to <code>paths</code>
-     * @throws IOException if an error occurred while zipping
-     */
-    public void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
-        createZipFileFromPathStream(zipFilePath, paths.stream(), pathsRoot, null);
-    }
-
-    /**
      * Recursively include all files in contentRootPath and create a zip file 'zipFileName' in the folder 'zipFileFolderName'
      *
      * @param zipFilePath     path where the zip file should be saved

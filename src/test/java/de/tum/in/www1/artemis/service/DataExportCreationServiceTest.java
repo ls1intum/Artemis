@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
-import de.tum.in.www1.artemis.service.dataexport.DataExportCreationService;
+import de.tum.in.www1.artemis.service.export.DataExportCreationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
