@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { merge } from 'rxjs';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -24,6 +25,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly ActionType = ActionType;
     readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
+    selectedQuizExercises: QuizExercise[] = [];
+    allChecked = false;
 
     @Input() quizExercises: QuizExercise[] = [];
     filteredQuizExercises: QuizExercise[] = [];
@@ -68,6 +71,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
                     exercise.isEditable = isQuizEditable(exercise);
+                    this.selectedQuizExercises = [];
                 });
                 this.setQuizExercisesStatus();
                 this.emitExerciseCount(this.quizExercises.length);
@@ -273,6 +277,25 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     /**
+     * Deletes all the given quiz exercises
+     * @param exercisesToDelete the exercise objects which are to be deleted
+     * @param event contains additional checks which are performed for all these exercises
+     */
+    deleteMultipleQuizExercises(exercisesToDelete: QuizExercise[]) {
+        const deletionObservables = exercisesToDelete.map((exercise) => this.quizExerciseService.delete(exercise.id!));
+        return merge(...deletionObservables).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'quizExerciseListModification',
+                    content: 'Deleted selected Exercises',
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
      * Resets quiz exercise
      * @param quizExercise the quiz exercise that will be deleted
      */
@@ -293,5 +316,26 @@ export class QuizExerciseComponent extends ExerciseComponent {
     public sortRows() {
         this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
         this.applyFilter();
+    }
+
+    toggleQuizExercise(quizExercise: QuizExercise) {
+        const quizExerciseIndex = this.selectedQuizExercises.indexOf(quizExercise);
+        if (quizExerciseIndex !== -1) {
+            this.selectedQuizExercises.splice(quizExerciseIndex, 1);
+        } else {
+            this.selectedQuizExercises.push(quizExercise);
+        }
+    }
+
+    toggleAllQuizExercises() {
+        this.selectedQuizExercises = [];
+        if (!this.allChecked) {
+            this.selectedQuizExercises = this.selectedQuizExercises.concat(this.quizExercises);
+        }
+        this.allChecked = !this.allChecked;
+    }
+
+    isExerciseSelected(exercise: QuizExercise) {
+        return this.selectedQuizExercises.includes(exercise);
     }
 }

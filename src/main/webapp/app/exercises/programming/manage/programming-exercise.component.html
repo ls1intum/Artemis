@@ -266,5 +266,23 @@
             <fa-icon [icon]="faCheckDouble"></fa-icon>
             <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
         </button>
+        <button
+            *ngIf="course.isAtLeastInstructor"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            jhiDeleteButton
+            [entityTitle]="'Multiple Programming Exercises'"
+            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+            (delete)="deleteMultipleExercises(selectedProgrammingExercises, $event)"
+            class="me-1"
+            id="delete-exercises"
+            [dialogError]="dialogError$"
+            [requireConfirmationOnlyForAdditionalChecks]="true"
+            [additionalChecks]="{
+                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+            }"
+        >
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
     </div>
 </div>

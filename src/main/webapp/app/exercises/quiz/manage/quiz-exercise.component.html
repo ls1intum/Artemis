@@ -2,6 +2,9 @@
     <table class="table table-striped">
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                <th *ngIf="course.isAtLeastEditor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleAllQuizExercises()" />
+                </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -20,6 +23,9 @@
         </thead>
         <tbody>
             <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
+                <td *ngIf="quizExercise.isAtLeastEditor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleQuizExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
+                </td>
                 <td *ngIf="!quizExercise.quizEnded || !quizExercise.isAtLeastEditor">
                     <a *ngIf="quizExercise.isEditable; else readOnlyId" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                         >{{ quizExercise.id }}
@@ -239,4 +245,18 @@
             </tr>
         </tbody>
     </table>
+    <div *ngIf="selectedQuizExercises.length > 0">
+        <button
+            *ngIf="course.isAtLeastInstructor"
+            jhiDeleteButton
+            [entityTitle]="'Delete All Quiz Exercises'"
+            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+            (delete)="deleteMultipleQuizExercises(selectedQuizExercises)"
+            [dialogError]="dialogError$"
+            id="delete-all-quiz"
+            class="mb-1"
+        >
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+    </div>
 </div>

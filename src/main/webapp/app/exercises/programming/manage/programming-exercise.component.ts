@@ -1,5 +1,6 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -156,6 +157,27 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
                     content: 'Deleted an programmingExercise',
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Deletes all the given programming exercises
+     * @param exercisesToDelete the exercise objects which are to be deleted
+     * @param event contains additional checks which are performed for all these exercises
+     */
+    deleteMultipleExercises(exercisesToDelete: ProgrammingExercise[], event: { [key: string]: boolean }) {
+        const deletionObservables = exercisesToDelete.map((exercise) =>
+            this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
+        );
+        return merge(...deletionObservables).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'programmingExerciseListModification',
+                    content: 'Deleted selected programmingExercises',
                 });
                 this.dialogErrorSource.next('');
             },
