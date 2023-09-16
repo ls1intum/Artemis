@@ -26,7 +26,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
-import { ArtemisExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
+import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -54,7 +54,7 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisExamNavigationBarModule,
         ArtemisExamTimerModule,
         ArtemisExamSubmissionComponentsModule,
-        ArtemisExamExerciseUpdateHighlighterModule,
+        ExamExerciseUpdateHighlighterModule,
     ],
     declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamExerciseOverviewPageComponent],
 })
