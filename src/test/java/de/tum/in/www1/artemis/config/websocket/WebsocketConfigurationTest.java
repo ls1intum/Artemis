@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config;
+package de.tum.in.www1.artemis.config.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,7 +7,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
 
 class WebsocketConfigurationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

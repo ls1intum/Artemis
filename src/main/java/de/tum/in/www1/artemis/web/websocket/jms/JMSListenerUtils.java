@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.web.websocket.jms;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+/**
+ * Common utils for JMS listeners.
+ */
 public class JMSListenerUtils {
 
     /**
