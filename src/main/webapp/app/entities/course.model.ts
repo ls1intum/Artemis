@@ -97,6 +97,7 @@ export class Course implements BaseEntity {
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
     public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+    public courseInformationSharingMessagingCodeOfConduct?: string;
 
     // helper attributes
     public isAtLeastTutor?: boolean;
