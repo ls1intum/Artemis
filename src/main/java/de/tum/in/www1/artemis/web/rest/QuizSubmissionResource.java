@@ -157,7 +157,7 @@ public class QuizSubmissionResource {
 
         quizExercise.setQuizPointStatistic(null);
 
-        messagingService.awaitBroadcastNewResult(result.getParticipation(), result);
+        messagingService.broadcastNewResult(result.getParticipation(), result);
 
         quizExercise.setCourse(null);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
