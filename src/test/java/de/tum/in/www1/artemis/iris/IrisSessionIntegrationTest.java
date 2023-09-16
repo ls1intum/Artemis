@@ -25,10 +25,11 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
     }
@@ -43,7 +44,7 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createSession_alreadyExists() throws Exception {
         var firstResponse = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
         var secondResponse = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
@@ -51,7 +52,7 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrentSession() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
         var currentIrisSession = request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions/current", HttpStatus.OK, IrisSession.class);
@@ -59,8 +60,27 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrentSession_notFound() throws Exception {
         request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions/current", HttpStatus.NOT_FOUND, IrisSession.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void isActive() throws Exception {
+        var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
+        var settings = irisSettingsService.getGlobalSettings();
+        settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_UP");
+        irisSettingsService.saveGlobalIrisSettings(settings);
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isTrue();
+        settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_DOWN");
+        irisSettingsService.saveGlobalIrisSettings(settings);
+        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
+        settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_NA");
+        irisSettingsService.saveGlobalIrisSettings(settings);
+        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
     }
 }

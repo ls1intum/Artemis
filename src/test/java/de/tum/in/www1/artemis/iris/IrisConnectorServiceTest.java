@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorException;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
-import de.tum.in.www1.artemis.service.iris.exception.IrisForbiddenException;
-import de.tum.in.www1.artemis.service.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.in.www1.artemis.service.iris.exception.IrisInvalidTemplateException;
-import de.tum.in.www1.artemis.service.iris.exception.IrisModelNotAvailableException;
+import de.tum.in.www1.artemis.service.iris.exception.*;
 
 class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
@@ -41,6 +38,18 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
+            return null;
+        }).get();
+    }
+
+    @Test
+    void testParseException() throws Exception {
+        var template = new IrisTemplate("Dummy");
+
+        irisRequestMockProvider.mockCustomJsonResponse("{\"message\": \"invalid\"}");
+
+        irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
+            assertThat(throwable.getCause()).isNotNull().isInstanceOf(IrisParseResponseException.class);
             return null;
         }).get();
     }

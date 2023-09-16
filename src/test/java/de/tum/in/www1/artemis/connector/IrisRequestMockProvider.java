@@ -27,9 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisErrorResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 
 @Component
 @Profile("iris")
@@ -44,6 +42,9 @@ public class IrisRequestMockProvider {
 
     @Value("${artemis.iris.url}/api/v1/models")
     private URL modelsApiURL;
+
+    @Value("${artemis.iris.url}/api/v1/health")
+    private URL healthApiURL;
 
     @Autowired
     private ObjectMapper mapper;
@@ -90,6 +91,11 @@ public class IrisRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
     }
 
+    public void mockCustomJsonResponse(String responseMessage) throws JsonProcessingException {
+        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(responseMessage, MediaType.APPLICATION_JSON));
+    }
+
     public void mockMessageError() throws JsonProcessingException {
         mockMessageError(500);
     }
@@ -106,6 +112,13 @@ public class IrisRequestMockProvider {
         var irisModelDTOArray = new IrisModelDTO[] { irisModelDTO };
         mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(irisModelDTOArray), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockStatusResponse() throws JsonProcessingException {
+        var irisStatusDTOArray = new IrisStatusDTO[] { new IrisStatusDTO("TEST_MODEL_UP", IrisStatusDTO.ModelStatus.UP),
+                new IrisStatusDTO("TEST_MODEL_DOWN", IrisStatusDTO.ModelStatus.DOWN), new IrisStatusDTO("TEST_MODEL_NA", IrisStatusDTO.ModelStatus.NOT_AVAILABLE) };
+        mockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(irisStatusDTOArray), MediaType.APPLICATION_JSON));
     }
 
     public void mockModelsError() throws JsonProcessingException {
