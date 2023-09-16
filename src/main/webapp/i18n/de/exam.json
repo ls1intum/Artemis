@@ -679,7 +679,7 @@
         "examTimeline": {
             "title": "Klausurverlauf von {{ username }}",
             "breadcrumb": "Klausurverlauf",
-            "disabledTooltip": "Der Klausurverlauf ist erst verfügbar, wenn die Klausur abgegeben wurde."
+            "disabledTooltip": "Der Klausurverlauf ist nur verfügbar, wenn die Klausur abgegeben wurde."
         },
         "examStatus": {
             "columnTitle": "Klausurstatus",

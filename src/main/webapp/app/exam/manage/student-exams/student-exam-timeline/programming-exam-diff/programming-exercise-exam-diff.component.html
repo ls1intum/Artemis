@@ -18,16 +18,19 @@
 />
 <div *ngIf="exercise?.gitDiffReport">
     <dt>
-        <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabelPart1"></span>
-        <span class="font-italic text-info">{{ currentSubmission?.commitHash }}</span>
-        <ng-container *ngIf="previousSubmission">
-            <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabelPart2"></span>
-            <span class="font-italic text-info">{{ previousSubmission?.commitHash }}</span>
-            <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabelPart3"></span>
+        <span
+            jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsCurrentSubmissionLabel"
+            [translateValues]="{ currentCommitHash: currentSubmission?.commitHash }"
+        ></span>
+        <ng-container *ngIf="previousSubmission; else noPreviousSubmission">
+            <span
+                jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsPreviousSubmissionLabel"
+                [translateValues]="{ previousCommitHash: previousSubmission?.commitHash }"
+            ></span>
         </ng-container>
-        <ng-container *ngIf="!previousSubmission">
-            <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabelTemplate"></span>
-        </ng-container>
+        <ng-template #noPreviousSubmission>
+            <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsTemplateLabel"></span>
+        </ng-template>
     </dt>
     <dd>
         <div class="fw-bold">

@@ -681,7 +681,7 @@
         "examTimeline": {
             "title": "Exam timeline of {{ username }}",
             "breadcrumb": "Exam timeline",
-            "disabledTooltip": "You cannot view the exam timeline as long as the student exam has not been submitted."
+            "disabledTooltip": "You cannot view the exam timeline if the student exam has not been submitted."
         },
         "examStatus": {
             "columnTitle": "Exam status",
