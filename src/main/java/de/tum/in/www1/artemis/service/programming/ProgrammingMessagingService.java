@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
@@ -47,28 +48,18 @@ public class ProgrammingMessagingService {
      * Notify user on a new programming submission.
      *
      * @param submission ProgrammingSubmission
-     * @param exerciseId
+     * @param exerciseId used to build the correct topic
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
+        var submissionDTO = SubmissionDTO.of(submission);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-
-            // TODO: we should reduce the amount of data sent to the client and use a DTO
-
-            // TODO LOCALVC_CI: Find a way to set the exercise to null (submission.getParticipation().setExercise(null)) as it is not necessary to send all these details here.
-            // Just removing it causes issues with the local CI system that calls this method and in some places expects the exercise to be set on the submission's participation
-            // afterwards (call by reference).
-            // Removing it and immediately setting it back to the original value after sending the message here, is not working either, because some steps in the local CI system
-            // happen in parallel to this and the exercise needs to be set at all times.
-            // Creating a deep copy of the submission and setting the exercise to null there is also not working, because 'java.time.ZoneRegion' is not open to external libraries
-            // (like Jackson) so it cannot be serialized using 'objectMapper.readValue()'.
-            // You could look into some kind of ProgrammingSubmissionDTO here that only gets the values set that the client actually needs.
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
         }
 
         // send an update to tutors, editors and instructors about submissions for template and solution participations
         if (!(submission.getParticipation() instanceof StudentParticipation)) {
             var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
-            websocketMessagingService.sendMessage(topicDestination, submission);
+            websocketMessagingService.sendMessage(topicDestination, submissionDTO);
         }
     }
 
@@ -141,7 +132,7 @@ public class ProgrammingMessagingService {
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
         log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
         // notify user via websocket
-        websocketMessagingService.awaitBroadcastNewResult((Participation) participation, result);
+        websocketMessagingService.broadcastNewResult((Participation) participation, result);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations

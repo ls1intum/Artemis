@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizSubmission extends AbstractQuizSubmission {
 
-    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getSubmissionExerciseType() {
         return "quiz";
     }
