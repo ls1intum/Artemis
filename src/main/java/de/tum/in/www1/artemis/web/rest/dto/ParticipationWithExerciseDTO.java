@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.participation.Participation;
 
 /**
@@ -8,7 +10,8 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
  * @param id       the id of the participation
  * @param exercise the exercise DTO, the participation belongs to
  */
-public record ParticipationDTO(long id, ExerciseDTO exercise) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ParticipationWithExerciseDTO(long id, ExerciseDTO exercise) {
 
     /**
      * Converts a participation to a participation DTO.
@@ -16,7 +19,7 @@ public record ParticipationDTO(long id, ExerciseDTO exercise) {
      * @param participation the participation to convert
      * @return the participation DTO
      */
-    public static ParticipationDTO of(Participation participation) {
-        return new ParticipationDTO(participation.getId(), ExerciseDTO.of(participation.getExercise()));
+    public static ParticipationWithExerciseDTO of(Participation participation) {
+        return new ParticipationWithExerciseDTO(participation.getId(), ExerciseDTO.of(participation.getExercise()));
     }
 }

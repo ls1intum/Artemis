@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.Submission;
  * @param participation the participation DTO, the submission belongs to
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SubmissionDTO(long id, ParticipationDTO participation) {
+public record SubmissionWithParticipationDTO(long id, ParticipationWithExerciseDTO participation) {
 
     /**
      * Converts a submission to a submission DTO.
@@ -19,7 +19,7 @@ public record SubmissionDTO(long id, ParticipationDTO participation) {
      * @param submission the submission to convert
      * @return the submission DTO
      */
-    public static SubmissionDTO of(Submission submission) {
-        return new SubmissionDTO(submission.getId(), ParticipationDTO.of(submission.getParticipation()));
+    public static SubmissionWithParticipationDTO of(Submission submission) {
+        return new SubmissionWithParticipationDTO(submission.getId(), ParticipationWithExerciseDTO.of(submission.getParticipation()));
     }
 }
