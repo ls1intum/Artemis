@@ -27,6 +27,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 
 @NgModule({
     imports: [
@@ -46,6 +47,7 @@ import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-ti
         SubmissionPolicyUpdateModule,
         ArtemisModePickerModule,
         ExerciseTitleChannelNameModule,
+        ExerciseUpdateNotificationModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

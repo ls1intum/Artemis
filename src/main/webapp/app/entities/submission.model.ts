@@ -38,7 +38,7 @@ export abstract class Submission implements BaseEntity {
     // Helper Attributes
 
     // latestResult is undefined until setLatestSubmissionResult() is called
-    public latestResult?: undefined | Result;
+    public latestResult?: Result;
 
     // only used for exam to check if it is saved to server
     public isSynced?: boolean;

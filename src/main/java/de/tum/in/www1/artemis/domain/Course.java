@@ -132,6 +132,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
+    @Column(name = "info_sharing_messaging_code_of_conduct")
+    private String courseInformationSharingMessagingCodeOfConduct;
+
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
@@ -1008,6 +1011,14 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
         this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
+    }
+
+    public String getCourseInformationSharingMessagingCodeOfConduct() {
+        return this.courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
+        this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
     }
 
     public IrisSettings getIrisSettings() {

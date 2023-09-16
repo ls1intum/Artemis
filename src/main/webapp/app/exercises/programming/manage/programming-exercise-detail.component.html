@@ -390,9 +390,11 @@
                                 </div>
                             </dt>
                             <dd>
-                                <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
-                                    auxiliaryRepository.repositoryUrl
-                                }}</a>
+                                <ng-container *ngif="!localVCEnabled">
+                                    <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
+                                        auxiliaryRepository.repositoryUrl
+                                    }}</a>
+                                </ng-container>
                             </dd>
                         </li>
                     </ul>
