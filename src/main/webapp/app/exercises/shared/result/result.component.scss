@@ -3,14 +3,6 @@ span {
     line-height: 1.25;
 }
 
-span.clickable-result {
+.clickable-result span {
     text-decoration: underline;
-    border-bottom-width: 0.4px;
-    border-bottom-style: solid;
-}
-
-span.clickable-result:hover {
-    border-bottom-width: 0.4px;
-    border-bottom-style: solid;
-    cursor: pointer;
 }
