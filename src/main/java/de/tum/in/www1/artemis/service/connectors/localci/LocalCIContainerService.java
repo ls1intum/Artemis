@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -128,7 +126,7 @@ public class LocalCIContainerService {
         });
 
         try {
-            log.info("Started running the build script for build job in container with id " + containerId);
+            log.info("Started running the build script for build job in container with id {}", containerId);
             // Block until the latch reaches 0 or until the thread is interrupted.
             latch.await();
         }
@@ -227,7 +225,7 @@ public class LocalCIContainerService {
             }
         }
 
-        String buildScriptPath = scriptsPath.toAbsolutePath() + "/" + programmingExerciseId.toString() + "-build.sh";
+        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(programmingExerciseId.toString() + "-build.sh");
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
@@ -274,15 +272,13 @@ public class LocalCIContainerService {
                 ./gradlew clean test""");
 
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(buildScriptPath));
-            writer.write(buildScript.toString());
-            writer.close();
+            Files.writeString(buildScriptPath, buildScript.toString(), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new LocalCIException("Failed to create build script file", e);
         }
 
-        return Path.of(buildScriptPath);
+        return buildScriptPath;
     }
 
     /**
@@ -293,9 +289,9 @@ public class LocalCIContainerService {
      */
     public void deleteScriptFile(String exerciseID) {
         Path scriptsPath = Path.of("local-ci-scripts");
-        String buildScriptPath = scriptsPath.toAbsolutePath() + "/" + exerciseID + "-build.sh";
+        Path buildScriptPath = scriptsPath.resolve(exerciseID + "-build.sh").toAbsolutePath();
         try {
-            Files.deleteIfExists(Path.of(buildScriptPath));
+            Files.deleteIfExists(buildScriptPath);
         }
         catch (IOException e) {
             throw new LocalCIException("Failed to delete build script file", e);

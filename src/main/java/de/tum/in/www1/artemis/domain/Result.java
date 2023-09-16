@@ -8,6 +8,7 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPl
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * A Result.
@@ -480,19 +482,30 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Removes all feedback details that should not be passed to the student.
      *
-     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
+     * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
      */
-    public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
-        feedbacks.removeIf(Feedback::isInvisible);
-
-        if (isBeforeDueDate) {
-            feedbacks.removeIf(Feedback::isAfterDueDate);
-        }
+    public void filterSensitiveFeedbacks(boolean removeHiddenFeedback) {
+        var filteredFeedback = createFilteredFeedbacks(removeHiddenFeedback);
+        setFeedbacks(filteredFeedback);
 
         // TODO: this is not good code!
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
         setTestCaseCount(testCaseFeedback.size());
         setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
+    }
+
+    /**
+     * Returns a new list that only contains feedback that should be passed to the student.
+     * Does not change the feedbacks attribute of this entity.
+     *
+     * @see ResultDTO
+     *
+     * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
+     * @return the new filtered list
+     */
+    public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback) {
+        return feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
