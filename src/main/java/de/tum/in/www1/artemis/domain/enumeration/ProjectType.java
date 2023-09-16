@@ -11,7 +11,7 @@ public enum ProjectType {
     MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE, GRADLE_GRADLE, MAVEN_BLACKBOX;
 
     public boolean isMaven() {
-        return this == MAVEN_MAVEN || this == PLAIN_MAVEN;
+        return this == MAVEN_MAVEN || this == PLAIN_MAVEN || this == MAVEN_BLACKBOX;
     }
 
     public boolean isGradle() {

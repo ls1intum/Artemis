@@ -296,19 +296,8 @@ public class ProgrammingExerciseRepositoryService {
 
         // First get files that are not dependent on the project type
         final Path templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(TEST_DIR);
-
-        // Java both supports Gradle and Maven as a test template
-        Path projectTemplatePath = templatePath;
-        if (projectType != null && projectType.isGradle()) {
-            projectTemplatePath = projectTemplatePath.resolve("gradle");
-        }
-        else if (isMavenProject(projectType)) {
-            projectTemplatePath = projectTemplatePath.resolve("maven");
-        }
-        else {
-            projectTemplatePath = projectTemplatePath.resolve("blackbox");
-        }
-        projectTemplatePath = projectTemplatePath.resolve("projectTemplate");
+        // Java supports multiple variants as test template
+        final Path projectTemplatePath = getJavaProjectTemplatePath(templatePath, projectType);
 
         final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
         // keep the folder structure
@@ -319,7 +308,7 @@ public class ProgrammingExerciseRepositoryService {
             setupJVMTestTemplateProjectTypeResources(resources, programmingExercise, repoLocalPath);
         }
 
-        if (projectType == ProjectType.MAVEN_BLACKBOX) {
+        if (ProjectType.MAVEN_BLACKBOX.equals(projectType)) {
             Path dejagnuLibFolderPath = repoLocalPath.resolve("testsuite").resolve("lib");
             fileService.replaceVariablesInFileName(dejagnuLibFolderPath.toString(), PACKAGE_NAME_FILE_PLACEHOLDER, programmingExercise.getPackageName());
         }
@@ -339,6 +328,22 @@ public class ProgrammingExerciseRepositoryService {
 
         replacePlaceholders(programmingExercise, resources.repository);
         commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, user);
+    }
+
+    private static Path getJavaProjectTemplatePath(final Path templatePath, final ProjectType projectType) {
+        Path projectTemplatePath = templatePath;
+
+        if (projectType != null && projectType.isGradle()) {
+            projectTemplatePath = projectTemplatePath.resolve("gradle");
+        }
+        else if (ProjectType.MAVEN_BLACKBOX.equals(projectType)) {
+            projectTemplatePath = projectTemplatePath.resolve("blackbox");
+        }
+        else {
+            projectTemplatePath = projectTemplatePath.resolve("maven");
+        }
+
+        return projectTemplatePath.resolve("projectTemplate");
     }
 
     /**
@@ -591,7 +596,7 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 
     /**
