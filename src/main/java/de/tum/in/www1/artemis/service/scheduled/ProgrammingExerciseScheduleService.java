@@ -382,10 +382,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             return;
         }
 
-        // BEFORE EXAM
+        // The common unlock date of the exam's programming exercises
         ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exercise);
+
+        // BEFORE EXAM
         if (now.isBefore(unlockDate)) {
-            // Use the custom date from the exam rather than the of the exercise's lifecycle
+            // Schedule unlocking of student repositories
+            // Uses the custom exam unlock date rather than the of the exercise's lifecycle
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositoriesAndParticipations(exercise))));
         }
         // DURING EXAM
@@ -397,7 +400,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     new Tuple<>(now.plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositoriesAndParticipations(exercise)));
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
 
-            // Schedule the locking of student repositories based on the individual working time
+            // Re-schedule the locking of student repositories based on the individual working time
             rescheduleProgrammingExerciseDuringExamConduction(exercise);
         }
         // NOTHING TO DO AFTER EXAM
@@ -795,22 +798,24 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * this method schedules individual lock tasks for programming exercises (mostly in the context of exams)
+     * Schedules individual lock tasks for programming exercises (mostly in the context of exams)
      *
-     * @param exercise           the programming exercise for which the lock is executed
-     * @param individualDueDates these are the individual due dates for students taking individual workingTimes of student exams into account
+     * @param exercise                             the programming exercise for which the lock is executed
+     * @param individualParticipationsWithDueDates the set of student participations with their individual due dates
      */
     public void scheduleIndividualRepositoryAndParticipationLockTasks(ProgrammingExercise exercise,
-            Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
-        // 1. Group all participations by due date (TODO use student exams for safety if some participations are not pre-generated)
-        var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.x() != null)
+            Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualParticipationsWithDueDates) {
+        // 1. Group all participations by due date
+        // TODO: use student exams for safety if some participations are not pre-generated
+        var participationsGroupedByDueDate = individualParticipationsWithDueDates.stream().filter(tuple -> tuple.x() != null)
                 .collect(Collectors.groupingBy(Tuple::x, Collectors.mapping(Tuple::y, Collectors.toSet())));
 
         // 2. Transform those groups into lock-repository tasks with times
         Set<Tuple<ZonedDateTime, Runnable>> tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
-            // Check that this participation is planed to be locked and has still the same due date
+            // Check that this participation is planned to be locked and has still the same due date
             Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation)
                     && entry.getKey().equals(studentExamRepository.getIndividualDueDate(exercise, participation));
+
             var task = lockStudentRepositoriesAndParticipations(exercise, lockingCondition);
             return new Tuple<>(entry.getKey(), task);
         }).collect(Collectors.toSet());
@@ -819,14 +824,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, tasks);
     }
 
-    private void scheduleIndividualRepositoryLockTasksForParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation programmingParticipation) {
-        ZonedDateTime dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, programmingParticipation);
-
-        scheduleIndividualRepositoryAndParticipationLockTasks(programmingExercise, Set.of(new Tuple<>(dueDate, programmingParticipation)));
-    }
-
     /**
-     * Reschedules all programming exercises in this exam, since the working time was changed
+     * Reschedules all programming exercise related tasks in the given exam.
      *
      * @param examId the id of the exam
      */
@@ -834,11 +833,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         Exam exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(examId).orElseThrow(NoSuchElementException::new);
 
         // get all programming exercises in the exam
-        List<ProgrammingExercise> programmingExercises = exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
-                .filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise).toList();
-
-        // schedule repository locks for each programming exercise, grouped by participation due date
-        programmingExercises.forEach(this::rescheduleProgrammingExerciseDuringExamConduction);
+        exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).filter(exercise -> exercise instanceof ProgrammingExercise)
+                .map(exercise -> (ProgrammingExercise) exercise)
+                // schedule repository locks for each programming exercise
+                .forEach(this::rescheduleProgrammingExerciseDuringExamConduction);
     }
 
     private void rescheduleProgrammingExerciseDuringExamConduction(ProgrammingExercise programmingExercise) {
@@ -854,29 +852,30 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Reschedules all programming exercises in this student exam, since the working time was changed
+     * Reschedules all programming exercises related tasks in the given student exam.
      *
      * @param studentExamId the id of the student exam
      */
     public void rescheduleStudentExamDuringConduction(Long studentExamId) {
         StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false).orElseThrow(NoSuchElementException::new);
 
-        // get all programming exercises and its student participation in the student's exam
-        var exercisesWithParticipation = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                .map(exercise -> (ProgrammingExercise) exercise).map(exercise -> {
-                    var participations = exercise.getStudentParticipations();
-                    if (participations.isEmpty()) {
-                        return null;
-                    }
-                    StudentParticipation participation = participations.iterator().next();
-                    if (!(participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation)) {
-                        return null;
-                    }
-                    return new Tuple<>(exercise, programmingParticipation);
-                }).filter(Objects::nonNull).toList();
-
-        // schedule repository locks for each programming exercise, grouped by participation due date
-        exercisesWithParticipation.forEach(tuple -> scheduleIndividualRepositoryLockTasksForParticipation(tuple.x(), tuple.y()));
+        // iterate over all programming exercises and its student participation in the student's exam
+        studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {
+            var participations = exercise.getStudentParticipations();
+            // if the student does not participate in the programming exercise, skip it
+            if (participations.isEmpty()) {
+                return;
+            }
+            StudentParticipation participation = participations.iterator().next();
+            // if it's not a programming exercise participation, skip it
+            if (!(participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation)) {
+                return;
+            }
+            // get the individual due date of the student's participation in the programming exercise
+            ZonedDateTime dueDate = studentExamRepository.getIndividualDueDate(exercise, programmingParticipation);
+            // schedule repository locks for each programming exercise
+            scheduleIndividualRepositoryAndParticipationLockTasks(exercise, Set.of(new Tuple<>(dueDate, programmingParticipation)));
+        });
     }
 
     private CompletableFuture<List<ProgrammingExerciseStudentParticipation>> removeWritePermissionsFromAllStudentRepositoriesAndLockParticipations(Long programmingExerciseId,
