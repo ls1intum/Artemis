@@ -12,7 +12,13 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result">
             <fa-icon *ngIf="showIcon" class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
-            <a [ngClass]="textColorClass" [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ" id="result-score" (click)="showDetails(result)">
+            <a
+                [ngClass]="textColorClass"
+                class="guided-tour result"
+                [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ"
+                id="result-score"
+                (click)="showDetails(result)"
+            >
                 <span class="text-decoration-underline" [ngbTooltip]="resultTooltip | artemisTranslate">
                     {{ resultString }}
                 </span>
