@@ -376,6 +376,8 @@ dependencies {
     testImplementation "io.zonky.test:embedded-database-spring-test:2.3.0"
     testImplementation "com.tngtech.archunit:archunit:1.1.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.1"
+    testImplementation "org.apache.activemq.tooling:activemq-junit:5.18.2"
+    testImplementation "org.apache.activemq:activemq-broker:5.16.3"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20230618"
