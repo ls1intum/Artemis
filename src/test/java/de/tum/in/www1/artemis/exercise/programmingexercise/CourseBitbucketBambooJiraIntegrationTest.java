@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +18,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseFactory;
@@ -671,19 +676,26 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise();
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise();
+        // the temp directory should be deleted
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise();
+        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
     }
 
     @Test
@@ -917,5 +929,11 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testEditCourseRemoveExistingIcon() throws Exception {
         courseTestService.testEditCourseRemoveExistingIcon();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseEnableLearningPaths() throws Exception {
+        courseTestService.testUpdateCourseEnableLearningPaths();
     }
 }

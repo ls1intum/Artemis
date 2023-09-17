@@ -37,11 +37,13 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
@@ -61,7 +63,7 @@ public class ExamService {
     private static final int EXAM_ACTIVE_DAYS = 7;
 
     @Value("${artemis.course-archives-path}")
-    private String examArchivesDirPath;
+    private Path examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -451,13 +453,12 @@ public class ExamService {
         // 1st: fetch participations, submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
         var participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
-        // fetch all submitted answers for quizzes
+        // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
-        // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
-        // available
+        // 3rd: connect & filter the exercises and student participations including the latest submission and results where necessary, connect all relevant associations
         for (Exercise exercise : studentExam.getExercises()) {
             // exercises can be null if multiple student exams exist for the same student/exam combination
             if (exercise != null) {
@@ -501,6 +502,26 @@ public class ExamService {
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
+
+            // we might need this information for programming exercises with submission policy
+            participation.setSubmissionCount(participation.getSubmissions().size());
+
+            // set the locked property of the participation properly
+            if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                    && exercise instanceof ProgrammingExercise programmingExercise) {
+                var submissionPolicy = programmingExercise.getSubmissionPolicy();
+                // in the unlikely case the student exam was already submitted, set all participations to locked
+                if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
+                    programmingExerciseStudentParticipation.setLocked(true);
+                }
+                else if (submissionPolicy != null && Boolean.TRUE.equals(submissionPolicy.isActive()) && submissionPolicy instanceof LockRepositoryPolicy) {
+                    programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
+                }
+                else {
+                    programmingExerciseStudentParticipation.setLocked(false);
+                }
+            }
+
             // only include the latest submission
             Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
@@ -1167,21 +1188,22 @@ public class ExamService {
      */
     @Async
     public void archiveExam(Exam exam) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
-        // Archiving a course is only possible after the exam is over
+        // Archiving an exam is only possible after the exam is over
         if (ZonedDateTime.now().isBefore(exam.getEndDate())) {
             return;
         }
 
         // This contains possible errors encountered during the archive process
-        ArrayList<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
 
         try {
             // Create exam archives directory if it doesn't exist
-            Files.createDirectories(Path.of(examArchivesDirPath));
+            Files.createDirectories(examArchivesDirPath);
             log.info("Created the exam archives directory at {} because it didn't exist.", examArchivesDirPath);
 
             // Export the exam to the archives directory.
@@ -1204,6 +1226,7 @@ public class ExamService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
+        log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
