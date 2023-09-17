@@ -69,8 +69,7 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
         const { results, submissions } = this.exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
         const feedbacks = results![0].feedbacks;
         if (submissions) {
-            // @ts-ignore
-            this.orionConnectorService.initializeFeedback(submissions[0].id, feedbacks);
+            this.orionConnectorService.initializeFeedback(submissions[0].id!, feedbacks!);
         }
     }
 }

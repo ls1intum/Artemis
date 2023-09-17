@@ -43,6 +43,7 @@ describe('OrionConnectorService', () => {
             downloadSubmission: jest.fn(),
             initializeAssessment: jest.fn(),
             importParticipation: jest.fn(),
+            initializeFeedback: jest.fn(),
         } as OrionExerciseConnector;
         (window as any).orionVCSConnector = { selectRepository: jest.fn(), submit: jest.fn() } as OrionVCSConnector;
         (window as any).orionBuildConnector = {
@@ -234,6 +235,17 @@ describe('OrionConnectorService', () => {
         expect((window as any).orionExerciseConnector.initializeAssessment).toHaveBeenCalledWith(
             '5',
             '[{"id":2,"positive":false,"detailText":"abc"},{"id":3,"positive":true,"detailText":"cde"}]',
+        );
+    });
+
+    it('should forward initializeFeedback', () => {
+        const feedbacks = [{ id: 12, positive: true, detailText: 'def' } as Feedback, { id: 13, positive: false, detailText: 'abc' } as Feedback];
+        serviceUnderTest.initializeFeedback(15, feedbacks);
+
+        expect((window as any).orionExerciseConnector.initializeAssessment).toHaveBeenCalledOnce();
+        expect((window as any).orionExerciseConnector.initializeAssessment).toHaveBeenCalledWith(
+            '15',
+            '[{"id":12,"positive":true,"detailText":"def"},{"id":13,"positive":false,"detailText":"abc"}]',
         );
     });
 });
