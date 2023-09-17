@@ -6,14 +6,12 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA
 import static de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -58,6 +56,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNot
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO.BambooTestJobDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -851,7 +850,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).orElseThrow();
 
         // Student should not receive a result over WebSocket, the exam is over and therefore test after due date would be visible
-        verify(websocketMessagingService, never()).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(ResultDTO.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
@@ -883,17 +882,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // set the author name to "Artemis"
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
-        doAnswer(answer((u, topic, arg) -> {
-            // Verify that the passed result is minimal
-            // We cannot use an ArgumentCaptor since the passed object gets modified afterwards, but we want to verify that state when calling the method.
-            assertThat(arg).isInstanceOf(Result.class);
-            Result result = (Result) arg;
-            assertThat(result.getSubmission().getResults()).isNull();
-            assertThat(result.getSubmission().getParticipation()).isNull();
-            assertThat(result.getParticipation().getExercise()).isNull();
-            return CompletableFuture.completedFuture(null);
-        })).when(websocketMessagingService).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
-
         // Mock result from bamboo
         assertThat(examDateService.getLatestIndividualExamEndDateWithGracePeriod(studentExam.getExam())).isAfter(ZonedDateTime.now());
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
@@ -905,7 +893,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).orElseThrow();
 
         // Student should receive a result over WebSocket, the exam not over (grace period still active)
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_RESULT_TOPIC), isA(ResultDTO.class));
 
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
@@ -949,7 +937,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testSubmissionAfterDueDateValues")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmissionAfterDueDate(ZonedDateTime dueDate, SubmissionType expectedType, boolean expectedRated, boolean testRun) throws Exception {
+    void testSubmissionAfterDueDate(ZonedDateTime dueDate, SubmissionType expectedType, boolean expectedRated, boolean practiceMode) throws Exception {
         var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
 
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -959,8 +947,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Add a participation for the programming exercise
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
-        if (testRun) {
-            participation.setTestRun(testRun);
+        if (practiceMode) {
+            participation.setPracticeMode(practiceMode);
             participation = participationRepository.save(participation);
         }
 
