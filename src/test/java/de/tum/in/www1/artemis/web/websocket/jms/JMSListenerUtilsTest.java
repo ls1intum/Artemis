@@ -11,11 +11,10 @@ import org.junit.jupiter.api.Test;
 
 class JMSListenerUtilsTest {
 
-    static EmbeddedActiveMQBroker broker;
+    static EmbeddedActiveMQBroker broker = new EmbeddedActiveMQBroker();
 
     @BeforeAll
     static void startBroker() {
-        broker = new EmbeddedActiveMQBroker();
         broker.start();
     }
 
