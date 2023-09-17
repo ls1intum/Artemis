@@ -1,8 +1,8 @@
-package de.tum.in.www1.artemis.service.dataexport;
+package de.tum.in.www1.artemis.service.export;
 
-import static de.tum.in.www1.artemis.service.dataexport.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
-import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.createDirectoryIfNotExistent;
-import static de.tum.in.www1.artemis.service.dataexport.DataExportUtil.retrieveCourseDirPath;
+import static de.tum.in.www1.artemis.service.export.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
+import static de.tum.in.www1.artemis.service.export.DataExportUtil.createDirectoryIfNotExistent;
+import static de.tum.in.www1.artemis.service.export.DataExportUtil.retrieveCourseDirPath;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 
 import java.io.File;
@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 /**
