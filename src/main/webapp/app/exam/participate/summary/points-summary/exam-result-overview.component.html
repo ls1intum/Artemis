@@ -38,10 +38,7 @@
                         }}</span>
                     </td>
                     <td>
-                        <!--                    TODO adjust calculation-->
-                        <span *ngIf="exercise.maxPoints != undefined">{{
-                            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints
-                        }}</span>
+                        <span *ngIf="exercise.maxPoints != undefined"> {{ getExerciseResultByExerciseId(exercise.id)?.achievedScore }}% </span>
                     </td>
                     <td *ngIf="getMaxBonusPointsSum() != 0">
                         <span *ngIf="exercise.bonusPoints != undefined">{{
@@ -61,7 +58,12 @@
                         {{ getMaxNormalPointsSum() }}
                     </th>
                     <th>
-                        {{ getAchievedPointsPercentageSum() }}
+                        <span *ngIf="studentExamWithGrade.studentResult.overallScoreAchieved !== undefined; else totalScoreNotDefinedPlaceholder">
+                            {{ studentExamWithGrade.studentResult.overallScoreAchieved }}%
+                        </span>
+                        <ng-template #totalScoreNotDefinedPlaceholder>
+                            <span>-</span>
+                        </ng-template>
                     </th>
                     <th *ngIf="getMaxBonusPointsSum() != 0">
                         {{ getMaxBonusPointsSum() }}

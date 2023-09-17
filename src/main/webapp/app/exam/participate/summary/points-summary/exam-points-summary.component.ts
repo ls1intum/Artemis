@@ -5,7 +5,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/entities/bonus.model';
 
 @Component({
@@ -82,6 +82,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     }
 
     getAchievedPointsSum() {
+        console.log('studentExamWithGrade', this.studentExamWithGrade);
         return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
@@ -92,7 +93,7 @@ export class ExamPointsSummaryComponent implements OnInit {
         return this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
-    getAchievedPointsPercentageSum() {
+    getAchievedScoreSum() {
         return 10;
     }
 
@@ -112,6 +113,24 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     getMaxNormalAndBonusPointsSum(): number {
         return this.getMaxNormalPointsSum() + this.getMaxBonusPointsSum();
+    }
+
+    getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {
+        if (exerciseId === undefined) {
+            return undefined;
+        }
+
+        const exerciseGroupResultMapping = this.studentExamWithGrade?.studentResult?.exerciseGroupIdToExerciseResult;
+        let exerciseResult = undefined;
+
+        for (const key in exerciseGroupResultMapping) {
+            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[key].exerciseId === exerciseId) {
+                exerciseResult = exerciseGroupResultMapping[key];
+                break;
+            }
+        }
+
+        return exerciseResult;
     }
 
     private hasAtLeastOneResult(): boolean {
