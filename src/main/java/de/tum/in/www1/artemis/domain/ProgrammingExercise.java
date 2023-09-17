@@ -673,8 +673,8 @@ public class ProgrammingExercise extends Exercise {
     public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         List<StudentParticipation> participationOfExercise = participations.stream()
                 .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).toList();
-        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isTestRun()).toList();
-        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isTestRun).toList();
+        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).toList();
+        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).toList();
 
         if (gradedParticipations.size() > 1) {
             gradedParticipations = super.findRelevantParticipation(gradedParticipations);

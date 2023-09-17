@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.AfterEach;
@@ -85,6 +86,15 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         }
     }
 
+    private void writeFile(String destinationPath, byte[] bytes) {
+        try {
+            FileUtils.writeByteArrayToFile(Path.of(".", "exportTest", destinationPath).toFile(), bytes);
+        }
+        catch (IOException ex) {
+            fail("Failed while writing test files", ex);
+        }
+    }
+
     @AfterEach
     @BeforeEach
     void deleteFiles() throws IOException {
@@ -104,7 +114,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
         assertThat(size).isEqualTo(129);
 
-        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsUnix.java").toString());
+        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsUnix.java"));
         size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
         assertThat(size).isEqualTo(129);
     }
@@ -122,7 +132,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
         assertThat(size).isEqualTo(136);
 
-        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsWindows.java").toString());
+        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsWindows.java"));
         size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
         assertThat(size).isEqualTo(129);
     }
@@ -140,7 +150,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Charset charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(StandardCharsets.ISO_8859_1);
 
-        fileService.convertToUTF8(Path.of(".", "exportTest", "EncodingISO_8559_1.java").toString());
+        fileService.convertToUTF8(Path.of(".", "exportTest", "EncodingISO_8559_1.java"));
         charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
@@ -156,7 +166,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
-        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements);
+        fileService.replaceVariablesInFileRecursive(pomXml.getParentFile().toPath(), replacements);
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).doesNotContain("${exerciseName}").contains("SomeCoolExerciseName");
@@ -173,7 +183,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
-        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements, List.of("pom.xml"));
+        fileService.replaceVariablesInFileRecursive(pomXml.getParentFile().toPath(), replacements, List.of("pom.xml"));
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
@@ -202,15 +212,16 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         doc1.save(outputStream);
         doc1.close();
 
-        writeFile("testfile1.pdf", outputStream.toString());
+        writeFile("testfile1.pdf", outputStream.toByteArray());
 
+        outputStream.reset();
         PDDocument doc2 = new PDDocument();
         doc2.addPage(new PDPage());
         doc2.addPage(new PDPage());
         doc2.save(outputStream);
         doc2.close();
 
-        writeFile("testfile2.pdf", outputStream.toString());
+        writeFile("testfile2.pdf", outputStream.toByteArray());
 
         paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
         paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
@@ -218,7 +229,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();
         assertThat(mergedFile.get()).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(mergedFile.get());
+        PDDocument mergedDoc = Loader.loadPDF(mergedFile.get());
         assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
     }
 
@@ -288,19 +299,19 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testReplaceVariablesInFileRecursive_shouldThrowException() {
-        assertThatRuntimeException().isThrownBy(() -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>()))
+        assertThatRuntimeException().isThrownBy(() -> fileService.replaceVariablesInFileRecursive(Path.of("some-path"), new HashMap<>()))
                 .withMessageEndingWith("should be replaced but the directory does not exist.");
     }
 
     @Test
     void testNormalizeLineEndingsDirectory_shouldThrowException() {
-        assertThatRuntimeException().isThrownBy(() -> fileService.normalizeLineEndingsDirectory("some-path"))
+        assertThatRuntimeException().isThrownBy(() -> fileService.normalizeLineEndingsDirectory(Path.of("some-path")))
                 .withMessageEndingWith("should be normalized but the directory does not exist.");
     }
 
     @Test
     void testConvertToUTF8Directory_shouldThrowException() {
-        assertThatRuntimeException().isThrownBy(() -> fileService.convertToUTF8Directory("some-path"))
+        assertThatRuntimeException().isThrownBy(() -> fileService.convertToUTF8Directory(Path.of("some-path")))
                 .withMessageEndingWith("should be converted to UTF-8 but the directory does not exist.");
     }
 
