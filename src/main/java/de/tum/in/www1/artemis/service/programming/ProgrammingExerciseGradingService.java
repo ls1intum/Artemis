@@ -281,7 +281,7 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
-                updatedLatestSemiAutomaticResult = resultRepository.save(updatedLatestSemiAutomaticResult);
+                resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
             }
@@ -310,7 +310,7 @@ public class ProgrammingExerciseGradingService {
      * @return The updated semi-automatic result
      */
     private Result updateLatestSemiAutomaticResultWithNewAutomaticFeedback(long lastSemiAutomaticResultId, Result newAutomaticResult) {
-        // Note: fetch the semi-automatic result with feedback and assessor again from the database
+        // Note: fetch the semi-automatic result with feedback, test cases, and assessor again from the database
         var latestSemiAutomaticResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(lastSemiAutomaticResultId)
                 .orElseThrow(() -> new EntityNotFoundException("Result", lastSemiAutomaticResultId));
         // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
@@ -331,7 +331,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.setScore(latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(),
                 exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        return resultRepository.save(latestSemiAutomaticResult);
+        return latestSemiAutomaticResult;
     }
 
     /**
