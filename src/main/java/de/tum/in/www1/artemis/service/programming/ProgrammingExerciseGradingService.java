@@ -1001,7 +1001,7 @@ public class ProgrammingExerciseGradingService {
     private void addFeedbackToStatistics(final Map<String, Integer> categoryIssuesMap, final Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap,
             final Feedback feedback) {
         if (feedback.isStaticCodeAnalysisFeedback()) {
-            String categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+            String categoryName = feedback.getStaticCodeAnalysisCategory();
             if (categoryName.isEmpty()) {
                 return;
             }

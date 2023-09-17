@@ -316,6 +316,10 @@ public class DataExportExerciseCreationService {
                         resultScoreAndFeedbacks.append("- Feedback: ");
 
                         // null if it's manual feedback
+                        if (feedback.getTestCase() != null) {
+                            resultScoreAndFeedbacks.append(feedback.getTestCase().getTestName()).append("\t");
+                        }
+                        // e.g the file and line number for programming exercises
                         if (feedback.getText() != null) {
                             resultScoreAndFeedbacks.append(feedback.getText()).append("\t");
                         }
