@@ -1,0 +1,38 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Prod-Postgres Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        depends_on:
+            postgres:
+                condition: service_healthy
+        restart: on-failure:3
+        volumes:
+            - ./.docker-data/artemis-data:/opt/artemis/data
+        env_file:
+            - ./artemis/config/postgres.env
+    postgres:
+        extends:
+            file: ./postgres.yml
+            service: postgres
+        restart: on-failure:3
+        volumes:
+            - ./.docker-data/artemis-postgres-data:/var/lib/postgresql/data
+    nginx:
+        extends:
+            file: ./nginx.yml
+            service: nginx
+        # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        depends_on:
+            artemis-app:
+                condition: service_started
+        restart: on-failure:3
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
