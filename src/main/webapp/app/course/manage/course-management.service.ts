@@ -418,7 +418,7 @@ export class CourseManagementService {
      * @param courseId The id of the course
      */
     downloadCourseArchive(courseId: number): void {
-        const url = `api/courses/${courseId}/download-archive`;
+        const url = `${this.resourceUrl}/${courseId}/download-archive`;
         window.open(url, '_blank');
     }
 
