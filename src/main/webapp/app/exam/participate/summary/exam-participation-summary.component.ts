@@ -142,10 +142,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
         return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
-    getIcon(exerciseType: ExerciseType) {
-        return getIcon(exerciseType);
-    }
-
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
         return exercise as ProgrammingExercise;
     }
@@ -248,4 +244,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
         return false;
     }
+
+    protected readonly getIcon = getIcon;
 }

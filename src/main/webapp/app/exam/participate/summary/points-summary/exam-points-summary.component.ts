@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -92,6 +92,10 @@ export class ExamPointsSummaryComponent implements OnInit {
         return this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
+    getAchievedPointsPercentageSum() {
+        return 10;
+    }
+
     getAchievedPoints(exercise: Exercise): number {
         return this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
     }
@@ -119,4 +123,6 @@ export class ExamPointsSummaryComponent implements OnInit {
         }
         return false;
     }
+
+    protected readonly getIcon = getIcon;
 }

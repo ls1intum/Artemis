@@ -82,6 +82,7 @@
                     "total": "Total",
                     "yourPoints": "Your Points",
                     "maxPoints": "Achievable Points",
+                    "achievedPercentage": "Achieved Percentage",
                     "maxBonus": "Achievable Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of a maximum {{normalPoints}} possible points (including bonus points).",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points.",

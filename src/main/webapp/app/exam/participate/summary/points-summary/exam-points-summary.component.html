@@ -11,6 +11,7 @@
                     <th scope="col" *ngIf="showIncludedInScoreColumn()">{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</th>
                     <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | artemisTranslate }}</th>
                     <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | artemisTranslate }}</th>
+                    <th scope="col">{{ 'artemisApp.exam.examSummary.points.achievedPercentage' | artemisTranslate }}</th>
                     <th scope="col" *ngIf="getMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.maxBonus' | artemisTranslate }}</th>
                 </tr>
             </thead>
@@ -24,6 +25,7 @@
                 >
                     <th scope="row">{{ exerciseIndex + 1 }}</th>
                     <td>
+                        &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="getIcon(exercise.type!)"></fa-icon>&nbsp;
                         <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
                     </td>
                     <td *ngIf="showIncludedInScoreColumn()">{{ exerciseService.isIncludedInScore(exercise) }}</td>
@@ -31,6 +33,12 @@
                         {{ getAchievedPoints(exercise) }}
                     </td>
                     <td>
+                        <span *ngIf="exercise.maxPoints != undefined">{{
+                            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints
+                        }}</span>
+                    </td>
+                    <td>
+                        <!--                    TODO adjust calculation-->
                         <span *ngIf="exercise.maxPoints != undefined">{{
                             exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints
                         }}</span>
@@ -51,6 +59,9 @@
                     </td>
                     <td>
                         {{ getMaxNormalPointsSum() }}
+                    </td>
+                    <td>
+                        {{ getAchievedPointsPercentageSum() }}
                     </td>
                     <td *ngIf="getMaxBonusPointsSum() != 0">
                         {{ getMaxBonusPointsSum() }}
