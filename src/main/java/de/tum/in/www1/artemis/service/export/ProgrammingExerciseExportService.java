@@ -147,15 +147,18 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             exportErrors.add("Failed to export programming exercise repositories: " + e.getMessage());
         }
 
-        // Add problem statement as .md file if it is not null
-        if (exercise.getProblemStatement() != null) {
-            programmingExerciseTaskService.replaceTestIdsWithNames(exercise);
-            super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
-        }
         // Add problem statement as .md file
-        super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
+        exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
 
         return exportDir.orElseThrow();
+    }
+
+    @Override
+    void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+        }
+        super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
     }
 
     /**
