@@ -119,6 +119,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
     private Course course1;
 
     private Course course2;
