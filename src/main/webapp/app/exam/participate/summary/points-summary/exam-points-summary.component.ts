@@ -9,9 +9,9 @@ import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.mo
 import { BonusStrategy } from 'app/entities/bonus.model';
 
 @Component({
-    selector: 'jhi-exam-points-summary',
-    styleUrls: ['./exam-points-summary.component.scss'],
-    templateUrl: './exam-points-summary.component.html',
+    selector: 'jhi-exam-result-overview',
+    styleUrls: ['./exam-result-overview.component.scss'],
+    templateUrl: './exam-result-overview.component.html',
 })
 export class ExamPointsSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
