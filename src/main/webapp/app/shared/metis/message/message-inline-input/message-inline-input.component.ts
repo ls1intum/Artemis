@@ -16,6 +16,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     warningDismissed = false;
+
     constructor(
         protected metisService: MetisService,
         protected modalService: NgbModal,
@@ -57,6 +58,10 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         });
     }
 
+    /**
+     * invokes the metis service with the updated answer post
+     * ends the process successfully by closing the modal and stopping the button's loading animation
+     */
     updatePosting(): void {
         this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.updatePost(this.posting).subscribe({

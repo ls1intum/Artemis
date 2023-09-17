@@ -210,7 +210,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
         ltiNewResultService.onNewResult((StudentParticipation) newManualResult.getParticipation());
         if (submit && ExerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
-            messagingService.awaitBroadcastNewResult(newManualResult.getParticipation(), newManualResult);
+            messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 
         var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && participation.getIndividualDueDate() != null

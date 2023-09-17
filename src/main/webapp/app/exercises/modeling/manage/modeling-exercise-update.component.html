@@ -235,10 +235,7 @@
                 name="competencies"
             ></jhi-competency-selection>
         </div>
-        <div class="form-group" *ngIf="modelingExercise.id && !isImport">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-            <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
-        </div>
+        <jhi-exercise-update-notification [exercise]="modelingExercise" [isImport]="isImport" [(notificationText)]="notificationText"> </jhi-exercise-update-notification>
     </div>
     <div>
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">

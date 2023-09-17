@@ -220,7 +220,8 @@
                     "pattern": {
                         "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!",
                         "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
-                        "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\"!"
+                        "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\"!",
+                        "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt."
                     }
                 },
                 "points": {

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -55,12 +56,23 @@ public interface DataExportRepository extends JpaRepository<DataExport, Long> {
             """)
     Set<DataExport> findAllToBeDeleted();
 
+    /**
+     * Find all data exports for the given user ordered by their request date descending.
+     * We use this sorting because this allows us to always get the latest data export without a doing any other calculations.
+     * <p>
+     * This is relevant if more than one data export exists that can be downloaded.
+     * This can happen if the user had requested a data export that was created and the admin requested another data export for the same user that has been created.
+     *
+     * @param userId the id of the user to find the data exports for
+     * @return a list of data exports for the given user ordered by their request date descending
+     */
     @Query("""
             SELECT dataExport
             FROM DataExport dataExport
             WHERE dataExport.user.id = :userId
+            ORDER BY dataExport.createdDate DESC
             """)
-    Set<DataExport> findAllDataExportsByUserId(long userId);
+    List<DataExport> findAllDataExportsByUserIdOrderByRequestDateDesc(long userId);
 
     @Query("""
             SELECT dataExport
