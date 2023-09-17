@@ -45,7 +45,7 @@ export class ExamPointsSummaryComponent implements OnInit {
      * - we are after the exam.publishResultsDate
      * - at least one exercise has a result
      */
-    show(): boolean {
+    showResultOverview(): boolean {
         return !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
     }
 
