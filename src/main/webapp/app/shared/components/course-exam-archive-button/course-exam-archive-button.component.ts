@@ -175,6 +175,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     openModal(modalRef: TemplateRef<any>) {
         this.modalService.open(modalRef).result.then(
             (result: string) => {
+                if (result === 'archive-confirm' && this.canDownloadArchive()) {
+                    this.openModal(this.archiveConfirmModal);
+                }
                 if (result === 'archive' || !this.canDownloadArchive()) {
                     this.archive();
                 } else {
