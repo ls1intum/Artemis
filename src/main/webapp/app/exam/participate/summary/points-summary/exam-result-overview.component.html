@@ -54,18 +54,18 @@
                 <tr>
                     <th scope="row" colspan="2">{{ 'artemisApp.exam.examSummary.points.total' | artemisTranslate }}</th>
                     <td *ngIf="showIncludedInScoreColumn()">-</td>
-                    <td>
+                    <th>
                         {{ getAchievedPointsSum() }}
-                    </td>
-                    <td>
+                    </th>
+                    <th>
                         {{ getMaxNormalPointsSum() }}
-                    </td>
-                    <td>
+                    </th>
+                    <th>
                         {{ getAchievedPointsPercentageSum() }}
-                    </td>
-                    <td *ngIf="getMaxBonusPointsSum() != 0">
+                    </th>
+                    <th *ngIf="getMaxBonusPointsSum() != 0">
                         {{ getMaxBonusPointsSum() }}
-                    </td>
+                    </th>
                 </tr>
             </tfoot>
         </table>
