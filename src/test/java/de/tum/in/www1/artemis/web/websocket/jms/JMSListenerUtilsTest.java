@@ -5,28 +5,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import javax.jms.JMSException;
 
 import org.apache.activemq.junit.EmbeddedActiveMQBroker;
-import org.junit.Rule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class JMSListenerUtilsTest {
 
-    @Rule
-    public EmbeddedActiveMQBroker broker = new EmbeddedActiveMQBroker();
+    static EmbeddedActiveMQBroker broker;
 
-    @BeforeEach
-    void startBroker() {
+    @BeforeAll
+    static void startBroker() {
+        broker = new EmbeddedActiveMQBroker();
         broker.start();
     }
 
-    @AfterEach
-    void stopBroker() {
+    @AfterAll
+    static void stopBroker() {
         broker.stop();
     }
 
     @Test
     void extractUsernameFromMessageReturnsCorrectUsername() throws JMSException {
+
         var message = broker.createBytesMessage();
         message.setStringProperty("user-name", "user1");
 
