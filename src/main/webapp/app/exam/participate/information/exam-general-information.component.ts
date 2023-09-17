@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-results-general-information',
-    templateUrl: './exam-general-information.component.html',
+    templateUrl: './exam-results-general-information.component.html',
 })
 export class ExamGeneralInformationComponent implements OnInit {
     @Input() exam: Exam;

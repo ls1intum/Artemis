@@ -10,6 +10,7 @@
     </h2>
 </div>
 <jhi-exam-results-general-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-results-general-information>
+<!--TODO move to general-information component-->
 <div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun">
     <div class="row justify-content-center">
         <div class="alert alert-success col-12 col-lg-6" role="alert">
