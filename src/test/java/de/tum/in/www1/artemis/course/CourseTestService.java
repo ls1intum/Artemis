@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
-import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,6 +71,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
@@ -87,7 +87,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 public class CourseTestService {
 
     @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
+    private Path courseArchivesDirPath;
 
     @Autowired
     private CourseRepository courseRepo;
@@ -127,9 +127,6 @@ public class CourseTestService {
 
     @Autowired
     private CourseExamExportService courseExamExportService;
-
-    @Autowired
-    private ZipFileService zipFileService;
 
     @Autowired
     private FileService fileService;
@@ -946,7 +943,7 @@ public class CourseTestService {
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
         StudentParticipation practiceParticipation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
                 student1);
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
         Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
         practiceResult.setRated(false);
@@ -2078,31 +2075,16 @@ public class CourseTestService {
     }
 
     private void archiveCourseAndAssertExerciseDoesntExist(Course course, Exercise exercise) throws Exception {
-        Files.createDirectories(Path.of(courseArchivesDirPath));
-
-        String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = FileService.sanitizeFilename(zipGroupName);
-        doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)), anyList(),
-                any(Path.class));
-
+        Files.createDirectories(courseArchivesDirPath);
         List<Path> files = archiveCourseAndExtractFiles(course);
-        assertThat(files).hasSize(4);
-
-        String exerciseType = "";
-        if (exercise instanceof FileUploadExercise) {
-            exerciseType = "FileUpload";
-        }
-        else if (exercise instanceof ModelingExercise) {
-            exerciseType = "Modeling";
-        }
-        else if (exercise instanceof TextExercise) {
-            exerciseType = "Text";
-        }
-        assertThat(files).doesNotContain(Path.of(exerciseType + "-" + userPrefix + "student1"));
+        // report.csv, errors.text, one submission per exercise, one problem statement per exercise and no exercise details.json per exercise
+        // because of the thrown exception. --> 2+3+3=8
+        assertThat(files).hasSize(8);
+        assertThat(files).doesNotContain(Path.of("Exercise-Details-" + exercise.getTitle() + ".json"));
     }
 
     private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
         assertThat(exportedCourse).isNotEmpty();
 
@@ -2118,7 +2100,7 @@ public class CourseTestService {
 
     public void testExportCourse_cannotCreateTmpDir() throws Exception {
         Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectories(argThat(path -> path.toString().contains("exports")))).thenThrow(IOException.class);
@@ -2130,7 +2112,7 @@ public class CourseTestService {
 
     public void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
         Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("course-exercises")))).thenThrow(IOException.class);
@@ -2142,7 +2124,7 @@ public class CourseTestService {
 
     public void testExportCourseExam_cannotCreateTmpDir() throws Exception {
         Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         Optional<Exam> exam = examRepo.findByCourseId(course.getId()).stream().findFirst();
         assertThat(exam).isPresent();
@@ -2157,7 +2139,7 @@ public class CourseTestService {
 
     public void testExportCourseExam_cannotCreateExamsDir() throws Exception {
         Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
-        List<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         course = courseRepo.findWithEagerExercisesById(course.getId());
 
