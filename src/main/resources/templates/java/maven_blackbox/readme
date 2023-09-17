@@ -1,0 +1,134 @@
+# Sorting with the Strategy Pattern
+
+In this exercise, we want to implement sorting algorithms and control the program interactively via user input on the console.
+
+**Note:** This project is using `Maven`! You have to import the project as Maven project (not as Eclipse project) as otherwise, errors will occur and you won't be able to work on this exercise.
+
+### Part 1: User Input
+
+First, there has to be a way for the user to communicate with the program.
+The `Client` class should handle the user input. The following commands need to be supported by your implementation:
+
+`add date1 date2 ...`<br>
+Adds at least one date, but should also support multiple dates.<br>
+
+`sort`<br>
+Sorts the previously entered dates.<br>
+
+`clear`<br>
+Clears the list of dates.<br>
+
+`help`<br>
+Prints a dialog to the console that briefly explains the supported commands.<br>
+
+`print`<br>
+Prints the current list of dates to the console.<br>
+
+`quit`<br>
+Terminates the program.<br>
+
+Using a `BufferedReader` might be a good starting point.
+
+
+
+### Part 2: Sorting
+
+We need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.
+
+**You have the following tasks:**
+
+1. **Implement Bubble Sort**<br>
+Implement the method `performSort(List<Date>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
+
+2. **Implement Merge Sort**<br>
+Implement the method `performSort(List<Date>)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
+
+### Part 3: Strategy Pattern
+
+We want the application to apply different algorithms for sorting a `List` of `Date` objects.
+Use the strategy pattern to select the right sorting algorithm at runtime.
+
+**You have the following tasks:**
+
+1. **SortStrategy Interface**<br>
+Create a `SortStrategy` interface and adjust the sorting algorithms so that they implement this interface.
+
+2. **Context Class**<br>
+Create and implement a `Context` class following the below class diagram
+
+3. **Context Policy**<br>
+Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
+
+    1. **Select MergeSort**<br>
+    Select `MergeSort` when the List has more than 10 dates.
+
+    2. **Select BubbleSort**<br>
+    Select `BubbleSort` when the List has less or equal 10 dates.
+
+4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
+
+@startuml
+
+class Client {
+}
+
+class Policy {
+  +configure()
+}
+
+class Context {
+  -dates: List<Date>
+  +sort()
+}
+
+interface SortStrategy {
+  +performSort(List<Date>)
+}
+
+class BubbleSort {
+  +performSort(List<Date>)
+}
+
+class MergeSort {
+  +performSort(List<Date>)
+}
+
+MergeSort -up-|> SortStrategy
+BubbleSort -up-|> SortStrategy
+Policy -right-> Context: context
+Context -right-> SortStrategy: sortAlgorithm
+Client .down.> Policy
+Client .down.> Context
+
+hide empty fields
+hide empty methods
+
+@enduml
+
+### Part 4: Tests
+
+This section shows you which tests are passed by your implementation.
+
+1. [task][Main method exists](MainMethodChecker)
+
+2. [task][All lines have <= 80 characters](LineLengthChecker)
+
+3. [task][Tests.txt exists and is not empty](FileExistsChecker)
+
+4. [task][Public Tests](dejagnu[public])
+
+5. [task][Advanced Tests](dejagnu[advanced])
+
+6. [task][Secret Tests](dejagnu[secret])
+
+
+### Part 5: Optional Challenges
+
+(These are not tested)
+
+1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
+
+2. Make the method `performSort(List<Dates>)` generic, so that other objects can also be sorted by the same method.
+**Hint:** Have a look at Java Generics and the interface `Comparable`.
+
+3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.

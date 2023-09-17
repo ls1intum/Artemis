@@ -40,7 +40,8 @@
                 !programmingExerciseCreationConfig.isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig.isImportFromFile &&
                 !programmingExercise.id &&
-                programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA
+                programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA &&
+                programmingExercise.projectType !== ProjectType.MAVEN_BLACKBOX
             "
         >
             <input
@@ -76,7 +77,14 @@
         />
         <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
             <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
-                <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+                <div
+                    *ngIf="programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX"
+                    [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage + '_BLACKBOX'"
+                ></div>
+                <div
+                    *ngIf="programmingExercise.projectType !== ProjectType.MAVEN_BLACKBOX"
+                    [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"
+                ></div>
             </div>
         </ng-container>
     </div>

@@ -26,7 +26,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -64,7 +63,7 @@ public class FileService implements DisposableBean {
      * Extensions must be lower-case without leading dots.
      */
     private static final Set<String> binaryFileExtensions = Set.of("png", "jpg", "jpeg", "heic", "gif", "tiff", "psd", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "pages",
-            "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar");
+            "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar", "bin", "so", "dll");
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
@@ -103,7 +102,7 @@ public class FileService implements DisposableBean {
     /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
-    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm");
+    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm", ".tests");
 
     @Override
     public void destroy() {
@@ -352,7 +351,6 @@ public class FileService implements DisposableBean {
      * Convert the given public file url to its corresponding local path
      *
      * @param publicPath the public file url to convert
-     * @throws FilePathParsingException if the path is unknown
      * @return the actual path to that file in the local filesystem
      */
     public String actualPathForPublicPathOrThrow(String publicPath) {
@@ -433,8 +431,8 @@ public class FileService implements DisposableBean {
      *
      * @param actualPathString the path to the file in the local filesystem
      * @param entityId         the id of the entity associated with the file
-     * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
+     * @throws FilePathParsingException if the path is unknown
      */
     public String publicPathForActualPathOrThrow(String actualPathString, @Nullable Long entityId) {
         String publicPath = publicPathForActualPath(actualPathString, entityId);
@@ -1110,15 +1108,14 @@ public class FileService implements DisposableBean {
      */
     private Path getUniquePath(Path path) {
         var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
+        if (!Files.exists(uniquePath) && Files.isDirectory(path)) {
             try {
-                Files.createDirectories(uniquePath);
+                return Files.createDirectories(uniquePath);
             }
             catch (IOException e) {
                 log.warn("could not create the directories for the path {}", uniquePath);
             }
         }
-
         return uniquePath;
     }
 
@@ -1131,6 +1128,21 @@ public class FileService implements DisposableBean {
      */
     public Path getTemporaryUniquePath(Path path, long deleteDelayInMinutes) {
         var temporaryPath = getUniquePath(path);
+        scheduleForDirectoryDeletion(temporaryPath, deleteDelayInMinutes);
+        return temporaryPath;
+    }
+
+    /**
+     * Create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system but does not create the folder.
+     * This is used when cloning the programming exercises into a new temporary directory because if we already create the directory, the git clone does not work anymore.
+     * The directory will be scheduled for deletion.
+     *
+     * @param path                 the original path, e.g. /opt/artemis/repos-download
+     * @param deleteDelayInMinutes the delay in minutes after which the path should be deleted
+     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
+     */
+    public Path getTemporaryUniquePathWithoutPathCreation(Path path, long deleteDelayInMinutes) {
+        var temporaryPath = path.resolve(String.valueOf(System.currentTimeMillis()));
         scheduleForDirectoryDeletion(temporaryPath, deleteDelayInMinutes);
         return temporaryPath;
     }
@@ -1151,23 +1163,6 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Write a given string into a file at a given path
-     *
-     * @param stringToWrite The string that will be written into a file
-     * @param path          The path where the file will be written to
-     * @return Path to the written file
-     */
-    public Path writeStringToFile(String stringToWrite, Path path) {
-        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), UTF_8)) {
-            outStream.write(stringToWrite);
-        }
-        catch (IOException e) {
-            log.warn("Could not write given string in file {}.", path);
-        }
-        return path;
-    }
-
-    /**
      * Serialize an object and write into file at a given path
      *
      * @param object       The object that is serialized and written into a file
@@ -1175,13 +1170,8 @@ public class FileService implements DisposableBean {
      * @param path         The path where the file will be written to
      * @return Path to the written file
      */
-    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
-        try {
-            objectMapper.writeValue(path.toFile(), object);
-        }
-        catch (IOException e) {
-            log.warn("Could not write given object in file {}", path);
-        }
+    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) throws IOException {
+        objectMapper.writeValue(path.toFile(), object);
         return path;
     }
 
@@ -1203,7 +1193,7 @@ public class FileService implements DisposableBean {
             for (String path : paths) {
                 File file = new File(path);
                 if (file.exists()) {
-                    pdfMerger.addSource(new File(path));
+                    pdfMerger.addSource(file);
                 }
             }
 
@@ -1212,7 +1202,7 @@ public class FileService implements DisposableBean {
             pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
 
             pdfMerger.setDestinationStream(outputStream);
-            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+            pdfMerger.mergeDocuments(null);
 
         }
         catch (IOException e) {
