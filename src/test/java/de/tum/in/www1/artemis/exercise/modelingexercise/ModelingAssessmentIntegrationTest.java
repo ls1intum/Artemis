@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -1461,7 +1462,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(ResultDTO.class));
     }
 
     private void assessmentDueDatePassed() {

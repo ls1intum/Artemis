@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -628,7 +629,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(ResultDTO.class));
     }
 
     @Test
