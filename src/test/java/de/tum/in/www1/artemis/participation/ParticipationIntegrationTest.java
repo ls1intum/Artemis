@@ -1312,7 +1312,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         QuizSubmission quizSubmission = new QuizSubmission();
         quizSubmission.addSubmittedAnswers(submittedAnswer);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+        request.postWithResponseBody("/api-quiz/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class, HttpStatus.OK);
 
         quizScheduleService.processCachedQuizSubmissions();
 

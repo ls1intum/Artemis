@@ -16,24 +16,30 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.jms.annotation.EnableJms;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompReactorNettyCodec;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -60,6 +66,7 @@ import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Configuration
+@EnableJms
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
@@ -85,6 +92,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final ExamRepository examRepository;
 
+    private final Environment environment;
+
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
     private List<String> brokerAddresses;
@@ -97,7 +106,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository) {
+            UserRepository userRepository, ExamRepository examRepository, Environment environment) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -106,6 +115,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
+        this.environment = environment;
     }
 
     @Override
@@ -115,9 +125,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
             log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
+            Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
+            var relayedDestinations = getTopicRelayPrefixes(activeProfiles);
+
             config
-                    // Enable the relay for "/topic"
-                    .enableStompBrokerRelay("/topic")
+                    // Enable the relay the specified destinations
+                    .enableStompBrokerRelay(relayedDestinations.toArray(String[]::new))
                     // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"
@@ -169,7 +182,19 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new TopicSubscriptionInterceptor());
+        registration.interceptors(new TopicSubscriptionInterceptor(), new ChannelInterceptor() {
+
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                MultiValueMap<String, String> nativeHeaders = (MultiValueMap<String, String>) message.getHeaders().get(NativeMessageHeaderAccessor.NATIVE_HEADERS);
+                Authentication authentication = message.getHeaders().get(SimpMessageHeaderAccessor.USER_HEADER, Authentication.class);
+                if (nativeHeaders != null && authentication != null && authentication.isAuthenticated()) {
+                    org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+                    nativeHeaders.add("user-name", user.getUsername());
+                }
+                return ChannelInterceptor.super.preSend(message, channel);
+            }
+        });
     }
 
     @NotNull
@@ -331,5 +356,27 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             return Optional.of(Long.valueOf(matcher.group(1)));
         }
         return Optional.empty();
+    }
+
+    /**
+     * Get the topic-prefixes that should be relayed to the ActiveMQ broker.
+     * This always includes messages sent to '/topic' and also includes messages sent to '/queue', if this instance of Artemis can not process the message.
+     *
+     * @param activeProfiles a list of active profiles for this Artemis instance
+     * @return a list of prefixes that should be relayed to the broker.
+     */
+    public static List<String> getTopicRelayPrefixes(Collection<String> activeProfiles) {
+        var relayedDestinations = new ArrayList<String>();
+        // Relay messages to /topic
+        relayedDestinations.add("/topic");
+        if (activeProfiles.contains("decoupling")) {
+            // Only apply the decoupling logic if the 'decoupling'-profile is present
+            if (!activeProfiles.contains("quiz")) {
+                // Relay messages to /queue/quizExercise only if the quiz functionality is not used
+                relayedDestinations.add("/queue/quizExercise");
+            }
+        }
+
+        return relayedDestinations;
     }
 }

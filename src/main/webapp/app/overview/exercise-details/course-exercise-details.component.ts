@@ -45,6 +45,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -64,6 +65,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly evaluateBadge = ResultService.evaluateBadge;
     readonly dayjs = dayjs;
+    readonly ProfileToggle = ProfileToggle;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;

@@ -94,7 +94,7 @@ class QuizCacheTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
 
-        assertThatDb(() -> request.postWithResponseBody("/api/exercises/" + exerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK))
+        assertThatDb(() -> request.postWithResponseBody("/api-quiz/exercises/" + exerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK))
                 .hasBeenCalledTimes(quizMode == QuizMode.SYNCHRONIZED ? 0 : 1);
     }
 }

@@ -6,6 +6,7 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -34,6 +35,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     faHandshakeAngle = faHandshakeAngle;
 
     documentationType = DocumentationType.Exercise;
+    ProfileToggle = ProfileToggle;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;

@@ -32,6 +32,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -40,6 +41,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
 })
 export class ExerciseGroupsComponent implements OnInit {
     participationType = ProgrammingExerciseParticipationType;
+    ProfileToggle = ProfileToggle;
     courseId: number;
     course: Course;
     examId: number;

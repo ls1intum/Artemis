@@ -307,7 +307,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     subscribeToWebsocketChannels() {
         if (!this.submissionChannel) {
-            this.submissionChannel = '/topic/quizExercise/' + this.quizId + '/submission';
+            this.submissionChannel = '/queue/quizExercise/' + this.quizId + '/submission';
 
             // submission channel => react to new submissions
             this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);

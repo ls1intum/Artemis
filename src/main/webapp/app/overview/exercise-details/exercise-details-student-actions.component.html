@@ -9,6 +9,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
+                [jhiProfileToggle]="ProfileToggle.QUIZ"
                 *ngIf="isStartPracticeAvailable()"
                 [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'practice']"
             ></button>
@@ -20,6 +21,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
+                [jhiProfileToggle]="ProfileToggle.QUIZ"
                 *ngIf="quizNotStarted || gradedParticipation?.initializationState === InitializationState.INITIALIZED"
                 [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"
             ></button>
@@ -32,6 +34,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
+                [jhiProfileToggle]="ProfileToggle.QUIZ"
                 *ngIf="uninitializedQuiz"
                 [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"
             ></button>
@@ -42,6 +45,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
+                [jhiProfileToggle]="ProfileToggle.QUIZ"
                 *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && !gradedParticipation?.results?.length"
                 [smallButton]="smallButtons"
                 [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"
@@ -52,6 +56,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
+                [jhiProfileToggle]="ProfileToggle.QUIZ"
                 *ngIf="gradedParticipation?.results?.length"
                 [smallButton]="smallButtons"
                 [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'live']"

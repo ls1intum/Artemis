@@ -3,11 +3,13 @@ import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/ex
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { ExerciseType, exerciseTypes } from 'app/entities/exercise.model';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
+import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
 
 const routes: Routes = [
     ...exerciseTypes.map((exerciseType) => {
-        return {
+        const route: any = {
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/scores',
             component: ExerciseScoresComponent,
             data: {
@@ -16,6 +18,11 @@ const routes: Routes = [
             },
             canActivate: [UserRouteAccessService],
         };
+        if (exerciseType === ExerciseType.QUIZ) {
+            route.canActivate.push(ProfileToggleGuard);
+            route.data.profile = ProfileToggle.QUIZ;
+        }
+        return route;
     }),
 ];
 

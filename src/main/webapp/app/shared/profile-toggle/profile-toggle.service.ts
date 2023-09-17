@@ -14,6 +14,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
  */
 export enum ProfileToggle {
     LECTURE = 'lecture',
+    QUIZ = 'quiz',
     DECOUPLING = 'decoupling',
 }
 export type ActiveProfileToggles = Array<ProfileToggle>;

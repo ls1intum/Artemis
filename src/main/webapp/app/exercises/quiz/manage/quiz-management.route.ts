@@ -6,6 +6,8 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
 import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
+import { ProfileToggleGuard } from 'app/shared/profile-toggle/profile-toggle-guard.service';
 
 export const quizManagementRoute: Routes = [
     {
@@ -18,8 +20,9 @@ export const quizManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
         canDeactivate: [PendingChangesGuard],
     },
     {
@@ -28,8 +31,9 @@ export const quizManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId',
@@ -37,8 +41,9 @@ export const quizManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
         canDeactivate: [PendingChangesGuard],
     },
     {
@@ -47,8 +52,9 @@ export const quizManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/edit',
@@ -56,8 +62,9 @@ export const quizManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
         canDeactivate: [PendingChangesGuard],
     },
     {
@@ -66,8 +73,9 @@ export const quizManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.importLabel',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
         canDeactivate: [PendingChangesGuard],
     },
     {
@@ -77,8 +85,9 @@ export const quizManagementRoute: Routes = [
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/solution',
@@ -87,7 +96,8 @@ export const quizManagementRoute: Routes = [
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
+            profile: ProfileToggle.QUIZ,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, ProfileToggleGuard],
     },
 ];

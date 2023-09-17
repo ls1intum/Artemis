@@ -1,6 +1,7 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { ExerciseType, exerciseTypes } from 'app/entities/exercise.model';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-exercises-search',
@@ -13,6 +14,9 @@ export class CourseManagementExercisesSearchComponent implements OnInit {
     exerciseCategorySearch: string;
     exerciseTypeSearch: string;
     @Output() exerciseFilter = new EventEmitter<ExerciseFilter>();
+
+    ExerciseType = ExerciseType;
+    ProfileToggle = ProfileToggle;
 
     /**
      * Initializes the attributes to match an empty filter

@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,7 +46,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing QuizExercise.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api-quiz")
+@Profile("!decoupling || quiz")
 public class QuizExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
@@ -159,7 +161,7 @@ public class QuizExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
+        return ResponseEntity.created(new URI("/api-quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
@@ -649,7 +651,7 @@ public class QuizExerciseResource {
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
+        return ResponseEntity.created(new URI("/api-quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 

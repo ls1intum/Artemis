@@ -2,7 +2,11 @@
     <div class="container">
         <div class="exercise-row">
             <div class="details-container">
-                <a class="stretched-link" [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id]"></a>
+                <a
+                    class="stretched-link"
+                    [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id]"
+                    [jhiProfileToggleLink]="details.type === exerciseType.QUIZ ? ProfileToggle.QUIZ : undefined"
+                ></a>
                 <div class="row-flex exercise-details-container">
                     <div class="ms-2 me-1 exercise-details-item" *ngIf="hasLeftoverAssessments">
                         <fa-icon [icon]="faExclamationTriangle" class="text-warning" placement="right auto" [ngbTooltip]="iconTooltip | artemisTranslate"></fa-icon>
@@ -129,6 +133,7 @@
                 <a
                     *ngIf="course.isAtLeastInstructor && details.type === exerciseType.QUIZ && rowType === exerciseRowType.PAST"
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 're-evaluate']"
+                    [jhiProfileToggleLink]="details.type === exerciseType.QUIZ ? ProfileToggle.QUIZ : undefined"
                     class="btn btn-warning me-1 mb-1"
                     [ngbTooltip]="'entity.action.re-evaluate' | artemisTranslate"
                     ><fa-icon [icon]="faWrench"></fa-icon
@@ -136,6 +141,7 @@
                 <a
                     *ngIf="course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id, 'scores']"
+                    [jhiProfileToggleLink]="details.type === exerciseType.QUIZ ? ProfileToggle.QUIZ : undefined"
                     class="btn btn-info me-1 mb-1"
                     [ngbTooltip]="'entity.action.scores' | artemisTranslate"
                     ><fa-icon [icon]="faTable"></fa-icon

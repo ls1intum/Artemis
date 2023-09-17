@@ -1,6 +1,6 @@
 import { Exercise } from 'app/entities/exercise.model';
 
-import { BASE_API, DELETE } from '../../constants';
+import { BASE_API, DELETE, QUIZ_EXERCISE_BASE } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course management exercises page.
@@ -41,7 +41,7 @@ export class CourseManagementExercisesPage {
     deleteQuizExercise(exercise: Exercise) {
         this.getExercise(exercise.id!).find(`#delete-quiz-${exercise.id}`).click();
         cy.get('#confirm-exercise-name').type(exercise.title!);
-        cy.intercept(DELETE, BASE_API + 'quiz-exercises/*').as('deleteQuizExercise');
+        cy.intercept(DELETE, QUIZ_EXERCISE_BASE + '*').as('deleteQuizExercise');
         cy.get('#delete').click();
         cy.wait('@deleteQuizExercise');
     }

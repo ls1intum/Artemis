@@ -1,4 +1,4 @@
-import { BASE_API, POST } from '../../../constants';
+import { POST, QUIZ_API_EXERCISE_BASE } from '../../../constants';
 import { getExercise } from '../../../utils';
 
 export class MultipleChoiceQuiz {
@@ -11,7 +11,7 @@ export class MultipleChoiceQuiz {
     }
 
     submit() {
-        cy.intercept(POST, BASE_API + 'exercises/*/submissions/live').as('createQuizExercise');
+        cy.intercept(POST, QUIZ_API_EXERCISE_BASE + '*/submissions/live').as('createQuizExercise');
         cy.get('#submit-quiz').click();
         return cy.wait('@createQuizExercise');
     }

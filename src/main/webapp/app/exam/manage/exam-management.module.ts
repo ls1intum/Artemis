@@ -57,6 +57,7 @@ import { SuspiciousBehaviorComponent } from './suspicious-behavior/suspicious-be
 import { SuspiciousSessionsOverviewComponent } from './suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { PlagiarismCasesOverviewComponent } from './suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
+import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -91,6 +92,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
+        ProfileToggleModule,
     ],
     declarations: [
         ExamManagementComponent,

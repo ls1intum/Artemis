@@ -35,7 +35,7 @@
                     {{ 'artemisApp.course.exercise.search.labelExerciseType' | artemisTranslate }}
                 </label>
                 <select id="exercise-search-type-input" class="form-select" [(ngModel)]="exerciseTypeSearch" (ngModelChange)="sendUpdate()">
-                    <option *ngFor="let optionValue of typeOptions" [value]="optionValue">
+                    <option *ngFor="let optionValue of typeOptions" [value]="optionValue" [jhiProfileToggle]="optionValue === ExerciseType.QUIZ ? ProfileToggle.QUIZ : undefined">
                         {{ 'artemisApp.course.exercise.search.type.' + optionValue | artemisTranslate }}
                     </option>
                 </select>
