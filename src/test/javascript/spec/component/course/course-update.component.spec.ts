@@ -14,6 +14,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -107,13 +108,14 @@ describe('Course Management Update Component', () => {
             declarations: [
                 CourseUpdateComponent,
                 MarkdownEditorStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(SecuredImageComponent),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(FeatureToggleHideDirective),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveKeysPipe),
             ],
         })

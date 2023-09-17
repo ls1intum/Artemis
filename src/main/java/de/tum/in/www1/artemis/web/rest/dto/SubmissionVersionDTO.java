@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.SubmissionVersion;
  * @param submission  the submission DTO, the submission version belongs to
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SubmissionVersionDTO(long id, Instant createdDate, String content, SubmissionDTO submission) {
+public record SubmissionVersionDTO(long id, Instant createdDate, String content, SubmissionWithParticipationDTO submission) {
 
     /**
      * Converts a submission version to a submission version DTO.
@@ -25,6 +25,6 @@ public record SubmissionVersionDTO(long id, Instant createdDate, String content,
      */
     public static SubmissionVersionDTO of(SubmissionVersion submissionVersion) {
         return new SubmissionVersionDTO(submissionVersion.getId(), submissionVersion.getCreatedDate(), submissionVersion.getContent(),
-                SubmissionDTO.of(submissionVersion.getSubmission()));
+                SubmissionWithParticipationDTO.of(submissionVersion.getSubmission()));
     }
 }

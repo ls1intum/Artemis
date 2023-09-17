@@ -955,7 +955,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise.setAssessmentType(AssessmentType.MANUAL);
         programmingExerciseRepository.save(programmingExercise);
 
-        participation.setTestRun(true);
+        participation.setPracticeMode(true);
         studentParticipationRepository.save(participation);
 
         testCommitChanges();
