@@ -49,6 +49,20 @@ export class ExamPointsSummaryComponent implements OnInit {
         return !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
     }
 
+    /**
+     * If all exercises are included in the overall score, we do not need to show the column
+     * -> displayed if at least one exercise is not included in the overall score
+     */
+    showIncludedInScoreColumn(): boolean {
+        for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
+            if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private isExamResultPublished() {
         const exam = this.studentExamWithGrade?.studentExam?.exam;
         return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());

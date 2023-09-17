@@ -1,3 +1,18 @@
+@import 'node_modules/bootstrap/scss/functions';
+@import 'node_modules/bootstrap/scss/variables';
+@import 'node_modules/bootstrap/scss/mixins';
+
+:host {
+    cursor: pointer;
+
+    > tr:not(thead tr) {
+        &:hover {
+            //transform: scale(1.012);
+            transform: scale(2);
+        }
+    }
+}
+
 .passing-grade {
     background-color: #28a745;
     color: white;
