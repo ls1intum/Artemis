@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -69,7 +69,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private modalService: NgbModal,
         private accountService: AccountService,
-        private changeDetectionRef: ChangeDetectorRef,
     ) {}
 
     ngOnInit() {
@@ -126,13 +125,11 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode === 'Exam' && this.exam) {
             this.examService.find(this.course.id!, this.exam.id!).subscribe((res) => {
                 this.exam = res.body!;
-                this.changeDetectionRef.detectChanges();
                 this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         } else {
             this.courseService.find(this.course.id!).subscribe((res) => {
                 this.course = res.body!;
-                this.changeDetectionRef.detectChanges();
                 this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         }
@@ -180,8 +177,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                 }
                 if (result === 'archive' || !this.canDownloadArchive()) {
                     this.archive();
-                } else {
-                    this.reloadCourseOrExam();
                 }
             },
             () => {},
