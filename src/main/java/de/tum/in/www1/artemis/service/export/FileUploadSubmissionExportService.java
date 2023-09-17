@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.export;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,15 +6,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 
 @Service
 public class FileUploadSubmissionExportService extends SubmissionExportService {
+
+    private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionExportService.class);
 
     public FileUploadSubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
         super(exerciseRepository, zipFileService, fileService);
@@ -29,15 +35,22 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
         // we need to get the 'real' file path here, the submission only has the api url path
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
-        String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
+        Path filePathPath = Path.of(filePath);
 
-        Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
-
-        if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
-            throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + submissionPath + " doesn't exist.");
+        if (!Files.exists(filePathPath)) { // throw if submission file does not exist
+            throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + filePathPath + " doesn't exist.");
         }
 
-        Files.copy(submissionPath, file.toPath());
+        try (var files = Files.list(filePathPath)) {
+            files.forEach(content -> {
+                try {
+                    Files.copy(content, file.toPath());
+                }
+                catch (IOException e) {
+                    log.error("Failed to copy file {} to zip file", content, e);
+                }
+            });
+        }
     }
 
     @Override
