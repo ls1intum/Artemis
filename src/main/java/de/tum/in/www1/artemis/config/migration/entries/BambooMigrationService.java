@@ -385,7 +385,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * Bamboo doesn't provide a REST endpoint for this action, but as we don't need to retrieve anything, it works the same way.
      *
      * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @param triggerId    the id of the notification to delete
+     * @param triggerId    the id of the trigger to delete
      */
     private void deleteBuildPlanTriggerId(String buildPlanKey, Long triggerId) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
