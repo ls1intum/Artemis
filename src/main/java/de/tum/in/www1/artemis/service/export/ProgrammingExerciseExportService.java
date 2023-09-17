@@ -145,6 +145,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
         catch (Exception e) {
             exportErrors.add("Failed to export programming exercise repositories: " + e.getMessage());
+        }
 
         // Add problem statement as .md file if it is not null
         if (exercise.getProblemStatement() != null) {
