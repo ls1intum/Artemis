@@ -9,7 +9,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ButtonSize } from '../button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
@@ -176,9 +175,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     openModal(modalRef: TemplateRef<any>) {
         this.modalService.open(modalRef).result.then(
             (result: string) => {
-                if (result === 'archive-confirm' && this.canDownloadArchive()) {
-                    this.openModal(this.archiveConfirmModal);
-                }
                 if (result === 'archive' || !this.canDownloadArchive()) {
                     this.archive();
                 } else {
@@ -211,15 +207,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     downloadArchive() {
         if (this.archiveMode === 'Exam' && this.exam) {
-            this.examService.downloadExamArchive(this.course.id!, this.exam.id!).subscribe({
-                next: (response) => downloadZipFileFromResponse(response),
-                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
-            });
+            this.examService.downloadExamArchive(this.course.id!, this.exam.id!);
         } else {
-            this.courseService.downloadCourseArchive(this.course.id!).subscribe({
-                next: (response) => downloadZipFileFromResponse(response),
-                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
-            });
+            this.courseService.downloadCourseArchive(this.course.id!);
         }
     }
 

@@ -417,11 +417,9 @@ export class CourseManagementService {
      * if the archive does not exist.
      * @param courseId The id of the course
      */
-    downloadCourseArchive(courseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/download-archive`, {
-            observe: 'response',
-            responseType: 'blob',
-        });
+    downloadCourseArchive(courseId: number): void {
+        const url = `api/courses/${courseId}/download-archive`;
+        window.open(url, '_blank');
     }
 
     /**
