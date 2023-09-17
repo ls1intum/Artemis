@@ -3,7 +3,7 @@
 @import 'node_modules/bootstrap/scss/mixins';
 
 :host {
-    tr:not(thead tr) {
+    tr:not(thead tr):not(tfoot tr) {
         cursor: pointer;
 
         &:hover {
