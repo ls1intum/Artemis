@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.dataexport;
+package de.tum.in.www1.artemis.service.export;
 
 import java.io.IOException;
 import java.nio.file.Files;
