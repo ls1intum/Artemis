@@ -1,6 +1,5 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.export;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,8 +22,10 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 /**
@@ -43,27 +43,29 @@ public class CourseExamExportService {
 
     private final ZipFileService zipFileService;
 
+    private final TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService;
+
+    private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;
+
+    private final ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService;
+
     private final FileService fileService;
-
-    private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
-
-    private final TextSubmissionExportService textSubmissionExportService;
-
-    private final ModelingSubmissionExportService modelingSubmissionExportService;
 
     private final ExamRepository examRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
-            ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
+            TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService,
+            FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService,
+            ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService,
+            ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
-        this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
-        this.textSubmissionExportService = textSubmissionExportService;
-        this.modelingSubmissionExportService = modelingSubmissionExportService;
+        this.textExerciseWithSubmissionsExportService = textExerciseWithSubmissionsExportService;
+        this.fileUploadExerciseWithSubmissionsExportService = fileUploadExerciseWithSubmissionsExportService;
+        this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
         this.websocketMessagingService = websocketMessagingService;
         this.examRepository = examRepository;
     }
@@ -77,7 +79,7 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return Path to the zip file
      */
-    public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
+    public Optional<Path> exportCourse(Course course, Path outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));
@@ -113,17 +115,17 @@ public class CourseExamExportService {
             log.error("Could not write report file for course {} due to the exception ", course.getId(), ex);
         }
 
-        Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir, exportedFiles);
+        Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
 
         log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
         return exportedCourse;
     }
 
-    private Optional<Path> zipExportedExercises(String outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir, List<Path> filesToZip) {
+    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir) {
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
-        Path courseZip = Path.of(outputDir, tmpDir.getFileName() + ".zip");
-        var exportedCourse = createCourseZipFile(courseZip, filesToZip, tmpDir, exportErrors);
+        Path courseZip = outputDir.resolve(tmpDir.getFileName() + ".zip");
+        var exportedCourse = createCourseZipFile(courseZip, List.of(tmpDir), exportErrors);
 
         // Delete temporary directory used for zipping
         fileService.scheduleForDirectoryDeletion(tmpDir, 1);
@@ -142,7 +144,7 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return Path to the zip file
      */
-    public Optional<Path> exportExam(Exam exam, String outputDir, List<String> exportErrors) {
+    public Optional<Path> exportExam(Exam exam, Path outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));
@@ -176,7 +178,7 @@ public class CourseExamExportService {
             log.error("Could not write report file for exam {} due to the exception ", exam.getId(), ex);
         }
 
-        Optional<Path> exportedExamPath = zipExportedExercises(outputDir, exportErrors, notificationTopic, tempExamsDir, exportedExercises);
+        Optional<Path> exportedExamPath = zipExportedExercises(outputDir, exportErrors, notificationTopic, tempExamsDir);
 
         log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath.orElse(null));
         return exportedExamPath;
@@ -361,35 +363,39 @@ public class CourseExamExportService {
             // Notify the user after the progress
             currentProgress++;
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(currentProgress + "/" + totalExerciseCount + " done"));
-
-            // Export programming exercise
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                // Download the repositories' template, solution, tests and students' repositories
-                exportedExercises.add(programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, true, outputDir, exportErrors, reportData));
+            // add the id because the exercise title might not be unique, leading to the same directory
+            // name for two exercises and the second exercise overriding the first one
+            var exerciseExportDir = outputDir.resolve(exercise.getSanitizedExerciseTitle() + "_" + exercise.getId());
+            try {
+                Files.createDirectory(exerciseExportDir);
+            }
+            catch (IOException e) {
+                log.error("Failed to create directory for exercise {} with id {}: {} Going to skip this exercise", exercise.getTitle(), exercise.getId(), e.getMessage());
                 continue;
             }
-
-            // Export the other exercises types
 
             // Export options
             var submissionsExportOptions = new SubmissionExportOptionsDTO();
             submissionsExportOptions.setExportAllParticipants(true);
-
-            // The zip file containing student submissions for the other exercise types
-            Optional<File> exportedSubmissionsFileOrEmpty = Optional.empty();
-
             try {
-                if (exercise instanceof FileUploadExercise) {
-                    exportedSubmissionsFileOrEmpty = fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
-                            reportData);
+                // Export programming exercise
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
+                    // Download the repositories' template, solution, tests and students' repositories
+                    programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exerciseExportDir), reportData)
+                            .ifPresent(exportedExercises::add);
+                }
+                // Export the other exercises types
+                else if (exercise instanceof FileUploadExercise) {
+                    exportedExercises.add(fileUploadExerciseWithSubmissionsExportService.exportFileUploadExerciseWithSubmissions(exercise, submissionsExportOptions,
+                            exerciseExportDir, exportErrors, reportData));
                 }
                 else if (exercise instanceof TextExercise) {
-                    exportedSubmissionsFileOrEmpty = textSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
-                            reportData);
+                    exportedExercises.add(textExerciseWithSubmissionsExportService.exportTextExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir,
+                            exportErrors, reportData));
                 }
                 else if (exercise instanceof ModelingExercise) {
-                    exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
-                            reportData);
+                    exportedExercises.add(modelingExerciseWithSubmissionsExportService.exportModelingExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir,
+                            exportErrors, reportData));
                 }
                 else if (exercise instanceof QuizExercise) {
                     // TODO: Quiz submissions aren't supported yet
@@ -403,24 +409,6 @@ public class CourseExamExportService {
             catch (Exception e) {
                 logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage(), exportErrors, e);
             }
-
-            // Exported submissions are stored somewhere else, so we move the generated zip file into the
-            // outputDir (directory where the files needed for the course archive are stored).
-            if (exportedSubmissionsFileOrEmpty.isPresent()) {
-                var exportedSubmissionsFile = exportedSubmissionsFileOrEmpty.get();
-                try {
-                    Path newExportedSubmissionsFilePath = Path.of(outputDir.toString(), exportedSubmissionsFile.getName());
-                    Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
-
-                    exportedExercises.add(newExportedSubmissionsFilePath);
-
-                    // Delete the directory where the zip was located before it was moved
-                    FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
-                }
-                catch (IOException e) {
-                    logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors, e);
-                }
-            }
         }
         return exportedExercises.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
     }
@@ -429,12 +417,11 @@ public class CourseExamExportService {
      * Creates a zip file out of all the files and directories inside courseDirPath and saves it to
      * the directory specified by outputDirPath
      *
-     * @param outputZipFile   The path to the zip file that will be created
-     * @param filesToZip      the files to zip together
-     * @param relativeZipPath the path of the zip files will be relative to this path
+     * @param outputZipFile The path to the zip file that will be created
+     * @param filesToZip    the files to zip together
      * @return The path to the zip file
      */
-    private Optional<Path> createCourseZipFile(Path outputZipFile, List<Path> filesToZip, Path relativeZipPath, List<String> exportErrors) {
+    private Optional<Path> createCourseZipFile(Path outputZipFile, List<Path> filesToZip, List<String> exportErrors) {
         try {
             // Create the parent directories if they don't exist otherwise the zip file cannot be created.
             Path parentDir = outputZipFile.getParent();
@@ -442,7 +429,7 @@ public class CourseExamExportService {
                 Files.createDirectories(parentDir);
             }
 
-            zipFileService.createZipFile(outputZipFile, filesToZip, relativeZipPath);
+            zipFileService.createZipFile(outputZipFile, filesToZip);
             log.info("Successfully created zip file: {}", outputZipFile);
             return Optional.of(outputZipFile);
         }
