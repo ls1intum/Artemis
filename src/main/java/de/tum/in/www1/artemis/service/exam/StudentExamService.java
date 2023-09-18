@@ -39,7 +39,9 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
+import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -50,8 +52,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
-
-    private static final String WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
 
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
@@ -89,6 +89,8 @@ public class StudentExamService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+
     private final TaskScheduler scheduler;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
@@ -97,7 +99,7 @@ public class StudentExamService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            ProgrammingExerciseScheduleService programmingExerciseScheduleService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -115,6 +117,7 @@ public class StudentExamService {
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
+        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.scheduler = scheduler;
     }
 
@@ -646,6 +649,13 @@ public class StudentExamService {
                                 || ExamDateService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                             // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingParticipation);
+
+                            // This is a special case if "prepare exercise start" was pressed shortly before the exam start
+                            // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
+                            // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
+                            // Since this gets never executed here, we need to manually schedule the locking.
+                            var tupel = new Tuple<>(studentExam.getIndividualEndDate(), programmingParticipation);
+                            programmingExerciseScheduleService.scheduleIndividualRepositoryAndParticipationLockTasks(programmingExercise, Set.of(tupel));
                         }
                         else {
                             programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
@@ -785,9 +795,5 @@ public class StudentExamService {
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
         return studentExamRepository.createRandomStudentExams(exam, userHashSet).get(0);
-    }
-
-    public void notifyStudentAboutWorkingTimeChangeDuringConduction(StudentExam studentExam) {
-        websocketMessagingService.sendMessage(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(studentExam.getId()), studentExam.getWorkingTime());
     }
 }

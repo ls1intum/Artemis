@@ -153,6 +153,10 @@
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",
                 "showNew": "Only show new Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolute",
+                "relative": "Change relative to regular working time"
             }
         },
         "examScores": {
@@ -571,6 +575,7 @@
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
                     "exportResults": "Export the exam results",
+                    "editWorkingTime": "Edit the exam duration",
                     "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
@@ -586,6 +591,7 @@
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
                     "exportResults": "Exports the exam results as a .csv file.",
+                    "editWorkingTime": "Until five minutes before the end of the exam, you can extend its duration.",
                     "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
@@ -619,6 +625,13 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants"
                 }
+            },
+            "editWorkingTime": {
+                "title": "Edit Exam Duration",
+                "label": "Exam duration change",
+                "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
+                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
             },
             "suspiciousBehavior": {
                 "title": "Suspicious Behavior",
