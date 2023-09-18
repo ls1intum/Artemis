@@ -107,6 +107,6 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
     // Student should not have access to the tests repository.
     void testShouldDenyAccessToTestRepository(boolean atLeastEditor) {
         assertThatExceptionOfType(AccessForbiddenException.class)
-                .isThrownBy(() -> repositoryAccessService.checkAccessTestRepositoryElseThrow(atLeastEditor, programmingExercise, student));
+                .isThrownBy(() -> repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(atLeastEditor, programmingExercise, student, "test"));
     }
 }
