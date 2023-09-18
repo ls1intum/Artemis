@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
-public class ExerciseTypeTest {
+class ExerciseTypeTest {
 
     @Test
     void testGetExerciseTypeFromClass() {
