@@ -86,7 +86,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
     @Override
     public void execute() {
         List<String> activeProfiles = List.of(environment.getActiveProfiles());
-        if (activeProfiles.stream().anyMatch(PROGRAMMING_EXERCISE_RELATED_PROFILES::contains)) {
+        if (activeProfiles.stream().noneMatch(PROGRAMMING_EXERCISE_RELATED_PROFILES::contains)) {
             log.info("Migration will be skipped and marked run because the system does not support programming exercises according to the selected profiles: {}", activeProfiles);
             return;
         }
