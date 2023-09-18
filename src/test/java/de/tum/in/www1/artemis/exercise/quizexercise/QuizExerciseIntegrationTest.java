@@ -824,6 +824,24 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testAddAndStartQuizBatch() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
+
+        QuizBatch batch = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
+        request.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAddAndStartQuizBatch_AsStudentNotAllowed() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
+
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.FORBIDDEN);
+        request.put("/api/quiz-exercises/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPerformStartNow() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);

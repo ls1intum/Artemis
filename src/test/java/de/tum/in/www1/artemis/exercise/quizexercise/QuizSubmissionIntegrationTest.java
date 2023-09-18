@@ -4,10 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
+import java.security.Principal;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +41,7 @@ import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -108,7 +112,41 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizSubmit() {
+    void testQuizSubmitWebsocket() {
+        QuizExercise quizExercise = setupQuizExerciseParameters();
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+
+        String username = TEST_PREFIX + "student1";
+        Principal principal = () -> username;
+
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
+        verify(websocketMessagingService, never()).sendMessageToUser(eq(username), any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizSubmitUnactiveQuizWebsocket() {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+        quizExercise.duration(240);
+        quizExerciseRepository.save(quizExercise);
+
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+
+        String username = TEST_PREFIX + "student1";
+        Principal principal = () -> username;
+
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
+        verify(websocketMessagingService).sendMessageToUser(eq(username), any(), any());
+    }
+
+    @Autowired
+    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizSubmit_CalculateScore() {
         QuizExercise quizExercise = setupQuizExerciseParameters();
         quizExercise = quizExerciseService.save(quizExercise);
 
@@ -120,7 +158,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             quizSubmission.setSubmitted(true);
             participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
             participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
-
         }
 
         // check first half of the submissions
