@@ -44,14 +44,12 @@
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-modeling-submission-exam>
-                        <jhi-programming-submission-exam
+                        <jhi-programming-exam-diff
                             *ngSwitchCase="ExerciseType.PROGRAMMING"
                             [exercise]="exercise"
                             [studentParticipation]="exercise.studentParticipations[0]"
-                            [courseId]="courseId"
-                            [readonly]="true"
-                            [examTimeline]="true"
-                        ></jhi-programming-submission-exam>
+                            [(cachedDiffReports)]="cachedDiffReports"
+                        ></jhi-programming-exam-diff>
                     </div>
                 </ng-container>
             </ng-container>

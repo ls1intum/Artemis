@@ -62,6 +62,9 @@ import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-se
 import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { NgxSliderModule } from 'ngx-slider-v2';
+import { ProgrammingExerciseExamDiffComponent } from './student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
+import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
@@ -98,6 +101,8 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisExamNavigationBarModule,
         ArtemisExamSubmissionComponentsModule,
         NgxSliderModule,
+        GitDiffReportModule,
+        ArtemisProgrammingExerciseModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -131,6 +136,7 @@ const ENTITY_STATES = [...examManagementState];
         PlagiarismCasesOverviewComponent,
         SuspiciousSessionsComponent,
         StudentExamTimelineComponent,
+        ProgrammingExerciseExamDiffComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

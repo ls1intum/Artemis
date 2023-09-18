@@ -6,7 +6,6 @@ import { Observable, of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/student-exam-timeline/student-exam-timeline.component';
-import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
@@ -34,6 +33,8 @@ import { QueryList } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ChangeContext } from 'ngx-slider-v2';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
+import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
@@ -43,7 +44,10 @@ describe('Student Exam Timeline Component', () => {
 
     const courseValue = { id: 1 } as Course;
     const examValue = { course: courseValue, id: 2 } as Exam;
-    let programmingSubmission1 = { id: 1, submissionDate: dayjs('2023-02-07') } as unknown as ProgrammingSubmission;
+    const participation = { id: 1, exercise: { id: 1 } } as unknown as StudentParticipation;
+    let programmingSubmission1 = { id: 1, submissionDate: dayjs('2023-02-07'), participation } as unknown as ProgrammingSubmission;
+    const programmingSubmission2 = { id: 2, submissionDate: dayjs('2023-03-07'), participation } as unknown as ProgrammingSubmission;
+    const programmingSubmission3 = { id: 3, submissionDate: dayjs('2023-04-07'), participation } as unknown as ProgrammingSubmission;
     let fileUploadSubmission1 = { id: 5, submissionDate: dayjs('2023-05-07'), filePath: 'abc' } as unknown as FileUploadSubmission;
 
     let textSubmission = { id: 2, submissionDate: dayjs('2023-01-07'), text: 'abc' } as unknown as TextSubmission;
@@ -62,7 +66,7 @@ describe('Student Exam Timeline Component', () => {
             declarations: [
                 StudentExamTimelineComponent,
                 NgxSliderStubComponent,
-                MockComponent(ProgrammingExamSubmissionComponent),
+                MockComponent(ProgrammingExerciseExamDiffComponent),
                 MockComponent(ModelingExamSubmissionComponent),
                 MockComponent(TextExamSubmissionComponent),
                 MockComponent(QuizExamSubmissionComponent),
@@ -114,22 +118,20 @@ describe('Student Exam Timeline Component', () => {
         expect(submissionVersionServiceSpy).toHaveBeenCalledWith(2);
     }));
 
-    it('should fetch submission versions and submission versions on init using retrieveSubmissionData', fakeAsync(() => {
+    it('should fetch submission versions and submissions on init using retrieveSubmissionData', () => {
         const retrieveDataSpy = jest
             .spyOn(component, 'retrieveSubmissionDataAndTimeStamps')
             .mockReturnValue(of([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]) as unknown as Observable<(SubmissionVersion[] | Submission[])[]>);
         component.ngOnInit();
-        tick();
         fixture.detectChanges();
         expect(retrieveDataSpy).toHaveBeenCalledOnce();
         expect(component.currentSubmission).toEqual(submissionVersion);
         expect(component.selectedTimestamp).toEqual(dayjs('2023-01-07').valueOf());
         expect(component.submissionTimeStamps).toEqual([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
-        expect(component.courseId).toBe(1);
         expect(component.submissionVersions).toEqual([submissionVersion]);
         expect(component.fileUploadSubmissions).toEqual([fileUploadSubmission1]);
         expect(component.programmingSubmissions).toEqual([programmingSubmission1]);
-    }));
+    });
 
     it('should subscribe to changes in ViewAfterInit', () => {
         component.currentPageComponents = new QueryList();
@@ -159,7 +161,10 @@ describe('Student Exam Timeline Component', () => {
             onActivate() {},
             updateViewFromSubmission() {},
             setSubmissionVersion() {},
-            updateExamTimelineView() {},
+            loadGitDiffReport() {},
+            exerciseIdSubject: {
+                next() {},
+            },
         } as unknown as ExamSubmissionComponent);
         let expectedSubmission = submission;
         // set the current timestamp needed to find the closest submission if no submission is set
@@ -228,5 +233,22 @@ describe('Student Exam Timeline Component', () => {
             }
             expect(component.selectedTimestamp).toEqual(changeContext.value);
         }),
+    );
+    it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
+        'should correctly determine the previous submission',
+        (currentSubmission: ProgrammingSubmission) => {
+            component.programmingSubmissions = [programmingSubmission1, programmingSubmission2, programmingSubmission3];
+            const exercise = { id: 1 } as ProgrammingExercise;
+            const actualPreviousSubmission = component.findPreviousProgrammingSubmission(exercise, currentSubmission);
+            if (currentSubmission.id === 1) {
+                expect(actualPreviousSubmission).toBeUndefined();
+            }
+            if (currentSubmission.id === 2) {
+                expect(actualPreviousSubmission).toEqual(programmingSubmission1);
+            }
+            if (currentSubmission.id === 3) {
+                expect(actualPreviousSubmission).toEqual(programmingSubmission2);
+            }
+        },
     );
 });

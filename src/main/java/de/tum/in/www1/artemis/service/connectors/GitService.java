@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -372,6 +373,40 @@ public class GitService {
     public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUrl);
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
+    }
+
+    /**
+     * Checkout at the given repository at the given commit hash
+     *
+     * @param repository the repository to check out the commit in
+     * @param commitHash the hash of the commit to check out
+     * @return the repository checked out at the given commit
+     */
+    public Repository checkoutRepositoryAtCommit(Repository repository, String commitHash) {
+        try (Git git = new Git(repository)) {
+            git.checkout().setName(commitHash).call();
+        }
+        catch (GitAPIException e) {
+            throw new GitException("Could not checkout commit " + commitHash + " in repository located at  " + repository.getLocalPath(), e);
+        }
+        return repository;
+    }
+
+    /**
+     * Get the local repository for a given remote repository URL.
+     * <p>
+     * If the local repo does not exist yet, it will be checked out.
+     * After retrieving the repository, the commit for the given hash will be checked out.
+     *
+     * @param vcsRepositoryUrl the url of the remote repository
+     * @param commitHash       the hash of the commit to checkout
+     * @param pullOnGet        pull from the remote on the checked out repository, if it does not need to be cloned
+     * @return the repository if it could be checked out
+     * @throws GitAPIException if the repository could not be checked out
+     */
+    public Repository checkoutRepositoryAtCommit(VcsRepositoryUrl vcsRepositoryUrl, String commitHash, boolean pullOnGet) throws GitAPIException {
+        var repository = getOrCheckoutRepository(vcsRepositoryUrl, pullOnGet);
+        return checkoutRepositoryAtCommit(repository, commitHash);
     }
 
     /**
@@ -848,6 +883,18 @@ public class GitService {
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUrl(), ex);
+        }
+    }
+
+    /**
+     * Switch back to the HEAD commit of the default branch.
+     *
+     * @param repository the repository for which we want to switch to the HEAD commit of the default branch
+     * @throws GitAPIException if this operation fails
+     */
+    public void switchBackToDefaultBranchHead(Repository repository) throws GitAPIException {
+        try (Git git = new Git(repository)) {
+            git.checkout().setName(defaultBranch).call();
         }
     }
 
@@ -1335,5 +1382,29 @@ public class GitService {
 
     public <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
         return command.setTransportConfigCallback(sshCallback);
+    }
+
+    /**
+     * Checkout a repository and get the git log for a given repository url.
+     *
+     * @param vcsRepositoryUrl the repository url for which the git log should be retrieved
+     * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
+     * @throws GitAPIException if an error occurs while retrieving the git log
+     */
+    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) throws GitAPIException {
+        List<CommitInfoDTO> commitInfos = new ArrayList<>();
+
+        try (var repo = getOrCheckoutRepository(vcsRepositoryUrl, true); var git = new Git(repo)) {
+            var commits = git.log().call();
+            commits.forEach(commit -> {
+                var commitInfo = CommitInfoDTO.of(commit);
+                commitInfos.add(commitInfo);
+            });
+        }
+        return commitInfos;
+    }
+
+    public void clearCachedRepositories() {
+        cachedRepositories.clear();
     }
 }
