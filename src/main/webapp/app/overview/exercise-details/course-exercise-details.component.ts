@@ -45,6 +45,8 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -96,6 +98,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
+    irisSettings?: IrisSettings;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -136,6 +139,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private plagiarismCaseService: PlagiarismCasesService,
         private exerciseHintService: ExerciseHintService,
         private courseService: CourseManagementService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit() {
@@ -211,6 +215,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
+            });
+
+            this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!).subscribe((settings) => {
+                this.irisSettings = settings;
             });
         }
 
