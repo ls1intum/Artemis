@@ -40,9 +40,9 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -335,7 +335,7 @@ class ProgrammingPlagiarismDetectionService {
     public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
-        return studentParticipations.parallelStream().filter(participation -> !participation.isTestRun())
+        return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
                 .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
                 .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
                     Submission submission = participation.findLatestSubmission().orElse(null);

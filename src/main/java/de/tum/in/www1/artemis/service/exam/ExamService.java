@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
@@ -62,7 +63,7 @@ public class ExamService {
     private static final int EXAM_ACTIVE_DAYS = 7;
 
     @Value("${artemis.course-archives-path}")
-    private String examArchivesDirPath;
+    private Path examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -1202,7 +1203,7 @@ public class ExamService {
 
         try {
             // Create exam archives directory if it doesn't exist
-            Files.createDirectories(Path.of(examArchivesDirPath));
+            Files.createDirectories(examArchivesDirPath);
             log.info("Created the exam archives directory at {} because it didn't exist.", examArchivesDirPath);
 
             // Export the exam to the archives directory.
