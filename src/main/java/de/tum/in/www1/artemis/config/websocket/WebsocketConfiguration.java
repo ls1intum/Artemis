@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.websocket;
 
-import static de.tum.in.www1.artemis.service.WebsocketMessagingService.*;
+import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
+import static de.tum.in.www1.artemis.web.websocket.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;

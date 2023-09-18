@@ -88,11 +88,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        // Not needed for local CI. Implemented for Bamboo as a bug workaround.
-    }
-
-    @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         // Not needed for local CI. Build plans are grouped into projects automatically.
     }
@@ -154,7 +149,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newBranch, List<String> triggeredByRepositories) throws LocalCIException {
+            String newBranch) throws LocalCIException {
         // Not implemented for local CI. No build plans exist.
         // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.
     }
