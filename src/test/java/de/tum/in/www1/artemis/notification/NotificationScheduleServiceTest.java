@@ -19,12 +19,9 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -54,9 +51,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     private Exercise exercise;
@@ -66,7 +60,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     private long sizeBefore;
 
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private static final long DELAY_MS = 1000;
+    private static final long DELAY_MS = 200;
 
     private static final long TIMEOUT_MS = 5000;
 
@@ -74,8 +68,10 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        final Course course = courseUtilService.addCourseWithModelingAndTextExercise();
-        exercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        final Course course = courseUtilService.addEmptyCourse();
+        exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
+        exercise.setMaxPoints(5.0);
+        exerciseRepository.saveAndFlush(exercise);
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         sizeBefore = notificationRepository.count();
