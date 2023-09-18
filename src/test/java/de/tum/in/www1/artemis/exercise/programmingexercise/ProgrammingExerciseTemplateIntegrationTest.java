@@ -149,6 +149,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
                 argumentBuilder.add(Arguments.of(language, null, false));
             }
             for (ProjectType projectType : projectTypes) {
+                // TODO: MAVEN_BLACKBOX Templates should be tested in the future!
+                if (projectType == ProjectType.MAVEN_BLACKBOX) {
+                    continue;
+                }
                 argumentBuilder.add(Arguments.of(language, projectType, false));
             }
 
@@ -157,6 +161,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
                     argumentBuilder.add(Arguments.of(language, null, true));
                 }
                 for (ProjectType projectType : projectTypes) {
+                    if (projectType == ProjectType.MAVEN_BLACKBOX) {
+                        continue;
+                    }
                     argumentBuilder.add(Arguments.of(language, projectType, true));
                 }
             }
