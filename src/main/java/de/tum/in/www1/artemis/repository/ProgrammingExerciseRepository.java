@@ -108,14 +108,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Returns all programming exercises with its test cases
-     *
-     * @return all programming exercises
-     */
-    @Query("SELECT p FROM ProgrammingExercise p LEFT JOIN FETCH p.testCases")
-    Set<ProgrammingExercise> findAllWithEagerTestCases();
-
-    /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
      *
      * @param exerciseId the id of the exercise that should be fetched.
