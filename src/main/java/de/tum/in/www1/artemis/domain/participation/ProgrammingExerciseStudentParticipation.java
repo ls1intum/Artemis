@@ -109,6 +109,11 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     }
 
     @Override
+    public String getType() {
+        return "programming";
+    }
+
+    @Override
     public String toString() {
         return getClass().getSimpleName() + "{" + "id=" + getId() + ", repositoryUrl='" + getRepositoryUrl() + "'" + ", buildPlanId='" + getBuildPlanId() + "'"
                 + ", initializationState='" + getInitializationState() + "'" + ", initializationDate='" + getInitializationDate() + "'" + ", individualDueDate="

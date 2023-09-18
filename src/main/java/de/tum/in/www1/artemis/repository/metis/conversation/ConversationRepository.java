@@ -64,7 +64,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
                  LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS true AND cp.lastRead IS null))
              WHERE conv.id IN :conversationIds
                  AND (channel.isCourseWide IS true OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
-             GROUP BY conv.id
+             GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.lastRead
             """)
     List<UserConversationInfo> getUserInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds, @Param("userId") Long userId);
 
