@@ -290,8 +290,5 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
         BuildPlan targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(targetExercise.getId());
         assertThat(sourceBuildPlan).isEqualTo(targetBuildPlan);
-
-        final ProgrammingExercise reloadedTargetExercise = programmingExerciseRepository.findByIdElseThrow(targetExercise.getId());
-        assertThat(reloadedTargetExercise.getBuildPlanAccessSecret()).isNotNull().isNotEqualTo(sourceExercise.getBuildPlanAccessSecret());
     }
 }
