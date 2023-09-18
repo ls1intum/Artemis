@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.byLessThan;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
