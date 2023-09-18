@@ -135,7 +135,19 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
                  * the tests repository also has a webhook for the solution repository, so
                  * we check if the hook contains the JenkinsServerUrl and ensure that not the artemisServerUrl
                  */
-                if ((url.contains(jenkinsServerUrl.toString()) || url.contains(internalJenkinsUrl.toString())) && !url.contains(artemisServerUrl)) {
+                boolean toJenkins = false;
+                if (url.contains(artemisServerUrl)) {
+                    continue;
+                }
+                if (url.contains(jenkinsServerUrl.toString())) {
+                    toJenkins = true;
+                }
+                else if (internalJenkinsUrl != null) {
+                    if (url.contains(internalJenkinsUrl.toString())) {
+                        toJenkins = true;
+                    }
+                }
+                if (toJenkins) {
                     gitlab.getProjectApi().deleteHook(projectHook);
                 }
             }
