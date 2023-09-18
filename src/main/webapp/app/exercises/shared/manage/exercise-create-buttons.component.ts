@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFileImport, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -18,6 +18,11 @@ export class ExerciseCreateButtonsComponent implements OnInit {
 
     faPlus = faPlus;
     faFileImport = faFileImport;
+    faFileUpload = faFileUpload;
+    faFont = faFont;
+    faProjectDiagram = faProjectDiagram;
+    faKeyboard = faKeyboard;
+    faCheckDouble = faCheckDouble;
 
     constructor(private router: Router, private modalService: NgbModal) {}
 
@@ -35,5 +40,20 @@ export class ExerciseCreateButtonsComponent implements OnInit {
         modalRef.result.then((result: Exercise) => {
             this.router.navigate(['course-management', this.course.id, this.exerciseType + '-exercises', result.id, 'import']);
         });
+    }
+
+    getExerciseTypeIcon(exerciseType: ExerciseType) {
+        switch (exerciseType) {
+            case ExerciseType.FILE_UPLOAD:
+                return faFileUpload;
+            case ExerciseType.MODELING:
+                return faProjectDiagram;
+            case ExerciseType.TEXT:
+                return faFont;
+            case ExerciseType.PROGRAMMING:
+                return faKeyboard;
+            case ExerciseType.QUIZ:
+                return faCheckDouble;
+        }
     }
 }
