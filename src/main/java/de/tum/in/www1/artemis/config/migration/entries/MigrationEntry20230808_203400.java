@@ -587,8 +587,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         log.error("Failed to migrate template build plan for exercises: {}", failedTemplates);
         log.error("Failed to migrate solution build plan for exercises: {}", failedSolutions);
         log.error("Failed to migrate students build plan for exercises: {}", failedStudents);
-        log.warn("Please check the logs for more information. Then either fix the issues and rerun the migration or "
-                + "fix the build plans yourself and mark the migration as run.");
+        log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration. or "
+                + "fix the build plans yourself and mark the migration as run. The migration can be rerun by deleting the migration entry in the database table containing "
+                + "the migration with author: " + author() + " and date_string: " + date() + " and then restarting Artemis.");
     }
 
     @Override
