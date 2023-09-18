@@ -21,6 +21,8 @@ import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/cod
 import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
+import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -148,12 +150,12 @@ describe('ExerciseHint Management Update Component', () => {
         fakeAsync((activeProfiles: string[]) => {
             // Mock getProfileInfo to return activeProfiles
             const profileService = TestBed.inject(ProfileService);
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles }));
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
 
             // Mock getTasksAndTestsExtractedFromProblemStatement
             jest.spyOn(programmingExerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of([]));
 
-            const fakeSettings = {};
+            const fakeSettings = {} as any as IrisSettings;
 
             // Mock getCombinedProgrammingExerciseSettings
             const irisSettingsService = TestBed.inject(IrisSettingsService);

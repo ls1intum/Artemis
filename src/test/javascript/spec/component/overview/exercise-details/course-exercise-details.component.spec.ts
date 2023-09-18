@@ -67,6 +67,7 @@ import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-butto
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
 import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -366,7 +367,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 course: {},
             } as unknown as ProgrammingExercise;
 
-            const fakeSettings = {};
+            const fakeSettings = {} as any as IrisSettings;
 
             const irisSettingsService = TestBed.inject(IrisSettingsService);
             const getCombinedProgrammingExerciseSettingsMock = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings');
@@ -379,7 +380,7 @@ describe('CourseExerciseDetailsComponent', () => {
             getExerciseDetailsMock.mockReturnValue(of({ body: programmingExercise }));
 
             const profileService = TestBed.inject(ProfileService);
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles }));
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
 
             // Act
             comp.ngOnInit();
