@@ -169,7 +169,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
      * <p>
-     * However the participation id provided by the VCS on the request is invalid.
+     * However, the participation id provided by the VCS on the request is invalid.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -203,7 +203,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     * However the participation id provided by the VCS on the request is invalid.
+     * However, the participation id provided by the VCS on the request is invalid.
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
@@ -211,6 +211,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
         String commitHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         Long participationId = getParticipationIdByType(participationType, 0);
+        mockTriggerByTypeAndParticipationId(participationType, participationId);
         // set the author name to "Artemis"
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participationId);
 
@@ -247,6 +248,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student3");
+        bambooRequestMockProvider.mockTriggerBuild(participation);
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
@@ -288,6 +290,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
+        mockTriggerByTypeAndParticipationId(IntegrationTestParticipationType.SOLUTION, participation.getId());
         postSubmission(participation.getId(), HttpStatus.OK);
 
         final var commit = new BambooBuildResultNotificationDTO.BambooCommitDTO("First commit", "asdf");
@@ -321,6 +324,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
         Long participationId = getParticipationIdByType(participationType, 0);
+        mockTriggerByTypeAndParticipationId(participationType, participationId);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
         final long submissionId = submission.getId();
         postResult(participationType, 0, HttpStatus.OK, additionalCommit);
@@ -366,6 +370,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
+        mockTriggerByTypeAndParticipationId(participationType, participationId);
         var submission = postSubmission(participationId, HttpStatus.OK);
         // Create 2 results for the same submission.
         postResult(participationType, 0, HttpStatus.OK, false);
@@ -408,6 +413,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
 
         Long participationId = getParticipationIdByType(participationType, 0);
+        // trigger twice because we submit twice
+        mockTriggerByTypeAndParticipationId(participationType, participationId);
+        mockTriggerByTypeAndParticipationId(participationType, participationId);
         // Post the same submission twice.
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
         postSubmission(participationId, HttpStatus.OK);
@@ -513,7 +521,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerInstructorBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
-        // Set buildAndTestAfterDueDate in future.
+        // Set buildAndTestAfterDueDate in the future.
         setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).orElseThrow();
@@ -553,11 +561,17 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCaseChanged() throws Exception {
-        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).orElseThrow();
-        bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
-        setBuildAndTestAfterDueDateForProgrammingExercise(null);
-        postTestRepositorySubmissionWithoutCommit(HttpStatus.INTERNAL_SERVER_ERROR);
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        Commit commit = new Commit();
+        commit.setCommitHash(dummyHash);
+
+        setBuildAndTestAfterDueDateForProgrammingExercise(null);
+
+        when(versionControlService.getLastCommitDetails(any())).thenReturn(commit);
+        mockTriggerByTypeAndParticipationId(IntegrationTestParticipationType.TEMPLATE, templateParticipationId);
+        mockTriggerByTypeAndParticipationId(IntegrationTestParticipationType.SOLUTION, solutionParticipationId);
+
+        postTestRepositorySubmissionWithoutCommit(HttpStatus.INTERNAL_SERVER_ERROR);
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         postTestRepositorySubmissionWithoutCommit(HttpStatus.OK);
     }
@@ -569,13 +583,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
-        final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).orElseThrow();
-        bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
+        mockTriggerByTypeAndParticipationId(IntegrationTestParticipationType.SOLUTION, solutionParticipationId);
+        mockTriggerByTypeAndParticipationId(IntegrationTestParticipationType.TEMPLATE, templateParticipationId);
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
         // Phase 1: There has been a commit to the test repository, the VCS now informs Artemis about it.
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>();
+
         participations.add(participationRepository.findWithEagerLegalSubmissionsById(solutionParticipationId).orElseThrow());
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(solutionParticipationId);
         // We only create submissions for the solution participation after a push to the test repository.
@@ -648,6 +663,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final var firstCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO("First commit", firstCommitHash);
         // Second commit is pushed and recorded
         final var secondCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO("Second commit", secondCommitHash);
+        bambooRequestMockProvider.mockTriggerBuild(testService.participation);
         postSubmission(testService.participation.getId(), HttpStatus.OK);
 
         // Build result for first commit is received
@@ -834,6 +850,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        bambooRequestMockProvider.mockTriggerBuild(participation);
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
         // Mock result from bamboo
@@ -873,9 +890,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Add a participation for the programming exercise
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
-
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 
+        bambooRequestMockProvider.mockTriggerBuild(participation);
         // set the author name to "Artemis"
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
@@ -953,6 +970,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String projectKey = "test201904bprogrammingexercise6";
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bambooRequestMockProvider.mockTriggerBuild(participation);
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
@@ -1134,6 +1152,16 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
             case TEMPLATE -> templateParticipationId;
             default -> participationIds.get(participationIndex);
         };
+    }
+
+    private void mockTriggerByTypeAndParticipationId(IntegrationTestParticipationType participationType, Long participationId) throws Exception {
+        var buildPlanId = "";
+        switch (participationType) {
+            case SOLUTION -> buildPlanId = solutionProgrammingExerciseParticipationRepository.findById(participationId).orElseThrow().getBuildPlanId();
+            case TEMPLATE -> buildPlanId = templateProgrammingExerciseParticipationRepository.findById(participationId).orElseThrow().getBuildPlanId();
+            case STUDENT -> buildPlanId = studentParticipationRepository.findById(participationId).orElseThrow().getBuildPlanId();
+        }
+        bambooRequestMockProvider.mockTriggerBuild(buildPlanId);
     }
 
     private void setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime buildAndTestAfterDueDate) {
