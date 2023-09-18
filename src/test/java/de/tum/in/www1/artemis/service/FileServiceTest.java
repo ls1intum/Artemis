@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -393,5 +395,55 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("package.xcworkspace");
         assertThat(expectedTargetFile).doesNotExist();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_Path_Null() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(null, URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/")))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_SubPath_Null() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/../../BackgroundFile.jpg"), null))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_Path_Temp() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/temp/backgrounds/1/../../BackgroundFile.jpg"),
+                URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_SubPath_Temp() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/../../BackgroundFile.jpg"),
+                URI.create("/api/files/temp/"))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Valid() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
+                URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/../../BackgroundFile.jpg"),
+                        URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/")));
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Valid() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/drag-items/1/PictureFile.jpg"),
+                URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/"))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/drag-items/1/../../PictureFile.jpg"),
+                        URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/")));
     }
 }
