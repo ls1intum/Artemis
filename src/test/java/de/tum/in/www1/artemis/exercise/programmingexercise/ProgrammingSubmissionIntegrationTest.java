@@ -404,6 +404,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var participation = createExerciseWithSubmissionAndParticipation();
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        var repoUrl = urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        doReturn(participation.getVcsRepositoryUrl()).when(versionControlService).getCloneRepositoryUrl(exercise.getProjectKey(), repoUrl);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);
