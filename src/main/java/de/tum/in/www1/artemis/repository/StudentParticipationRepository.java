@@ -503,16 +503,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query(value = """
-            SELECT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH p.results r
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.results r
             WHERE p.exercise.id = :#{#exerciseId}
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL
             """, countQuery = """
-            SELECT count(p) FROM StudentParticipation p
-            LEFT JOIN p.submissions s
-            LEFT JOIN p.results r
+            SELECT count(p)
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions s
+                LEFT JOIN p.results r
             WHERE p.exercise.id = :#{#exerciseId}
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL
