@@ -1,0 +1,33 @@
+<div>
+    <div>
+        <div class="card-title about-iris-header mb-2">
+            <div class="row">
+                <div class="col-auto">
+                    <jhi-iris-logo [size]="IrisLogoSize.BIG"></jhi-iris-logo>
+                </div>
+                <div class="col-8">
+                    <h2 class="mt-2 font-weight-bold">
+                        {{ 'artemisApp.exerciseChatbot.title' | artemisTranslate }}
+                    </h2>
+                    <div class="ms-2 d-none d-md-block">
+                        <p class="mt-1 font-weight-normal">{{ 'artemisApp.exerciseChatbot.subtext' | artemisTranslate }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row d-md-none">
+                <p class="mt-1 font-weight-normal">{{ 'artemisApp.exerciseChatbot.subtext' | artemisTranslate }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-5 ms-2" style="margin-right: 70px">
+        <div *ngFor="let key of objectKeys(bulletPoints)">
+            <h4 class="mb-3 font-weight-bold">{{ 'artemisApp.exerciseChatbot.subheading' + key | artemisTranslate }}</h4>
+            <ul>
+                <li *ngFor="let item of array(bulletPoints[key]); let i = index">
+                    <span [jhiTranslate]="'artemisApp.exerciseChatbot.text' + key + '_' + (i + 1)"></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
