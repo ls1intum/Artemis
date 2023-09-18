@@ -1,0 +1,14 @@
+# Sorting Testdata
+
+# Tests for advanced functionality
+PROGRAM_test {add 2020-03-31} {}
+PROGRAM_test {add 2020-03-30} {}
+PROGRAM_test {add 2020-04-01} {}
+PROGRAM_test {print} {[Tue Mar 31 00:00:00 UTC 2020, Mon Mar 30 00:00:00 UTC 2020, Wed Apr 01 00:00:00 UTC 2020]}
+PROGRAM_test {sort} {}
+PROGRAM_test {print} {[Mon Mar 30 00:00:00 UTC 2020, Tue Mar 31 00:00:00 UTC 2020, Wed Apr 01 00:00:00 UTC 2020]}
+
+PROGRAM_test {add 2020-01-31} {}
+PROGRAM_test {print} {[Mon Mar 30 00:00:00 UTC 2020, Tue Mar 31 00:00:00 UTC 2020, Wed Apr 01 00:00:00 UTC 2020, Fri Jan 31 00:00:00 UTC 2020]}
+PROGRAM_test {sort} {}
+PROGRAM_test {print} {[Fri Jan 31 00:00:00 UTC 2020, Mon Mar 30 00:00:00 UTC 2020, Tue Mar 31 00:00:00 UTC 2020, Wed Apr 01 00:00:00 UTC 2020]}

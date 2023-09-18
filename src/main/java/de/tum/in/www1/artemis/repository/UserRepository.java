@@ -374,6 +374,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("UPDATE User user SET user.langKey = :#{#languageKey} WHERE user.id = :#{#userId}")
     void updateUserLanguageKey(@Param("userId") Long userId, @Param("languageKey") String languageKey);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User user SET user.irisAccepted = :#{#acceptDatetime} WHERE user.id = :#{#userId}")
+    void updateIrisAcceptedToDate(@Param("userId") Long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("SELECT user FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups AND user NOT IN :#{#ignoredUsers}")
     Set<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
