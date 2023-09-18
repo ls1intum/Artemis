@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -411,13 +412,13 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
         programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
 
-        postResult(resultNotification);
-
         doAnswer(invocation -> {
             // only one feedback should be visible, the others are not active / only visible after due date
-            assertThat(((Result) invocation.getArguments()[2]).getFeedbacks()).hasSize(1).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
+            assertThat(((ResultDTO) invocation.getArguments()[2]).feedbacks()).hasSize(1).allMatch(feedback -> feedback.testCase().testName() == null);
             return null;
         }).when(websocketMessagingService).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), any());
+
+        postResult(resultNotification);
 
         // ensure that the method got called and the assertion above was executed
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), any());
