@@ -12,9 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -98,6 +97,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     ParticipationUtilService participationUtilService;
 
+    @Autowired
+    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
+
     @BeforeEach
     void init() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
@@ -140,9 +142,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
         verify(websocketMessagingService).sendMessageToUser(eq(username), any(), any());
     }
-
-    @Autowired
-    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -310,34 +309,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
-        quizExercise.setDuration(600);
-        quizExercise = quizExerciseService.save(quizExercise);
-
-        // at the beginning there are no submissions and no participants
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
-        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
-
-        if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
-            quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
-        }
-
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
-        QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class,
-                HttpStatus.OK);
-        // check whether submission flag was updated
-        assertThat(updatedSubmission.isSubmitted()).isTrue();
-        // check whether all answers were submitted properly
-        assertThat(updatedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
-        // check whether submission date was set
-        assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitLiveMode_badRequest_notActive(QuizMode quizMode) throws Exception {
@@ -357,26 +328,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         if (quizMode == QuizMode.SYNCHRONIZED) {
             quizExerciseRepository.delete(quizExercise);
         }
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
-        quizExercise.setDuration(10);
-        quizExercise = quizExerciseService.save(quizExercise);
-
-        if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
-            quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student3");
-        }
-
-        // create a submission for the first time
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
-        quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student3", quizSubmission);
-        // submit quiz for the second time, expected status = BAD_REQUEST
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -822,5 +773,58 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
         return quizExercise;
+    }
+
+    @Nested
+    @Isolated
+    class QuizSubmitLiveModeIsolatedTest {
+
+        @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @EnumSource(QuizMode.class)
+        void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            // at the beginning there are no submissions and no participants
+            assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+            assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
+
+            if (quizMode != QuizMode.SYNCHRONIZED) {
+                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
+                quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
+            }
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class,
+                    HttpStatus.OK);
+            // check whether submission flag was updated
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            // check whether all answers were submitted properly
+            assertThat(updatedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
+            // check whether submission date was set
+            assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
+        }
+
+        @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+        @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+        @EnumSource(QuizMode.class)
+        void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
+            quizExercise.setDuration(10);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            if (quizMode != QuizMode.SYNCHRONIZED) {
+                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
+                quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student3");
+            }
+
+            // create a submission for the first time
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
+            quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student3", quizSubmission);
+            // submit quiz for the second time, expected status = BAD_REQUEST
+            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+        }
     }
 }
