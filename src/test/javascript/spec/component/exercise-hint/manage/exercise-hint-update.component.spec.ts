@@ -18,6 +18,11 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
+import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -51,6 +56,8 @@ describe('ExerciseHint Management Update Component', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ExerciseHintService),
                 MockProvider(TranslateService),
+                MockProvider(IrisSettingsService),
+                MockProfileService,
                 { provide: ActivatedRoute, useValue: route },
             ],
         })
@@ -137,6 +144,38 @@ describe('ExerciseHint Management Update Component', () => {
         expect(comp.exerciseHint.content).toBe('Hello Content');
         expect(comp.exerciseHint.description).toBe('Hello Description');
     }));
+
+    it.each<[string[]]>([[[]], [['iris']]])(
+        'should load iris settings only if profile iris is active',
+        fakeAsync((activeProfiles: string[]) => {
+            // Mock getProfileInfo to return activeProfiles
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
+
+            // Mock getTasksAndTestsExtractedFromProblemStatement
+            jest.spyOn(programmingExerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of([]));
+
+            const fakeSettings = {} as any as IrisSettings;
+
+            // Mock getCombinedProgrammingExerciseSettings
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
+            const getCombinedProgrammingExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings').mockReturnValue(of(fakeSettings));
+
+            // Run ngOnInit
+            comp.ngOnInit();
+            tick();
+
+            if (activeProfiles.includes('iris')) {
+                // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
+                expect(getCombinedProgrammingExerciseSettingsSpy).toHaveBeenCalledOnce();
+                expect(comp.irisSettings).toBe(fakeSettings);
+            } else {
+                // Should not have called getCombinedProgrammingExerciseSettings if 'iris' is not active
+                expect(getCombinedProgrammingExerciseSettingsSpy).not.toHaveBeenCalled();
+                expect(comp.irisSettings).toBeUndefined();
+            }
+        }),
+    );
 
     it('should generate descriptions', () => {
         const codeHint = new CodeHint();

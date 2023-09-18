@@ -120,6 +120,7 @@ public class IrisSessionResource {
      * GET iris/sessions/{sessionId}/active: Retrieve if Iris is active for a session
      * This checks if the used model is healthy.
      *
+     * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
     @GetMapping("/sessions/{sessionId}/active")
