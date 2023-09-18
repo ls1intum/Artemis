@@ -468,11 +468,9 @@ export class ExamManagementService {
      * @param courseId
      * @param examId The id of the exam
      */
-    downloadExamArchive(courseId: number, examId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`, {
-            observe: 'response',
-            responseType: 'blob',
-        });
+    downloadExamArchive(courseId: number, examId: number): void {
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`;
+        window.open(url, '_blank');
     }
 
     /**
