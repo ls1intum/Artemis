@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDuration;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,15 +86,18 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             log.error("Can not run migration because the prerequisites for it to succeed are not met: {}", e.getMessage());
             throw e;
         }
-        long exerciseCount = programmingExerciseRepository.count();
-        if (exerciseCount == 0) {
-            return;
-        }
+        var programmingExerciseCount = programmingExerciseRepository.count();
+        var studentCount = ciMigrationService.orElseThrow().getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, Pageable.unpaged())
+                .getTotalElements();
 
-        log.info("Migrating {} programming exercises.", exerciseCount);
+        var totalCount = programmingExerciseCount * 2 + studentCount; // seconds
+
+        log.info("Will migrate {} programming exercises and {} student participations now. Stay tuned! Estimate duration of the migration: {}", programmingExerciseCount,
+                studentCount, formatDuration(totalCount));
+        log.info("Artemis will be available again after the migration has finished.");
 
         // Number of full batches. The last batch might be smaller
-        long totalFullBatchCount = exerciseCount / BATCH_SIZE;
+        long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
         int threadCount = (int) Math.max(1, Math.min(totalFullBatchCount, MAX_THREAD_COUNT));
 
         // Use fixed thread pool to prevent loading too many exercises into memory at once
@@ -101,45 +106,44 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         /*
          * migrate the solution participations first, then the template participations, then the student participations
          */
-        var count = solutionProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} solution programming exercises to migrate.", count);
-        for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
+        var solutionCount = solutionProgrammingExerciseParticipationRepository.count();
+        log.info("Found {} solution participations to migrate.", solutionCount);
+        for (int currentPageStart = 0; currentPageStart < solutionCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} solution programming exercises to migrate in batch.", solutionParticipationPage.getNumberOfElements());
+            log.info("Will migrate {} solution participations in batch.", solutionParticipationPage.getNumberOfElements());
             var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
             for (var solutionParticipations : solutionParticipationsPartitions) {
                 executorService.submit(() -> migrateSolutions(solutionParticipations));
             }
         }
 
-        log.info("Submitted all solution programming exercises to thread pool.");
+        log.info("Submitted all solution participations to thread pool for migration.");
         /*
          * migrate the template participations
          */
-        count = templateProgrammingExerciseParticipationRepository.count();
-        log.info("Found {} template programming exercises to migrate", count);
-        for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
+        var templateCount = templateProgrammingExerciseParticipationRepository.count();
+        log.info("Found {} template participations to migrate", templateCount);
+        for (int currentPageStart = 0; currentPageStart < templateCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
-            log.info("Found {} template programming exercises to migrate in batch.", templateParticipationPage.getNumberOfElements());
+            log.info("Will migrate {} template programming exercises in batch.", templateParticipationPage.getNumberOfElements());
             var templateParticipationsPartitions = Lists.partition(templateParticipationPage.toList(), threadCount);
             for (var templateParticipations : templateParticipationsPartitions) {
                 executorService.submit(() -> migrateTemplates(templateParticipations));
             }
         }
 
-        log.info("Submitted all template programming exercises to thread pool.");
+        log.info("Submitted all template participations to thread pool for migration.");
         /*
          * migrate the student participations
          */
-        count = ciMigrationService.orElseThrow().getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, Pageable.unpaged()).getTotalElements();
-        log.info("Found {} student programming exercises with build plans to migrate.", count);
-        for (int currentPageStart = 0; currentPageStart < count; currentPageStart += BATCH_SIZE) {
+        log.info("Found {} student programming exercise participations with build plans to migrate.", studentCount);
+        for (int currentPageStart = 0; currentPageStart < studentCount; currentPageStart += BATCH_SIZE) {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
                     .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
-            log.info("Found {} student programming exercises to migrate in batch.", studentParticipationPage.getNumberOfElements());
+            log.info("Will migrate {} student programming exercise participations in batch.", studentParticipationPage.getNumberOfElements());
             var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), threadCount);
             for (var studentParticipations : studentPartitionsPartitions) {
                 executorService.submit(() -> migrateStudents(studentParticipations));
@@ -154,7 +158,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             if (!finished) {
                 log.error(ERROR_MESSAGE);
                 if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                    log.error("Failed to cancel all threads. Some threads are still running.");
+                    log.error("Failed to cancel all migration threads. Some threads are still running.");
                 }
                 throw new RuntimeException(ERROR_MESSAGE);
             }
@@ -166,7 +170,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             throw new RuntimeException(e);
         }
 
-        log.info("Migrated student programming exercises");
+        log.info("Finished migrating programming exercises and student participations");
         evaluateErrorList();
     }
 
@@ -285,9 +289,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     continue;
                 }
 
-                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
-                // we had in the past
-                // note: this method calls directly saves the participation in the database with the updated branch
+                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that we had in the past
+                // note: this method calls directly saves the participation in the database with the updated branch in case it was not available
                 String branch = versionControlService.getOrRetrieveBranchOfStudentParticipation(participation);
                 if (branch == null || branch.isEmpty()) {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
@@ -576,17 +579,19 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             return;
         }
 
-        List<Long> failedTemplates = errorList.stream().filter(participation -> participation instanceof TemplateProgrammingExerciseParticipation)
+        List<Long> failedTemplateExercises = errorList.stream().filter(participation -> participation instanceof TemplateProgrammingExerciseParticipation)
                 .map(participation -> participation.getProgrammingExercise().getId()).toList();
-        List<Long> failedSolutions = errorList.stream().filter(participation -> participation instanceof SolutionProgrammingExerciseParticipation)
+        List<Long> failedSolutionExercises = errorList.stream().filter(participation -> participation instanceof SolutionProgrammingExerciseParticipation)
                 .map(participation -> participation.getProgrammingExercise().getId()).toList();
-        List<Long> failedStudents = errorList.stream().filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation)
-                .map(participation -> participation.getProgrammingExercise().getId()).toList();
+        List<Long> failedStudentParticipations = errorList.stream().filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation)
+                .map(ParticipationInterface::getId).toList();
 
-        log.error("Failed to migrate {} programming exercises", errorList);
-        log.error("Failed to migrate template build plan for exercises: {}", failedTemplates);
-        log.error("Failed to migrate solution build plan for exercises: {}", failedSolutions);
-        log.error("Failed to migrate students build plan for exercises: {}", failedStudents);
+        log.error("{} failures during migration", errorList.size());
+        // print each participation in a single line in the long to simplify reviewing the issues
+        log.error("Errors occurred for the following participations: \n{}", errorList.stream().map(Object::toString).collect(Collectors.joining("\n")));
+        log.error("Failed to migrate template build plan for exercises: {}", failedTemplateExercises);
+        log.error("Failed to migrate solution build plan for exercises: {}", failedSolutionExercises);
+        log.error("Failed to migrate students participations: {}", failedStudentParticipations);
         log.warn("Please check the logs for more information. If the issues are related to the external VCS/CI system, fix the issues and rerun the migration. or "
                 + "fix the build plans yourself and mark the migration as run. The migration can be rerun by deleting the migration entry in the database table containing "
                 + "the migration with author: " + author() + " and date_string: " + date() + " and then restarting Artemis.");
