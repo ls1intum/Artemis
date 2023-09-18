@@ -1,20 +1,16 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-
 /**
- * Stores configuration for manual and continuous plagiarism control.
+ * Stores configuration for plagiarism detection.
+ * This class is not a record as in the future (when cpc will be implemented) it will be extended to a DomainObject and represent a database entry.
  */
-public class PlagiarismDetectionConfig extends DomainObject {
+public class PlagiarismDetectionConfig {
 
-    private float similarityThreshold;
+    private final float similarityThreshold;
 
-    private int minimumScore;
+    private final int minimumScore;
 
-    private int minimumSize;
-
-    public PlagiarismDetectionConfig() {
-    }
+    private final int minimumSize;
 
     public PlagiarismDetectionConfig(float similarityThreshold, int minimumScore, int minimumSize) {
         this.similarityThreshold = similarityThreshold;
@@ -26,23 +22,11 @@ public class PlagiarismDetectionConfig extends DomainObject {
         return similarityThreshold;
     }
 
-    public void setSimilarityThreshold(float similarityThreshold) {
-        this.similarityThreshold = similarityThreshold;
-    }
-
     public int getMinimumScore() {
         return minimumScore;
     }
 
-    public void setMinimumScore(int minimumScore) {
-        this.minimumScore = minimumScore;
-    }
-
     public int getMinimumSize() {
         return minimumSize;
-    }
-
-    public void setMinimumSize(int minimumSize) {
-        this.minimumSize = minimumSize;
     }
 }
