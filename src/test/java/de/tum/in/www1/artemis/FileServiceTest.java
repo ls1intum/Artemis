@@ -10,7 +10,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.service.FileService;
 
-public class FileServiceTest {
+class FileServiceTest {
 
     private static final String TEST_PREFIX = "fileService";
 
