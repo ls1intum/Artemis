@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
@@ -215,9 +215,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.submissionPolicy = submissionPolicy;
             });
 
-            this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!).subscribe((settings) => {
-                this.irisSettings = settings;
-            });
+            this.profileService
+                .getProfileInfo()
+                .pipe(
+                    filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                    switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!)),
+                )
+                .subscribe((settings) => {
+                    this.irisSettings = settings;
+                });
         }
 
         this.showIfExampleSolutionPresent(newExercise);
