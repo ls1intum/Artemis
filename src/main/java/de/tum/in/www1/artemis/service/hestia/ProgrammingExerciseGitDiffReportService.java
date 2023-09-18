@@ -179,7 +179,7 @@ public class ProgrammingExerciseGitDiffReportService {
         try (var diffOutputStream = new ByteArrayOutputStream(); var git = Git.wrap(repoB)) {
             git.diff().setOldTree(treeParserRepoB).setNewTree(treeParserRepoA).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            return extractDiffEntries(diff).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).map(Math::abs).sum();
+            return extractDiffEntries(diff, true).stream().mapToInt(ProgrammingExerciseGitDiffEntry::getLineCount).sum();
         }
         catch (IOException | GitAPIException e) {
             log.error("Error calculating number of diff lines between repositories: urlRepoA={}, urlRepoB={}.", urlRepoA, urlRepoB, e);
@@ -212,7 +212,7 @@ public class ProgrammingExerciseGitDiffReportService {
         try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(templateRepo)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            var programmingExerciseGitDiffEntries = extractDiffEntries(diff);
+            var programmingExerciseGitDiffEntries = extractDiffEntries(diff, false);
             var report = new ProgrammingExerciseGitDiffReport();
             for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
                 gitDiffEntry.setGitDiffReport(report);
@@ -228,7 +228,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @param diff The raw git-diff output
      * @return The extracted ProgrammingExerciseGitDiffEntries
      */
-    private List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff) {
+    private List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff, boolean useAbsoluteLineCount) {
         var lines = diff.split("\n");
         var parserState = new ParserState();
 
@@ -245,7 +245,7 @@ public class ProgrammingExerciseGitDiffReportService {
             else if (!parserState.deactivateCodeReading) {
                 switch (line.charAt(0)) {
                     case '+' -> handleAddition(parserState);
-                    case '-' -> handleRemoval(parserState);
+                    case '-' -> handleRemoval(parserState, useAbsoluteLineCount);
                     case ' ' -> handleUnchanged(parserState);
                     default -> parserState.deactivateCodeReading = true;
                 }
@@ -291,7 +291,7 @@ public class ProgrammingExerciseGitDiffReportService {
         parserState.currentPreviousLineCount++;
     }
 
-    private void handleRemoval(ParserState parserState) {
+    private void handleRemoval(ParserState parserState, boolean useAbsoluteLineCount) {
         var entry = parserState.currentEntry;
         if (!parserState.lastLineRemoveOperation && !entry.isEmpty()) {
             parserState.entries.add(entry);
@@ -303,7 +303,16 @@ public class ProgrammingExerciseGitDiffReportService {
             entry.setPreviousLineCount(0);
             entry.setPreviousStartLine(parserState.currentPreviousLineCount);
         }
-        entry.setPreviousLineCount(entry.getPreviousLineCount() + 1);
+        if (useAbsoluteLineCount) {
+            if (parserState.currentEntry.getLineCount() == null) {
+                parserState.currentEntry.setLineCount(0);
+                parserState.currentEntry.setStartLine(parserState.currentLineCount);
+            }
+            parserState.currentEntry.setLineCount(parserState.currentEntry.getLineCount() + 1);
+        }
+        else {
+            entry.setPreviousLineCount(entry.getPreviousLineCount() + 1);
+        }
 
         parserState.currentEntry = entry;
         parserState.lastLineRemoveOperation = true;
