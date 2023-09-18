@@ -12,6 +12,7 @@
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (clickHandler)="submitChanges()"
             buttonLabel="Submit"
+            [buttonType]="1"
             [buttonLoading]="this.exercise.loading || orionState.building"
             [smallButton]="smallButtons"
             *ngIf="isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id"
@@ -19,7 +20,8 @@
         <jhi-ide-button
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (clickHandler)="initializeFeedback()"
-            buttonLabel="Reload"
+            buttonLabel="Reload Feedback"
+            [buttonType]="2"
             [smallButton]="smallButtons"
             *ngIf="isOfflineIdeAllowed && (orionState.view !== ExerciseView.STUDENT || orionState.opened === this.exercise.id)"
         ></jhi-ide-button>

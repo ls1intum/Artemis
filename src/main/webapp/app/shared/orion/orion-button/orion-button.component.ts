@@ -1,6 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faDownload, faFileArrowUp, faRotateRight } from '@fortawesome/free-solid-svg-icons';
+
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+
+enum OrionButtonType {
+    Other,
+    Submit,
+    Reload,
+    Download,
+}
 
 @Component({
     selector: 'jhi-ide-button',
@@ -9,6 +17,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 })
 export class OrionButtonComponent {
     @Input() buttonLabel: string;
+    @Input() buttonType: OrionButtonType = OrionButtonType.Other;
     @Input() buttonLoading = false;
     @Input() outlined = false;
     @Input() smallButton = false;
@@ -20,6 +29,9 @@ export class OrionButtonComponent {
 
     // Icons
     faCircleNotch = faCircleNotch;
+    faRotateRight = faRotateRight;
+    faFileArrowUp = faFileArrowUp;
+    faDownload = faDownload;
 
     constructor() {}
 
@@ -35,4 +47,6 @@ export class OrionButtonComponent {
             this.clickHandler.emit();
         }
     }
+
+    protected readonly OrionButtonType = OrionButtonType;
 }
