@@ -240,12 +240,8 @@ public class ParticipationService {
         participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
         participation = configureBuildPlan(participation);
-        // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
-        // (when the web hook was already initialized, see below)
-        continuousIntegrationService.orElseThrow().performEmptySetupCommit(participation);
-        // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
-        participation = configureRepositoryWebHook(participation);
+        configureRepositoryWebHook(participation);
         // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
         // Step 4b) Set the InitializationDate to the current time
@@ -343,7 +339,7 @@ public class ParticipationService {
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUrl(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
-            programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+            configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
                     || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
@@ -490,11 +486,10 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
+    private void configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.orElseThrow().addWebHookForParticipation(participation);
         }
-        return participation;
     }
 
     /**

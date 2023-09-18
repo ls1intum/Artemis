@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.exam;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -190,6 +191,14 @@ public class Exam extends DomainObject {
 
     public void setEndDate(@NotNull ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    /**
+     * @return the duration of the exam in seconds
+     */
+    @JsonIgnore
+    public int getDuration() {
+        return Math.toIntExact(Duration.between(getStartDate(), getEndDate()).toSeconds());
     }
 
     public ZonedDateTime getPublishResultsDate() {
