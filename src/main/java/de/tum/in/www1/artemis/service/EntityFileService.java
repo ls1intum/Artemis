@@ -78,7 +78,7 @@ public class EntityFileService {
             return newPath.toString();
         }
         catch (IOException e) {
-            log.error("Error moving file: " + filePath, e);
+            log.error("Error moving file: {}", filePath, e);
             // fallback return original path
             return filePath.toString();
         }

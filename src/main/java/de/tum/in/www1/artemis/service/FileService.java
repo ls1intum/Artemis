@@ -245,7 +245,7 @@ public class FileService implements DisposableBean {
                 return target;
             }
             catch (IOException e) {
-                log.error("Error moving file: " + oldFilePath, e);
+                log.error("Error moving file: {}", oldFilePath, e);
             }
         }
         return null;
