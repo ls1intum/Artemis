@@ -2,7 +2,7 @@
     <table class="table table-striped">
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                <th *ngIf="course.isAtLeastEditor" class="d-md-table-cell">
+                <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
                     <input class="form-check-input" type="checkbox" (change)="toggleAllFileUploadExercises()" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
