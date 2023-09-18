@@ -185,7 +185,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     log.info("Skipping migration for exercise {} and setting build_plan_id to null", participation.getProgrammingExercise().getId());
                     participation.setBuildPlanId(null);
                     solutionProgrammingExerciseParticipationRepository.save(participation);
-                    return;
+                    continue;
                 }
 
                 // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
@@ -195,7 +195,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 if (branch == null || branch.isEmpty()) {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
                             participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
-                    return;
+                    continue;
                 }
 
                 log.info("Migrating solution build plan with name {} for exercise {}",
@@ -235,7 +235,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     participation.setBuildPlanId(null);
                     templateProgrammingExerciseParticipationRepository.save(participation);
                     // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
-                    return;
+                    continue;
                 }
 
                 log.info("Migrating build plan with name {} for exercise {}", participation.getProgrammingExercise().getProjectKey() + "-" + participation.getBuildPlanId(),
@@ -249,7 +249,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
                             participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
                     // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
-                    return;
+                    continue;
                 }
                 var startMs = System.currentTimeMillis();
                 List<AuxiliaryRepository> auxiliaryRepositories = getAuxiliaryRepositories(participation.getProgrammingExercise().getId());
@@ -282,6 +282,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                     log.info("Skipping migration for exercise {} and setting build_plan_id to null", participation.getProgrammingExercise().getId());
                     participation.setBuildPlanId(null);
                     programmingExerciseStudentParticipationRepository.save(participation);
+                    continue;
                 }
 
                 // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
@@ -291,7 +292,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 if (branch == null || branch.isEmpty()) {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
                             participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
-                    return;
+                    continue;
                 }
 
                 log.info("Migrating student participation with buildPlanId {} for exercise {}", participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
@@ -536,7 +537,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         }
         // NOTE: this handles an edge case with HASKELL exercises, where the solution repository is checked out in the student build plan
         try {
-            // we dont have the solution repository url in the template participation, so we have to get it from the repository service
+            // we do not have the solution repository url in the template participation, so we have to get it from the repository service
             var solutionRepositoryUrl = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).get().getVcsRepositoryUrl();
             ciMigrationService.orElseThrow().overrideBuildPlanRepository(participation.getBuildPlanId(), SOLUTION_REPO_NAME,
                     urlService.getPlainUrlFromRepositoryUrl(solutionRepositoryUrl), exercise.getBranch());
