@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -57,5 +58,20 @@ export class UserService {
      */
     initializeLTIUser(): Observable<HttpResponse<{ password: string }>> {
         return this.http.put<{ password: string }>(`${this.resourceUrl}/initialize`, null, { observe: 'response' });
+    }
+
+    /**
+     * Accept Iris policy.
+     */
+    acceptIris(): Observable<HttpResponse<void>> {
+        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
+    }
+
+    /**
+     * Get the timestamp that Iris is accepted.
+     * @return Observable<dayjs.Dayjs> with the accepted date.
+     */
+    getIrisAcceptedAt(): Observable<dayjs.Dayjs | null> {
+        return this.http.get<dayjs.Dayjs | null>(`${this.resourceUrl}/accept-iris`);
     }
 }

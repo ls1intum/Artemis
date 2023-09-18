@@ -1069,7 +1069,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Download the archive
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().orElseThrow();
-        var archive = request.getFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        Map<String, String> expectedHeaders = new HashMap<>();
+        expectedHeaders.put("Content-Disposition", "attachment; filename=\"" + exam.getExamArchivePath() + "\"");
+        var archive = request.getFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>(),
+                expectedHeaders);
         assertThat(archive).isNotNull();
 
         // Extract the archive
