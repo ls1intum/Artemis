@@ -242,8 +242,8 @@ describe('OrionConnectorService', () => {
         const feedbacks = [{ id: 12, positive: true, detailText: 'def' } as Feedback, { id: 13, positive: false, detailText: 'abc' } as Feedback];
         serviceUnderTest.initializeFeedback(15, feedbacks);
 
-        expect((window as any).orionExerciseConnector.initializeAssessment).toHaveBeenCalledOnce();
-        expect((window as any).orionExerciseConnector.initializeAssessment).toHaveBeenCalledWith(
+        expect((window as any).orionExerciseConnector.initializeFeedback).toHaveBeenCalledOnce();
+        expect((window as any).orionExerciseConnector.initializeFeedback).toHaveBeenCalledWith(
             '15',
             '[{"id":12,"positive":true,"detailText":"def"},{"id":13,"positive":false,"detailText":"abc"}]',
         );

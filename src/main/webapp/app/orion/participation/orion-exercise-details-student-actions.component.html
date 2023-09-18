@@ -21,7 +21,7 @@
             (clickHandler)="initializeFeedback()"
             buttonLabel="Reload"
             [smallButton]="smallButtons"
-            *ngIf="isOfflineIdeAllowed && (orionState.view !== ExerciseView.STUDENT || orionState.opened !== this.exercise.id)"
+            *ngIf="isOfflineIdeAllowed && (orionState.view !== ExerciseView.STUDENT || orionState.opened === this.exercise.id)"
         ></jhi-ide-button>
     </ng-template>
 </jhi-exercise-details-student-actions>
