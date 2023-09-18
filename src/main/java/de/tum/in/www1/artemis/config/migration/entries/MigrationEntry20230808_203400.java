@@ -107,9 +107,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var solutionParticipationPage = solutionProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} solution programming exercises to migrate in batch.", solutionParticipationPage.getNumberOfElements());
-            var partitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
-            for (var partition : partitions) {
-                executorService.submit(() -> migrateSolutions(partition));
+            var solutionParticipationsPartitions = Lists.partition(solutionParticipationPage.toList(), threadCount);
+            for (var solutionParticipations : solutionParticipationsPartitions) {
+                executorService.submit(() -> migrateSolutions(solutionParticipations));
             }
         }
 
@@ -123,9 +123,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             Pageable pageable = PageRequest.of(currentPageStart / BATCH_SIZE, BATCH_SIZE);
             var templateParticipationPage = templateProgrammingExerciseParticipationRepository.findAll(pageable);
             log.info("Found {} template programming exercises to migrate in batch.", templateParticipationPage.getNumberOfElements());
-            var partitions = Lists.partition(templateParticipationPage.toList(), threadCount);
-            for (var partition : partitions) {
-                executorService.submit(() -> migrateTemplates(partition));
+            var templateParticipationsPartitions = Lists.partition(templateParticipationPage.toList(), threadCount);
+            for (var templateParticipations : templateParticipationsPartitions) {
+                executorService.submit(() -> migrateTemplates(templateParticipations));
             }
         }
 
@@ -140,9 +140,9 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             Page<ProgrammingExerciseStudentParticipation> studentParticipationPage = ciMigrationService.orElseThrow()
                     .getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, pageable);
             log.info("Found {} student programming exercises to migrate in batch.", studentParticipationPage.getNumberOfElements());
-            var partitions = Lists.partition(studentParticipationPage.toList(), threadCount);
-            for (var partition : partitions) {
-                executorService.submit(() -> migrateStudents(partition));
+            var studentPartitionsPartitions = Lists.partition(studentParticipationPage.toList(), threadCount);
+            for (var studentParticipations : studentPartitionsPartitions) {
+                executorService.submit(() -> migrateStudents(studentParticipations));
             }
         }
 

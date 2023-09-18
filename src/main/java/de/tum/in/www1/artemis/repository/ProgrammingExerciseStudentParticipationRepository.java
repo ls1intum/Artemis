@@ -134,9 +134,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
-    ProgrammingExerciseStudentParticipation findWithResultsById(Long participationId);
-
     @EntityGraph(type = LOAD, attributePaths = "student")
     Optional<ProgrammingExerciseStudentParticipation> findWithStudentById(Long participationId);
 
@@ -159,16 +156,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     void updateLockedById(@Param("participationId") Long participationId, @Param("locked") boolean locked);
 
     @Query("""
-                SELECT DISTINCT p
-                FROM ProgrammingExerciseStudentParticipation p
-                    WHERE p.buildPlanId IS NOT NULL
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                WHERE p.buildPlanId IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId(Pageable pageable);
 
     @Query("""
-                SELECT DISTINCT p
-                FROM ProgrammingExerciseStudentParticipation p
-                    WHERE p.buildPlanId IS NOT NULL or p.repositoryUrl IS NOT NULL
+            SELECT DISTINCT p
+            FROM ProgrammingExerciseStudentParticipation p
+                WHERE p.buildPlanId IS NOT NULL or p.repositoryUrl IS NOT NULL
             """)
     Page<ProgrammingExerciseStudentParticipation> findAllWithRepositoryUrlOrBuildPlanId(Pageable pageable);
 }
