@@ -1,0 +1,4 @@
+artemis:
+    iris:
+        url: "http://iris.fake"
+        secret-token: "secret-token"

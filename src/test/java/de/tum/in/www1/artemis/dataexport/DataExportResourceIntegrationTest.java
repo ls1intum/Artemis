@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.service.dataexport.DataExportService;
+import de.tum.in.www1.artemis.service.export.DataExportService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
@@ -156,15 +156,26 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(value = DataExportState.class, names = { "IN_CREATION", "DOWNLOADED" })
-    void testCanDownload_dataExportInCorrectState_dataExportIdReturned() throws Exception {
+    @EnumSource(value = DataExportState.class, names = { "EMAIL_SENT", "DOWNLOADED" })
+    void testCanDownload_dataExportInCorrectState_dataExportIdReturned(DataExportState state) throws Exception {
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
-        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setDataExportState(state);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
         var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isEqualTo(dataExport.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanDownload_multipleDataExportsInCorrectState_returnsLatest() throws Exception {
+        dataExportRepository.deleteAll();
+        initDataExport(DataExportState.DOWNLOADED);
+        var expectedDataExport = initDataExport(DataExportState.EMAIL_SENT);
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isEqualTo(expectedDataExport.getId());
+        assertThat(dataExportToDownload.dataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
     }
 
     @Test

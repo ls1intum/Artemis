@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 
 describe('ExamExerciseUpdateHighlighterComponent', () => {
@@ -17,8 +17,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
 
     const oldProblemStatement = 'problem statement with errors';
     const updatedProblemStatement = 'new updated ProblemStatement';
-    const exerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
-
+    const textExerciseDummy = { id: 42, problemStatement: oldProblemStatement } as Exercise;
     beforeAll(() => {
         return TestBed.configureTestingModule({
             declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
@@ -29,7 +28,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
                 fixture = TestBed.createComponent(ExamExerciseUpdateHighlighterComponent);
                 component = fixture.componentInstance;
 
-                component.exercise = exerciseDummy;
+                component.exercise = textExerciseDummy;
                 const exerciseId = component.exercise.id!;
                 const update = { exerciseId, problemStatement: updatedProblemStatement };
 
@@ -60,5 +59,37 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         expect(problemStatementAfterClick).toEqual(updatedProblemStatement);
         expect(problemStatementAfterClick).not.toEqual(component.updatedProblemStatementWithHighlightedDifferences);
         expect(problemStatementAfterClick).not.toEqual(problemStatementBeforeClick);
+    });
+
+    describe('ExamExerciseUpdateHighlighterComponent for programming exercises', () => {
+        const oldProblemStatementWithPlantUml =
+            'problem statement with errors @startuml class BubbleSort {<color:testsColor(testBubbleSort())>+performSort(List<Date>)</color>' + '@enduml';
+        const programmingExerciseDummy = { id: 42, problemStatement: oldProblemStatementWithPlantUml, type: ExerciseType.PROGRAMMING } as Exercise;
+        const updatedProblemStatementWithPlantUml =
+            'new updated ProblemStatement @startuml class BubbleSort {<color:testsColor(testBubbleSort())>+performSortUpdate(List<Date>)</color>' + '@enduml';
+        beforeAll(() => {
+            return TestBed.configureTestingModule({
+                declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
+                providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
+            })
+                .compileComponents()
+                .then(() => {
+                    fixture = TestBed.createComponent(ExamExerciseUpdateHighlighterComponent);
+                    component = fixture.componentInstance;
+
+                    component.exercise = programmingExerciseDummy;
+                    const exerciseId = component.exercise.id!;
+                    const update = { exerciseId, problemStatement: updatedProblemStatementWithPlantUml };
+
+                    fixture.detectChanges();
+                    examExerciseIdAndProblemStatementSourceMock.next(update);
+                });
+        });
+
+        it('should ignore plantuml diagrams in programming exercise problem statements for diff calculation', () => {
+            const result = component.exercise.problemStatement;
+            expect(result).toEqual(component.updatedProblemStatementWithHighlightedDifferences);
+            fixture.detectChanges();
+        });
     });
 });

@@ -449,7 +449,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToExportRepository() throws Exception {
-        doThrow(GitException.class).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), anyLong());
+        doThrow(GitException.class).when(fileService).getTemporaryUniquePathWithoutPathCreation(any(Path.class), anyLong());
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, false, true, true);
     }
 

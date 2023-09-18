@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.AfterEach;
@@ -82,6 +83,15 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private void writeFile(String destinationPath, String content) {
         try {
             FileUtils.writeByteArrayToFile(Path.of(".", "exportTest", destinationPath).toFile(), content.getBytes(StandardCharsets.UTF_8));
+        }
+        catch (IOException ex) {
+            fail("Failed while writing test files", ex);
+        }
+    }
+
+    private void writeFile(String destinationPath, byte[] bytes) {
+        try {
+            FileUtils.writeByteArrayToFile(Path.of(".", "exportTest", destinationPath).toFile(), bytes);
         }
         catch (IOException ex) {
             fail("Failed while writing test files", ex);
@@ -253,15 +263,16 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         doc1.save(outputStream);
         doc1.close();
 
-        writeFile("testfile1.pdf", outputStream.toString());
+        writeFile("testfile1.pdf", outputStream.toByteArray());
 
+        outputStream.reset();
         PDDocument doc2 = new PDDocument();
         doc2.addPage(new PDPage());
         doc2.addPage(new PDPage());
         doc2.save(outputStream);
         doc2.close();
 
-        writeFile("testfile2.pdf", outputStream.toString());
+        writeFile("testfile2.pdf", outputStream.toByteArray());
 
         paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
         paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
@@ -269,7 +280,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();
         assertThat(mergedFile.get()).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(mergedFile.get());
+        PDDocument mergedDoc = Loader.loadPDF(mergedFile.get());
         assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
     }
 

@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfigu
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
@@ -139,6 +140,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
+    @Column(name = "info_sharing_messaging_code_of_conduct")
+    private String courseInformationSharingMessagingCodeOfConduct;
+
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
@@ -250,6 +254,10 @@ public class Course extends DomainObject {
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "iris_settings_id")
+    private IrisSettings irisSettings;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1015,4 +1023,19 @@ public class Course extends DomainObject {
         this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
     }
 
+    public String getCourseInformationSharingMessagingCodeOfConduct() {
+        return this.courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
+        this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public IrisSettings getIrisSettings() {
+        return irisSettings;
+    }
+
+    public void setIrisSettings(IrisSettings irisSettings) {
+        this.irisSettings = irisSettings;
+    }
 }

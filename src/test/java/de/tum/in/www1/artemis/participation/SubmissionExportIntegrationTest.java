@@ -241,14 +241,14 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportAll_IOException() throws Exception {
-        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any());
         request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportTextExerciseSubmission_IOException() throws Exception {
-        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any());
         request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
     }
 

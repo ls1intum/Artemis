@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.slf4j.Logger;
@@ -51,7 +52,7 @@ public class ExamUserService {
      */
     public List<ExamUserWithImageDTO> parsePDF(MultipartFile file) {
 
-        try (PDDocument document = PDDocument.load(file.getBytes())) {
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
             ImageExtractor imageExtractor = new ImageExtractor(document);
             imageExtractor.process();
             List<ImageDTO> images = imageExtractor.getImages();
@@ -129,6 +130,6 @@ public class ExamUserService {
     /**
      * Contains the information about an exam user with image
      */
-    private record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
+    record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
     }
 }

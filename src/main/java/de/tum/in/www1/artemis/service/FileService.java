@@ -25,7 +25,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -60,7 +59,7 @@ public class FileService implements DisposableBean {
      * Extensions must be lower-case without leading dots.
      */
     private static final Set<String> BINARY_FILE_EXTENSIONS = Set.of("png", "jpg", "jpeg", "heic", "gif", "tiff", "psd", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-            "pages", "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar");
+            "pages", "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar", "bin", "so", "dll");
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
@@ -99,7 +98,7 @@ public class FileService implements DisposableBean {
     /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
-    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm");
+    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm", ".tests");
 
     @Override
     public void destroy() {
@@ -817,15 +816,14 @@ public class FileService implements DisposableBean {
      */
     public Path getUniqueSubfolderPath(Path path) {
         var uniquePath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
+        if (!Files.exists(uniquePath) && Files.isDirectory(path)) {
             try {
-                Files.createDirectories(uniquePath);
+                return Files.createDirectories(uniquePath);
             }
             catch (IOException e) {
                 log.warn("could not create the directories for the path {}", uniquePath);
             }
         }
-
         return uniquePath;
     }
 
@@ -844,20 +842,33 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Write a given string into a file at a given path
+     * Create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system but does not create the folder.
+     * This is used when cloning the programming exercises into a new temporary directory because if we already create the directory, the git clone does not work anymore.
+     * The directory will be scheduled for deletion.
      *
-     * @param stringToWrite The string that will be written into a file
-     * @param path          The path where the file will be written to
-     * @return Path to the written file
+     * @param path                 the original path, e.g. /opt/artemis/repos-download
+     * @param deleteDelayInMinutes the delay in minutes after which the path should be deleted
+     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
      */
-    public Path writeStringToFile(String stringToWrite, Path path) {
-        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), UTF_8)) {
-            outStream.write(stringToWrite);
+    public Path getTemporaryUniquePathWithoutPathCreation(Path path, long deleteDelayInMinutes) {
+        var temporaryPath = path.resolve(String.valueOf(System.currentTimeMillis()));
+        scheduleDirectoryPathForRecursiveDeletion(temporaryPath, deleteDelayInMinutes);
+        return temporaryPath;
+    }
+
+    /**
+     * create a directory at a given path
+     *
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     */
+    public void createDirectory(Path path) {
+        try {
+            Files.createDirectories(path);
         }
         catch (IOException e) {
-            log.warn("Could not write given string in file {}.", path);
+            var error = "Failed to create temporary directory at path " + path + " : " + e.getMessage();
+            log.info(error);
         }
-        return path;
     }
 
     /**
@@ -868,13 +879,8 @@ public class FileService implements DisposableBean {
      * @param path         The path where the file will be written to
      * @return Path to the written file
      */
-    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
-        try {
-            objectMapper.writeValue(path.toFile(), object);
-        }
-        catch (IOException e) {
-            log.warn("Could not write given object in file {}", path);
-        }
+    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) throws IOException {
+        objectMapper.writeValue(path.toFile(), object);
         return path;
     }
 
@@ -896,7 +902,7 @@ public class FileService implements DisposableBean {
             for (String path : paths) {
                 File file = new File(path);
                 if (file.exists()) {
-                    pdfMerger.addSource(new File(path));
+                    pdfMerger.addSource(file);
                 }
             }
 
@@ -905,7 +911,7 @@ public class FileService implements DisposableBean {
             pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
 
             pdfMerger.setDestinationStream(outputStream);
-            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+            pdfMerger.mergeDocuments(null);
 
         }
         catch (IOException e) {
