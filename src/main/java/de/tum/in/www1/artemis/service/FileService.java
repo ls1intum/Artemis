@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -73,6 +74,10 @@ public class FileService implements DisposableBean {
      */
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
+
+    public static final String DRAG_AND_DROP_BACKGROUND_SUBPATH = "files/drag-and-drop/backgrounds";
+
+    public static final String DRAG_AND_DROP_PICTURE_SUBPATH = "files/drag-and-drop/drag-items";
 
     public static final String MARKDOWN_FILE_SUBPATH = "/api/files/markdown/";
 
@@ -345,8 +350,8 @@ public class FileService implements DisposableBean {
      * Convert the given public file url to its corresponding local path
      *
      * @param publicPath the public file url to convert
-     * @throws FilePathParsingException if the path is unknown
      * @return the actual path to that file in the local filesystem
+     * @throws FilePathParsingException if the path is unknown
      */
     public String actualPathForPublicPathOrThrow(String publicPath) {
         String actualPath = actualPathForPublicPath(publicPath);
@@ -372,10 +377,10 @@ public class FileService implements DisposableBean {
         if (publicPath.contains("files/temp")) {
             return Path.of(FilePathService.getTempFilePath(), filename).toString();
         }
-        if (publicPath.contains("files/drag-and-drop/backgrounds")) {
+        if (publicPath.contains(FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH)) {
             return Path.of(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
         }
-        if (publicPath.contains("files/drag-and-drop/drag-items")) {
+        if (publicPath.contains(FileService.DRAG_AND_DROP_PICTURE_SUBPATH)) {
             return Path.of(FilePathService.getDragItemFilePath(), filename).toString();
         }
         if (publicPath.contains("files/course/icons")) {
@@ -422,12 +427,32 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Checks whether a path (defined by a URI) contains a certain sub-path (defined by a URI)).
+     *
+     * @param path    URI to be checked
+     * @param subPath URI to check
+     * @throws IllegalArgumentException if the provided path does not contain the provided sub-path
+     */
+    public static void sanitizeByCheckingIfPathContainsSubPathElseThrow(URI path, URI subPath) {
+        // Only act if path and subpath exist and if neither of them points to a temp location
+        if (path != null && !path.getPath().contains("files/temp") && subPath != null && !subPath.getPath().contains("files/temp")) {
+            // Removes redundant elements (e.g. ../ or ./) from the path and subPath
+            URI normalisedPath = path.normalize();
+            URI normalisedSubPath = subPath.normalize();
+            // Check whether the normalisedPath starts with the normalisedSubPath
+            if (!normalisedPath.getPath().startsWith(normalisedSubPath.getPath())) {
+                throw new IllegalArgumentException("Path is not valid!");
+            }
+        }
+    }
+
+    /**
      * Generate the public path for the file at the given path
      *
      * @param actualPathString the path to the file in the local filesystem
      * @param entityId         the id of the entity associated with the file
-     * @throws FilePathParsingException if the path is unknown
      * @return the public file url that can be used by users to access the file from outside
+     * @throws FilePathParsingException if the path is unknown
      */
     public String publicPathForActualPathOrThrow(String actualPathString, @Nullable Long entityId) {
         String publicPath = publicPathForActualPath(actualPathString, entityId);
@@ -458,10 +483,10 @@ public class FileService implements DisposableBean {
             return DEFAULT_FILE_SUBPATH + filename;
         }
         if (actualPathString.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
-            return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
+            return "/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/" + id + "/" + filename;
         }
         if (actualPathString.contains(FilePathService.getDragItemFilePath())) {
-            return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
+            return "/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/" + id + "/" + filename;
         }
         if (actualPathString.contains(FilePathService.getCourseIconFilePath())) {
             return "/api/files/course/icons/" + id + "/" + filename;

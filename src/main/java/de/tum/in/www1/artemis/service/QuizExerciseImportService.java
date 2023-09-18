@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URI;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -101,7 +99,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
                 // Check whether dndQuestion.getBackgroundFilePath() is actually a background file path
-                QuizExerciseImportService.checkIfBackgroundFilePathIsABackgroundFilePathElseThrow(dndQuestion.getBackgroundFilePath());
+                // (which is the case when its path starts with "/api/files/drag-and-drop/backgrounds/")
+                FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
+                        // Turn dndQuestion.getBackgroundFilePath() into a URI analog to
+                        // https://github.com/ls1intum/Artemis/pull/7038/files#diff-d41031bc9d88710f3ba653294756465029245a3d3a8d1af479b8a6498c254bd3
+                        URI.create(dndQuestion.getBackgroundFilePath()), URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"));
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
                 dndQuestion
                         .setBackgroundFilePath(fileService.copyExistingFileToTarget(dndQuestion.getBackgroundFilePath(), FilePathService.getDragAndDropBackgroundFilePath(), null));
@@ -114,6 +116,12 @@ public class QuizExerciseImportService extends ExerciseImportService {
                     dragItem.setId(null);
                     dragItem.setQuestion(dndQuestion);
                     if (dragItem.getPictureFilePath() != null) {
+                        // Check whether dndQuestion.getBackgroundFilePath() is actually a background file path
+                        // (which is the case when its path starts with "/api/files/drag-and-drop/backgrounds/")
+                        FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
+                                // Turn dragItem.getPictureFilePath() into a URI analog to
+                                // https://github.com/ls1intum/Artemis/pull/7038/files#diff-d41031bc9d88710f3ba653294756465029245a3d3a8d1af479b8a6498c254bd3
+                                URI.create(dragItem.getPictureFilePath()), URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/"));
                         // Need to copy the file and get a new path, same as above
                         dragItem.setPictureFilePath(fileService.copyExistingFileToTarget(dragItem.getPictureFilePath(), FilePathService.getDragItemFilePath(), null));
                     }
@@ -152,36 +160,6 @@ public class QuizExerciseImportService extends ExerciseImportService {
             quizQuestion.setExercise(newExercise);
         }
         newExercise.setQuizQuestions(importedExercise.getQuizQuestions());
-    }
-
-    /**
-     * Checks whether an alleged backgroundFilePath is actually one.
-     *
-     * @param backgroundFilePath Path to be checked
-     * @throws IllegalArgumentException if the provided path is not a valid background file path
-     */
-    public static void checkIfBackgroundFilePathIsABackgroundFilePathElseThrow(String backgroundFilePath) {
-        /*
-         * FileService.copyExistingFileToTarget(String, String, Long) only acts,
-         * when backgroundFilePath != null && !backgroundFilePath.contains("files/temp")
-         * => No need to check if backgroundFilePath == null || backgroundFilePath.contains("files/temp")
-         */
-        if (backgroundFilePath != null && !backgroundFilePath.contains("files/temp")) {
-            // Substitutes all escape sequences in the backgroundFilePath with their standard elements
-            String unescapedBackgroundFilePath = StringEscapeUtils.unescapeJava(backgroundFilePath);
-            // Removes redundant elements (e.g. ../ or ./) from the backgroundFilePath
-            Path normalisedBackgroundFilePath = Paths.get(unescapedBackgroundFilePath).normalize();
-            // Resolve the backgroundFilePath on the empty path in order to receive an absolute path
-            Path absoluteBackgroundFilePath = Path.of("").resolve(normalisedBackgroundFilePath);
-            /*
-             * Check whether the absolute backgroundFilePath without any escape sequences
-             * or redundant elements starts with "/api/files/drag-and-drop/backgrounds"
-             * (the standard actual path for drag-and-drop background images)
-             */
-            if (!absoluteBackgroundFilePath.startsWith("/api/files/drag-and-drop/backgrounds")) {
-                throw new IllegalArgumentException("Background File Path is not valid!");
-            }
-        }
     }
 
     /**
