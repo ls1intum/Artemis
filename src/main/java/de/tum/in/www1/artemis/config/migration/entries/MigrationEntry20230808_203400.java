@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Component
 public class MigrationEntry20230808_203400 extends MigrationEntry {
@@ -58,7 +58,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final Optional<CIVCSMigrationService> ciMigrationService;
 
-    private final Optional<AbstractVersionControlService> versionControlService;
+    private final Optional<VersionControlService> versionControlService;
 
     private final Environment environment;
 
@@ -72,7 +72,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<CIVCSMigrationService> ciMigrationService, Optional<AbstractVersionControlService> versionControlService, Environment environment) {
+            Optional<CIVCSMigrationService> ciMigrationService, Optional<VersionControlService> versionControlService, Environment environment) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
