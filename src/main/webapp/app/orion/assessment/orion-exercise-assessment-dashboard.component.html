@@ -8,6 +8,7 @@
             <jhi-ide-button
                 [buttonLoading]="orionState.cloning"
                 buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}"
+                [buttonType]="OrionButtonType.Download"
                 (clickHandler)="openAssessmentInOrion()"
             >
             </jhi-ide-button>
@@ -23,6 +24,7 @@
                     [buttonLoading]="orionState.cloning"
                     [disabled]="!!disabled"
                     buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.' + buttonLabel | artemisTranslate }}"
+                    [buttonType]="OrionButtonType.Download"
                     (clickHandler)="downloadSubmissionInOrion(submission, queryParams['correction-round'], queryParams['testRun'])"
                 >
                 </jhi-ide-button>

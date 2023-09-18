@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { onError } from 'app/shared/util/global.utils';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',
@@ -54,4 +55,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0, testRun = false) {
         this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound, testRun);
     }
+
+    protected readonly OrionButtonType = OrionButtonType;
 }

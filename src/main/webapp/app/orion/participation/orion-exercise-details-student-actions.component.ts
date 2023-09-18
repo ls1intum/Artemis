@@ -7,6 +7,7 @@ import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',
@@ -72,4 +73,6 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
             this.orionConnectorService.initializeFeedback(submissions[0].id!, feedbacks!);
         }
     }
+
+    protected readonly OrionButtonType = OrionButtonType;
 }

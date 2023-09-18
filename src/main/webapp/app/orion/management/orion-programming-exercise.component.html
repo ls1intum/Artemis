@@ -16,6 +16,7 @@
                     else importAsInstructor
                 "
                 buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
+                [buttonType]="OrionButtonType.Download"
                 [smallButton]="false"
                 (clickHandler)="openOrionEditor(exercise)"
             >
@@ -24,6 +25,7 @@
                 <jhi-ide-button
                     *ngIf="exercise.isAtLeastEditor && exercise.templateParticipation"
                     [buttonLabel]="'entity.action.editInIntelliJ' | artemisTranslate"
+                    [buttonType]="OrionButtonType.Download"
                     [buttonLoading]="orionState.cloning"
                     [smallButton]="false"
                     (clickHandler)="editInIDE(exercise)"

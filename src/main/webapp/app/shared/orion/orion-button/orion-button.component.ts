@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faCircleNotch, faDownload, faFileArrowUp, faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faDownload, faRotateRight, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
-enum OrionButtonType {
-    Other,
-    Submit,
-    Reload,
-    Download,
+export enum OrionButtonType {
+    Other = 'Other',
+    Submit = 'Submit',
+    Reload = 'Reload',
+    Download = 'Download',
 }
 
 @Component({
@@ -29,7 +29,7 @@ export class OrionButtonComponent {
     // Icons
     faCircleNotch = faCircleNotch;
     faRotateRight = faRotateRight;
-    faFileArrowUp = faFileArrowUp;
+    faUpload = faUpload;
     faDownload = faDownload;
 
     constructor() {}
