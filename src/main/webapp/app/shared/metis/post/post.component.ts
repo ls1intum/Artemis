@@ -100,6 +100,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.postFooterComponent.openCreateAnswerPostModal();
     }
 
+    /**
+     * Create a or navigate to one-to-one chat with the referenced user
+     *
+     * @param referencedUserLogin login of the referenced user
+     */
     onUserReferenceClicked(referencedUserLogin: string) {
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {

@@ -100,7 +100,7 @@ export class PostingContentPartComponent {
     }
 
     /**
-     * Create a or navigate to one-to-one chat with the referenced user
+     * Emit an event if the clicked user reference is different from the current user
      *
      * @param referenceUserLogin login of the referenced user
      */
