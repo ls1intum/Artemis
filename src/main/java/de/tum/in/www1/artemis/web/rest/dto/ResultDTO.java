@@ -36,6 +36,9 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
     public record TestCaseDTO(String testName, Long id) {
 
         public static TestCaseDTO of(ProgrammingExerciseTestCase testCase) {
+            if (testCase == null) {
+                return null;
+            }
             return new TestCaseDTO(testCase.getTestName(), testCase.getId());
         }
     }

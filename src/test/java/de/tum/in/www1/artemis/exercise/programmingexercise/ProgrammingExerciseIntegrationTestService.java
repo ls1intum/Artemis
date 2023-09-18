@@ -1425,7 +1425,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false);
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         doNothing().when(versionControlService).addWebHooksForExercise(any());
-        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
         var response = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceId), exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
 
