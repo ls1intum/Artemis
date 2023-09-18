@@ -528,7 +528,10 @@
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
-                "lineStatBetweenSubmissionsLabel": "Zeilen, die zwischen der aktuellen Abgabe und der vorherigen Abgabe hinzugefügt/entfernt wurden",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
+                "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
+
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
                 "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",

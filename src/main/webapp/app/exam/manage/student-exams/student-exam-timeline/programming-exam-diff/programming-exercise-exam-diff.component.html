@@ -18,7 +18,19 @@
 />
 <div *ngIf="exercise?.gitDiffReport">
     <dt>
-        <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsLabel">Lines added/removed between current submission and previous submission</span>
+        <span
+            jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsCurrentSubmissionLabel"
+            [translateValues]="{ currentCommitHash: currentSubmission?.commitHash }"
+        ></span>
+        <ng-container *ngIf="previousSubmission; else noPreviousSubmission">
+            <span
+                jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsPreviousSubmissionLabel"
+                [translateValues]="{ previousCommitHash: previousSubmission?.commitHash }"
+            ></span>
+        </ng-container>
+        <ng-template #noPreviousSubmission>
+            <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsTemplateLabel"></span>
+        </ng-template>
     </dt>
     <dd>
         <div class="fw-bold">

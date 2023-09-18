@@ -680,7 +680,8 @@
         },
         "examTimeline": {
             "title": "Exam timeline of {{ username }}",
-            "breadcrumb": "Exam timeline"
+            "breadcrumb": "Exam timeline",
+            "disabledTooltip": "You cannot view the exam timeline if the student exam has not been submitted."
         },
         "examStatus": {
             "columnTitle": "Exam status",
