@@ -15,8 +15,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.dataexport.DataExportCreationService;
-import de.tum.in.www1.artemis.service.dataexport.DataExportService;
+import de.tum.in.www1.artemis.service.export.DataExportCreationService;
+import de.tum.in.www1.artemis.service.export.DataExportService;
 import de.tum.in.www1.artemis.service.notifications.MailService;
 import de.tum.in.www1.artemis.service.user.UserService;
 
