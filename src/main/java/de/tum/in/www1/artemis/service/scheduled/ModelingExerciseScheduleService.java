@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -128,9 +128,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
-                buildModelingClusters(exercise).run();
-            });
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> buildModelingClusters(exercise).run());
             log.debug("Scheduled build modeling clusters after due date for Modeling Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
         }
         else {
@@ -148,9 +146,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam))) {
             var buildDate = endDate.plusMinutes(EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES);
             exercise.setClusterBuildDate(buildDate);
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> {
-                buildModelingClusters(exercise).run();
-            });
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> buildModelingClusters(exercise).run());
         }
         log.debug("Scheduled Exam Modeling Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
@@ -166,7 +162,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     /**
      * Returns a runnable that, once executed, will build modeling clusters
-     *
+     * <p>
      * NOTE: this will not build modeling clusters as only a Runnable is returned!
      *
      * @param exercise The exercise for which the clusters will be created

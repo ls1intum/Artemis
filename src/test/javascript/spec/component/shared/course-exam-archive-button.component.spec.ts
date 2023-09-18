@@ -170,8 +170,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
 
         it('should download archive for course', fakeAsync(() => {
-            const response: HttpResponse<Blob> = new HttpResponse({ status: 200 });
-            const downloadStub = jest.spyOn(courseManagementService, 'downloadCourseArchive').mockReturnValue(of(response));
+            const downloadStub = jest.spyOn(courseManagementService, 'downloadCourseArchive').mockImplementation(() => {});
 
             comp.downloadArchive();
 
@@ -253,14 +252,13 @@ describe('Course Exam Archive Button Component', () => {
             expect(comp.canCleanupCourse()).toBeFalse();
         }));
 
-        it('should download archive for exam', fakeAsync(() => {
-            const response: HttpResponse<Blob> = new HttpResponse({ status: 200 });
-            const downloadStub = jest.spyOn(examManagementService, 'downloadExamArchive').mockReturnValue(of(response));
+        it('should download archive for exam', () => {
+            const downloadStub = jest.spyOn(examManagementService, 'downloadExamArchive').mockImplementation(() => {});
 
             comp.downloadArchive();
 
             expect(downloadStub).toHaveBeenCalledOnce();
-        }));
+        });
 
         it('should archive course', fakeAsync(() => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
