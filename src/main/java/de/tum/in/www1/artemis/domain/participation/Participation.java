@@ -320,4 +320,7 @@ public abstract class Participation extends DomainObject implements Participatio
     public abstract Participation copyParticipationId();
 
     public abstract void filterSensitiveInformation();
+
+    @JsonIgnore
+    public abstract String getType();
 }

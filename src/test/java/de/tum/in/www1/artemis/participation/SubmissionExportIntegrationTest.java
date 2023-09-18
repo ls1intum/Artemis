@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.AfterEach;
@@ -140,9 +139,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationTest {
 
     private void saveEmptySubmissionFile(Exercise exercise, FileUploadSubmission submission) throws IOException {
 
-        String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
-        String fileName = parts[parts.length - 1];
-        File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
+        File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), submission.getFilePath()).toFile();
 
         File parent = file.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {
@@ -242,14 +239,14 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportAll_IOException() throws Exception {
-        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any());
         request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportTextExerciseSubmission_IOException() throws Exception {
-        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any());
         request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
     }
 

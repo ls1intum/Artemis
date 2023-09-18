@@ -1,0 +1,31 @@
+<div>
+    <jhi-button id="reload" [btnType]="PRIMARY" [isLoading]="isLoading" [icon]="faRotate" [title]="'artemisApp.iris.settings.button.reload'" (onClick)="loadIrisSettings()">
+    </jhi-button>
+    <jhi-button id="save" [btnType]="SUCCESS" [isLoading]="isSaving" [icon]="faSave" [title]="'artemisApp.iris.settings.button.save'" (onClick)="saveIrisSettings()"></jhi-button>
+</div>
+<div *ngIf="irisSettings">
+    <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings">Chat Settings</h3>
+    <div>
+        <jhi-iris-sub-settings-update
+            [subSettings]="irisSettings!.irisChatSettings!"
+            [models]="irisModels ?? []"
+            [templateOptional]="settingType !== GLOBAL"
+            [modelOptional]="settingType !== GLOBAL"
+        ></jhi-iris-sub-settings-update>
+    </div>
+    <hr class="hr" />
+
+    <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings">Hestia Settings</h3>
+    <div *ngIf="settingType === PROGRAMMING_EXERCISE" class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="inheritHestia" [checked]="!irisSettings?.irisHestiaSettings" (change)="onInheritHestiaSettingsChanged()" />
+        <label class="form-check-label" for="inheritHestia" jhiTranslate="artemisApp.iris.settings.subSettings.inheritHestiaSettings"> Inherit </label>
+    </div>
+    <div *ngIf="irisSettings!.irisHestiaSettings">
+        <jhi-iris-sub-settings-update
+            [subSettings]="irisSettings!.irisHestiaSettings!"
+            [models]="irisModels ?? []"
+            [templateOptional]="settingType !== GLOBAL"
+            [modelOptional]="settingType !== GLOBAL"
+        ></jhi-iris-sub-settings-update>
+    </div>
+</div>

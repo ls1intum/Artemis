@@ -1,0 +1,225 @@
+# Set timeout, prompt, etc.
+# Please adapt this.
+set standard_timeout 15
+set startup_timeout 5
+set prompt "sort> "
+set answer ""
+set exit_cmd "quit"
+
+# Don't change this
+set timeout $standard_timeout
+# If we haven't read the right prompt in PROGRAM_start, it doesn't
+# make sense to do any other test.
+set prompt_error 0
+
+# Load a program
+proc PROGRAM_load { arg } {
+    #
+}
+
+# Start program and wait for prompt
+proc PROGRAM_start {} {
+    # it is impossible to use <pass> or <fail> in start :-(
+    global standard_timeout
+    global startup_timeout
+    global timeout
+    global prompt
+    global spawn_id
+    global prompt_error
+
+    # Startup of the java engine needs to much time.
+    set timeout $startup_timeout
+    spawn "java" -cp CLASSPATH "MAIN_CLASS"
+
+    # Check for prompt
+    expect {
+    "$prompt" { }
+    timeout {
+        set prompt_error 1
+        send_user "\nFAIL: start "
+        send_user "(timeout with no prompt, expected \"$prompt\")\n";
+    }
+    eof {
+        set prompt_error 1
+        send_user "\nFAIL: start "
+        send_user "(no prompt, expected \"$prompt\")\n"
+    }
+    }
+    set timeout $standard_timeout
+}
+
+# End program
+proc PROGRAM_exit {} {
+    global exit_cmd
+    global prompt_error
+
+    # Don't continue if we haven't read the right prompt
+    if $prompt_error {
+        return
+    }
+
+    if [catch {send "$exit_cmd\n"}] {
+        send_user "\n"
+        fail "could not send text, is the program running?"
+        return
+    }
+
+    expect "$exit_cmd\r\n"
+
+    expect {
+        eof     { pass "$exit_cmd" }
+    -re "." {
+        send_user "\n"
+        fail "$exit_cmd (expected end-of-output)"
+    }
+    }
+}
+
+# Return version
+proc PROGRAM_version {} {
+    return "unknown"
+}
+
+# Functions to just enter data without expecting answers or errors.
+#
+# There are two variants:
+# 1. ..._enter just expects the data to send
+# 2. ..._enter_c has an additional argument: a comment that is printed
+#                on succes or failure.
+#
+proc PROGRAM_enter {expr} {
+    PROGRAM_enter_ "$expr" ""
+}
+
+proc PROGRAM_enter_c {expr comment} {
+    PROGRAM_enter_ "$expr" "\[$comment\]"
+}
+
+proc PROGRAM_enter_ {expr comment} {
+    global prompt
+    global prompt_error
+
+    # Don't continue if we haven't read the right prompt
+    if $prompt_error {
+        return
+    }
+
+    # Quote the command
+    regsub -all {[].$^()*+?|[]} $expr {\\&} cmd
+
+    # Send expression and wait for echo
+    if [catch {send -- "$expr\n"}] {
+        fail "could not send text, is the program running? $comment"
+        return
+    }
+
+    # Check result
+    expect {
+    -re "$expr\[\r\n\]+$prompt" {
+        pass "$expr $comment"
+    }
+    -re "\[:\].*\[\r\n\]+$prompt" {
+         fail "$expr (got answer, but none expected) $comment"
+     }
+    -re "\[!\].*\[\r\n\]+$prompt" {
+        send_user "\n"
+         fail "$expr (got error, but none expected) $comment"
+     }
+    -ex "$prompt" {
+        send_user "\n"
+        fail "$expr (expected nothing) $comment"
+    }
+    timeout {
+        send_user "\n"
+        fail "$expr (timeout with no prompt, expected \"$prompt\") $comment";
+        expect "$prompt"
+    }
+    }
+}
+
+proc PROGRAM_test {expr result} {
+    PROGRAM_test_ "$expr" "$result" ""
+}
+
+proc PROGRAM_test_c {expr result comment} {
+    PROGRAM_test_ "$expr" "$result" "\[$comment\]"
+}
+
+proc PROGRAM_test_ {expr result comment} {
+    global prompt
+    global answer
+    global prompt_error
+
+    # Don't continue if we haven't read the right prompt
+    if $prompt_error {
+        return
+    }
+
+    # Send expression and wait for echo
+    if [catch {send -- "$expr\n"}] {
+        send_user "\n"
+        fail "could not send text, is the program running? $comment"
+        return
+    }
+
+    # Quote the expected result
+    regsub -all {[].$^()*+?|[]} $result {\\&} quoted
+    # Quote the command
+    regsub -all {[].$^()*+?|[]} $expr {\\&} cmd
+
+    # Check result
+    expect {
+    -re "$cmd\[\r\n \]+$answer *$quoted\[ \r\n\]+$prompt" {
+        pass "$expr $comment"
+    }
+    -re "\[:\].*\[\r\n\]+$prompt" {
+         fail "$expr (got wrong answer, expected \"$result\") $comment"
+     }
+    -re "\[!\].*\[\r\n\]+$prompt" {
+        send_user "\n"
+         fail "$expr (got error, but expected \"$result\") $comment"
+     }
+    -ex "$prompt" {
+        send_user "\n"
+        fail "$expr (expected \"$result\") $comment"
+    }
+    timeout {
+        send_user "\n"
+        fail "$expr (timeout with no prompt, expected \"$prompt\") $comment";
+        expect "$prompt"
+    }
+    }
+}
+
+proc PROGRAM_write_testfile {path} {
+    set file_tail [file tail "$path"]
+
+    if [catch {open "$path" "r"} f] {
+        fail "could not open test file $path"
+
+    } else {
+        set source_file [open "$path" "r"]
+
+        if [catch {open "tests/$file_tail" "w+"} fh] {
+            file mkdir "tests"
+            set fh [open "tests/$file_tail" "w+"]
+
+            while {[gets $source_file line] != -1} {
+                puts $fh $line
+            }
+            close $fh
+
+        } else {
+            set fh [open "tests/$file_tail" "w+"]
+
+            while {[gets $source_file line] != -1} {
+                puts $fh $line
+            }
+            close $fh
+        }
+    }
+}
+
+
+# Now go and start the program...
+PROGRAM_start
