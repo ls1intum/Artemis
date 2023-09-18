@@ -109,7 +109,7 @@ export const evaluateTemplateStatus = (
     result: Result | undefined,
     isBuilding: boolean,
     missingResultInfo = MissingResultInformation.NONE,
-) => {
+): ResultTemplateStatus => {
     // Fallback if participation is not set
     if (!participation || !exercise) {
         if (!result) {

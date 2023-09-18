@@ -49,19 +49,26 @@ public class LocalCIBuildJobManagementService {
 
     private final LocalCIContainerService localCIContainerService;
 
+    private final LocalCIDockerService localCIDockerService;
+
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
+    @Value("${artemis.continuous-integration.build.images.java.default}")
+    private String dockerImage;
+
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
-            ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService) {
+            ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
+            LocalCIDockerService localCIDockerService) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.localCIContainerService = localCIContainerService;
+        this.localCIDockerService = localCIDockerService;
     }
 
     /**
@@ -73,12 +80,13 @@ public class LocalCIBuildJobManagementService {
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
     public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
-
-        // It should not be possible to create a programming exercise with a different project type than Gradle. This is just a sanity check.
         ProjectType projectType = participation.getProgrammingExercise().getProjectType();
         if (projectType == null || !projectType.isGradle()) {
             throw new LocalCIException("Project type must be Gradle.");
         }
+
+        // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
+        localCIDockerService.pullDockerImage(dockerImage);
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));

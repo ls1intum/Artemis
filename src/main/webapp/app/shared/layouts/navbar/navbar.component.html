@@ -234,6 +234,12 @@
                             <span jhiTranslate="global.menu.admin.apidocs">API</span>
                         </a>
                     </li>
+                    <li *ngIf="irisEnabled">
+                        <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faRobot" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.iris">Iris Settings</span>
+                        </a>
+                    </li>
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
             </li>
