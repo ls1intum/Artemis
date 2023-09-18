@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -799,7 +800,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(ResultDTO.class));
     }
 
     @Test
