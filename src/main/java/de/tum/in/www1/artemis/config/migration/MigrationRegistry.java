@@ -28,8 +28,8 @@ public class MigrationRegistry {
     public MigrationRegistry(MigrationService migrationService) {
         this.migrationService = migrationService;
         // Here we define the order of the ChangeEntries
-        migrationEntryMap.put(0, MigrationEntry20230810_150000.class);
         this.migrationEntryMap.put(1, MigrationEntry20230808_203400.class);
+        this.migrationEntryMap.put(2, MigrationEntry20230810_150000.class);
     }
 
     /**
