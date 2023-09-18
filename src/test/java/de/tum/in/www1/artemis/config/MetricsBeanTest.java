@@ -436,6 +436,19 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertMetricEquals(0, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "60");
     }
 
+    @Test
+    void testEnsureCourseInformationIsSet() {
+        var course = courseUtilService.addEmptyCourse();
+        course.setTitle(null);
+        course.setShortName("metricCourseShort");
+        course.setSemester(null);
+
+        courseRepository.save(course);
+
+        metricsBean.updatePublicArtemisMetrics();
+        assertMetricEquals(0, "artemis.statistics.public.course_students", "semester", "No semester", "courseName", "CoursemetricCourseShort");
+    }
+
     private void assertMetricEquals(double expectedValue, String metricName, String... tags) {
         var gauge = meterRegistry.get(metricName).tags(tags).gauge();
         assertThat(gauge.value()).isEqualTo(expectedValue);
