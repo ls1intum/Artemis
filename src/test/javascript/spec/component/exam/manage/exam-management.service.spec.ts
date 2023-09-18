@@ -641,21 +641,11 @@ describe('Exam Management Service Tests', () => {
     }));
 
     it('should download the exam from archive', fakeAsync(() => {
-        // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockResponse = new Blob();
-        const expected = new Blob();
 
-        // WHEN
-        service.downloadExamArchive(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'GET',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/download-archive`,
-        });
-        req.flush(mockResponse);
-        tick();
+        const windowSpy = jest.spyOn(window, 'open').mockImplementation();
+        service.downloadExamArchive(course.id!, mockExam.id!);
+        expect(windowSpy).toHaveBeenCalledWith('api/courses/456/exams/1/download-archive', '_blank');
     }));
 
     it('should archive the exam', fakeAsync(() => {
