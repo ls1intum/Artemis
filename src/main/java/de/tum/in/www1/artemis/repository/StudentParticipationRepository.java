@@ -357,17 +357,19 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.exercise.id = :#{#exerciseId}
-                and p.student.id = :#{#studentId}
-                and p.testRun = :#{#testRun}
-                and (r.id = (select max(pr.id) from p.results pr
-                        left join pr.submission prs
-                        where (prs.type <> 'ILLEGAL' or prs.type is null))
-                    or r.id = null)
+            SELECT DISTINC p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+                LEFT JOIN FETCH r.submission s
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND p.testRun = :testRun
+                AND (r.id = (SELECT max(pr.id) FROM p.results pr
+                        LEFT JOIN pr.submission prs
+                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    OR r.id IS NULL)
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId,
             @Param("testRun") boolean testRun);
