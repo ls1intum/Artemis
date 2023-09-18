@@ -188,6 +188,7 @@ public class ProgrammingLanguageConfiguration {
             case XCODE -> ProjectType.XCODE;
             case FACT -> ProjectType.FACT;
             case GCC -> ProjectType.GCC;
+            case MAVEN_BLACKBOX -> ProjectType.MAVEN_BLACKBOX;
         };
     }
 
