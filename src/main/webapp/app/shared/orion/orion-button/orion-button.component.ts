@@ -13,7 +13,6 @@ enum OrionButtonType {
 @Component({
     selector: 'jhi-ide-button',
     templateUrl: './orion-button.component.html',
-    styleUrls: ['./orion-button.component.scss'],
 })
 export class OrionButtonComponent {
     @Input() buttonLabel: string;
