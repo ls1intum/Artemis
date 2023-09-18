@@ -147,7 +147,7 @@ describe('ExerciseHint Management Update Component', () => {
         'should load iris settings only if profile iris is active',
         fakeAsync((activeProfiles: string[]) => {
             // Mock getProfileInfo to return activeProfiles
-            const profileService = TestBed.inject(ProfileService); // Make sure to import ProfileService
+            const profileService = TestBed.inject(ProfileService);
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles }));
 
             // Mock getTasksAndTestsExtractedFromProblemStatement
@@ -156,7 +156,7 @@ describe('ExerciseHint Management Update Component', () => {
             const fakeSettings = {};
 
             // Mock getCombinedProgrammingExerciseSettings
-            const irisSettingsService = TestBed.inject(IrisSettingsService); // Make sure to import IrisSettingsService
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
             const getCombinedProgrammingExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings').mockReturnValue(of(fakeSettings));
 
             // Run ngOnInit
