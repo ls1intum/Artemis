@@ -22,6 +22,7 @@
                         'font-italic text-danger font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
                         'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
                     }"
+                    (click)="scrollToExercise(exercise.id)"
                 >
                     <th scope="row">{{ exerciseIndex + 1 }}</th>
                     <td>

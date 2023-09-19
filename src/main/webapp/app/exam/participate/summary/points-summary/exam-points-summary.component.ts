@@ -82,7 +82,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     }
 
     getAchievedPointsSum() {
-        console.log('studentExamWithGrade', this.studentExamWithGrade);
+        // console.log('studentExamWithGrade', this.studentExamWithGrade);
         return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
@@ -131,6 +131,25 @@ export class ExamPointsSummaryComponent implements OnInit {
         }
 
         return exerciseResult;
+    }
+
+    scrollToExercise(exerciseId?: number) {
+        if (exerciseId === undefined) {
+            return;
+        }
+
+        const searchedId = `exercise-${exerciseId}`;
+        const targetElement = document.getElementById(searchedId);
+
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest',
+            });
+        } else {
+            console.error(`Could not find corresponding exercise with id "${searchedId}"`);
+        }
     }
 
     private hasAtLeastOneResult(): boolean {
