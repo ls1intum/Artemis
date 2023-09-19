@@ -130,13 +130,7 @@ public class CourseTestService {
     private CourseExamExportService courseExamExportService;
 
     @Autowired
-    private ZipFileService zipFileService;
-
-    @Autowired
     private FilePathService filePathService;
-
-    @Autowired
-    private FileService fileService;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
