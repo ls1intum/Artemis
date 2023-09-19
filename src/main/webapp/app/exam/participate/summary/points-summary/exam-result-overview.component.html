@@ -151,7 +151,7 @@
                 </span>
             </button>
             <div [ngbCollapse]="isGradingKeyCollapsed">
-                <jhi-grade-key-table />
+                <jhi-grade-key-table [studentGrade]="grade" />
             </div>
             <!--            TODO highlight the achieved grade -->
             <!--            <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">-->
