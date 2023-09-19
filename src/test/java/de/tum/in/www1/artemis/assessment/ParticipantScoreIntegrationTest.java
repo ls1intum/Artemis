@@ -137,6 +137,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         long getIdOfIndividualTextExerciseOfExam = examTextExercise.getId();
         participationUtilService.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
 
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(participantScoreScheduleService::isIdle);
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(examTextExercise).size() == 1);

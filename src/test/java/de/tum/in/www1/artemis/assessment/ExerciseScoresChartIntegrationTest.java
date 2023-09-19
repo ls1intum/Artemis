@@ -19,7 +19,9 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -111,6 +113,7 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
         participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
 
         participantScoreScheduleService.executeScheduledTasks();
+        await().until(participantScoreScheduleService::isIdle);
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 3);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 2);
     }
