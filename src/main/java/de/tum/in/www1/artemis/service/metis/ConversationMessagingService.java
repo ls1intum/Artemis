@@ -90,6 +90,7 @@ public class ConversationMessagingService extends PostingService {
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
 
+        this.parseUserMentions(course, newMessage.getContent());
         // extra checks for channels
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
@@ -242,6 +243,7 @@ public class ConversationMessagingService extends PostingService {
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+        this.parseUserMentions(course, messagePost.getContent());
         // update: allow overwriting of values only for depicted fields
         existingMessage.setContent(messagePost.getContent());
         existingMessage.setUpdatedDate(ZonedDateTime.now());

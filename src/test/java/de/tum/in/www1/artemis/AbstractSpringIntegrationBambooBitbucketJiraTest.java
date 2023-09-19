@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
@@ -17,6 +18,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,6 +54,7 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
@@ -658,5 +661,27 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
         bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
+    }
+
+    /**
+     * Provides a list of various user mentions flagged with in indicator whether the user mention is valid
+     *
+     * @param courseMemberLogin1 login of one course member
+     * @param courseMemberLogin2 login of another course member
+     *
+     * @return list of user mentions and validity flags
+     */
+    protected static List<Arguments> userMentionProvider(String courseMemberLogin1, String courseMemberLogin2) {
+        User courseMember1 = UserFactory.generateActivatedUser(courseMemberLogin1);
+        User courseMember2 = UserFactory.generateActivatedUser(courseMemberLogin2);
+        User noCourseMember = UserFactory.generateActivatedUser("noCourseMember");
+
+        return List.of(Arguments.of("no mention", true), // no user mention
+                Arguments.of("[user]" + courseMember1.getFullName() + "(" + courseMember1.getLogin() + ")[/user]", true), // valid mention
+                Arguments.of("[user]" + courseMember2.getFullName() + "(" + courseMember2.getLogin() + ")[/user][user]" + courseMember1.getFullName() + "("
+                        + courseMember1.getLogin() + ")[/user]", true), // multiple valid user mentions
+                Arguments.of("[user]invalidName(" + courseMember1.getLogin() + ")[/user]", false), // invalid full name
+                Arguments.of("[user]" + noCourseMember.getFullName() + "(" + noCourseMember.getLogin() + ")[/user]", false) // not a course member
+        );
     }
 }
