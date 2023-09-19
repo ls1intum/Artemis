@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 @Service
 public class ResultService {
@@ -35,7 +36,7 @@ public class ResultService {
 
     private final LtiNewResultService ltiNewResultService;
 
-    private final WebsocketMessagingService websocketMessagingService;
+    private final ResultWebsocketService resultWebsocketService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
@@ -59,17 +60,16 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService,
-            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
-            FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, ResultWebsocketService resultWebsocketService,
+            ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
+            ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService,
+            ExerciseDateService exerciseDateService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
-        this.websocketMessagingService = websocketMessagingService;
+        this.resultWebsocketService = resultWebsocketService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
@@ -114,7 +114,7 @@ public class ResultService {
                 ltiNewResultService.onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
-            websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
+            resultWebsocketService.broadcastNewResult(savedResult.getParticipation(), savedResult);
         }
         return savedResult;
     }
