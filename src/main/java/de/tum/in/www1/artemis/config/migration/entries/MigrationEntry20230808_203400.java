@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Component
 public class MigrationEntry20230808_203400 extends MigrationEntry {
@@ -57,17 +58,21 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final Optional<CIVCSMigrationService> ciMigrationService;
 
-    private final AbstractVersionControlService versionControlService;
+    private final Optional<VersionControlService> versionControlService;
+
+    private final Environment environment;
 
     private final UrlService urlService = new UrlService();
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
+    private static final List<String> PROGRAMMING_EXERCISE_RELATED_PROFILES = List.of("bamboo", "bitbucket", "gitlab", "jenkins", "gitlabci", "localvc", "localci");
+
     public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<CIVCSMigrationService> ciMigrationService, AbstractVersionControlService versionControlService) {
+            Optional<CIVCSMigrationService> ciMigrationService, Optional<VersionControlService> versionControlService, Environment environment) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -75,10 +80,17 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.ciMigrationService = ciMigrationService;
         this.versionControlService = versionControlService;
+        this.environment = environment;
     }
 
     @Override
     public void execute() {
+        List<String> activeProfiles = List.of(environment.getActiveProfiles());
+        if (activeProfiles.stream().noneMatch(PROGRAMMING_EXERCISE_RELATED_PROFILES::contains)) {
+            log.info("Migration will be skipped and marked run because the system does not support programming exercises according to the selected profiles: {}", activeProfiles);
+            return;
+        }
+
         try {
             ciMigrationService.orElseThrow().checkPrerequisites();
         }
@@ -195,7 +207,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
                 // we had in the past
                 // note: this method calls directly saves the participation in the database with the updated branch
-                String branch = versionControlService.getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
                 if (branch == null || branch.isEmpty()) {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
                             participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
@@ -248,7 +260,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
                 // we had in the past
                 // note: this method calls directly saves the participation in the database with the updated branch
-                String branch = versionControlService.getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
                 if (branch == null || branch.isEmpty()) {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
                             participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
@@ -291,7 +303,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
                 // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that we had in the past
                 // note: this method calls directly saves the participation in the database with the updated branch in case it was not available
-                String branch = versionControlService.getOrRetrieveBranchOfStudentParticipation(participation);
+                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(participation);
                 if (branch == null || branch.isEmpty()) {
                     log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
                             participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
