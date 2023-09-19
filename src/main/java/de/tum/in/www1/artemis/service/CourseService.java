@@ -799,7 +799,7 @@ public class CourseService {
         }
 
         // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
-        // hibernate sometimes adds nulls to in the list of exercise groups to keep the order
+        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
         Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().flatMap(e -> e.getExerciseGroups().stream())
                 .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
 

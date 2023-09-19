@@ -235,13 +235,13 @@ describe('Course Exam Archive Button Component', () => {
             jest.restoreAllMocks();
         });
 
-        it('should display an archive button', fakeAsync(() => {
+        it('should display an archive and cleanup button', fakeAsync(() => {
             expect(comp.canArchive()).toBeTrue();
-            expect(comp.canCleanup()).toBeFalse();
+            expect(comp.canCleanup()).toBeTrue();
             expect(comp.canDownloadArchive()).toBeTrue();
         }));
 
-        it('should not cleanup archive for exam', fakeAsync(() => {
+        it('should cleanup archive for exam', fakeAsync(() => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
             const cleanupStub = jest.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
 
@@ -249,7 +249,7 @@ describe('Course Exam Archive Button Component', () => {
             comp.cleanup();
 
             expect(cleanupStub).not.toHaveBeenCalled();
-            expect(comp.canCleanup()).toBeFalse();
+            expect(comp.canCleanup()).toBeTrue();
         }));
 
         it('should download archive for exam', () => {
