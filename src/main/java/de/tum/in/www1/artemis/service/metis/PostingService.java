@@ -247,7 +247,7 @@ public abstract class PostingService {
         String regex = "\\[user\\](.*?)\\((.*?)\\)\\[/user\\]";
 
         Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(postingContent);
+        Matcher matcher = pattern.matcher(Optional.ofNullable(postingContent).orElse(""));
 
         Map<String, String> matches = new HashMap<>();
 
