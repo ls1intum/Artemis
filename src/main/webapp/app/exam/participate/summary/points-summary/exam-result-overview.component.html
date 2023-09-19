@@ -128,7 +128,7 @@
                         {{ 'artemisApp.exam.examSummary.' + (studentExamWithGrade.studentResult.gradeWithBonus != undefined ? 'gradeBeforeBonus' : 'grade') | artemisTranslate }}:
                     </td>
                     <td>
-                        <span [ngClass]="hasPassed ? 'passing-grade' : 'failing-grade'"> {{ grade }}</span>
+                        <span [ngClass]="hasPassed ? 'passing-grade' : 'failing-grade'" class="grade"> {{ grade }}</span>
                     </td>
                 </tr>
                 <tr *ngIf="isBonus">

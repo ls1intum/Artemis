@@ -7,16 +7,19 @@ tr:not(thead tr):not(tfoot tr) {
     }
 }
 
-.passing-grade {
-    background-color: var(--success);
+.grade {
     color: var(--white);
     padding: 0.25em 0.5em;
+    margin-left: 0.25em;
+    border-radius: 0.25em;
+}
+
+.passing-grade {
+    background-color: var(--success);
 }
 
 .failing-grade {
     background-color: var(--danger);
-    color: var(--white);
-    padding: 0.25em 0.5em;
 }
 
 .total-footer {
