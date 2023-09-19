@@ -29,6 +29,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     canClosePopover: boolean;
 
     private closeTimeout: any;
+    private clickInPopover: boolean = false;
 
     toggle(): void {
         super.toggle();
@@ -101,10 +102,18 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
                     }
                 }, 250);
             });
+
+            this._render.listen(popover, 'click', () => {
+                this.clickInPopover = true;
+            });
         }, 0);
     }
 
     close() {
-        super.close();
+        if (this.clickInPopover) {
+            this.clickInPopover = false;
+        } else {
+            super.close();
+        }
     }
 }
