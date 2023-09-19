@@ -7,6 +7,8 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/entities/bonus.model';
+import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/result/updating-result.component';
 
 @Component({
     selector: 'jhi-exam-result-overview',
@@ -162,5 +164,18 @@ export class ExamPointsSummaryComponent implements OnInit {
         return false;
     }
 
+    getTextColorClassByExercise(exercise: Exercise) {
+        const participation = exercise.studentParticipations![0];
+        const showUngradedResults = false;
+        const result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
+
+        const isBuilding = false;
+        const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);
+
+        return getTextColorClass(result, templateStatus);
+    }
+
     protected readonly getIcon = getIcon;
+    protected readonly getTextColorClass = getTextColorClass;
+    protected readonly evaluateTemplateStatus = evaluateTemplateStatus;
 }

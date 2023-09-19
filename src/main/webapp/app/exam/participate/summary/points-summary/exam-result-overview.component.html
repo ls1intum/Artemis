@@ -39,7 +39,9 @@
                         }}</span>
                     </td>
                     <td>
-                        <span *ngIf="exercise.maxPoints != undefined"> {{ getExerciseResultByExerciseId(exercise.id)?.achievedScore }}% </span>
+                        <span *ngIf="exercise.maxPoints != undefined" [class]="getTextColorClassByExercise(exercise)">
+                            {{ getExerciseResultByExerciseId(exercise.id)?.achievedScore }}%
+                        </span>
                     </td>
                     <td *ngIf="getMaxBonusPointsSum() != 0">
                         <span *ngIf="exercise.bonusPoints != undefined">{{
