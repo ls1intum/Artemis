@@ -12,7 +12,8 @@
                     <fa-icon [icon]="faListAlt"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
                 </a>
-                <a id="quiz-pool" type="submit" [routerLink]="getExamRoutesByIdentifier('quiz-pool')" class="btn btn-primary mt-1">
+                <!-- Remove ngIf when Quiz Exam feature is fully implemented -->
+                <a *ngIf="false" id="quiz-pool" type="submit" [routerLink]="getExamRoutesByIdentifier('quiz-pool')" class="btn btn-primary mt-1">
                     <fa-icon [icon]="faListAlt"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.quizPool' | artemisTranslate }}</span>
                 </a>
@@ -145,7 +146,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.workingTime">Working Time</span></dt>
                 <dd id="exam-working-time">
-                    <span>{{ exam.workingTime! | artemisDurationFromSeconds : true }}</span>
+                    <span>{{ exam.workingTime! | artemisDurationFromSeconds: true }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</span></dt>
                 <dd>
