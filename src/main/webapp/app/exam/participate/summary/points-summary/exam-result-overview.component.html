@@ -150,13 +150,13 @@
                     <fa-icon [icon]="faChevronRight"></fa-icon>
                 </span>
             </button>
-
             <div [ngbCollapse]="isGradingKeyCollapsed">
-                <jhi-grade-key-overview id="gradeKeyOverview" />
+                <jhi-grade-key-table />
             </div>
             <!--            TODO highlight the achieved grade -->
             <!--            <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">-->
             <!--            </span>-->
+            <!--        TODO generate exam and display bonus grading key -->
             <span
                 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined"
                 [routerLink]="['overview', 'bonus-grading-key']"
