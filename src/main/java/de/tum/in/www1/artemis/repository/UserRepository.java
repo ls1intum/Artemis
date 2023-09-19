@@ -307,6 +307,20 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> findAllByLoginsInGroup(@Param("groupName") String groupName, @Param("logins") Set<String> logins);
 
     /**
+     * Gets users with groups by their login.
+     *
+     * @param logins Logins of users
+     * @return found users that match the criteria
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.isDeleted = false AND user.login IN :#{#logins}
+            """)
+    List<User> findAllByLogins(@Param("logins") Set<String> logins);
+
+    /**
      * Searches for users by their login or full name.
      *
      * @param page        Pageable related info (e.g. for page size)
