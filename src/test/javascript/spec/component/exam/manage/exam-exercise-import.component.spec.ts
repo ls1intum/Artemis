@@ -293,10 +293,10 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should correctly return the Exercise Icon', () => {
-        expect(component.getExerciseIcon(modelingExercise)).toEqual(faProjectDiagram);
-        expect(component.getExerciseIcon(textExercise)).toEqual(faFont);
-        expect(component.getExerciseIcon(programmingExercise)).toEqual(faKeyboard);
-        expect(component.getExerciseIcon(quizExercise)).toEqual(faCheckDouble);
-        expect(component.getExerciseIcon(fileUploadExercise)).toEqual(faFileUpload);
+        expect(component.getExerciseIcon(modelingExercise.type)).toEqual(faProjectDiagram);
+        expect(component.getExerciseIcon(textExercise.type)).toEqual(faFont);
+        expect(component.getExerciseIcon(programmingExercise.type)).toEqual(faKeyboard);
+        expect(component.getExerciseIcon(quizExercise.type)).toEqual(faCheckDouble);
+        expect(component.getExerciseIcon(fileUploadExercise.type)).toEqual(faFileUpload);
     });
 });
