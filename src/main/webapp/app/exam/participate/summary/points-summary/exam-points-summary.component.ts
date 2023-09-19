@@ -29,6 +29,8 @@ export class ExamPointsSummaryComponent implements OnInit {
     faClipboard = faClipboard;
     faAward = faAward;
 
+    isGradingKeyCollapsed = true;
+
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
@@ -173,6 +175,10 @@ export class ExamPointsSummaryComponent implements OnInit {
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);
 
         return getTextColorClass(result, templateStatus);
+    }
+
+    toggleCollapseGradingKey() {
+        this.isGradingKeyCollapsed = !this.isGradingKeyCollapsed;
     }
 
     protected readonly getIcon = getIcon;

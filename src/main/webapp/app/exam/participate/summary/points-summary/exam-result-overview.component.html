@@ -138,16 +138,27 @@
                     </td>
                 </tr>
             </table>
-            <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">
-                <a class="btn btn-primary">
-                    <fa-icon [icon]="faClipboard"></fa-icon>
-                    <span
-                        >&nbsp;{{
-                            isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                        }}</span
-                    >
-                </a>
-            </span>
+
+            <button class="btn btn-primary" (click)="toggleCollapseGradingKey()" [attr.data-toggle]="'collapse'" [attr.data-target]="'#gradeKeyOverview'">
+                >
+                <fa-icon [icon]="faClipboard"></fa-icon>
+                <span>
+                    {{ isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate) }}
+                </span>
+            </button>
+
+            <jhi-grade-key-overview id="gradeKeyOverview" [class.collapse]="isGradingKeyCollapsed" />
+            <!--            TODO highlight the achieved grade -->
+            <!--            <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">-->
+            <!--                <a class="btn btn-primary">-->
+            <!--                    <fa-icon [icon]="faClipboard"></fa-icon>-->
+            <!--                    <span-->
+            <!--                        >&nbsp;{{-->
+            <!--                            isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)-->
+            <!--                        }}</span-->
+            <!--                    >-->
+            <!--                </a>-->
+            <!--            </span>-->
             <span
                 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined"
                 [routerLink]="['overview', 'bonus-grading-key']"
