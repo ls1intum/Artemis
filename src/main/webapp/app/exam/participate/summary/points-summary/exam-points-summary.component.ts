@@ -19,7 +19,9 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 export class ExamPointsSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
+
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
+    @Input() isGradingKeyCollapsed: boolean = true;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -30,8 +32,6 @@ export class ExamPointsSummaryComponent implements OnInit {
     faClipboard = faClipboard;
     faAward = faAward;
     faChevronRight = faChevronRight;
-
-    isGradingKeyCollapsed = true;
 
     constructor(
         private serverDateService: ArtemisServerDateService,

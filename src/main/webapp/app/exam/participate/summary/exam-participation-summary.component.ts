@@ -58,6 +58,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     studentExamGradeInfoDTO: StudentExamWithGradeDTO;
 
+    isGradingKeyCollapsed: boolean = true;
+
     @Input()
     instructorView = false;
 
@@ -159,9 +161,13 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * called for exportPDF Button
      */
     printPDF() {
-        // expand all exercises before printing
-        this.collapsedExerciseIds = [];
+        this.expandExercisesAndGradingKeyBeforePrinting();
         setTimeout(() => this.themeService.print());
+    }
+
+    private expandExercisesAndGradingKeyBeforePrinting() {
+        this.collapsedExerciseIds = [];
+        this.isGradingKeyCollapsed = false;
     }
 
     public generateLink(exercise: Exercise) {
