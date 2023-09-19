@@ -1,0 +1,59 @@
+{
+    "artemisApp": {
+        "exerciseChatbot": {
+            "popUpMessage": "By choosing to continue, you agree that your interactions with Iris will be processed by Microsoft and OpenAI, with data transfer occurring outside of our university data center. If you do not agree with these terms, please select 'Decline'. To acknowledge this and begin your chat with IrisBot, press 'Accept'.",
+            "inputMessage": "Write a message...",
+            "accept": "Accept",
+            "decline": "Decline",
+            "title": "Iris: Your Virtual Programming Companion",
+            "subtext": "Iris is an LLM-based chatbot that guides you through your programming exercises. She enhances your learning journey by answering questions and providing support.",
+            "subheading1": "Data Processing & Consent",
+            "text1_1": "<b>Data Processing:</b> Your interactions with Iris are processed by Microsoft and OpenAI. This means that the information you share with Iris will leave our university's data center.",
+            "text1_2": "<b>Consent:</b> To use Iris, you must accept the consent message that appears the first time you use Iris. By accepting it, you agree to allow Microsoft and OpenAI to process your data as described.",
+            "subheading2": "Key Features of Iris",
+            "text2_1": "<b>Programming Skills:</b> Iris can answer your programming questions, whether are about programming languages, syntax, algorithms, data structures, or other specific topic. She can also identify problems in your code and give you advice on how to improve it.",
+            "text2_2": "<b>Tutoring Skills:</b> Iris can explain complex programming concepts and provide helpful examples to improve your understanding of various topics.",
+            "text2_3": "<b>Contextual Understanding:</b> Unlike other LLM-based chatbots, Iris has knowledge of your code, the problem statement, build results, and logging data.. This means you can rely on her to explain or clarify tasks and get feedback on your code or potential build errors.",
+            "text2_4": "<b>Feedback:</b> Your input is crucial to refining Iris's behavior. Feel free to rate specific responses or entire conversations to help improve her performance over time.",
+            "text2_5": "<b>Communication Skills:</b> Iris keeps a record of your conversation history, so you can continue your interaction and refer back to previous messages whenever you reopen the chatbot.",
+            "subheading3": "Boundaries & Limitations",
+            "text3_1": "<b>No Solution:</b> Iris is designed to guide your learning process, which means she won't simply give you the complete solution to a task. Instead, she will help you by answering specific questions and offering hints to assist you in solving the task on your own.",
+            "text3_2": "<b>No Off-Topic Conversations:</b> Iris's main focus is programming. Therefore, she won't answer questions that aren't related to programming or the current programming exercise you're working on.",
+            "text3_3": "<b>No Organizational Information:</b> Iris won't provide information to organizational topics. Often, the first slides or the course website will give you more information.",
+            "subheading4": "Chat Widget Function",
+            "text4_1": "<b>Close the Widget:</b> You can close the widget by clicking on the 'X' button (top right corner of the widget) or on the chatbot button (below the widget).",
+            "text4_2": "<b>Movable Functionality:</b> You have the flexibility to move the widget around. Simply click and hold on the widget and drag it to the desired position.",
+            "text4_3": "<b>Resize the Widget:</b> Click and drag the borders of the widget in different directions to make it smaller or larger, depending on your preference.",
+            "text4_4": "<b>Full Screen Feature:</b> You can expand the widget to full screen mode by clicking on the full screen button (top right corner of the widget).",
+            "text4_5": "<b>Clear chat history:</b> You can clear your chat history by clicking on the trash can button (top right corner of the widget). Thereby, all previous messages are deleted and you can start a new conversation.",
+            "supportText": "(If you have any problems using the widget or messaging Iris, please create an issue on GitHub: https://github.com/ls1intum/Artemis)",
+            "unreadMessages": "Unread messages",
+            "buttonTooltip": "Start chatting with Iris!",
+            "clearSession": {
+                "title": "Clear chat history",
+                "text": "Are you sure you want to clear the chat history?",
+                "submit": "Confirm"
+            },
+            "errors": {
+                "invalidSessionState": "Iris session state is invalid. It is impossible to send messages in this state.",
+                "historyLoadFailed": "Could not fetch messages.",
+                "sessionLoadFailed": "Could not fetch session details.",
+                "sessionCreationFailed": "Could not create a new session.",
+                "sendMessageFailed": "Something went wrong while sending the message. Please try again later!",
+                "rateMessageFailed": "Could not rate message. Please try again later.",
+                "irisDisabled": "Iris has been disabled for this exercise.",
+                "timeout": "The Artemis server has not sent a response yet. Please don't reload the page.",
+                "emptyMessage": "You cannot submit empty messages.",
+                "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
+                "internalPyrisError": "An internal error when communicating with the LLM occurred. Error message is: {{ pyrisErrorMessage }}.",
+                "invalidTemplate": "The template is invalid. Error message is: {{ pyrisErrorMessage }}.",
+                "noModelAvailable": "Model {{ model }} is not available to use. Please contact your administrator if this problem persists.",
+                "noResponse": "No response from Iris was received.",
+                "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}",
+                "technicalError": "There has been a technical error. Please contact Artemis Administrators if this error message persists.",
+                "irisNotAvailable": "Iris is not available. Please try again later!"
+            },
+            "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me <a href='/about-iris' target='_blank'>here</a>."
+        }
+    }
+}

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.util;
 
+import org.apache.commons.lang.time.DurationFormatUtils;
+
 public class TimeLogUtil {
 
     /**
@@ -27,6 +29,13 @@ public class TimeLogUtil {
         }
         double durationInHours = durationInMinutes / 60.0;
         return roundOffTo2DecPlaces(durationInHours) + "hours";
+    }
+
+    public static String formatDuration(long durationInSeconds) {
+        if (durationInSeconds < 60) {
+            return durationInSeconds + "s";
+        }
+        return DurationFormatUtils.formatDuration(durationInSeconds * 1000, "HH:mm:ss") + " (HH:mm:ss)";
     }
 
     private static String roundOffTo2DecPlaces(double val) {

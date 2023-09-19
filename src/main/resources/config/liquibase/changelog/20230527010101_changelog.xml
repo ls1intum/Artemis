@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20230527010101" author="morrien">
+        <addColumn tableName="iris_session">
+            <column name="discriminator" type="varchar(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code_hint_id" type="bigint"/>
+        </addColumn>
+        <sql>update iris_session SET discriminator = 'CHAT' WHERE discriminator IS NULL;</sql>
+        <createIndex indexName="iris_session_discriminator" tableName="iris_session">
+            <column name="discriminator"/>
+        </createIndex>
+        <addForeignKeyConstraint baseColumnNames="code_hint_id" baseTableName="iris_session" constraintName="fk_iris_session_code_hint_id" referencedColumnNames="id" referencedTableName="exercise_hint"/>
+    </changeSet>
+</databaseChangeLog>

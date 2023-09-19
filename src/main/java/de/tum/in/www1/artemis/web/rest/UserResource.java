@@ -161,4 +161,32 @@ public class UserResource {
         String result = userCreationService.setRandomPasswordAndReturn(user);
         return ResponseEntity.ok().body(new UserInitializationDTO(result));
     }
+
+    /**
+     * PUT users/accept-iris : sets the irisAccepted flag for the user to ZonedDateTime.now()
+     *
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request) if Iris was already accepted
+     */
+    @PutMapping("users/accept-iris")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> setIrisAcceptedToTimestamp() {
+        User user = userRepository.getUser();
+        if (user.getIrisAcceptedTimestamp() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+        userRepository.updateIrisAcceptedToDate(user.getId(), ZonedDateTime.now());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET users/accept-iris : gets the irisAccepted flag for the user
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the flag's value as ZonedDateTime, or with status 404 (Not Found)
+     */
+    @GetMapping("users/accept-iris")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ZonedDateTime> getIrisAcceptedForStudent() {
+        User user = userRepository.getUser();
+        return ResponseEntity.ok().body(user.getIrisAcceptedTimestamp());
+    }
 }

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
  * This service contains utility functionality that verifies a changelog to prevent corruption and executes a given changelog.
  */
 @Service
+@Profile("scheduling")
 public class MigrationService {
 
     private final Logger log = LoggerFactory.getLogger(MigrationService.class);
