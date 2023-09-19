@@ -118,7 +118,7 @@ public class ParticipationService {
     public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isTestRun() && exercise.isCourseExercise()) {
+        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
             // In case there is already a practice participation, set it to inactive
             optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
             studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
@@ -240,12 +240,8 @@ public class ParticipationService {
         participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
         participation = configureBuildPlan(participation);
-        // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
-        // (when the web hook was already initialized, see below)
-        continuousIntegrationService.orElseThrow().performEmptySetupCommit(participation);
-        // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
-        participation = configureRepositoryWebHook(participation);
+        configureRepositoryWebHook(participation);
         // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
         // Step 4b) Set the InitializationDate to the current time
@@ -285,7 +281,7 @@ public class ParticipationService {
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
-            participation.setTestRun(true);
+            participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
         }
         else {
@@ -343,7 +339,7 @@ public class ParticipationService {
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUrl(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
-            programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+            configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
                     || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
@@ -394,7 +390,7 @@ public class ParticipationService {
 
         // If a graded participation gets reset after the due date set the state back to finished. Otherwise, the participation is initialized
         var dueDate = ExerciseDateService.getDueDate(participation);
-        if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+        if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
             participation.setInitializationState(InitializationState.FINISHED);
         }
         else {
@@ -490,11 +486,10 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
+    private void configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.orElseThrow().addWebHookForParticipation(participation);
         }
-        return participation;
     }
 
     /**
@@ -646,7 +641,7 @@ public class ParticipationService {
 
             // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
             var dueDate = ExerciseDateService.getDueDate(participation);
-            if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+            if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
                 participation.setInitializationState(InitializationState.FINISHED);
             }
             else {

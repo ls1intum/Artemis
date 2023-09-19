@@ -265,11 +265,10 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         continuousIntegrationService.removeAllDefaultProjectPermissions(null);
         continuousIntegrationService.givePlanPermissions(null, null);
         continuousIntegrationService.giveProjectPermissions(null, null, null);
-        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, List.of());
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null);
         continuousIntegrationService.enablePlan(null, null);
         continuousIntegrationService.deleteBuildPlan(null, null);
         continuousIntegrationService.deleteProject(null);
-        continuousIntegrationService.performEmptySetupCommit(null);
         assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isNotPresent();
         assertThat(continuousIntegrationService.checkIfProjectExists(null, null)).isNull();
         assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isTrue();

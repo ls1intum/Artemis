@@ -56,6 +56,11 @@ public class StudentParticipation extends Participation {
         return Optional.ofNullable((Participant) student).orElse(team);
     }
 
+    @Override
+    public String getType() {
+        return "student";
+    }
+
     /**
      * allows to set the participant independent whether it is a team or user
      *

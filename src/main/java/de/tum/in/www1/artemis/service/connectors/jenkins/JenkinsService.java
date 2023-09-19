@@ -93,11 +93,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        // Not needed for Jenkins
-    }
-
-    @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
@@ -115,7 +110,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, List<String> triggeredByRepositories) {
+            String newDefaultBranch) {
         jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
     }
 
