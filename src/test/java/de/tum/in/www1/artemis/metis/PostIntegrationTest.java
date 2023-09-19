@@ -498,6 +498,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         if (!isUserMentionValid) {
             request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
+            return;
         }
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
