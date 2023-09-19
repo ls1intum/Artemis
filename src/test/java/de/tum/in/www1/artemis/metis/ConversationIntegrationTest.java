@@ -441,6 +441,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var agreement = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/code-of-conduct-agreement", HttpStatus.OK, Boolean.class);
         assertThat(agreement).isTrue();
 
+        var newAgreement = request.get("/api/courses/" + exampleCourseId + "/code-of-conduct-agreement", HttpStatus.OK, Boolean.class);
+        assertThat(newAgreement).isTrue();
+        ;
+
     }
 
     private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelModerationRights,
