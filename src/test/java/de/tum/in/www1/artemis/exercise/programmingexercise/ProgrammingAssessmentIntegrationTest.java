@@ -607,17 +607,17 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
 
         Instant createdDate = manualResult.getAssessmentNote().getCreatedDate();
-        Instant initialLastUpdatedDate = manualResult.getAssessmentNote().getLastUpdatedDate();
+        Instant initialLastModifiedDate = manualResult.getAssessmentNote().getLastModifiedDate();
 
         // Because the two timestamps are created sequentially, it is required to compare them based on some epsilon,
         // which is a second here. Going too low might make the test flaky.
-        Duration difference = Duration.between(createdDate, initialLastUpdatedDate);
+        Duration difference = Duration.between(createdDate, initialLastModifiedDate);
         assertThat(difference.abs().toSeconds() < 1).isTrue();
         manualResult.getAssessmentNote().setNote("note2");
 
         manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
         assertThat(createdDate).isEqualTo(manualResult.getAssessmentNote().getCreatedDate());
-        assertThat(manualResult.getAssessmentNote().getLastUpdatedDate().isAfter(initialLastUpdatedDate)).isTrue();
+        assertThat(manualResult.getAssessmentNote().getLastModifiedDate().isAfter(initialLastModifiedDate)).isTrue();
     }
 
     private void assessmentDueDatePassed() {

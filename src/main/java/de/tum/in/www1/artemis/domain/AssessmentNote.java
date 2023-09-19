@@ -29,7 +29,7 @@ public class AssessmentNote extends DomainObject {
     private final Instant createdDate = Instant.now();
 
     @Column(name = "last_updated_date")
-    private Instant lastUpdatedDate = Instant.now();
+    private Instant lastModifiedDate = Instant.now();
 
     @Column(name = "note")
     private String note;
@@ -54,11 +54,11 @@ public class AssessmentNote extends DomainObject {
         return this.createdDate;
     }
 
-    public void setLastUpdatedDate(Instant lastUpdatedDate) {
-        this.lastUpdatedDate = lastUpdatedDate;
+    public void setLastModifiedDate(Instant lastUpdatedDate) {
+        this.lastModifiedDate = lastUpdatedDate;
     }
 
-    public Instant getLastUpdatedDate() {
-        return this.lastUpdatedDate;
+    public Instant getLastModifiedDate() {
+        return this.lastModifiedDate;
     }
 }

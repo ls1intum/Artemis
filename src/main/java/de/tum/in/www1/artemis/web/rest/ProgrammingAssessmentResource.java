@@ -186,7 +186,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         if (newManualResult.getAssessmentNote() != null) {
             newManualResult.getAssessmentNote().setCreator(newManualResult.getAssessor());
-            newManualResult.getAssessmentNote().setLastUpdatedDate(Instant.now());
+            newManualResult.getAssessmentNote().setLastModifiedDate(Instant.now());
         }
 
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
