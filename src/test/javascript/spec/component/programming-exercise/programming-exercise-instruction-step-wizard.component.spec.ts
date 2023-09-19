@@ -64,7 +64,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
+            feedbacks: [{ testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum' }],
         };
         comp.latestResult = result;
         comp.tasks = [];

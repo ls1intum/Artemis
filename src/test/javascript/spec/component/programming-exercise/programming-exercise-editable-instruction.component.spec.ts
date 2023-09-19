@@ -159,7 +159,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.exerciseTestCases).toHaveLength(0);
         expect(getLatestResultWithFeedbacksStub).toHaveBeenNthCalledWith(1, exercise.templateParticipation!.id!);
 
-        subject.next({ feedbacks: [{ text: 'testY' }, { text: 'testX' }] } as Result);
+        subject.next({ feedbacks: [{ testCase: { testName: 'testY' } }, { testCase: { testName: 'testX' } }] } as Result);
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);

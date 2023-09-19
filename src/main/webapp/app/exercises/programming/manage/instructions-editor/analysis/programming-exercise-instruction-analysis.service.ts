@@ -98,12 +98,10 @@ export class ProgrammingExerciseInstructionAnalysisService {
      *
      * @param issueType for which to retrieve the fitting translation.
      */
-    private getTranslationByIssueType = (issueType: ProblemStatementIssue) => {
+    private getTranslationByIssueType = (issueType: ProblemStatementIssue): string => {
         switch (issueType) {
             case ProblemStatementIssue.INVALID_TEST_CASES:
                 return this.INVALID_TEST_CASE_TRANSLATION;
-            default:
-                return '';
         }
     };
 
