@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
+import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -11,6 +12,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
+import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import {
     CodeEditorBuildLogService,
     CodeEditorRepositoryFileService,
@@ -30,7 +32,7 @@ import {
     ],
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
     exerciseType = ExerciseType.PROGRAMMING;
 
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
@@ -46,14 +48,18 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
+    submissionCount?: number;
+    repositoryIsLocked = false;
 
+    readonly SubmissionPolicyType = SubmissionPolicyType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    getSubmission() {
-        if (this.studentParticipation && this.studentParticipation.submissions && this.studentParticipation.submissions.length > 0) {
+    getSubmission(): Submission | undefined {
+        if (this.studentParticipation?.submissions?.length) {
             return this.studentParticipation.submissions[0];
         }
+        return undefined;
     }
 
     getExerciseId(): number | undefined {
@@ -77,6 +83,11 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      */
     ngOnInit(): void {
         this.updateDomain();
+        this.setSubmissionCountAndLockIfNeeded();
+    }
+
+    ngOnChanges(): void {
+        this.setSubmissionCountAndLockIfNeeded();
     }
 
     onActivate() {
@@ -91,6 +102,14 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     updateDomain() {
         const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
+    }
+
+    /**
+     * Sets the submission count and lock based on the student participation.
+     */
+    setSubmissionCountAndLockIfNeeded() {
+        this.submissionCount = this.studentParticipation.submissionCount ?? this.submissionCount;
+        this.repositoryIsLocked = this.studentParticipation.locked ?? this.repositoryIsLocked;
     }
 
     /**

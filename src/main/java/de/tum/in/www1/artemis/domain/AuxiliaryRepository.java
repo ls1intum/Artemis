@@ -174,9 +174,9 @@ public class AuxiliaryRepository extends DomainObject {
     }
 
     /**
-     * Used in Bamboo Service to map the name of an auxiliary repository to its repository slug.
+     * Used in Bamboo Service to map the name of an auxiliary repository to its repository url.
      */
-    public record AuxRepoNameWithSlug(String name, String repositorySlug) {
+    public record AuxRepoNameWithUrl(String name, VcsRepositoryUrl repositoryUrl) {
     }
 
     public boolean containsEqualStringValues(AuxiliaryRepository other) {

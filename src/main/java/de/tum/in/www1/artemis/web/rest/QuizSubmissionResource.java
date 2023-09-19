@@ -30,9 +30,9 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -58,19 +58,19 @@ public class QuizSubmissionResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final WebsocketMessagingService messagingService;
+    private final ResultWebsocketService resultWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
 
     private final ExamSubmissionService examSubmissionService;
 
     public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            WebsocketMessagingService messagingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService,
+            ResultWebsocketService resultWebsocketService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService,
             StudentParticipationRepository studentParticipationRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
-        this.messagingService = messagingService;
+        this.resultWebsocketService = resultWebsocketService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.examSubmissionService = examSubmissionService;
@@ -157,7 +157,7 @@ public class QuizSubmissionResource {
 
         quizExercise.setQuizPointStatistic(null);
 
-        messagingService.awaitBroadcastNewResult(result.getParticipation(), result);
+        resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
 
         quizExercise.setCourse(null);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
