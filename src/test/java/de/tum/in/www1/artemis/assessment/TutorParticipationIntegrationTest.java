@@ -133,7 +133,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     /**
-     * Tests when tutor provides unnecessry unreferenced feedback in text example assessment, bad request exception is thrown
+     * Tests when tutor provides unnecessary unreferenced feedback in text example assessment, bad request exception is thrown
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
