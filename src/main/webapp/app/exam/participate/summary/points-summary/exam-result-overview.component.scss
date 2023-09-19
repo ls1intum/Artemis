@@ -35,3 +35,17 @@ tr:not(thead tr):not(tfoot tr) {
 .rotate-icon.rotated {
     transform: rotate(90deg);
 }
+
+.icon-container {
+    display: inline-block;
+    vertical-align: middle;
+    horiz-align: center;
+}
+
+.icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+}

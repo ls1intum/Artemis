@@ -26,7 +26,11 @@
                 >
                     <th scope="row">{{ exerciseIndex + 1 }}</th>
                     <td>
-                        &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="getIcon(exercise.type!)"></fa-icon>&nbsp;
+                        &nbsp;
+                        <div *ngIf="exercise?.type" class="icon-container">
+                            <fa-icon [icon]="getIcon(exercise.type!)" class="icon"></fa-icon>
+                        </div>
+                        &nbsp;
                         <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
                     </td>
                     <td *ngIf="showIncludedInScoreColumn()">{{ exerciseService.isIncludedInScore(exercise) }}</td>
