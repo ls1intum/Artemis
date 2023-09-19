@@ -138,4 +138,23 @@ public class UrlService {
         }
         return projectKey;
     }
+
+    /**
+     * Gets the plain URL from the given repository URL,
+     * https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+     *
+     * @param repositoryUrl The repository url object
+     * @return The plain URL
+     * @throws VersionControlException if the URL is invalid and no plain URL could be extracted
+     */
+    public String getPlainUrlFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+        var uri = repositoryUrl.getURI();
+        try {
+            var updatedUri = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), null, uri.getFragment());
+            return updatedUri.toString();
+        }
+        catch (URISyntaxException e) {
+            throw new VersionControlException(e);
+        }
+    }
 }

@@ -290,7 +290,7 @@ public class ParticipationResource {
 
         // There is a second participation of that student in the exericse that is inactive/finished now
         Optional<StudentParticipation> optionalOtherStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(programmingExercise, user,
-                !participation.isTestRun());
+                !participation.isPracticeMode());
         if (optionalOtherStudentParticipation.isPresent()) {
             StudentParticipation otherParticipation = optionalOtherStudentParticipation.get();
             if (participation.getInitializationState() == InitializationState.INACTIVE) {
@@ -303,8 +303,6 @@ public class ParticipationResource {
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
-        // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
-        continuousIntegrationService.orElseThrow().performEmptySetupCommit(participation);
         addLatestResultToParticipation(participation);
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().body(participation);
@@ -371,7 +369,7 @@ public class ParticipationResource {
     private boolean isAllowedToParticipateInProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
         if (participation != null) {
             // only regular participation before the due date; only practice run afterwards
-            return participation.isTestRun() == exerciseDateService.isAfterDueDate(participation);
+            return participation.isPracticeMode() == exerciseDateService.isAfterDueDate(participation);
         }
         else {
             return programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate());
@@ -424,7 +422,7 @@ public class ParticipationResource {
             Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
             // Presentation Score is only valid for non practice participations
-            if (participation.isTestRun()) {
+            if (participation.isPracticeMode()) {
                 throw new BadRequestAlertException("Presentation score is not allowed for practice participations", ENTITY_NAME, "presentationScoreInvalid");
             }
 
