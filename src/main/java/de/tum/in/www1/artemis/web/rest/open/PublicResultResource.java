@@ -78,7 +78,7 @@ public class PublicResultResource {
      */
     @PostMapping("programming-exercises/new-result")
     @EnforceNothing
-    public ResponseEntity<?> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+    public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
         if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
