@@ -127,7 +127,7 @@ both are set up correctly and follow these steps:
         INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_ADMIN");
         INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_USER");
 
-4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username,
+4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username and
 email are the same as the user from the database:
 
 .. figure:: setup/jenkins-gitlab/gitlab_admin_user.png
@@ -754,7 +754,7 @@ Choose “Download now and install after restart” and checking the
 Timestamper Configuration
 """""""""""""""""""""""""
 
-Go to *Manage Jenkins → Configure*. There you will find the
+Go to *Manage Jenkins → System Configuration → Configure*. There you will find the
 Timestamper configuration, use the following value for both formats:
 
 ::
@@ -775,8 +775,8 @@ JUnit formatted results to any URL.
 You can download the current release of the plugin
 `here <https://github.com/ls1intum/jenkins-server-notification-plugin/releases>`__
 (Download the **.hpi** file). Go to the Jenkins plugin page (*Manage
-Jenkins → Plugins*) and install the downloaded file under the
-*Advanced* tab under *Deploy Plugin*
+Jenkins → System Configuration → Plugins*) and install the downloaded file under the
+*Advanced settings* tab under *Deploy Plugin*
 
 .. figure:: setup/jenkins-gitlab/jenkins_custom_plugin.png
    :align: center
@@ -784,7 +784,7 @@ Jenkins → Plugins*) and install the downloaded file under the
 Jenkins Credentials
 """""""""""""""""""
 
-Go to *Manage Jenkins → Security → Manage Credentials → Jenkins → Global credentials* and create the
+Go to *Manage Jenkins → Security → Credentials → Jenkins → Global credentials* and create the
 following credentials
 
 GitLab API Token
