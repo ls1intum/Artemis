@@ -262,7 +262,7 @@ public abstract class PostingService {
         List<User> mentionedUsers = userRepository.findAllByLogins(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
-            throw new BadRequestAlertException("At least one of the mentioned users do not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
+            throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
         }
 
         mentionedUsers.forEach(user -> {
