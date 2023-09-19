@@ -66,7 +66,7 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
 
     private final CopyOnWriteArrayList<ProgrammingExerciseParticipation> errorList = new CopyOnWriteArrayList<>();
 
-    private static final List<String> PROGRAMMING_EXERCISE_RELATED_PROFILES = List.of("bamboo", "bitbucket", "gitlab", "jenkins", "gitlabci", "localvc", "localci");
+    private static final List<String> MIGRATABLE_PROFILES = List.of("bamboo", "gitlab", "jenkins");
 
     public MigrationEntry20230808_203400(ProgrammingExerciseRepository programmingExerciseRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -86,8 +86,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
     @Override
     public void execute() {
         List<String> activeProfiles = List.of(environment.getActiveProfiles());
-        if (activeProfiles.stream().noneMatch(PROGRAMMING_EXERCISE_RELATED_PROFILES::contains)) {
-            log.info("Migration will be skipped and marked run because the system does not support programming exercises according to the selected profiles: {}", activeProfiles);
+        if (activeProfiles.stream().noneMatch(MIGRATABLE_PROFILES::contains)) {
+            log.info("Migration will be skipped and marked run because the system does not support a tech-stack that requires this migration: {}", activeProfiles);
             return;
         }
 
