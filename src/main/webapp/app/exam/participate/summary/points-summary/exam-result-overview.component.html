@@ -61,7 +61,10 @@
                         {{ getMaxNormalPointsSum() }}
                     </th>
                     <th>
-                        <span *ngIf="studentExamWithGrade.studentResult.overallScoreAchieved !== undefined; else totalScoreNotDefinedPlaceholder">
+                        <span
+                            *ngIf="studentExamWithGrade.studentResult.overallScoreAchieved !== undefined; else totalScoreNotDefinedPlaceholder"
+                            [class]="hasPassed ? 'text-success' : 'text-danger'"
+                        >
                             {{ studentExamWithGrade.studentResult.overallScoreAchieved }}%
                         </span>
                         <ng-template #totalScoreNotDefinedPlaceholder>
