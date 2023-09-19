@@ -1,0 +1,66 @@
+<div class="d-flex flex-column gap-1 working-time-control">
+    <div class="d-flex flex-column gap-1">
+        <label for="hours" class="me-4" [jhiTranslate]="durationLabelText" *ngIf="durationLabelText"></label>
+        <div class="input-group">
+            <input
+                [(ngModel)]="workingTime.hours"
+                (ngModelChange)="onDurationChanged()"
+                [disabled]="disabled"
+                id="hours"
+                name="hours"
+                type="number"
+                class="text-center form-control form-number-input"
+                min="0"
+                step="1"
+                required
+            />
+            <label for="hours" class="input-group-text">h</label>
+            <input
+                [(ngModel)]="workingTime.minutes"
+                (ngModelChange)="onDurationChanged()"
+                [disabled]="disabled"
+                id="minutes"
+                name="minutes"
+                type="number"
+                class="text-center form-control form-number-input"
+                min="0"
+                max="59"
+                step="1"
+                required
+            />
+            <label for="minutes" class="input-group-text">min</label>
+            <input
+                [(ngModel)]="workingTime.seconds"
+                (ngModelChange)="onDurationChanged()"
+                [disabled]="disabled"
+                id="seconds"
+                name="seconds"
+                type="number"
+                class="text-center form-control form-number-input"
+                min="0"
+                max="59"
+                step="1"
+                required
+            />
+            <label for="seconds" class="input-group-text">s</label>
+        </div>
+    </div>
+    <div class="d-flex flex-column gap-1" *ngIf="exam && showRelative">
+        <label for="percent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText" *ngIf="relativeLabelText"></label>
+        <div class="input-group">
+            <input
+                [(ngModel)]="workingTime.percent"
+                (ngModelChange)="onPercentChanged()"
+                [disabled]="disabled"
+                id="percent"
+                name="percent"
+                type="number"
+                class="text-center form-control form-number-input"
+                min="-100"
+                step=".01"
+                required
+            />
+            <label for="percent" class="input-group-text">%</label>
+        </div>
+    </div>
+</div>
