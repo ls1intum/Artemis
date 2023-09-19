@@ -66,12 +66,23 @@
                 </div>
             </ng-template>
         </div>
-        <div *ngIf="exam && studentExam.ended && (exam.examStudentReviewStart || exam.examStudentReviewEnd)" class="mb-2 mx-2">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewTimespan' | artemisTranslate }}:</strong>
+        <div *ngIf="exam && studentExam.ended && (exam.examStudentReviewStart || exam.examStudentReviewEnd)" class="mb-2 mx-2 d-flex align-items-center justify-content-center">
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewTimespan' | artemisTranslate }}:&nbsp;</strong>
             <span *ngIf="exam.examStudentReviewStart"> {{ exam.examStudentReviewStart | artemisDate }} </span>
             <span *ngIf="exam.examStudentReviewStart && exam.examStudentReviewEnd"> - </span>
             <span *ngIf="exam.examStudentReviewEnd">{{ exam.examStudentReviewEnd | artemisDate }}</span>
+            <div *ngIf="reviewIsOpen" class="mx-2 badge bg-success">{{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}</div>
         </div>
+
+        <!--TODO move to general-information component-->
+        <!--        <div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun">-->
+        <!--            <div class="row justify-content-center">-->
+        <!--                <div class="alert alert-success col-12 col-lg-6" role="alert">-->
+        <!--                    {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}-->
+        <!--                </div>-->
+        <!--            </div>-->
+        <!--        </div>-->
+
         <div *ngIf="studentExam?.user?.name">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.examinedStudent' | artemisTranslate }}:</strong>
             <span> {{ studentExam!.user!.name }} </span>

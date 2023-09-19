@@ -11,6 +11,7 @@ import dayjs from 'dayjs/esm';
 export class ExamGeneralInformationComponent implements OnInit {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
+    @Input() reviewIsOpen?: boolean = false;
 
     examEndDate?: dayjs.Dayjs;
     normalWorkingTime?: number;
