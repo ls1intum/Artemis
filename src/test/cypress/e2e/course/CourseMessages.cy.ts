@@ -20,6 +20,17 @@ describe('Course messages', () => {
         });
     });
 
+    it('accepts code of conduct', () => {
+        cy.login(instructor, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+        cy.login(studentOne, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+        cy.login(studentTwo, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+        cy.login(tutor, `/courses/${course.id}/messages`);
+        courseMessages.acceptCodeOfConductButton();
+    });
+
     describe('Channel messages', () => {
         describe('Create channel', () => {
             it('check for pre-created channels', () => {
