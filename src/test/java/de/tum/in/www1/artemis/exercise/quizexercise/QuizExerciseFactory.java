@@ -183,7 +183,7 @@ public class QuizExerciseFactory {
 
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode, Course course) {
         QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, assessmentDueDate, course);
-        quizExercise.setTitle("my cool quiz title");
+        quizExercise.setTitle("new quiz");
 
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
@@ -318,7 +318,7 @@ public class QuizExerciseFactory {
 
     private static ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
         var shortAnswerQuestion = createShortAnswerQuestion();
-        shortAnswerQuestion.setText("This [-spot1] a [-spot 2] answer text");
+        shortAnswerQuestion.setText("This [-spot0] a [-spot 2] answer text");
         return shortAnswerQuestion;
     }
 

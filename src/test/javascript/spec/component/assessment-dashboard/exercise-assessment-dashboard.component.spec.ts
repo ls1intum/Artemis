@@ -729,6 +729,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
+    it('generate exercise detail link', () => {
+        comp.exercise = modelingExercise;
+        comp.courseId = 4;
+        const exerciseDetailsLink = comp.getExerciseDetailsLink();
+        expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
+    });
+
     it('should toggle second correction', () => {
         comp.exercise = exercise;
         comp.exercise.type = ExerciseType.TEXT;

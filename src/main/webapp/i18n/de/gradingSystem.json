@@ -59,7 +59,7 @@
                 },
                 "maxPoints": {
                     "title": "Maximale Punktzahl",
-                    "explanation": "Legt die maximale Punktzahl für den gegebenen Kurs/die gegebene Prüfung fest. Der Wert wird benötigt, wenn ein Notenschlüssel mit absoluter Punktzahl als Schranke anstelle eines Prozentsatzes benötigt wird"
+                    "explanation": "Legt die maximale Punktzahl für den gegebenen Kurs/die gegebene Prüfung fest. Der Wert wird benötigt, wenn ein Notenschlüssel mit absoluter Punktzahl als Schranke anstelle eines Prozentsatzes benötigt wird. Beachten Sie, dass die maximale Punktzahl keinen Einfluss auf die Notenberechnung für Kurse hat, für Prüfungen jedoch schon."
                 },
                 "gradeType": {
                     "title": "Notentyp",

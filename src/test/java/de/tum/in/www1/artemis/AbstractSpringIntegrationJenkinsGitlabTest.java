@@ -8,7 +8,6 @@ import static tech.jhipster.config.JHipsterConstants.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -43,7 +42,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ExtendWith(SpringExtension.class)
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athene", "scheduling" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athena", "scheduling" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$" })
@@ -91,16 +90,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
-
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-
         if (!recreateBuildPlans) {
             mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
             mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
@@ -110,8 +105,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         }
         if (addAuxRepos) {
             // we basically mock the same requests for template and solution, in reality they would include a different payload (job.xml)
-            mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName(), null, null, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName(), null, null, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName(), null, null);
+            mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName(), null, null);
         }
     }
 
@@ -124,7 +119,6 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
         mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
     }
@@ -169,10 +163,10 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
-        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
-        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName, List.of());
-        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName);
+        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName);
+        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName);
+        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName);
     }
 
     private void mockSetupBuildPlansForNewExercise(ProgrammingExercise exerciseToBeImported) throws Exception {
@@ -218,12 +212,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username;
-        mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName, List.of());
+        mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName);
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
-            throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException {
         jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName, false);
     }
 

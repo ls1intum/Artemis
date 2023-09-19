@@ -13,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -23,14 +22,20 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Long> {
 
-    List<ExerciseGroup> findByExamId(Long examId);
-
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    @Query("SELECT e FROM ExerciseGroup e WHERE e.id = :#{#exerciseGroupId}")
+    @Query("SELECT e FROM ExerciseGroup e WHERE e.id = :exerciseGroupId")
     Optional<ExerciseGroup> findWithExercisesById(@Param("exerciseGroupId") Long exerciseGroupId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exam", "exercises" })
-    @Query("SELECT e FROM ExerciseGroup e WHERE e.exam.id = :#{#examId}")
+    @Query("""
+            SELECT eg
+            FROM Exam exam
+                LEFT JOIN exam.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises
+                LEFT JOIN FETCH eg.exam
+            WHERE exam.id = :examId
+            ORDER BY INDEX(eg)
+            """)
+    // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<ExerciseGroup> findWithExamAndExercisesByExamId(@Param("examId") Long examId);
 
     /**
@@ -43,17 +48,6 @@ public interface ExerciseGroupRepository extends JpaRepository<ExerciseGroup, Lo
     default ExerciseGroup findByIdElseThrow(long exerciseGroupId) {
         // Note: exam is loaded eagerly anyway
         return findById(exerciseGroupId).orElseThrow(() -> new EntityNotFoundException("ExerciseGroup", exerciseGroupId));
-    }
-
-    /**
-     * Retrieve the course through ExerciseGroup -> Exam -> Course
-     *
-     * @param exerciseGroupId the id of the exerciseGroup for which the course is retrieved
-     * @return the Course of the Exercise
-     */
-    default Course retrieveCourseOverExerciseGroup(long exerciseGroupId) {
-        ExerciseGroup exerciseGroup = findByIdElseThrow(exerciseGroupId);
-        return exerciseGroup.getExam().getCourse();
     }
 
     /**

@@ -20,6 +20,8 @@ public class ChannelDTO extends ConversationDTO {
 
     private Boolean isArchived;
 
+    private Boolean isCourseWide;
+
     // property not taken from entity
     /**
      * A course instructor has channel moderation rights but is not necessarily a moderator of the channel
@@ -65,6 +67,7 @@ public class ChannelDTO extends ConversationDTO {
         this.topic = channel.getTopic();
         this.isArchived = channel.getIsArchived();
         this.isAnnouncementChannel = channel.getIsAnnouncementChannel();
+        this.isCourseWide = channel.getIsCourseWide();
     }
 
     public ChannelDTO() {
@@ -159,12 +162,16 @@ public class ChannelDTO extends ConversationDTO {
         return subTypeReferenceId;
     }
 
+    public Boolean getIsCourseWide() {
+        return isCourseWide;
+    }
+
     @Override
     public String toString() {
         return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
-                + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator
-                + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle=" + tutorialGroupTitle + "}"
-                + super.toString();
+                + isPublic + ", isAnnouncementChannel=" + isAnnouncementChannel + ", isArchived=" + isArchived + ", isCourseWide=" + isCourseWide + ", isChannelModerator="
+                + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights + ", tutorialGroupId=" + tutorialGroupId + ", tutorialGroupTitle="
+                + tutorialGroupTitle + "}" + super.toString();
     }
 
     private void setSubTypeWithReferenceFromChannel(Channel channel) {

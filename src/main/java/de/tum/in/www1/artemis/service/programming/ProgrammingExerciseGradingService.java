@@ -126,10 +126,11 @@ public class ProgrammingExerciseGradingService {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         try {
-            var buildResult = continuousIntegrationResultService.orElseThrow().convertBuildResult(requestBody);
+            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+            var buildResult = ciResultService.convertBuildResult(requestBody);
             checkCorrectBranchElseThrow(participation, buildResult);
 
-            Result newResult = continuousIntegrationResultService.get().createResultFromBuildResult(buildResult, participation);
+            Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
@@ -142,7 +143,7 @@ public class ProgrammingExerciseGradingService {
                 var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
 
-                continuousIntegrationResultService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
+                ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
@@ -155,7 +156,7 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            newResult.setRatedIfNotExceeded(ExerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
+            newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
             return processNewProgrammingExerciseResult(participation, newResult);
         }
@@ -271,11 +272,11 @@ public class ProgrammingExerciseGradingService {
             // test run repository).
             // Student test exam participations will still be locked by this.
             SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
-            if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isTestRun()) {
+            if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
-            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isTestRun()) {
+            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
                 // Adding back dropped submission

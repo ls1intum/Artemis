@@ -28,19 +28,16 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
             .pipe(map((response: HttpResponse<Lecture[]>) => response.body!))
             .subscribe((lectures: Lecture[]) => {
                 lectures.map((lecture) => {
-                    this.setValues(
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        [
-                            ...this.values,
-                            {
-                                id: lecture.id!.toString(),
-                                value: lecture.title!,
-                                type: ReferenceType.LECTURE,
-                                elements: this.lectureAttachments(lecture.attachments!),
-                                attachmentUnits: this.attachmentUnitsWithSlides(lecture.lectureUnits!),
-                            },
-                        ],
-                    );
+                    this.setValues([
+                        ...this.values,
+                        {
+                            id: lecture.id!.toString(),
+                            value: lecture.title!,
+                            type: ReferenceType.LECTURE,
+                            elements: this.lectureAttachments(lecture.attachments!),
+                            attachmentUnits: this.attachmentUnitsWithSlides(lecture.lectureUnits!),
+                        },
+                    ]);
                 });
             });
     }

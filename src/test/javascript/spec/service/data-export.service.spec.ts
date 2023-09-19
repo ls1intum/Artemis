@@ -33,10 +33,19 @@ describe('DataExportService', () => {
         tick();
     }));
 
-    it('should make GET request to download data export', fakeAsync(() => {
-        service.downloadDataExport(1).subscribe();
-        const req = httpMock.expectOne({ method: 'GET', url: `api/data-exports/1` });
-        req.flush(new Blob());
+    it('should make open download link to download data export', () => {
+        const windowSpy = jest.spyOn(window, 'open').mockImplementation();
+        service.downloadDataExport(1);
+        expect(windowSpy).toHaveBeenCalledWith('api/data-exports/1', '_blank');
+    });
+
+    it('should make POST request to request data export as admin for another user', fakeAsync(() => {
+        const dataExport = new DataExport();
+        const user = new User();
+        user.login = 'ge12abc';
+        service.requestDataExportForAnotherUser(user.login).subscribe((resp) => expect(resp).toEqual(dataExport));
+        const req = httpMock.expectOne({ method: 'POST', url: `api/admin/data-exports/ge12abc` });
+        req.flush(dataExport);
         tick();
     }));
 

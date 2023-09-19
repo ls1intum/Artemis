@@ -350,8 +350,9 @@ Do **not** write
 .. code-block:: java
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(Long resultId);
@@ -361,8 +362,9 @@ but instead annotate the parameter with @Param:
 .. code-block:: java
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
@@ -377,8 +379,9 @@ We prefer to write SQL statements all in upper case. Split queries onto multiple
 .. code-block:: java
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
@@ -392,11 +395,14 @@ So instead of:
 .. code-block:: java
 
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
-                WHERE p.exercise.id = :#{#exerciseId}
-                AND EXISTS (SELECT s FROM Submission s
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND EXISTS (SELECT s
+                    FROM Submission s
                     WHERE s.participation.id = p.id
-                    AND s.submitted = TRUE
+                        AND s.submitted = TRUE
+                    )
             """)
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
@@ -406,8 +412,10 @@ you should use:
 .. code-block:: java
 
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p JOIN p.submissions s
-                WHERE p.exercise.id = :#{#exerciseId}
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+            WHERE p.exercise.id = :exerciseId
                 AND s.submitted = TRUE
             """)
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);

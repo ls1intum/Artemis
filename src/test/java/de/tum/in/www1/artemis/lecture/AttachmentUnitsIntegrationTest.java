@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +58,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
-        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, true, false);
+        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -106,7 +108,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false, false);
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "");
 
         List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
@@ -146,36 +148,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-        var filePart = createLectureFile(true);
-
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
-        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, false);
-
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
-                "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
-        assertThat(attachmentUnits).hasSize(2);
-        assertThat(slideRepository.findAll()).hasSize(19); // 19 slides should be created for 2 attachment units (1 break slide is removed)
-
-        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
-        List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
-        String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
-        byte[] fileBytes = request.get(attachmentPath, HttpStatus.OK, byte[].class);
-
-        try (PDDocument document = PDDocument.load(fileBytes)) {
-            // 6 is the number of pages for the first unit without the break slides
-            assertThat(document.getNumberOfPages()).isEqualTo(6);
-            document.close();
-        }
-        assertThat(attachmentUnitList).hasSize(2);
-        assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldRemoveSolutionSlides_and_removeBreakSlides() throws Exception {
         var filePart = createLectureFile(true);
 
@@ -183,7 +155,9 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 LectureUnitInformationDTO.class, HttpStatus.OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true, true);
+
+        var commaSeparatedKeyPhrases = String.join(",", new String[] { "Break", "Example solution" });
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
 
         List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
                 "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
@@ -200,20 +174,18 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         String attachmentPathFirstUnit = attachmentUnitList.get(0).getAttachment().getLink();
         byte[] fileBytesFirst = request.get(attachmentPathFirstUnit, HttpStatus.OK, byte[].class);
 
-        try (PDDocument document = PDDocument.load(fileBytesFirst)) {
+        try (PDDocument document = Loader.loadPDF(fileBytesFirst)) {
             // 5 is the number of pages for the first unit (after break and solution are removed)
             assertThat(document.getNumberOfPages()).isEqualTo(5);
-            document.close();
         }
 
         // second unit
         String attachmentPathSecondUnit = attachmentUnitList.get(1).getAttachment().getLink();
         byte[] fileBytesSecond = request.get(attachmentPathSecondUnit, HttpStatus.OK, byte[].class);
 
-        try (PDDocument document = PDDocument.load(fileBytesSecond)) {
+        try (PDDocument document = Loader.loadPDF(fileBytesSecond)) {
             // 13 is the number of pages for the second unit
             assertThat(document.getNumberOfPages()).isEqualTo(13);
-            document.close();
         }
     }
 
@@ -232,6 +204,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
      */
     private MockMultipartFile createLectureFile(boolean shouldBePDF) throws IOException {
 
+        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
             if (shouldBePDF) {
                 for (int i = 1; i <= 20; i++) {
@@ -240,20 +214,21 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                     if (i == 6) {
                         contentStream.beginText();
-                        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                        contentStream.setFont(font, 12);
                         contentStream.newLineAtOffset(25, -15);
                         contentStream.showText("itp20..");
                         contentStream.newLineAtOffset(25, 500);
                         contentStream.showText("Break");
                         contentStream.newLineAtOffset(0, -15);
                         contentStream.showText("Have fun");
+                        contentStream.endText();
                         contentStream.close();
                         continue;
                     }
 
                     if (i == 7) {
                         contentStream.beginText();
-                        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                        contentStream.setFont(font, 12);
                         contentStream.newLineAtOffset(25, -15);
                         contentStream.showText("itp20..");
                         contentStream.newLineAtOffset(25, 500);
@@ -269,7 +244,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                     if (i == 2 || i == 8) {
                         contentStream.beginText();
-                        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                        contentStream.setFont(font, 12);
                         contentStream.newLineAtOffset(25, -15);
                         contentStream.showText("itp20..");
                         contentStream.newLineAtOffset(25, 500);
@@ -283,7 +258,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
                         continue;
                     }
                     contentStream.beginText();
-                    contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                    contentStream.setFont(font, 12);
                     contentStream.newLineAtOffset(25, 500);
                     String text = "This is the sample document";
                     contentStream.showText(text);

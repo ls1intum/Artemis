@@ -201,7 +201,7 @@ public class CourseScoreCalculationService {
             // TODO: Look into refactoring the fetchParticipationsWithSubmissionsAndResultsForCourses method in the CourseService to always initialize the participations (to an
             // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
             if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
-                exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()).forEach(participation -> {
+                exercise.getStudentParticipations().stream().filter(participation -> !participation.isPracticeMode()).forEach(participation -> {
                     participation.setExercise(exercise);
                     gradedStudentParticipations.add(participation);
                 });
@@ -483,5 +483,16 @@ public class CourseScoreCalculationService {
         }
         var studentVerdictsFromExercises = plagiarismCasesForSingleStudent.stream().map(PlagiarismCase::getVerdict).toList();
         return PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
+    }
+
+    /**
+     * Calculates the reachable points for a course given its grading scale and exercises.
+     *
+     * @param gradingScale the grading scale of the course.
+     * @param exercises    the exercises of the course.
+     * @return the reachable points for a course excluding bonus and optional points.
+     */
+    public double calculateReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+        return calculateMaxAndReachablePoints(gradingScale, exercises).reachablePoints;
     }
 }

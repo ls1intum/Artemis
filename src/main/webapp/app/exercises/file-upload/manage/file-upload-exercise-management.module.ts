@@ -19,7 +19,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 
 @NgModule({
     imports: [
@@ -40,7 +41,8 @@ import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title
         NonProgrammingExerciseDetailCommonActionsModule,
         ArtemisSharedComponentModule,
         ExerciseCategoriesModule,
-        TitleChannelNameModule,
+        ExerciseTitleChannelNameModule,
+        ExerciseUpdateNotificationModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

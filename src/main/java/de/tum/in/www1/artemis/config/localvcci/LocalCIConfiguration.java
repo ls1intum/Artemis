@@ -23,9 +23,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.exception.BadRequestException;
-import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -111,6 +108,7 @@ public class LocalCIConfiguration {
         return XMLInputFactory.newInstance();
     }
 
+    // TODO: the Artemis server should start even if docker is not running. Also, pulling the image should be done after the start has finished or only on demand
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
      *
@@ -124,29 +122,7 @@ public class LocalCIConfiguration {
 
         log.info("Docker client created with connection URI: " + dockerConnectionUri);
 
-        // If the Docker image used for the local CI build job containers is not available on the local machine, pull it from Docker Hub.
-        pullDockerImage(dockerClient);
-
         return dockerClient;
-    }
-
-    private void pullDockerImage(DockerClient dockerClient) {
-        try {
-            dockerClient.inspectImageCmd(dockerImage).exec();
-        }
-        catch (NotFoundException e) {
-            // Image does not exist locally, pull it from Docker Hub.
-            log.info("Pulling docker image {}", dockerImage);
-            try {
-                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
-            }
-            catch (InterruptedException ie) {
-                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
-            }
-        }
-        catch (BadRequestException e) {
-            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
-        }
     }
 
     /**

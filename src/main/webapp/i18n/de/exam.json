@@ -152,6 +152,10 @@
             "problemStatementUpdate": {
                 "showDiff": "Zeige Unterschiede",
                 "showNew": "Zeige nur neue Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolut",
+                "relative": "Änderung relativ zur normalen Bearbeitungszeit"
             }
         },
         "examScores": {
@@ -197,6 +201,7 @@
             "overallGradeColumn": "Gesamtnote",
             "overallBonusColumn": "Gesamt-Bonuspunkte",
             "bonusGradeColumn": "Bonusnote",
+            "bonusPointsColumn": "Bonuspunkte",
             "finalGradeColumn": "Endnote",
             "passedColumn": "Bestanden",
             "mostSeverePlagiarismVerdictColumn": "Urteil",
@@ -286,7 +291,9 @@
             "browserFingerprintHash": "Browser-Fingerabdruck",
             "instanceId": "Browserinstanz-ID",
             "ipAddress": "IP-Adresse",
-            "createdDate": "Erstellungsdatum"
+            "createdDate": "Erstellungsdatum",
+            "studentExamId": "Klausur-ID",
+            "userLogin": "Benutzername"
         },
         "studentExams": {
             "title": "Klausuren",
@@ -405,7 +412,7 @@
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
-                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl."
+                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl. Dies wirkt sich auch auf die Noten aller Studierenden in der Prüfung aus!"
             },
             "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
@@ -566,7 +573,9 @@
                     "examReview": "Planung der Klausureinsicht ",
                     "resolveComplaints": "Auflösung aller Beschwerden",
                     "testRun": "Abhalten eines Testdurchlaufs",
-                    "exportResults": "Exportieren der Klausurergebnisse"
+                    "exportResults": "Exportieren der Klausurergebnisse",
+                    "editWorkingTime": "Bearbeiten der Prüfungsdauer",
+                    "suspiciousBehavior": "Überprüfung von verdächtigem Verhalten"
                 },
                 "descriptionItem": {
                     "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
@@ -580,7 +589,9 @@
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
-                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
+                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
+                    "editWorkingTime": "Bis 5 Minuten vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
@@ -613,6 +624,38 @@
                     "numberParticipants": "Teilnehmende",
                     "variants": "Varianten"
                 }
+            },
+            "editWorkingTime": {
+                "title": "Prüfungszeit bearbeiten",
+                "label": "Änderung der Prüfungszeit",
+                "duration": "Die neue Dauer der Prüfung beträgt <strong>{{ duration }}</strong>.",
+                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+            },
+            "suspiciousBehavior": {
+                "title": "Verdächtiges Verhalten",
+                "examSessionDescription": "Bei jedem Eintritt in eine Klausur wird für den Studierenden eine Sitzung erstellt. Diese Sitzung ist die Kombination aus IP-Adresse, Sitzungsschlüssel, User Agent, Browser-Fingerabdruck, Browserinstanz-ID und einem dazugehörigen Zeitstempel.",
+                "suspiciousSessionDescription": "Eine Sitzung wird als verdächtig eingestuft, wenn sie eine der folgenden Kriterien erfüllt:",
+                "suspiciousSessionCriterionIpAddress": "Es gibt mehrere Sitzungen mit derselben IP-Adresse, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterionBrowserFingerprint": "Es gibt mehrere Sitzungen mit demselben Browser-Fingerabdruck, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessions": {
+                    "title": "Verdächtige Sitzungen",
+                    "view": "Verdächtige Sitzungen anzeigen",
+                    "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Fälle.",
+                    "reasons": "Verdächtig aufgrund von:",
+                    "case": "Fall",
+                    "sameIpAddress": "Gleiche IP-Adresse",
+                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck"
+                }
+            },
+            "plagiarismCasesOverview": {
+                "title": "Plagiatsfälle Übersicht",
+                "exerciseName": "Aufgabe",
+                "numberOfResults": "Anzahl potentieller Plagiate",
+                "numberOfCases": "Anzahl Plagiatsfälle",
+                "actions": "Aktionen",
+                "viewResultsOrRunDetection": "Ergebnisse anzeigen oder Plagiatsprüfung starten",
+                "viewCases": "Fälle anzeigen"
             }
         },
         "studentExamDetail": {

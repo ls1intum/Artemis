@@ -1,0 +1,22 @@
+.chatbot-button {
+    position: fixed;
+    bottom: 40px;
+    right: 50px;
+    z-index: 9999;
+}
+
+.btn-circle {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.unread-indicator {
+    position: absolute;
+    top: -5px;
+    right: 1px;
+    width: 10px;
+    height: 10px;
+    color: var(--red);
+}

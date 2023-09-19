@@ -153,6 +153,10 @@
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",
                 "showNew": "Only show new Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolute",
+                "relative": "Change relative to regular working time"
             }
         },
         "examScores": {
@@ -198,6 +202,7 @@
             "overallGradeColumn": "Overall Grade",
             "overallBonusColumn": "Overall Bonus Points",
             "bonusGradeColumn": "Bonus Grade",
+            "bonusPointsColumn": "Bonus Points",
             "finalGradeColumn": "Final Grade",
             "passedColumn": "Passed",
             "mostSeverePlagiarismVerdictColumn": "Plagiarism Verdict",
@@ -289,7 +294,9 @@
             "browserFingerprintHash": "Browser Fingerprint",
             "instanceId": "Browser Instance ID",
             "ipAddress": "IP Address",
-            "createdDate": "Created Date"
+            "createdDate": "Created Date",
+            "studentExamId": "Exam ID",
+            "userLogin": "Login"
         },
         "studentExams": {
             "title": "Student exams",
@@ -407,7 +414,7 @@
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
-                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
             },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
@@ -568,7 +575,9 @@
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
-                    "exportResults": "Export the exam results"
+                    "exportResults": "Export the exam results",
+                    "editWorkingTime": "Edit the exam duration",
+                    "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
@@ -582,7 +591,9 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file."
+                    "exportResults": "Exports the exam results as a .csv file.",
+                    "editWorkingTime": "Until five minutes before the end of the exam, you can extend its duration.",
+                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
@@ -615,6 +626,38 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants"
                 }
+            },
+            "editWorkingTime": {
+                "title": "Edit Exam Duration",
+                "label": "Exam duration change",
+                "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
+                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+            },
+            "suspiciousBehavior": {
+                "title": "Suspicious Behavior",
+                "examSessionDescription": "Whenever a student enters a exam, a session is created for the student. This session is the combination of IP address, session token, user agent, browser fingerprint, browser instance ID and a timestamp.",
+                "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
+                "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
+                "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessions": {
+                    "title": "Suspicious Sessions",
+                    "view": "View Suspicious Sessions",
+                    "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
+                    "reasons": "Suspicious because of:",
+                    "case": "Case",
+                    "sameIpAddress": "Same IP address",
+                    "sameBrowserFingerprint": "Same browser fingerprint"
+                }
+            },
+            "plagiarismCasesOverview": {
+                "title": "Plagiarism Cases Overview",
+                "exerciseName": "Exercise",
+                "numberOfResults": "Number of potential plagiarism cases",
+                "numberOfCases": "Number of plagiarism cases",
+                "actions": "Actions",
+                "viewResultsOrRunDetection": "View Results or Run Detection",
+                "viewCases": "View Cases"
             }
         },
         "studentExamDetail": {

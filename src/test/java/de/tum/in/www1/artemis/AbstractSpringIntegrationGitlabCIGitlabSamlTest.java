@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApi;
@@ -103,8 +102,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
             doThrow(new ContinuousIntegrationException()).when(continuousIntegrationService).createBuildPlanForExercise(any(), any(), any(), any(), any());
         }
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-
         // saml2-specific mocks
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
         doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
@@ -114,7 +111,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
             throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
@@ -126,7 +122,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(exerciseToBeImported);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws GitLabApiException {
@@ -174,7 +169,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy) {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
         // Unsupported action in GitLab CI setup
     }
 

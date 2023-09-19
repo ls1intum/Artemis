@@ -1,6 +1,6 @@
 <section class="mb-5">
-    <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">Language</span></h1>
-    <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage">Set language.</span></p>
+    <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">Language</h3>
+    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage">Set language.</p>
 
     <div class="form-group">
         <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
@@ -40,7 +40,8 @@
                 !programmingExerciseCreationConfig.isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig.isImportFromFile &&
                 !programmingExercise.id &&
-                programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA
+                programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA &&
+                programmingExercise.projectType !== ProjectType.MAVEN_BLACKBOX
             "
         >
             <input
@@ -76,7 +77,14 @@
         />
         <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
             <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
-                <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+                <div
+                    *ngIf="programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX"
+                    [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage + '_BLACKBOX'"
+                ></div>
+                <div
+                    *ngIf="programmingExercise.projectType !== ProjectType.MAVEN_BLACKBOX"
+                    [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"
+                ></div>
             </div>
         </ng-container>
     </div>
@@ -103,8 +111,8 @@
     </div>
 
     <!-- Static code analysis checkbox -->
-    <div class="form-group mb-0" *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed">
-        <div class="form-check mb-0 custom-control custom-checkbox">
+    <div *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed">
+        <div class="form-check custom-control custom-checkbox">
             <input
                 type="checkbox"
                 class="form-check-input custom-control-input"
@@ -117,56 +125,46 @@
             <label class="form-check-label custom-control-label" for="field_staticCodeAnalysisEnabled" jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">
                 Enable Static Code Analysis</label
             >
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary"
-                placement="auto"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
-            ></fa-icon>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.enableStaticCodeAnalysis.description"></jhi-help-icon>
         </div>
     </div>
 
     <!-- Sequential Test Runs checkbox
 It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-    <div class="form-group mb-0" *ngIf="programmingExerciseCreationConfig.sequentialTestRunsAllowed">
-        <div class="form-check">
-            <label class="form-check-label" for="field_sequentialTestRuns">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    name="sequentialTestRuns"
-                    id="field_sequentialTestRuns"
-                    [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled || !!programmingExercise.testwiseCoverageEnabled"
-                    [(ngModel)]="programmingExercise.sequentialTestRuns"
-                    checked
-                />
-                <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
-            </label>
+    <div *ngIf="programmingExerciseCreationConfig.sequentialTestRunsAllowed">
+        <div class="form-check custom-control custom-checkbox">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                name="sequentialTestRuns"
+                id="field_sequentialTestRuns"
+                [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled || !!programmingExercise.testwiseCoverageEnabled"
+                [(ngModel)]="programmingExercise.sequentialTestRuns"
+                checked
+            />
+            <label class="form-check-label custom-control-label" for="field_sequentialTestRuns" jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">
+                >Sequential Test Runs</label
+            >
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
         </div>
     </div>
 
     <!-- Testwise Coverage checkbox-->
     <div class="form-group" *ngIf="programmingExerciseCreationConfig.testwiseCoverageAnalysisSupported">
-        <div class="form-check">
-            <label class="form-check-label" for="field_testwiseCoverageEnabled">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    name="testwiseCoverageEnabled"
-                    id="field_testwiseCoverageEnabled"
-                    [disabled]="!!programmingExercise.sequentialTestRuns || !!programmingExercise.id"
-                    [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
-                    checked
-                />
-                <span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record Testwise Coverage</span>
-                <fa-icon
-                    [icon]="faQuestionCircle"
-                    class="text-secondary"
-                    placement="auto"
-                    ngbTooltip="{{ 'artemisApp.programmingExercise.recordTestwiseCoverageTooltip' | artemisTranslate }}"
-                ></fa-icon>
+        <div class="form-check custom-control custom-checkbox">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                name="testwiseCoverageEnabled"
+                id="field_testwiseCoverageEnabled"
+                [disabled]="!!programmingExercise.sequentialTestRuns || !!programmingExercise.id"
+                [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
+                checked
+            />
+            <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"
+                >Record Testwise Coverage
             </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip"></jhi-help-icon>
         </div>
     </div>
 </section>

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -34,8 +33,7 @@ public interface MockDelegate {
 
     void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException;
 
-    void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
-            throws IOException, URISyntaxException;
+    void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException;
 
     void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception;
 

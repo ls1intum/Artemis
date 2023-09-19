@@ -79,11 +79,12 @@ export class ExamParticipation {
 
     startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
         cy.login(student, '/');
+        cy.visit('/courses');
         courseList.openCourse(course.id!);
         courseOverview.openExamsTab();
         courseOverview.openExam(exam.id!);
         cy.url().should('contain', `/exams/${exam.id}`);
-        examStartEnd.startExam();
+        examStartEnd.startExam(true);
     }
 
     selectExerciseOnOverview(index: number) {

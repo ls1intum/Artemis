@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -45,6 +44,7 @@ import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -89,6 +89,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
     private final ParticipationRepository participationRepository;
 
     private final ParticipationService participationService;
@@ -130,7 +132,7 @@ public class ProgrammingExerciseService {
     private final ChannelService channelService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, GroupNotificationService groupNotificationService,
@@ -144,6 +146,7 @@ public class ProgrammingExerciseService {
         this.gitService = gitService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.participationRepository = participationRepository;
@@ -195,7 +198,8 @@ public class ProgrammingExerciseService {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
-        programmingExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+        VersionControlService versionControl = versionControlService.orElseThrow();
+        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
@@ -210,8 +214,7 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(savedProgrammingExercise, programmingExercise.getChannelName());
-        channelService.registerUsersToChannelAsynchronously(true, savedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook
@@ -221,9 +224,9 @@ public class ProgrammingExerciseService {
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
-        versionControlService.get().addWebHooksForExercise(savedProgrammingExercise);
+        versionControl.addWebHooksForExercise(savedProgrammingExercise);
         scheduleOperations(savedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExercise(savedProgrammingExercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         return savedProgrammingExercise;
     }
 
@@ -343,16 +346,21 @@ public class ProgrammingExerciseService {
         var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
         var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
 
-        continuousIntegrationService.orElseThrow().createProjectForExercise(programmingExercise);
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        continuousIntegration.createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // Give appropriate permissions for CI projects
-        continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
+        continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
 
         giveCIProjectPermissions(programmingExercise);
+
+        // trigger BASE and SOLUTION build plans once here
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
     /**
@@ -395,11 +403,12 @@ public class ProgrammingExerciseService {
         final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
 
+        VersionControlService versionControl = versionControlService.orElseThrow();
         templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(solutionPlanId);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControl.getCloneRepositoryUrl(projectKey, testRepoName).toString());
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
@@ -633,14 +642,15 @@ public class ProgrammingExerciseService {
 
     private void deleteBuildPlans(ProgrammingExercise programmingExercise) {
         final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         if (templateBuildPlanId != null) {
-            continuousIntegrationService.orElseThrow().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
         }
         final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
         if (solutionBuildPlanId != null) {
-            continuousIntegrationService.orElseThrow().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
         }
-        continuousIntegrationService.orElseThrow().deleteProject(programmingExercise.getProjectKey());
+        continuousIntegration.deleteProject(programmingExercise.getProjectKey());
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
@@ -719,10 +729,11 @@ public class ProgrammingExerciseService {
             adminGroups.add(editorGroup);
         }
 
-        continuousIntegrationService.orElseThrow().giveProjectPermissions(exercise.getProjectKey(), adminGroups,
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        continuousIntegration.giveProjectPermissions(exercise.getProjectKey(), adminGroups,
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.CREATEREPOSITORY, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
-            continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
+            continuousIntegration.giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
         }
     }
 

@@ -8,10 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -46,6 +43,7 @@ import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
@@ -190,6 +188,7 @@ public class ProgrammingExerciseExportImportResource {
 
         // If the new exercise has a submission policy, it must be validated.
         if (newExercise.getSubmissionPolicy() != null) {
+            newExercise.getSubmissionPolicy().setActive(true);
             submissionPolicyService.validateSubmissionPolicy(newExercise.getSubmissionPolicy());
         }
 
@@ -269,7 +268,7 @@ public class ProgrammingExerciseExportImportResource {
         long start = System.nanoTime();
         Path path;
         try {
-            path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
+            path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
         }
         catch (Exception e) {
             log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);

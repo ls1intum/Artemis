@@ -21,10 +21,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -47,7 +44,6 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
@@ -111,14 +107,14 @@ public class CourseResource {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final ChannelService channelService;
+    private final LearningPathService learningPathService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, ChannelService channelService) {
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -137,7 +133,7 @@ public class CourseResource {
         this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.channelService = channelService;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -238,6 +234,12 @@ public class CourseResource {
         courseUpdate.setId(courseId); // Don't persist a wrong ID
         Course result = courseRepository.save(courseUpdate);
 
+        // if learning paths got enabled, generate learning paths for students
+        if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
+            Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(result.getId());
+            learningPathService.generateLearningPaths(courseWithCompetencies);
+        }
+
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
         // users no longer have TA, editor or instructor rights in the related exercise repositories.
@@ -301,7 +303,7 @@ public class CourseResource {
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<String>> enrollInCourse(@PathVariable Long courseId) {
-        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
+        Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseService.enrollUserForCourseOrThrow(user, course);
@@ -538,6 +540,7 @@ public class CourseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-assessment-dashboard");
+        // TODO: use ...ElseThrow below in case the course cannot be found
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
@@ -756,7 +759,11 @@ public class CourseResource {
 
         File zipFile = archive.toFile();
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(contentDisposition);
+        return ResponseEntity.ok().headers(headers).contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName())
+                .body(resource);
     }
 
     /**
@@ -863,7 +870,7 @@ public class CourseResource {
             groups.add(course.getInstructorGroupName());
         }
         User searchingUser = userRepository.getUser();
-        var originalPage = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
+        var originalPage = userRepository.searchAllByLoginOrNameInGroupsNotUserId(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
 
         var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
@@ -1034,7 +1041,10 @@ public class CourseResource {
                 throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
-            channelService.registerUserToDefaultChannels(userToAddToGroup.get(), group, role);
+            if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
+                Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+                learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
+            }
             return ResponseEntity.ok().body(null);
         }
         else {
@@ -1185,16 +1195,15 @@ public class CourseResource {
 
     /**
      * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
-     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
-     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * This method first tries to find the student in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      *
      * @param courseId    the id of the course
-     * @param studentDtos the list of students (with at least registration number) who should get access to the course
+     * @param studentDtos the list of students (with at one unique user identifier) who should get access to the course
      * @param courseGroup the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
-     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
      */
     @PostMapping("courses/{courseId}/{courseGroup}")
     @EnforceAtLeastInstructor

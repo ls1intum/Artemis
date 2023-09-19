@@ -20,6 +20,7 @@ export type ProgrammingExerciseCreationConfig = {
     invalidDirectoryNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;
+    isImportFromFile: boolean;
     appNamePatternForSwift: string;
     modePickerOptions: ModePickerOption<ProjectType>[];
     withDependencies: boolean;
@@ -50,6 +51,5 @@ export type ProgrammingExerciseCreationConfig = {
     recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
     isExamMode: boolean;
     isEdit: boolean;
-    isImportFromFile: boolean;
     showSummary: boolean;
 };

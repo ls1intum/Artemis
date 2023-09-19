@@ -155,6 +155,18 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseLockRepositorySubmissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExerciseLockRepositorySubmissionPolicyChange();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseNoneSubmissionPolicy() throws Exception {
+        programmingExerciseTestService.testImportProgrammingExerciseNoneSubmissionPolicyChange();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_structureOracle() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_validExercise_structureOracle();
     }
@@ -437,7 +449,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToExportRepository() throws Exception {
-        doThrow(GitException.class).when(fileService).getTemporaryUniquePath(any(Path.class), anyLong());
+        doThrow(GitException.class).when(fileService).getTemporaryUniquePathWithoutPathCreation(any(Path.class), anyLong());
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.INTERNAL_SERVER_ERROR, false, true, true);
     }
 

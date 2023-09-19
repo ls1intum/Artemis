@@ -44,7 +44,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         private modalService: NgbModal,
     ) {}
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set tests(tests: string[]) {
         this.testsValue = tests;
         const {

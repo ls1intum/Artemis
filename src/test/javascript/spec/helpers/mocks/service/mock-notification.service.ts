@@ -9,4 +9,10 @@ export class MockNotificationService {
     interpretNotification = (notification: GroupNotification): void => {};
     cleanUp = () => {};
     forceComponentReload = () => {};
+
+    subscribeToTotalNotificationCountUpdates = (): Observable<number> => of();
+
+    subscribeToLoadingStateUpdates = (): Observable<number> => of();
+
+    subscribeToSingleIncomingNotifications = (): Observable<Notification> => of();
 }

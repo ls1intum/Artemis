@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -31,6 +31,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 
@@ -55,7 +56,10 @@ describe('ExamDetailComponent', () => {
                 RouterTestingModule.withRoutes([
                     { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/assessment-dashboard', component: DummyComponent },
+                    {
+                        path: 'course-management/:courseId/exams/:examId/assessment-dashboard',
+                        component: DummyComponent,
+                    },
                     { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
@@ -80,6 +84,7 @@ describe('ExamDetailComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockDirective(FeatureToggleLinkDirective),
+                ExamEditWorkingTimeComponent,
             ],
             providers: [
                 {
@@ -147,6 +152,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponentFixture.detectChanges();
         const editButton = examDetailComponentFixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
+        discardPeriodicTasks();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/edit');
         });
@@ -157,6 +163,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponentFixture.detectChanges();
         const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
+        discardPeriodicTasks();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/student-exams');
         });
@@ -167,6 +174,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponentFixture.detectChanges();
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
+        discardPeriodicTasks();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/assessment-dashboard');
         });
@@ -177,6 +185,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponentFixture.detectChanges();
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
+        discardPeriodicTasks();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/exercise-groups');
         });
@@ -187,6 +196,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponentFixture.detectChanges();
         const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
+        discardPeriodicTasks();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/scores');
         });
@@ -197,6 +207,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponentFixture.detectChanges();
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
+        discardPeriodicTasks();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/students');
         });
@@ -207,6 +218,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponentFixture.detectChanges();
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();
+        discardPeriodicTasks();
         examDetailComponentFixture.whenStable().then(() => {
             expect(location.path()).toBe('/course-management/1/exams/1/test-runs');
         });

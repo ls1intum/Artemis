@@ -1,7 +1,14 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -26,10 +33,7 @@ import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
-import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -97,7 +101,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
-        userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
@@ -647,7 +651,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void foo() {
+    void testExamWorkingTimeChangeDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         Exam exam = examExercise.getExamViaExerciseGroupOrCourseMember();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
@@ -660,7 +664,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         studentExam.setWorkingTime(1);
         studentExamRepository.save(studentExam);
 
-        instanceMessageReceiveService.processExamWorkingTimeChangeDuringConduction(studentExam.getId());
+        instanceMessageReceiveService.processStudentExamIndividualWorkingTimeChangeDuringConduction(studentExam.getId());
 
         verify(versionControlService, timeout(200)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), examExercise.getProjectKey(),
                 participation.getStudents());
