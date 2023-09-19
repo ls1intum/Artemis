@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import java.util.Objects;
+
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 /**
  * A user's agreement of a course's code of conduct.
@@ -15,20 +12,21 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 @Entity
 @Table(name = "course_code_of_conduct_agreement")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class CourseCodeOfConductAgreement extends DomainObject {
+@IdClass(CourseCodeOfConductAgreementId.class)
+public class CourseCodeOfConductAgreement {
 
+    @Id
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
-    @NotNull
+    @JoinColumn(name = "course_id")
     private Course course;
 
+    @Id
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
-    @NotNull
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name = "is_accepted")
-    private Boolean isAccepted;
+    private boolean isAccepted = false;
 
     public Course getCourse() {
         return course;
@@ -46,11 +44,33 @@ public class CourseCodeOfConductAgreement extends DomainObject {
         this.user = user;
     }
 
-    public Boolean getIsAccepted() {
+    public boolean getIsAccepted() {
         return isAccepted;
     }
 
-    public void setIsAccepted(Boolean isAccepted) {
+    public void setIsAccepted(boolean isAccepted) {
         this.isAccepted = isAccepted;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        CourseCodeOfConductAgreement that = (CourseCodeOfConductAgreement) o;
+        return course.equals(that.course) && user.equals(that.user) && isAccepted == that.isAccepted;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), course, user, isAccepted);
+    }
+
+    @Override
+    public String toString() {
+        return "CourseCodeOfConductAgreement{" + "course=" + course + ", user=" + user + ", isAccepted=" + isAccepted + '}';
     }
 }
