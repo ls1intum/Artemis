@@ -47,7 +47,6 @@ describe('Course messages', () => {
 
             it('instructors should be able to create private announcement channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 const name = 'private-ancmnt-ch';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
@@ -60,7 +59,6 @@ describe('Course messages', () => {
 
             it('instructors should be able to create public unrestricted channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 const name = 'public-unrstct-ch';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
@@ -73,7 +71,6 @@ describe('Course messages', () => {
 
             it('instructors should be able to create private unrestricted channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 const name = 'private-unrstct-ch';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
@@ -86,7 +83,6 @@ describe('Course messages', () => {
 
             it('instructors should not be able to create channel with uppercase name', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 const name = 'Forbidden Name';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
@@ -95,7 +91,6 @@ describe('Course messages', () => {
 
             it('instructors should not be able to create channel with name longer than 30 chars', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 const name = 'way-way-way-too-long-channel-title';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
@@ -106,7 +101,6 @@ describe('Course messages', () => {
                 cy.login(admin);
                 courseManagementAPIRequest.createLecture(course, 'Test Lecture');
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseLectureChannelsButton();
                 courseMessages.checkChannelsExists('lecture-test-lecture');
             });
@@ -115,7 +109,6 @@ describe('Course messages', () => {
                 cy.login(admin);
                 exerciseAPIRequest.createTextExercise({ course }, 'Test Exercise');
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseExerciseChannelsButton();
                 courseMessages.checkChannelsExists('exercise-test-exercise');
             });
@@ -125,7 +118,6 @@ describe('Course messages', () => {
                 const examTitle = 'exam' + generateUUID();
                 examAPIRequests.createExam({ course, title: examTitle });
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseExamChannelsButton();
                 courseMessages.checkChannelsExists(titleLowercase(examTitle));
             });
@@ -143,7 +135,6 @@ describe('Course messages', () => {
 
             it('instructors should be able to edit a channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages?conversationId=${channel.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 const newName = 'new-test-name';
                 const topic = 'test-topic';
                 courseMessages.getName().click();
@@ -168,7 +159,6 @@ describe('Course messages', () => {
 
             it('student should be joined into pre-created channels automatically', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseChannelsButton();
                 courseMessages.getChannelIdByName('tech-support').then((response) => {
                     const techSupportChannelId = Number(response!);
@@ -190,7 +180,6 @@ describe('Course messages', () => {
 
             it('student should be able to join a public channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseChannelsButton();
                 courseMessages.joinChannel(channel.id!);
                 courseMessages.checkBadgeJoined(channel.id!).should('exist').contains('Joined');
@@ -198,7 +187,6 @@ describe('Course messages', () => {
 
             it('student should be able to leave a public channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseChannelsButton();
                 courseMessages.leaveChannel(channel.id!);
                 courseMessages.checkBadgeJoined(channel.id!).should('not.exist');
@@ -217,7 +205,6 @@ describe('Course messages', () => {
 
             it('student should be able to write message in channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 const messageText = 'Student Test Message';
                 courseMessages.writeMessage(messageText);
                 courseMessages.save().then((interception) => {
@@ -228,7 +215,6 @@ describe('Course messages', () => {
 
             it('student should be able to edit message in channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 const messageText = 'Student Edit Test Message';
                 communicationAPIRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
                     const message = response.body;
@@ -241,7 +227,6 @@ describe('Course messages', () => {
 
             it('student should be able to delete message in channel', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 const messageText = 'Student Edit Test Message';
                 communicationAPIRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
                     const message = response.body;
@@ -278,7 +263,6 @@ describe('Course messages', () => {
         describe('Create group chat', () => {
             it('instructors should be able to create group chat', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.createGroupChatButton();
                 courseMessages.addUserToGroupChat(studentOne.username);
                 courseMessages.addUserToGroupChat(studentTwo.username);
@@ -293,7 +277,6 @@ describe('Course messages', () => {
 
             it('tutor should be able to create group chat', () => {
                 cy.login(tutor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.createGroupChatButton();
                 courseMessages.addUserToGroupChat(studentOne.username);
                 courseMessages.addUserToGroupChat(instructor.username);
@@ -308,7 +291,6 @@ describe('Course messages', () => {
 
             it('student should be able to create group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.createGroupChatButton();
                 courseMessages.addUserToGroupChat(studentTwo.username);
                 courseMessages.addUserToGroupChat(tutor.username);
@@ -333,7 +315,6 @@ describe('Course messages', () => {
 
             it('tutor should be able to add user to group chat', () => {
                 cy.login(tutor, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.addUserToGroupChatButton();
                 courseMessages.addUserToGroupChat(instructor.username);
                 courseMessages.updateGroupChat();
@@ -345,7 +326,6 @@ describe('Course messages', () => {
 
             it('student should be able to add user to group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.addUserToGroupChatButton();
                 courseMessages.addUserToGroupChat(studentTwo.username);
                 courseMessages.updateGroupChat();
@@ -370,7 +350,6 @@ describe('Course messages', () => {
 
             it('tutor should be able to leave group chat', () => {
                 cy.login(tutor, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.checkGroupChatExists(groupChatName, true);
                 courseMessages.listMembersButton(course.id!, groupChat.id!);
                 courseMessages.openSettingsTab();
@@ -381,7 +360,6 @@ describe('Course messages', () => {
 
             it('student should be able to leave group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.checkGroupChatExists(groupChatName, true);
                 courseMessages.listMembersButton(course.id!, groupChat.id!);
                 courseMessages.openSettingsTab();
@@ -402,7 +380,6 @@ describe('Course messages', () => {
 
             it('student should be able to write message in group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 const messageText = 'Student Test Message';
                 courseMessages.writeMessage(messageText);
                 courseMessages.save(true).then((interception) => {
@@ -413,7 +390,6 @@ describe('Course messages', () => {
 
             it('student should be able to edit message in group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 const messageText = 'Student Edit Test Message';
                 communicationAPIRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
                     const message = response.body;
@@ -426,7 +402,6 @@ describe('Course messages', () => {
 
             it('student should be able to delete message in group chat', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
-                courseMessages.acceptCodeOfConductButton();
                 const messageText = 'Student Edit Test Message';
                 communicationAPIRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
                     const message = response.body;
