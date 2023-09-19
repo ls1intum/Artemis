@@ -2426,7 +2426,6 @@ public class CourseTestService {
         await().until(() -> !participantScoreRepository.findAllByExercise(finalExerciseInAssessment).isEmpty());
         TextExercise finalExerciseAssessmentDone = exerciseAssessmentDone;
         await().until(() -> !participantScoreRepository.findAllByExercise(finalExerciseAssessmentDone).isEmpty());
-        await().until(() -> participantScoreScheduleService.isIdle());
 
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
         // We only added one course, so expect one dto
@@ -2710,6 +2709,7 @@ public class CourseTestService {
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
+        await().until(participantScoreScheduleService::isIdle);
         TextExercise finalExercise1 = exercise1;
         await().until(() -> participantScoreRepository.findAllByExercise(finalExercise1).size() == 2);
         TextExercise finalExercise2 = exercise2;
