@@ -8,14 +8,14 @@ tr:not(thead tr):not(tfoot tr) {
 }
 
 .passing-grade {
-    background-color: #28a745;
-    color: white;
+    background-color: var(--success);
+    color: var(--white);
     padding: 0.25em 0.5em;
 }
 
 .failing-grade {
-    background-color: #ca2024;
-    color: white;
+    background-color: var(--danger);
+    color: var(--white);
     padding: 0.25em 0.5em;
 }
 
