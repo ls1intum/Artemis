@@ -31,7 +31,6 @@
             <h5>
                 &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="getIcon(exercise.type!)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
-                <span>Exercise Id {{ exercise.id }}</span>
             </h5>
             <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
                 <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
