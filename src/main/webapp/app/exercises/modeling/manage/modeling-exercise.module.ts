@@ -23,6 +23,7 @@ import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submissio
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 
 @NgModule({
     imports: [
@@ -47,6 +48,7 @@ import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-ti
         ArtemisSharedComponentModule,
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
+        ExerciseUpdateNotificationModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],

@@ -120,6 +120,9 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         else if (projectType.isPresent() && projectType.get().isGradle()) {
             return Optional.of("gradle");
         }
+        else if (projectType.isPresent() && projectType.get().equals(ProjectType.MAVEN_BLACKBOX)) {
+            return Optional.of("blackbox");
+        }
         // Maven is also the project type for all other Java exercises (also if the project type is not present)
         else if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
             return Optional.of("maven");

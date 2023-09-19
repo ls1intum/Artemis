@@ -25,6 +25,7 @@ import { ArtemisExerciseUpdateWarningModule } from 'app/exercises/shared/exercis
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -50,6 +51,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ExampleSubmissionsModule,
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
+        ExerciseUpdateNotificationModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],
