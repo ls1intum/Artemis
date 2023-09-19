@@ -279,7 +279,10 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLectureUnitForLearningPathNodeDetailsAsStudentOfCourse() throws Exception {
-        request.get("/api/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK, LectureUnitForLearningPathNodeDetailsDTO.class);
+        final var result = request.get("/api/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK, LectureUnitForLearningPathNodeDetailsDTO.class);
+        assertThat(result.id()).isEqualTo(textUnit.getId());
+        assertThat(result.name()).isEqualTo(textUnit.getName());
+        assertThat(result.type()).isEqualTo(textUnit.getType());
     }
 
     @Test
