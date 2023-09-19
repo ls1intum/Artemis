@@ -107,17 +107,24 @@ export class UnreferencedFeedbackComponent {
         }
     }
 
+    /**
+     * Called whenever an input is made on the internal tutor note text box. This updates the assessment note of the parent
+     * component.
+     */
     onAssessmentNoteInput(event: any) {
         console.log(event.target.value);
         this.assessmentNote.note = event.target.value;
         this.assessmentNoteChange.emit(this.assessmentNote);
     }
 
-    getTextContent() {
-        if (this.assessmentNote === undefined) {
-            return '';
-        } else {
+    /**
+     * Return an empty string if the assessment note or its note field is undefined, or otherwise the text of the note.
+     */
+    getAssessmentNoteText() {
+        if (!this.assessmentNote !== undefined && this.assessmentNote.note !== undefined) {
             return this.assessmentNote.note;
+        } else {
+            return '';
         }
     }
 }

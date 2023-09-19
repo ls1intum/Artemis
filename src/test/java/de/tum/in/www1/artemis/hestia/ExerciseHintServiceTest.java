@@ -246,7 +246,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         // create result with feedbacks with "null" for attribute "positive"
         addResultWithSuccessfulTestCases(exercise.getTestCases());
         var results = resultRepository.findAllByExerciseId(exercise.getId());
-        var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(results.get(0).getId());
+        var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorAndAssessmentNoteById(results.get(0).getId());
         assertThat(optionalResult).isPresent();
 
         var result = optionalResult.get();

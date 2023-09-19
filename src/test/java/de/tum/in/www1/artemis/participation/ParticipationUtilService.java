@@ -398,7 +398,7 @@ public class ParticipationUtilService {
         var allSubmissions = new ArrayList<Submission>();
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
-            allSubmissions.add(submissionRepository.findWithEagerResultAndFeedbackById(submission.getId()).orElseThrow());
+            allSubmissions.add(submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(submission.getId()).orElseThrow());
         });
         return allSubmissions;
     }

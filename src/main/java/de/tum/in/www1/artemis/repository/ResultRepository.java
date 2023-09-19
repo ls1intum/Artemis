@@ -103,13 +103,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Load a result from the database by its id together with the associated submission, the list of feedback items and the assessor.
+     * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note
      *
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
     @EntityGraph(type = LOAD, attributePaths = { "submission", "submission.results", "feedbacks", "assessor", "assessmentNote" })
-    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorAndAssessmentNoteById(Long resultId);
 
     /**
      * counts the number of assessments of a course, which are either rated or not rated
@@ -651,7 +651,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     default Result findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(long resultId) {
-        return findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        return findWithEagerSubmissionAndFeedbackAndAssessorAndAssessmentNoteById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**

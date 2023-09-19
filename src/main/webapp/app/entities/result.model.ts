@@ -47,6 +47,12 @@ export class Result implements BaseEntity {
         return that.assessmentType === AssessmentType.MANUAL || that.assessmentType === AssessmentType.SEMI_AUTOMATIC;
     }
 
+    /**
+     * Checks whether the given result has an assessment note that is not empty.
+     * @param that the result of which the presence of an assessment note is being checked
+     *
+     * @return true if the assessment note exists and is not empty, false otherwise
+     */
     public static hasNonEmptyAssessmentNote(that: Result) {
         return that.assessmentNote && that.assessmentNote.note && that.assessmentNote.note != '';
     }

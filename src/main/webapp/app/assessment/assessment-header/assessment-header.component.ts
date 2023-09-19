@@ -95,8 +95,6 @@ export class AssessmentHeaderComponent {
             return true;
         } else {
             if (this.result && Result.hasNonEmptyAssessmentNote(this.result)) {
-                // having an assessment note bypasses the valid assessment check
-                // this is not dangerous because it only affects saving, not submitting
                 return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
             } else {
                 return this.submitDisabled;

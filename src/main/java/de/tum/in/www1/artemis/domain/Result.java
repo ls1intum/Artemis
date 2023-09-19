@@ -107,7 +107,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     // OneToMany is required, otherwise the lazy loading does not work
     // it will be ensured programmatically that only ever one note exists for every result object
     @JoinColumn(name = "result_id", nullable = false)
-    private List<AssessmentNote> assessmentNote = new ArrayList<>();
+    private final List<AssessmentNote> assessmentNote = new ArrayList<>();
 
     // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_count")

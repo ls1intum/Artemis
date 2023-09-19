@@ -510,6 +510,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
+    /**
+     * Updates the assessment note field of the result on input and validates the feedback afterward.
+     * @param assessmentNote the object with the current text from the text box
+     */
     onUpdateAssessmentNote(assessmentNote: AssessmentNote) {
         this.manualResult!.assessmentNote = assessmentNote;
         this.validateFeedback();

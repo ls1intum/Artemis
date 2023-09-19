@@ -360,7 +360,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * @param submissionId the submission id we are interested in
-     * @return the submission with its feedback and assessor
+     * @return the submission with its feedback, assessor and assessment note
      */
     @Query("""
             SELECT DISTINCT submission FROM Submission submission
@@ -370,7 +370,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :#{#submissionId}
             """)
-    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+    Optional<Submission> findWithEagerResultAndFeedbackAndAssessmentNoteById(@Param("submissionId") long submissionId);
 
     /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
@@ -428,7 +428,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with the given id
      */
     default Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+        return this.findWithEagerResultAndFeedbackAndAssessmentNoteById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**

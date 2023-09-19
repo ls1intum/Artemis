@@ -439,7 +439,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).orElseThrow();
+        var submission = submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(exampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().orElseThrow(),
                 Objects.requireNonNull(submission.getLatestResult()));
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
@@ -1052,7 +1052,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).orElseThrow();
+        var submission = submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(exampleSubmission.getSubmission().getId()).orElseThrow();
 
         Feedback feedback = ParticipationFactory.generateFeedback().get(0);
         feedback.setGradingInstruction(gradingInstruction);
