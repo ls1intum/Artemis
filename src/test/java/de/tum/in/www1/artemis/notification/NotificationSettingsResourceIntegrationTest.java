@@ -12,13 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationTest {
+class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "notificationsettingsresourrce";
 

@@ -13,11 +13,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 
-class SystemNotificationIntegrationTest extends AbstractSpringIntegrationTest {
+class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private SystemNotificationRepository systemNotificationRepo;

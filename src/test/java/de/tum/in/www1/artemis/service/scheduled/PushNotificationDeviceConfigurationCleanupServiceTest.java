@@ -10,14 +10,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpringIntegrationTest {
+class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PushNotificationDeviceConfigurationRepository deviceConfigurationRepository;

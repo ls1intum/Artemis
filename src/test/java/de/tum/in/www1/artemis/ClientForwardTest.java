@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.web.rest.ClientForwardResource;
  *
  * @see ClientForwardResource
  */
-class ClientForwardTest extends AbstractSpringIntegrationTest {
+class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private JWTCookieService jwtCookieService;

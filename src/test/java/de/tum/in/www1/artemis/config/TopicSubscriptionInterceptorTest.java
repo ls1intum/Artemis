@@ -12,14 +12,14 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 @SuppressWarnings("unchecked")
-class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationTest {
+class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "topicsubscriptioninterceptor";
 

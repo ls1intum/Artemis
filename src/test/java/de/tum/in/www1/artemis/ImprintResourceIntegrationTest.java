@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import net.minidev.json.JSONObject;
 
-class ImprintResourceIntegrationTest extends AbstractSpringIntegrationTest {
+class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ir"; // only lower case is supported
 

@@ -20,7 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationTest {
+class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "programmingexerciseparticipation";
 

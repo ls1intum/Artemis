@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -33,12 +32,12 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
-@ResourceLock("AbstractSpringIntegrationTest")
+@ResourceLock("AbstractSpringIntegrationIndependentTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "scheduling" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
-public abstract class AbstractSpringIntegrationTest extends AbstractArtemisIntegrationTest {
+public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -84,8 +83,8 @@ public abstract class AbstractSpringIntegrationTest extends AbstractArtemisInteg
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy) {
-        log.debug("Called mockUpdatePlanRepository with args {}, {}, {}, {}, {}", exercise, planName, repoNameInCI, repoNameInVcs, triggeredBy);
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
+        log.debug("Called mockUpdatePlanRepository with args {}, {}, {}, {}", exercise, planName, repoNameInCI, repoNameInVcs);
     }
 
     @Override

@@ -10,7 +10,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
-class LogResourceIntegrationTest extends AbstractSpringIntegrationTest {
+class LogResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")

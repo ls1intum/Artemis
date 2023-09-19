@@ -127,7 +127,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
         BAMBOO_INTEGRATION_TEST(AbstractSpringIntegrationBambooBitbucketJiraTest.class), GITLAB_INTEGRATION_TEST(AbstractSpringIntegrationGitlabCIGitlabSamlTest.class),
         JENKINS_INTEGRATION_TEST(AbstractSpringIntegrationJenkinsGitlabTest.class), LOCAL_INTEGRATION_TEST(AbstractSpringIntegrationLocalCILocalVCTest.class),
-        MIN_INTEGRATION_TEST(AbstractSpringIntegrationTest.class);
+        MIN_INTEGRATION_TEST(AbstractSpringIntegrationIndependentTest.class);
 
         @NotNull
         private final Class<?> clazz;

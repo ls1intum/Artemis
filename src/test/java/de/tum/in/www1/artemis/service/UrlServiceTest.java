@@ -8,14 +8,14 @@ import java.net.URISyntaxException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
-class UrlServiceTest extends AbstractSpringIntegrationTest {
+class UrlServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private final VcsRepositoryUrl repositoryUrl1 = new VcsRepositoryUrl("https://ab12cde@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde");
 

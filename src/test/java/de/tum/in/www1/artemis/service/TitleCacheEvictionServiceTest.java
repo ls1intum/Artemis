@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.util.Tuple;
  * The service is not directly injected / used here as it listens to Hibernate events, so we just apply
  * CRUD operations on the entities it supports.
  */
-class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationTest {
+class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CacheManager cacheManager;

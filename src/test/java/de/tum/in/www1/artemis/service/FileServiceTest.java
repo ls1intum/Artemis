@@ -24,10 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
-class FileServiceTest extends AbstractSpringIntegrationTest {
+class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ResourceLoaderService resourceLoaderService;

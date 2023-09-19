@@ -11,12 +11,12 @@ import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 
-class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationTest {
+class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExerciseLifecycleService exerciseLifecycleService;

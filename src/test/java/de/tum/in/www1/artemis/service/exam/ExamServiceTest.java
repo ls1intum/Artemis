@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-class ExamServiceTest extends AbstractSpringIntegrationTest {
+class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamService examService;

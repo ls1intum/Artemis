@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
-class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationTest {
+class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
 

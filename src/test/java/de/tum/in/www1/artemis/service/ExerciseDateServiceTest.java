@@ -11,7 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ExerciseDateServiceTest extends AbstractSpringIntegrationTest {
+class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exercisedateservice";
 

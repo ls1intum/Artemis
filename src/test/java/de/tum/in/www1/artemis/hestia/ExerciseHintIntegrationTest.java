@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
+class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exercisehintintegration";
 

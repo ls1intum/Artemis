@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
-class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrationTest {
+class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "participationauthservice";
 

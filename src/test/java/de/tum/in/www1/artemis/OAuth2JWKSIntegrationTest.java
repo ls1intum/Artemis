@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 
-class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationTest {
+class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CourseRepository courseRepository;

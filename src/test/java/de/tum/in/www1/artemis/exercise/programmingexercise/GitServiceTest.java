@@ -26,13 +26,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
-class GitServiceTest extends AbstractSpringIntegrationTest {
+class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private GitUtilService gitUtilService;

@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
-class AnswerMessageIntegrationTest extends AbstractSpringIntegrationTest {
+class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "answermessageint";
 

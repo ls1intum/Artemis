@@ -17,7 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 @Isolated
-class QuizCacheTest extends AbstractSpringIntegrationTest {
+class QuizCacheTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "quizcachetest";
 

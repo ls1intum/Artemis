@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationTest {
+class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "partlcservice";
 

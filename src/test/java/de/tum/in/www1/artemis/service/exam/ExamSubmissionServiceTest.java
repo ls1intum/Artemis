@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class ExamSubmissionServiceTest extends AbstractSpringIntegrationTest {
+class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "esstest"; // only lower case is supported
 

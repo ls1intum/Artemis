@@ -20,7 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
-class OnlineUnitIntegrationTest extends AbstractSpringIntegrationTest {
+class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "onlineunitintegration";
 

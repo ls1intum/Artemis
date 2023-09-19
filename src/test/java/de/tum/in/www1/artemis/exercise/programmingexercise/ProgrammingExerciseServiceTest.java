@@ -10,14 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationTest {
+class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexservice";
 

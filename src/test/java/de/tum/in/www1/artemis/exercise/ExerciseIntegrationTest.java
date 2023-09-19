@@ -14,7 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
+class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exerciseintegration";
 

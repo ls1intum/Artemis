@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest {
+class GuidedTourSettingResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "gtsettingtest";
 

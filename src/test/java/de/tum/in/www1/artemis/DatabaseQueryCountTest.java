@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class DatabaseQueryCountTest extends AbstractSpringIntegrationTest {
+class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 

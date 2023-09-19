@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class FileIntegrationTest extends AbstractSpringIntegrationTest {
+class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileintegration";
 

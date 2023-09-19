@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class AppleAppSiteAssociationResourceTest extends AbstractSpringIntegrationTest {
+class AppleAppSiteAssociationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     AppleAppSiteAssociationResource appleAppSiteAssociationResource;

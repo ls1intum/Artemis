@@ -1,14 +1,7 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;

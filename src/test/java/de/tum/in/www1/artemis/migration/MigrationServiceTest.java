@@ -20,7 +20,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Profiles;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.config.migration.MigrationIntegrityException;
 import de.tum.in.www1.artemis.config.migration.MigrationRegistry;
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.migration.entries.TestChangeEntry20211215_231800;
 import de.tum.in.www1.artemis.migration.entries.TestChangeEntry20211216_231800;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 
-class MigrationServiceTest extends AbstractSpringIntegrationTest {
+class MigrationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private MigrationRegistry registry;

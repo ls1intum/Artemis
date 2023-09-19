@@ -15,7 +15,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.assessment.GradingScaleUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class GradingScaleServiceTest extends AbstractSpringIntegrationTest {
+class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private GradingScaleService gradingScaleService;

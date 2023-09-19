@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
-class StatisticsIntegrationTest extends AbstractSpringIntegrationTest {
+class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "statisticsintegration";
 
