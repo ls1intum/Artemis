@@ -92,7 +92,7 @@ describe('Course Exam Archive Button Component', () => {
             tick();
 
             expect(comp.canArchive()).toBeFalse();
-            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canCleanup()).toBeFalse();
             expect(comp.canDownloadArchive()).toBeFalse();
         }));
     });
@@ -112,7 +112,7 @@ describe('Course Exam Archive Button Component', () => {
             tick();
 
             expect(comp.canArchive()).toBeFalse();
-            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canCleanup()).toBeFalse();
             expect(comp.canDownloadArchive()).toBeFalse();
         }));
     });
@@ -130,7 +130,7 @@ describe('Course Exam Archive Button Component', () => {
             tick();
 
             expect(comp.canArchive()).toBeTrue();
-            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canCleanup()).toBeFalse();
             expect(comp.canDownloadArchive()).toBeFalse();
         }));
     });
@@ -152,7 +152,7 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should not display an archive course button', fakeAsync(() => {
             expect(comp.canArchive()).toBeTrue();
-            expect(comp.canCleanupCourse()).toBeTrue();
+            expect(comp.canCleanup()).toBeTrue();
             expect(comp.canDownloadArchive()).toBeTrue();
         }));
 
@@ -163,7 +163,7 @@ describe('Course Exam Archive Button Component', () => {
             const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = jest.spyOn(alertService, 'success');
 
-            comp.cleanupCourse();
+            comp.cleanup();
 
             expect(cleanupStub).toHaveBeenCalledOnce();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -237,7 +237,7 @@ describe('Course Exam Archive Button Component', () => {
 
         it('should display an archive button', fakeAsync(() => {
             expect(comp.canArchive()).toBeTrue();
-            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canCleanup()).toBeFalse();
             expect(comp.canDownloadArchive()).toBeTrue();
         }));
 
@@ -246,10 +246,10 @@ describe('Course Exam Archive Button Component', () => {
             const cleanupStub = jest.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
 
             comp.archiveMode = 'Exam';
-            comp.cleanupCourse();
+            comp.cleanup();
 
             expect(cleanupStub).not.toHaveBeenCalled();
-            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canCleanup()).toBeFalse();
         }));
 
         it('should download archive for exam', () => {
