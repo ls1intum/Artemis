@@ -383,7 +383,7 @@ public class FileService implements DisposableBean {
         if (publicPath.contains("files/temp")) {
             return Path.of(FilePathService.getTempFilePath(), filename).toString();
         }
-        if (publicPath.contains(FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH)) {
+        if (publicPath.contains(DRAG_AND_DROP_BACKGROUND_SUBPATH)) {
             return Path.of(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
         }
         if (publicPath.contains(FileService.DRAG_AND_DROP_PICTURE_SUBPATH)) {
