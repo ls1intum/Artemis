@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -574,6 +576,48 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSaveAssessmentNote() throws Exception {
+        AssessmentNote assessmentNote = new AssessmentNote();
+        assertThat(assessmentNote.getCreatedDate()).isNotNull();
+
+        assessmentNote.setNote("note");
+        manualResult.setAssessmentNote(assessmentNote);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        manualResult.setAssessor(user);
+        assertThat(manualResult.getAssessmentNote().getCreator()).isNull();
+
+        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        assertThat(manualResult.getAssessmentNote().getCreator()).isNotNull().isEqualTo(user);
+
+        Instant createdDate = assessmentNote.getCreatedDate();
+        assertThat(createdDate).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testAssessmentNoteTimestamps() throws Exception {
+        AssessmentNote assessmentNote = new AssessmentNote();
+        assessmentNote.setNote("note1");
+        manualResult.setAssessmentNote(assessmentNote);
+        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+
+        Instant createdDate = manualResult.getAssessmentNote().getCreatedDate();
+        Instant initialLastUpdatedDate = manualResult.getAssessmentNote().getLastUpdatedDate();
+
+        // Because the two timestamps are created sequentially, it is required to compare them based on some epsilon,
+        // which is a second here. Going too low might make the test flaky.
+        Duration difference = Duration.between(createdDate, initialLastUpdatedDate);
+        assertThat(difference.abs().toSeconds() < 1).isTrue();
+        manualResult.getAssessmentNote().setNote("note2");
+
+        manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        assertThat(createdDate).isEqualTo(manualResult.getAssessmentNote().getCreatedDate());
+        assertThat(manualResult.getAssessmentNote().getLastUpdatedDate().isAfter(initialLastUpdatedDate)).isTrue();
     }
 
     private void assessmentDueDatePassed() {

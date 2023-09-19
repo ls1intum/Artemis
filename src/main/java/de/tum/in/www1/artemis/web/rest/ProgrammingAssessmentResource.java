@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Optional;
@@ -185,6 +186,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         if (newManualResult.getAssessmentNote() != null) {
             newManualResult.getAssessmentNote().setCreator(newManualResult.getAssessor());
+            newManualResult.getAssessmentNote().setLastUpdatedDate(Instant.now());
         }
 
         newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
