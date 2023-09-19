@@ -117,9 +117,6 @@
                         <fa-icon [icon]="faChevronRight"></fa-icon>
                     </span>
                 </button>
-                <!--            TODO highlight the achieved grade -->
-                <!--            <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">-->
-                <!--            </span>-->
                 <!--        TODO generate exam and display bonus grading key -->
                 <span
                     *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined"
