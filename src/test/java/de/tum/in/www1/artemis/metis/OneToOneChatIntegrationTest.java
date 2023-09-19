@@ -53,14 +53,6 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void startOneToOneChat_asStudent1WithNonCourseMember_shouldCreateOneToOneChat() throws Exception {
-        // when
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "notAMember"), OneToOneChatDTO.class,
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void startOneToOneChat_invalidNumberOfChatPartners_shouldReturnBadRequest() throws Exception {
         // chat with too many users
         // then

@@ -11,8 +11,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class OneToOneChatService {
@@ -23,14 +21,10 @@ public class OneToOneChatService {
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
-    public OneToOneChatService(ConversationParticipantRepository conversationParticipantRepository, OneToOneChatRepository oneToOneChatRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+    public OneToOneChatService(ConversationParticipantRepository conversationParticipantRepository, OneToOneChatRepository oneToOneChatRepository, UserRepository userRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -49,12 +43,6 @@ public class OneToOneChatService {
         if (existingChatBetweenUsers.isPresent()) {
             return existingChatBetweenUsers.get();
         }
-
-        // Check that both users are a member of the course
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, userA) || !authorizationCheckService.isAtLeastStudentInCourse(course, userB)) {
-            throw new BadRequestAlertException("A one-to-one chat can only be started with two members of the course", "OneToOneChat", "invalidUserLogin");
-        }
-
         var oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
         oneToOneChat.setCreator(requestingUser);
