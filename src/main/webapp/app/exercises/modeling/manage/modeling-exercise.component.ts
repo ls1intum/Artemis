@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { merge } from 'rxjs';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -23,8 +22,6 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
     templateUrl: './modeling-exercise.component.html',
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
-    selectedModelingExercises: ModelingExercise[] = [];
-    allChecked = false;
     @Input() modelingExercises: ModelingExercise[];
     filteredModelingExercises: ModelingExercise[];
     // Icons
@@ -39,7 +36,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     constructor(
         public exerciseService: ExerciseService,
-        private modelingExerciseService: ModelingExerciseService,
+        public modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
         private alertService: AlertService,
         private accountService: AccountService,
@@ -63,7 +60,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 this.modelingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
-                    this.selectedModelingExercises = [];
+                    this.selectedExercises = [];
                 });
                 this.applyFilter();
                 this.emitExerciseCount(this.modelingExercises.length);
@@ -103,25 +100,6 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         });
     }
 
-    /**
-     * Deletes all the given modeling exercises
-     * @param exercisesToDelete the exercise objects which are to be deleted
-     * @param event contains additional checks which are performed for all these exercises
-     */
-    deleteMultipleModelingExercises(exercisesToDelete: ModelingExercise[]) {
-        const deletionObservables = exercisesToDelete.map((exercise) => this.modelingExerciseService.delete(exercise.id!));
-        return merge(...deletionObservables).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'modelingExerciseListModification',
-                    content: 'Deleted selected Exercises',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
     protected getChangeEventName(): string {
         return 'modelingExerciseListModification';
     }
@@ -135,25 +113,4 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      * Used in the template for jhiSort
      */
     callback() {}
-
-    toggleModelingExercise(modelingExercise: ModelingExercise) {
-        const modelingExerciseIndex = this.selectedModelingExercises.indexOf(modelingExercise);
-        if (modelingExerciseIndex !== -1) {
-            this.selectedModelingExercises.splice(modelingExerciseIndex, 1);
-        } else {
-            this.selectedModelingExercises.push(modelingExercise);
-        }
-    }
-
-    toggleAllModelingExercises() {
-        this.selectedModelingExercises = [];
-        if (!this.allChecked) {
-            this.selectedModelingExercises = this.selectedModelingExercises.concat(this.modelingExercises);
-        }
-        this.allChecked = !this.allChecked;
-    }
-
-    isExerciseSelected(exercise: ModelingExercise) {
-        return this.selectedModelingExercises.includes(exercise);
-    }
 }

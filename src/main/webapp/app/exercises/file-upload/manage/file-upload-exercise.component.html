@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleAllFileUploadExercises()" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises)" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -24,7 +24,7 @@
         <tbody class="markdown-preview">
             <tr *ngFor="let fileUploadExercise of filteredFileUploadExercises; trackBy: trackId" id="exercise-card-{{ fileUploadExercise.id }}">
                 <td *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleFileUploadExercise(fileUploadExercise)" [ngModel]="isExerciseSelected(fileUploadExercise)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(fileUploadExercise)" [ngModel]="isExerciseSelected(fileUploadExercise)" />
                 </td>
                 <td>
                     <a *ngIf="fileUploadExercise.isAtLeastEditor; else showId" [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
@@ -98,13 +98,13 @@
             </tr>
         </tbody>
     </table>
-    <div *ngIf="selectedFileUploadExercises.length > 0">
+    <div *ngIf="selectedExercises.length > 0">
         <button
             *ngIf="course.isAtLeastInstructor"
             jhiDeleteButton
             [entityTitle]="'Delete All File Upload Exercises'"
             deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
-            (delete)="deleteMultipleFileUploadExercises(selectedFileUploadExercises)"
+            (delete)="deleteMultipleExercises(selectedExercises, fileUploadExerciseService)"
             [dialogError]="dialogError$"
             id="delete-all-quiz"
             class="mb-1"

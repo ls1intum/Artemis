@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { merge } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
@@ -24,9 +23,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './file-upload-exercise.component.html',
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
-    selectedFileUploadExercises: FileUploadExercise[];
-    allChecked = false;
-
     @Input() fileUploadExercises: FileUploadExercise[] = [];
     filteredFileUploadExercises: FileUploadExercise[] = [];
 
@@ -42,7 +38,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     constructor(
         public exerciseService: ExerciseService,
-        private fileUploadExerciseService: FileUploadExerciseService,
+        public fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
         private alertService: AlertService,
         private accountService: AccountService,
@@ -68,7 +64,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     this.fileUploadExercises.forEach((exercise) => {
                         exercise.course = this.course;
                         this.accountService.setAccessRightsForExercise(exercise);
-                        this.selectedFileUploadExercises = [];
+                        this.selectedExercises = [];
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
                     this.applyFilter();
@@ -108,25 +104,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         });
     }
 
-    /**
-     * Deletes all the given file upload exercises
-     * @param exercisesToDelete the exercise objects which are to be deleted
-     * @param event contains additional checks which are performed for all these exercises
-     */
-    deleteMultipleFileUploadExercises(exercisesToDelete: FileUploadExercise[]) {
-        const deletionObservables = exercisesToDelete.map((exercise) => this.fileUploadExerciseService.delete(exercise.id!));
-        return merge(...deletionObservables).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'fileUploadExerciseListModification',
-                    content: 'Deleted selected Exercises',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
     protected getChangeEventName(): string {
         return 'fileUploadExerciseListModification';
     }
@@ -140,25 +117,4 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * Used in the template for jhiSort
      */
     callback() {}
-
-    toggleFileUploadExercise(fileUploadExercise: FileUploadExercise) {
-        const fileUploadExerciseIndex = this.selectedFileUploadExercises.indexOf(fileUploadExercise);
-        if (fileUploadExerciseIndex !== -1) {
-            this.selectedFileUploadExercises.splice(fileUploadExerciseIndex, 1);
-        } else {
-            this.selectedFileUploadExercises.push(fileUploadExercise);
-        }
-    }
-
-    toggleAllFileUploadExercises() {
-        this.selectedFileUploadExercises = [];
-        if (!this.allChecked) {
-            this.selectedFileUploadExercises = this.selectedFileUploadExercises.concat(this.fileUploadExercises);
-        }
-        this.allChecked = !this.allChecked;
-    }
-
-    isExerciseSelected(exercise: FileUploadExercise) {
-        return this.selectedFileUploadExercises.includes(exercise);
-    }
 }

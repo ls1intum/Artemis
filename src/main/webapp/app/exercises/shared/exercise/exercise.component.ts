@@ -1,11 +1,17 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, merge } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+
+interface DeletionServiceInterface {
+    delete: (id: number) => Observable<HttpResponse<any>>;
+}
 
 @Component({ template: '' })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
@@ -19,6 +25,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     predicate: string;
     reverse: boolean;
+
+    selectedExercises: Exercise[] = [];
+    allChecked = false;
 
     // These two variables are used to emit errors to the delete dialog
     protected dialogErrorSource = new Subject<string>();
@@ -103,5 +112,46 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     private registerChangeInExercises() {
         this.eventSubscriber = this.eventManager.subscribe(this.getChangeEventName(), () => this.load());
+    }
+
+    /**
+     * Deletes all the given exercises (does not work for programming exercises)
+     * @param exercisesToDelete the exercise objects which are to be deleted
+     * @param exerciseService service that is used to delete the exercise
+     * @param event contains additional checks which are performed for all these exercises
+     */
+    deleteMultipleExercises(exercisesToDelete: Exercise[], exerciseService: DeletionServiceInterface) {
+        const deletionObservables = exercisesToDelete.map((exercise) => exerciseService.delete(exercise.id!));
+        return merge(...deletionObservables).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: this.getChangeEventName(),
+                    content: 'Deleted selected Exercises',
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    toggleExercise(exercise: Exercise) {
+        const exerciseIndex = this.selectedExercises.indexOf(exercise);
+        if (exerciseIndex !== -1) {
+            this.selectedExercises.splice(exerciseIndex, 1);
+        } else {
+            this.selectedExercises.push(exercise);
+        }
+    }
+
+    toggleMultipleExercises(exercises: Exercise[]) {
+        this.selectedExercises = [];
+        if (!this.allChecked) {
+            this.selectedExercises = this.selectedExercises.concat(exercises);
+        }
+        this.allChecked = !this.allChecked;
+    }
+
+    isExerciseSelected(exercise: Exercise) {
+        return this.selectedExercises.includes(exercise);
     }
 }

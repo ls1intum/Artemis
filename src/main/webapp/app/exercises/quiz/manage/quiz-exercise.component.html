@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleAllQuizExercises()" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -24,7 +24,7 @@
         <tbody>
             <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
                 <td *ngIf="quizExercise.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleQuizExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
                 </td>
                 <td *ngIf="!quizExercise.quizEnded || !quizExercise.isAtLeastEditor">
                     <a *ngIf="quizExercise.isEditable; else readOnlyId" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
@@ -245,13 +245,13 @@
             </tr>
         </tbody>
     </table>
-    <div *ngIf="selectedQuizExercises.length > 0">
+    <div *ngIf="selectedExercises.length > 0">
         <button
             *ngIf="course.isAtLeastInstructor"
             jhiDeleteButton
             [entityTitle]="'Delete All Quiz Exercises'"
             deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
-            (delete)="deleteMultipleQuizExercises(selectedQuizExercises)"
+            (delete)="deleteMultipleExercises(selectedExercises, quizExerciseService)"
             [dialogError]="dialogError$"
             id="delete-all-quiz"
             class="mb-1"

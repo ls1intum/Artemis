@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleAllTextExercises()" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(textExercises)" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -23,7 +23,7 @@
         <tbody class="markdown-preview">
             <tr *ngFor="let textExercise of filteredTextExercises; trackBy: trackId" id="exercise-card-{{ textExercise.id }}">
                 <td *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleTextExercise(textExercise)" [ngModel]="isExerciseSelected(textExercise)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(textExercise)" [ngModel]="isExerciseSelected(textExercise)" />
                 </td>
                 <td>
                     <a *ngIf="textExercise.isAtLeastInstructor; else showId" [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{
@@ -51,13 +51,13 @@
             </tr>
         </tbody>
     </table>
-    <div *ngIf="selectedTextExercises.length > 0">
+    <div *ngIf="selectedExercises.length > 0">
         <button
             *ngIf="course.isAtLeastInstructor"
             jhiDeleteButton
             [entityTitle]="'Delete All Text Exercises'"
             deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
-            (delete)="deleteMultipleTextExercises(selectedTextExercises)"
+            (delete)="deleteMultipleExercises(selectedExercises, textExerciseService)"
             [dialogError]="dialogError$"
             id="delete-all-quiz"
             class="mb-1"

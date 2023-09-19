@@ -281,6 +281,22 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.delete).toHaveBeenCalledOnce();
     });
 
+    it('should delete multiple quizzes', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(quizExerciseService, 'delete').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    headers,
+                }),
+            ),
+        );
+
+        comp.ngOnInit();
+        com.deleteMultipleExercises([{ id: 1 }, { id: 2 }, { id: 3 }] as QuizExercise[], comp.quizExerciseService);
+        expect(quizExerciseService.delete).toHaveBeenCalledtimes(3);
+    });
+
     it('should export quiz', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'find').mockReturnValue(

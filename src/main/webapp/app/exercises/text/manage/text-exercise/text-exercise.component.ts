@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { merge } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
@@ -24,9 +23,6 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
     templateUrl: './text-exercise.component.html',
 })
 export class TextExerciseComponent extends ExerciseComponent {
-    selectedTextExercises: TextExercise[] = [];
-    allChecked = false;
-
     @Input() textExercises: TextExercise[];
     filteredTextExercises: TextExercise[];
 
@@ -37,7 +33,7 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     constructor(
         public exerciseService: ExerciseService,
-        private textExerciseService: TextExerciseService,
+        public textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
         private modalService: NgbModal,
         private router: Router,
@@ -63,7 +59,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 this.textExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
-                    this.selectedTextExercises = [];
+                    this.selectedExercises = [];
                 });
                 this.applyFilter();
                 this.emitExerciseCount(this.textExercises.length);
@@ -106,45 +102,5 @@ export class TextExerciseComponent extends ExerciseComponent {
         modalRef.result.then((result: TextExercise) => {
             this.router.navigate(['course-management', this.courseId, 'text-exercises', result.id, 'import']);
         });
-    }
-
-    /**
-     * Deletes all the given text exercises
-     * @param exercisesToDelete the exercise objects which are to be deleted
-     * @param event contains additional checks which are performed for all these exercises
-     */
-    deleteMultipleTextExercises(exercisesToDelete: TextExercise[]) {
-        const deletionObservables = exercisesToDelete.map((exercise) => this.textExerciseService.delete(exercise.id!));
-        return merge(...deletionObservables).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'textExerciseListModification',
-                    content: 'Deleted selected Exercises',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    toggleTextExercise(textExercise: TextExercise) {
-        const textExerciseIndex = this.selectedTextExercises.indexOf(textExercise);
-        if (textExerciseIndex !== -1) {
-            this.selectedTextExercises.splice(textExerciseIndex, 1);
-        } else {
-            this.selectedTextExercises.push(textExercise);
-        }
-    }
-
-    toggleAllTextExercises() {
-        this.selectedTextExercises = [];
-        if (!this.allChecked) {
-            this.selectedTextExercises = this.selectedTextExercises.concat(this.textExercises);
-        }
-        this.allChecked = !this.allChecked;
-    }
-
-    isExerciseSelected(exercise: TextExercise) {
-        return this.selectedTextExercises.includes(exercise);
     }
 }
