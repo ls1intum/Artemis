@@ -9,6 +9,7 @@ import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/ex
 import { BonusStrategy } from 'app/entities/bonus.model';
 import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/result/updating-result.component';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-result-overview',
@@ -28,6 +29,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     // Icons
     faClipboard = faClipboard;
     faAward = faAward;
+    faChevronRight = faChevronRight;
 
     isGradingKeyCollapsed = true;
 

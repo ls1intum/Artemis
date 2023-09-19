@@ -142,24 +142,20 @@
             <button class="btn btn-primary" (click)="toggleCollapseGradingKey()">
                 <fa-icon [icon]="faClipboard"></fa-icon>
                 <span>
-                    {{ isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate) }}
+                    &nbsp;{{
+                        isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
+                    }}&nbsp;
+                </span>
+                <span class="rotate-icon chevron-position" [class.rotated]="!isGradingKeyCollapsed">
+                    <fa-icon [icon]="faChevronRight"></fa-icon>
                 </span>
             </button>
 
             <div [ngbCollapse]="isGradingKeyCollapsed">
                 <jhi-grade-key-overview id="gradeKeyOverview" />
             </div>
-
             <!--            TODO highlight the achieved grade -->
             <!--            <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">-->
-            <!--                <a class="btn btn-primary">-->
-            <!--                    <fa-icon [icon]="faClipboard"></fa-icon>-->
-            <!--                    <span-->
-            <!--                        >&nbsp;{{-->
-            <!--                            isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)-->
-            <!--                        }}</span-->
-            <!--                    >-->
-            <!--                </a>-->
             <!--            </span>-->
             <span
                 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined"

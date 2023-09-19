@@ -22,3 +22,16 @@ tr:not(thead tr):not(tfoot tr) {
 .total-footer {
     border-top-width: 2px;
 }
+
+.chevron-position {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotate-icon.rotated {
+    transform: rotate(90deg);
+}
