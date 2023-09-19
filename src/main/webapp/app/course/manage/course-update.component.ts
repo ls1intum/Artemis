@@ -156,11 +156,13 @@ export class CourseUpdateComponent implements OnInit {
                 editorGroupName: new FormControl(this.course.editorGroupName),
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
                 organizations: new FormControl(this.courseOrganizations),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
+                learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
@@ -520,6 +522,14 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Updates courseInformationSharingMessagingCodeOfConduct on markdown change
+     * @param message new courseInformationSharingMessagingCodeOfConduct
+     */
+    updateCourseInformationSharingMessagingCodeOfConduct(message: string) {
+        this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(message);
+    }
+
+    /**
      * Auxiliary method checking if online course is currently true
      */
     isOnlineCourse(): boolean {
@@ -598,6 +608,8 @@ export class CourseUpdateComponent implements OnInit {
         this.croppedImage = undefined;
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
+
+    protected readonly FeatureToggle = FeatureToggle;
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {

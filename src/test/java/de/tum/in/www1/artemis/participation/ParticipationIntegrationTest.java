@@ -158,7 +158,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }
@@ -306,7 +305,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.CREATED);
         var participationUsers = participation.getStudents();
         assertThat(participation).isNotNull();
-        assertThat(participation.isTestRun()).isFalse();
+        assertThat(participation.isPracticeMode()).isFalse();
         assertThat(participationUsers).contains(user);
     }
 
@@ -339,7 +338,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null,
                 StudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation).isNotNull();
-        assertThat(participation.isTestRun()).isTrue();
+        assertThat(participation.isPracticeMode()).isTrue();
         assertThat(participation.getStudent()).contains(user);
     }
 
@@ -354,7 +353,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
                 HttpStatus.CREATED);
         assertThat(participation).isNotNull();
-        assertThat(participation.isTestRun()).isFalse();
+        assertThat(participation.isPracticeMode()).isFalse();
         assertThat(participation.getStudent()).contains(user);
     }
 
@@ -593,7 +592,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
         StudentParticipation testParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
-        testParticipation.setTestRun(true);
+        testParticipation.setPracticeMode(true);
         participationRepo.save(testParticipation);
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
         assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
@@ -617,7 +616,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Submission onlySubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, students.get(2), "asdf");
 
         StudentParticipation testParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student4");
-        testParticipation.setTestRun(true);
+        testParticipation.setPracticeMode(true);
         participationRepo.save(testParticipation);
 
         final var params = new LinkedMultiValueMap<String, String>();
@@ -1066,7 +1065,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void cleanupBuildPlan(boolean practiceMode, boolean afterDueDate) throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        participation.setTestRun(practiceMode);
+        participation.setPracticeMode(practiceMode);
         participationRepo.save(participation);
         if (afterDueDate) {
             programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));

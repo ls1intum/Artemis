@@ -151,7 +151,13 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendExamWorkingTimeChangeDuringConduction(Long studentExamId) {
+    public void sendExamWorkingTimeChangeDuringConduction(Long examId) {
+        log.info("Sending schedule to reschedule exam {} to broker.", examId);
+        sendMessageDelayed(MessageTopic.EXAM_RESCHEDULE_DURING_CONDUCTION, examId);
+    }
+
+    @Override
+    public void sendStudentExamIndividualWorkingTimeChangeDuringConduction(Long studentExamId) {
         log.info("Sending schedule to reschedule student exam {} to broker.", studentExamId);
         sendMessageDelayed(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION, studentExamId);
     }
@@ -162,6 +168,7 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed(MessageTopic.PARTICIPANT_SCORE_SCHEDULE, exerciseId, participantId, resultId);
     }
 
+    // NOTE: Don't remove any of the following methods despite the warning.
     private void sendMessageDelayed(MessageTopic topic, Long payload) {
         exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }

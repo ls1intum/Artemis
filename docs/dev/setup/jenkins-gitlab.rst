@@ -59,12 +59,10 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         user: root
         password: artemis_admin # created in Gitlab Server Quickstart step 2
         token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
-        ci-token: jenkins-secret-token # pre-generated or replaced in Automated Jenkins Server step 3
     continuous-integration:
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
-        empty-commit-necessary: true
         secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
@@ -490,11 +488,11 @@ do either do it manually or using the following command:
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
    in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-3. You need to generate the `ci-token` and `secret-push-token`.
+3. You need to generate the `secret-push-token`.
 
    ..
        Workaround as long as Github Issue 5973 (Default Push Notifications GitLab → Jenkins not working)
-       for now just generate the ci-token and secret-push-token manually
+       for now just generate the secret-push-token manually
 
    As there is currently an `open issue with the presets for Jenkins in Development environments <https://github.com/ls1intum/Artemis/issues/5973>`__,
    follow the steps described in
@@ -515,7 +513,6 @@ do either do it manually or using the following command:
             url: http://localhost:8081
             user: artemis_admin
             password: artemis_admin
-            ci-token: # pre-generated or replaced in Automated Jenkins Server step 3
         continuous-integration:
             user: artemis_admin
             password: artemis_admin
@@ -938,8 +935,6 @@ the following steps:
     .. code:: yaml
 
        artemis:
-           version-control:
-               ci-token: $gitlab-push-token
            continuous-integration:
                secret-push-token: $some-long-encrypted-value
 

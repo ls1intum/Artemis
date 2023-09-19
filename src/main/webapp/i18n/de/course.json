@@ -78,6 +78,10 @@
                 "plural": "Testkurse"
             },
             "accessGroups": "Zugriffsrechte",
+            "learningPaths": {
+                "label": "Lernpfade aktiviert",
+                "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
+            },
             "onlineCourse": {
                 "title": "Onlinekurs",
                 "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX/Moodle), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist. Du kannst dies auf der Seite LTI-Konfiguration weiter konfigurieren."
@@ -89,7 +93,11 @@
                 },
                 "messagingEnabled": {
                     "label": "Nachrichten aktiviert",
-                    "tooltip": "Ermöglicht den Nachrichtenaustausch zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, Gruppenchats oder Direktnachrichten. Kanäle können nur von Lehrenden und Tutor:innen erstellt werden. Nutzer:innen können selbst öffentlichen Kanälen beitreten und müssen zu privaten Kanälen hinzugefügt werden. Alle Nutzer:innen können einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Alle Nutzer:innen können Direktnachrichten an andere Nutzer:innen senden. Die Chats finden im Nachrichtenbereich des Kurses statt."
+                    "tooltip": "Ermöglicht den Nachrichtenaustausch zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, Gruppenchats oder Direktnachrichten. Kanäle können nur von Lehrenden und Tutor:innen erstellt werden. Nutzer:innen können selbst öffentlichen Kanälen beitreten und müssen zu privaten Kanälen hinzugefügt werden. Alle Nutzer:innen können einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Alle Nutzer:innen können Direktnachrichten an andere Nutzer:innen senden. Die Chats finden im Nachrichtenbereich des Kurses statt.",
+                    "codeOfConduct": {
+                        "label": "Verhaltenskodex",
+                        "tooltip": "Der Verhaltenskodex gibt Nutzer:innen an, wie sie miteinander kommunizieren sollen und welche Konsequenzen bei Fehlverhalten drohen können, sowie einen Kontakt zur Berichterstattung."
+                    }
                 }
             },
             "registrationEnabled": {
