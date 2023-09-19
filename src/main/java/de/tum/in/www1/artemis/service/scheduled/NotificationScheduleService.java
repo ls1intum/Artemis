@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 

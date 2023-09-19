@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 /**
  * REST controller for managing ProgrammingAssessment.
@@ -53,11 +53,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
-            WebsocketMessagingService messagingService, LtiNewResultService ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
+            ResultWebsocketService resultWebsocketService, LtiNewResultService ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
-        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService);
+        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, resultWebsocketService,
+                exampleSubmissionRepository, submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -209,7 +209,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
         ltiNewResultService.onNewResult((StudentParticipation) newManualResult.getParticipation());
         if (submit && ExerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
-            messagingService.awaitBroadcastNewResult(newManualResult.getParticipation(), newManualResult);
+            resultWebsocketService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 
         var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && participation.getIndividualDueDate() != null
