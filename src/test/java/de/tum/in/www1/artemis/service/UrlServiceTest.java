@@ -124,4 +124,14 @@ class UrlServiceTest extends AbstractSpringIntegrationTest {
         studentParticipation3.setRepositoryUrl("http://localhost:8080/Assignment/rest/words/{name}/protection");
         assertThat(studentParticipation3.getUserIndependentRepositoryUrl()).isNull();
     }
+
+    @Test
+    void testGetPlainUrl() {
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl1)).isEqualTo("https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl2)).isEqualTo("https://repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl3)).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl4)).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl5)).isEqualTo("ssh://bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab12cde.git");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl6)).isEqualTo("https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12git");
+    }
 }
