@@ -433,7 +433,7 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Checks whether a path (defined by a URI) contains a certain sub-path (defined by a URI)).
+     * Checks whether a path (defined by a URI) contains a certain sub-path (defined by a URI).
      *
      * @param path    URI to be checked
      * @param subPath URI to check
