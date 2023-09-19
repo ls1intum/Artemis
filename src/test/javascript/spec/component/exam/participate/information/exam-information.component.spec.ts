@@ -29,7 +29,7 @@ let exam = {
 
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
-describe('ExamInformationComponent', () => {
+describe('ExamGeneralInformationComponent', () => {
     beforeEach(() => {
         exam = { id: 1, title: 'ExamForTesting', startDate, endDate, testExam: false } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;

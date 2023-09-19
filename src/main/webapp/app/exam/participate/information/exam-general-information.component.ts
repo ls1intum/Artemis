@@ -6,6 +6,7 @@ import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-results-general-information',
+    styleUrls: ['./exam-results-general-information.component.scss'],
     templateUrl: './exam-results-general-information.component.html',
 })
 export class ExamGeneralInformationComponent implements OnInit {
