@@ -74,15 +74,6 @@
             <div *ngIf="reviewIsOpen" class="mx-2 badge bg-success">{{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}</div>
         </div>
 
-        <!--TODO move to general-information component-->
-        <!--        <div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun">-->
-        <!--            <div class="row justify-content-center">-->
-        <!--                <div class="alert alert-success col-12 col-lg-6" role="alert">-->
-        <!--                    {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-
         <div *ngIf="studentExam?.user?.name">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.examinedStudent' | artemisTranslate }}:</strong>
             <span> {{ studentExam!.user!.name }} </span>

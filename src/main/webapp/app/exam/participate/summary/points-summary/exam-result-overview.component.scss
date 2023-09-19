@@ -1,4 +1,4 @@
-tr:not(thead tr):not(tfoot tr) {
+#result-overview-table tr:not(thead tr):not(tfoot tr) {
     cursor: pointer;
 
     &:hover {
