@@ -1,15 +1,9 @@
-@import 'node_modules/bootstrap/scss/functions';
-@import 'node_modules/bootstrap/scss/variables';
-@import 'node_modules/bootstrap/scss/mixins';
+tr:not(thead tr):not(tfoot tr) {
+    cursor: pointer;
 
-:host {
-    tr:not(thead tr):not(tfoot tr) {
-        cursor: pointer;
-
-        &:hover {
-            transform: scale(1.01);
-            transition: transform 0.1s;
-        }
+    &:hover {
+        transform: scale(1.01);
+        transition: transform 0.1s;
     }
 }
 
