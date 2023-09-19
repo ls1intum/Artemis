@@ -1,16 +1,17 @@
-import { Course } from '../../../../main/webapp/app/entities/course.model';
+import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { courseManagementRequest, courseOverview } from '../../support/artemis';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest } from '../../support/artemis';
 import { admin } from '../../support/users';
-import { QuizExercise } from '../../../../main/webapp/app/entities/quiz/quiz-exercise.model';
+import { convertModelAfterMultiPart } from '../../support/utils';
 
 describe('Course Exercise', () => {
     let course: Course;
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });
@@ -21,13 +22,13 @@ describe('Course Exercise', () => {
         let exercise3: QuizExercise;
 
         before('Create Exercises', () => {
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 1').then((response) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 1').then((response) => {
                 exercise1 = response.body;
             });
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 2').then((response) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 2').then((response) => {
                 exercise2 = response.body;
             });
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise 3').then((response) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise 3').then((response) => {
                 exercise3 = response.body;
             });
         });
@@ -44,13 +45,13 @@ describe('Course Exercise', () => {
         });
 
         after('Delete Exercises', () => {
-            courseManagementRequest.deleteQuizExercise(exercise1.id!);
-            courseManagementRequest.deleteQuizExercise(exercise2.id!);
-            courseManagementRequest.deleteQuizExercise(exercise3.id!);
+            exerciseAPIRequest.deleteQuizExercise(exercise1.id!);
+            exerciseAPIRequest.deleteQuizExercise(exercise2.id!);
+            exerciseAPIRequest.deleteQuizExercise(exercise3.id!);
         });
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

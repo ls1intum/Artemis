@@ -22,7 +22,10 @@ export class ProgrammingExerciseCreateButtonsComponent {
     faFileImport = faFileImport;
     faKeyboard = faKeyboard;
 
-    constructor(private router: Router, private modalService: NgbModal) {}
+    constructor(
+        private router: Router,
+        private modalService: NgbModal,
+    ) {}
 
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });

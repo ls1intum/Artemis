@@ -15,21 +15,21 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "io.spring.dependency-management" version "1.1.1"
+    id "io.spring.dependency-management" version "1.1.3"
     id "com.google.cloud.tools.jib" version "3.3.2"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.diffplug.spotless" version "6.19.0"
+    id "com.diffplug.spotless" version "6.21.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.47.0"
+    id "com.github.ben-manes.versions" version "0.48.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id "info.solidsoft.pitest" version "1.9.11"
-    id "org.owasp.dependencycheck" version "8.3.1"
+    id "org.owasp.dependencycheck" version "8.4.0"
     id "com.adarshr.test-logger" version "3.2.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.3.9"
+version = "6.5.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -96,10 +96,17 @@ modernizer {
 }
 
 // Execute the test cases: ./gradlew test
-
+// Execute only architecture tests: ./gradlew test -DincludeTags='ArchitectureTest'
 test {
-    useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
+    if (System.getProperty("includeTags")) {
+        useJUnitPlatform {
+            includeTags System.getProperty("includeTags")
+        }
+    } else {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    }
+
     testLogging {
         events "FAILED", "SKIPPED"
     }
@@ -115,7 +122,7 @@ tasks.register("testReport", TestReport) {
 }
 
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.10"
 }
 
 jar {
@@ -127,7 +134,7 @@ private excludedClassFilesForReport(classDirectories) {
         fileTree(dir: it,
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
-                "**/de/tum/in/www1/artemis/config/migration/entries/*_*",
+                "**/de/tum/in/www1/artemis/config/migration/entries/**",
                 "**/gradle-wrapper.jar/**"
             ]
         )
@@ -156,7 +163,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 20
+                maximum = 19
             }
         }
     }
@@ -256,15 +263,15 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-ui:1.7.0"
     implementation "com.vdurmont:semver4j:3.1.0"
 
-    implementation "com.github.docker-java:docker-java-core:3.3.2"
-    implementation "com.github.docker-java:docker-java-transport-httpclient5:3.3.2"
+    implementation "com.github.docker-java:docker-java-core:3.3.3"
+    implementation "com.github.docker-java:docker-java-transport-httpclient5:3.3.3"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.11.2"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.11.4"
     implementation "net.logstash.logback:logstash-logback-encoder:7.4"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -281,7 +288,7 @@ dependencies {
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    implementation "org.liquibase:liquibase-core:4.23.0"
+    implementation "org.liquibase:liquibase-core:4.23.2"
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
@@ -298,16 +305,16 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.4.1"
-    implementation "org.springframework.data:spring-data-ldap:2.7.14"
+    implementation "org.springframework.data:spring-data-ldap:2.7.15"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.7"
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.8"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.94.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.9"
+    implementation "io.netty:netty-all:4.1.97.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.11"
     implementation "org.springframework:spring-messaging:5.3.29"
-    implementation "org.springframework.retry:spring-retry:2.0.2"
+    implementation "org.springframework.retry:spring-retry:2.0.3"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -326,18 +333,17 @@ dependencies {
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "mysql:mysql-connector-java:8.0.33"
     implementation "org.postgresql:postgresql:42.6.0"
-    implementation "com.h2database:h2:2.2.220"
+    implementation "com.h2database:h2:2.2.222"
 
     // zalando problem spring web can only be updated when we support Spring 6
     implementation "org.zalando:problem-spring-web:0.27.0"
     implementation "com.ibm.icu:icu4j:73.2"
     implementation "com.github.seancfoley:ipaddress:5.4.0"
-    implementation "org.apache.maven:maven-model:3.9.3"
-    implementation "org.apache.pdfbox:pdfbox:2.0.29"
-    implementation "com.google.protobuf:protobuf-java:3.23.4"
+    implementation "org.apache.maven:maven-model:3.9.4"
+    implementation "org.apache.pdfbox:pdfbox:3.0.0"
+    implementation "com.google.protobuf:protobuf-java:3.24.3"
     implementation "org.apache.commons:commons-csv:1.10.0"
     implementation "org.commonmark:commonmark:0.21.0"
-    implementation "de.tum.in.ase.athene:client:0.0.2"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -360,14 +366,15 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.161"
+    testImplementation "io.github.classgraph:classgraph:4.8.162"
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.2.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.1.2"
-    testImplementation "com.opencsv:opencsv:5.7.1"
+    testImplementation "com.opencsv:opencsv:5.8"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.3.0"
-    testImplementation "com.tngtech.archunit:archunit:1.0.1"
+    testImplementation "com.tngtech.archunit:archunit:1.1.0"
+    testImplementation "org.skyscreamer:jsonassert:1.5.1"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20230618"
@@ -410,7 +417,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.2.1"
+    gradleVersion = "8.3"
 }
 
 tasks.register("stage") {

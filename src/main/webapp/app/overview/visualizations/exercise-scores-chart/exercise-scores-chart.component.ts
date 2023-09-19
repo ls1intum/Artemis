@@ -114,7 +114,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
      * visualize the scores and pushes them to ngxData and backUpData
      * @param exerciseScoresDTOs array of objects containing the students score, the average score for this exercise and
      * the max score achieved for this exercise by a student as well as other detailed information of the exericse
-     * @private
      */
     private addData(exerciseScoresDTOs: ExerciseScoresDTO[]): void {
         this.ngxData = [];
@@ -206,7 +205,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     /**
      * Auxiliary method that instantiated the translations for the exercise.
      * As we subscribe to language changes, this ensures that the chart is translated instantly if the user changes the language
-     * @private
      */
     private setTranslations(): void {
         this.xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');

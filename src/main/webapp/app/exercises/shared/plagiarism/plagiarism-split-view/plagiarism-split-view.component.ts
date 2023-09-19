@@ -84,7 +84,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * Swaps fields of A with fields of B in-place.
      * More specifically, swaps submissionA with submissionB and startA with startB in matches.
      * @param plagiarismComparison plagiarism comparison that will be modified in-place
-     * @private
      */
     private swapSubmissions(plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>) {
         const temp = plagiarismComparison.submissionA;

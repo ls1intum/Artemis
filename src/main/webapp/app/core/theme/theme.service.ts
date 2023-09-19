@@ -49,18 +49,15 @@ export class Theme {
 export class ThemeService {
     /**
      * The currently applied theme
-     * @private
      */
     private currentTheme: Theme = Theme.LIGHT;
     /**
      * A behavior subject that fires for each new applied theme.
-     * @private
      */
     private currentThemeSubject: BehaviorSubject<Theme> = new BehaviorSubject<Theme>(Theme.LIGHT);
     /**
      * A behavior subject that fires if the user preference changes.
      * Can be either a theme for an explicit theme or undefined if system settings are preferred
-     * @private
      */
     private preferenceSubject: BehaviorSubject<Theme | undefined> = new BehaviorSubject<Theme | undefined>(undefined);
 
@@ -118,7 +115,6 @@ export class ThemeService {
      * - the theme stored in local storage, if present, or else
      * - the system preference, if present, or else
      * - the default theme
-     * @private
      */
     private applyPreferredTheme() {
         const storedTheme = this.getStoredTheme();
@@ -137,7 +133,6 @@ export class ThemeService {
 
     /**
      * Returns the theme preference stored in local storage or undefined if no preference is stored
-     * @private
      */
     private getStoredTheme(): Theme | undefined {
         const storedIdentifier = this.localStorageService.retrieve(THEME_LOCAL_STORAGE_KEY);

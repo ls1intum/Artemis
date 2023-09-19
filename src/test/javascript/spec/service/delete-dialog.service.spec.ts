@@ -34,6 +34,7 @@ describe('Delete Dialog Service', () => {
             dialogError: new Observable<string>(),
             entityTitle: 'title',
             deleteQuestion: 'artemisApp.exercise.delete.question',
+            translateValues: {},
             deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
             actionType: ActionType.Delete,
             buttonType: ButtonType.ERROR,

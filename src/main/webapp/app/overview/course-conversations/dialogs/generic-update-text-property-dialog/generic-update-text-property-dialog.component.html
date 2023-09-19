@@ -18,7 +18,7 @@
                                 {{ translationKeys.requiredErrorKey | artemisTranslate }}
                             </div>
                             <div *ngIf="control?.errors?.maxlength">
-                                {{ translationKeys.maxLengthErrorKey | artemisTranslate : { max: this.maxPropertyLength } }}
+                                {{ translationKeys.maxLengthErrorKey | artemisTranslate: { max: this.maxPropertyLength } }}
                             </div>
                             <div *ngIf="!control?.errors?.required && !control?.errors?.maxlength && control?.errors?.pattern">
                                 {{ translationKeys.regexErrorKey | artemisTranslate }}

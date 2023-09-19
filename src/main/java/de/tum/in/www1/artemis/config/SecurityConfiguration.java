@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -57,8 +59,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
-    @Value("${spring.prometheus.monitoringIp:#{null}}")
-    private Optional<String> monitoringIpAddress;
+    @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
+    private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
             CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
@@ -121,6 +123,16 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         // @formatter:on
     }
 
+    /**
+     * Only allow the configured IP addresses to access the prometheus endpoint
+     *
+     * @return an access check like "hasIpAddress('127.0.0.1') or hasIpAddress('::1')" that can be used as argument for
+     *         {@link org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer.AuthorizedUrl#access(String)}}
+     */
+    private String getMonitoringAccessDefinition() {
+        return monitoringIpAddresses.stream().map(ip -> String.format("hasIpAddress(\"%s\")", ip)).collect(Collectors.joining(" or "));
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // @formatter:off
@@ -161,8 +173,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/api/lti/launch/*").permitAll()
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/.well-known/jwks.json").permitAll()
-            // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
-            .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
+            .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
             .antMatchers("/api/**").authenticated()
         .and()
             .apply(securityConfigurerAdapter());

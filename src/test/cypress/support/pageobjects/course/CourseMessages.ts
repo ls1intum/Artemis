@@ -156,9 +156,9 @@ export class CourseMessagesPage {
         return cy.get(`#item-${postID}`);
     }
 
-    save() {
+    save(force = false) {
         cy.intercept(POST, BASE_API + 'courses/*/messages').as('createMessage');
-        cy.get('#save').click();
+        cy.get('#save').click({ force });
         return cy.wait('@createMessage');
     }
 

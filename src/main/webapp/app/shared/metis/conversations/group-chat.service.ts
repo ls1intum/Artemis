@@ -10,7 +10,11 @@ import { AccountService } from 'app/core/auth/account.service';
 export class GroupChatService {
     public resourceUrl = 'api/courses/';
 
-    constructor(private http: HttpClient, private conversationService: ConversationService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private conversationService: ConversationService,
+        private accountService: AccountService,
+    ) {}
 
     create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDto>> {
         return this.http

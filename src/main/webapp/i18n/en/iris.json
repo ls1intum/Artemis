@@ -1,0 +1,51 @@
+{
+    "artemisApp": {
+        "iris": {
+            "settings": {
+                "success": "Successfully saved Iris settings",
+                "error": {
+                    "save": "Error while saving Iris settings",
+                    "noSettings": "Unable to load settings. Please contact your administrator if this problem persists."
+                },
+                "button": {
+                    "reload": "Reload Settings",
+                    "save": "Save Settings",
+                    "programmingExercise": {
+                        "title": "Iris",
+                        "tooltip": "Edit the Iris settings for this programming exercise"
+                    },
+                    "course": {
+                        "title": "Iris",
+                        "tooltip": "Edit the Iris settings for this course"
+                    }
+                },
+                "subSettings": {
+                    "chatSettings": "Chat Settings",
+                    "hestiaSettings": "Hestia Settings",
+                    "inheritChatSettings": "Inherit Chat Settings",
+                    "inheritHestiaSettings": "Inherit Hestia Settings",
+                    "enabled-disabled": "Enabled/Disabled",
+                    "preferredModel": "Preferred Model",
+                    "inheritModel": "Inherit Modell",
+                    "template": {
+                        "title": "Template",
+                        "inherit": "Inherit Template"
+                    }
+                },
+                "title": {
+                    "global": "Global Iris Settings",
+                    "course": "Course Iris Settings",
+                    "programmingExercise": "Programming Exercise Iris Settings"
+                }
+            },
+            "error": {
+                "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
+                "internalPyrisError": "An internal error when communicating with the LLM occurred. Error message is: {{ pyrisErrorMessage }}.",
+                "invalidTemplate": "The template is invalid. Error message is: {{ pyrisErrorMessage }}.",
+                "noModelAvailable": "Model {{ model }} is not available to use. Please contact your administrator if this problem persists.",
+                "noResponse": "No response from Iris was received.",
+                "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}"
+            }
+        }
+    }
+}

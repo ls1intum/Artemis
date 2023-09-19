@@ -1,4 +1,4 @@
-import { EXERCISE_TYPE } from '../../constants';
+import { ExerciseType } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -14,10 +14,10 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
     }
 
     rejectComplaint(response: string, examMode: boolean) {
-        return super.rejectComplaint(response, examMode, EXERCISE_TYPE.FileUpload);
+        return super.rejectComplaint(response, examMode, ExerciseType.FILE_UPLOAD);
     }
 
     acceptComplaint(response: string, examMode: boolean) {
-        return super.acceptComplaint(response, examMode, EXERCISE_TYPE.FileUpload);
+        return super.acceptComplaint(response, examMode, ExerciseType.FILE_UPLOAD);
     }
 }

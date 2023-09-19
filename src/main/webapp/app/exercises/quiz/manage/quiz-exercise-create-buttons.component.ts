@@ -21,7 +21,10 @@ export class QuizExerciseCreateButtonsComponent {
     faFileExport = faFileExport;
     faCheckDouble = faCheckDouble;
 
-    constructor(private router: Router, private modalService: NgbModal) {}
+    constructor(
+        private router: Router,
+        private modalService: NgbModal,
+    ) {}
 
     /**
      * Opens the import modal for a quiz exercise

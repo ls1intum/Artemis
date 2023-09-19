@@ -22,7 +22,10 @@ export class ExerciseCreateButtonsComponent implements OnInit {
 
     getExerciseTypeIcon = getIcon;
 
-    constructor(private router: Router, private modalService: NgbModal) {}
+    constructor(
+        private router: Router,
+        private modalService: NgbModal,
+    ) {}
 
     ngOnInit(): void {
         if (this.exerciseType === ExerciseType.FILE_UPLOAD) {

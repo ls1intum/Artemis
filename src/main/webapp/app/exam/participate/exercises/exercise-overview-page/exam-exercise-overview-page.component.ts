@@ -19,7 +19,10 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
 
-    constructor(protected changeDetectorReference: ChangeDetectorRef, private examParticipationService: ExamParticipationService) {
+    constructor(
+        protected changeDetectorReference: ChangeDetectorRef,
+        private examParticipationService: ExamParticipationService,
+    ) {
         super(changeDetectorReference);
     }
 

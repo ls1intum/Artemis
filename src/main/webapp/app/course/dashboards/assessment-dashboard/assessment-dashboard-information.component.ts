@@ -7,7 +7,11 @@ import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 
 export class AssessmentDashboardInformationEntry {
-    constructor(public total: number, public tutor: number, public done?: number) {}
+    constructor(
+        public total: number,
+        public tutor: number,
+        public done?: number,
+    ) {}
 
     /**
      * Computes the percentage of done/total ratio and returns it as a string

@@ -1,10 +1,11 @@
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, courseOverview, quizExerciseMultipleChoice, quizExerciseShortAnswerQuiz } from '../../../support/artemis';
+import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, quizExerciseMultipleChoice, quizExerciseShortAnswerQuiz } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Quiz Exercise Participation', () => {
     let course: Course;
@@ -12,16 +13,16 @@ describe('Quiz Exercise Participation', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
         });
     });
 
     describe('Quiz exercise participation', () => {
         beforeEach('Create quiz exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
@@ -33,15 +34,15 @@ describe('Quiz Exercise Participation', () => {
 
         it('Student can see a visible quiz', () => {
             cy.login(admin);
-            courseManagementRequest.setQuizVisible(quizExercise.id!);
+            exerciseAPIRequest.setQuizVisible(quizExercise.id!);
             cy.login(studentOne, '/courses/' + course.id);
             courseOverview.openRunningExercise(quizExercise.id!);
         });
 
         it('Student can participate in MC quiz', () => {
             cy.login(admin);
-            courseManagementRequest.setQuizVisible(quizExercise.id!);
-            courseManagementRequest.startQuizNow(quizExercise.id!);
+            exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+            exerciseAPIRequest.startQuizNow(quizExercise.id!);
             cy.login(studentOne, '/courses/' + course.id);
             courseOverview.startExercise(quizExercise.id!);
             quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
@@ -53,10 +54,10 @@ describe('Quiz Exercise Participation', () => {
     describe('SA quiz participation', () => {
         before('Create SA quiz', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
-                courseManagementRequest.setQuizVisible(quizExercise.id!);
-                courseManagementRequest.startQuizNow(quizExercise.id!);
+                exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+                exerciseAPIRequest.startQuizNow(quizExercise.id!);
             });
         });
 
@@ -83,8 +84,8 @@ describe('Quiz Exercise Participation', () => {
     //         quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
     //         quizExerciseCreation.saveQuiz().then((quizResponse) => {
     //             quizExercise = quizResponse.response?.body;
-    //             courseManagementRequest.setQuizVisible(quizExercise.id!);
-    //             courseManagementRequest.startQuizNow(quizExercise.id!);
+    //             courseManagementAPIRequest.setQuizVisible(quizExercise.id!);
+    //             courseManagementAPIRequest.startQuizNow(quizExercise.id!);
     //         });
     //     });
 
@@ -97,6 +98,6 @@ describe('Quiz Exercise Participation', () => {
     // });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

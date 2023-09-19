@@ -1,17 +1,20 @@
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import dayjs from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
-import day from 'dayjs/esm';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+
 import {
     courseAssessment,
     courseManagement,
-    courseManagementRequest,
+    courseManagementAPIRequest,
+    exerciseAPIRequest,
     exerciseAssessment,
     exerciseResult,
     modelingExerciseAssessment,
     modelingExerciseFeedback,
 } from '../../../support/artemis';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Modeling Exercise Assessment', () => {
     let course: Course;
@@ -19,19 +22,19 @@ describe('Modeling Exercise Assessment', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.createModelingExercise({ course }).then((modelingResponse) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            exerciseAPIRequest.createModelingExercise({ course }).then((modelingResponse) => {
                 modelingExercise = modelingResponse.body;
                 cy.login(studentOne);
                 cy.wait(500);
-                courseManagementRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
-                    courseManagementRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
+                exerciseAPIRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
+                    exerciseAPIRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
                     cy.login(instructor);
-                    courseManagementRequest.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
+                    exerciseAPIRequest.updateModelingExerciseDueDate(modelingExercise, dayjs().add(5, 'seconds'));
                 });
             });
         });
@@ -58,8 +61,8 @@ describe('Modeling Exercise Assessment', () => {
     describe('Handling complaints', () => {
         before(() => {
             cy.login(admin);
-            courseManagementRequest
-                .updateModelingExerciseAssessmentDueDate(modelingExercise, day())
+            exerciseAPIRequest
+                .updateModelingExerciseAssessmentDueDate(modelingExercise, dayjs())
                 .its('body')
                 .then((exercise) => {
                     modelingExercise = exercise;
@@ -85,6 +88,6 @@ describe('Modeling Exercise Assessment', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

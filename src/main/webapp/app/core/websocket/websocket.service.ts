@@ -190,7 +190,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     /**
      * Adds a STOMP subscription to the subscribers to receive messages for specific channels
      * @param channel the path (e.g. '/courses/5/exercises/10') that should be subscribed
-     * @private
      */
     private addSubscription(channel: string) {
         const subscription = this.stompClient!.subscribe(

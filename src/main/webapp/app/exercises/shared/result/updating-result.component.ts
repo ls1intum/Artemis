@@ -47,7 +47,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
+    constructor(
+        private participationWebsocketService: ParticipationWebsocketService,
+        private submissionService: ProgrammingSubmissionService,
+    ) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
@@ -60,14 +63,14 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 this.participation.results = _orderBy(this.participation.results, 'completionDate', 'desc');
             }
             // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-            const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
+            const latestResult = this.participation.results?.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
             this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
             this.missingResultInfo = MissingResultInformation.NONE;
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
-            if (this.exercise && this.exercise.type === ExerciseType.PROGRAMMING) {
+            if (this.exercise?.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
             }
         }
@@ -139,7 +142,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Checks if a status update should be shown for this submission.
      *
      * @param submission for which a status update should be shown.
-     * @private
      */
     private shouldUpdateSubmissionState(submission?: Submission): boolean {
         // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
@@ -158,7 +160,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Updates the shown status based on the given state of a submission.
      *
      * @param submissionState the submission is currently in.
-     * @private
      */
     private updateSubmissionState(submissionState: ProgrammingSubmissionState) {
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;

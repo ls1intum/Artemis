@@ -1,21 +1,23 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Cypress Setup PostgreSQL
+# Cypress Setup Postgres
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    postgresql:
+    postgres:
         extends:
-            file: ./postgresql.yml
-            service: postgresql
+            file: ./postgres.yml
+            service: postgres
 
     artemis-app:
         extends:
             file: ./artemis.yml
             service: artemis-app
         depends_on:
-            postgresql:
+            postgres:
                 condition: service_healthy
         env_file:
+            - ./artemis/config/postgres.env
+            - ./artemis/config/cypress.env
             - ./artemis/config/cypress-postgres.env
 
     nginx:
@@ -42,15 +44,16 @@ services:
             artemis-app:
                 condition: service_healthy
         environment:
+            CYPRESS_DB_TYPE: "Postgres"
             SORRY_CYPRESS_PROJECT_ID: "artemis-postgres"
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:record:postgres"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:setup && (npm run cypress:record:postgres & sleep 60 && npm run cypress:record:postgres & wait)"
 
 networks:
     artemis:
         driver: "bridge"
         name: artemis
 volumes:
-    artemis-postgresql-data:
-        name: artemis-postgresql-data
+    artemis-postgres-data:
+        name: artemis-postgres-data
     artemis-data:
         name: artemis-data

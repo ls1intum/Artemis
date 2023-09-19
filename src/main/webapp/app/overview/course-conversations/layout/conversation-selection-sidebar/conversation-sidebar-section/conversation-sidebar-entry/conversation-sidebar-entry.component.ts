@@ -56,7 +56,12 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     faEllipsis = faEllipsis;
     faMessage = faMessage;
-    constructor(public conversationService: ConversationService, private metisService: MetisService, private alertService: AlertService, private modalService: NgbModal) {}
+    constructor(
+        public conversationService: ConversationService,
+        private metisService: MetisService,
+        private alertService: AlertService,
+        private modalService: NgbModal,
+    ) {}
 
     get isConversationUnread(): boolean {
         // do not show unread count for open conversation that the user is currently reading

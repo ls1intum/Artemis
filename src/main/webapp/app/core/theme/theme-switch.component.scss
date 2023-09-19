@@ -44,7 +44,9 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
                 & > .sun-beams {
                     stroke: var(--navbar-dark-color);
                     stroke-width: 2px;
-                    transition: transform 1s $ease-default, opacity 0.5s $ease-default;
+                    transition:
+                        transform 1s $ease-default,
+                        opacity 0.5s $ease-default;
                 }
 
                 & > .sun {

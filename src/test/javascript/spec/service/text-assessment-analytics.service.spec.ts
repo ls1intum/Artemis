@@ -28,7 +28,7 @@ describe('TextAssessmentAnalytics Service', () => {
                         courseId: 1,
                     }),
             },
-        } as any as ActivatedRoute);
+        }) as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

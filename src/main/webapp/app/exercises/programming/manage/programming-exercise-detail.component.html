@@ -81,8 +81,8 @@
                         class="btn btn-info btn-sm me-1"
                         style="margin-bottom: 10px"
                     >
-                        <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
+                        <fa-icon [icon]="faUserCheck"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
@@ -172,6 +172,16 @@
                             <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
                         </button>
                     </span>
+                    <button
+                        *ngIf="irisEnabled"
+                        type="button"
+                        (click)="showIrisSettings()"
+                        class="btn btn-secondary btn-sm"
+                        ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
+                    >
+                        <fa-icon [icon]="faRobot"></fa-icon>
+                        <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
+                    </button>
                 </div>
                 <div>
                     <button
@@ -242,7 +252,7 @@
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
-                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate : 'long' : true }}</span>
+                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long' : true }}</span>
                     </dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">Enable Static Code Analysis</span></dt>
@@ -272,10 +282,13 @@
                     </dd>
                 </ng-container>
                 <ng-container *ngIf="programmingExercise.submissionPolicy && programmingExercise.submissionPolicy.exceedingPenalty">
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel">Exceeding Penalty</span></dt>
-                    <dd>
-                        <span>{{ programmingExercise.submissionPolicy.exceedingPenalty }}</span>
-                    </dd>
+                    <dt>
+                        <span>{{
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                                | artemisTranslate: { points: programmingExercise.submissionPolicy.exceedingPenalty }
+                        }}</span>
+                    </dt>
+                    <dd></dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
                 <dd>
@@ -377,9 +390,11 @@
                                 </div>
                             </dt>
                             <dd>
-                                <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
-                                    auxiliaryRepository.repositoryUrl
-                                }}</a>
+                                <ng-container *ngif="!localVCEnabled">
+                                    <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
+                                        auxiliaryRepository.repositoryUrl
+                                    }}</a>
+                                </ng-container>
                             </dd>
                         </li>
                     </ul>
@@ -552,26 +567,26 @@
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.agentSetupDuration
-                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number : '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.testDuration
-                                                ? (programmingExercise.buildLogStatistics.testDuration | number : '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.testDuration | number: '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
-                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number : '1.2-2') + 's' : '-'
+                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.totalJobDuration
-                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number : '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>

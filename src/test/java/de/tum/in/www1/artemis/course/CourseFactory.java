@@ -14,10 +14,6 @@ import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfigu
  */
 public class CourseFactory {
 
-    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        return generateCourse(id, startDate, endDate, exercises, null, null, null, null);
-    }
-
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
         return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
@@ -30,7 +26,21 @@ public class CourseFactory {
                 messagingEnabled, 7);
     }
 
+    public static Course generateCourse(Long id, String shortName, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
+            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
+        return generateCourse(id, shortName, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000,
+                true, true, 7);
+    }
+
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
+            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
+            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
+        return generateCourse(id, "short", startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, maxComplaints,
+                maxTeamComplaints, maxComplaintTimeDays, maxComplaintTextLimit, maxComplaintResponseTextLimit, communicationEnabled, messagingEnabled, requestMoreFeedbackTimeDays);
+
+    }
+
+    public static Course generateCourse(Long id, String shortName, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
             int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
@@ -38,7 +48,7 @@ public class CourseFactory {
         course.setTitle("Course title " + UUID.randomUUID());
 
         // must start with a letter
-        course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
+        course.setShortName(shortName + UUID.randomUUID().toString().replace("-", "0"));
         course.setMaxComplaints(maxComplaints);
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
@@ -69,6 +79,10 @@ public class CourseFactory {
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;
+    }
+
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        return generateCourse(id, startDate, endDate, exercises, null, null, null, null);
     }
 
     public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {

@@ -40,12 +40,12 @@
             <span>
                 {{
                     'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                        | artemisTranslate : { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                        | artemisTranslate: { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
                 }}
             </span>
             <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
                 {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate : { points: exercise.submissionPolicy.exceedingPenalty }
+                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
                 }}
             </span>
         </div>

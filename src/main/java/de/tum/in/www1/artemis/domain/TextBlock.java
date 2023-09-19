@@ -50,14 +50,6 @@ public class TextBlock implements Serializable {
     @Column(name = "type")
     private TextBlockType type = TextBlockType.MANUAL;
 
-    @SuppressWarnings("FieldCanBeLocal")
-    @Column(name = "position_in_cluster")
-    private Integer positionInCluster = null;
-
-    @Column(name = "added_distance")
-    @JsonIgnore
-    private Double addedDistance;
-
     // There is a foreign key on delete set null
     @OneToOne
     @JsonIgnore
@@ -67,9 +59,6 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private TextSubmission submission;
 
-    @ManyToOne
-    @JsonIgnore
-    private TextCluster cluster;
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getId() {
@@ -173,24 +162,7 @@ public class TextBlock implements Serializable {
     public void setSubmission(TextSubmission textSubmission) {
         this.submission = textSubmission;
     }
-
-    public TextCluster getCluster() {
-        return cluster;
-    }
-
-    public TextBlock cluster(TextCluster textCluster) {
-        this.cluster = textCluster;
-        return this;
-    }
-
-    public void setCluster(TextCluster textCluster) {
-        this.cluster = textCluster;
-    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
-    void setPositionInCluster(Integer positionInCluster) {
-        this.positionInCluster = positionInCluster;
-    }
 
     @Override
     public boolean equals(Object obj) {
@@ -212,18 +184,5 @@ public class TextBlock implements Serializable {
     public String toString() {
         return "TextBlock{" + "id=" + getId() + ", text='" + getText() + "'" + ", startIndex='" + getStartIndex() + "'" + ", endIndex='" + getEndIndex() + "'" + ", type='"
                 + getType() + "'" + "}";
-    }
-
-    @JsonIgnore
-    public boolean isAssessable() {
-        return submission.getLatestResult() != null;
-    }
-
-    public void setAddedDistance(double addedDistance) {
-        this.addedDistance = addedDistance;
-    }
-
-    public Double getAddedDistance() {
-        return addedDistance;
     }
 }

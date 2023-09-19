@@ -17,7 +17,10 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     public resourceUrl = 'api/modeling-exercises';
     public adminResourceUrl = 'api/admin/modeling-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {
+    constructor(
+        private http: HttpClient,
+        private exerciseService: ExerciseService,
+    ) {
         this.exerciseService = exerciseService;
     }
 

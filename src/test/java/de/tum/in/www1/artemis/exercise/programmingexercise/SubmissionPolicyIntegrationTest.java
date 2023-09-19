@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -412,17 +411,17 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }
-        Optional<Result> result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
-        assertThat(result).isPresent();
+        var result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
+        assertThat(result).isNotNull();
 
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
         result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
-        assertThat(result).isPresent();
+        assertThat(result).isNotNull();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            assertThat(result.get().isRated()).isFalse();
+            assertThat(result.isRated()).isFalse();
         }
         else {
-            assertThat(result.get().isRated()).isTrue();
+            assertThat(result.isRated()).isTrue();
         }
     }
 
@@ -443,18 +442,18 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }
-        Optional<Result> result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
-        assertThat(result).isPresent();
-        assertThat(result.get().getScore()).isEqualTo(25);
+        var result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
+        assertThat(result).isNotNull();
+        assertThat(result.getScore()).isEqualTo(25);
         result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
-        assertThat(result).isPresent();
+        assertThat(result).isNotNull();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            assertThat(result.get().getScore()).isEqualTo(15);
-            assertThat(result.get().getFeedbacks()).anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
+            assertThat(result.getScore()).isEqualTo(15);
+            assertThat(result.getFeedbacks()).anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
         else {
-            assertThat(result.get().getScore()).isEqualTo(25);
-            assertThat(result.get().getFeedbacks()).noneMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
+            assertThat(result.getScore()).isEqualTo(25);
+            assertThat(result.getFeedbacks()).noneMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
     }
 

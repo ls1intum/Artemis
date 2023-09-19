@@ -35,7 +35,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
-    constructor(private route: ActivatedRoute, private courseStorageService: CourseStorageService, private competencyService: CompetencyService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private courseStorageService: CourseStorageService,
+        private competencyService: CompetencyService,
+    ) {}
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));

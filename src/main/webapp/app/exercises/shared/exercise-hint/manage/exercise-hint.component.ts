@@ -41,7 +41,12 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
 
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
-    constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, private alertService: AlertService, protected eventManager: EventManager) {}
+    constructor(
+        private route: ActivatedRoute,
+        protected exerciseHintService: ExerciseHintService,
+        private alertService: AlertService,
+        protected eventManager: EventManager,
+    ) {}
 
     /**
      * Subscribes to the route params to act on the currently selected exercise.

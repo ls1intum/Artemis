@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.INDIVIDUAL;
+import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
-import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -17,6 +18,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -48,6 +50,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
@@ -58,6 +62,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exception.GitException;
@@ -67,15 +72,13 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.CourseExamExportService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
@@ -149,7 +152,7 @@ public class ProgrammingExerciseTestService {
     private AutomaticProgrammingExerciseCleanupService automaticProgrammingExerciseCleanupService;
 
     @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
+    private Path courseArchivesDirPath;
 
     @Autowired
     private CourseExamExportService courseExamExportService;
@@ -287,6 +290,7 @@ public class ProgrammingExerciseTestService {
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
+        auxRepo.resetLocalRepo();
         sourceExerciseRepo.resetLocalRepo();
         sourceTestRepo.resetLocalRepo();
         sourceSolutionRepo.resetLocalRepo();
@@ -342,7 +346,7 @@ public class ProgrammingExerciseTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any(), any());
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
@@ -379,7 +383,6 @@ public class ProgrammingExerciseTestService {
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + participantRepoName, participantRepoTestUrl);
@@ -618,11 +621,11 @@ public class ProgrammingExerciseTestService {
         request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
-    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
+    private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
-        auxiliaryRepositoryRepository.save(repository);
+        return auxiliaryRepositoryRepository.save(repository);
     }
 
     // TEST
@@ -702,9 +705,9 @@ public class ProgrammingExerciseTestService {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
         }
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans, addAuxRepos);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans, addAuxRepos);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         // Create request parameters
@@ -810,9 +813,9 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
@@ -853,9 +856,9 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
@@ -929,6 +932,64 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
+    void testImportProgrammingExerciseLockRepositorySubmissionPolicyChange() throws Exception {
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
+
+        var submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.setSubmissionLimit(5);
+        exerciseToBeImported.setSubmissionPolicy(submissionPolicy);
+
+        // Mock requests
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+        setupMocksForConsistencyChecksOnImport(sourceExercise);
+
+        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(exerciseToBeImported.getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
+        assertThat(exerciseToBeImported.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
+
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        assertThat(sourceExercise.getSubmissionPolicy()).isNull();
+    }
+
+    void testImportProgrammingExerciseNoneSubmissionPolicyChange() throws Exception {
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        var submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.setSubmissionLimit(5);
+        submissionPolicy.setProgrammingExercise(sourceExercise);
+        submissionPolicy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(submissionPolicy, sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
+        exerciseToBeImported.setSubmissionPolicy(null);
+
+        // Mock requests
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+        setupMocksForConsistencyChecksOnImport(sourceExercise);
+
+        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(exerciseToBeImported.getSubmissionPolicy()).isNull();
+
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        assertThat(sourceExercise.getSubmissionPolicy()).isNotNull();
+    }
+
     /**
      * Method to test the correct import of a programming exercise into an exam during an exam import
      * For more Information see {@link de.tum.in.www1.artemis.service.exam.ExamImportService}
@@ -956,9 +1017,9 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setId(sourceExercise.getId());
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
         // Import the exam
         targetExam.setChannelName("testchannel-imported");
@@ -1260,6 +1321,29 @@ public class ProgrammingExerciseTestService {
         assertThat(zip).isNotNull();
     }
 
+    void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
+        generateProgrammingExerciseForExport(false);
+        var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
+        setupAuxRepoMock(auxRepo);
+        setupRepositoryMocks(exercise);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
+        request.get(url, HttpStatus.OK, String.class);
+    }
+
+    private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.localRepoFile.toPath(), null);
+        disableAutoGC(repository);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), (Path) any(), anyBoolean());
+    }
+
+    void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
+        generateProgrammingExerciseForExport(false);
+        var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
+        request.get(url, HttpStatus.FORBIDDEN, String.class);
+    }
+
     // Test
     void exportInstructorRepositories_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
@@ -1271,7 +1355,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String exportInstructorRepository(RepositoryType repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
-        generateProgrammingExerciseForExport();
+        generateProgrammingExerciseForExport(false);
 
         setupMockRepo(localRepository, repositoryType, "some-file.java");
 
@@ -1280,7 +1364,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String exportStudentRequestedRepository(HttpStatus expectedStatus, boolean includeTests) throws Exception {
-        generateProgrammingExerciseForExport();
+        generateProgrammingExerciseForExport(false);
 
         setupMockRepo(exerciseRepo, RepositoryType.SOLUTION, "some-file.java");
         if (includeTests) {
@@ -1292,16 +1376,29 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK);
+
+    /**
+     * Test that the export of the instructor material works as expected.
+     *
+     * @param saveEmbeddedFiles whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
+     * @throws Exception if the export fails
+     */
+    void exportProgrammingExerciseInstructorMaterial_shouldReturnFile(boolean saveEmbeddedFiles) throws Exception {
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, true, saveEmbeddedFiles);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
-        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1));
-        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2));
+        Path embeddedFilePath1 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1);
+        Path embeddedFilePath2 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2);
+        if (Files.exists(embeddedFilePath1)) {
+            Files.delete(embeddedFilePath1);
+        }
+        if (Files.exists(embeddedFilePath2)) {
+            Files.delete(embeddedFilePath2);
+        }
         // Recursively unzip the exported file, to make sure there is no erroneous content
         zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
         String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
@@ -1312,8 +1409,28 @@ public class ProgrammingExerciseTestService {
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
-                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
-                    .anyMatch((filename) -> filename.toString().equals(embeddedFileName1)).anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+            if (saveEmbeddedFiles) {
+                assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().equals(embeddedFileName1))
+                        .anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
+            }
+        }
+    }
+
+    void exportProgrammingExerciseInstructorMaterial_problemStatementNull_success() throws Exception {
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, true, false);
+        await().until(zipFile::exists);
+        assertThat(zipFile).isNotNull();
+        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
+        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+
+        // Check that the contents we created exist in the unzipped exported folder
+        try (var files = Files.walk(Path.of(extractedZipDir))) {
+            List<Path> listOfIncludedFiles = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+            assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+
         }
     }
 
@@ -1322,46 +1439,74 @@ public class ProgrammingExerciseTestService {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN);
+        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN, false, false, false);
     }
 
-    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
-        generateProgrammingExerciseForExport();
-        // Mock template repo
-        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+    /**
+     * export programming exercise instructor material
+     *
+     * @param expectedStatus       the expected http status, e.g. 200 OK
+     * @param problemStatementNull whether the problem statement should be null or not
+     * @param mockRepos            whether the repos should be mocked or not, if we mock the files API we cannot mock them but also cannot use them
+     * @param saveEmbeddedFiles    whether embedded files should be saved or not, not saving them simulates that embedded files are no longer stored on the file system
+     * @return the zip file
+     * @throws Exception if the export fails
+     */
+    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles)
+            throws Exception {
+        if (problemStatementNull) {
+            generateProgrammingExerciseWithProblemStatementNullForExport();
+        }
+        else {
+            generateProgrammingExerciseForExport(saveEmbeddedFiles);
+        }
+        if (mockRepos) {
+            // Mock template repo
+            Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+            createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
+            doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
-        // Mock solution repo
-        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+            // Mock solution repo
+            Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+            createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
+            doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
-        // Mock tests repo
-        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
-
+            // Mock tests repo
+            Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+            createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+            doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
+        }
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
         return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
     }
 
-    private void generateProgrammingExerciseForExport() throws IOException {
+    private void generateProgrammingExerciseWithProblemStatementNullForExport() {
+        exercise.setProblemStatement(null);
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+    }
+
+    private void generateProgrammingExerciseForExport(boolean saveEmbeddedFiles) throws IOException {
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         exercise.setProblemStatement(String.format("""
                 Problem statement
                 ![mountain.jpg](/api/files/markdown/%s)
-                ![matterhorn.jpg](/api/files/markdown/%s)
+                <img src="/api/files/markdown/%s" width="400">
                 """, embeddedFileName1, embeddedFileName2));
-        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
-                new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
-        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
-                new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
+        if (saveEmbeddedFiles) {
+            Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
+                    new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
+            Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
+                    new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
+        }
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
@@ -1384,6 +1529,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise.setProblemStatement("Lorem Ipsum");
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
 
         // Add student participation
@@ -1394,32 +1540,42 @@ public class ProgrammingExerciseTestService {
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
         disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
         disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
         disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
         disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepository.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
 
         var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
-
+        // extract archive content and check that all expected files exist.
+        Path courseArchivePath = courseArchivesDirPath.resolve(updatedCourse.getCourseArchivePath());
+        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        String extractedArchiveDir = updatedCourse.getCourseArchivePath().substring(0, updatedCourse.getCourseArchivePath().length() - 4);
+        try (var files = Files.walk(courseArchivesDirPath.resolve(extractedArchiveDir))) {
+            assertThat(files).map(Path::getFileName).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
+                    .anyMatch((filename) -> filename.toString().matches(".*student1.zip"));
+        }
     }
 
     // Test
@@ -1444,7 +1600,7 @@ public class ProgrammingExerciseTestService {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + "student2");
 
         // Mock error when exporting a participation
-        doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
@@ -1483,25 +1639,25 @@ public class ProgrammingExerciseTestService {
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
         disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
         disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
         disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
         disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
     }
 
     public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
@@ -1594,7 +1750,7 @@ public class ProgrammingExerciseTestService {
             Files.createFile(file);
         }
         localRepository.localGit.add().addFilepattern(file.getFileName().toString()).call();
-        localRepository.localGit.commit().setMessage("Added testfile").call();
+        GitService.commit(localRepository.localGit).setMessage("Added testfile").call();
     }
 
     // Test
@@ -2001,9 +2157,9 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         ProgrammingExercise newProgrammingExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()),

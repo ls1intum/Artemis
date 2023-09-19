@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingSubmission extends Submission {
 
-    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getSubmissionExerciseType() {
         return "programming";
     }
@@ -119,7 +119,7 @@ public class ProgrammingSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + ", type=" + getType() + '}';
     }
 
     @Override

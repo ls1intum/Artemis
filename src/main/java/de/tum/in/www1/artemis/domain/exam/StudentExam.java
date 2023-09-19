@@ -96,16 +96,18 @@ public class StudentExam extends AbstractAuditingEntity {
         return started;
     }
 
-    public void setStarted(Boolean started) {
-        this.started = started;
+    /**
+     * Sets the started flag to true and sets the startedDate to the current date
+     *
+     * @param startedDate the date when the exam was started
+     */
+    public void setStartedAndStartDate(ZonedDateTime startedDate) {
+        this.started = true;
+        this.startedDate = startedDate;
     }
 
     public ZonedDateTime getStartedDate() {
         return startedDate;
-    }
-
-    public void setStartedDate(ZonedDateTime startedDate) {
-        this.startedDate = startedDate;
     }
 
     public ZonedDateTime getSubmissionDate() {
@@ -156,6 +158,18 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setExamSessions(Set<ExamSession> examSessions) {
         this.examSessions = examSessions;
+    }
+
+    /**
+     * Adds the given exam session to the student exam
+     *
+     * @param examSession the exam session to add
+     * @return the student exam with the added exam session
+     */
+    public StudentExam addExamSession(ExamSession examSession) {
+        this.examSessions.add(examSession);
+        examSession.setStudentExam(this);
+        return this;
     }
 
     /**
@@ -228,4 +242,5 @@ public class StudentExam extends AbstractAuditingEntity {
             return exam.resultsPublished();
         }
     }
+
 }

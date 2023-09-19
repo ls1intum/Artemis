@@ -5,7 +5,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { Course } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
@@ -31,6 +31,8 @@ export class ExamUpdateComponent implements OnInit {
     maxWorkingTimeInMinutes: number;
     isImport = false;
     isImportInSameCourse = false;
+    hideChannelNameInput = false;
+
     // Expose enums to the template
     exerciseType = ExerciseType;
     // Link to the component enabling the selection of exercise groups and exercises for import
@@ -60,9 +62,6 @@ export class ExamUpdateComponent implements OnInit {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
 
-            if (this.exam.id == undefined && this.exam.testExam !== true) {
-                this.exam.channelName = '';
-            }
             // Tap the URL to determine, if the Exam should be imported
             this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
 
@@ -75,6 +74,7 @@ export class ExamUpdateComponent implements OnInit {
                 next: (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
+                    this.hideChannelNameInput = (exam.id !== undefined && exam.channelName === undefined) || !isMessagingEnabled(this.course);
                 },
                 error: (err: HttpErrorResponse) => onError(this.alertService, err),
             });
@@ -318,7 +318,6 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Helper-Method to reset the Exam Id and Exam dates when importing the Exam
-     * @private
      */
     private resetIdAndDatesForImport() {
         this.exam.id = undefined;

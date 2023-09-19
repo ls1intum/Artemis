@@ -256,7 +256,6 @@ export class UserManagementUpdateComponent implements OnInit {
     /**
      * Filter the groups based on the input value
      * @param value input value
-     * @private
      */
     private filter(value: string): string[] {
         const filterValue = value.toLowerCase();
@@ -267,7 +266,6 @@ export class UserManagementUpdateComponent implements OnInit {
      * Adds a group to the user if it is valid
      * @param user to add the group to
      * @param groupString group to add
-     * @private
      */
     private addGroup(user: User, groupString: string) {
         if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
