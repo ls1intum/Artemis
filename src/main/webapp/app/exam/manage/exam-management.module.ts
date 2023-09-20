@@ -53,10 +53,12 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
 import { SuspiciousBehaviorComponent } from './suspicious-behavior/suspicious-behavior.component';
 import { SuspiciousSessionsOverviewComponent } from './suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
 import { PlagiarismCasesOverviewComponent } from './suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
+import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -119,6 +121,8 @@ const ENTITY_STATES = [...examManagementState];
         ExamImportComponent,
         ExamExerciseImportComponent,
         BonusComponent,
+        ExamEditWorkingTimeComponent,
+        ExamEditWorkingTimeDialogComponent,
         SuspiciousBehaviorComponent,
         SuspiciousSessionsOverviewComponent,
         PlagiarismCasesOverviewComponent,

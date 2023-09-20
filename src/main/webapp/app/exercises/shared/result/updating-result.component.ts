@@ -63,7 +63,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
-            if (this.exercise && this.exercise.type === ExerciseType.PROGRAMMING) {
+            if (this.exercise?.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
             }
         }
@@ -172,7 +172,7 @@ export function getLatestResultOfStudentParticipation(participation: StudentPart
         participation.results = _orderBy(participation.results, 'completionDate', 'desc');
     }
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = participation.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
+    const latestResult = participation.results?.find(({ rated }) => showUngradedResults || rated === true);
     // Make sure that the participation result is connected to the newest result.
     return latestResult ? { ...latestResult, participation: participation } : undefined;
 }

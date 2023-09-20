@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,4 +35,26 @@ public interface ProgrammingExerciseTestRepository extends JpaRepository<Program
             where p.id = :#{#exerciseId}
             """)
     ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") Long exerciseId);
+
+    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation LEFT JOIN FETCH pe.solutionParticipation")
+    List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
+
+    /**
+     * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
+     * This can't be done as a standard query as the property contains the word 'And'.
+     *
+     * @param dateTime ZonedDatetime object.
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
+    List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Returns the list of programming exercises with a buildAndTestStudentSubmissionsAfterDueDate in the future.
+     *
+     * @return List<ProgrammingExercise>
+     */
+    default List<ProgrammingExercise> findAllWithBuildAndTestAfterDueDateInFuture() {
+        return findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
+    }
 }
