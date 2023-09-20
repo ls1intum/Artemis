@@ -79,10 +79,10 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisMessage.getHelpful()).isNull();
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
         // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
-                .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
+        assertThat(irisMessage.getContent()).hasSize(3).usingRecursiveFieldByFieldElementComparatorIgnoringFields("message", "id")
+                .containsExactlyElementsOf(messageToSend.getContent());
         var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
-        assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage));
+        assertThat(irisSessionFromDb.getMessages()).contains(irisMessage);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);

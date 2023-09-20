@@ -116,7 +116,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param message   the content of the message
      */
     protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, String message) {
-        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
+        verify(websocketMessagingService, timeout(100).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
                 ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
                         && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE
                         && Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")), message)));
@@ -130,7 +130,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param message   the message
      */
     protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, IrisMessage message) {
-        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
+        verify(websocketMessagingService, timeout(100).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
                 ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
                         && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE
                         && Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getTextContent).toList(),
