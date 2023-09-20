@@ -170,11 +170,11 @@
             </div>
         </div>
 
-        <div class="row mt-3">
-            <div [ngbCollapse]="isGradingKeyCollapsed" class="col">
+        <div class="row mt-3 justify-content-center">
+            <div [ngbCollapse]="isGradingKeyCollapsed" class="col" style="max-width: 50%">
                 <jhi-grade-key-table [studentGrade]="grade" />
             </div>
-            <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="col">
+            <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="col" style="max-width: 50%">
                 <jhi-grade-key-table [studentGrade]="grade" [forBonus]="true" />
             </div>
         </div>
