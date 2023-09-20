@@ -11,10 +11,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,10 +35,7 @@ import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooResultService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -661,15 +655,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         // First argument is a string containing a user mention
         // Second argument indicates whether the user mention is valid
         return List.of(Arguments.of("no mention", true), // no user mention
-                Arguments.of("[user]" + courseMember1.getFullName() + "(" + courseMember1.getLogin() + ")[/user]", true), // valid mention
+                Arguments.of("[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user]", true), // valid mention
                 Arguments.of("[user](" + courseMember1.getLogin() + ")[/user]", false), // missing full name
-                Arguments.of("[user]" + courseMember1.getFullName() + "()[/user]", false), // missing login
-                Arguments.of("[user]" + courseMember1.getFullName() + "[/user]", false), // missing login and parentheses
-                Arguments.of("[user]" + courseMember2.getFullName() + "(" + courseMember2.getLogin() + ")[/user][user]" + courseMember1.getFullName() + "("
-                        + courseMember1.getLogin() + ")[/user]", true), // multiple valid user mentions
+                Arguments.of("[user]" + courseMember1.getName() + "()[/user]", false), // missing login
+                Arguments.of("[user]" + courseMember1.getName() + "[/user]", false), // missing login and parentheses
+                Arguments.of("[user]" + courseMember2.getName() + "(" + courseMember2.getLogin() + ")[/user][user]" + courseMember1.getName() + "(" + courseMember1.getLogin()
+                        + ")[/user]", true), // multiple valid user mentions
                 Arguments.of("[user]invalidName(" + courseMember1.getLogin() + ")[/user]", false), // invalid full name
-                Arguments.of("[user]" + noCourseMember.getFullName() + "(" + noCourseMember.getLogin() + ")[/user]", false), // not a course member
-                Arguments.of("[user]invalidName[user]" + courseMember1.getFullName() + "(" + courseMember1.getLogin() + ")[/user](invalid)[/user]", true) // matching only inner
+                Arguments.of("[user]" + noCourseMember.getName() + "(" + noCourseMember.getLogin() + ")[/user]", false), // not a course member
+                Arguments.of("[user]invalidName[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user](invalid)[/user]", true) // matching only inner
 
         );
     }
