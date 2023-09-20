@@ -59,6 +59,7 @@ export class ExamResultSummaryComponent implements OnInit {
     studentExamGradeInfoDTO: StudentExamWithGradeDTO;
 
     isGradingKeyCollapsed: boolean = true;
+    isBonusGradingKeyCollapsed: boolean = true;
 
     @Input()
     instructorView = false;
@@ -161,13 +162,14 @@ export class ExamResultSummaryComponent implements OnInit {
      * called for exportPDF Button
      */
     printPDF() {
-        this.expandExercisesAndGradingKeyBeforePrinting();
+        this.expandExercisesAndGradingKeysBeforePrinting();
         setTimeout(() => this.themeService.print());
     }
 
-    private expandExercisesAndGradingKeyBeforePrinting() {
+    private expandExercisesAndGradingKeysBeforePrinting() {
         this.collapsedExerciseIds = [];
         this.isGradingKeyCollapsed = false;
+        this.isBonusGradingKeyCollapsed = false;
     }
 
     public generateLink(exercise: Exercise) {

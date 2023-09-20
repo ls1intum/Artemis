@@ -22,6 +22,7 @@ export class ExamResultOverviewComponent implements OnInit {
 
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
     @Input() isGradingKeyCollapsed: boolean = true;
+    @Input() isBonusGradingKeyCollapsed: boolean = true;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -178,8 +179,12 @@ export class ExamResultOverviewComponent implements OnInit {
         return getTextColorClass(result, templateStatus);
     }
 
-    toggleCollapseGradingKey() {
+    toggleGradingKey() {
         this.isGradingKeyCollapsed = !this.isGradingKeyCollapsed;
+    }
+
+    toggleBonusGradingKey() {
+        this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
     }
 
     protected readonly getIcon = getIcon;
