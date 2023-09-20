@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
+import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
@@ -49,7 +49,7 @@ import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overvie
         GradingKeyOverviewModule,
     ],
     declarations: [
-        ExamParticipationSummaryComponent,
+        ExamResultSummaryComponent,
         ProgrammingExamSummaryComponent,
         ModelingExamSummaryComponent,
         FileUploadExamSummaryComponent,
@@ -60,6 +60,6 @@ import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overvie
         TestRunRibbonComponent,
         ExampleSolutionComponent,
     ],
-    exports: [ExamParticipationSummaryComponent, ExamGeneralInformationComponent, TestRunRibbonComponent],
+    exports: [ExamResultSummaryComponent, ExamGeneralInformationComponent, TestRunRibbonComponent],
 })
 export class ArtemisParticipationSummaryModule {}

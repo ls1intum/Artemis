@@ -25,7 +25,7 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
-import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
+import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-result-summary.module';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
