@@ -1,0 +1,4 @@
+<div class="form-group d-flex flex-column gap-1">
+    <label for="confirm-entity-name" [ngClass]="warningTextColor" [jhiTranslate]="confirmationText">Please type in the name to confirm</label>
+    <input id="confirm-entity-name" type="text" class="form-control" name="confirmEntityName" [formControl]="control" (blur)="onTouched()" />
+</div>

@@ -257,7 +257,7 @@ public class UserUtilService {
         // Before adding new users, existing users are removed from courses.
         // Otherwise, the amount users per course constantly increases while running the tests,
         // even though the old users are not needed anymore.
-        if (usersToAdd.size() > 0) {
+        if (!usersToAdd.isEmpty()) {
             Set<User> currentUsers = userTestRepository.findAllInAnyGroup();
             log.debug("Removing {} users from all courses...", currentUsers.size());
             currentUsers.forEach(user -> user.setGroups(Set.of()));
