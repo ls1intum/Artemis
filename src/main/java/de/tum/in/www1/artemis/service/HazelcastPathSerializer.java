@@ -17,7 +17,7 @@ public class HazelcastPathSerializer implements ByteArraySerializer<Path> {
 
     @Override
     public Path read(byte[] buffer) throws IOException {
-        String pathString = new String(buffer);
+        String pathString = new String(buffer, StandardCharsets.UTF_8);
         return Path.of(pathString);
     }
 
