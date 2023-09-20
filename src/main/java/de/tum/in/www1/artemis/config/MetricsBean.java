@@ -450,8 +450,8 @@ public class MetricsBean {
         courses.forEach(course -> course.setNumberOfStudents(userRepository.countByGroupsIsContaining(course.getStudentGroupName())));
         ensureCourseInformationIsSet(courses);
 
-        final List<Exam> examsInActiveCourses = new ArrayList<>();
-        courses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
+        final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();
+        final List<Exam> examsInActiveCourses = examRepository.findExamsInCourses(courseIds);
 
         // Update multi gauges
         updateStudentsCourseMultiGauge(courses);
