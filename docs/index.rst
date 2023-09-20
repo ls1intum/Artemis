@@ -39,6 +39,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/scaling
    user/markdown-support
    user/mobile-applications
+   user/lti
 
 
 .. toctree::
