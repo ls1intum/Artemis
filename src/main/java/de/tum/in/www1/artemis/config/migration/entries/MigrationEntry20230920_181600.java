@@ -50,8 +50,6 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
 
     private final Optional<CIVCSMigrationService> ciMigrationService;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final Environment environment;
 
     private final UrlService urlService = new UrlService();
@@ -70,7 +68,6 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.ciMigrationService = ciMigrationService;
-        this.versionControlService = versionControlService;
         this.environment = environment;
     }
 
@@ -190,7 +187,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                 migrateSolutionBuildPlan(participation);
             }
             catch (Exception e) {
-                log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
+                log.warn("Failed to migrate solution build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
                         participation.getBuildPlanId(), e);
                 errorList.add(participation);
             }
@@ -218,8 +215,8 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                     continue;
                 }
 
-                log.info("Migrating build plan with name {} for exercise {}", participation.getProgrammingExercise().getProjectKey() + "-" + participation.getBuildPlanId(),
-                        participation.getProgrammingExercise().getId());
+                log.info("Migrating template build plan with name {} for exercise {}",
+                        participation.getProgrammingExercise().getProjectKey() + "-" + participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
 
                 migrateTemplateBuildPlan(participation);
             }
@@ -254,8 +251,8 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                 migrateStudentBuildPlan(participation);
             }
             catch (Exception e) {
-                log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
-                        participation.getBuildPlanId(), e);
+                log.warn("Failed to migrate student build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(), participation.getBuildPlanId(),
+                        e);
                 errorList.add(participation);
             }
         }
