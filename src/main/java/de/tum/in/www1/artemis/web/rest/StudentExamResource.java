@@ -597,7 +597,15 @@ public class StudentExamResource {
         auditEventRepository.add(auditEvent);
 
         studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
-                numberOfGeneratedParticipations, formatDurationFrom(start), examId));
+                numberOfGeneratedParticipations, formatDurationFrom(start), examId)).thenRun(() -> {
+                    if (ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(exam))) {
+                        // This is a special case if "prepare exercise start" was pressed shortly before the exam start
+                        // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
+                        // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
+                        // Since this gets never executed here, we need to manually schedule the locking.
+                        instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(examId);
+                    }
+                });
         return ResponseEntity.ok().build();
     }
 

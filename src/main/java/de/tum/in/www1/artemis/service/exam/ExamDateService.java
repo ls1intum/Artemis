@@ -181,7 +181,14 @@ public class ExamDateService {
     }
 
     public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
+        if (!exercise.isExamExercise()) {
+            return null;
+        }
         // using start date minus 5 minutes here because unlocking will take some time (it is invoked synchronously).
-        return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
+        return getExamProgrammingExerciseUnlockDate(exercise.getExerciseGroup().getExam());
+    }
+
+    public static ZonedDateTime getExamProgrammingExerciseUnlockDate(Exam exam) {
+        return exam.getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }
 }
