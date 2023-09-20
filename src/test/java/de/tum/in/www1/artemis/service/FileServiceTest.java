@@ -410,28 +410,23 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_Path_Temp() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/temp/backgrounds/1/../../BackgroundFile.jpg"),
-                URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"))).doesNotThrowAnyException();
-    }
-
-    @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_SubPath_Temp() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/../../BackgroundFile.jpg"),
-                URI.create("/api/files/temp/"))).doesNotThrowAnyException();
-    }
-
-    @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Valid() {
         assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
                 URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"))).doesNotThrowAnyException();
     }
 
     @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/../../BackgroundFile.jpg"),
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
+                () -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/temp/backgrounds/1/../../../exam-users/signatures/some-file.png"),
                         URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/")));
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_SubPath() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
+                        URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/")));
     }
 
     @Test
@@ -441,9 +436,15 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid() {
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
+                URI.create("/api/files/temp/backgrounds/1/../../../exam-users/signatures/some-file.png"), URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/")));
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_SubPath() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/drag-items/1/../../PictureFile.jpg"),
-                        URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/")));
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/drag-items/1/PictureFile.jpg"),
+                        URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/")));
     }
 }

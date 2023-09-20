@@ -440,8 +440,8 @@ public class FileService implements DisposableBean {
      * @throws IllegalArgumentException if the provided path does not contain the provided sub-path
      */
     public static void sanitizeByCheckingIfPathContainsSubPathElseThrow(URI path, URI subPath) {
-        // Only act if path and subpath exist and if neither of them points to a temp location
-        if (path != null && !path.getPath().contains("files/temp") && subPath != null && !subPath.getPath().contains("files/temp")) {
+        // Only act if path and subpath exist
+        if (path != null && subPath != null) {
             // Removes redundant elements (e.g. ../ or ./) from the path and subPath
             URI normalisedPath = path.normalize();
             URI normalisedSubPath = subPath.normalize();
