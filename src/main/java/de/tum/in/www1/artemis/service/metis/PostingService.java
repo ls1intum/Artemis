@@ -243,8 +243,16 @@ public abstract class PostingService {
      * @return the list of logins of mentioned users
      */
     protected List<String> parseUserMentions(@NotNull Course course, String postingContent) {
-        // Define the regex pattern that matches user mentions and retrieves the full name and login in two groups
-        String regex = "\\[user\\](.*?)\\((.*?)\\)\\[/user\\]";
+        // Define a regular expression to match text enclosed in [user]...[/user] tags, along with login inside parentheses () within those tags.
+        // It makes use of the possessive quantifier "*+" to avoid backtracking and increase performance.
+        // Explanation:
+        // - "\\[user\\]" matches the literal string "[user]".
+        // - "([^\\[\\]()]*+)" captures any characters that are not '[', ']', '(', or ')' zero or more times. This captures the full name the user mention.
+        // - "\\(?" matches the literal '(' character.
+        // - "([^\\[\\]()]*+)" captures any characters that are not '[', ']', '(', or ')' zero or more times. This captures the content within parentheses.
+        // - "\\)?" matches the literal ')' character.
+        // - "\\[/user\\]" matches the literal string "[/user]".
+        String regex = "\\[user\\]([^\\[\\]()]*+)\\(?([^\\[\\]()]*+)\\)?\\[/user\\]";
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(Optional.ofNullable(postingContent).orElse(""));

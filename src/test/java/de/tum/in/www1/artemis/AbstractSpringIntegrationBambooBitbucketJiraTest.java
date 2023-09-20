@@ -658,12 +658,19 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         User courseMember2 = UserFactory.generateActivatedUser(courseMemberLogin2);
         User noCourseMember = UserFactory.generateActivatedUser("noCourseMember");
 
+        // First argument is a string containing a user mention
+        // Second argument indicates whether the user mention is valid
         return List.of(Arguments.of("no mention", true), // no user mention
                 Arguments.of("[user]" + courseMember1.getFullName() + "(" + courseMember1.getLogin() + ")[/user]", true), // valid mention
+                Arguments.of("[user](" + courseMember1.getLogin() + ")[/user]", false), // missing full name
+                Arguments.of("[user]" + courseMember1.getFullName() + "()[/user]", false), // missing login
+                Arguments.of("[user]" + courseMember1.getFullName() + "[/user]", false), // missing login and parentheses
                 Arguments.of("[user]" + courseMember2.getFullName() + "(" + courseMember2.getLogin() + ")[/user][user]" + courseMember1.getFullName() + "("
                         + courseMember1.getLogin() + ")[/user]", true), // multiple valid user mentions
                 Arguments.of("[user]invalidName(" + courseMember1.getLogin() + ")[/user]", false), // invalid full name
-                Arguments.of("[user]" + noCourseMember.getFullName() + "(" + noCourseMember.getLogin() + ")[/user]", false) // not a course member
+                Arguments.of("[user]" + noCourseMember.getFullName() + "(" + noCourseMember.getLogin() + ")[/user]", false), // not a course member
+                Arguments.of("[user]invalidName[user]" + courseMember1.getFullName() + "(" + courseMember1.getLogin() + ")[/user](invalid)[/user]", true) // matching only inner
+
         );
     }
 }
