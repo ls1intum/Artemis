@@ -3,10 +3,9 @@ package de.tum.in.www1.artemis.util.junit_parallel_logging;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import javax.validation.constraints.NotNull;
 
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -14,6 +13,13 @@ import ch.qos.logback.core.AppenderBase;
 import de.tum.in.www1.artemis.*;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 
+/**
+ * This custom appender is used to capture the logs of multiple tests running in parallel.
+ * <p>
+ * It captures the logs for each test group separately and prints them to the console at the end of the test class.
+ * The test group is determined by the test's class. Each test class can only be assigned to one test group.
+ * If a log cannot be assigned to a test group, the logs are printed for all active test groups.
+ */
 public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
     private PatternLayoutEncoder encoder;
@@ -21,6 +27,9 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
     private static final InheritableThreadLocal<Class<?>> LOCAL_TEST_GROUP = new InheritableThreadLocal<>();
 
     private static final ConcurrentMap<Class<?>, ByteArrayOutputStream> TEST_GROUP_TO_ENCODED_LOGS = new ConcurrentHashMap<>();
+
+    private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationBambooBitbucketJiraTest.class, AbstractSpringIntegrationGitlabCIGitlabSamlTest.class,
+            AbstractSpringIntegrationJenkinsGitlabTest.class, AbstractSpringIntegrationLocalCILocalVCTest.class, AbstractSpringIntegrationIndependentTest.class);
 
     @Override
     protected synchronized void append(ILoggingEvent loggingEvent) {
@@ -52,7 +61,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
      * @param testClass the test's class for which the logs should be printed
      */
     public static synchronized void printLogsForGroup(Class<?> testClass) {
-        Class<?> testGroupClass = TestGroup.fromClass(testClass);
+        Class<?> testGroupClass = groupFromClass(testClass);
         ByteArrayOutputStream logs = TEST_GROUP_TO_ENCODED_LOGS.remove(testGroupClass);
         if (logs == null) {
             return;
@@ -98,7 +107,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
      * @param testClass the test's class
      */
     public static void registerActiveTestGroup(Class<?> testClass) {
-        LOCAL_TEST_GROUP.set(TestGroup.fromClass(testClass));
+        LOCAL_TEST_GROUP.set(groupFromClass(testClass));
     }
 
     /**
@@ -123,35 +132,28 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
         this.encoder = encoder;
     }
 
-    private enum TestGroup {
-
-        BAMBOO_INTEGRATION_TEST(AbstractSpringIntegrationBambooBitbucketJiraTest.class), GITLAB_INTEGRATION_TEST(AbstractSpringIntegrationGitlabCIGitlabSamlTest.class),
-        JENKINS_INTEGRATION_TEST(AbstractSpringIntegrationJenkinsGitlabTest.class), LOCAL_INTEGRATION_TEST(AbstractSpringIntegrationLocalCILocalVCTest.class),
-        MIN_INTEGRATION_TEST(AbstractSpringIntegrationIndependentTest.class);
-
-        @NotNull
-        private final Class<?> clazz;
-
-        TestGroup(Class<?> clazz) {
-            this.clazz = clazz;
+    /**
+     * Returns the test group's class for the given class.
+     * If none of the groups' classes is assignable from the given class, the class itself is returned.
+     *
+     * @param clazz the class for which the test group's class should be returned
+     * @return the test group's class for the given class
+     */
+    private static Class<?> groupFromClass(Class<?> clazz) {
+        if (clazz == null) {
+            return null;
         }
 
-        public static Class<?> fromClass(Class<?> clazz) {
-            if (clazz == null) {
-                return null;
+        for (Class<?> group : TEST_GROUPS) {
+            if (group.isAssignableFrom(clazz)) {
+                return group;
             }
-
-            for (TestGroup group : values()) {
-                if (group.clazz.isAssignableFrom(clazz)) {
-                    return group.clazz;
-                }
-            }
-
-            if (AbstractArtemisIntegrationTest.class.isAssignableFrom(clazz)) {
-                fail("Test class " + clazz.getName() + " extends ArtemisIntegrationTest but is not assigned to a test group");
-            }
-
-            return clazz;
         }
+
+        if (AbstractArtemisIntegrationTest.class.isAssignableFrom(clazz)) {
+            fail("Test class " + clazz.getName() + " extends ArtemisIntegrationTest but is not assigned to a test group");
+        }
+
+        return clazz;
     }
 }
