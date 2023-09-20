@@ -470,9 +470,4 @@ public class User extends AbstractAuditingEntity implements Participant {
     public ZonedDateTime getIrisAcceptedTimestamp() {
         return irisAccepted;
     }
-
-    @JsonIgnore
-    public String getFullName() {
-        return (this.getFirstName() + ' ' + this.getLastName()).strip();
-    }
 }
