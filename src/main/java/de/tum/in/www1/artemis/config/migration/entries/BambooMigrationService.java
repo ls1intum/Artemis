@@ -22,6 +22,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -119,7 +120,12 @@ public class BambooMigrationService implements CIVCSMigrationService {
         List<Long> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
 
         for (var notificationId : notificationIds) {
-            deleteBuildPlanServerNotificationId(buildPlanKey, notificationId);
+            try {
+                deleteBuildPlanServerNotificationId(buildPlanKey, notificationId);
+            }
+            catch (RestClientException e) {
+                log.error("Could not delete notification with id " + notificationId + " for build plan " + buildPlanKey, e);
+            }
         }
 
         createBuildPlanServerNotification(buildPlanKey, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
@@ -321,15 +327,12 @@ public class BambooMigrationService implements CIVCSMigrationService {
             if (columns.size() != 3) {
                 continue;
             }
-            String recipient = columns.get(1).text();
             String actions = columns.get(2).toString();
             Pattern editNotificationIdPattern = Pattern.compile(".*?id=\"editNotification:(\\d+)\".*?");
-            if (recipient.trim().startsWith(artemisServerUrl)) {
-                Matcher matcher = editNotificationIdPattern.matcher(actions);
-                if (matcher.find()) {
-                    String notificationIdString = matcher.group(1);
-                    notificationIds.add(Long.parseLong(notificationIdString));
-                }
+            Matcher matcher = editNotificationIdPattern.matcher(actions);
+            if (matcher.find()) {
+                String notificationIdString = matcher.group(1);
+                notificationIds.add(Long.parseLong(notificationIdString));
             }
         }
 
