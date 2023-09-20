@@ -68,7 +68,7 @@ export class LearningPathGraphComponent implements OnInit {
     }
 
     @Input() set panningEnabled(value) {
-        this._panningEnabled = value || false;
+        this._panningEnabled = value && this.viewMode !== LearningPathViewMode.PATH;
     }
 
     get panningEnabled() {
@@ -76,20 +76,19 @@ export class LearningPathGraphComponent implements OnInit {
     }
 
     @Input() set zoomEnabled(value) {
-        this._zoomEnabled = value || false;
+        this._zoomEnabled = value && this.viewMode !== LearningPathViewMode.PATH;
     }
 
     get zoomEnabled() {
         return this._zoomEnabled;
     }
 
-    @Input('panOnZoom')
-    get panOnZoom() {
-        return this._panOnZoom;
+    @Input() set panOnZoom(value) {
+        this._panOnZoom = value && this.viewMode !== LearningPathViewMode.PATH;
     }
 
-    set panOnZoom(value) {
-        this._panOnZoom = value || false;
+    get panOnZoom() {
+        return this._panOnZoom;
     }
 
     refreshData() {
@@ -202,5 +201,5 @@ export class LearningPathGraphComponent implements OnInit {
         });
     }
 
-    protected readonly PATH = LearningPathViewMode.PATH;
+    protected readonly LearningPathViewMode = LearningPathViewMode;
 }

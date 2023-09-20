@@ -1,12 +1,31 @@
 <div class="row mt-2 main-container">
-    <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
+    <div class="col d-flex flex-column flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
+        <button
+            type="button"
+            class="btn btn-primary prev-button"
+            (click)="onPrevTask()"
+            [disabled]="!learningPathStorageService.hasPrevRecommendation(this.learningPathId, currentStateToEntry())"
+            ngbTooltip="{{ 'artemisApp.learningPath.participate.prevHint' | artemisTranslate }}"
+        >
+            <fa-icon [icon]="faChevronUp"></fa-icon>
+        </button>
         <jhi-learning-path-graph-sidebar
+            class="my-2"
             #graphSidebar
             *ngIf="learningPathId"
             [courseId]="courseId"
             [learningPathId]="learningPathId"
             (nodeClicked)="onNodeClicked($event)"
         ></jhi-learning-path-graph-sidebar>
+        <button
+            type="button"
+            class="btn btn-primary next-button"
+            (click)="onNextTask()"
+            [disabled]="!learningPathStorageService.hasNextRecommendation(this.learningPathId, currentStateToEntry())"
+            ngbTooltip="{{ 'artemisApp.learningPath.participate.nextHint' | artemisTranslate }}"
+        >
+            <fa-icon [icon]="faChevronDown"></fa-icon>
+        </button>
     </div>
     <div class="col pe-0 flex-grow-1" style="min-width: 200px">
         <div class="card" style="border-style: none">
@@ -15,29 +34,5 @@
             </div>
             <router-outlet *ngIf="lectureUnit || exercise" (activate)="onChildActivate($event)"></router-outlet>
         </div>
-    </div>
-</div>
-<div class="row mt-2">
-    <div class="col-auto">
-        <button
-            type="button"
-            class="btn btn-primary prev-button"
-            (click)="onPrevTask()"
-            [disabled]="!learningPathStorageService.hasPrevRecommendation(this.learningPathId, currentStateToEntry())"
-        >
-            <fa-icon [icon]="faChevronLeft"></fa-icon>
-            <span jhiTranslate="artemisApp.learningPath.participate.prev" ngbTooltip="{{ 'artemisApp.learningPath.participate.prevHint' | artemisTranslate }}">Previous</span>
-        </button>
-    </div>
-    <div class="col-auto">
-        <button
-            type="button"
-            class="btn btn-primary next-button"
-            (click)="onNextTask()"
-            [disabled]="!learningPathStorageService.hasNextRecommendation(this.learningPathId, currentStateToEntry())"
-        >
-            <span jhiTranslate="artemisApp.learningPath.participate.next" ngbTooltip="{{ 'artemisApp.learningPath.participate.nextHint' | artemisTranslate }}">Next</span>
-            <fa-icon [icon]="faChevronRight"></fa-icon>
-        </button>
     </div>
 </div>

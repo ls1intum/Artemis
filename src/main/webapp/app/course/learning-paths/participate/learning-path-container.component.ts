@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -35,8 +35,8 @@ export class LearningPathContainerComponent implements OnInit {
     exercise: Exercise | undefined;
 
     // icons
-    faChevronLeft = faChevronLeft;
-    faChevronRight = faChevronRight;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
 
     constructor(
         private router: Router,
@@ -63,8 +63,9 @@ export class LearningPathContainerComponent implements OnInit {
         const entry = this.currentStateToEntry();
         // reset state to avoid invalid states
         this.undefineAll();
-        const recommendation = this.learningPathStorageService.getNextRecommendation(this.learningPathId, entry);
-        this.loadEntry(recommendation);
+        if (this.learningPathStorageService.hasNextRecommendation(this.learningPathId, entry)) {
+            this.loadEntry(this.learningPathStorageService.getNextRecommendation(this.learningPathId, entry));
+        }
     }
 
     onPrevTask() {
@@ -107,6 +108,7 @@ export class LearningPathContainerComponent implements OnInit {
             return;
         }
         this.graphSidebar.learningPathGraphComponent.highlightNode(entry);
+        this.scrollTo(this.graphSidebar.learningPathGraphComponent.highlightedNode!);
     }
 
     loadLectureUnit() {
@@ -173,6 +175,15 @@ export class LearningPathContainerComponent implements OnInit {
                 this.loadExercise();
                 this.graphSidebar.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
             }
+            if (this.graphSidebar.learningPathGraphComponent.highlightedNode) {
+                this.scrollTo(this.graphSidebar.learningPathGraphComponent.highlightedNode);
+            }
         }
+    }
+
+    scrollTo(node: NgxLearningPathNode) {
+        document.getElementById(node.id)?.scrollIntoView({
+            behavior: 'smooth',
+        });
     }
 }
