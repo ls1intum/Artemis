@@ -99,10 +99,6 @@ export class ExamResultOverviewComponent implements OnInit {
         return this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
-    getAchievedScoreSum() {
-        return 10;
-    }
-
     getAchievedPoints(exercise: Exercise): number {
         return this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
     }
