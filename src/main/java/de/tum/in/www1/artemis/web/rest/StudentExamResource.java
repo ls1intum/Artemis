@@ -603,7 +603,7 @@ public class StudentExamResource {
                         // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
                         // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
                         // Since this gets never executed here, we need to manually schedule the locking.
-                        instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(examId);
+                        instanceMessageSendService.sendRescheduleAllStudentExams(examId);
                     }
                 });
         return ResponseEntity.ok().build();

@@ -295,7 +295,7 @@ public class ExamResource {
 
         // NOTE: if the exam is already visible, notify instances about the working time change
         if (now.isAfter(exam.getVisibleDate())) {
-            instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(exam.getId());
+            instanceMessageSendService.sendRescheduleAllStudentExams(exam.getId());
         }
 
         if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
