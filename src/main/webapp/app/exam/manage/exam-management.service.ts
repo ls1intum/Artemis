@@ -492,6 +492,10 @@ export class ExamManagementService {
         return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 
+    cleanupExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/cleanup`, { observe: 'response' });
+    }
+
     private sendTitlesToEntityTitleService(exam: Exam | undefined | null) {
         this.entityTitleService.setTitle(EntityType.EXAM, [exam?.id], exam?.title);
     }
