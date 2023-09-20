@@ -450,7 +450,7 @@ public class MetricsBean {
 
         ensureCourseInformationIsSet(courses);
 
-        var activeCourses = courses.stream()
+        var activeCourses = courses.stream().filter(course -> !course.isTestCourse())
                 .filter(course -> (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now)))
                 .toList();
 
