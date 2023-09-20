@@ -117,19 +117,29 @@ public class BambooMigrationService implements CIVCSMigrationService {
 
     @Override
     public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
-        List<Long> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
+        Map<Long, String> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
         log.info("Found {} notifications for build plan {}", notificationIds.size(), buildPlanKey);
 
-        for (var notificationId : notificationIds) {
-            try {
-                deleteBuildPlanServerNotificationId(buildPlanKey, notificationId);
-            }
-            catch (RestClientException e) {
-                log.error("Could not delete notification with id " + notificationId + " for build plan " + buildPlanKey, e);
-            }
+        List<Long> idsWithValidUrl = notificationIds.entrySet().stream().filter(entry -> entry.getValue().equals(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH))
+                .map(Map.Entry::getKey).toList();
+        boolean hasValidUrl = !idsWithValidUrl.isEmpty();
+        if (hasValidUrl) {
+            log.info("Build plan {} already has a notification with the correct URL", buildPlanKey);
+            notificationIds.remove(idsWithValidUrl.get(0));
         }
 
-        createBuildPlanServerNotification(buildPlanKey, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
+        notificationIds.forEach((id, url) -> {
+            try {
+                deleteBuildPlanServerNotificationId(buildPlanKey, id);
+            }
+            catch (RestClientException e) {
+                log.error("Could not delete notification with id " + id + " for build plan " + buildPlanKey, e);
+            }
+        });
+
+        if (!hasValidUrl) {
+            createBuildPlanServerNotification(buildPlanKey, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
+        }
     }
 
     @Override
@@ -304,7 +314,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
      * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @return a list of all notification ids
      */
-    private List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
+    private Map<Long, String> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("buildKey", buildPlanKey);
         String requestUrl = bambooServerUrl + "/chain/admin/config/defaultChainNotification.action";
@@ -313,31 +323,32 @@ public class BambooMigrationService implements CIVCSMigrationService {
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, String.class);
         var html = response.getBody();
         if (html == null) {
-            return List.of();
+            return Map.of();
         }
         Element notificationTableBody = Jsoup.parse(html).selectFirst("table#notificationTable tbody");
         if (notificationTableBody == null) {
-            return List.of();
+            return Map.of();
         }
         // First column is the event, second column the recipient, third the actions
         // If there is a URL, the URL is the recipient. In that case we take the notification id from the edit button
         Elements entries = notificationTableBody.select("tr");
-        List<Long> notificationIds = new ArrayList<>();
+        Map<Long, String> notificationIdToRecipient = new HashMap<>();
         for (Element entry : entries) {
             Elements columns = entry.select("td");
             if (columns.size() != 3) {
                 continue;
             }
+            String recipient = columns.get(1).text();
             String actions = columns.get(2).toString();
             Pattern editNotificationIdPattern = Pattern.compile(".*?id=\"editNotification:(\\d+)\".*?");
             Matcher matcher = editNotificationIdPattern.matcher(actions);
             if (matcher.find()) {
                 String notificationIdString = matcher.group(1);
-                notificationIds.add(Long.parseLong(notificationIdString));
+                notificationIdToRecipient.put(Long.parseLong(notificationIdString), recipient);
             }
         }
 
-        return notificationIds;
+        return notificationIdToRecipient;
     }
 
     /**
