@@ -121,7 +121,7 @@ export class UnreferencedFeedbackComponent {
      * Return an empty string if the assessment note or its note field is undefined, or otherwise the text of the note.
      */
     getAssessmentNoteText() {
-        if (!this.assessmentNote !== undefined && this.assessmentNote.note !== undefined) {
+        if (this.assessmentNote !== undefined && this.assessmentNote.note !== undefined) {
             return this.assessmentNote.note;
         } else {
             return '';
