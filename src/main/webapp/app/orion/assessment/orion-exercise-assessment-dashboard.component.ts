@@ -19,8 +19,9 @@ import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.comp
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     readonly ExerciseView = ExerciseView;
     readonly ExerciseType = ExerciseType;
-    orionState: OrionState;
+    protected readonly OrionButtonType = OrionButtonType;
 
+    orionState: OrionState;
     exerciseId: number;
     exercise: Exercise;
 
@@ -55,6 +56,4 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0, testRun = false) {
         this.orionAssessmentService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound, testRun);
     }
-
-    protected readonly OrionButtonType = OrionButtonType;
 }
