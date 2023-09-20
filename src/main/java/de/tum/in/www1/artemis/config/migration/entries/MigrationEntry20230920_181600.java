@@ -51,8 +51,6 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
     private final Optional<CIVCSMigrationService> ciMigrationService;
 
     private final Optional<VersionControlService> versionControlService;
@@ -74,7 +72,6 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.ciMigrationService = ciMigrationService;
         this.versionControlService = versionControlService;
         this.environment = environment;
@@ -217,8 +214,6 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                 var startMs = System.currentTimeMillis();
 
                 migrateSolutionBuildPlan(participation);
-
-                migrateTestRepository(participation);
                 log.info("Migrated template build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             }
             catch (Exception e) {
@@ -266,8 +261,6 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                 var startMs = System.currentTimeMillis();
 
                 migrateTemplateBuildPlan(participation);
-
-                migrateTestRepository(participation);
                 log.info("Migrated template build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             }
             catch (Exception e) {
@@ -317,29 +310,6 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                         participation.getBuildPlanId(), e);
                 errorList.add(participation);
             }
-        }
-    }
-
-    /**
-     * Migrates a single test repository. This method is idempotent, i.e. if you invoke it multiple times, it would still work fine
-     *
-     * @param participation The participation to migrate, needed so we can map the error to the participation
-     */
-    private void migrateTestRepository(AbstractBaseProgrammingExerciseParticipation participation) {
-        var exercise = participation.getProgrammingExercise();
-        if (exercise.getTestRepositoryUrl() == null) {
-            /*
-             * when the test repository url is null, we don't have to migrate the test build plan, saving multiple API calls
-             * this is also only needed for Jenkins, as Bamboo does not have a separate test build plan
-             */
-            return;
-        }
-        try {
-            ciMigrationService.orElseThrow().removeWebHook(exercise.getVcsTestRepositoryUrl());
-        }
-        catch (Exception e) {
-            log.warn("Failed to delete build triggers in test repository for exercise {} with test repository {}", exercise.getId(), exercise.getVcsTestRepositoryUrl(), e);
-            errorList.add(participation);
         }
     }
 
