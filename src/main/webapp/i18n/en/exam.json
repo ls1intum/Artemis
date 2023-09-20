@@ -91,7 +91,6 @@
                         "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}.",
                         "POINTS": "You received {{achievedBonus}} additional bonus points from {{bonusFromTitle}}."
                     },
-                    "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus.",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
                 "grade": "Grade",
