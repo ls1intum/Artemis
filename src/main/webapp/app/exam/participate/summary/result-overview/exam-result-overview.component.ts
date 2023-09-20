@@ -10,6 +10,7 @@ import { BonusStrategy } from 'app/entities/bonus.model';
 import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/result/updating-result.component';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-result-overview',
@@ -133,6 +134,26 @@ export class ExamResultOverviewComponent implements OnInit {
         }
 
         return exerciseResult;
+    }
+
+    getAchievedPercentageByExerciseId(exerciseId?: number): number | undefined {
+        const result = this.getExerciseResultByExerciseId(exerciseId);
+        if (result === undefined) {
+            return undefined;
+        }
+
+        const course = this.studentExamWithGrade.studentExam?.exam?.course;
+
+        if (result.achievedScore !== undefined) {
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
+        }
+
+        const canCalculatePercentage = result.maxScore && result.achievedPoints !== undefined;
+        if (canCalculatePercentage) {
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, course);
+        }
+
+        return undefined;
     }
 
     scrollToExercise(exerciseId?: number) {
