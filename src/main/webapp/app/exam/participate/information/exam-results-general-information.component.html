@@ -41,6 +41,11 @@
                             <td>{{ exam.startDate | artemisDate: 'time' }} - {{ examEndDate | artemisDate: 'time' }}</td>
                         </tr>
                     </ng-template>
+
+                    <tr *ngIf="exam.endDate && studentExam.workingTime">
+                        <th>{{ 'artemisApp.exam.duration' | artemisTranslate }}:</th>
+                        <td><jhi-student-exam-working-time [studentExam]="studentExam" /></td>
+                    </tr>
                 </ng-container>
 
                 <tr *ngIf="exam && studentExam.ended && (exam.examStudentReviewStart || exam.examStudentReviewEnd)">
