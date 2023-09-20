@@ -29,7 +29,7 @@ import { isPracticeMode } from 'app/entities/participation/student-participation
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
-    styles: ['span { display: inline-block; line-height: 1.25 }'],
+    styleUrls: ['./result.component.scss'],
 })
 
 /**
