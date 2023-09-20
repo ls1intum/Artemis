@@ -118,6 +118,7 @@ public class BambooMigrationService implements CIVCSMigrationService {
     @Override
     public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
         List<Long> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
+        log.info("Found {} notifications for build plan {}", notificationIds.size(), buildPlanKey);
 
         for (var notificationId : notificationIds) {
             try {

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
-import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDuration;
-
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +23,6 @@ import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -85,22 +82,11 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
             return;
         }
 
-        try {
-            ciMigrationService.orElseThrow().checkPrerequisites();
-        }
-        catch (ContinuousIntegrationException e) {
-            log.error("Can not run migration because the prerequisites for it to succeed are not met: {}", e.getMessage());
-            throw e;
-        }
         var programmingExerciseCount = programmingExerciseRepository.count();
         var studentCount = ciMigrationService.orElseThrow().getPageableStudentParticipations(programmingExerciseStudentParticipationRepository, Pageable.unpaged())
                 .getTotalElements();
 
-        var totalCount = programmingExerciseCount * 2 + studentCount; // seconds
-
-        log.info("Will migrate {} programming exercises and {} student participations now. Stay tuned! Estimate duration of the migration: {}", programmingExerciseCount,
-                studentCount, formatDuration(totalCount));
-        log.info("Artemis will be available again after the migration has finished.");
+        log.info("Will migrate {} programming exercises and {} student participations now.", programmingExerciseCount, studentCount);
 
         // Number of full batches. The last batch might be smaller
         long totalFullBatchCount = programmingExerciseCount / BATCH_SIZE;
@@ -198,23 +184,10 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                     continue;
                 }
 
-                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
-                // we had in the past
-                // note: this method calls directly saves the participation in the database with the updated branch
-                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
-                if (branch == null || branch.isEmpty()) {
-                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                            participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
-                    continue;
-                }
-
                 log.info("Migrating solution build plan with name {} for exercise {}",
                         participation.getProgrammingExercise().getProjectKey() + "-" + participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
 
-                var startMs = System.currentTimeMillis();
-
                 migrateSolutionBuildPlan(participation);
-                log.info("Migrated template build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             }
             catch (Exception e) {
                 log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
@@ -248,20 +221,7 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                 log.info("Migrating build plan with name {} for exercise {}", participation.getProgrammingExercise().getProjectKey() + "-" + participation.getBuildPlanId(),
                         participation.getProgrammingExercise().getId());
 
-                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that
-                // we had in the past
-                // note: this method calls directly saves the participation in the database with the updated branch
-                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
-                if (branch == null || branch.isEmpty()) {
-                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                            participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
-                    // CANCEL THE SUBSEQUENT OPERATIONS FOR THIS PROGRAMMING EXERCISE
-                    continue;
-                }
-                var startMs = System.currentTimeMillis();
-
                 migrateTemplateBuildPlan(participation);
-                log.info("Migrated template build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             }
             catch (Exception e) {
                 log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
@@ -289,21 +249,9 @@ public class MigrationEntry20230920_181600 extends MigrationEntry {
                     continue;
                 }
 
-                // 2nd step: check if the default branch exists, this cleans up the database a bit and fixes the effects of a bug that we had in the past
-                // note: this method calls directly saves the participation in the database with the updated branch in case it was not available
-                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(participation);
-                if (branch == null || branch.isEmpty()) {
-                    log.warn("Failed to get default branch for template of exercise {} with buildPlanId {}, will abort migration for this Participation",
-                            participation.getProgrammingExercise().getId(), participation.getBuildPlanId());
-                    continue;
-                }
-
                 log.info("Migrating student participation with buildPlanId {} for exercise {}", participation.getBuildPlanId(), participation.getProgrammingExercise().getId());
 
-                var startMs = System.currentTimeMillis();
-
                 migrateStudentBuildPlan(participation);
-                log.info("Migrated student build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             }
             catch (Exception e) {
                 log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
