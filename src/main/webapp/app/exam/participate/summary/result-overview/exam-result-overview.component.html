@@ -23,6 +23,7 @@
                         'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
                     }"
                     (click)="scrollToExercise(exercise.id)"
+                    [class.not-included-in-score]="exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED"
                 >
                     <th scope="row">{{ exerciseIndex + 1 }}</th>
                     <td>
