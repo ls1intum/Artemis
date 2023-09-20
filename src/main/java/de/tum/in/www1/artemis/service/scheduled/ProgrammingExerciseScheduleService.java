@@ -803,7 +803,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise                             the programming exercise for which the lock is executed
      * @param individualParticipationsWithDueDates the set of student participations with their individual due dates
      */
-    public void scheduleIndividualRepositoryAndParticipationLockTasks(ProgrammingExercise exercise,
+    private void scheduleIndividualRepositoryAndParticipationLockTasks(ProgrammingExercise exercise,
             Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualParticipationsWithDueDates) {
         // 1. Group all participations by due date
         // TODO: use student exams for safety if some participations are not pre-generated

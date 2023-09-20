@@ -7,6 +7,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -782,21 +783,24 @@ public class CourseService {
 
     /**
      * Cleans up a course by cleaning up all exercises from that course. This deletes all student
-     * submissions. Note that a course has to be archived first before being cleaned up.
+     * repositories and build plans. Note that a course has to be archived first before being cleaned up.
      *
-     * @param courseId The id of the course to clean up
+     * @param courseId  The id of the course to clean up
+     * @param principal the user that wants to cleanup the course
      */
-    public void cleanupCourse(Long courseId) {
+    public void cleanupCourse(Long courseId, Principal principal) {
+        final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_COURSE, "course=" + courseId);
+        auditEventRepository.add(auditEvent);
         // Get the course with all exercises
-        var course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
+        var course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;
         }
 
         // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
-        // hibernate sometimes adds nulls to in the list of exercise groups to keep the order
-        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().map(Exam::getExerciseGroups).flatMap(Collection::stream)
+        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().flatMap(e -> e.getExerciseGroups().stream())
                 .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
@@ -804,8 +808,6 @@ public class CourseService {
             if (exercise instanceof ProgrammingExercise) {
                 exerciseDeletionService.cleanup(exercise.getId(), true);
             }
-
-            // TODO: extend exerciseDeletionService.cleanup to clean up all exercise types
         });
 
         log.info("The course {} has been cleaned up!", courseId);
