@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.hestia;
 
 import java.time.ZonedDateTime;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,12 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
         Course course = courseUtilService.addEmptyCourse();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+    }
+
+    @AfterEach
+    void cleanup() throws Exception {
+        solutionRepo.resetLocalRepo();
+        templateRepo.resetLocalRepo();
     }
 
     @Test

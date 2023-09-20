@@ -234,6 +234,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Add the appender to the logger, the addAppender is outdated now
         logger.addAppender(listAppender);
+        templateRepository.resetLocalRepo();
     }
 
     @AfterEach
@@ -631,6 +632,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
 
         request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
+        instructorAssignmentRepository.resetLocalRepo();
     }
 
     @Test

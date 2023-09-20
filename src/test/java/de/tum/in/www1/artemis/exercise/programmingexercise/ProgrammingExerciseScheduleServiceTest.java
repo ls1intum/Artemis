@@ -113,7 +113,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @AfterEach
-    void tearDown() throws InterruptedException {
+    void tearDown() throws Exception {
         // not yet finished scheduled futures may otherwise affect following tests
         scheduleService.clearAllTasks();
 
@@ -124,6 +124,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
+        studentRepository.resetLocalRepo();
     }
 
     private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, long timeoutInMs) {
