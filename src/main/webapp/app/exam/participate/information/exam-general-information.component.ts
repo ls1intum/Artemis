@@ -13,6 +13,7 @@ export class ExamGeneralInformationComponent implements OnInit {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
     @Input() reviewIsOpen?: boolean = false;
+    @Input() displayTitle?: boolean = true;
 
     examEndDate?: dayjs.Dayjs;
     normalWorkingTime?: number;
