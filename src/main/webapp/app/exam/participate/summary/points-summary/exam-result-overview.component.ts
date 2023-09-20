@@ -16,7 +16,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./exam-result-overview.component.scss'],
     templateUrl: './exam-result-overview.component.html',
 })
-export class ExamPointsSummaryComponent implements OnInit {
+export class ExamResultOverviewComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
 

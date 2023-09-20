@@ -15,7 +15,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ExamGeneralInformationComponent } from 'app/exam/participate/information/exam-general-information.component';
-import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
+import { ExamResultOverviewComponent } from 'app/exam/participate/summary/points-summary/exam-result-overview.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -56,7 +56,7 @@ import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overvie
         TextExamSummaryComponent,
         QuizExamSummaryComponent,
         ExamGeneralInformationComponent,
-        ExamPointsSummaryComponent,
+        ExamResultOverviewComponent,
         TestRunRibbonComponent,
         ExampleSolutionComponent,
     ],

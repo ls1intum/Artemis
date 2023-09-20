@@ -5,7 +5,7 @@ import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
+import { ExamResultOverviewComponent } from 'app/exam/participate/summary/points-summary/exam-result-overview.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -21,8 +21,8 @@ import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
-let fixture: ComponentFixture<ExamPointsSummaryComponent>;
-let component: ExamPointsSummaryComponent;
+let fixture: ComponentFixture<ExamResultOverviewComponent>;
+let component: ExamResultOverviewComponent;
 let studentExamWithGrade: StudentExamWithGradeDTO;
 
 const visibleDate = dayjs().subtract(7, 'hours');
@@ -120,7 +120,7 @@ describe('ExamPointsSummaryComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
-            declarations: [ExamPointsSummaryComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExamResultOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(ExerciseService)],
         })
             .compileComponents()
@@ -157,7 +157,7 @@ describe('ExamPointsSummaryComponent', () => {
                 course.id = 1;
                 course.accuracyOfScores = 2;
 
-                fixture = TestBed.createComponent(ExamPointsSummaryComponent);
+                fixture = TestBed.createComponent(ExamResultOverviewComponent);
                 component = fixture.componentInstance;
                 exam.course = course;
                 component.gradingScaleExists = false;
