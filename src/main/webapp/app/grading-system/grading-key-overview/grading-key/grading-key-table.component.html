@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-5">
         <h6 *ngIf="!isExam">{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
-        <div style="font-size: 1.1em">
+        <div>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -36,7 +36,7 @@
             </table>
         </div>
         <div>
-            <h5>{{ 'artemisApp.gradingSystem.overview.intervals.title' | artemisTranslate }}</h5>
+            <h6>{{ 'artemisApp.gradingSystem.overview.intervals.title' | artemisTranslate }}</h6>
             <ul>
                 <li><span style="font-weight: bold">[a, b)</span>: {{ 'artemisApp.gradingSystem.overview.intervals.leftInclusiveRightExclusive' | artemisTranslate }}</li>
                 <li><span style="font-weight: bold">(a, b]</span>: {{ 'artemisApp.gradingSystem.overview.intervals.leftExclusiveRightInclusive' | artemisTranslate }}</li>
