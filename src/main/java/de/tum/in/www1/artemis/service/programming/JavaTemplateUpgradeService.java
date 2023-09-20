@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -289,7 +288,9 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             Optional<File> repoFile = getFileByName(repository, filename);
             Optional<Resource> templateResource = getFileByName(templateResources, filename);
             if (repoFile.isPresent() && templateResource.isPresent()) {
-                FileUtils.copyFile(templateResource.get().getFile(), repoFile.get(), StandardCopyOption.REPLACE_EXISTING);
+                try (InputStream inputStream = templateResource.get().getInputStream()) {
+                    FileUtils.copyToFile(inputStream, repoFile.get());
+                }
             }
         }
     }

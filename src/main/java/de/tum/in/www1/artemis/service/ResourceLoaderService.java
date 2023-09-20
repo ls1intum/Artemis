@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -202,7 +200,7 @@ public class ResourceLoaderService {
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
             Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
-            FileUtils.copyFile(resource.getFile(), resourcePath.toFile(), REPLACE_EXISTING);
+            FileUtils.copyToFile(resource.getInputStream(), resourcePath.toFile());
             // Delete the temporary file when the JVM exits.
             resourcePath.toFile().deleteOnExit();
             return resourcePath;

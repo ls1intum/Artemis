@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
 import java.net.URI;
@@ -324,7 +323,7 @@ public class FileService implements DisposableBean {
             return;
         }
 
-        FileUtils.copyFile(resource.getFile(), targetPath.toFile(), REPLACE_EXISTING);
+        FileUtils.copyToFile(resource.getInputStream(), targetPath.toFile());
 
         if (targetPath.endsWith("gradlew")) {
             targetPath.toFile().setExecutable(true);
