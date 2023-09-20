@@ -109,11 +109,11 @@ public class FilePathService {
         if (uriPath.startsWith("/api/files/course/icons")) {
             return FilePathService.getCourseIconFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/exam-user")) {
-            return FilePathService.getStudentImageFilePath().resolve(filename);
-        }
         if (uriPath.startsWith("/api/files/exam-user/signatures")) {
             return FilePathService.getExamUserSignatureFilePath().resolve(filename);
+        }
+        if (uriPath.startsWith("/api/files/exam-user")) {
+            return FilePathService.getStudentImageFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/attachments/lecture")) {
             String lectureId = path.getName(4).toString();
