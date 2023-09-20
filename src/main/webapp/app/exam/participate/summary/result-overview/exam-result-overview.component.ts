@@ -61,7 +61,7 @@ export class ExamResultOverviewComponent implements OnInit {
      */
     showIncludedInScoreColumn(): boolean {
         for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
-            if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 return true;
             }
         }
