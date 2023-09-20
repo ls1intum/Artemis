@@ -51,8 +51,6 @@ public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
-    private static final String WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
-
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
     private final ParticipationService participationService;
@@ -646,6 +644,14 @@ public class StudentExamService {
                                 || ExamDateService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                             // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingParticipation);
+
+                            // This is a special case if "prepare exercise start" was pressed shortly before the exam start
+                            // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
+                            // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
+                            // Since this gets never executed here, we need to manually schedule the locking.
+                            // TODO: reconsider this edge case and instead send a message to over the instanceMessageSendService
+                            // var tupel = new Tuple<>(studentExam.getIndividualEndDate(), programmingParticipation);
+                            // programmingExerciseScheduleService.scheduleIndividualRepositoryAndParticipationLockTasks(programmingExercise, Set.of(tupel));
                         }
                         else {
                             programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
@@ -785,9 +791,5 @@ public class StudentExamService {
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
         return studentExamRepository.createRandomStudentExams(exam, userHashSet).get(0);
-    }
-
-    public void notifyStudentAboutWorkingTimeChangeDuringConduction(StudentExam studentExam) {
-        websocketMessagingService.sendMessage(WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(studentExam.getId()), studentExam.getWorkingTime());
     }
 }
