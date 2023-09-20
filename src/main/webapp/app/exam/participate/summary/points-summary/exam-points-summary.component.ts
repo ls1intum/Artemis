@@ -88,7 +88,6 @@ export class ExamPointsSummaryComponent implements OnInit {
     }
 
     getAchievedPointsSum() {
-        // console.log('studentExamWithGrade', this.studentExamWithGrade);
         return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
