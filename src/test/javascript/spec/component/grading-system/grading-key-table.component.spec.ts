@@ -1,5 +1,4 @@
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -23,10 +22,11 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseScores, StudentScores } from 'app/course/course-scores/course-scores';
+import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 
-describe('GradeKeyOverviewComponent', () => {
-    let fixture: ComponentFixture<GradingKeyOverviewComponent>;
-    let comp: GradingKeyOverviewComponent;
+describe('GradingKeyTableComponent', () => {
+    let fixture: ComponentFixture<GradingKeyTableComponent>;
+    let comp: GradingKeyTableComponent;
     let route: ActivatedRoute;
 
     let gradingSystemService: GradingSystemService;
@@ -75,7 +75,7 @@ describe('GradeKeyOverviewComponent', () => {
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbModule)],
             declarations: [
-                GradingKeyOverviewComponent,
+                GradingKeyTableComponent,
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
@@ -95,7 +95,7 @@ describe('GradeKeyOverviewComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(GradingKeyOverviewComponent);
+                fixture = TestBed.createComponent(GradingKeyTableComponent);
                 comp = fixture.componentInstance;
                 gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
                 bonusService = fixture.debugElement.injector.get(BonusService);
