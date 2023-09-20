@@ -27,9 +27,8 @@
                     <tr *ngIf="isExamOverMultipleDays; else examSingleDay">
                         <th>{{ 'artemisApp.exam.time' | artemisTranslate }}:</th>
                         <td>
-                            {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }}
-                            -
-                            {{ examEndDate | artemisDate: 'long-date' }} {{ examEndDate | artemisDate: 'time' }}
+                            {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }} &nbsp;-&nbsp;{{ examEndDate | artemisDate: 'long-date' }}
+                            {{ examEndDate | artemisDate: 'time' }}
                         </td>
                     </tr>
                     <ng-template #examSingleDay>
@@ -48,7 +47,7 @@
                     <th>{{ 'artemisApp.exam.examStudentReviewTimespan' | artemisTranslate }}:&nbsp;</th>
                     <td class="d-flex align-items-center">
                         <span *ngIf="exam.examStudentReviewStart"> {{ exam.examStudentReviewStart | artemisDate }} </span>
-                        <span *ngIf="exam.examStudentReviewStart && exam.examStudentReviewEnd"> - </span>
+                        <span *ngIf="exam.examStudentReviewStart && exam.examStudentReviewEnd">&nbsp;-&nbsp;</span>
                         <span *ngIf="exam.examStudentReviewEnd">{{ exam.examStudentReviewEnd | artemisDate }}</span>
                         <div *ngIf="reviewIsOpen" class="mx-2 badge bg-success">{{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}</div>
                     </td>
