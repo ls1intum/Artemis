@@ -93,7 +93,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
                 this.canClosePopover = false;
             });
 
-            this._render.listen(popover, 'mouseout', () => {
+            this._render.listen(popover, 'pointerleave', () => {
                 this.canClosePopover = true;
                 clearTimeout(this.closeTimeout);
                 this.closeTimeout = setTimeout(() => {
