@@ -83,8 +83,8 @@
             </tfoot>
         </table>
         <div class="d-flex align-items-center justify-content-evenly">
-            <ng-container>
-                <h5 *ngIf="getMaxBonusPointsSum() != 0" class="mb-0">
+            <div class="d-flex flex-wrap mb-0">
+                <h5 *ngIf="getMaxBonusPointsSum() != 0">
                     {{
                         'artemisApp.exam.examSummary.points.youAchievedWithBonus'
                             | artemisTranslate
@@ -94,7 +94,7 @@
                                   }
                     }}
                 </h5>
-                <h5 *ngIf="getMaxBonusPointsSum() == 0" class="mb-0">
+                <h5 *ngIf="getMaxBonusPointsSum() == 0">
                     {{
                         'artemisApp.exam.examSummary.points.youAchieved'
                             | artemisTranslate
@@ -104,7 +104,7 @@
                                   }
                     }}
                 </h5>
-                <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined" class="mb-0">
+                <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined">
                     {{
                         'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade.studentResult.gradeWithBonus.bonusStrategy
                             | artemisTranslate
@@ -114,7 +114,7 @@
                                   }
                     }}
                 </h5>
-                <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusStrategy === BonusStrategy.POINTS" class="mb-0">
+                <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusStrategy === BonusStrategy.POINTS">
                     {{
                         'artemisApp.exam.examSummary.points.youAchievedPointsAfterBonus'
                             | artemisTranslate
@@ -123,7 +123,7 @@
                                   }
                     }}
                 </h5>
-            </ng-container>
+            </div>
 
             <div *ngIf="gradingScaleExists" class="d-flex justify-content-center align-items-center">
                 <table class="h5 lh-lg mb-0 me-2">
