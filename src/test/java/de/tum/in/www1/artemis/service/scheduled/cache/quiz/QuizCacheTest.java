@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 import static de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizCache.HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -26,6 +29,7 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
@@ -155,24 +159,15 @@ class QuizCacheTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizEnded() {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
+    void testQuizNewParticipationAndStatistics() {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().minusMinutes(1), QuizMode.SYNCHRONIZED);
         quizExercise.duration(5);
-        quizExerciseRepository.save(quizExercise);
-
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
-        String username = TEST_PREFIX + "student1";
-        Principal principal = () -> username;
-
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-
-        quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
         quizExerciseService.save(quizExercise);
 
-        quizScheduleService.processCachedQuizSubmissions();
-        // verify(websocketMessagingService, timeout(3000)).sendMessageToUser(any(), any(), any());
-        // todo: hasNewSubmissions, hasNewParticipations, hasNewResults
+        QuizBatch batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusMinutes(1)));
+        quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
 
-        // assertThat(submissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(submitted? 1 : 0);
+        quizScheduleService.processCachedQuizSubmissions();
+        verify(websocketMessagingService, timeout(3000)).sendMessageToUser(any(), any(), any());
     }
 }
