@@ -5,7 +5,7 @@ import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamResultOverviewComponent } from 'app/exam/participate/summary/points-summary/exam-result-overview.component';
+import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result-overview/exam-result-overview.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
