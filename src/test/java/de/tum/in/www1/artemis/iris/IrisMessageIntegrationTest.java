@@ -81,9 +81,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
-        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
-        assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage));
-        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
+        await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
@@ -246,7 +244,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        waitForIrisMessageToBeProcessed();
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
         verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
@@ -266,7 +263,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        waitForIrisMessageToBeProcessed();
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
         verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
