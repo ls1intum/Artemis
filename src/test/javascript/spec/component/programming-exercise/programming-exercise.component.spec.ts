@@ -253,7 +253,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleMultipleExercises(comp.programmingExercises); // Deselect all
 
             // THEN
-            expect(comp.selectedProgrammingExercises).toHaveLength(0);
+            expect(comp.selectedExercises).toHaveLength(0);
         });
 
         it('should check correctly if selected', () => {
