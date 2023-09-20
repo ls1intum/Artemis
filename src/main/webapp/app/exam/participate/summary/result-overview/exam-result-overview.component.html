@@ -83,7 +83,7 @@
             </tfoot>
         </table>
         <div class="d-flex align-items-center justify-content-evenly">
-            <div class="col">
+            <div>
                 <h5 *ngIf="getMaxBonusPointsSum() != 0">
                     {{
                         'artemisApp.exam.examSummary.points.youAchievedWithBonus'
@@ -139,38 +139,36 @@
                         </td>
                     </tr>
                 </table>
-
-                <div class="col">
-                    <button class="btn btn-primary" (click)="toggleGradingKey()">
-                        <fa-icon [icon]="faClipboard"></fa-icon>
-                        <span>
-                            &nbsp;
-                            {{
-                                isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                            }}
-                            &nbsp;
-                        </span>
-                        <span class="rotate-icon chevron-position" [class.rotated]="!isGradingKeyCollapsed">
-                            <fa-icon [icon]="faChevronRight"></fa-icon>
-                        </span>
-                    </button>
-
-                    <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
-                        <fa-icon [icon]="faAward"></fa-icon>
-                        <span>
-                            &nbsp;
-                            {{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}
-                            &nbsp;
-                        </span>
-                        <span class="rotate-icon chevron-position" [class.rotated]="!isBonusGradingKeyCollapsed">
-                            <fa-icon [icon]="faChevronRight"></fa-icon>
-                        </span>
-                    </button>
-                </div>
             </div>
         </div>
 
-        <div class="row mt-3 justify-content-center">
+        <div class="d-flex justify-content-evenly mt-4">
+            <button class="btn btn-primary" (click)="toggleGradingKey()">
+                <fa-icon [icon]="faClipboard"></fa-icon>
+                <span>
+                    &nbsp;
+                    {{ isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate) }}
+                    &nbsp;
+                </span>
+                <span class="rotate-icon chevron-position" [class.rotated]="!isGradingKeyCollapsed">
+                    <fa-icon [icon]="faChevronRight"></fa-icon>
+                </span>
+            </button>
+
+            <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
+                <fa-icon [icon]="faAward"></fa-icon>
+                <span>
+                    &nbsp;
+                    {{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}
+                    &nbsp;
+                </span>
+                <span class="rotate-icon chevron-position" [class.rotated]="!isBonusGradingKeyCollapsed">
+                    <fa-icon [icon]="faChevronRight"></fa-icon>
+                </span>
+            </button>
+        </div>
+
+        <div class="row mt-3">
             <div [ngbCollapse]="isGradingKeyCollapsed" class="col" style="max-width: 50%">
                 <jhi-grade-key-table [studentGrade]="grade" />
             </div>
