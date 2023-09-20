@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -88,8 +89,8 @@ public class LocalCIContainerService {
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
     }
@@ -101,6 +102,15 @@ public class LocalCIContainerService {
      */
     public void startContainer(String containerId) {
         dockerClient.startContainerCmd(containerId).exec();
+    }
+
+    public void copyIntoContainer(String containerId, Path sourcePath, String targetPath) {
+        try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()))) {
+            dockerClient.copyArchiveToContainerCmd(containerId).withTarInputStream(tarArchiveInputStream).withRemotePath(targetPath).exec();
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not copy file into container", e);
+        }
     }
 
     /**

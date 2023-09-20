@@ -120,6 +120,8 @@ public class LocalCIBuildJobExecutionService {
             auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
         }
 
+        log.info("Test");
+
         // Prepare script
         Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise(), auxiliaryRepositories);
 

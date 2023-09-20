@@ -1,0 +1,45 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-Local_VC-Local_CI-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+# This setup is experimental and NOT yet production ready
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        # just add this linux workaround for docker compose in a development version of artemis as developers
+        # might want to access external services on the docker host
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        #TODO: check if it works without root not sure so because of the docker socket ...
+        user: 0:0
+        ports:
+            - "8080:8080"
+            - "5005:5005" # Java Remote Debugging port declared in the java cmd options
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "5005"
+        env_file:
+            - ./artemis/config/dev-local-vc-local-ci.env
+        depends_on:
+            mysql:
+                condition: service_healthy
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+    mysql:
+        extends:
+            file: ./mysql.yml
+            service: mysql
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data
