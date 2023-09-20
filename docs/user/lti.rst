@@ -82,10 +82,11 @@ Below presented use-cases that are supported for Artemis Moodle integration.
        #. Route to LTI Configuration.\
        #. Navigate to Exercises tab.\
        #. Copy the LTI 1.3 Launch URL for the respected exercise.
-     - #. Home → Select the corresponding course → Enable edit mode.\
+     - #. Navigate to corresponding course.\
+       #. Enable edit mode.\
        #. Press "Add an activity or resource".\
        #. Select external tool.\
-       #. Paste the recently copied exercise URL on the resource URL field.\
+       #. Paste the copied exercise URL on the resource URL field.\
        #. Save and go to course.
 
 
