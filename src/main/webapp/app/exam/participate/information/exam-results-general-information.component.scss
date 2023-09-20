@@ -1,3 +1,11 @@
-.container {
-    //max-width: 600px;
+table {
+    width: fit-content;
+}
+
+th {
+    text-align: end;
+}
+
+td {
+    text-align: start;
 }
