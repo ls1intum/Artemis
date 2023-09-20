@@ -14,7 +14,7 @@ LTI (Learning Tools Interoperability) is a standard developed by IMS Global that
 It enables tools to integrate smoothly with a learning management system (like Moodle or edX). Artemis supports LTI 1.1 (deprecated) and LTI 1.3.
 
 .. list-table:: Supported Exercise Types
-   :widths: 25 15 15
+   :widths: 25 15 15 15
    :header-rows: 1
 
    * - Exercise Type
@@ -68,10 +68,12 @@ Below presented use-cases that are supported for Artemis Moodle integration.
        4. Route to LTI Configuration.\
        5. Navigate to LTI 1.3 tab.\
        6. Copy the Dynamic Registration URL.\
-     - 1. Navigate to Site Administration and select Plugins → External tool → Manage Tools.\
-       2. Paste the Dynamic Registration URL to Tool URL field  and click on "Add LTI Advantage".\
-       3. Refresh the page and scroll down to find the Artemis course with its shortname.\
-       4. Click on "Activate" to complete the integration.
+     - 1. Navigate to Site Administration.\
+       2. Select Plugins → External tool → Manage Tools.\
+       3. Paste the Dynamic Registration URL to Tool URL field
+       4. Click on "Add LTI Advantage".\
+       5. Scroll down to find the Artemis course with its shortname.\
+       6. Click on "Activate" to complete the integration.
    * - Link Artemis Exercises to Moodle Course
      - 1. Navigate to the course management section.\
        2. Select the corresponding course.\
@@ -87,7 +89,7 @@ Below presented use-cases that are supported for Artemis Moodle integration.
 
 
 .. list-table:: Artemis LTI 1.3 Student Use Cases
-   :widths: 25 50 50
+   :widths: 25 50
    :header-rows: 1
 
    * - Uses Case
