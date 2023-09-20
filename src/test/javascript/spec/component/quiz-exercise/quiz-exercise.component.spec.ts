@@ -293,8 +293,8 @@ describe('QuizExercise Management Component', () => {
         );
 
         comp.ngOnInit();
-        com.deleteMultipleExercises([{ id: 1 }, { id: 2 }, { id: 3 }] as QuizExercise[], comp.quizExerciseService);
-        expect(quizExerciseService.delete).toHaveBeenCalledtimes(3);
+        comp.deleteMultipleExercises([{ id: 1 }, { id: 2 }, { id: 3 }] as QuizExercise[], comp.quizExerciseService);
+        expect(quizExerciseService.delete).toHaveBeenCalledTimes(3);
     });
 
     it('should export quiz', () => {
