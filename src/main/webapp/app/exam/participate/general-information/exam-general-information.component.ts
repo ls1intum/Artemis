@@ -5,9 +5,9 @@ import { endTime, getAdditionalWorkingTime, isExamOverMultipleDays, normalWorkin
 import dayjs from 'dayjs/esm';
 
 @Component({
-    selector: 'jhi-exam-results-general-information',
-    styleUrls: ['./exam-results-general-information.component.scss'],
-    templateUrl: './exam-results-general-information.component.html',
+    selector: 'jhi-exam-general-information',
+    styleUrls: ['./exam-general-information.component.scss'],
+    templateUrl: './exam-general-information.component.html',
 })
 export class ExamGeneralInformationComponent implements OnInit {
     @Input() exam: Exam;
