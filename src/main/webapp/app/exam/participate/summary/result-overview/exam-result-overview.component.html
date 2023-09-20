@@ -155,7 +155,7 @@
                         </span>
                     </button>
 
-                    <button class="btn btn-primary mt-2" (click)="toggleBonusGradingKey()">
+                    <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
                         <fa-icon [icon]="faAward"></fa-icon>
                         <span>
                             &nbsp;
@@ -170,11 +170,13 @@
             </div>
         </div>
 
-        <div [ngbCollapse]="isGradingKeyCollapsed" class="mt-3">
-            <jhi-grade-key-table [studentGrade]="grade" />
-        </div>
-        <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3">
-            <jhi-grade-key-table [studentGrade]="grade" [forBonus]="true" />
+        <div class="row mt-3">
+            <div [ngbCollapse]="isGradingKeyCollapsed" class="col">
+                <jhi-grade-key-table [studentGrade]="grade" />
+            </div>
+            <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="col">
+                <jhi-grade-key-table [studentGrade]="grade" [forBonus]="true" />
+            </div>
         </div>
     </div>
 </div>
