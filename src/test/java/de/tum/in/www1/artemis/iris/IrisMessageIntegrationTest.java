@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private ProgrammingExercise exercise;
 
+    private LocalRepository repository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
@@ -59,6 +63,12 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisFor(course);
         activateIrisFor(exercise);
+        repository = new LocalRepository("main");
+    }
+
+    @AfterEach
+    void cleanup() throws IOException {
+        repository.resetLocalRepo();
     }
 
     @Test
@@ -69,7 +79,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setMessageDifferentiator(1453);
 
         irisRequestMockProvider.mockMessageResponse("Hello World");
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
         activateIrisFor(savedExercise);
@@ -115,7 +125,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend1 = createDefaultMockMessage(irisSession);
 
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
         activateIrisFor(savedExercise);
@@ -239,7 +249,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageError();
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
         activateIrisFor(savedExercise);
@@ -259,7 +269,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageResponse(null);
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
         activateIrisFor(savedExercise);
