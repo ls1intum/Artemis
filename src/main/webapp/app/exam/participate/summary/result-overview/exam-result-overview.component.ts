@@ -104,10 +104,6 @@ export class ExamResultOverviewComponent implements OnInit {
         return this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
-    getAchievedPoints(exercise: Exercise): number {
-        return this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
-    }
-
     /**
      * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
      */

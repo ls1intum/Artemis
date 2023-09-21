@@ -36,7 +36,7 @@
                     </td>
                     <td *ngIf="showIncludedInScoreColumn">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                     <td>
-                        {{ getAchievedPoints(exercise) }}
+                        {{ studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
                     </td>
                     <td>
                         <span *ngIf="exercise.maxPoints != undefined">{{
