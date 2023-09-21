@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -24,7 +24,7 @@ type ExerciseInfo = {
     styleUrls: ['./exam-result-overview.component.scss'],
     templateUrl: './exam-result-overview.component.html',
 })
-export class ExamResultOverviewComponent implements OnInit {
+export class ExamResultOverviewComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
 
