@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -9,12 +10,13 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.time.Duration;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,26 +26,22 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.AssessmentDashboardService;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ProfileService;
-import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -111,6 +109,8 @@ public class ExamResource {
 
     private final ChannelService channelService;
 
+    private final WebsocketMessagingService websocketMessagingService;
+
     private final ExerciseRepository exerciseRepository;
 
     private final ExamSessionService examSessionService;
@@ -120,7 +120,8 @@ public class ExamResource {
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
-            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository) {
+            ChannelRepository channelRepository, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository,
+            ExamSessionService examSessionRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -140,6 +141,7 @@ public class ExamResource {
         this.auditEventRepository = auditEventRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.websocketMessagingService = websocketMessagingService;
         this.exerciseRepository = exerciseRepository;
         this.examSessionService = examSessionRepository;
     }
@@ -171,8 +173,7 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(exam);
 
-        Channel createdChannel = channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
-        channelService.registerTutorsAndInstructorsToChannel(savedExam.getCourse(), createdChannel);
+        channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
@@ -237,6 +238,72 @@ public class ExamResource {
         }
 
         return ResponseEntity.ok(savedExam);
+    }
+
+    /**
+     * PATCH /courses/{courseId}/exams/{examId}/working-time : Update the working time of all exams
+     *
+     * @param courseId          the course ID to which the exam belong to
+     * @param examId            the exam ID the working time should be extended for
+     * @param workingTimeChange the working time change in seconds (can be positive or negative, but must not be 0)
+     * @return the ResponseEntity with status 200 (OK) and with the updated exam as body
+     */
+    @PatchMapping("/courses/{courseId}/exams/{examId}/working-time")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Integer workingTimeChange) {
+        log.debug("REST request to update the working time of exam with id {}", examId);
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        if (workingTimeChange == 0) {
+            throw new BadRequestException();
+        }
+
+        var now = now();
+
+        // We have to get exercise groups as `scheduleModelingExercises` needs them
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        var originalExamDuration = exam.getDuration();
+
+        // 1. Update the end date & working time of the exam
+        exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
+        examRepository.save(exam);
+
+        // 2. Re-calculate the working times of all student exams
+        var studentExams = studentExamRepository.findByExamId(examId);
+        for (var studentExam : studentExams) {
+            Integer originalStudentWorkingTime = studentExam.getWorkingTime();
+            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
+            // NOTE: take the original working time extensions into account
+            if (originalTimeExtension == 0) {
+                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
+            }
+            else {
+                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
+                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
+                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
+                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
+                studentExam.setWorkingTime(adjustedWorkingTime);
+            }
+            var savedStudentExam = studentExamRepository.save(studentExam);
+            // NOTE: if the exam is already visible, notify the student about the working time change
+            if (now.isAfter(exam.getVisibleDate())) {
+                websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
+            }
+        }
+
+        // NOTE: if the exam is already visible, notify instances about the working time change
+        if (now.isAfter(exam.getVisibleDate())) {
+            instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(exam.getId());
+        }
+
+        if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+            // potentially re-schedule clustering of modeling submissions (in case Compass is active)
+            examService.scheduleModelingExercises(exam);
+        }
+
+        return ResponseEntity.ok(exam);
     }
 
     /**
@@ -337,19 +404,19 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamForWorkingTimeConflictsElseThrow(Exam exam) {
-        int differenceStartEndDate = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        var examDuration = exam.getDuration();
 
         if (exam.isTestExam()) {
-            if (exam.getWorkingTime() > differenceStartEndDate || exam.getWorkingTime() < 1) {
+            if (exam.getWorkingTime() > examDuration || exam.getWorkingTime() < 1) {
                 throw new BadRequestAlertException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
             }
         }
-        else if (exam.getWorkingTime() != differenceStartEndDate) {
+        else if (exam.getWorkingTime() != examDuration) {
             /*
              * Set the working time to the time difference for real exams, if not done by the client. This can be an issue if the working time calculation in the client is not
              * performed (e.g. for Cypress-2E2-Tests). However, since the working time currently depends on the start- and end-date, we can do a server-side assignment
              */
-            exam.setWorkingTime(differenceStartEndDate);
+            exam.setWorkingTime(examDuration);
         }
     }
 
@@ -643,6 +710,28 @@ public class ExamResource {
     }
 
     /**
+     * DELETE /courses/{courseId}/exams/{examId}/cleanup : Cleans up an exam by deleting all student submissions.
+     *
+     * @param courseId  id of the course which in includes the exam
+     * @param examId    id of the exam to clean up
+     * @param principal the user that wants to cleanup the exam
+     * @return ResponseEntity with status
+     */
+    @DeleteMapping("courses/{courseId}/exams/{examId}/cleanup")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, @PathVariable Long examId, Principal principal) {
+        log.info("REST request to cleanup the exam : {}", examId);
+        final Exam exam = examRepository.findByIdElseThrow(examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        // Forbid cleaning the course if no archive has been created
+        if (!exam.hasExamArchive()) {
+            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+        }
+        examService.cleanupExam(examId, principal);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
      * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
@@ -928,8 +1017,6 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        channelService.registerCourseStudentsToChannelAsynchronously(exam.getCourse(), channel);
 
         return ResponseEntity.ok().body(null);
     }
@@ -1151,8 +1238,12 @@ public class ExamResource {
         Path archive = Path.of(examArchivesDirPath, exam.getExamArchivePath());
 
         File zipFile = archive.toFile();
+        ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(contentDisposition);
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().headers(headers).contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName())
+                .body(resource);
     }
 
     /**

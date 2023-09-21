@@ -66,6 +66,8 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
+import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -145,6 +147,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(SubmissionPolicyService),
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
+                MockProvider(IrisSettingsService),
             ],
         })
             .compileComponents()
@@ -352,4 +355,46 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
     }));
+
+    it.each<[string[]]>([[[]], [['iris']]])(
+        'should load iris settings only if profile iris is active',
+        fakeAsync((activeProfiles: string[]) => {
+            // Setup
+            const programmingExercise = {
+                id: 42,
+                type: ExerciseType.PROGRAMMING,
+                studentParticipations: [],
+                course: {},
+            } as unknown as ProgrammingExercise;
+
+            const fakeSettings = {} as any as IrisSettings;
+
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
+            const getCombinedProgrammingExerciseSettingsMock = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings');
+            getCombinedProgrammingExerciseSettingsMock.mockReturnValue(of(fakeSettings));
+
+            const submissionPolicyService = TestBed.inject(SubmissionPolicyService);
+            const submissionPolicy = new LockRepositoryPolicy();
+            jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
+
+            getExerciseDetailsMock.mockReturnValue(of({ body: programmingExercise }));
+
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
+
+            // Act
+            comp.ngOnInit();
+            tick();
+
+            if (activeProfiles.includes('iris')) {
+                // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
+                expect(getCombinedProgrammingExerciseSettingsMock).toHaveBeenCalled();
+                expect(comp.irisSettings).toBe(fakeSettings);
+            } else {
+                // Should not have called getCombinedProgrammingExerciseSettings if 'iris' is not active
+                expect(getCombinedProgrammingExerciseSettingsMock).not.toHaveBeenCalled();
+                expect(comp.irisSettings).toBeUndefined();
+            }
+        }),
+    );
 });
