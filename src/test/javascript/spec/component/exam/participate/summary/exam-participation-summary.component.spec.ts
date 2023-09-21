@@ -191,7 +191,7 @@ function sharedSetup(url: string[]) {
     });
 }
 
-describe('ExamParticipationSummaryComponent', () => {
+describe('ExamResultSummaryComponent', () => {
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
