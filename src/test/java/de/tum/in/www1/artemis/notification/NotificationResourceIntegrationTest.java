@@ -38,9 +38,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
     private NotificationRepository notificationRepository;
 
     @Autowired
-    private SystemNotificationRepository systemNotificationRepository;
-
-    @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
@@ -60,7 +57,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         course2 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        systemNotificationRepository.deleteAll();
         notificationRepository.deleteAll();
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -70,7 +66,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     @AfterEach
     void tearDown() {
-        systemNotificationRepository.deleteAll();
         notificationRepository.deleteAll();
     }
 
