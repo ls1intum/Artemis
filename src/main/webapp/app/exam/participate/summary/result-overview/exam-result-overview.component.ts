@@ -15,6 +15,8 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 type ExerciseInfo = {
     icon: IconProp;
+    achievedPercentage?: number;
+    colorClass?: string;
 };
 
 @Component({
@@ -41,13 +43,14 @@ export class ExamResultOverviewComponent implements OnInit {
     faChevronRight = faChevronRight;
 
     showIncludedInScoreColumn = false;
-    overallAchievedPoints = 0;
     /**
      * the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
      */
     maxPoints = 0;
+    overallAchievedPoints = 0;
+    isBonusGradingKeyDisplayed = false;
 
-    exerciseInfos: Record<number, { icon: IconProp }>;
+    exerciseInfos: Record<number, ExerciseInfo>;
 
     constructor(
         private serverDateService: ArtemisServerDateService,
@@ -63,8 +66,9 @@ export class ExamResultOverviewComponent implements OnInit {
 
     ngOnChanges() {
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
-        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
+        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
+        this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
 
         this.exerciseInfos = this.getExerciseInfos();
     }
@@ -75,7 +79,7 @@ export class ExamResultOverviewComponent implements OnInit {
             if (exercise.id === undefined) {
                 continue;
             }
-            exerciseInfos[exercise.id] = { icon: getIcon(exercise.type) };
+            exerciseInfos[exercise.id] = { icon: getIcon(exercise.type), achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id) };
         }
         return exerciseInfos;
     }
@@ -95,7 +99,6 @@ export class ExamResultOverviewComponent implements OnInit {
      * -> displayed if at least one exercise is not included in the overall score
      */
     containsExerciseThatIsNotIncludedCompletely(): boolean {
-        console.log('method called');
         for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
             if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 return true;
@@ -215,10 +218,6 @@ export class ExamResultOverviewComponent implements OnInit {
 
     toggleBonusGradingKey(): void {
         this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
-    }
-
-    isBonusGradingKeyDisplayed(): boolean {
-        return this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
     }
 
     protected readonly getIcon = getIcon;
