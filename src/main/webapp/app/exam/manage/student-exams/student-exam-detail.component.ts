@@ -6,13 +6,11 @@ import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
@@ -44,20 +42,14 @@ export class StudentExamDetailComponent implements OnInit {
     isBonus = false;
     passed = false;
 
-    workingTimeFormValues = {
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-        percent: 0,
-    };
-
     // Icons
     faSave = faSave;
+
+    workingTimeSeconds = 0;
 
     constructor(
         private route: ActivatedRoute,
         private studentExamService: StudentExamService,
-        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: AlertService,
         private modalService: NgbModal,
     ) {}
@@ -98,8 +90,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.getWorkingTimeSeconds();
-        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe({
+        this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.workingTimeSeconds).subscribe({
             next: (res) => {
                 if (res.body) {
                     this.setStudentExam(res.body);
@@ -185,58 +176,14 @@ export class StudentExamDetailComponent implements OnInit {
         }
     }
 
-    /**
-     * Updates the form values based on the working time of the student exam.
-     */
     private initWorkingTimeForm() {
-        this.setWorkingTimeDuration(this.studentExam.workingTime!);
-        this.updateWorkingTimePercent();
-    }
-
-    /**
-     * Updates the working time duration values of the form whenever the percent value has been changed by the user.
-     */
-    updateWorkingTimeDuration() {
-        const regularWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
-        const seconds = round(regularWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100), 0);
-        this.setWorkingTimeDuration(seconds);
-    }
-
-    /**
-     * Updates the hours, minutes, and seconds values of the form.
-     * @param seconds the total number of seconds of working time.
-     */
-    private setWorkingTimeDuration(seconds: number) {
-        const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(seconds);
-        this.workingTimeFormValues.hours = workingTime.days * 24 + workingTime.hours;
-        this.workingTimeFormValues.minutes = workingTime.minutes;
-        this.workingTimeFormValues.seconds = workingTime.seconds;
-    }
-
-    /**
-     * Uses the current durations saved in the form to update the extension percent value.
-     */
-    updateWorkingTimePercent() {
-        this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds());
-    }
-
-    /**
-     * Calculates how many seconds the currently set working time has in total.
-     */
-    private getWorkingTimeSeconds(): number {
-        const duration = {
-            days: 0,
-            hours: this.workingTimeFormValues.hours,
-            minutes: this.workingTimeFormValues.minutes,
-            seconds: this.workingTimeFormValues.seconds,
-        };
-        return this.artemisDurationFromSecondsPipe.durationToSeconds(duration);
+        this.workingTimeSeconds = this.studentExam.workingTime ?? 0;
     }
 
     /**
      * Checks if the user should be able to edit the inputs.
      */
-    isFormDisabled(): boolean {
+    get isWorkingTimeFormDisabled(): boolean {
         return this.isSavingWorkingTime || (this.isTestRun && !!this.studentExam.submitted) || !this.studentExam.exam;
     }
 

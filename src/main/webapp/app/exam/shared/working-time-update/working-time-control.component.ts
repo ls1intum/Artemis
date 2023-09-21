@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/entities/exam.model';
-import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { round } from 'app/shared/util/utils';
 
@@ -22,26 +22,27 @@ import { round } from 'app/shared/util/utils';
 export class WorkingTimeControlComponent implements ControlValueAccessor {
     // Control disabled state
     @Input() disabled = false;
-    @Input() showRelative = false;
 
+    // Whether the percentage-based working time extension control should be shown
+    @Input() relative = false;
+
+    // Labels for the working time duration inputs
     @Input() durationLabelText?: string;
     @Input() relativeLabelText?: string;
 
-    // The exam for which the working time should be updated
     @Input()
     set exam(exam: Exam | undefined) {
         this.currentExam = exam;
-        this.initWorkingTimeFromCurrentExam();
+        this.updateWorkingTimePercentFromDuration();
     }
 
     get exam(): Exam | undefined {
         return this.currentExam;
     }
 
+    // The exam for which the working time should be updated
+    // Used to calculate the relative working time extension
     private currentExam?: Exam;
-    private touched = false;
-    private onTouched = () => {};
-    private onChange: (_: number) => void = () => {};
 
     workingTime = {
         hours: 0,
@@ -49,6 +50,10 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
         seconds: 0,
         percent: 0,
     };
+
+    private touched = false;
+    private onTouched = () => {};
+    private onChange: (_: number) => void = () => {};
 
     constructor(private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe) {}
 
@@ -84,24 +89,13 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
     }
 
     /**
-     * Updates the controls based on the working time of the student exam.
-     */
-    private initWorkingTimeFromCurrentExam() {
-        if (this.exam) {
-            this.setWorkingTimeDuration(normalWorkingTime(this.exam)!);
-            this.updateWorkingTimePercentFromDuration();
-            this.onChange(this.getWorkingTimeSeconds());
-        }
-    }
-
-    /**
      * Updates the working time duration values of the control whenever the percent value was changed.
      * After the update, the onChange callback is called with the new working time in seconds.
      */
     onPercentChanged() {
         this.markAsTouched();
         this.updateWorkingTimeDurationFromPercent();
-        this.onChange(this.getWorkingTimeSeconds());
+        this.emitWorkingTimeChange();
     }
 
     /**
@@ -111,11 +105,12 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
     onDurationChanged() {
         this.markAsTouched();
         this.updateWorkingTimePercentFromDuration();
-        this.onChange(this.getWorkingTimeSeconds());
+        this.emitWorkingTimeChange();
     }
 
     /**
      * Updates the working time percent value of the control based on the current working time duration.
+     * @private
      */
     private updateWorkingTimePercentFromDuration() {
         if (this.exam) {
@@ -125,12 +120,12 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
 
     /**
      * Updates the working time duration values of the control based on the current working time percent.
+     * @private
      */
     private updateWorkingTimeDurationFromPercent() {
         if (this.exam) {
             const regularWorkingTime = this.exam.workingTime!;
             const absoluteWorkingTimeSeconds = round(regularWorkingTime * (1.0 + this.workingTime.percent / 100), 0);
-            console.log(regularWorkingTime, absoluteWorkingTimeSeconds);
             this.setWorkingTimeDuration(absoluteWorkingTimeSeconds);
         }
     }
@@ -139,6 +134,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * Sets the working time duration values of the respective controls by
      * converting the given seconds into hours, minutes and seconds.
      * @param seconds the total number of seconds of working time.
+     * @private
      */
     private setWorkingTimeDuration(seconds: number) {
         const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(seconds);
@@ -149,6 +145,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
 
     /**
      * Returns the seconds of the current working time duration.
+     * @private
      */
     private getWorkingTimeSeconds(): number {
         return this.artemisDurationFromSecondsPipe.durationToSeconds({
@@ -157,5 +154,13 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
             minutes: this.workingTime.minutes,
             seconds: this.workingTime.seconds,
         });
+    }
+
+    /**
+     * Calls the onChange callback with the current working time in seconds.
+     * @private
+     */
+    private emitWorkingTimeChange() {
+        this.onChange(this.getWorkingTimeSeconds());
     }
 }

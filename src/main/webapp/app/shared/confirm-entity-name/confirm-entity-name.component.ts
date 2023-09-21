@@ -35,7 +35,7 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     ngOnInit() {
         this.control = this.fb.control('', {
             nonNullable: true,
-            validators: [Validators.required, Validators.pattern(this.entityName)],
+            validators: [Validators.required, (control: FormControl) => Validators.pattern(this.entityName)(control)],
         });
     }
 
@@ -45,8 +45,8 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
         }
     }
 
-    writeValue(entityName: string) {
-        if (entityName) {
+    writeValue(entityName: string | undefined | null) {
+        if (typeof entityName === 'string') {
             this.control.setValue(entityName, { emitEvent: false });
         }
     }

@@ -45,7 +45,7 @@
             <label for="seconds" class="input-group-text">s</label>
         </div>
     </div>
-    <div class="d-flex flex-column gap-1" *ngIf="exam && showRelative">
+    <div class="d-flex flex-column gap-1" *ngIf="exam && relative">
         <label for="percent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText" *ngIf="relativeLabelText"></label>
         <div class="input-group">
             <input
