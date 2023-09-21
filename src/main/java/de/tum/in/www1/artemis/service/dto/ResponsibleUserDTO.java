@@ -3,9 +3,9 @@ package de.tum.in.www1.artemis.service.dto;
 import java.util.Objects;
 
 /**
- * A DTO representing a course's responsible contact, i.e., a person to report misconduct to.
+ * A DTO representing a course's responsible user, i.e., a person to report misconduct to.
  */
-public record ResponsibleUserDTO(String firstName, String lastName, String email) {
+public record ResponsibleUserDTO(String name, String email) {
 
     @Override
     public boolean equals(Object o) {
@@ -14,16 +14,16 @@ public record ResponsibleUserDTO(String firstName, String lastName, String email
         if (o == null || getClass() != o.getClass())
             return false;
         ResponsibleUserDTO that = (ResponsibleUserDTO) o;
-        return Objects.equals(firstName, that.firstName) && Objects.equals(lastName, that.lastName) && Objects.equals(email, that.email);
+        return Objects.equals(name, that.name) && Objects.equals(email, that.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(firstName, lastName, email);
+        return Objects.hash(name, email);
     }
 
     @Override
     public String toString() {
-        return "ResponsibleUserDTO{" + "firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + '}';
+        return "ResponsibleUserDTO{" + "name='" + name + '\'' + ", email='" + email + '\'' + '}';
     }
 }

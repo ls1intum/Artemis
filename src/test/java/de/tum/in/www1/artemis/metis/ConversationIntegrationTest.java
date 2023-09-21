@@ -455,8 +455,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void responsibleUsers_shouldReturnCorrectValue() throws Exception {
-        var instructors = users.stream().filter((u) -> u.getGroups().contains("instructor")).map((u) -> new ResponsibleUserDTO(u.getFirstName(), u.getLastName(), u.getEmail()))
-                .toList();
+        var instructors = users.stream().filter((u) -> u.getGroups().contains("instructor")).map((u) -> new ResponsibleUserDTO(u.getName(), u.getEmail())).toList();
 
         var responsibleUsers = request.getList("/api/courses/" + exampleCourseId + "/code-of-conduct/responsible-users", HttpStatus.OK, ResponsibleUserDTO.class);
         assertThat(responsibleUsers).hasSameElementsAs(instructors).hasSameSizeAs(instructors);

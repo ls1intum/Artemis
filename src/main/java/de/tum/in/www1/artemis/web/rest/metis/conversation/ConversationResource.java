@@ -149,10 +149,10 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/code-of-conduct/agreement : Accept the course's code of conduct
+     * PATCH /api/courses/:courseId/code-of-conduct/agreement : Accept the course's code of conduct
      *
      * @param courseId the course's ID
-     * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the code of conduct
+     * @return ResponseEntity with status 200 (Ok)
      */
     @PatchMapping("/{courseId}/code-of-conduct/agreement")
     @EnforceAtLeastStudent
@@ -165,6 +165,12 @@ public class ConversationResource extends ConversationManagementResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET /api/courses/:courseId/code-of-conduct/responsible-users : Users responsible for the course
+     *
+     * @param courseId the course's ID
+     * @return ResponseEntity with the status 200 (Ok) and a list of users responsible for the course
+     */
     @GetMapping("/{courseId}/code-of-conduct/responsible-users")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ResponsibleUserDTO>> getResponsibleUsersForCodeOfConduct(@PathVariable Long courseId) {
@@ -176,7 +182,7 @@ public class ConversationResource extends ConversationManagementResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
         var responsibleUsers = userRepository.searchAllByLoginOrNameInGroups(Pageable.unpaged(), "", Set.of(course.getInstructorGroupName()))
-                .map((user) -> new ResponsibleUserDTO(user.getFirstName(), user.getLastName(), user.getEmail())).toList();
+                .map((user) -> new ResponsibleUserDTO(user.getName(), user.getEmail())).toList();
 
         return ResponseEntity.ok(responsibleUsers);
     }

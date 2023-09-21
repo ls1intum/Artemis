@@ -43,6 +43,11 @@ public class CourseCodeOfConductAgreementService {
         courseCodeOfConductAgreementRepository.save(courseCodeOfConductAgreement);
     }
 
+    /**
+     * Reset all agreements to a course's code of conduct.
+     *
+     * @param course the code of conduct's course
+     */
     public void resetUsersAgreeToCodeOfConductInCourse(Course course) {
         courseCodeOfConductAgreementRepository.deleteByCourseId(course.getId());
     }
