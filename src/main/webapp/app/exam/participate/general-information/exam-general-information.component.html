@@ -62,8 +62,8 @@
                 <tr *ngIf="exam && studentExam?.ended && (exam.examStudentReviewStart || exam.examStudentReviewEnd)">
                     <th>{{ 'artemisApp.exam.examStudentReviewTimespan' | artemisTranslate }}:&nbsp;</th>
                     <td class="d-flex align-items-center">
-                        <div class="d-inline-block text-nowrap">
-                            <span *ngIf="exam.examStudentReviewStart"> {{ exam.examStudentReviewStart | artemisDate }} </span>
+                        <div class="d-inline-block" style="white-space: nowrap">
+                            <span *ngIf="exam.examStudentReviewStart" class="nowrap-span"> {{ exam.examStudentReviewStart | artemisDate }} </span>
                             <span *ngIf="exam.examStudentReviewStart && exam.examStudentReviewEnd">&nbsp;-&nbsp;</span>
                             <span *ngIf="exam.examStudentReviewEnd">{{ exam.examStudentReviewEnd | artemisDate }}</span>
                         </div>
