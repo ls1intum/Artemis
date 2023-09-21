@@ -51,7 +51,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         continuousIntegrationService.recreateBuildPlansForExercise(null);
         continuousIntegrationService.givePlanPermissions(null, null);
         continuousIntegrationService.enablePlan(null, null);
-        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, null);
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null);
         assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
         assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isEmpty();
         ResponseEntity<byte[]> latestArtifactResponse = continuousIntegrationService.retrieveLatestArtifact(null);

@@ -426,15 +426,11 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should download course archive', fakeAsync(() => {
-        const expectedBlob = new Blob(['abc', 'cfe']);
-        courseManagementService.downloadCourseArchive(course.id!).subscribe((resp) => {
-            expect(resp.body).toEqual(expectedBlob);
-        });
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/download-archive` });
-        req.flush(expectedBlob);
-        tick();
-    }));
+    it('should download course archive', () => {
+        const windowSpy = jest.spyOn(window, 'open').mockImplementation();
+        courseManagementService.downloadCourseArchive(1);
+        expect(windowSpy).toHaveBeenCalledWith('api/courses/1/download-archive', '_blank');
+    });
 
     it('should archive the course', fakeAsync(() => {
         courseManagementService.archiveCourse(course.id!).subscribe((res) => expect(res.body).toEqual(course));

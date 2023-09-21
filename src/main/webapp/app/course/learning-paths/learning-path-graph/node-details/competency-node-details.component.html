@@ -1,0 +1,18 @@
+<div *ngIf="competency" class="row">
+    <div class="col-9">
+        <h3 class="mb-0">
+            <fa-icon
+                *ngIf="competency.taxonomy"
+                [icon]="getIcon(competency.taxonomy)"
+                [fixedWidth]="true"
+                [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate"
+                container="body"
+            ></fa-icon>
+            <span>{{ competency.title }}</span>
+            <span *ngIf="this.mastery >= 100" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
+            <span *ngIf="competency.optional" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
+        </h3>
+        <div *ngIf="competency.description">{{ competency.description }}</div>
+    </div>
+    <div class="col-3"><jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings></div>
+</div>

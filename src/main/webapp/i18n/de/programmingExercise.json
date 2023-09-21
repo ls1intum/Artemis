@@ -22,7 +22,8 @@
             },
             "cleanup": {
                 "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studierenden können ihre Teilnahme wieder aufnehmen.",
-                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
+                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet.",
+                "successMessageCleanup": "Die Bereinigung verlief erfolgreich. Alle Studierenden Repositories wurden gelöscht."
             },
             "reset": {
                 "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
@@ -531,6 +532,7 @@
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",
