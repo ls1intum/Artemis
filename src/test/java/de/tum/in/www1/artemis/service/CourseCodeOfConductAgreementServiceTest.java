@@ -37,7 +37,7 @@ class CourseCodeOfConductAgreementServiceTest extends AbstractSpringIntegrationB
     }
 
     @Test
-    void fetchAndAgreeIsCodeOfConductAccepted() {
+    void fetchAndAgreeAndResetCodeOfConductAgreement() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
         courseRepository.save(course);
@@ -47,5 +47,9 @@ class CourseCodeOfConductAgreementServiceTest extends AbstractSpringIntegrationB
         courseCodeOfConductAgreementService.setUserAgreesToCodeOfConductInCourse(user, course);
         var resultAfterAgreement = courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
         assertThat(resultAfterAgreement).isTrue();
+
+        courseCodeOfConductAgreementService.resetUsersAgreeToCodeOfConductInCourse(course);
+        var resultAfterReset = courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
+        assertThat(resultAfterReset).isFalse();
     }
 }

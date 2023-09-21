@@ -25,9 +25,6 @@ public class CourseCodeOfConductAgreement {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "is_accepted")
-    private boolean isAccepted = false;
-
     public Course getCourse() {
         return course;
     }
@@ -44,14 +41,6 @@ public class CourseCodeOfConductAgreement {
         this.user = user;
     }
 
-    public boolean getIsAccepted() {
-        return isAccepted;
-    }
-
-    public void setIsAccepted(boolean isAccepted) {
-        this.isAccepted = isAccepted;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -61,16 +50,16 @@ public class CourseCodeOfConductAgreement {
         if (!super.equals(o))
             return false;
         CourseCodeOfConductAgreement that = (CourseCodeOfConductAgreement) o;
-        return course.equals(that.course) && user.equals(that.user) && isAccepted == that.isAccepted;
+        return course.equals(that.course) && user.equals(that.user);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), course, user, isAccepted);
+        return Objects.hash(super.hashCode(), course, user);
     }
 
     @Override
     public String toString() {
-        return "CourseCodeOfConductAgreement{" + "course=" + course + ", user=" + user + ", isAccepted=" + isAccepted + '}';
+        return "CourseCodeOfConductAgreement{" + "course=" + course + ", user=" + user + '}';
     }
 }

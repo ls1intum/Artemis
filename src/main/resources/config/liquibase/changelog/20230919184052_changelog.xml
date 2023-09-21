@@ -11,7 +11,6 @@
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="course_code_of_conduct_agreementPK"/>
             </column>
-            <column name="is_accepted" type="BIT"/>
         </createTable>
     </changeSet>
     <changeSet author="zbil" id="1695141658157-224">
