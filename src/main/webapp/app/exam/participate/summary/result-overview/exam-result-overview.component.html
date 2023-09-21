@@ -148,8 +148,8 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
-                    <button class="btn btn-primary" (click)="toggleGradingKey()">
+                <div class="col-md-6 mt-3 d-flex flex-column align-items-center">
+                    <button class="btn btn-primary" (click)="toggleGradingKey()" style="max-width: fit-content">
                         <fa-icon [icon]="faClipboard"></fa-icon>
                         <span
                             >&nbsp;{{
@@ -168,7 +168,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-6 mt-3 d-flex flex-column align-items-center">
                     <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
                         <fa-icon [icon]="faAward"></fa-icon>
                         <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}&nbsp;</span>
@@ -176,7 +176,7 @@
                             <fa-icon [icon]="faChevronRight"></fa-icon>
                         </span>
                     </button>
-                    <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3" style="max-width: fit-content">
+                    <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3 text-start" style="max-width: fit-content">
                         <jhi-grade-key-table [studentGrade]="grade" [forBonus]="true" />
                     </div>
                 </div>
