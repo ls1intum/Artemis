@@ -116,7 +116,7 @@ const programmingExerciseTwo = {
 } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo, notIncludedTextExercise, bonusTextExercise];
 
-describe('ExamPointsSummaryComponent', () => {
+describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
