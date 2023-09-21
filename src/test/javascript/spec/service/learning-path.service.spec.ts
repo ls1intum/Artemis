@@ -45,4 +45,10 @@ describe('LearningPathService', () => {
         expect(getStub).toHaveBeenCalledOnce();
         expect(getStub).toHaveBeenCalledWith('api/courses/1/learning-path-health', { observe: 'response' });
     });
+
+    it('should send a request to the server to get ngx representation of learning path', () => {
+        learningPathService.getLearningPathNgxGraph(1).subscribe();
+        expect(getStub).toHaveBeenCalledOnce();
+        expect(getStub).toHaveBeenCalledWith('api/learning-path/1/graph', { observe: 'response' });
+    });
 });
