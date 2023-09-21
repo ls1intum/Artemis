@@ -144,6 +144,25 @@ public abstract class Participation extends DomainObject implements Participatio
         this.testRun = testRun;
     }
 
+    /**
+     * Same as {@link #isTestRun} since {@link Participation#testRun} is used to determine if a participation in a course exercise is used for practice purposes
+     *
+     * @return true if the participation is only used for practicing after the due date
+     */
+    @JsonIgnore
+    public boolean isPracticeMode() {
+        return Boolean.TRUE.equals(testRun);
+    }
+
+    /**
+     * Same as {@link #setTestRun} since {@link Participation#testRun} is used to determine if a participation in a course exercise is used for practice purposes
+     *
+     * @param practiceMode sets the testRun flag to this value
+     */
+    public void setPracticeMode(boolean practiceMode) {
+        this.testRun = practiceMode;
+    }
+
     public Set<Result> getResults() {
         return results;
     }
@@ -282,7 +301,7 @@ public abstract class Participation extends DomainObject implements Participatio
      * @return the same string with "practice-" added to the front if this is a test run participation
      */
     public String addPracticePrefixIfTestRun(String string) {
-        return (isTestRun() ? "practice-" : "") + string;
+        return (isPracticeMode() ? "practice-" : "") + string;
     }
 
     @Override
@@ -301,4 +320,7 @@ public abstract class Participation extends DomainObject implements Participatio
     public abstract Participation copyParticipationId();
 
     public abstract void filterSensitiveInformation();
+
+    @JsonIgnore
+    public abstract String getType();
 }

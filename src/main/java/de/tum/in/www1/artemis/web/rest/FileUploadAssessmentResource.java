@@ -16,9 +16,9 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -36,10 +36,10 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, WebsocketMessagingService messagingService,
+            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ResultWebsocketService resultWebsocketService,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
-        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, resultWebsocketService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;

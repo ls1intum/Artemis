@@ -576,6 +576,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(injectSpy).toHaveBeenCalledWith(expectedUML, 0);
     }));
 
+    it('should update the markdown and set the correct problem statement if renderUpdatedProblemStatement is called', () => {
+        const problemStatement = 'lorem ipsum';
+        const updatedProblemStatement = 'new lorem ipsum';
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        comp.problemStatement = problemStatement;
+        comp.exercise = { problemStatement: updatedProblemStatement } as ProgrammingExercise;
+        comp.renderUpdatedProblemStatement();
+        expect(comp.problemStatement).toBe(updatedProblemStatement);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+    });
+
     const verifyTask = (expectedInvocations: number, expected: NgbModalRef) => {
         expect(openModalStub).toHaveBeenCalledTimes(expectedInvocations);
         expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });

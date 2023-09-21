@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
+import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -40,13 +41,17 @@ public class CodeHintResource {
 
     private final CodeHintService codeHintService;
 
+    private final IrisSettingsService irisSettingsService;
+
     public CodeHintResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, CodeHintRepository codeHintRepository, CodeHintService codeHintService) {
+            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, CodeHintRepository codeHintRepository, CodeHintService codeHintService,
+            IrisSettingsService irisSettingsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.solutionEntryRepository = solutionEntryRepository;
         this.codeHintRepository = codeHintRepository;
         this.codeHintService = codeHintService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -88,6 +93,36 @@ public class CodeHintResource {
 
         var codeHints = codeHintService.generateCodeHintsForExercise(exercise, deleteOldCodeHints);
         return ResponseEntity.ok(codeHints);
+    }
+
+    /**
+     * {@code POST programming-exercises/:exerciseId/code-hints/:codeHintId/generate-description} : Generate a description for a code hint using Iris.
+     *
+     * @param exerciseId The id of the exercise of the code hint
+     * @param codeHintId The id of the code hint
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
+     */
+    @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
+    @EnforceAtLeastEditor
+    public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
+        log.debug("REST request to generate description with Iris for CodeHint: {}", codeHintId);
+
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        irisSettingsService.checkIsIrisHestiaSessionEnabledElseThrow(exercise);
+
+        // Hints for exam exercises are not supported at the moment
+        if (exercise.isExamExercise()) {
+            throw new AccessForbiddenException("Code hints for exams are currently not supported");
+        }
+
+        var codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintId);
+        if (!Objects.equals(codeHint.getExercise().getId(), exercise.getId())) {
+            throw new ConflictException("The code hint does not belong to the exercise", "CodeHint", "codeHintExerciseConflict");
+        }
+
+        codeHint = codeHintService.generateDescriptionWithIris(codeHint);
+        return ResponseEntity.ok(codeHint);
     }
 
     /**
