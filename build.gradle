@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.5.0"
+version = "6.5.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -134,7 +134,7 @@ private excludedClassFilesForReport(classDirectories) {
         fileTree(dir: it,
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
-                "**/de/tum/in/www1/artemis/config/migration/entries/*_*",
+                "**/de/tum/in/www1/artemis/config/migration/entries/**",
                 "**/gradle-wrapper.jar/**"
             ]
         )
@@ -163,7 +163,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 20
+                maximum = 19
             }
         }
     }
@@ -246,7 +246,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:9.2.1"
+    implementation "com.atlassian.bamboo:bamboo-specs:9.3.3"
     implementation ("org.yaml:snakeyaml") {
         version {
             strictly "1.33" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
