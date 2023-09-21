@@ -10,8 +10,8 @@ LTI Integration
 Overview
 --------
 
-LTI (Learning Tools Interoperability) is a standard developed by `IMS Global <https://www.1edtech.org/>` that allows different learning platforms and tools to work together seamlessly.
-It enables tools to integrate smoothly with a learning management system (like Moodle or edX). Artemis supports `LTI 1.1 (deprecated) <https://www.imsglobal.org/specs/ltiv1p1/implementation-guide>` and `LTI 1.3. <https://www.imsglobal.org/spec/lti/v1p3>`
+LTI (Learning Tools Interoperability) is a standard developed by `IMS Global <https://www.1edtech.org/>`_ that allows different learning platforms and tools to work together seamlessly.
+It enables tools to integrate smoothly with a learning management system (like Moodle or edX). Artemis supports `LTI 1.1 (deprecated) <https://www.imsglobal.org/specs/ltiv1p1/implementation-guide>`_ and `LTI 1.3. <https://www.imsglobal.org/spec/lti/v1p3>`_
 The table below showcases the types of exercises supported by Artemis and their respective functionalities.
 
 .. list-table:: Supported Exercise Types
@@ -64,6 +64,7 @@ To enable the Online Course setting in Artemis, follow the steps below:\
 
 .. figure:: lti/enable_onlinecourse.png
     :align: center
+    :width: 500
     :alt: Enable Online Course
 
 With the Online Course setting enabled, you can now proceed to integrate Artemis with Moodle using the LTI 1.3 standard. The subsequent sections of this guide will provide detailed steps on achieving this integration.
@@ -84,6 +85,7 @@ To set up the LTI 1.3 integration in Artemis, follow the steps outlined below:
 
     .. figure:: lti/lticonfiguration_link.png
         :align: center
+        :width: 500
         :alt: Locate LTI Configuration
 
 #. Switch to LTI 1.3 Tab: Inside the LTI Configuration, there will be multiple tabs related to different LTI versions. Click on the LTI 1.3 tab to access the settings specific to this version.\
@@ -91,17 +93,20 @@ To set up the LTI 1.3 integration in Artemis, follow the steps outlined below:
 
 .. figure:: lti/lticonfiguration_tab.png
     :align: center
+    :width: 500
     :alt: LTI 1.3 Configuration
 
 Moodle Steps
 """""""""""""
 
-#. Navigate to Site Administration.\
-#. Select Plugins → External tool → Manage Tools.\
-#. Paste the Dynamic Registration URL to Tool URL field
-#. Click on "Add LTI Advantage".\
-#. Scroll down to find the Artemis course with its shortname.\
-#. Click on "Activate" to complete the integration.
+With the Dynamic Registration URL copied, you can now configure the LTI 1.3 integration in Moodle:
+
+#. Access Site Administration: Log into your Moodle account. From the main dashboard, navigate to the Site Administration section. This section contains various administrative settings for the Moodle platform.
+#. Navigate to External Tool Settings: Inside the Site Administration, go to Plugins. From there, select External tool followed by Manage Tools. This will lead you to the LTI configurations in Moodle.
+#. Enter Dynamic Registration URL: In the "Manage Tools" section, you'll find a field labeled "Tool URL." Paste the previously copied "Dynamic Registration URL" from Artemis into this field.
+#. Initiate LTI Advantage Integration: After entering the URL, click on the Add LTI Advantage button. This action will begin the process of integrating Artemis with Moodle using the LTI 1.3 standard.
+#. Locate the Artemis Course: Once the integration process starts, scroll down the list until you find the Artemis course identified by its shortname.
+#. Activate the Integration: To finalize the integration, click on the Activate button next to the Artemis course name. This action will complete the LTI 1.3 integration between Artemis and Moodle.
 
 Link Artemis Exercises to Moodle Course
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -144,5 +149,5 @@ Moodle Steps
      - #. Navigate to Grades tab.\
        #. Verify grades and feedback for evaluated Artemis exercises.
 
-.. |course-management| image:: general/course-management.png
-.. |course_edit| image:: customizable/buttons/course_edit.png
+.. |course-management| image:: exercises/general/course-management.png
+.. |course_edit| image:: courses/customizable/buttons/course_edit.png
