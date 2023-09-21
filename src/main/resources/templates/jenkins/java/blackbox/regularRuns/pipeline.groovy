@@ -71,10 +71,10 @@ private void customCheckers() {
     stage('Checkers') {
         docker.image(dockerImage).inside(dockerFlags) { c ->
             // all java files in the assignment folder should have maximal line length 80
-            sh 'pipeline-helper -l 80 assignment/ java'
+            sh 'pipeline-helper line-length -l 80 -s assignment/ -e java'
             // checks that the file exists and is not empty for non gui programs
             if (runDejagnuTests) {
-                sh 'pipeline-helper -e assignment/Tests.txt'
+                sh 'pipeline-helper file-exists assignment/Tests.txt'
             }
         }
     }
@@ -117,7 +117,7 @@ private void runDejagnuTestStep(String step, int timeoutSeconds) {
             """
         }
     }
-    sh("""pipeline-helper -o customFeedbacks -d "dejagnu[${step}]" testsuite/${tool}.log""")
+    sh("""pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log""")
 }
 
 /**
@@ -144,7 +144,7 @@ private String getToolName() {
  */
 private void setMainClass() {
     def main_checker_lines = sh(
-        script: "pipeline-helper -m assignment/",
+        script: 'pipeline-helper main-method -s target/classes',
         returnStdout: true
     ).tokenize('\n')
 
