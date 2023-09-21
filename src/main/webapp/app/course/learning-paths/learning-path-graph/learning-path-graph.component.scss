@@ -1,0 +1,54 @@
+.graph-container {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    .ngx-graph {
+        width: auto;
+    }
+
+    .node {
+        display: flex;
+        width: 100%;
+        height: 100%;
+    }
+
+    #arrow {
+        stroke: var(--body-color);
+        fill: var(--body-color);
+    }
+
+    .edge {
+        stroke: var(--body-color) !important;
+        marker-end: url(#arrow);
+    }
+}
+
+jhi-learning-path-graph-node:hover {
+    cursor: pointer;
+}
+
+.node-icon-container {
+    width: 100%;
+    display: flex;
+
+    fa-icon {
+        width: 100%;
+
+        svg {
+            margin: 10%;
+            width: 80%;
+            height: 80%;
+        }
+    }
+}
+
+.completed {
+    color: var(--bs-success);
+}
+
+.node-details {
+    display: block;
+    max-width: 40vw;
+}

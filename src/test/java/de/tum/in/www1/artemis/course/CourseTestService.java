@@ -2176,9 +2176,11 @@ public class CourseTestService {
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
         // Archive the course and wait until it's complete
         Course updatedCourse = testArchiveCourseWithTestModelingAndFileUploadExercises();
+        Map<String, String> expectedHeaders = new HashMap<>();
+        expectedHeaders.put("Content-Disposition", "attachment; filename=\"" + updatedCourse.getCourseArchivePath() + "\"");
 
         // Download the archive
-        var archive = request.getFile("/api/courses/" + updatedCourse.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        var archive = request.getFile("/api/courses/" + updatedCourse.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>(), expectedHeaders);
         assertThat(archive).isNotNull();
         assertThat(archive).exists();
         assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);

@@ -1,0 +1,26 @@
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" [(ngModel)]="subSettings!.enabled" />
+    <label class="form-check-label" for="flexSwitchCheckDefault" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
+</div>
+<span><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.preferredModel">Preferred Model</span>: </span>
+<div *ngIf="true" ngbDropdown class="d-inline-block me-2">
+    <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
+        {{ getSelectedModelName() }}
+    </button>
+    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+        <button *ngIf="modelOptional" (click)="setModel(undefined)" [class.selected]="subSettings.preferredModel === undefined" ngbDropdownItem>
+            {{ 'artemisApp.iris.settings.subSettings.inheritModel' | artemisTranslate }}
+        </button>
+        <button *ngFor="let model of models" (click)="setModel(model)" [class.selected]="model.id === subSettings.preferredModel" [ngbTooltip]="model.description" ngbDropdownItem>
+            {{ model.name }}
+        </button>
+    </div>
+</div>
+<div class="mb-3">
+    <label class="form-label fs-4 fw-bold" for="template-editor" jhiTranslate="artemisApp.iris.settings.subSettings.template.title"> Template </label>
+    <div *ngIf="templateOptional" class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="inheritTemplate" [checked]="!subSettings.template" (change)="onInheritTemplateChanged()" />
+        <label class="form-check-label" for="inheritTemplate" jhiTranslate="artemisApp.iris.settings.subSettings.template.inherit">Inherit</label>
+    </div>
+    <textarea *ngIf="subSettings.template" id="template-editor" class="form-control" rows="25" [(ngModel)]="subSettings.template!.content"></textarea>
+</div>

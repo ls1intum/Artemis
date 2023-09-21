@@ -13,6 +13,7 @@ import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock
 import { of } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -20,8 +21,20 @@ function getExerciseGroups(equalPoints: boolean) {
         {
             id: 1,
             exercises: [
-                { id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
-                { id: 2, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+                {
+                    id: 3,
+                    maxPoints: 100,
+                    numberOfAssessmentsOfCorrectionRounds: dueDateStatArray,
+                    studentAssignedTeamIdComputed: false,
+                    secondCorrectionEnabled: false,
+                },
+                {
+                    id: 2,
+                    maxPoints: 100,
+                    numberOfAssessmentsOfCorrectionRounds: dueDateStatArray,
+                    studentAssignedTeamIdComputed: false,
+                    secondCorrectionEnabled: false,
+                },
             ],
         },
     ];
@@ -44,7 +57,14 @@ describe('ExamChecklistComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ExamChecklistComponent, MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective), ExamChecklistExerciseGroupTableComponent, ProgressBarComponent],
+            declarations: [
+                ExamChecklistComponent,
+                MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
+                ExamChecklistExerciseGroupTableComponent,
+                ProgressBarComponent,
+                ExamEditWorkingTimeComponent,
+            ],
             providers: [
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -83,7 +103,15 @@ describe('ExamChecklistComponent', () => {
 
         const additionalExerciseGroup = {
             id: 13,
-            exercises: [{ id: 23, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false }],
+            exercises: [
+                {
+                    id: 23,
+                    maxPoints: 100,
+                    numberOfAssessmentsOfCorrectionRounds: dueDateStatArray,
+                    studentAssignedTeamIdComputed: false,
+                    secondCorrectionEnabled: false,
+                },
+            ],
         };
         component.exam.exerciseGroups.push(additionalExerciseGroup);
 
