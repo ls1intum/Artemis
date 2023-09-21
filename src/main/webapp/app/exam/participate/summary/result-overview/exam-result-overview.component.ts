@@ -35,11 +35,14 @@ export class ExamResultOverviewComponent implements OnInit {
     faAward = faAward;
     faChevronRight = faChevronRight;
 
+    showIncludedInScoreColumn = false;
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
         private changeDetector: ChangeDetectorRef,
-    ) {}
+    ) {
+        this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
+    }
 
     ngOnInit() {
         if (this.isExamResultPublished()) {
@@ -61,7 +64,8 @@ export class ExamResultOverviewComponent implements OnInit {
      * If all exercises are included in the overall score, we do not need to show the column
      * -> displayed if at least one exercise is not included in the overall score
      */
-    showIncludedInScoreColumn(): boolean {
+    containsExerciseThatIsNotIncludedCompletely(): boolean {
+        console.log('method called');
         for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
             if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 return true;

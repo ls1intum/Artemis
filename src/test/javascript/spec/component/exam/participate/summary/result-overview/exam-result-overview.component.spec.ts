@@ -229,21 +229,21 @@ describe('ExamResultOverviewComponent', () => {
             const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
             component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
 
-            expect(component.showIncludedInScoreColumn()).toBeFalse();
+            expect(component.containsExerciseThatIsNotIncludedCompletely()).toBeFalse();
         });
 
         it('to true if exercise is excluded', () => {
             const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise, notIncludedTextExercise];
             component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
 
-            expect(component.showIncludedInScoreColumn()).toBeTrue();
+            expect(component.containsExerciseThatIsNotIncludedCompletely()).toBeTrue();
         });
 
         it('to true if bonus exercise is included', () => {
             const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise, bonusTextExercise];
             component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
 
-            expect(component.showIncludedInScoreColumn()).toBeTrue();
+            expect(component.containsExerciseThatIsNotIncludedCompletely()).toBeTrue();
         });
     });
 
