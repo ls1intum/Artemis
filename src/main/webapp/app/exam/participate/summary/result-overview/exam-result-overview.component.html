@@ -29,7 +29,7 @@
                     <td>
                         &nbsp;
                         <div *ngIf="exercise?.type" class="icon-container">
-                            <fa-icon [icon]="getIcon(exercise.type!)" class="icon"></fa-icon>
+                            <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon"></fa-icon>
                         </div>
                         &nbsp;
                         <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>

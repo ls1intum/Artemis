@@ -11,6 +11,11 @@ import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+
+type ExerciseInfo = {
+    icon: IconProp;
+};
 
 @Component({
     selector: 'jhi-exam-result-overview',
@@ -42,6 +47,8 @@ export class ExamResultOverviewComponent implements OnInit {
      */
     maxPoints = 0;
 
+    exerciseInfos: Record<number, { icon: IconProp }>;
+
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
@@ -55,10 +62,22 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     ngOnChanges() {
-        console.log('ngOnChanges');
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
         this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
+
+        this.exerciseInfos = this.getExerciseInfos();
+    }
+
+    private getExerciseInfos() {
+        const exerciseInfos: Record<number, ExerciseInfo> = {};
+        for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
+            if (exercise.id === undefined) {
+                continue;
+            }
+            exerciseInfos[exercise.id] = { icon: getIcon(exercise.type) };
+        }
+        return exerciseInfos;
     }
 
     /**
