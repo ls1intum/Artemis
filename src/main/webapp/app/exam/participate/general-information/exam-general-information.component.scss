@@ -2,10 +2,8 @@ table {
     width: fit-content;
 }
 
-th {
-    text-align: end;
-}
-
+th,
 td {
     text-align: start;
+    padding: 0.25em;
 }
