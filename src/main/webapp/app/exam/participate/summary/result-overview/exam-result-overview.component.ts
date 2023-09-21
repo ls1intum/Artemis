@@ -52,6 +52,14 @@ export class ExamResultOverviewComponent implements OnInit {
 
     exerciseInfos: Record<number, ExerciseInfo>;
 
+    /**
+     * The points summary table will only be shown if:
+     * - exam.publishResultsDate is set
+     * - we are after the exam.publishResultsDate
+     * - at least one exercise has a result
+     */
+    showResultOverview = false;
+
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
@@ -65,6 +73,7 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     ngOnChanges() {
+        this.showResultOverview = !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
         this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
@@ -87,16 +96,6 @@ export class ExamResultOverviewComponent implements OnInit {
             };
         }
         return exerciseInfos;
-    }
-
-    /**
-     * The points summary table will only be shown if:
-     * - exam.publishResultsDate is set
-     * - we are after the exam.publishResultsDate
-     * - at least one exercise has a result
-     */
-    showResultOverview(): boolean {
-        return !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
     }
 
     /**
