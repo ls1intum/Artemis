@@ -70,9 +70,15 @@ export class ExamResultOverviewComponent implements OnInit {
         if (this.isExamResultPublished()) {
             this.setExamGrade();
         }
+
+        this.updateLocalVariables();
     }
 
     ngOnChanges() {
+        this.updateLocalVariables();
+    }
+
+    private updateLocalVariables() {
         this.showResultOverview = !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;

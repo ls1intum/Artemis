@@ -207,7 +207,7 @@ describe('ExamResultOverviewComponent', () => {
         expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[programmingExercise.id!]).toBe(0);
 
         expect(component.overallAchievedPoints).toBe(35.33);
-        expect(component.overallAchievedPoints).toBe(40);
+        expect(component.maxPoints).toBe(40);
         expect(component.studentExamWithGrade?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(60);
     });
