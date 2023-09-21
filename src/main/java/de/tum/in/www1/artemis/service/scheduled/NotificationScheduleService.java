@@ -164,7 +164,8 @@ public class NotificationScheduleService {
      * @return true if the time is valid else false
      */
     private boolean checkIfTimeIsCorrectForScheduledTask(ZonedDateTime relevantTime) {
-        // only send a notification if relevantTime is defined and not in the future (i.e. in the range [now-2 minutes, now+2 minutes]) (due to possible delays in scheduling)
+        // Only send a notification if relevantTime is defined and close to the current time (i.e. in the range [now-2 minutes, now+2 minutes]) (due to possible delays in
+        // scheduling)
         return relevantTime != null && !relevantTime.isBefore(ZonedDateTime.now().minusMinutes(2)) && !relevantTime.isAfter(ZonedDateTime.now().plusMinutes(2));
     }
 

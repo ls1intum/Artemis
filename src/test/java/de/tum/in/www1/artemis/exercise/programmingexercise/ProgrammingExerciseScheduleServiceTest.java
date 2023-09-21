@@ -84,7 +84,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
     private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1000;
 
-    private static final long DELAY_MS = 200;
+    private static final long DELAY_MS = 300;
 
     private static final long TIMEOUT_MS = 5000;
 
@@ -338,7 +338,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
         var login = TEST_PREFIX + "student3";
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, login);
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, login);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
@@ -351,7 +351,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotEqualTo(programmingExercise.getDueDate());
 
         // the repo-lock for the participation with a later due date should only have been called after that individual due date has passed
-        verifyLockStudentRepositoryAndParticipationOperation(true, studentParticipationsRegularDueDate, TIMEOUT_MS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, studentParticipationsRegularDueDate, DELAY_MS * 2);
         // first the operation should not be called
         verifyLockStudentRepositoryAndParticipationOperation(false, participationIndividualDueDate, 0);
         // after some time the operation should be called as well (verify waits up to 5s until this condition is fulfilled)
@@ -364,25 +364,25 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
-        setupProgrammingExerciseDates(now, DELAY_MS, DELAY_MS * 3);
+        setupProgrammingExerciseDates(now, DELAY_MS, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
         // individual due date between regular due date and build and test date
-        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(DELAY_MS * 2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
         verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
 
         // not yet locked on regular due date
-        verify(programmingTriggerService, after(DELAY_MS).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingTriggerService, after(DELAY_MS * 2).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
         verifyLockStudentRepositoryAndParticipationOperation(false, participationIndividualDueDate, 0);
 
         // locked after individual due date
-        verifyLockStudentRepositoryAndParticipationOperation(true, participationIndividualDueDate, 2 * DELAY_MS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, participationIndividualDueDate, 2 * DELAY_MS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         // after build and test date: no individual build and test actions are scheduled
-        verify(programmingTriggerService, after(DELAY_MS * 3).never()).triggerBuildForParticipations(List.of(participationIndividualDueDate));
+        verify(programmingTriggerService, after(DELAY_MS + SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).triggerBuildForParticipations(List.of(participationIndividualDueDate));
         verify(programmingTriggerService, timeout(TIMEOUT_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
