@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
@@ -88,7 +87,6 @@ describe('GradingKeyTableComponent', () => {
                 MockProvider(BonusService),
                 MockProvider(CourseStorageService),
                 MockProvider(ScoresStorageService),
-                MockProvider(ArtemisNavigationUtilService),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
@@ -204,11 +202,5 @@ describe('GradingKeyTableComponent', () => {
 
         expect(gradingSystemServiceSpy).toHaveBeenCalledOnce();
         expect(gradingSystemServiceSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], reachablePoints);
-    });
-
-    it('should round correctly', () => {
-        expect(comp.round(undefined)).toBeUndefined();
-        expect(comp.round(5)).toBe(5);
-        expect(comp.round(3.333333333333333)).toBe(3.33);
     });
 });

@@ -2,11 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -33,8 +30,6 @@ export class GradingKeyTableComponent implements OnInit {
         private gradingSystemService: GradingSystemService,
         private bonusService: BonusService,
         private scoresStorageService: ScoresStorageService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private themeService: ThemeService,
     ) {}
 
     plagiarismGrade: string;
@@ -113,12 +108,5 @@ export class GradingKeyTableComponent implements OnInit {
      */
     hasPointsSet(): boolean {
         return this.gradingSystemService.hasPointsSet(this.gradeSteps);
-    }
-
-    /**
-     * @see GradeStepBoundsPipe.round
-     */
-    round(num?: number) {
-        return GradeStepBoundsPipe.round(num);
     }
 }

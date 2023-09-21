@@ -4,7 +4,6 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview/grading-key-helper';
 
@@ -66,19 +65,5 @@ export class GradingKeyOverviewComponent implements OnInit {
      */
     printPDF() {
         setTimeout(() => this.themeService.print());
-    }
-
-    /**
-     * @see GradingSystemService.hasPointsSet
-     */
-    hasPointsSet(): boolean {
-        return this.gradingSystemService.hasPointsSet(this.gradeSteps);
-    }
-
-    /**
-     * @see GradeStepBoundsPipe.round
-     */
-    round(num?: number) {
-        return GradeStepBoundsPipe.round(num);
     }
 }
