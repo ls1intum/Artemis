@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { orderBy as _orderBy } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -13,7 +12,7 @@ import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
@@ -164,15 +163,4 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.missingResultInfo = MissingResultInformation.NONE;
         }
     }
-}
-
-export function getLatestResultOfStudentParticipation(participation: StudentParticipation, showUngradedResults: boolean): Result | undefined {
-    // Sort participation results by completionDate desc.
-    if (participation.results) {
-        participation.results = _orderBy(participation.results, 'completionDate', 'desc');
-    }
-    // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = participation.results?.find(({ rated }) => showUngradedResults || rated === true);
-    // Make sure that the participation result is connected to the newest result.
-    return latestResult ? { ...latestResult, participation: participation } : undefined;
 }

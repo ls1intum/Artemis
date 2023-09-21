@@ -8,9 +8,9 @@ import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/entities/bonus.model';
 import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/result/result.utils';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/result/updating-result.component';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 @Component({
     selector: 'jhi-exam-result-overview',
