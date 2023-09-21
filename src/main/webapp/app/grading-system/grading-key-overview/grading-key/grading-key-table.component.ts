@@ -44,9 +44,10 @@ export class GradingKeyTableComponent implements OnInit {
     gradeSteps: GradeStep[] = [];
     isBonus = false;
 
+    hasPointsSet = false;
+
     ngOnInit(): void {
         const { courseId, examId, forBonus, isExam, studentGrade } = loadGradingKeyUrlParams(this.route);
-
         this.courseId = courseId;
         this.examId = examId;
         this.forBonus = this.forBonus || forBonus;
@@ -75,6 +76,8 @@ export class GradingKeyTableComponent implements OnInit {
                 }
             }
         });
+
+        this.gradingSystemService.hasPointsSet(this.gradeSteps);
     }
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
@@ -101,12 +104,5 @@ export class GradingKeyTableComponent implements OnInit {
                 }),
             );
         }
-    }
-
-    /**
-     * @see GradingSystemService.hasPointsSet
-     */
-    hasPointsSet(): boolean {
-        return this.gradingSystemService.hasPointsSet(this.gradeSteps);
     }
 }
