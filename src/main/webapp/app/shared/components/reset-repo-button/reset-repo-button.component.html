@@ -29,21 +29,25 @@
             >
                 Are you sure you want to delete?
             </p>
-            <div class="form-group">
-                <label for="confirm-exercise-name" class="text-danger" [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.typeNameToConfirm'"
-                    >Please type in the name to confirm</label
-                >
-                <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
-            </div>
+
+            <jhi-confirm-entity-name
+                *ngIf="exercise.title"
+                confirmationText="artemisApp.exerciseActions.resetRepository.typeNameToConfirm"
+                [entityName]="exercise.title"
+                warningTextColor="text-danger"
+                name="confirmExerciseName"
+                ngModel
+            />
+
             <div class="button-footer">
-                <button class="btn btn-danger" type="submit" [disabled]="resetForm.form.invalid || confirmEntityName !== exercise.title" (click)="resetRepository()">
+                <button class="btn btn-danger" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository()">
                     <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate">Reset</span>
                 </button>
                 <button
                     class="btn btn-danger ms-2"
                     type="submit"
                     *ngIf="gradedParticipation && practiceParticipation"
-                    [disabled]="resetForm.form.invalid || confirmEntityName !== exercise.title"
+                    [disabled]="resetForm.invalid"
                     (click)="resetRepository(gradedParticipation?.id)"
                 >
                     <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation">Reset</span>

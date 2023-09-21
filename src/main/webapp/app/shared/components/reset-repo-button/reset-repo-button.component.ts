@@ -26,8 +26,6 @@ export class ResetRepoButtonComponent implements OnInit {
     gradedParticipation?: StudentParticipation;
     practiceParticipation?: StudentParticipation;
 
-    confirmEntityName: string;
-
     // Icons
     faBackward = faBackward;
 
