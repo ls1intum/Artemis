@@ -104,6 +104,8 @@ public class CourseResource {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final CourseCodeOfConductAgreementService courseCodeOfConductAgreementService;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
@@ -114,7 +116,8 @@ public class CourseResource {
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService) {
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
+            CourseCodeOfConductAgreementService courseCodeOfConductAgreementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -134,6 +137,7 @@ public class CourseResource {
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
+        this.courseCodeOfConductAgreementService = courseCodeOfConductAgreementService;
     }
 
     /**
@@ -229,6 +233,10 @@ public class CourseResource {
             else {
                 courseUpdate.setOnlineCourseConfiguration(null);
             }
+        }
+
+        if (!courseUpdate.getCourseInformationSharingMessagingCodeOfConduct().equals(existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
+            courseCodeOfConductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
         courseUpdate.setId(courseId); // Don't persist a wrong ID

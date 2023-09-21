@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.Objects;
 
+/**
+ * A DTO representing a course's responsible contact, i.e., a person to report misconduct to.
+ */
 public record ResponsibleUserDTO(String firstName, String lastName, String email) {
 
     @Override
