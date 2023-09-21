@@ -262,11 +262,9 @@ export class MetisConversationService implements OnDestroy {
         }
 
         this.conversationService.acceptCodeOfConduct(course.id).subscribe({
-            next: (response) => {
-                if (response.body !== null) {
-                    this.isCodeOfConductAccepted = response.body;
-                    this._isCodeOfConductAccepted$.next(this.isCodeOfConductAccepted);
-                }
+            next: () => {
+                this.isCodeOfConductAccepted = true;
+                this._isCodeOfConductAccepted$.next(true);
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);

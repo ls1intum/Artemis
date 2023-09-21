@@ -1,10 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 @Component({
     selector: 'jhi-course-conversations-code-of-conduct',
@@ -14,17 +15,18 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
     @Input()
     course: Course;
 
-    responsibleContacts: UserPublicInfoDTO[] = [];
+    responsibleContacts: User[] = [];
 
     constructor(
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
+        private conversationService: ConversationService,
     ) {}
 
     ngOnInit() {
         if (this.course.id) {
-            this.courseManagementService.searchUsers(this.course.id, '', ['instructors']).subscribe({
-                next: (res: HttpResponse<UserPublicInfoDTO[]>) => {
+            this.conversationService.getResponsibleUsersForCodeOfConduct(this.course.id).subscribe({
+                next: (res: HttpResponse<User[]>) => {
                     if (res.body) {
                         this.responsibleContacts = res.body;
                     }
@@ -32,16 +34,5 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
         }
-    }
-
-    getUserLabel(user: UserPublicInfoDTO) {
-        let label = '';
-        if (user.firstName) {
-            label += user.firstName + ' ';
-        }
-        if (user.lastName) {
-            label += user.lastName + ' ';
-        }
-        return label.trim();
     }
 }

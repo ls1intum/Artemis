@@ -14,9 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -25,6 +23,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
+import de.tum.in.www1.artemis.service.dto.ResponsibleUserDTO;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
@@ -42,6 +41,8 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     private final ConversationUtilService conversationUtilService;
 
+    private List<User> users = List.of();
+
     @Autowired
     public ConversationIntegrationTest(TextExerciseUtilService textExerciseUtilService, ExerciseUtilService exerciseUtilService, ExamUtilService examUtilService,
             LectureUtilService lectureUtilService, ConversationUtilService conversationUtilService) {
@@ -55,9 +56,12 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        users = userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
+            User student42 = UserFactory.generateActivatedUser(testPrefix + "student42");
+            userRepository.save(student42);
+
+            users.add(student42);
         }
     }
 
@@ -431,20 +435,31 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void codeOfConduct_isAccepted() throws Exception {
-        var agreement = request.get("/api/courses/" + exampleCourseId + "/code-of-conduct-agreement", HttpStatus.OK, Boolean.class);
+        var agreement = request.get("/api/courses/" + exampleCourseId + "/code-of-conduct/agreement", HttpStatus.OK, Boolean.class);
         assertThat(agreement).isFalse();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void codeOfConduct_accept() throws Exception {
-        var agreement = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/code-of-conduct-agreement", HttpStatus.OK, Boolean.class);
-        assertThat(agreement).isTrue();
+        var initialAgreement = request.get("/api/courses/" + exampleCourseId + "/code-of-conduct/agreement", HttpStatus.OK, Boolean.class);
+        assertThat(initialAgreement).isFalse();
 
-        var newAgreement = request.get("/api/courses/" + exampleCourseId + "/code-of-conduct-agreement", HttpStatus.OK, Boolean.class);
+        // Accept
+        request.patch("/api/courses/" + exampleCourseId + "/code-of-conduct/agreement", null, HttpStatus.OK);
+
+        var newAgreement = request.get("/api/courses/" + exampleCourseId + "/code-of-conduct/agreement", HttpStatus.OK, Boolean.class);
         assertThat(newAgreement).isTrue();
-        ;
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void responsibleUsers_shouldReturnCorrectValue() throws Exception {
+        var instructors = users.stream().filter((u) -> u.getGroups().contains("instructor")).map((u) -> new ResponsibleUserDTO(u.getFirstName(), u.getLastName(), u.getEmail()))
+                .toList();
+
+        var responsibleUsers = request.getList("/api/courses/" + exampleCourseId + "/code-of-conduct/responsible-users", HttpStatus.OK, ResponsibleUserDTO.class);
+        assertThat(responsibleUsers).hasSameElementsAs(instructors).hasSameSizeAs(instructors);
     }
 
     private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelModerationRights,
