@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermi
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.io.IOException;
 import java.net.URI;
@@ -533,13 +532,6 @@ public class BitbucketRequestMockProvider {
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
-    }
-
-    public void mockGetBitbucketRepository(String projectKey, String repositorySlug) throws URISyntaxException, JsonProcessingException {
-        BitbucketRepositoryDTO mockResponse = new BitbucketRepositoryDTO("asd", repositorySlug, projectKey, "ssh:cloneUrl");
-        String body = mapper.writeValueAsString(mockResponse);
-        URI uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").path(projectKey).path("/repos/").path(repositorySlug).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(body).contentType(MediaType.APPLICATION_JSON));
     }
 
 }

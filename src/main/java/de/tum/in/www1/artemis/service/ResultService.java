@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 @Service
 public class ResultService {
@@ -35,7 +36,7 @@ public class ResultService {
 
     private final LtiNewResultService ltiNewResultService;
 
-    private final WebsocketMessagingService websocketMessagingService;
+    private final ResultWebsocketService resultWebsocketService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
@@ -59,17 +60,16 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService,
-            WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
-            FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, ResultWebsocketService resultWebsocketService,
+            ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
+            ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService,
+            ExerciseDateService exerciseDateService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
-        this.websocketMessagingService = websocketMessagingService;
+        this.resultWebsocketService = resultWebsocketService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
         this.feedbackRepository = feedbackRepository;
@@ -114,7 +114,7 @@ public class ResultService {
                 ltiNewResultService.onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
-            websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
+            resultWebsocketService.broadcastNewResult(savedResult.getParticipation(), savedResult);
         }
         return savedResult;
     }
@@ -217,7 +217,7 @@ public class ResultService {
      * @param result        a result of this participation
      */
     public void filterSensitiveInformationIfNecessary(final Participation participation, final Result result) {
-        this.filterSensitiveInformationIfNecessary(participation, List.of(result));
+        this.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.empty());
     }
 
     /**
@@ -225,26 +225,38 @@ public class ResultService {
      *
      * @param participation the results belong to.
      * @param results       collection of results of this participation
+     * @param user          the user for which the information should be filtered if it is an empty optional, the currently logged-in user is used
      */
-    public void filterSensitiveInformationIfNecessary(final Participation participation, final Collection<Result> results) {
+    public void filterSensitiveInformationIfNecessary(final Participation participation, final Collection<Result> results, Optional<User> user) {
         results.forEach(Result::filterSensitiveInformation);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
-            // The test cases marked as after_due_date should only be shown after all
-            // students can no longer submit so that no unfair advantage is possible.
-            //
-            // For course exercises, this applies only to automatic results. For manual ones the instructors
-            // are responsible to set an appropriate assessment due date.
-            //
-            // For exams, we filter sensitive results until the results are published.
-            // For test exam exercises, this is the case when the student submitted the test exam.
+        if (user.isPresent()) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user.get())) {
+                filterInformation(participation, results);
+            }
+        }
+        else {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
+                filterInformation(participation, results);
+            }
+        }
+    }
 
-            Exercise exercise = participation.getExercise();
-            if (exercise.isExamExercise()) {
-                filterSensitiveFeedbacksInExamExercise(participation, results, exercise);
-            }
-            else {
-                filterSensitiveFeedbackInCourseExercise(participation, results, exercise);
-            }
+    private void filterInformation(Participation participation, Collection<Result> results) {
+        // The test cases marked as after_due_date should only be shown after all
+        // students can no longer submit so that no unfair advantage is possible.
+        //
+        // For course exercises, this applies only to automatic results. For manual ones the instructors
+        // are responsible to set an appropriate assessment due date.
+        //
+        // For exams, we filter sensitive results until the results are published.
+        // For test exam exercises, this is the case when the student submitted the test exam.
+
+        Exercise exercise = participation.getExercise();
+        if (exercise.isExamExercise()) {
+            filterSensitiveFeedbacksInExamExercise(participation, results, exercise);
+        }
+        else {
+            filterSensitiveFeedbackInCourseExercise(participation, results, exercise);
         }
     }
 
