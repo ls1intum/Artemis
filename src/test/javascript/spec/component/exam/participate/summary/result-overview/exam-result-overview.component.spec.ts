@@ -242,4 +242,38 @@ describe('ExamResultOverviewComponent', () => {
             expect(component.showIncludedInScoreColumn()).toBeTrue();
         });
     });
+
+    describe('scrollToExercise', () => {
+        it('should scroll to the target exercise dom element', () => {
+            const mockElement = document.createElement('div');
+            mockElement.id = 'exercise-1';
+            document.body.appendChild(mockElement);
+            mockElement.scrollIntoView = jest.fn();
+
+            component.scrollToExercise(1);
+
+            expect(mockElement.scrollIntoView).toHaveBeenCalledWith({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest',
+            });
+        });
+
+        it('should log an error when the target exercise dom element does not exist', () => {
+            const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
+            const INVALID_EXERCISE_ID = 999;
+
+            component.scrollToExercise(INVALID_EXERCISE_ID);
+
+            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Could not find corresponding exercise with id'));
+        });
+
+        it('should return immediately when exerciseId is undefined', () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            component.scrollToExercise(undefined);
+
+            expect(consoleErrorSpy).not.toHaveBeenCalled();
+        });
+    });
 });
