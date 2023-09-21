@@ -33,15 +33,4 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
             });
         }
     }
-
-    getUserLabel(user: UserPublicInfoDTO) {
-        let label = '';
-        if (user.firstName) {
-            label += user.firstName + ' ';
-        }
-        if (user.lastName) {
-            label += user.lastName + ' ';
-        }
-        return label.trim();
-    }
 }

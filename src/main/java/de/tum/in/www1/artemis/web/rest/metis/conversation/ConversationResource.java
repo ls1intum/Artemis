@@ -159,7 +159,7 @@ public class ConversationResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         courseCodeOfConductAgreementService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
-        return ResponseEntity.ok(courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
+        return ResponseEntity.ok(true);
     }
 
     /**
