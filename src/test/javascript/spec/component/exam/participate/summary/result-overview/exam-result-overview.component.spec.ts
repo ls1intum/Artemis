@@ -219,4 +219,27 @@ describe('ExamResultOverviewComponent', () => {
         expect(component.getMaxBonusPointsSum()).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);
     });
+
+    describe('should evaluate showIncludedInScoreColumn', () => {
+        it('to false if all exercises are included in the score', () => {
+            const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
+            component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
+
+            expect(component.showIncludedInScoreColumn()).toBeFalse();
+        });
+
+        it('to true if exercise is excluded', () => {
+            const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise, notIncludedTextExercise];
+            component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
+
+            expect(component.showIncludedInScoreColumn()).toBeTrue();
+        });
+
+        it('to true if bonus exercise is included', () => {
+            const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise, bonusTextExercise];
+            component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
+
+            expect(component.showIncludedInScoreColumn()).toBeTrue();
+        });
+    });
 });
