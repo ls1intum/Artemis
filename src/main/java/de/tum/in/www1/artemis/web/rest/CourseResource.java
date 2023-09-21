@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -769,12 +770,13 @@ public class CourseResource {
     /**
      * DELETE /courses/:course/cleanup : Cleans up a course by deleting all student submissions.
      *
-     * @param courseId id of the course to clean up
+     * @param courseId  id of the course to clean up
+     * @param principal the user that wants to cleanup the course
      * @return ResponseEntity with status
      */
     @DeleteMapping("courses/{courseId}/cleanup")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
+    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, Principal principal) {
         log.info("REST request to cleanup the Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -782,7 +784,7 @@ public class CourseResource {
         if (!course.hasCourseArchive()) {
             throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", Course.ENTITY_NAME, "archivenonexistant");
         }
-        courseService.cleanupCourse(courseId);
+        courseService.cleanupCourse(courseId, principal);
         return ResponseEntity.ok().build();
     }
 

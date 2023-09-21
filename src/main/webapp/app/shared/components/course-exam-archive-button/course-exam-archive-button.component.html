@@ -96,7 +96,7 @@
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>
     <button
-        *ngIf="canCleanupCourse()"
+        *ngIf="canCleanup() && archiveMode === 'Course'"
         [disabled]="isBeingArchived"
         [attr.data-mode]="archiveMode"
         jhiDeleteButton
@@ -104,9 +104,25 @@
         [actionType]="ActionType.Cleanup"
         [entityTitle]="course.title!"
         deleteQuestion="artemisApp.course.cleanup.question"
-        (delete)="cleanupCourse()"
+        (delete)="cleanup()"
         [dialogError]="dialogError$"
         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+        style="margin-right: 0 !important"
+    >
+        <fa-icon [icon]="faEraser"></fa-icon>
+    </button>
+    <button
+        *ngIf="canCleanup() && archiveMode === 'Exam'"
+        [disabled]="isBeingArchived"
+        [attr.data-mode]="archiveMode"
+        jhiDeleteButton
+        [buttonSize]="ButtonSize.MEDIUM"
+        [actionType]="ActionType.Cleanup"
+        [entityTitle]="exam!.title!"
+        deleteQuestion="artemisApp.exam.cleanup.question"
+        (delete)="cleanup()"
+        [dialogError]="dialogError$"
+        deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
         style="margin-right: 0 !important"
     >
         <fa-icon [icon]="faEraser"></fa-icon>
