@@ -196,12 +196,16 @@ export class ExamResultOverviewComponent implements OnInit {
         return getTextColorClass(result, templateStatus);
     }
 
-    toggleGradingKey() {
+    toggleGradingKey(): void {
         this.isGradingKeyCollapsed = !this.isGradingKeyCollapsed;
     }
 
-    toggleBonusGradingKey() {
+    toggleBonusGradingKey(): void {
         this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
+    }
+
+    isBonusGradingKeyDisplayed(): boolean {
+        return this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
     }
 
     protected readonly getIcon = getIcon;

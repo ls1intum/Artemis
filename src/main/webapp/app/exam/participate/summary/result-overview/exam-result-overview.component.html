@@ -148,7 +148,7 @@
 
         <div class="container">
             <div class="row">
-                <div class="col-md-6 mt-3 d-flex flex-column align-items-center">
+                <div class="mt-3 d-flex flex-column align-items-center" [class]="isBonusGradingKeyDisplayed() ? 'col-md-6' : 'col-md-12'">
                     <button class="btn btn-primary" (click)="toggleGradingKey()" style="max-width: fit-content">
                         <fa-icon [icon]="faClipboard"></fa-icon>
                         <span
@@ -168,7 +168,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-6 mt-3 d-flex flex-column align-items-center">
+                <div *ngIf="isBonusGradingKeyDisplayed()" class="col-md-6 mt-3 d-flex flex-column align-items-center">
                     <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
                         <fa-icon [icon]="faAward"></fa-icon>
                         <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}&nbsp;</span>
