@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -9,7 +9,6 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ButtonSize } from '../button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
@@ -70,7 +69,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private modalService: NgbModal,
         private accountService: AccountService,
-        private changeDetectionRef: ChangeDetectorRef,
     ) {}
 
     ngOnInit() {
@@ -127,13 +125,11 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode === 'Exam' && this.exam) {
             this.examService.find(this.course.id!, this.exam.id!).subscribe((res) => {
                 this.exam = res.body!;
-                this.changeDetectionRef.detectChanges();
                 this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         } else {
             this.courseService.find(this.course.id!).subscribe((res) => {
                 this.course = res.body!;
-                this.changeDetectionRef.detectChanges();
                 this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         }
@@ -181,8 +177,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                 }
                 if (result === 'archive' || !this.canDownloadArchive()) {
                     this.archive();
-                } else {
-                    this.reloadCourseOrExam();
                 }
             },
             () => {},
@@ -211,41 +205,44 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     downloadArchive() {
         if (this.archiveMode === 'Exam' && this.exam) {
-            this.examService.downloadExamArchive(this.course.id!, this.exam.id!).subscribe({
-                next: (response) => downloadZipFileFromResponse(response),
-                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+            this.examService.downloadExamArchive(this.course.id!, this.exam.id!);
+        } else {
+            this.courseService.downloadCourseArchive(this.course.id!);
+        }
+    }
+
+    canCleanup() {
+        let hasBeenArchived: boolean;
+        if (this.archiveMode === 'Exam' && this.exam) {
+            hasBeenArchived = !!this.exam.examArchivePath && this.exam.examArchivePath.length > 0;
+        } else {
+            hasBeenArchived = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
+        }
+        // A course / exam can only be cleaned up if the course / exam has been archived.
+        return this.accountService.isAtLeastInstructorInCourse(this.course) && hasBeenArchived;
+    }
+
+    cleanup() {
+        if (this.archiveMode === 'Exam' && this.exam) {
+            this.examService.cleanupExam(this.course.id!, this.exam.id!).subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => {
+                    this.dialogErrorSource.next(error.error.title);
+                },
             });
         } else {
-            this.courseService.downloadCourseArchive(this.course.id!).subscribe({
-                next: (response) => downloadZipFileFromResponse(response),
-                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+            this.courseService.cleanupCourse(this.course.id!).subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => {
+                    this.dialogErrorSource.next(error.error.title);
+                },
             });
         }
-    }
-
-    canCleanupCourse() {
-        if (this.archiveMode !== 'Course') {
-            return false;
-        }
-
-        // A course can only be cleaned up if the course has been archived.
-        const courseHasBeenArchived = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
-        return this.accountService.isAtLeastInstructorInCourse(this.course) && courseHasBeenArchived;
-    }
-
-    cleanupCourse() {
-        if (this.archiveMode !== 'Course') {
-            return;
-        }
-
-        this.courseService.cleanupCourse(this.course.id!).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
-                this.dialogErrorSource.next('');
-            },
-            error: (error) => {
-                this.dialogErrorSource.next(error.error.title);
-            },
-        });
     }
 }

@@ -17,11 +17,8 @@ services:
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "5005"
-        environment:
-            # The following enables the Java Remote Debugging port. More infos in the documentation:
-            # https://ls1intum.github.io/Artemis/dev/setup.html#debugging-with-docker
-            _JAVA_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-            SPRING_PROFILES_ACTIVE: artemis,scheduling,athena,dev,docker
+        env_file:
+            - ./artemis/config/dev.env
         depends_on:
             mysql:
                 condition: service_healthy

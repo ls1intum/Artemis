@@ -427,7 +427,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     void checkResetRepository_noAccessToGradedParticipation_forbidden() throws Exception {
         var gradedParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         var practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
 
         request.put("/api/programming-exercise-participations/" + practiceParticipation.getId() + "/reset-repository?gradedParticipationId=" + gradedParticipation.getId(), null,

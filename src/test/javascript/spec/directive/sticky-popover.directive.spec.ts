@@ -40,7 +40,7 @@ describe('StickyPopoverDirective', () => {
         fixture.whenStable();
         const div = fixture.debugElement.query(By.css('div'));
         expect(div).not.toBeNull();
-        div.nativeElement.dispatchEvent(new MouseEvent('mouseenter'));
+        div.nativeElement.dispatchEvent(new MouseEvent('pointerenter'));
         tick(10);
         expect(openStub).toHaveBeenCalledOnce();
         expect(directive.isOpen()).toBeTruthy();
@@ -52,9 +52,23 @@ describe('StickyPopoverDirective', () => {
         fixture.whenStable();
         const div = fixture.debugElement.query(By.css('div'));
         expect(div).not.toBeNull();
-        div.nativeElement.dispatchEvent(new MouseEvent('mouseenter'));
+        div.nativeElement.dispatchEvent(new MouseEvent('pointerenter'));
         tick(10);
         const span = fixture.debugElement.query(By.css('span'));
         expect(span).not.toBeNull();
+    }));
+
+    it('should close on leave', fakeAsync(() => {
+        fixture.whenStable();
+        const div = fixture.debugElement.query(By.css('div'));
+        expect(div).not.toBeNull();
+        div.nativeElement.dispatchEvent(new MouseEvent('pointerenter'));
+        tick(10);
+        let span = fixture.debugElement.query(By.css('span'));
+        expect(span).not.toBeNull();
+        div.nativeElement.dispatchEvent(new MouseEvent('pointerleave'));
+        tick(100);
+        span = fixture.debugElement.query(By.css('span'));
+        expect(span).toBeNull();
     }));
 });

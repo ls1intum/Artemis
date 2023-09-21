@@ -174,6 +174,6 @@ public class LectureUnitResource {
         log.info("REST request to get lecture unit for learning path node details with id: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
-        return ResponseEntity.ok(new LectureUnitForLearningPathNodeDetailsDTO(lectureUnit));
+        return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
     }
 }
