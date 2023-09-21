@@ -28,6 +28,9 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     container: string;
     canClosePopover: boolean;
 
+    private closeTimeout: any;
+    private clickInPopover: boolean = false;
+
     toggle(): void {
         super.toggle();
     }
@@ -57,13 +60,16 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
         super.ngOnInit();
         this.ngbPopover = this.jhiStickyPopover;
 
-        this._render.listen(this._elRef.nativeElement, 'mouseenter', () => {
+        this._render.listen(this._elRef.nativeElement, 'pointerenter', () => {
             this.canClosePopover = true;
-            this.open();
+            clearTimeout(this.closeTimeout);
+            if (!this.isOpen()) {
+                this.open();
+            }
         });
 
-        this._render.listen(this._elRef.nativeElement, 'mouseleave', () => {
-            setTimeout(() => {
+        this._render.listen(this._elRef.nativeElement, 'pointerleave', () => {
+            this.closeTimeout = setTimeout(() => {
                 if (this.canClosePopover) {
                     this.close();
                 }
@@ -87,18 +93,27 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
                 this.canClosePopover = false;
             });
 
-            this._render.listen(popover, 'mouseout', () => {
+            this._render.listen(popover, 'pointerleave', () => {
                 this.canClosePopover = true;
-                setTimeout(() => {
+                clearTimeout(this.closeTimeout);
+                this.closeTimeout = setTimeout(() => {
                     if (this.canClosePopover) {
                         this.close();
                     }
-                }, 0);
+                }, 250);
+            });
+
+            this._render.listen(popover, 'click', () => {
+                this.clickInPopover = true;
             });
         }, 0);
     }
 
     close() {
-        super.close();
+        if (this.clickInPopover) {
+            this.clickInPopover = false;
+        } else {
+            super.close();
+        }
     }
 }

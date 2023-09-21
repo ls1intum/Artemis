@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.web.rest.admin;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.dataexport.DataExportService;
+import de.tum.in.www1.artemis.service.export.DataExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
 
 /**

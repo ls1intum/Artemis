@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
@@ -27,7 +27,6 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -45,6 +44,8 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -97,6 +98,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
+    irisSettings?: IrisSettings;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -131,12 +133,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
-        private submissionService: ProgrammingSubmissionService,
         private complaintService: ComplaintService,
         private artemisMarkdown: ArtemisMarkdownService,
         private plagiarismCaseService: PlagiarismCasesService,
         private exerciseHintService: ExerciseHintService,
         private courseService: CourseManagementService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit() {
@@ -216,6 +218,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
             });
+
+            this.profileService
+                .getProfileInfo()
+                .pipe(
+                    filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                    switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!)),
+                )
+                .subscribe((settings) => {
+                    this.irisSettings = settings;
+                });
         }
 
         this.showIfExampleSolutionPresent(newExercise);

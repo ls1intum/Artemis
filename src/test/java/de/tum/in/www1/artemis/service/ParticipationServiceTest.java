@@ -183,7 +183,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
                 Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);
 
-        assertThat(studentParticipationReceived.isTestRun()).isTrue();
+        assertThat(studentParticipationReceived.isPracticeMode()).isTrue();
         assertThat(studentParticipationReceived.getExercise()).isEqualTo(programmingExercise);
         assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
