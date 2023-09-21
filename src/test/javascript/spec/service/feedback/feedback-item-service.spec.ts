@@ -1,8 +1,8 @@
-import { FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { TranslateService } from '@ngx-translate/core';
-import { Feedback } from 'app/entities/feedback.model';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 describe('FeedbackItemService', () => {
@@ -99,6 +99,18 @@ describe('FeedbackItemService', () => {
 
         const infoGroup = groups.find((group) => group.name === 'info');
         expect(infoGroup?.credits).toBe(0);
+    });
+
+    it('should handle automatic feedback with missing positive attribute', () => {
+        const feedbacks: Feedback[] = [{ type: FeedbackType.AUTOMATIC, credits: 2 }];
+
+        const items = service.create(feedbacks, false);
+        const groups = service.group(items) as FeedbackGroup[];
+
+        expect(groups).toBeArrayOfSize(1);
+
+        const correctGroup = groups.find((group) => group.name === 'correct');
+        expect(correctGroup?.credits).toBe(2);
     });
 
     it('should have a custom type guard function that works', () => {

@@ -23,9 +23,8 @@ class ProgrammingFeedbackGroupWrong extends FeedbackGroup {
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
-        const isTestFeedback = feedbackItem.type === 'Test';
-        const isFailedTest = feedbackItem.positive === false || (feedbackItem.positive == undefined && feedbackItem.credits === 0);
-        return isReviewerFeedback || (isTestFeedback && isFailedTest);
+        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.positive === false;
+        return isReviewerFeedback || isTestFeedback;
     }
 }
 
