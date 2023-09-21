@@ -24,7 +24,7 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 ## Scope
 
-This Code of Conduct applies within all communication channels.
+This Code of Conduct applies within all messages channels.
 
 ## Reporting
 
