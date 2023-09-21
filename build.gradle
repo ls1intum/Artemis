@@ -246,7 +246,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:9.2.1"
+    implementation "com.atlassian.bamboo:bamboo-specs:9.3.3"
     implementation ("org.yaml:snakeyaml") {
         version {
             strictly "1.33" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
@@ -346,6 +346,7 @@ dependencies {
     implementation "org.commonmark:commonmark:0.21.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
+    implementation "org.jgrapht:jgrapht-core:1.5.2"
 
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
