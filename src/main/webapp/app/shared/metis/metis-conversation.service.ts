@@ -116,6 +116,9 @@ export class MetisConversationService implements OnDestroy {
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
     }
 
+    /**
+     * Set the course conversation component to the contents of the code of conduct.
+     */
     public setCodeOfConduct() {
         this.activeConversation = undefined;
         this._activeConversation$.next(this.activeConversation);
