@@ -19,7 +19,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { GradeType } from 'app/entities/grading-scale.model';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -116,6 +116,8 @@ const programmingExerciseTwo = {
 } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo, notIncludedTextExercise, bonusTextExercise];
 
+const textExerciseResult = { exerciseId: textExercise.id, achievedScore: 60, achievedPoints: 6, maxScore: textExercise.maxPoints } as ExerciseResult;
+
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -141,7 +143,9 @@ describe('ExamResultOverviewComponent', () => {
                         overallGrade: '1.7',
                         hasPassed: true,
                         submitted: true,
-                        exerciseGroupIdToExerciseResult: {},
+                        exerciseGroupIdToExerciseResult: {
+                            [textExercise.id!]: textExerciseResult,
+                        },
                     },
                     achievedPointsPerExercise: {
                         [textExercise.id!]: 20,
@@ -274,6 +278,43 @@ describe('ExamResultOverviewComponent', () => {
             component.scrollToExercise(undefined);
 
             expect(consoleErrorSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('getAchievedPercentageByExerciseId', () => {
+        it('should return undefined if exercise result is undefined', () => {
+            component.studentExamWithGrade.studentResult.exerciseGroupIdToExerciseResult = {};
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBeUndefined();
+        });
+
+        it('should calculate percentage based on achievedScore considering course settings', () => {
+            textExerciseResult.achievedScore = 60.6666;
+
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBe(60.67);
+        });
+
+        it('should calculate percentage based on maxScore and achievedPoints', () => {
+            textExerciseResult.achievedScore = undefined;
+            textExerciseResult.maxScore = 10;
+            textExerciseResult.achievedPoints = 6.066666;
+            component.studentExamWithGrade.studentExam!.exam!.course!.accuracyOfScores = 3;
+
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBe(60.667);
+        });
+
+        it('should return undefined if not set and not calculable', () => {
+            textExerciseResult.achievedScore = undefined;
+            textExerciseResult.achievedPoints = undefined;
+
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBeUndefined();
         });
     });
 });

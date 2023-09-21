@@ -118,7 +118,7 @@ export class ExamResultOverviewComponent implements OnInit {
         return this.getMaxNormalPointsSum() + this.getMaxBonusPointsSum();
     }
 
-    getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {
+    private getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {
         if (exerciseId === undefined) {
             return undefined;
         }
