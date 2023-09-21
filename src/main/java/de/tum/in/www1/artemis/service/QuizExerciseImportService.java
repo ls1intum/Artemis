@@ -98,13 +98,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 }
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                // Check whether dndQuestion.getBackgroundFilePath() is actually a background file path
-                // (which is the case when its path starts with "/api/files/drag-and-drop/backgrounds/")
-                FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
-                        // Turn dndQuestion.getBackgroundFilePath() into a URI analog to
-                        // https://github.com/ls1intum/Artemis/pull/7038/files#diff-d41031bc9d88710f3ba653294756465029245a3d3a8d1af479b8a6498c254bd3
-                        dndQuestion.getBackgroundFilePath() != null ? URI.create(dndQuestion.getBackgroundFilePath()) : null,
-                        URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"));
+                if (dndQuestion.getBackgroundFilePath() != null) {
+                    // Check whether dndQuestion.getBackgroundFilePath() is actually a background file path
+                    // (which is the case when its path starts with "/api/files/drag-and-drop/backgrounds/")
+                    FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
+                            // Turn dndQuestion.getBackgroundFilePath() into a URI analog to
+                            // https://github.com/ls1intum/Artemis/pull/7038/files#diff-d41031bc9d88710f3ba653294756465029245a3d3a8d1af479b8a6498c254bd3
+                            URI.create(dndQuestion.getBackgroundFilePath()), URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"));
+                }
+
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
                 dndQuestion
                         .setBackgroundFilePath(fileService.copyExistingFileToTarget(dndQuestion.getBackgroundFilePath(), FilePathService.getDragAndDropBackgroundFilePath(), null));
@@ -122,8 +124,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
                         FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
                                 // Turn dragItem.getPictureFilePath() into a URI analog to
                                 // https://github.com/ls1intum/Artemis/pull/7038/files#diff-d41031bc9d88710f3ba653294756465029245a3d3a8d1af479b8a6498c254bd3
-                                dragItem.getPictureFilePath() != null ? URI.create(dragItem.getPictureFilePath()) : null,
-                                URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/"));
+                                URI.create(dragItem.getPictureFilePath()), URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/"));
                         // Need to copy the file and get a new path, same as above
                         dragItem.setPictureFilePath(fileService.copyExistingFileToTarget(dragItem.getPictureFilePath(), FilePathService.getDragItemFilePath(), null));
                     }
