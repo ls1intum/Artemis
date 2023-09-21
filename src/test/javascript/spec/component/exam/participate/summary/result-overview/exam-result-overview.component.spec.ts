@@ -221,7 +221,7 @@ describe('ExamResultOverviewComponent', () => {
         expect(fixture).not.toBeNull();
 
         expect(component.overallAchievedPoints).toBe(0);
-        expect(component.getMaxNormalPointsSum()).toBe(0);
+        expect(component.maxPoints).toBe(0);
         expect(component.studentExamWithGrade?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);
     });

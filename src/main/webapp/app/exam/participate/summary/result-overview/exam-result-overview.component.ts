@@ -37,6 +37,10 @@ export class ExamResultOverviewComponent implements OnInit {
 
     showIncludedInScoreColumn = false;
     overallAchievedPoints = 0;
+    /**
+     * the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
+     */
+    maxPoints = 0;
 
     constructor(
         private serverDateService: ArtemisServerDateService,
@@ -45,6 +49,7 @@ export class ExamResultOverviewComponent implements OnInit {
     ) {
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
         this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
+        this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
     ngOnInit() {
@@ -97,18 +102,11 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     /**
-     * Returns the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
-     */
-    getMaxNormalPointsSum() {
-        return this.studentExamWithGrade?.maxPoints ?? 0;
-    }
-
-    /**
      * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
      */
     getMaxNormalAndBonusPointsSum(): number {
         const maxAchievableBonusPoints = this.studentExamWithGrade?.maxBonusPoints ?? 0;
-        return this.getMaxNormalPointsSum() + maxAchievableBonusPoints;
+        return this.maxPoints + maxAchievableBonusPoints;
     }
 
     private getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {

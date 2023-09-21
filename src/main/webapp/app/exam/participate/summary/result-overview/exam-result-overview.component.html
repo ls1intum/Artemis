@@ -67,7 +67,7 @@
                         {{ overallAchievedPoints }}
                     </th>
                     <th>
-                        {{ getMaxNormalPointsSum() }}
+                        {{ maxPoints }}
                     </th>
                     <th>
                         <span
@@ -94,7 +94,7 @@
                             | artemisTranslate
                                 : {
                                       achievedPoints: overallAchievedPoints,
-                                      normalPoints: getMaxNormalPointsSum()
+                                      normalPoints: maxPoints
                                   }
                     }}
                 </h5>
@@ -104,7 +104,7 @@
                             | artemisTranslate
                                 : {
                                       achievedPoints: overallAchievedPoints,
-                                      normalPoints: getMaxNormalPointsSum()
+                                      normalPoints: maxPoints
                                   }
                     }}
                 </h5>
