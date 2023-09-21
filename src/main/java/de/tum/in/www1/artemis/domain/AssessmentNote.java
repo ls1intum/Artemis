@@ -9,6 +9,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -28,6 +29,7 @@ public class AssessmentNote extends DomainObject {
     @Column(name = "created_date", updatable = false)
     private final Instant createdDate = Instant.now();
 
+    @LastModifiedDate
     @Column(name = "last_modified_date")
     private Instant lastModifiedDate = Instant.now();
 
