@@ -46,16 +46,19 @@ export class ExamResultOverviewComponent implements OnInit {
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
         private changeDetector: ChangeDetectorRef,
-    ) {
-        this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
-        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
-        this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
-    }
+    ) {}
 
     ngOnInit() {
         if (this.isExamResultPublished()) {
             this.setExamGrade();
         }
+    }
+
+    ngOnChanges() {
+        console.log('ngOnChanges');
+        this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
+        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
+        this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
     /**
