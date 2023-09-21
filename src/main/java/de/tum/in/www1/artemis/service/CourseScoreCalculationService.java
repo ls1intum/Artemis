@@ -201,7 +201,7 @@ public class CourseScoreCalculationService {
             // TODO: Look into refactoring the fetchParticipationsWithSubmissionsAndResultsForCourses method in the CourseService to always initialize the participations (to an
             // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
             if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
-                exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()).forEach(participation -> {
+                exercise.getStudentParticipations().stream().filter(participation -> !participation.isPracticeMode()).forEach(participation -> {
                     participation.setExercise(exercise);
                     gradedStudentParticipations.add(participation);
                 });

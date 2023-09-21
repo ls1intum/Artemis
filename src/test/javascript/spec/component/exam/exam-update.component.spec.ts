@@ -12,7 +12,7 @@ import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -57,6 +57,7 @@ describe('Exam Update Component', () => {
 
     const course = new Course();
     course.id = 1;
+    course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
         { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -210,6 +211,14 @@ describe('Exam Update Component', () => {
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeFalse();
         });
+
+        it('should show channel name input for test exams', fakeAsync(() => {
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.channelName = 'test-exam';
+            component.ngOnInit();
+            tick();
+            expect(component.hideChannelNameInput).toBeFalse();
+        }));
 
         it('should validate the example solution publication date correctly', () => {
             const newExamWithoutExercises = new Exam();

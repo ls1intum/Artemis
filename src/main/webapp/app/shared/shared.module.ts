@@ -24,6 +24,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
+import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -37,6 +38,7 @@ import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
+        ConfirmEntityNameComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
         JhiConnectionStatusComponent,
@@ -55,6 +57,7 @@ import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         CircularProgressBarComponent,
+        ConfirmEntityNameComponent,
         LoadingIndicatorContainerComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
