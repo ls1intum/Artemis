@@ -2,7 +2,7 @@
     <h3 *ngIf="!displayOnExamCover" id="general-information-title">
         {{ 'artemisApp.exam.examSummary.generalInformation' | artemisTranslate }}
     </h3>
-    <table class="table table-borderless" style="margin-left: 2rem">
+    <table class="table table-borderless table-responsive">
         <tbody>
             <tr *ngIf="isTestExam">
                 <th class="text-end text-right">{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
