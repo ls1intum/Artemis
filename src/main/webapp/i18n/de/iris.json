@@ -1,0 +1,51 @@
+{
+    "artemisApp": {
+        "iris": {
+            "settings": {
+                "success": "Iris Einträge erfolgreich gespeichert",
+                "error": {
+                    "save": "Fehler beim Speichern der Iris Einstellungen",
+                    "noSettings": "Iris Einstellungen konnten nicht geladen werden. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht."
+                },
+                "button": {
+                    "reload": "Einstellungen neu laden",
+                    "save": "Einstellungen speichern",
+                    "programmingExercise": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diese Programmieraufgabe"
+                    },
+                    "course": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diesen Kurs"
+                    }
+                },
+                "subSettings": {
+                    "chatSettings": "Chat Einstellungen",
+                    "hestiaSettings": "Hestia Einstellungen",
+                    "inheritChatSettings": "Vererbe Chat Einstellungen",
+                    "inheritHestiaSettings": "Vererbe Hestia Einstellungen",
+                    "enabled-disabled": "Aktiviert/Deaktiviert",
+                    "preferredModel": "Präferiertes Modell",
+                    "inheritModel": "Vererbe Modell",
+                    "template": {
+                        "title": "Template",
+                        "inherit": "Inherit Template"
+                    }
+                },
+                "title": {
+                    "global": "Globale Iris Einstellungen",
+                    "course": "Kurs Iris Einstellungen",
+                    "programmingExercise": "Programmieraufgabe Iris Einstellungen"
+                }
+            },
+            "error": {
+                "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
+                "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
+                "invalidTemplate": "Die Vorlage ist ungültig. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
+                "noModelAvailable": "Das Modell {{ model }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
+            }
+        }
+    }
+}

@@ -1,0 +1,9 @@
+span {
+    display: inline-block;
+    line-height: 1.25;
+}
+
+.clickable-result span {
+    text-decoration: underline;
+    cursor: pointer;
+}

@@ -36,7 +36,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -57,9 +56,6 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
-
-    @Value("${artemis.version-control.ci-token}")
-    private String ciToken;
 
     @Value("${artemis.version-control.health-api-token:#{null}}")
     private Optional<String> healthToken;
@@ -241,34 +237,6 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryPath, e);
             }
         }, delayTime, delayTimeUnit);
-    }
-
-    @Override
-    public void addWebHooksForExercise(ProgrammingExercise exercise) {
-        super.addWebHooksForExercise(exercise);
-        final var projectKey = exercise.getProjectKey();
-
-        // Optional webhook from the version control system to the continuous integration system
-        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
-        final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
-        final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
-        if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            addAuthenticatedWebHook(exercise.getVcsTemplateRepositoryUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getVcsSolutionRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getVcsTestRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", ciToken);
-        }
-    }
-
-    @Override
-    public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            super.addWebHookForParticipation(participation);
-
-            // Webhook from the version control system to the continuous integration system
-            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
-            getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
-                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
-        }
     }
 
     @Override

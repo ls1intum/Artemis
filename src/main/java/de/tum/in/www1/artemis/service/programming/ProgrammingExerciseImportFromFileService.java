@@ -127,6 +127,7 @@ public class ProgrammingExerciseImportFromFileService {
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
+        // TODO: use the current instructor user for the commit
         gitService.commitAndPush(templateRepo, "Import template from file", true, null);
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);
