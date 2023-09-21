@@ -1,0 +1,14 @@
+<div *ngIf="lectureUnit" class="row">
+    <div class="col">
+        <h3 class="mb-0">
+            <fa-icon
+                *ngIf="lectureUnit.type"
+                [icon]="getIcon(lectureUnit.type!)"
+                [fixedWidth]="true"
+                [ngbTooltip]="getIconTooltip(lectureUnit.type!) | artemisTranslate"
+                container="body"
+            ></fa-icon>
+            <span>{{ lectureUnit.name }}</span>
+        </h3>
+    </div>
+</div>
