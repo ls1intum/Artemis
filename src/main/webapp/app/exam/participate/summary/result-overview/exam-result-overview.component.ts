@@ -105,17 +105,11 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     /**
-     * Returns the max. achievable bonusPoints.
-     */
-    getMaxBonusPointsSum(): number {
-        return this.studentExamWithGrade?.maxBonusPoints ?? 0;
-    }
-
-    /**
      * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
      */
     getMaxNormalAndBonusPointsSum(): number {
-        return this.getMaxNormalPointsSum() + this.getMaxBonusPointsSum();
+        const maxAchievableBonusPoints = this.studentExamWithGrade?.maxBonusPoints ?? 0;
+        return this.getMaxNormalPointsSum() + maxAchievableBonusPoints;
     }
 
     private getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {

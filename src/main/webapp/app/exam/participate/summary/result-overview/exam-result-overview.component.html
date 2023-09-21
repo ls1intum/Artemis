@@ -12,7 +12,7 @@
                     <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | artemisTranslate }}</th>
                     <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | artemisTranslate }}</th>
                     <th scope="col">{{ 'artemisApp.exam.examSummary.points.achievedPercentage' | artemisTranslate }}</th>
-                    <th scope="col" *ngIf="getMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.maxBonus' | artemisTranslate }}</th>
+                    <th scope="col" *ngIf="studentExamWithGrade?.maxBonusPoints">{{ 'artemisApp.exam.examSummary.points.maxBonus' | artemisTranslate }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,7 +52,7 @@
                         </span>
                         <ng-template #noPercentageKnownPlaceholder> - </ng-template>
                     </td>
-                    <td *ngIf="getMaxBonusPointsSum() != 0">
+                    <td *ngIf="studentExamWithGrade?.maxBonusPoints">
                         <span *ngIf="exercise.bonusPoints != undefined">{{
                             exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
                         }}</span>
@@ -80,15 +80,15 @@
                             <span>-</span>
                         </ng-template>
                     </th>
-                    <th *ngIf="getMaxBonusPointsSum() != 0">
-                        {{ getMaxBonusPointsSum() }}
+                    <th *ngIf="studentExamWithGrade?.maxBonusPoints">
+                        {{ studentExamWithGrade?.maxBonusPoints }}
                     </th>
                 </tr>
             </tfoot>
         </table>
         <div class="d-flex align-items-center justify-content-evenly">
             <div>
-                <h5 *ngIf="getMaxBonusPointsSum() != 0">
+                <h5 *ngIf="studentExamWithGrade?.maxBonusPoints">
                     {{
                         'artemisApp.exam.examSummary.points.youAchievedWithBonus'
                             | artemisTranslate
@@ -98,7 +98,7 @@
                                   }
                     }}
                 </h5>
-                <h5 *ngIf="getMaxBonusPointsSum() == 0">
+                <h5 *ngIf="studentExamWithGrade?.maxBonusPoints">
                     {{
                         'artemisApp.exam.examSummary.points.youAchieved'
                             | artemisTranslate
