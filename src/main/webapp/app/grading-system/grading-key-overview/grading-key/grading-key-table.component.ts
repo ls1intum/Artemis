@@ -109,26 +109,6 @@ export class GradingKeyTableComponent implements OnInit {
     }
 
     /**
-     * Navigates to the previous page (back button on the browser)
-     */
-    previousState() {
-        const fallbackUrl = ['courses', this.courseId!.toString()];
-        if (this.isExam) {
-            fallbackUrl.push('exams', this.examId!.toString());
-        } else {
-            fallbackUrl.push('statistics');
-        }
-        this.navigationUtilService.navigateBack(fallbackUrl);
-    }
-
-    /**
-     * Exports page as PDF
-     */
-    printPDF() {
-        setTimeout(() => this.themeService.print());
-    }
-
-    /**
      * @see GradingSystemService.hasPointsSet
      */
     hasPointsSet(): boolean {

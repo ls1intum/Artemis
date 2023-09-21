@@ -1,5 +1,5 @@
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -15,7 +15,6 @@ import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
@@ -207,38 +206,9 @@ describe('GradingKeyTableComponent', () => {
         expect(gradingSystemServiceSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], reachablePoints);
     });
 
-    it('should print PDF', fakeAsync(() => {
-        const printSpy = jest.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation();
-
-        comp.printPDF();
-
-        tick();
-        expect(printSpy).toHaveBeenCalledOnce();
-    }));
-
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();
         expect(comp.round(5)).toBe(5);
         expect(comp.round(3.333333333333333)).toBe(3.33);
-    });
-
-    it.each([456, undefined])('should call the back method on the nav util service on previousState for examId %s', (examId) => {
-        const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
-        const navUtilServiceSpy = jest.spyOn(navUtilService, 'navigateBack');
-        const courseId = 213;
-
-        comp.courseId = courseId;
-        comp.examId = examId;
-        comp.isExam = examId !== undefined;
-
-        comp.previousState();
-
-        expect(navUtilServiceSpy).toHaveBeenCalledOnce();
-
-        if (examId == undefined) {
-            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'statistics']);
-        } else {
-            expect(navUtilServiceSpy).toHaveBeenCalledWith(['courses', courseId.toString(), 'exams', examId.toString()]);
-        }
     });
 });
