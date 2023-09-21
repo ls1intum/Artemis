@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="zbil" id="1695141658157-206">
+        <createTable tableName="course_code_of_conduct_agreement">
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="course_code_of_conduct_agreementPK"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="course_code_of_conduct_agreementPK"/>
+            </column>
+            <column name="is_accepted" type="BIT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="zbil" id="1695141658157-224">
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_code_of_conduct_agreement"
+                                 constraintName="FK8sijgspbqroh9saasrpj3ifsa" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
+                                 validate="true"/>
+    </changeSet>
+    <changeSet author="zbil" id="1695141658157-226">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="course_code_of_conduct_agreement"
+                                 constraintName="FKiuc9i7eratit8nw8od8u6bb5p" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"
+                                 validate="true"/>
+    </changeSet>
+</databaseChangeLog>
