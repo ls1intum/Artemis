@@ -1,9 +1,12 @@
-th {
-    text-align: end;
-    width: 50%;
+table {
+    width: fit-content;
+}
+
+th,
+td {
+    padding: 0.25em;
 }
 
 td {
     text-align: start;
-    width: 50%;
 }
