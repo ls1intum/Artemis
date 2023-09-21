@@ -206,8 +206,8 @@ describe('ExamResultOverviewComponent', () => {
         expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[modelingExercise.id!]).toBe(3.33);
         expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[programmingExercise.id!]).toBe(0);
 
-        expect(component.getAchievedPointsSum()).toBe(35.33);
-        expect(component.getMaxNormalPointsSum()).toBe(40);
+        expect(component.overallAchievedPoints).toBe(35.33);
+        expect(component.overallAchievedPoints).toBe(40);
         expect(component.studentExamWithGrade?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(60);
     });
@@ -220,7 +220,7 @@ describe('ExamResultOverviewComponent', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
-        expect(component.getAchievedPointsSum()).toBe(0);
+        expect(component.overallAchievedPoints).toBe(0);
         expect(component.getMaxNormalPointsSum()).toBe(0);
         expect(component.studentExamWithGrade?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);

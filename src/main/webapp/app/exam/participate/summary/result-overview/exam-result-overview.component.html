@@ -64,7 +64,7 @@
                     <th scope="row" colspan="2">{{ 'artemisApp.exam.examSummary.points.total' | artemisTranslate }}</th>
                     <td *ngIf="showIncludedInScoreColumn">-</td>
                     <th>
-                        {{ getAchievedPointsSum() }}
+                        {{ overallAchievedPoints }}
                     </th>
                     <th>
                         {{ getMaxNormalPointsSum() }}
@@ -93,7 +93,7 @@
                         'artemisApp.exam.examSummary.points.youAchievedWithBonus'
                             | artemisTranslate
                                 : {
-                                      achievedPoints: getAchievedPointsSum(),
+                                      achievedPoints: overallAchievedPoints,
                                       normalPoints: getMaxNormalPointsSum()
                                   }
                     }}
@@ -103,7 +103,7 @@
                         'artemisApp.exam.examSummary.points.youAchieved'
                             | artemisTranslate
                                 : {
-                                      achievedPoints: getAchievedPointsSum(),
+                                      achievedPoints: overallAchievedPoints,
                                       normalPoints: getMaxNormalPointsSum()
                                   }
                     }}

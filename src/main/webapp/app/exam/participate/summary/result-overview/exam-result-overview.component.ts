@@ -36,12 +36,15 @@ export class ExamResultOverviewComponent implements OnInit {
     faChevronRight = faChevronRight;
 
     showIncludedInScoreColumn = false;
+    overallAchievedPoints = 0;
+
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
         private changeDetector: ChangeDetectorRef,
     ) {
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
+        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
     ngOnInit() {
@@ -91,10 +94,6 @@ export class ExamResultOverviewComponent implements OnInit {
             this.hasPassed = !!this.studentExamWithGrade.studentResult.hasPassed;
             this.changeDetector.detectChanges();
         }
-    }
-
-    getAchievedPointsSum() {
-        return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
     /**
