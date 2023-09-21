@@ -94,14 +94,12 @@ public class Slide extends DomainObject {
         if (slideImagePath == null) {
             return;
         }
-        Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())));
-        slideImagePath = entityFileService.moveFileBeforeEntityPersistenceWithIdIfIsTemp(slideImagePath, targetFolder, false, (long) getSlideNumber());
+        slideImagePath = entityFileService.moveFileBeforeEntityPersistenceWithIdIfIsTemp(slideImagePath, getTargetFolder(), false, (long) getSlideNumber());
     }
 
     @PreUpdate
     public void onUpdate() {
-        Path targetFolder = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())));
-        slideImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence((long) getSlideNumber(), prevSlideImagePath, slideImagePath, targetFolder, false);
+        slideImagePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence((long) getSlideNumber(), prevSlideImagePath, slideImagePath, getTargetFolder(), false);
     }
 
     @PostRemove
@@ -109,5 +107,9 @@ public class Slide extends DomainObject {
         if (prevSlideImagePath != null) {
             fileService.schedulePathForDeletion(Path.of(prevSlideImagePath), 0);
         }
+    }
+
+    private Path getTargetFolder() {
+        return FilePathService.getAttachmentUnitFilePath().resolve(Path.of(getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())));
     }
 }

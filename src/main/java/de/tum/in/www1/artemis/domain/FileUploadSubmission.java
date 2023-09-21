@@ -50,7 +50,7 @@ public class FileUploadSubmission extends Submission {
      * @return path where submission for file upload exercise is stored
      */
     public static Path buildFilePath(Long exerciseId, Long submissionId) {
-        return FilePathService.getFileUploadExercisesFilePath().resolve(Path.of(exerciseId.toString(), submissionId.toString()));
+        return FilePathService.getFileUploadExercisesFilePath().resolve(exerciseId.toString()).resolve(submissionId.toString());
     }
 
     public void setFilePath(String filePath) {

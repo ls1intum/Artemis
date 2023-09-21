@@ -114,11 +114,9 @@ public class FileService implements DisposableBean {
      */
     @Cacheable(value = "files", unless = "#result == null")
     public byte[] getFileForPath(Path path) throws IOException {
-        File file = path.toFile();
-        if (file.exists()) {
-            return Files.readAllBytes(file.toPath());
+        if (Files.exists(path)) {
+            return Files.readAllBytes(path);
         }
-
         return null;
     }
 
