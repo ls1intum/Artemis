@@ -129,6 +129,10 @@
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
             "startExamToolTip": "Button wird 5 Minuten vor der Klausur aktiviert.",
+            "cleanup": {
+                "title": "Aufräumen",
+                "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories in der Prüfung gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+            },
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
@@ -148,6 +152,10 @@
             "problemStatementUpdate": {
                 "showDiff": "Zeige Unterschiede",
                 "showNew": "Zeige nur neue Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolut",
+                "relative": "Änderung relativ zur normalen Bearbeitungszeit"
             }
         },
         "examScores": {
@@ -567,6 +575,7 @@
                     "resolveComplaints": "Auflösung aller Beschwerden",
                     "testRun": "Abhalten eines Testdurchlaufs",
                     "exportResults": "Exportieren der Klausurergebnisse",
+                    "editWorkingTime": "Bearbeiten der Prüfungsdauer",
                     "suspiciousBehavior": "Überprüfung von verdächtigem Verhalten"
                 },
                 "descriptionItem": {
@@ -582,6 +591,7 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
+                    "editWorkingTime": "Bis 5 Minuten vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
@@ -615,6 +625,13 @@
                     "numberParticipants": "Teilnehmende",
                     "variants": "Varianten"
                 }
+            },
+            "editWorkingTime": {
+                "title": "Prüfungszeit bearbeiten",
+                "label": "Änderung der Prüfungszeit",
+                "duration": "Die neue Dauer der Prüfung beträgt <strong>{{ duration }}</strong>.",
+                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "suspiciousBehavior": {
                 "title": "Verdächtiges Verhalten",
