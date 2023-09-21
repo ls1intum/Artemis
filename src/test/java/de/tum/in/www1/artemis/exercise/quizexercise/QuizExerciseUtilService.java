@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
@@ -71,9 +70,6 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private CourseUtilService courseUtilService;
-
-    @Autowired
-    private RequestUtilService requestUtilService;
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
