@@ -14,7 +14,7 @@ import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry, StorageEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
-import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/participate/learning-path-graph-sidebar.component';
+import { LearningPathGraphComponent, LearningPathViewMode } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 
 @Component({
     selector: 'jhi-learning-path-container',
@@ -23,7 +23,7 @@ import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/par
     encapsulation: ViewEncapsulation.None,
 })
 export class LearningPathContainerComponent implements OnInit {
-    @ViewChild('graphSidebar') graphSidebar: LearningPathGraphSidebarComponent;
+    @ViewChild('learningPathGraphComponent') learningPathGraphComponent: LearningPathGraphComponent;
 
     @Input() courseId: number;
     learningPathId: number;
@@ -104,11 +104,13 @@ export class LearningPathContainerComponent implements OnInit {
             this.learningObjectId = entry.exerciseId;
             this.loadExercise();
         } else {
-            this.graphSidebar.learningPathGraphComponent.clearHighlighting();
+            this.learningPathGraphComponent.clearHighlighting();
             return;
         }
-        this.graphSidebar.learningPathGraphComponent.highlightNode(entry);
-        this.scrollTo(this.graphSidebar.learningPathGraphComponent.highlightedNode!);
+        this.learningPathGraphComponent.highlightNode(entry);
+        if (this.learningPathGraphComponent.highlightedNode) {
+            this.scrollTo(this.learningPathGraphComponent.highlightedNode);
+        }
     }
 
     loadLectureUnit() {
@@ -170,13 +172,13 @@ export class LearningPathContainerComponent implements OnInit {
             this.lectureId = node.linkedResourceParent;
             if (node.type === NodeType.LECTURE_UNIT) {
                 this.loadLectureUnit();
-                this.graphSidebar.learningPathGraphComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
+                this.learningPathGraphComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
             } else if (node.type === NodeType.EXERCISE) {
                 this.loadExercise();
-                this.graphSidebar.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
+                this.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
             }
-            if (this.graphSidebar.learningPathGraphComponent.highlightedNode) {
-                this.scrollTo(this.graphSidebar.learningPathGraphComponent.highlightedNode);
+            if (this.learningPathGraphComponent.highlightedNode) {
+                this.scrollTo(this.learningPathGraphComponent.highlightedNode);
             }
         }
     }
@@ -186,4 +188,6 @@ export class LearningPathContainerComponent implements OnInit {
             behavior: 'smooth',
         });
     }
+
+    protected readonly LearningPathViewMode = LearningPathViewMode;
 }

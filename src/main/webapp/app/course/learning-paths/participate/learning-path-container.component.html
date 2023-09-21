@@ -9,14 +9,16 @@
         >
             <fa-icon [icon]="faChevronUp"></fa-icon>
         </button>
-        <jhi-learning-path-graph-sidebar
-            class="my-2"
-            #graphSidebar
-            *ngIf="learningPathId"
-            [courseId]="courseId"
-            [learningPathId]="learningPathId"
-            (nodeClicked)="onNodeClicked($event)"
-        ></jhi-learning-path-graph-sidebar>
+        <div class="learning-path-sidebar my-2">
+            <jhi-learning-path-graph
+                #learningPathGraphComponent
+                *ngIf="learningPathId"
+                [viewMode]="LearningPathViewMode.PATH"
+                [courseId]="courseId"
+                [learningPathId]="learningPathId"
+                (nodeClicked)="onNodeClicked($event)"
+            ></jhi-learning-path-graph>
+        </div>
         <button
             type="button"
             class="btn btn-primary next-button"

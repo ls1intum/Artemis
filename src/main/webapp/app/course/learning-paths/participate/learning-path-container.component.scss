@@ -11,3 +11,15 @@
     margin-left: 0 !important;
     margin-right: 0 !important;
 }
+
+.learning-path-sidebar {
+    display: flex;
+    width: 100px;
+    height: 60vh;
+    overflow: scroll;
+    scrollbar-width: thin;
+
+    jhi-learning-path {
+        min-height: fit-content;
+    }
+}
