@@ -46,7 +46,7 @@
                     <td>
                         <span
                             *ngIf="exerciseInfos[exercise.id!].achievedPercentage !== undefined; else noPercentageKnownPlaceholder"
-                            [class]="getTextColorClassByExercise(exercise)"
+                            [class]="exerciseInfos[exercise.id!].colorClass"
                         >
                             {{ exerciseInfos[exercise.id!].achievedPercentage }}%
                         </span>

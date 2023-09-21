@@ -77,9 +77,14 @@ export class ExamResultOverviewComponent implements OnInit {
         const exerciseInfos: Record<number, ExerciseInfo> = {};
         for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
             if (exercise.id === undefined) {
+                console.error('Exercise id is undefined', exercise);
                 continue;
             }
-            exerciseInfos[exercise.id] = { icon: getIcon(exercise.type), achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id) };
+            exerciseInfos[exercise.id] = {
+                icon: getIcon(exercise.type),
+                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
+                colorClass: this.getTextColorClassByExercise(exercise),
+            };
         }
         return exerciseInfos;
     }
