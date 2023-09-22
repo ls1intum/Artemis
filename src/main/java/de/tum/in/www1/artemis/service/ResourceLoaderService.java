@@ -200,9 +200,9 @@ public class ResourceLoaderService {
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
             Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
-            FileUtils.copyToFile(resource.getInputStream(), resourcePath.toFile());
-            // Delete the temporary file when the JVM exits.
-            resourcePath.toFile().deleteOnExit();
+            File file = resourcePath.toFile();
+            file.deleteOnExit();
+            FileUtils.copyInputStreamToFile(resource.getInputStream(), file);
             return resourcePath;
         }
         throw new IllegalArgumentException("Unsupported protocol: " + resourceUrl.getProtocol());

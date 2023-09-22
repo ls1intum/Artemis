@@ -132,7 +132,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         // Mock the getResource() method.
         doReturn(true).when(resource).exists();
         doReturn(resourceUrl).when(resource).getURL();
-        doReturn(mock(InputStream.class)).when(resource).getInputStream();
+        doReturn(InputStream.nullInputStream()).when(resource).getInputStream();
 
         doReturn(resource).when(resourceLoader).getResource(anyString());
 
