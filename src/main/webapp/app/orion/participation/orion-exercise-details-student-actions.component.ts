@@ -23,6 +23,7 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+    protected readonly OrionButtonType = OrionButtonType;
 
     constructor(
         private orionConnectorService: OrionConnectorService,
@@ -69,10 +70,8 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     initializeFeedback() {
         const { results, submissions } = this.exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
         const feedbacks = results![0].feedbacks;
-        if (submissions) {
+        if (submissions !== undefined) {
             this.orionConnectorService.initializeFeedback(submissions[0].id!, feedbacks!);
         }
     }
-
-    protected readonly OrionButtonType = OrionButtonType;
 }
