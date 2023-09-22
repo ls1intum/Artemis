@@ -223,10 +223,10 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 migrateSolutionBuildPlan(participation, auxiliaryRepositories);
 
                 migrateTestRepository(participation);
-                log.info("Migrated template build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
+                log.info("Migrated solution build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             }
             catch (Exception e) {
-                log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
+                log.warn("Failed to migrate solution build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
                         participation.getBuildPlanId(), e);
                 errorList.add(participation);
             }
@@ -319,8 +319,8 @@ public class MigrationEntry20230808_203400 extends MigrationEntry {
                 log.info("Migrated student build plan for exercise {} in {}ms", participation.getProgrammingExercise().getId(), System.currentTimeMillis() - startMs);
             }
             catch (Exception e) {
-                log.warn("Failed to migrate template build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(),
-                        participation.getBuildPlanId(), e);
+                log.warn("Failed to migrate student build plan for exercise {} with buildPlanId {}", participation.getProgrammingExercise().getId(), participation.getBuildPlanId(),
+                        e);
                 errorList.add(participation);
             }
         }

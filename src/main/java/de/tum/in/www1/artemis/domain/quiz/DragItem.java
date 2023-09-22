@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -28,7 +30,13 @@ import de.tum.in.www1.artemis.service.FileService;
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FilePathService filePathService = new FilePathService();
+
+    @Transient
+    private final transient FileService fileService = new FileService();
+
+    @Transient
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevPictureFilePath;
@@ -138,8 +146,9 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
 
     @PrePersist
     public void beforeCreate() {
-        // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilePath(), getId());
+        if (pictureFilePath != null) {
+            pictureFilePath = entityFileService.moveTempFileBeforeEntityPersistence(pictureFilePath, FilePathService.getDragItemFilePath(), false);
+        }
     }
 
     @PostPersist
@@ -152,14 +161,15 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
 
     @PreUpdate
     public void onUpdate() {
-        // move file and delete old file if necessary
-        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilePath(), getId());
+        pictureFilePath = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevPictureFilePath, pictureFilePath, FilePathService.getDragItemFilePath(),
+                false);
     }
 
     @PostRemove
     public void onDelete() {
-        // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, null, FilePathService.getDragItemFilePath(), getId());
+        if (prevPictureFilePath != null) {
+            fileService.schedulePathForDeletion(Path.of(prevPictureFilePath), 0);
+        }
     }
 
     @Override
