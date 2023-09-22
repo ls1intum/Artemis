@@ -53,6 +53,12 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateUserEmptyRoles() throws Exception {
+        userTestService.updateUserWithEmptyRoles();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserInvalidId() throws Exception {
         userTestService.updateUserInvalidId();
     }
@@ -124,6 +130,15 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
         bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", TEST_PREFIX + "student1First " + TEST_PREFIX + "student1Last");
         bitbucketRequestMockProvider.mockAddUserToGroups();
         userTestService.createInternalUser_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void createInternalUserWithoutRoles_asAdmin_isSuccessful() throws Exception {
+        bitbucketRequestMockProvider.mockUserDoesNotExist("batman");
+        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", TEST_PREFIX + "student1First " + TEST_PREFIX + "student1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        userTestService.createInternalUserWithoutRoles_asAdmin_isSuccessful();
     }
 
     @Test
