@@ -8,7 +8,7 @@
         ></jhi-learning-path-graph-sidebar>
     </div>
     <div class="col pe-0 flex-grow-1">
-        <div class="card learning-object-wrapper">
+        <div class="card learning-object-wrapper" [class.exercise-wrapper]="exercise">
             <div *ngIf="!lectureUnit && !exercise">
                 <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
             </div>
