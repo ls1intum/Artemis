@@ -13,7 +13,12 @@ export class LtiInitializerModalComponent {
 
     readAndUnderstood = false;
 
-    constructor(private activeModal: NgbActiveModal, private alertService: AlertService, private router: Router, private activatedRoute: ActivatedRoute) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private alertService: AlertService,
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+    ) {}
 
     /**
      * Closes the dialog, removes the query parameter and shows a helper message

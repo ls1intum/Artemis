@@ -26,7 +26,12 @@ export class EditAttachmentUnitComponent implements OnInit {
     lectureId: number;
     notificationText: string;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private attachmentUnitService: AttachmentUnitService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private attachmentUnitService: AttachmentUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

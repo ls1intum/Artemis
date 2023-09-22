@@ -16,6 +16,7 @@ services:
             mysql:
                 condition: service_healthy
         env_file:
+            - ./artemis/config/cypress.env
             - ./artemis/config/cypress-mysql.env
 
     nginx:
@@ -42,8 +43,9 @@ services:
             artemis-app:
                 condition: service_healthy
         environment:
+            CYPRESS_DB_TYPE: "MySQL"
             SORRY_CYPRESS_PROJECT_ID: "artemis-mysql"
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:record:mysql"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:setup && (npm run cypress:record:mysql & sleep 60 && npm run cypress:record:mysql & wait)"
 
 networks:
     artemis:

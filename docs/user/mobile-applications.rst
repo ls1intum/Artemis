@@ -58,16 +58,16 @@ Server Selection
 After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
 
 * TUM: https://artemis.cit.tum.de
-* Codeablity: https://artemis.codeability.uibk.ac.at
+* CodeAbility: https://artemis.codeability.uibk.ac.at
 * KIT: https://artemis.praktomat.cs.kit.edu
 
 Furthermore, users have the option to select a custom instance. To do this, scroll down the list of servers to the bottom. Then, select "custom instance":
 
-|server-selection-overview|
+|server-selection-overview-android|
 
 Then, enter the URL of the server as you would enter it into the browser:
 
-|custom-server-entered|
+|custom-server-entered-android|
 
 The "Set custom instance" button will be enabled if the client could connect successfully to Artemis.
 
@@ -93,13 +93,119 @@ Problems
 
 Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-android/issues>`_.
 
-.. |server-selection-overview| image:: native-applications/android/server_selection_overview.png
-    :width: 300
-
-.. |custom-server-entered| image:: native-applications/android/custom_server_entered.png
-    :width: 300
-
 iOS Application
 ---------------
 
-Coming soon.
+The iOS application supports the following features:
+
+#. Login:
+    #. Select predefined and custom Artemis servers
+    #. Login with username + password
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35200?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Login on TUM-Live.
+    </iframe>
+    
+#. View your courses:
+    #. Register in new courses
+    #. View courses you have already registered for
+
+#. View the exercises of your courses:
+    #. View exercise details and problem statement
+    #. View submission feedback
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35217?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Exercise features on TUM-Live.
+    </iframe>
+
+#. View the lectures of your courses:
+    #. View lecture details and learning units
+    #. View and open attachments
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35218?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Lecture features on TUM-Live.
+    </iframe>
+
+#. Communicate via Messages:
+    #. Create new posts
+    #. Write replies
+    #. Add emoji reactions
+    #. Create new conversations
+    #. Edit conversation settings
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35219?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Messaging features on TUM-Live.
+    </iframe>
+
+#. Receive push notifications:
+    #. Optionally opt in and out of push notifications
+    #. Choose which notifications you want to receive as push notifications
+    #. In-App notification center
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/35216?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Video tutorial of the Push Notification features on TUM-Live.
+    </iframe>
+
+Installation
+^^^^^^^^^^^^
+
+The iOS application is currently only available in beta state and can be downloaded over `TestFlight <https://testflight.apple.com/join/WTwsKbjr>`_. Make sure to follow the steps described by TestFlight to install the application.
+
+Server Selection
+^^^^^^^^^^^^^^^^
+
+After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
+
+* TUM: https://artemis.cit.tum.de
+* CodeAbility: https://artemis.codeability.uibk.ac.at
+* KIT: https://artemis.praktomat.cs.kit.edu
+* Hochschule Munich: https://artemis.cs.hm.edu/
+
+Furthermore, users have the option to select a custom instance. To do this, scroll down the list of servers to the bottom. Under "Custom Instance" enter the URL of the server as you would enter it into the browser:
+
+|custom-server-entered-ios|
+
+By pressing the "Select" button the app checks if it can connect successfully to the given Artemis instance.
+
+Push Notifications
+^^^^^^^^^^^^^^^^^^
+
+Users may receive push notifications on their iOS devices. When first logging in to an Artemis instance, users will be asked if they want to receive push notifications on that device.
+
+  .. image:: native-applications/iOS/initial_login_notification_configuration.png
+            :width: 300
+
+When logged in, users can navigate to the notification settings:
+
+  .. image:: native-applications/iOS/settings_push.png
+            :width: 300
+
+In this screen, users can choose which notification types they want to receive.
+
+  .. image:: native-applications/iOS/settings_push_detail.png
+            :width: 300
+
+Problems
+^^^^^^^^
+
+Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-ios/issues>`_.
+
+.. |server-selection-overview-android| image:: native-applications/android/server_selection_overview.png
+    :width: 300
+
+.. |custom-server-entered-android| image:: native-applications/android/custom_server_entered.png
+    :width: 300
+
+.. |custom-server-entered-ios| image:: native-applications/iOS/custom-server-entered-ios.PNG
+    :width: 300
+

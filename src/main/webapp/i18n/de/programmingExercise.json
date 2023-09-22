@@ -22,7 +22,8 @@
             },
             "cleanup": {
                 "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studierenden können ihre Teilnahme wieder aufnehmen.",
-                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
+                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet.",
+                "successMessageCleanup": "Die Bereinigung verlief erfolgreich. Alle Studierenden Repositories wurden gelöscht."
             },
             "reset": {
                 "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
@@ -99,6 +100,7 @@
             "buildplans": "Build-Pläne",
             "buildplan": "Build-Plan",
             "buildPlanEditor": "Build-Plan-Editor",
+            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
@@ -367,6 +369,7 @@
             "resultETA": "Ergebniswartezeit: {{eta}}",
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
             "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
+            "channelNameTooltip": "Es wird automatisch ein kursübergreifender Kanal mit diesem Namen erstellt. Der Name kann jederzeit geändert werden.",
             "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
             "projectTypeTooltip": "Dieser Wert legt den Projekttypen von Vorlagen- und Lösungs-Repository fest.",
             "testRepositoryProjectTypeTooltip": "Dieser Wert legt den Projekttypen des Test-Repository fest.",
@@ -402,7 +405,7 @@
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
-                "releaseTestsWithExampleSolution": "Tests veröffentlichen",
+                "releaseTestsWithExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
                 "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden."
             },
             "repositoryIsLocked": {
@@ -507,6 +510,7 @@
                 "submissionLimitTitle": "Abgabelimit",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
+                "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
                 "submissionLimitWarning": {
                     "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
@@ -528,6 +532,7 @@
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",

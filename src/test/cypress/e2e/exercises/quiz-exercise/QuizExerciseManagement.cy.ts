@@ -1,18 +1,19 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
 import { Course } from 'app/entities/course.model';
-import { generateUUID } from '../../../support/utils';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { courseManagement, courseManagementExercises, courseManagementRequest, navigationBar, quizExerciseCreation } from '../../../support/artemis';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { courseManagement, courseManagementAPIRequest, courseManagementExercises, exerciseAPIRequest, navigationBar, quizExerciseCreation } from '../../../support/artemis';
 import { admin } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 describe('Quiz Exercise Management', () => {
     let course: Course;
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
     });
@@ -58,7 +59,7 @@ describe('Quiz Exercise Management', () => {
 
         before('Create quiz Exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
                 quizExercise = quizResponse.body;
             });
         });
@@ -73,6 +74,6 @@ describe('Quiz Exercise Management', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

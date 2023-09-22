@@ -21,6 +21,7 @@ logging:
         tech.jhipster: INFO
         org.springframework.web.socket.config: INFO
         liquibase: INFO
+        de.jplag.Submission: ERROR
     logback:
         rollingpolicy:
             max-history: 90
@@ -62,12 +63,13 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-17"
+                    default: "ls1tum/artemis-maven-template:java17-18"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:21"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-17"
+                    default: "ls1tum/artemis-maven-template:java17-18"
                 empty:
-                    default: "ls1tum/artemis-maven-template:java17-17"
+                    default: "ls1tum/artemis-maven-template:java17-18"
                 python:
                     default: "ls1tum/artemis-python-docker:latest"
                 c:

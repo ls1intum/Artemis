@@ -14,6 +14,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -35,6 +36,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -84,6 +86,7 @@ describe('Course Management Update Component', () => {
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
         course.timeZone = 'Europe/London';
+        course.learningPathsEnabled = true;
 
         const parentRoute = {
             data: of({ course }),
@@ -105,12 +108,14 @@ describe('Course Management Update Component', () => {
             declarations: [
                 CourseUpdateComponent,
                 MarkdownEditorStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(SecuredImageComponent),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveKeysPipe),
             ],
         })
@@ -182,6 +187,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
+            expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
         }));
     });
 

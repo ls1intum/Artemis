@@ -1,9 +1,11 @@
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { courseManagementRequest, courseOverview, fileUploadExerciseEditor } from 'src/test/cypress/support/artemis';
-import { admin, studentOne } from 'src/test/cypress/support/users';
-import { convertModelAfterMultiPart } from 'src/test/cypress/support/requests/CourseManagementRequests';
 import { Interception } from 'cypress/types/net-stubbing';
+
+import { Course } from 'app/entities/course.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+
+import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, fileUploadExerciseEditor } from '../../../support/artemis';
+import { admin, studentOne } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('File upload exercise participation', () => {
     let course: Course;
@@ -11,10 +13,10 @@ describe('File upload exercise participation', () => {
 
     before(() => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.createFileUploadExercise({ course }).then((exerciseResponse) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            exerciseAPIRequest.createFileUploadExercise({ course }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
         });
@@ -38,6 +40,6 @@ describe('File upload exercise participation', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

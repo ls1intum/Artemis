@@ -27,7 +27,10 @@ export class TeamsExportButtonComponent {
     // Icons
     faFileExport = faFileExport;
 
-    constructor(private teamService: TeamService, private alertService: AlertService) {}
+    constructor(
+        private teamService: TeamService,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Export teams or show students if there is an error

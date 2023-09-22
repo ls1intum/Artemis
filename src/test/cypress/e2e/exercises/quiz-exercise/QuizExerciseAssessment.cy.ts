@@ -1,10 +1,11 @@
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
-import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, exerciseResult } from '../../../support/artemis';
+import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
+import { courseManagementAPIRequest, exerciseAPIRequest, exerciseResult } from '../../../support/artemis';
 import { admin, studentOne, tutor } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 describe('Quiz Exercise Assessment', () => {
     let course: Course;
@@ -12,27 +13,27 @@ describe('Quiz Exercise Assessment', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
         });
     });
 
     describe('MC Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
                 quizExercise = quizResponse.body;
-                courseManagementRequest.setQuizVisible(quizExercise.id!);
-                courseManagementRequest.startQuizNow(quizExercise.id!);
+                exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+                exerciseAPIRequest.startQuizNow(quizExercise.id!);
             });
         });
 
         it('Assesses a mc quiz submission automatically', () => {
             cy.login(studentOne);
-            courseManagementRequest.startExerciseParticipation(quizExercise.id!);
-            courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
+            exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
+            exerciseAPIRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             exerciseResult.shouldShowScore(50);
         });
@@ -41,23 +42,23 @@ describe('Quiz Exercise Assessment', () => {
     describe('SA Quiz assessment', () => {
         before('Creates a quiz and a submission', () => {
             cy.login(admin);
-            courseManagementRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
+            exerciseAPIRequest.createQuizExercise({ course }, [shortAnswerQuizTemplate], undefined, undefined, 10).then((quizResponse) => {
                 quizExercise = quizResponse.body;
-                courseManagementRequest.setQuizVisible(quizExercise.id!);
-                courseManagementRequest.startQuizNow(quizExercise.id!);
+                exerciseAPIRequest.setQuizVisible(quizExercise.id!);
+                exerciseAPIRequest.startQuizNow(quizExercise.id!);
             });
         });
 
         it('Assesses a sa quiz submission automatically', () => {
             cy.login(studentOne);
-            courseManagementRequest.startExerciseParticipation(quizExercise.id!);
-            courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
+            exerciseAPIRequest.startExerciseParticipation(quizExercise.id!);
+            exerciseAPIRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             exerciseResult.shouldShowScore(66.7);
         });
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

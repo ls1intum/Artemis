@@ -1,7 +1,20 @@
 <div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3" id="assessment-detail">
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
         <jhi-grading-instruction-link-icon *ngIf="assessment.gradingInstruction" [assessment]="assessment"></jhi-grading-instruction-link-icon>
-        <fa-icon [icon]="faTrashAlt" class="float-end" (click)="delete()" *ngIf="!readOnly"></fa-icon>
+        <button
+            *ngIf="!readOnly"
+            jhiDeleteButton
+            [buttonSize]="ButtonSize.SMALL"
+            [translateValues]="{ text: assessment.detailText }"
+            deleteQuestion="artemisApp.feedback.delete.question"
+            (delete)="delete()"
+            [dialogError]="dialogError$"
+            [renderButtonStyle]="false"
+            [renderButtonText]="false"
+            class="btn float-end"
+        >
+            <fa-icon [icon]="faTrashAlt"></fa-icon>
+        </button>
         <span class="badge bg-secondary float-end" *ngIf="assessment.type == FeedbackType_AUTOMATIC" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}">
             <fa-icon [icon]="faRobot"></fa-icon>
             <span jhiTranslate="artemisApp.textAssessment.automatic">Automatic</span>

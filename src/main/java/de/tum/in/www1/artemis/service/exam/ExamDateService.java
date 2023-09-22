@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Set;
@@ -10,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -175,5 +178,10 @@ public class ExamDateService {
         }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
+    }
+
+    public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
+        // using start date minus 5 minutes here because unlocking will take some time (it is invoked synchronously).
+        return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }
 }

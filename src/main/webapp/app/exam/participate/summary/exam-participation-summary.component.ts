@@ -120,6 +120,15 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     private tryLoadPlagiarismCaseInfosForStudent() {
+        // If the exam has not yet ended, or we're only a few minutes after the end, we can assume that there are no plagiarism cases yet.
+        // We should avoid trying to load them to reduce server load.
+        if (this.studentExam?.exam?.endDate) {
+            const endDateWithTimeExtension = dayjs(this.studentExam.exam.endDate).add(2, 'hours');
+            if (dayjs().isBefore(endDateWithTimeExtension)) {
+                return;
+            }
+        }
+
         const exerciseIds = this.studentExam?.exercises?.map((exercise) => exercise.id!);
         if (exerciseIds?.length && this.courseId) {
             this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId, exerciseIds).subscribe((res) => {

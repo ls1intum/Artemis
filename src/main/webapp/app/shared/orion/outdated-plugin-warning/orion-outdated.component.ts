@@ -19,7 +19,10 @@ export class OrionOutdatedComponent implements OnInit {
     versionString: string;
     allowedMinimumVersion: string;
 
-    constructor(private activatedRoute: ActivatedRoute, private profileService: ProfileService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private profileService: ProfileService,
+    ) {}
 
     /**
      * On initialization, sets the values of the used version and the minimum allowed version of orion.

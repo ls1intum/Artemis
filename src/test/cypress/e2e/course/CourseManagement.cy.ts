@@ -1,18 +1,19 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
-import { convertBooleanToYesNo, dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import dayjs from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
-import day from 'dayjs/esm';
+
+import { courseCreation, courseManagement, courseManagementAPIRequest, navigationBar } from '../../support/artemis';
 import { admin, studentOne } from '../../support/users';
+import { convertBooleanToYesNo, convertModelAfterMultiPart, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 
 // Common primitives
 const courseData = {
     title: '',
     shortName: '',
     description: 'Lore Impsum',
-    startDate: day(),
-    endDate: day().add(1, 'day'),
+    startDate: dayjs(),
+    endDate: dayjs().add(1, 'day'),
     testCourse: true,
     semester: 'SS23',
     maxPoints: 40,
@@ -50,7 +51,7 @@ describe('Course management', () => {
             const uid = generateUUID();
             courseData.title = 'Course ' + uid;
             courseData.shortName = 'cypress' + uid;
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
+            courseManagementAPIRequest.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName }).then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
         });
@@ -75,7 +76,7 @@ describe('Course management', () => {
         });
 
         after('Delete course', () => {
-            courseManagementRequest.deleteCourse(course, admin);
+            courseManagementAPIRequest.deleteCourse(course, admin);
         });
     });
 
@@ -188,8 +189,8 @@ describe('Course management', () => {
         }
 
         after('Delete courses', () => {
-            courseManagementRequest.deleteCourse(course, admin);
-            courseManagementRequest.deleteCourse(course2, admin);
+            courseManagementAPIRequest.deleteCourse(course, admin);
+            courseManagementAPIRequest.deleteCourse(course2, admin);
         });
     });
 
@@ -201,7 +202,7 @@ describe('Course management', () => {
             const uid = generateUUID();
             courseData.title = 'Course ' + uid;
             courseData.shortName = 'cypress' + uid;
-            courseManagementRequest.createCourse(false, courseData.title, courseData.shortName).then((response) => {
+            courseManagementAPIRequest.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName }).then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
         });
@@ -230,7 +231,7 @@ describe('Course management', () => {
         });
 
         after('Delete course', () => {
-            courseManagementRequest.deleteCourse(course, admin);
+            courseManagementAPIRequest.deleteCourse(course, admin);
         });
     });
 
@@ -239,7 +240,7 @@ describe('Course management', () => {
 
         before('Create course', () => {
             cy.login(admin, '/');
-            courseManagementRequest.createCourse().then((response) => {
+            courseManagementAPIRequest.createCourse().then((response) => {
                 course = convertModelAfterMultiPart(response);
             });
         });
@@ -261,7 +262,7 @@ describe('Course management', () => {
                 cy.fixture('course/icon.png', 'base64')
                     .then(Cypress.Blob.base64StringToBlob)
                     .then((blob) => {
-                        courseManagementRequest.createCourse(false, undefined, undefined, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob).then((response) => {
+                        courseManagementAPIRequest.createCourse({ iconFileName: 'icon.png', iconFile: blob }).then((response) => {
                             course = convertModelAfterMultiPart(response);
                         });
                     });
@@ -279,7 +280,7 @@ describe('Course management', () => {
             });
 
             after('Delete course', () => {
-                courseManagementRequest.deleteCourse(course, admin);
+                courseManagementAPIRequest.deleteCourse(course, admin);
             });
         });
 
@@ -288,7 +289,7 @@ describe('Course management', () => {
 
             before('Creates course without icon', () => {
                 cy.login(admin, '/');
-                courseManagementRequest.createCourse().then((response) => {
+                courseManagementAPIRequest.createCourse().then((response) => {
                     course = convertModelAfterMultiPart(response);
                 });
             });
@@ -301,7 +302,7 @@ describe('Course management', () => {
             });
 
             after('Delete courses', () => {
-                courseManagementRequest.deleteCourse(course, admin);
+                courseManagementAPIRequest.deleteCourse(course, admin);
             });
         });
     });

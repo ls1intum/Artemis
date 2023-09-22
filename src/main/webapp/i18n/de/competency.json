@@ -148,6 +148,34 @@
                 "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
                 "relationAlreadyExists": "Diese Beziehung existiert bereits."
             }
+        },
+        "learningPath": {
+            "learningPathButton": "Lernpfade",
+            "manageLearningPaths": {
+                "title": "Lernpfadmanagement",
+                "health": {
+                    "missing": {
+                        "title": "Fehlende Lernpfade",
+                        "body": "Für einige Studierende wurde noch kein Lernpfad erstellt. Dies ist nicht kritisch. Ihre Lernpfade werden generiert, wenn sie ihren Lernpfad das erste mal anfragen.",
+                        "action": "Erstellen",
+                        "hint": "Erstellen der fehlenden Lernpfade"
+                    }
+                },
+                "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",
+                "enable": "Lernpfade aktivieren",
+                "enableHint": "Die Erstellung von Lernpfaden für alle Studierende kann einen Moment dauern.",
+                "search": "Suche:",
+                "table": {
+                    "name": "Name",
+                    "login": "Login",
+                    "progress": "Fortschritt"
+                },
+                "progressNav": {
+                    "header": "Lernpfad",
+                    "refresh": "Aktualisieren",
+                    "center": "Zentrieren"
+                }
+            }
         }
     }
 }

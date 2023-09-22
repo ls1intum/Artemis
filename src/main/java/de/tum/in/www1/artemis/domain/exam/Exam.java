@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.exam;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Entity
 @Table(name = "exam")
@@ -189,6 +191,14 @@ public class Exam extends DomainObject {
 
     public void setEndDate(@NotNull ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    /**
+     * @return the duration of the exam in seconds
+     */
+    @JsonIgnore
+    public int getDuration() {
+        return Math.toIntExact(Duration.between(getStartDate(), getEndDate()).toSeconds());
     }
 
     public ZonedDateTime getPublishResultsDate() {
@@ -471,6 +481,12 @@ public class Exam extends DomainObject {
 
     public void setChannelName(String channelNameTransient) {
         this.channelNameTransient = channelNameTransient;
+    }
+
+    @JsonIgnore
+    public String getSanitizedExamTitle() {
+        // exam titles are non-nullable
+        return StringUtil.sanitizeStringForFileName(this.title);
     }
 
     /**

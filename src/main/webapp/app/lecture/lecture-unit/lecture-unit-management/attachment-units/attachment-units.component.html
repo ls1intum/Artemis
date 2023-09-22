@@ -74,10 +74,24 @@
             </tbody>
         </table>
     </div>
+
     <div class="mt-3 mb-3">
-        <input class="form-check-input" type="checkbox" name="processUnit" [disabled]="units.length < 1" (change)="onSelectRemoveBreakSlides()" />
-        <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlide' | artemisTranslate }}</span>
-        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.removeBreakSlideTooltip' | artemisTranslate"></fa-icon>
+        <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlides' | artemisTranslate }}</span>
+        <div>
+            <div class="alert alert-warning mt-3 ml-3">
+                <span>
+                    {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo' | artemisTranslate }}
+                </span>
+            </div>
+            <input
+                type="text"
+                class="form-control"
+                id="removeSlidesCommaSeparatedKeyPhrases"
+                placeholder="{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesPlaceholder' | artemisTranslate }}"
+                autocomplete="off"
+                [(ngModel)]="removeSlidesCommaSeparatedKeyPhrases"
+            />
+        </div>
     </div>
 
     <div *ngIf="units && units.length < 1" class="alert alert-danger mt-3">

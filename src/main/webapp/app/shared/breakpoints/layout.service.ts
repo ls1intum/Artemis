@@ -10,7 +10,10 @@ import { Observable } from 'rxjs';
 export class LayoutService {
     activeBreakpoints: string[] = [];
 
-    constructor(private breakpointObserver: BreakpointObserver, private breakpointService: BreakpointsService) {}
+    constructor(
+        private breakpointObserver: BreakpointObserver,
+        private breakpointService: BreakpointsService,
+    ) {}
 
     subscribeToLayoutChanges(): Observable<string[]> {
         return this.breakpointObserver.observe(this.breakpointService.getBreakpoints()).pipe(map((observeResponse) => this.parseBreakpointsResponse(observeResponse.breakpoints)));

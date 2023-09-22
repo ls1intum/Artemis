@@ -24,7 +24,10 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 export class TextAssessmentService {
     private readonly resourceUrl = 'api';
 
-    constructor(private http: HttpClient, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Saves the passed feedback items of the assessment.
@@ -182,13 +185,19 @@ export class TextAssessmentService {
             delete feedback.result;
             return feedback;
         });
-        textBlocks = textBlocks.map((textBlock) => {
-            textBlock = Object.assign({}, textBlock);
-            textBlock.submission = undefined;
-            return textBlock;
+        const textBlocksRequestObjects = textBlocks.map((textBlock) => {
+            // We convert the text block to a request object, so that we can send it to the server.
+            // This way, we omit the submissionId and avoid serializing it with private properties.
+            return {
+                id: textBlock.id,
+                type: textBlock.type,
+                startIndex: textBlock.startIndex,
+                endIndex: textBlock.endIndex,
+                text: textBlock.text,
+            };
         });
 
-        return { feedbacks, textBlocks };
+        return { feedbacks, textBlocks: textBlocksRequestObjects } as TextAssessmentDTO;
     }
 
     private convertResultEntityResponseTypeFromServer(res: EntityResponseType): EntityResponseType {

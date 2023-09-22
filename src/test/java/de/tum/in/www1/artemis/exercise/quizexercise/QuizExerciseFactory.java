@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.validation.constraints.NotNull;
@@ -177,8 +178,12 @@ public class QuizExerciseFactory {
     }
 
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
-        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
-        quizExercise.setTitle("my cool quiz title");
+        return generateQuizExercise(releaseDate, dueDate, null, quizMode, course);
+    }
+
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode, Course course) {
+        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, assessmentDueDate, course);
+        quizExercise.setTitle("new quiz");
 
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
@@ -298,6 +303,12 @@ public class QuizExerciseFactory {
         return quizExercise;
     }
 
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var quizExercise = generateQuizExerciseForExam(exerciseGroup);
+        quizExercise.setTitle(title + UUID.randomUUID().toString().substring(0, 3));
+        return quizExercise;
+    }
+
     public static void initializeQuizExerciseWithAllQuestionTypes(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
         quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
@@ -307,7 +318,7 @@ public class QuizExerciseFactory {
 
     private static ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
         var shortAnswerQuestion = createShortAnswerQuestion();
-        shortAnswerQuestion.setText("This [-spot1] a [-spot 2] answer text");
+        shortAnswerQuestion.setText("This [-spot0] a [-spot 2] answer text");
         return shortAnswerQuestion;
     }
 
@@ -511,6 +522,13 @@ public class QuizExerciseFactory {
         quizSubmission.submissionDate(submissionDate);
 
         return quizSubmission;
+    }
+
+    @NotNull
+    public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
+        initializeQuizExerciseWithAllQuestionTypes(quizExercise);
+        return quizExercise;
     }
 
     /**

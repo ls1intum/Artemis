@@ -34,7 +34,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { By } from '@angular/platform-browser';
@@ -221,7 +221,8 @@ describe('ExamParticipationComponent', () => {
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
         const loadTestRunWithExercisesForConductionSpy = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
-        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         comp.ngOnInit();
         expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
@@ -556,12 +557,13 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should submit exam when end confirmed', () => {
-        const studentExam = new StudentExam();
-        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        comp.studentExam = new StudentExam();
+        comp.studentExam.submitted = false;
+        const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(undefined));
         comp.exam = new Exam();
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.studentExam?.submitted).toBeTrue();
     });
 
     it('should show error', () => {

@@ -7,10 +7,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -45,6 +43,7 @@ import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
@@ -189,6 +188,7 @@ public class ProgrammingExerciseExportImportResource {
 
         // If the new exercise has a submission policy, it must be validated.
         if (newExercise.getSubmissionPolicy() != null) {
+            newExercise.getSubmissionPolicy().setActive(true);
             submissionPolicyService.validateSubmissionPolicy(newExercise.getSubmissionPolicy());
         }
 
@@ -266,10 +266,13 @@ public class ProgrammingExerciseExportImportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
-        var path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
-        if (path == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
+        Path path;
+        try {
+            path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
+        }
+        catch (Exception e) {
+            log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);
+            throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
         }
         var finalZipFile = path.toFile();
 

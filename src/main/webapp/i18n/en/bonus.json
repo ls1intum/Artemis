@@ -20,7 +20,8 @@
             "bonusSource": {
                 "title": "Select bonus source",
                 "helpText": "Exams and courses with \"Bonus\" type grading keys are listed below. The student's grade for the selected course or exam determines the bonus amount.",
-                "maxPoints": "Max points"
+                "maxPoints": "Max points",
+                "maxPointsCourseHelpText": "The maximum points specified in the course's grading key. This value is only used for example calculations and is not used in the actual bonus calculation. Instead, the bonus is calculated based on the points achievable in the course."
             },
             "examples": {
                 "title": "Examples",

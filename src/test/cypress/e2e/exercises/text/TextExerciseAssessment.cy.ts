@@ -1,17 +1,20 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { TextExercise } from 'app/entities/text-exercise.model';
+
 import { Course } from 'app/entities/course.model';
-import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { TextExercise } from 'app/entities/text-exercise.model';
+
 import {
     courseAssessment,
     courseManagement,
-    courseManagementRequest,
+    courseManagementAPIRequest,
+    exerciseAPIRequest,
     exerciseAssessment,
     exerciseResult,
     textExerciseAssessment,
     textExerciseFeedback,
 } from '../../../support/artemis';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
 
 // Common primitives
 const tutorFeedback = 'Try to use some newlines next time!';
@@ -26,17 +29,17 @@ describe('Text exercise assessment', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.createTextExercise({ course }).then((textResponse) => {
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            exerciseAPIRequest.createTextExercise({ course }).then((textResponse) => {
                 exercise = textResponse.body;
                 cy.login(studentOne);
-                courseManagementRequest.startExerciseParticipation(exercise.id!);
+                exerciseAPIRequest.startExerciseParticipation(exercise.id!);
                 cy.fixture('loremIpsum-short.txt').then((submission) => {
-                    courseManagementRequest.makeTextExerciseSubmission(exercise.id!, submission);
+                    exerciseAPIRequest.makeTextExerciseSubmission(exercise.id!, submission);
                 });
             });
         });
@@ -84,6 +87,6 @@ describe('Text exercise assessment', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

@@ -119,6 +119,46 @@ public class UserUtilService {
         return generatedUsers;
     }
 
+    /**
+     * Updates students starting with suffix 1 with the respective registration numbers
+     * Users have to exist to be updated otherwise an IllegalArgumentException is thrown
+     *
+     * @param registrationNumbers registration numbers of users. Size controls the number of students getting updated.
+     * @param testPrefix          the prefix used for the student login
+     * @return the updated students
+     */
+    public List<User> setRegistrationNumberOfStudents(List<String> registrationNumbers, String testPrefix) {
+        List<User> students = new ArrayList<>();
+        for (int i = 1; i <= registrationNumbers.size(); i++) {
+            students.add(setRegistrationNumberOfUserAndSave(testPrefix + "student" + i, registrationNumbers.get(i - 1)));
+        }
+        return students;
+    }
+
+    /**
+     * set the registration number of the user with the given login and saves the user in the repository
+     *
+     * @param login              login of the user, whose registration number will be changed
+     * @param registrationNumber new registration number to use
+     * @return the user
+     */
+    public User setRegistrationNumberOfUserAndSave(String login, String registrationNumber) {
+        User user = getUserByLogin(login);
+        return setRegistrationNumberOfUserAndSave(user, registrationNumber);
+    }
+
+    /**
+     * set the registration number of the user and saves the user in the repository
+     *
+     * @param user               the user, whose registration number will be changed
+     * @param registrationNumber new registration number to use
+     * @return the user
+     */
+    public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
+        user.setRegistrationNumber(registrationNumber);
+        return userRepo.save(user);
+    }
+
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
         return generateActivatedUsers(loginPrefix, commonPasswordHash, groups, authorities, 1, amount);
     }
@@ -217,7 +257,7 @@ public class UserUtilService {
         // Before adding new users, existing users are removed from courses.
         // Otherwise, the amount users per course constantly increases while running the tests,
         // even though the old users are not needed anymore.
-        if (usersToAdd.size() > 0) {
+        if (!usersToAdd.isEmpty()) {
             Set<User> currentUsers = userTestRepository.findAllInAnyGroup();
             log.debug("Removing {} users from all courses...", currentUsers.size());
             currentUsers.forEach(user -> user.setGroups(Set.of()));

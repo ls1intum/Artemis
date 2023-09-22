@@ -30,6 +30,22 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     List<Post> findPostsByAuthorId(long authorId);
 
     /**
+     * find all posts of a user in a course
+     * currently only used for testing
+     *
+     * @param authorId id of the user
+     * @param courseId id of the course
+     * @return a list of posts
+     */
+    @Query("""
+            SELECT p
+            FROM Post p
+            WHERE p.author.id =:authorId
+                  AND p.conversation.course.id =:courseId
+            """)
+    List<Post> findPostsByAuthorIdAndCourseId(long authorId, long courseId);
+
+    /**
      * Generates SQL Query via specifications to filter and sort Posts
      *
      * @param postContextFilter filtering and sorting properties for Posts

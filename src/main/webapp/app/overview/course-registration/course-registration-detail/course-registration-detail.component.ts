@@ -16,7 +16,12 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     course: Course | null = null;
     private paramSubscription: any;
 
-    constructor(private accountService: AccountService, private courseService: CourseManagementService, private route: ActivatedRoute, private router: Router) {}
+    constructor(
+        private accountService: AccountService,
+        private courseService: CourseManagementService,
+        private route: ActivatedRoute,
+        private router: Router,
+    ) {}
 
     ngOnInit(): void {
         this.loading = true;

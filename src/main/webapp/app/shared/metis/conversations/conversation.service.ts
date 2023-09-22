@@ -34,7 +34,11 @@ export enum ConversationMemberSearchFilter {
 export class ConversationService {
     public resourceUrl = '/api/courses/';
 
-    constructor(protected http: HttpClient, protected translationService: TranslateService, protected accountService: AccountService) {}
+    constructor(
+        protected http: HttpClient,
+        protected translationService: TranslateService,
+        protected accountService: AccountService,
+    ) {}
 
     getConversationName(conversation: ConversationDto | undefined, showLogin = false): string {
         if (!conversation) {

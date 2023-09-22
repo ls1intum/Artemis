@@ -1,4 +1,5 @@
 import { Exercise } from 'app/entities/exercise.model';
+
 import { BASE_API, DELETE } from '../../constants';
 
 /**

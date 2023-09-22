@@ -16,12 +16,13 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
 import { User } from 'app/core/user/user.model';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
+
 const memberTemplate = {
     id: 1,
     login: 'login',
@@ -36,7 +37,12 @@ const memberTemplate = {
 const creatorTemplate = { id: 2, login: 'login2', firstName: 'Kaddl2', lastName: 'Garching2' } as ConversationUserDTO;
 const currentUserTemplate = { id: 3, login: 'login3', firstName: 'Kaddl3', lastName: 'Garching3' } as User;
 
-const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDto[] = [
+    generateOneToOneChatDTO({}),
+    generateExampleGroupChatDTO({}),
+    generateExampleChannelDTO({}),
+    generateExampleChannelDTO({ isCourseWide: true }),
+];
 
 examples.forEach((activeConversation) => {
     describe('ConversationMemberRowComponent with ' + activeConversation.type, () => {
@@ -73,7 +79,7 @@ examples.forEach((activeConversation) => {
 
             const accountService = TestBed.inject(AccountService);
             jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(loggedInUser));
-            canRemoveUsersFromConversation.mockReturnValue(true);
+            canRemoveUsersFromConversation.mockReturnValue(!(activeConversation instanceof ChannelDTO && activeConversation.isCourseWide));
             canGrantChannelModeratorRole.mockReturnValue(true);
             canRevokeChannelModeratorRole.mockReturnValue(true);
 
@@ -96,7 +102,7 @@ examples.forEach((activeConversation) => {
             tick();
             fixture.detectChanges();
             expect(component).toBeTruthy();
-            expect(component.canBeRemovedFromConversation).toBeTrue();
+            expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
 
             if (isChannelDto(activeConversation)) {
                 expect(component.canBeGrantedChannelModeratorRole).toBeFalse(); // is already moderator
@@ -104,13 +110,23 @@ examples.forEach((activeConversation) => {
             }
         }));
 
-        it('should show remove user button if the user has the permissions', fakeAsync(() => {
+        it('should show remove user button if the user has the permissions in group chat', fakeAsync(() => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            if (isChannelDto(activeConversation) || isGroupChatDto(activeConversation)) {
+            if (isGroupChatDto(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toBeTrue();
                 checkRemoveMemberButton(true);
+            }
+        }));
+
+        it('should show remove user button if the user has the permissions in channel', fakeAsync(() => {
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+            if (isChannelDto(activeConversation)) {
+                expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
+                checkRemoveMemberButton(component.canBeRemovedFromConversation);
             }
         }));
 

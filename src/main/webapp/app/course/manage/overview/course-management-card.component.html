@@ -4,12 +4,12 @@
         <div class="card-header-left">
             <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
             <div class="card-date">
-                <div *ngIf="course.startDate && course.endDate">{{ course.startDate | artemisDate : 'long-date' }} - {{ course.endDate | artemisDate : 'long-date' }}</div>
+                <div *ngIf="course.startDate && course.endDate">{{ course.startDate | artemisDate: 'long-date' }} - {{ course.endDate | artemisDate: 'long-date' }}</div>
                 <div *ngIf="course.startDate && !course.endDate">
-                    <span jhiTranslate="artemisApp.course.startDate">Start Date</span>: {{ course.startDate | artemisDate : 'long-date' }}
+                    <span jhiTranslate="artemisApp.course.startDate">Start Date</span>: {{ course.startDate | artemisDate: 'long-date' }}
                 </div>
                 <div *ngIf="!course.startDate && course.endDate">
-                    <span jhiTranslate="artemisApp.course.endDate">End Date</span>: {{ course.endDate | artemisDate : 'long-date' }}
+                    <span jhiTranslate="artemisApp.course.endDate">End Date</span>: {{ course.endDate | artemisDate: 'long-date' }}
                 </div>
             </div>
         </div>
@@ -156,7 +156,7 @@
                     <div *ngIf="pastExercises && pastExercises.length > 0">
                         <div class="control-label" (click)="showPastExercises = !showPastExercises">
                             <fa-icon class="control-icon" [icon]="showPastExercises ? faAngleDown : faAngleUp"></fa-icon>
-                            <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate : { amount: pastExercises.length, total: pastExerciseCount } }}</strong>
+                            <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}</strong>
                         </div>
                         <div *ngIf="showPastExercises">
                             <jhi-course-management-exercise-row
@@ -273,6 +273,17 @@
         >
             <fa-icon [icon]="faFlag"></fa-icon>
             <span [innerHTML]="'artemisApp.competency.competencyButton' | artemisTranslate" class="d-none d-xl-inline"></span>
+        </a>
+        <a
+            *ngIf="course.isAtLeastInstructor"
+            [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
+            [routerLink]="['/course-management', course.id, 'learning-path-management']"
+            class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+            [ngbTooltip]="'artemisApp.learningPath.learningPathButton' | artemisTranslate"
+            id="course-card-open-learning-paths"
+        >
+            <fa-icon [icon]="faNetworkWired"></fa-icon>
+            <span [innerHTML]="'artemisApp.learningPath.learningPathButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"

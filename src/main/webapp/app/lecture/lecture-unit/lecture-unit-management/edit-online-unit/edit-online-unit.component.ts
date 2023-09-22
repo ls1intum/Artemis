@@ -20,7 +20,12 @@ export class EditOnlineUnitComponent implements OnInit {
     formData: OnlineUnitFormData;
     lectureId: number;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private onlineUnitService: OnlineUnitService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private onlineUnitService: OnlineUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

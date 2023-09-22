@@ -15,9 +15,8 @@ export class ChartCategoryFilter extends ChartFilter {
 
     /**
      * Collects all categories from the provided exercises
-     * @private
      */
-    determineDisplayableCategories(courseExercises: CategoryFilterOperatingType[]): Set<string> {
+    private determineDisplayableCategories(courseExercises: CategoryFilterOperatingType[]): Set<string> {
         const exerciseCategories = courseExercises
             .filter((exercise) => exercise.categories)
             .flatMap((exercise) => exercise.categories!)
@@ -40,7 +39,6 @@ export class ChartCategoryFilter extends ChartFilter {
 
     /**
      * Calculates the current amount of active category filter options
-     * @private
      */
     private calculateNumberOfAppliedFilters(): void {
         this.numberOfActiveFilters = this.exerciseCategories.size + (this.includeExercisesWithNoCategory ? 1 : 0);
@@ -113,7 +111,6 @@ export class ChartCategoryFilter extends ChartFilter {
     /**
      * Auxiliary method that checks whether all possible categories are selected and updates the allCategoriesSelected flag accordingly
      * @param newFilterStatement indicates whether the updated filter option got selected or deselected and updates the flag accordingly
-     * @private
      */
     private areAllCategoriesSelected(newFilterStatement: boolean): void {
         if (newFilterStatement) {

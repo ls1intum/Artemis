@@ -11,7 +11,11 @@ import { filter, map, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseManagementResolve implements Resolve<FileUploadExercise> {
-    constructor(private fileUploadExerciseService: FileUploadExerciseService, private courseService: CourseManagementService, private exerciseGroupService: ExerciseGroupService) {}
+    constructor(
+        private fileUploadExerciseService: FileUploadExerciseService,
+        private courseService: CourseManagementService,
+        private exerciseGroupService: ExerciseGroupService,
+    ) {}
 
     /**
      * Resolves the route and initializes file upload exercise either from exerciseId (existing exercise) or

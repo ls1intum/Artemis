@@ -123,7 +123,8 @@ public class ConversationUtilService {
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
-        posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix));
+        posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
+        posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
 
         return posts;
     }
@@ -200,6 +201,11 @@ public class ConversationUtilService {
         conversationPost.setAnswers(createBasicAnswers(conversationPost, userPrefix));
         postRepository.save(conversationPost);
 
+        Post studentConversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null && coursePost.getAuthor().getLogin().contains("student"))
+                .findFirst().orElseThrow();
+        studentConversationPost.setAnswers(createBasicAnswers(studentConversationPost, userPrefix));
+        postRepository.save(studentConversationPost);
+
         return posts;
     }
 
@@ -242,17 +248,17 @@ public class ConversationUtilService {
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
+    public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
         postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
     }
 
-    private List<Post> createBasicPosts(Conversation conversation, String userPrefix) {
+    private List<Post> createBasicPosts(Conversation conversation, String userPrefix, String userRole) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "tutor", (i + 1))));
+            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + userRole, (i + 1))));
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -321,15 +327,13 @@ public class ConversationUtilService {
         return conversationRepository.save(conversation);
     }
 
-    public Channel createChannel(Course course, String channelName) {
-        Channel channel = new Channel();
-        channel.setCourse(course);
-        channel.setName(channelName);
-        channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsArchived(false);
-        channel.setDescription("Test channel");
+    public Channel createCourseWideChannel(Course course, String channelName) {
+        Channel channel = ConversationFactory.generatePublicChannel(course, channelName, true);
         return conversationRepository.save(channel);
+    }
+
+    public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName) {
+        return createConversationParticipant(conversation, userName);
     }
 
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
@@ -337,6 +341,7 @@ public class ConversationUtilService {
         conversationParticipant.setConversation(conversation);
         conversationParticipant.setLastRead(conversation.getLastMessageDate());
         conversationParticipant.setUser(userUtilService.getUserByLogin(userName));
+        conversationParticipant.setIsHidden(false);
 
         return conversationParticipantRepository.save(conversationParticipant);
     }
@@ -349,6 +354,10 @@ public class ConversationUtilService {
         return conversationRepository.save(groupChat);
     }
 
+    public Post addMessageToConversation(String login, Conversation conversation) {
+        return createMessageWithReactionForUser(login, "test", conversation);
+    }
+
     public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
@@ -357,7 +366,7 @@ public class ConversationUtilService {
         return conversationRepository.save(oneToOneChat);
     }
 
-    private void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+    public void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userUtilService.getUserByLogin(login));
         answerPost.setContent("answer post");
@@ -368,7 +377,7 @@ public class ConversationUtilService {
         answerPostRepository.save(answerPost);
     }
 
-    private void addReactionForUserToPost(String login, Post post) {
+    public void addReactionForUserToPost(String login, Post post) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setPost(post);
         conversationRepository.save(post.getConversation());
@@ -376,7 +385,7 @@ public class ConversationUtilService {
         reactionRepository.save(reaction);
     }
 
-    private void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
+    public void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setAnswerPost(answerPost);
         answerPostRepository.save(answerPost);
@@ -392,6 +401,25 @@ public class ConversationUtilService {
         channel.setCourse(course);
         var message = createMessageWithReactionForUser(login, messageText, channel);
         addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(channel);
+    }
+
+    public Conversation addOneMessageForUserInCourse(String login, Course course, String messageText) {
+        Post message = new Post();
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("channel");
+        channel.setCourse(course);
+        message.setConversation(channel);
+        message.setAuthor(userUtilService.getUserByLogin(login));
+        message.setContent(messageText);
+        message.setCreationDate(ZonedDateTime.now());
+        channel.setCreator(message.getAuthor());
+        addReactionForUserToPost(login, message);
+        conversationRepository.save(channel);
+        message = postRepository.save(message);
         return conversationRepository.save(channel);
     }
 

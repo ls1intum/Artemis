@@ -36,7 +36,10 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     faThList = faThList;
     faChartBar = faChartBar;
 
-    constructor(private examChecklistService: ExamChecklistService, private websocketService: JhiWebsocketService) {}
+    constructor(
+        private examChecklistService: ExamChecklistService,
+        private websocketService: JhiWebsocketService,
+    ) {}
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);

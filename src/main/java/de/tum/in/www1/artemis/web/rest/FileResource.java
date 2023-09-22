@@ -32,6 +32,8 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
@@ -78,10 +80,16 @@ public class FileResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final QuizQuestionRepository quizQuestionRepository;
+
+    private final DragItemRepository dragItemRepository;
+
+    private final CourseRepository courseRepository;
+
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository) {
+            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -94,6 +102,9 @@ public class FileResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
         this.slideRepository = slideRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.dragItemRepository = dragItemRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -131,7 +142,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
-        return responseEntityForFilePath(FilePathService.getTempFilePath(), filename);
+        return responseEntityForFilePath(Path.of(FilePathService.getTempFilePath(), filename).toString());
     }
 
     /**
@@ -161,7 +172,7 @@ public class FileResource {
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping("files/markdown/{filename:.+}")
+    @GetMapping("files/markdown/{filename}")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -170,30 +181,34 @@ public class FileResource {
     }
 
     /**
-     * GET /files/templates/:filename : Get the template file with the given filename
+     * GET /files/templates/:language/:projectType : Get the template file with the given filename<br/>
+     * GET /files/templates/:language : Get the template file with the given filename
+     * <p>
+     * The readme file contains the default problem statement for new programming exercises.
      *
-     * @param filename    The filename of the file to get
      * @param language    The programming language for which the template file should be returned
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "files/templates/{language}/{projectType}/{filename}", "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
+    @GetMapping({ "files/templates/{language}/{projectType}", "files/templates/{language}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable Optional<ProjectType> projectType,
-            @PathVariable String filename) {
-        log.debug("REST request to get file '{}' for programming language {} and project type {}", filename, language, projectType);
-        sanitizeFilenameElseThrow(filename);
+    public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
+        log.debug("REST request to get readme file for programming language {} and project type {}", language, projectType);
+
+        String languagePrefix = language.name().toLowerCase();
+        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+
+        return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
+    }
+
+    private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {
         try {
-            String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
-            String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
-
-            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, filename));
-            if (!fileResource.exists()) {
+            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, "readme"));
+            if (!fileResource.exists() && !projectTypePrefix.isEmpty()) {
                 // Load without project type if not found with project type
-                fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, filename));
+                fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, "readme"));
             }
-
-            var fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
             return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
@@ -209,30 +224,35 @@ public class FileResource {
      * GET /files/drag-and-drop/backgrounds/:questionId/:filename : Get the background file with the given name for the given drag and drop question
      *
      * @param questionId ID of the drag and drop question, the file belongs to
-     * @param filename   the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
+    @GetMapping("files/drag-and-drop/backgrounds/{questionId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
-        return responseEntityForFilePath(FilePathService.getDragAndDropBackgroundFilePath(), filename);
+    public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId) {
+        log.debug("REST request to get background for drag and drop question : {}", questionId);
+        DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
+        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        return responseEntityForFilePath(fileService.actualPathForPublicPath(question.getBackgroundFilePath()));
     }
 
     /**
      * GET /files/drag-and-drop/drag-items/:dragItemId/:filename : Get the drag item file with the given name for the given drag item
      *
      * @param dragItemId ID of the drag item, the file belongs to
-     * @param filename   the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
+    @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
-        return responseEntityForFilePath(FilePathService.getDragItemFilePath(), filename);
+    public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
+        log.debug("REST request to get file for drag item : {}", dragItemId);
+        DragItem dragItem = dragItemRepository.findByIdElseThrow(dragItemId);
+        Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        if (dragItem.getPictureFilePath() == null) {
+            throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
+        }
+        return responseEntityForFilePath(fileService.actualPathForPublicPath(dragItem.getPictureFilePath()));
     }
 
     /**
@@ -240,14 +260,12 @@ public class FileResource {
      *
      * @param submissionId id of the submission, the file belongs to
      * @param exerciseId   id of the exercise, the file belongs to
-     * @param filename     the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
+    @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
+    public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
         FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
@@ -268,56 +286,54 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        return buildFileResponse(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), filename);
+        return buildFileResponse(fileService.actualPathForPublicPath(submission.getFilePath()), false);
     }
 
     /**
      * GET /files/course/icons/:courseId/:filename : Get the course image
      *
      * @param courseId ID of the course, the image belongs to
-     * @param filename the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/course/icons/{courseId}/{filename:.+}")
+    @GetMapping("files/course/icons/{courseId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
-        return responseEntityForFilePath(FilePathService.getCourseIconFilePath(), filename);
+    public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId) {
+        log.debug("REST request to get icon for course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        return responseEntityForFilePath(fileService.actualPathForPublicPath(course.getCourseIcon()));
     }
 
     /**
      * GET /files/exam-user/signatures/:examUserId/:filename : Get the exam user signature
      *
      * @param examUserId ID of the exam user, the image belongs to
-     * @param filename   the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/exam-user/signatures/{examUserId}/{filename:.+}")
+    @GetMapping("files/exam-user/signatures/{examUserId}/*")
     @EnforceAtLeastInstructor
-    public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
+    public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
+        log.debug("REST request to get signature for exam user : {}", examUserId);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
-        return buildFileResponse(FilePathService.getExamUserSignatureFilePath(), filename);
+
+        return buildFileResponse(fileService.actualPathForPublicPath(examUser.getSigningImagePath()), false);
     }
 
     /**
      * GET /files/exam-user/:examUserId/:filename : Get the image of exam user
      *
      * @param examUserId ID of the exam user, the image belongs to
-     * @param filename   the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/exam-user/{examUserId}/{filename:.+}")
+    @GetMapping("files/exam-user/{examUserId}/*")
     @EnforceAtLeastInstructor
-    public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
+    public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId) {
+        log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
-        return buildFileResponse(FilePathService.getStudentImageFilePath(), filename, true);
+
+        return buildFileResponse(fileService.actualPathForPublicPath(examUser.getStudentImagePath()), true);
     }
 
     /**
@@ -327,7 +343,7 @@ public class FileResource {
      * @param filename  the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
+    @GetMapping("files/attachments/lecture/{lectureId}/{filename}")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -342,11 +358,9 @@ public class FileResource {
         Course course = lecture.getCourse();
 
         // check if the user is authorized to access the requested attachment unit
-        if (!checkAttachmentAuthorization(course, attachment)) {
-            throw new AccessForbiddenException();
-        }
+        checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString(), filename);
+        return buildFileResponse(fileService.actualPathForPublicPath(attachment.getLink()), false);
     }
 
     /**
@@ -388,14 +402,12 @@ public class FileResource {
      * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
-     * @param filename         the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
+    public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
@@ -403,11 +415,9 @@ public class FileResource {
         Course course = attachmentUnit.getLecture().getCourse();
 
         // check if the user is authorized to access the requested attachment unit
-        if (!checkAttachmentAuthorization(course, attachment)) {
-            throw new AccessForbiddenException();
-        }
+        checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
+        return buildFileResponse(fileService.actualPathForPublicPath(attachment.getLink()), false);
     }
 
     /**
@@ -426,9 +436,8 @@ public class FileResource {
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = attachmentUnit.getLecture().getCourse();
 
-        if (!checkAttachmentAuthorization(course, attachment)) {
-            throw new AccessForbiddenException();
-        }
+        checkAttachmentAuthorizationOrThrow(course, attachment);
+
         Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
         String directoryPath = slide.getSlideImagePath();
 
@@ -456,6 +465,18 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
         return buildFileResponse(path, filename, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path containing the file name
+     *
+     * @param pathString to the file including the file name
+     * @param cache      true if the response should contain a header that allows caching; false otherwise
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(String pathString, boolean cache) {
+        Path path = Path.of(pathString);
+        return buildFileResponse(path.getParent().toString(), path.getFileName().toString(), cache);
     }
 
     /**
@@ -510,28 +531,25 @@ public class FileResource {
      *
      * @param course     the course to check if the user is part of it
      * @param attachment the attachment for which the authentication should be checked
-     * @return true if the user is authorized to access the attachment, otherwise false is returned
      */
-    private boolean checkAttachmentAuthorization(Course course, Attachment attachment) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        if (attachment.isVisibleToStudents() || authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-            return true;
+    private void checkAttachmentAuthorizationOrThrow(Course course, Attachment attachment) {
+        if (attachment.isVisibleToStudents()) {
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         }
-        log.info("User not authorized to access attachment");
-        return false;
+        else {
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        }
     }
 
     /**
      * Reads the file and turns it into a ResponseEntity
      *
-     * @param path the path for the file to read
+     * @param filePath the path for the file to read
      * @return ResponseEntity with status 200 and the file as byte stream, status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
      */
-    private ResponseEntity<byte[]> responseEntityForFilePath(String path, String filename) {
-        sanitizeFilenameElseThrow(filename);
+    private ResponseEntity<byte[]> responseEntityForFilePath(String filePath) {
         try {
-            var actualPath = Path.of(path, filename).toString();
-            var file = fileService.getFileForPath(actualPath);
+            var file = fileService.getFileForPath(filePath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
@@ -550,7 +568,7 @@ public class FileResource {
      * @param filename the filename which is validated
      */
     private static void sanitizeFilenameElseThrow(String filename) {
-        String sanitizedFileName = FileService.removeIllegalCharacters(filename);
+        String sanitizedFileName = FileService.sanitizeFilename(filename);
         if (!sanitizedFileName.equals(filename)) {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }

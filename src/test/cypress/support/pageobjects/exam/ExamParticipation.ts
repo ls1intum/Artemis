@@ -1,8 +1,8 @@
-import { Exam } from 'app/entities/exam.model';
+import { Interception } from 'cypress/types/net-stubbing';
+
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { EXERCISE_TYPE } from '../../constants';
-import { getExercise } from '../../utils';
+import { Exam } from 'app/entities/exam.model';
+
 import {
     courseList,
     courseOverview,
@@ -13,10 +13,10 @@ import {
     quizExerciseMultipleChoice,
     textExerciseEditor,
 } from '../../artemis';
-import { Interception } from 'cypress/types/net-stubbing';
+import { AdditionalData, ExerciseType } from '../../constants';
 import { CypressCredentials } from '../../users';
+import { getExercise } from '../../utils';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
-import { ProgrammingExerciseAssessmentType } from '../../requests/CourseManagementRequests';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.
@@ -28,18 +28,18 @@ export class ExamParticipation {
      * @param exerciseType the type of the exercise
      * @param additionalData additional data such as the expected score
      */
-    makeSubmission(exerciseID: number, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
+    makeSubmission(exerciseID: number, exerciseType: ExerciseType, additionalData?: AdditionalData) {
         switch (exerciseType) {
-            case EXERCISE_TYPE.Text:
+            case ExerciseType.TEXT:
                 this.makeTextExerciseSubmission(exerciseID, additionalData!.textFixture!);
                 break;
-            case EXERCISE_TYPE.Modeling:
+            case ExerciseType.MODELING:
                 this.makeModelingExerciseSubmission(exerciseID);
                 break;
-            case EXERCISE_TYPE.Quiz:
+            case ExerciseType.QUIZ:
                 this.makeQuizExerciseSubmission(exerciseID, additionalData!.quizExerciseID!);
                 break;
-            case EXERCISE_TYPE.Programming:
+            case ExerciseType.PROGRAMMING:
                 this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode);
                 break;
         }
@@ -79,11 +79,12 @@ export class ExamParticipation {
 
     startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
         cy.login(student, '/');
+        cy.visit('/courses');
         courseList.openCourse(course.id!);
         courseOverview.openExamsTab();
         courseOverview.openExam(exam.id!);
         cy.url().should('contain', `/exams/${exam.id}`);
-        examStartEnd.startExam();
+        examStartEnd.startExam(true);
     }
 
     selectExerciseOnOverview(index: number) {
@@ -136,20 +137,3 @@ export class ExamParticipation {
         });
     }
 }
-
-export class AdditionalData {
-    quizExerciseID?: number;
-    submission?: ProgrammingExerciseSubmission;
-    expectedScore?: number;
-    textFixture?: string;
-    practiceMode?: boolean;
-    progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
-}
-
-export type Exercise = {
-    title: string;
-    type: EXERCISE_TYPE;
-    id: number;
-    additionalData?: AdditionalData;
-    exerciseGroup?: ExerciseGroup;
-};
