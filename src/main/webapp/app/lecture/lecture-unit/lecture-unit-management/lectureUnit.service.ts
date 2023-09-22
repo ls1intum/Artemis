@@ -1,4 +1,4 @@
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitForLearningPathNodeDetailsDTO, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -137,5 +137,11 @@ export class LectureUnitService {
         } else {
             return lectureUnit.releaseDate;
         }
+    }
+
+    getLectureUnitForLearningPathNodeDetails(lectureUnitId: number) {
+        return this.httpClient.get<LectureUnitForLearningPathNodeDetailsDTO>(`${this.resourceURL}/lecture-units/${lectureUnitId}/for-learning-path-node-details`, {
+            observe: 'response',
+        });
     }
 }

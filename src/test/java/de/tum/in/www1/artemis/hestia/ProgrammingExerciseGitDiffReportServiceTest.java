@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +67,12 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+    }
+
+    @AfterEach
+    void cleanup() throws IOException {
+        templateRepo.resetLocalRepo();
+        solutionRepo.resetLocalRepo();
     }
 
     @Test
