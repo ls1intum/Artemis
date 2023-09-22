@@ -58,7 +58,7 @@ export interface OrionExerciseConnector {
     downloadSubmission(submissionId: string, correctionRound: string, base64data: string): void;
 
     /**
-     * Initializes the feedback comments. See {@link OrionConnectorService} for details.
+     * Initializes the feedback comments for tutors. See {@link OrionConnectorService} for details.
      * @param submissionId id of the submission, for validation purposes
      * @param feedback current feedback
      */
@@ -72,11 +72,10 @@ export interface OrionExerciseConnector {
     importParticipation(repository: string, exerciseJson: string): void;
 
     /**
-     * Initializes the feedback comments
-     * @param submissionId id of the submission for validation
-     * @param feedback a string containing feedback
+     * Initializes the feedback comments for a student. See {@link OrionConnectorService} for details
+     * @param programmingExerciseStudentParticipation a string containing an array of {@link ProgrammingExerciseStudentParticipation}
      */
-    initializeFeedback(submissionId: string, feedback: string): void;
+    initializeFeedback(programmingExerciseStudentParticipation: string): void;
 }
 
 export interface OrionVCSConnector {

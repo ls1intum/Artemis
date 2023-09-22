@@ -65,13 +65,11 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
-     * returns feedback for an exercise
+     * returns all participations and their feedback for an exercise.
+     * Orion will handle the feedback and processes the last graded result
+     * this ensures feedback changes won't break the plugin and the endpoint stays extensible
      */
     initializeFeedback() {
-        const { results, submissions } = this.exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
-        const feedbacks = results![0].feedbacks;
-        if (submissions !== undefined) {
-            this.orionConnectorService.initializeFeedback(submissions[0].id!, feedbacks!);
-        }
+        this.orionConnectorService.initializeFeedback(this.exercise.studentParticipations as ProgrammingExerciseStudentParticipation[]);
     }
 }
