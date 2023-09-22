@@ -51,6 +51,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private ProgrammingExercise exercise;
 
+    private LocalRepository repository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
@@ -59,6 +61,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisFor(course);
         activateIrisFor(exercise);
+        repository = new LocalRepository("main");
     }
 
     @Test
@@ -69,9 +72,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setMessageDifferentiator(1453);
 
         irisRequestMockProvider.mockMessageResponse("Hello World");
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
         activateIrisFor(savedExercise);
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
@@ -115,9 +118,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend1 = createDefaultMockMessage(irisSession);
 
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
         activateIrisFor(savedExercise);
 
         var irisMessage1 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
@@ -239,9 +242,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageError();
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
         activateIrisFor(savedExercise);
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
@@ -259,9 +262,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageResponse(null);
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
         activateIrisFor(savedExercise);
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);

@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,17 +35,16 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         }
 
         // we need to get the 'real' file path here, the submission only has the api url path
-        String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
-        Path filePathPath = Path.of(filePath);
+        Path filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
 
-        if (!Files.exists(filePathPath)) { // throw if submission file does not exist
-            throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + filePathPath + " doesn't exist.");
+        if (!Files.exists(filePath)) { // throw if submission file does not exist
+            throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + filePath + " doesn't exist.");
         }
 
-        try (var files = Files.list(filePathPath)) {
+        try (var files = Files.list(filePath)) {
             files.forEach(content -> {
                 try {
-                    Files.copy(content, file.toPath());
+                    FileUtils.copyFile(content.toFile(), file);
                 }
                 catch (IOException e) {
                     log.error("Failed to copy file {} to zip file", content, e);

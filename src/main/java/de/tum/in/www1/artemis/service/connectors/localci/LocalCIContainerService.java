@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -272,7 +273,7 @@ public class LocalCIContainerService {
                 ./gradlew clean test""");
 
         try {
-            Files.writeString(buildScriptPath, buildScript.toString(), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new LocalCIException("Failed to create build script file", e);

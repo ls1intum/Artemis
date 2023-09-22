@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -30,14 +30,14 @@ import de.tum.in.www1.artemis.domain.quiz.DropLocation;
 @Service
 public class DragAndDropQuizAnswerConversionService {
 
-    private final FileService fileService;
+    private final FilePathService filePathService;
 
     // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
     // this value needs to be consistent with MAX_SIZE_UNIT in quiz-exercise-generator.ts
     private static final int MAX_SIZE_UNIT = 200;
 
-    public DragAndDropQuizAnswerConversionService(FileService fileService) {
-        this.fileService = fileService;
+    public DragAndDropQuizAnswerConversionService(FilePathService filePathService) {
+        this.filePathService = filePathService;
     }
 
     /**
@@ -50,7 +50,7 @@ public class DragAndDropQuizAnswerConversionService {
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir, boolean showResult) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
-        BufferedImage backgroundImage = ImageIO.read(new File(fileService.actualPathForPublicPath(backgroundFilePath)));
+        BufferedImage backgroundImage = ImageIO.read(filePathService.actualPathForPublicPath(URI.create(backgroundFilePath)).toFile());
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer, showResult);
         Path dndSubmissionPathPdf = outputDir.resolve(
@@ -121,7 +121,7 @@ public class DragAndDropQuizAnswerConversionService {
     }
 
     private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
-        BufferedImage dragItem = ImageIO.read(new File(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath())));
+        BufferedImage dragItem = ImageIO.read(filePathService.actualPathForPublicPath(URI.create(mapping.getDragItem().getPictureFilePath())).toFile());
         Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
                 new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));
         graphics.drawImage(dragItem, dropLocationCoordinates.x, dropLocationCoordinates.y, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);

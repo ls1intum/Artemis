@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.surefire.log.api.PrintStreamLogger;
 import org.apache.maven.plugins.surefire.report.ReportTestCase;
 import org.apache.maven.plugins.surefire.report.ReportTestSuite;
@@ -254,7 +255,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         Path sourceSrc = localRepository.localRepoFile.toPath().resolve("src");
         Path assignment = testRepo.localRepoFile.toPath().resolve("assignment");
         Files.createDirectories(assignment);
-        Files.move(sourceSrc, assignment.resolve("src"));
+        FileUtils.moveDirectory(sourceSrc.toFile(), assignment.resolve("src").toFile());
     }
 
     private Map<TestResult, Integer> readTestReports(String testResultPath) {
