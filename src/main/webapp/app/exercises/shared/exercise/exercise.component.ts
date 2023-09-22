@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 interface DeletionServiceInterface {
     delete: (id: number) => Observable<HttpResponse<any>>;
