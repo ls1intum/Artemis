@@ -62,10 +62,9 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * the value of the form control changes.
      * @param seconds
      */
-    writeValue(seconds: number) {
-        if (seconds) {
-            this.setWorkingTimeDuration(seconds);
-            this.updateWorkingTimePercentFromDuration();
+    writeValue(seconds: number | undefined | null) {
+        if (typeof seconds === 'number') {
+            this.workingTimeSeconds = seconds;
         }
     }
 
@@ -86,6 +85,23 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
             this.onTouched();
             this.touched = true;
         }
+    }
+
+    set workingTimeSeconds(seconds: number) {
+        this.setWorkingTimeDuration(seconds);
+        this.updateWorkingTimePercentFromDuration();
+    }
+
+    /**
+     * The seconds of the current working time duration.
+     */
+    get workingTimeSeconds(): number {
+        return this.artemisDurationFromSecondsPipe.durationToSeconds({
+            days: 0,
+            hours: this.workingTime.hours,
+            minutes: this.workingTime.minutes,
+            seconds: this.workingTime.seconds,
+        });
     }
 
     /**
@@ -114,7 +130,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      */
     private updateWorkingTimePercentFromDuration() {
         if (this.exam) {
-            this.workingTime.percent = getRelativeWorkingTimeExtension(this.exam, this.getWorkingTimeSeconds());
+            this.workingTime.percent = getRelativeWorkingTimeExtension(this.exam, this.workingTimeSeconds);
         }
     }
 
@@ -144,23 +160,10 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
     }
 
     /**
-     * Returns the seconds of the current working time duration.
-     * @private
-     */
-    private getWorkingTimeSeconds(): number {
-        return this.artemisDurationFromSecondsPipe.durationToSeconds({
-            days: 0,
-            hours: this.workingTime.hours,
-            minutes: this.workingTime.minutes,
-            seconds: this.workingTime.seconds,
-        });
-    }
-
-    /**
      * Calls the onChange callback with the current working time in seconds.
      * @private
      */
     private emitWorkingTimeChange() {
-        this.onChange(this.getWorkingTimeSeconds());
+        this.onChange(this.workingTimeSeconds);
     }
 }

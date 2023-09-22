@@ -27,8 +27,8 @@
             *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)"
             [confirmationText]="deleteConfirmationText"
             [entityName]="entityTitle"
+            [(ngModel)]="confirmEntityName"
             name="confirmEntityName"
-            ngModel
         />
     </div>
     <div class="modal-footer">
@@ -39,8 +39,8 @@
             id="delete"
             type="submit"
             [ngClass]="['btn', buttonType]"
-            [style.cursor]="deleteForm.form.invalid || submitDisabled ? 'not-allowed' : 'pointer'"
-            [disabled]="deleteForm.form.invalid || submitDisabled"
+            [style.cursor]="deleteForm.invalid || submitDisabled ? 'not-allowed' : 'pointer'"
+            [disabled]="deleteForm.invalid || submitDisabled"
             [ngSwitch]="actionType"
         >
             <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>

@@ -34,6 +34,7 @@ import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-wo
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-update/working-time-control.component';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -130,6 +131,7 @@ describe('StudentExamDetailComponent', () => {
                 StudentExamDetailComponent,
                 MockComponent(DataTableComponent),
                 MockComponent(StudentExamWorkingTimeComponent),
+                MockComponent(WorkingTimeControlComponent),
                 MockDirective(NgForm),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
@@ -193,20 +195,11 @@ describe('StudentExamDetailComponent', () => {
         jest.restoreAllMocks();
     });
 
-    const expectDuration = (hours: number, minutes: number, seconds: number) => {
-        expect(studentExamDetailComponent.workingTimeFormValues.hours).toBe(hours);
-        expect(studentExamDetailComponent.workingTimeFormValues.minutes).toBe(minutes);
-        expect(studentExamDetailComponent.workingTimeFormValues.seconds).toBe(seconds);
-    };
-
     it('initialize', () => {
         studentExamDetailComponentFixture.detectChanges();
 
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
-
-        expectDuration(2, 0, 0);
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0);
     });
 
     it('should save working time', () => {
@@ -236,7 +229,7 @@ describe('StudentExamDetailComponent', () => {
 
     it('should disable the working time form while saving', () => {
         studentExamDetailComponent.isSavingWorkingTime = true;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
     });
 
     it('should disable the working time form after a test run is submitted', () => {
@@ -244,10 +237,10 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.submitted = false;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeFalse();
 
         studentExamDetailComponent.studentExam.submitted = true;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
     });
 
     it('should disable the working time form if there is no exam', () => {
@@ -255,7 +248,7 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.exam = undefined;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
     });
 
     it('should get examIsOver', () => {
@@ -302,40 +295,6 @@ describe('StudentExamDetailComponent', () => {
         expect(modalServiceSpy).toHaveBeenCalledWith(content);
         expect(toggleSpy).toHaveBeenCalledOnce();
     }));
-
-    it('should update the percent difference when the absolute working time changes', () => {
-        studentExamDetailComponent.ngOnInit();
-
-        studentExamDetailComponent.workingTimeFormValues.hours = 4;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(100);
-
-        studentExamDetailComponent.workingTimeFormValues.hours = 3;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(50);
-
-        studentExamDetailComponent.workingTimeFormValues.hours = 0;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(-100);
-
-        // small change, not a full percent
-        studentExamDetailComponent.workingTimeFormValues.hours = 2;
-        studentExamDetailComponent.workingTimeFormValues.seconds = 12;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0.17);
-    });
-
-    it('should update the absolute working time when changing the percent difference', () => {
-        studentExamDetailComponent.ngOnInit();
-
-        studentExamDetailComponent.workingTimeFormValues.percent = 26;
-        studentExamDetailComponent.updateWorkingTimeDuration();
-        expectDuration(2, 31, 12);
-
-        studentExamDetailComponent.workingTimeFormValues.percent = -100;
-        studentExamDetailComponent.updateWorkingTimeDuration();
-        expectDuration(0, 0, 0);
-    });
 
     it.each([
         [true, undefined, 'artemisApp.studentExams.bonus'],

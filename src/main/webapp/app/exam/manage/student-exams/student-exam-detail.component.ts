@@ -4,7 +4,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -18,7 +17,6 @@ import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.mo
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
     styleUrls: ['./student-exam-detail.component.scss'],
-    providers: [ArtemisDurationFromSecondsPipe],
 })
 export class StudentExamDetailComponent implements OnInit {
     courseId: number;
