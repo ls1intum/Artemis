@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import net.minidev.json.JSONObject;
 
-class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ir"; // only lower case is supported
 

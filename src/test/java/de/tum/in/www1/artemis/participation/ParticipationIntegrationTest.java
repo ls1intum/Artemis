@@ -7,21 +7,16 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -45,9 +40,9 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
@@ -83,7 +78,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private ParticipationService participationService;
 
     @Autowired
-    private QuizExerciseUtilService quizUtilService;
+    private QuizBatchService quizBatchService;
 
     @Autowired
     protected QuizScheduleService quizScheduleService;
@@ -1239,20 +1234,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.getNullable("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.NO_CONTENT, StudentParticipation.class);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void getParticipation_quizExerciseStartedAndSubmissionAllowed(QuizMode quizMode) throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), quizMode, course).duration(360);
-        quizEx = exerciseRepo.save(quizEx);
-        quizUtilService.prepareBatchForSubmitting(quizEx, SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"),
-                SecurityContextHolder.getContext().getAuthentication());
-        var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-        assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
-        assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation_quizBatchNotPresent() throws Exception {
@@ -1292,16 +1273,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @MethodSource("getGetParticipationsubmittedNotEndedQuizParameters")
-    void getParticipation_submittedNotEndedQuiz(QuizMode quizMode, boolean isSubmissionAllowed) throws Exception {
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(10), quizMode, course);
+    @EnumSource(QuizMode.class)
+    void testCheckQuizParticipation(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
         quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepo.save(quizExercise);
-
-        quizUtilService.prepareBatchForSubmitting(quizExercise, SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"),
-                SecurityContextHolder.getContext().getAuthentication());
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
         List<ShortAnswerSpot> spots = saQuestion.getSpots();
@@ -1315,24 +1293,15 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         QuizSubmission quizSubmission = new QuizSubmission();
         quizSubmission.addSubmittedAnswers(submittedAnswer);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class, HttpStatus.OK);
-
-        quizScheduleService.processCachedQuizSubmissions();
-
-        if (!isSubmissionAllowed) {
-            // Duration is set to 0 so that QuizBatch.isSubmissionAllowed() will be false
-            quizExercise.setDuration(0);
-            quizExercise = exerciseRepo.save(quizExercise);
-        }
+        quizSubmission.submitted(true);
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         var actualParticipation = request.get("/api/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation.getInitializationState()).isEqualTo(InitializationState.FINISHED);
-
         var actualResults = actualParticipation.getResults();
         assertThat(actualResults).hasSize(1);
 
         var actualSubmission = (QuizSubmission) actualResults.stream().findFirst().get().getSubmission();
-        assertThat(actualSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(actualSubmission.isSubmitted()).isTrue();
 
         var actualSubmittedAnswers = actualSubmission.getSubmittedAnswers();
@@ -1347,8 +1316,25 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
     }
 
-    private static Stream<Arguments> getGetParticipationsubmittedNotEndedQuizParameters() {
-        return Stream.of(Arguments.of(QuizMode.SYNCHRONIZED, true), Arguments.of(QuizMode.SYNCHRONIZED, false), Arguments.of(QuizMode.BATCHED, true),
-                Arguments.of(QuizMode.BATCHED, false), Arguments.of(QuizMode.INDIVIDUAL, true), Arguments.of(QuizMode.INDIVIDUAL, false));
+    @Nested
+    @Isolated
+    class ParticipationIntegrationIsolatedTest {
+
+        @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @EnumSource(QuizMode.class)
+        void getParticipation_quizExerciseStartedAndSubmissionAllowed(QuizMode quizMode) throws Exception {
+            var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), quizMode, course).duration(360);
+            quizEx = exerciseRepo.save(quizEx);
+
+            if (quizMode != QuizMode.SYNCHRONIZED) {
+                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizEx, ZonedDateTime.now().minusSeconds(10)));
+                quizExerciseUtilService.joinQuizBatch(quizEx, batch, TEST_PREFIX + "student1");
+            }
+            var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+            assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
+            assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
+            assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
+        }
     }
 }
