@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -162,8 +161,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testPublicMetricsCourses() {
         var activeCourse = courseUtilService.createCourse();
-        activeCourse.setStartDate(ZonedDateTime.now().minusDays(1));
-        activeCourse.setEndDate(ZonedDateTime.now().plusDays(1));
+        activateCourse(activeCourse);
         courseRepository.save(activeCourse);
 
         var inactiveCourse = courseUtilService.createCourse();
@@ -173,14 +171,41 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         metricsBean.updatePublicArtemisMetrics();
 
-        var totalNumberOfCourses = courseRepository.count();
-        var numberOfActiveCourses = courseRepository.findAllActive(ZonedDateTime.now()).size();
+        long totalNumberOfCourses = courseRepository.count();
+        long numberOfActiveCourses = countActiveCourses();
 
         // Assert that there is at least one non-active course in the database so that the values returned from the metrics are different
         assertThat(numberOfActiveCourses).isNotEqualTo(totalNumberOfCourses);
 
         assertMetricEquals(totalNumberOfCourses, "artemis.statistics.public.courses");
         assertMetricEquals(numberOfActiveCourses, "artemis.statistics.public.active_courses");
+    }
+
+    @Test
+    void testPublicMetricsFilterTestCourses() {
+        var activeCourse = courseUtilService.createCourse();
+        activateCourse(activeCourse);
+        courseRepository.save(activeCourse);
+
+        var testCourse = courseUtilService.createCourse();
+        activateCourse(testCourse);
+        testCourse.setTestCourse(true);
+        courseRepository.save(testCourse);
+
+        metricsBean.updatePublicArtemisMetrics();
+
+        long totalNumberOfCourses = courseRepository.count();
+        long numberOfActiveCourses = countActiveCourses();
+
+        assertMetricEquals(totalNumberOfCourses, "artemis.statistics.public.courses");
+        assertMetricEquals(numberOfActiveCourses, "artemis.statistics.public.active_courses");
+    }
+
+    private long countActiveCourses() {
+        final List<Course> activeCourses = courseRepository.findAllActive(ZonedDateTime.now());
+        // the test courses are only filtered for the metrics since for instructors/tutors/editors using Artemis
+        // test courses count as active, but they never contain active students/exams relevant for the metrics
+        return activeCourses.stream().filter(course -> !course.isTestCourse()).count();
     }
 
     @Test
@@ -454,5 +479,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private void assertMetricEquals(double expectedValue, String metricName, String... tags) {
         var gauge = meterRegistry.get(metricName).tags(tags).gauge();
         assertThat(gauge.value()).isEqualTo(expectedValue);
+    }
+
+    private void activateCourse(final Course course) {
+        course.setStartDate(ZonedDateTime.now().minusDays(1));
+        course.setEndDate(ZonedDateTime.now().plusDays(1));
     }
 }

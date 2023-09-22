@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastEditor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleAllProgrammingExercises()" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises)" />
                 </th>
                 <th class="d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -29,7 +29,7 @@
         <tbody>
             <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId" id="exercise-card-{{ programmingExercise.id }}">
                 <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                 </td>
                 <td class="d-md-table-cell">
                     <a *ngIf="programmingExercise.isAtLeastEditor; else showId" [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">
@@ -251,20 +251,34 @@
             </tr>
         </tbody>
     </table>
-    <div *ngIf="selectedProgrammingExercises.length > 0">
+    <div *ngIf="selectedExercises.length > 0">
         <button type="submit" (click)="openEditSelectedModal()" class="btn btn-warning btn-sm me-1">
             <fa-icon [icon]="faWrench"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
         </button>
-        <jhi-programming-assessment-repo-export
-            *ngIf="course.isAtLeastInstructor"
-            [programmingExercises]="selectedProgrammingExercises"
-            class="me-1"
-        ></jhi-programming-assessment-repo-export>
-        <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
+        <jhi-programming-assessment-repo-export *ngIf="course.isAtLeastInstructor" [programmingExercises]="selectedExercises" class="me-1"></jhi-programming-assessment-repo-export>
+        <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedExercises"></jhi-exercise-scores-export-button>
         <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
             <fa-icon [icon]="faCheckDouble"></fa-icon>
             <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+        </button>
+        <button
+            *ngIf="course.isAtLeastInstructor"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            jhiDeleteButton
+            [entityTitle]="'Multiple Programming Exercises'"
+            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+            (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
+            class="me-1"
+            id="delete-exercises"
+            [dialogError]="dialogError$"
+            [requireConfirmationOnlyForAdditionalChecks]="true"
+            [additionalChecks]="{
+                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+            }"
+        >
+            <fa-icon [icon]="faTimes"></fa-icon>
         </button>
     </div>
 </div>
