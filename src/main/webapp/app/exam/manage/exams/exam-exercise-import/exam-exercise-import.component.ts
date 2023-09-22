@@ -1,10 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { getIcon } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
