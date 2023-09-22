@@ -26,7 +26,9 @@
                     "inheritHestiaSettings": "Inherit Hestia Settings",
                     "enabled-disabled": "Enabled/Disabled",
                     "preferredModel": "Preferred Model",
-                    "inheritModel": "Inherit Modell",
+                    "inheritModel": "Inherit Model",
+                    "rateLimit": "Rate Limit",
+                    "rateLimitTooltip": "The maximum number of answers a user can receive from the LLM in a given time period. The time period is currently 3h.",
                     "template": {
                         "title": "Template",
                         "inherit": "Inherit Template"

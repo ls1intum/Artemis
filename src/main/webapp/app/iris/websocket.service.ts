@@ -6,6 +6,7 @@ import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
     MessageStoreAction,
+    RateLimitUpdatedAction,
     StudentMessageSentAction,
     isSessionReceivedAction,
 } from 'app/iris/state-store.model';
@@ -20,6 +21,11 @@ export enum IrisWebsocketMessageType {
     ERROR = 'ERROR',
 }
 
+class RateLimitDTO {
+    currentRateLimit: number;
+    maxRateLimit: number;
+}
+
 /**
  * The IrisWebsocketDTO is the data transfer object for messages sent over the websocket.
  * It either contains an IrisMessage or an error message.
@@ -29,6 +35,7 @@ export class IrisWebsocketDTO {
     message?: IrisMessage;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
+    rateLimit?: RateLimitDTO;
 }
 
 /**
@@ -87,6 +94,10 @@ export class IrisWebsocketService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
+            if (websocketResponse.rateLimit) {
+                this.stateStore.dispatch(new RateLimitUpdatedAction(websocketResponse.rateLimit.currentRateLimit, websocketResponse.rateLimit.maxRateLimit));
+            }
+
             if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {
                 if (!websocketResponse.errorTranslationKey) {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));

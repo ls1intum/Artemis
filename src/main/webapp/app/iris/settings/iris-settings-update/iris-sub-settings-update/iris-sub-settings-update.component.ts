@@ -20,6 +20,9 @@ export class IrisSubSettingsUpdateComponent {
     @Input()
     templateOptional = false;
 
+    @Input()
+    rateLimitSettable = false;
+
     previousTemplate?: IrisTemplate;
 
     onInheritTemplateChanged() {

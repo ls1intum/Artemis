@@ -9,6 +9,7 @@ export enum ActionType {
     STUDENT_MESSAGE_SENT = 'student-message-sent',
     SESSION_CHANGED = 'session-changed',
     RATE_MESSAGE_SUCCESS = 'rate-message-success',
+    RATE_LIMIT_UPDATED = 'rate-limit-updated',
 }
 
 export interface MessageStoreAction {
@@ -89,6 +90,17 @@ export class RateMessageSuccessAction implements MessageStoreAction {
     }
 }
 
+export class RateLimitUpdatedAction implements MessageStoreAction {
+    readonly type: ActionType;
+
+    public constructor(
+        public readonly currentRateLimit: number,
+        public readonly maxRateLimit: number,
+    ) {
+        this.type = ActionType.RATE_LIMIT_UPDATED;
+    }
+}
+
 export function isNumNewMessagesResetAction(action: MessageStoreAction): action is NumNewMessagesResetAction {
     return action.type === ActionType.NUM_NEW_MESSAGES_RESET;
 }
@@ -117,6 +129,10 @@ export function isRateMessageSuccessAction(action: MessageStoreAction): action i
     return action.type === ActionType.RATE_MESSAGE_SUCCESS;
 }
 
+export function isRateLimitUpdatedAction(action: MessageStoreAction): action is RateLimitUpdatedAction {
+    return action.type === ActionType.RATE_LIMIT_UPDATED;
+}
+
 export class MessageStoreState {
     public constructor(
         public messages: ReadonlyArray<IrisMessage>,
@@ -125,5 +141,7 @@ export class MessageStoreState {
         public numNewMessages: number,
         public error: IrisErrorType | null,
         public serverResponseTimeout: ReturnType<typeof setTimeout> | null,
+        public currentRateLimit: number,
+        public maxRateLimit: number,
     ) {}
 }

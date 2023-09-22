@@ -6,4 +6,5 @@ export class IrisSubSettings implements BaseEntity {
     enabled = false;
     template?: IrisTemplate;
     preferredModel?: string;
+    rateLimit?: number;
 }
