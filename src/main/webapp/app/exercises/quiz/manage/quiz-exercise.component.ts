@@ -41,7 +41,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     faStopCircle = faStopCircle;
 
     constructor(
-        private quizExerciseService: QuizExerciseService,
+        public quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -68,6 +68,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
                     exercise.isEditable = isQuizEditable(exercise);
+                    this.selectedExercises = [];
                 });
                 this.setQuizExercisesStatus();
                 this.emitExerciseCount(this.quizExercises.length);
