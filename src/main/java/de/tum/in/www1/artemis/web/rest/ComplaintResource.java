@@ -236,7 +236,7 @@ public class ComplaintResource {
      * exercises
      *
      * @param exerciseId the id of the exercise we are interested in
-     * @param principal  that wants to get complaints
+     * @param principal  the user that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("exercises/{exerciseId}/complaints-for-test-run-dashboard")

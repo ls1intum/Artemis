@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -706,6 +707,28 @@ public class ExamResource {
             var userGroups = new ArrayList<>(user.getGroups());
             return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups));
         }
+    }
+
+    /**
+     * DELETE /courses/{courseId}/exams/{examId}/cleanup : Cleans up an exam by deleting all student submissions.
+     *
+     * @param courseId  id of the course which in includes the exam
+     * @param examId    id of the exam to clean up
+     * @param principal the user that wants to cleanup the exam
+     * @return ResponseEntity with status
+     */
+    @DeleteMapping("courses/{courseId}/exams/{examId}/cleanup")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, @PathVariable Long examId, Principal principal) {
+        log.info("REST request to cleanup the exam : {}", examId);
+        final Exam exam = examRepository.findByIdElseThrow(examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        // Forbid cleaning the course if no archive has been created
+        if (!exam.hasExamArchive()) {
+            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+        }
+        examService.cleanupExam(examId, principal);
+        return ResponseEntity.ok().build();
     }
 
     /**
