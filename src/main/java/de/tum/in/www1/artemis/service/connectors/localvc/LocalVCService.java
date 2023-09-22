@@ -208,7 +208,6 @@ public class LocalVCService extends AbstractVersionControlService {
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         try {
-            log.info("Guten Morgen: {}", localVCBasePath);
             // Instead of defining a project like would be done for GitLab or Bitbucket, just create a directory that will contain all repositories.
             Path projectPath = Path.of(localVCBasePath, projectKey);
             Files.createDirectories(projectPath);
@@ -239,6 +238,9 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     private void createRepository(String projectKey, String repositorySlug) {
+
+
+        log.info("Guten Morgen: {}", localVCBasePath);
 
         LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
 
