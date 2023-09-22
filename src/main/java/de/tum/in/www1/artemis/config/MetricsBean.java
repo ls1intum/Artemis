@@ -437,36 +437,32 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
-        var startDate = System.currentTimeMillis();
+
+        final long startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
-        ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = ZonedDateTime.now();
 
-        var courses = courseRepository.findAll();
+        final List<Course> courses = courseRepository.findAllActiveWithoutTestCourses(now);
         // We set the number of students once to prevent multiple queries for the same date
         courses.forEach(course -> course.setNumberOfStudents(userRepository.countByGroupsIsContaining(course.getStudentGroupName())));
-
         ensureCourseInformationIsSet(courses);
 
-        var activeCourses = courses.stream()
-                .filter(course -> (course.getStartDate() == null || course.getStartDate().isBefore(now)) && (course.getEndDate() == null || course.getEndDate().isAfter(now)))
-                .toList();
-
-        List<Exam> examsInActiveCourses = new ArrayList<>();
-        activeCourses.forEach(course -> examsInActiveCourses.addAll(examRepository.findByCourseId(course.getId())));
+        final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();
+        final List<Exam> examsInActiveCourses = examRepository.findExamsInCourses(courseIds);
 
         // Update multi gauges
-        updateStudentsCourseMultiGauge(activeCourses);
+        updateStudentsCourseMultiGauge(courses);
         updateStudentsExamMultiGauge(examsInActiveCourses, courses);
         updateActiveUserMultiGauge(now);
         updateActiveExerciseMultiGauge();
         updateExerciseMultiGauge();
 
         // Update normal Gauges
-        activeCoursesGauge.set(activeCourses.size());
-        coursesGauge.set(courses.size());
+        activeCoursesGauge.set(courses.size());
+        coursesGauge.set((int) courseRepository.count());
 
         activeExamsGauge.set(examRepository.countAllActiveExams(now));
         examsGauge.set((int) examRepository.count());
@@ -491,12 +487,16 @@ public class MetricsBean {
     }
 
     private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
-        studentsExamGauge.register(examsInActiveCourses.stream().map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(),
-                // The course semester.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
-                "semester", courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester")),
-                studentExamRepository.findByExamId(exam.getId()).size()))
+        studentsExamGauge.register(examsInActiveCourses.stream()
+                .map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(), "semester", getExamSemester(courses, exam)),
+                        studentExamRepository.findByExamId(exam.getId()).size()))
                 // A mutable list is required here because otherwise the values can not be updated correctly
                 .collect(Collectors.toCollection(ArrayList::new)), true);
+    }
+
+    private String getExamSemester(final List<Course> courses, final Exam exam) {
+        // The exam.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
+        return courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester");
     }
 
     private void updateActiveExerciseMultiGauge() {

@@ -8,15 +8,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import net.sourceforge.plantuml.FileFormat;
-import net.sourceforge.plantuml.FileFormatOption;
-import net.sourceforge.plantuml.SourceStringReader;
+import net.sourceforge.plantuml.*;
 
 @Service
 public class PlantUmlService {
@@ -50,8 +49,7 @@ public class PlantUmlService {
                 log.info("Storing UML theme to temporary directory");
                 final var themeResource = resourceLoaderService.getResource(Path.of("puml", fileName));
                 try (var inputStream = themeResource.getInputStream()) {
-                    Files.createDirectories(PATH_TMP_THEME);
-                    Files.write(path, inputStream.readAllBytes());
+                    FileUtils.copyToFile(inputStream, path.toFile());
                     log.info("UML theme stored successfully to {}", path);
                 }
                 catch (IOException e) {
