@@ -421,8 +421,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0.0);
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0.0);
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50.0);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100.0);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, bonus ? 150.0 : 100.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -2.5, 25.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 15.0, bonus ? 175.0 : 100.0);
 
         if (bonus) {
             addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200.0);

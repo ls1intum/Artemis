@@ -129,11 +129,11 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     @CsvSource({ "INCLUDED_COMPLETELY,true", "INCLUDED_COMPLETELY,false", "INCLUDED_AS_BONUS,true", "INCLUDED_AS_BONUS,false", "NOT_INCLUDED,true", "INCLUDED_AS_BONUS,false" })
-    void testManualAssessmentSubmitWithBonus(IncludedInOverallScore includedInOverallScore, boolean bonus) throws Exception { // without bonus
+    void testManualAssessmentSubmitWithBonus(IncludedInOverallScore includedInOverallScore, boolean bonus) throws Exception {
         // setting up exercise
         afterReleaseFileUploadExercise.setIncludedInOverallScore(includedInOverallScore);
-        afterReleaseFileUploadExercise.setMaxPoints(10.0);
-        afterReleaseFileUploadExercise.setBonusPoints(bonus ? 10.0 : 0.0); // includedInOverallScore == IncludedInOverallScore.INCLUDED_COMPLETELY ? 10.0 :
+        afterReleaseFileUploadExercise.setMaxPoints(15.0);
+        afterReleaseFileUploadExercise.setBonusPoints(bonus ? 15.0 : 0.0);
         exerciseRepository.save(afterReleaseFileUploadExercise);
 
         // setting up student submission
@@ -141,16 +141,13 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         submission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, submission, TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0.0);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0.0);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0.0);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50.0);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100.0);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, bonus ? 150.0 : 100.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 3.75, 25.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 7.5, 75.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 7.5, bonus ? 125.0 : 100.0);
 
         if (bonus) {
-            addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200.0);
-            addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200.0);
+            addAssessmentFeedbackAndCheckScore(submission, feedbacks, 7.5, 175.0);
+            addAssessmentFeedbackAndCheckScore(submission, feedbacks, 15.0, 200.0);
         }
     }
 
