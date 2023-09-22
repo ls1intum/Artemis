@@ -605,4 +605,26 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult.setSubmission(existingSubmission);
         return newResult;
     }
+
+    /**
+     * We need to create the submissions for the solution and template repository for the first time,
+     * so that the client displays the correct results
+     *
+     * @param programmingExercise exercise that needs submissions for its template and solution repository
+     */
+    public void createInitialSubmissions(ProgrammingExercise programmingExercise) {
+        ProgrammingSubmission solutionSubmission = (ProgrammingSubmission) submissionRepository.initializeSubmission(programmingExercise.getSolutionParticipation(),
+                programmingExercise, SubmissionType.INSTRUCTOR);
+        var latestHash = gitService.getLastCommitHash(programmingExercise.getVcsSolutionRepositoryUrl());
+        solutionSubmission.setCommitHash(latestHash.getName());
+        solutionSubmission.setSubmissionDate(ZonedDateTime.now());
+        submissionRepository.save(solutionSubmission);
+
+        ProgrammingSubmission templateSubmission = (ProgrammingSubmission) submissionRepository.initializeSubmission(programmingExercise.getTemplateParticipation(),
+                programmingExercise, SubmissionType.INSTRUCTOR);
+        latestHash = gitService.getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
+        templateSubmission.setCommitHash(latestHash.getName());
+        templateSubmission.setSubmissionDate(ZonedDateTime.now());
+        submissionRepository.save(templateSubmission);
+    }
 }

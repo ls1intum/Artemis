@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
 import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -1466,6 +1467,7 @@ public class ProgrammingExerciseTestService {
             Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
             doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
+            doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
             // Mock solution repo
             Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
@@ -2114,7 +2116,11 @@ public class ProgrammingExerciseTestService {
 
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
         exercise.setId(generatedExercise.getId());
+        exercise.setTemplateParticipation(generatedExercise.getTemplateParticipation());
+        exercise.setSolutionParticipation(generatedExercise.getSolutionParticipation());
         assertThat(exercise).isEqualTo(generatedExercise);
+        assertThat(submissionRepository.findAllByParticipationId(exercise.getTemplateParticipation().getId()).size()).isEqualTo(1);
+        assertThat(submissionRepository.findAllByParticipationId(exercise.getSolutionParticipation().getId()).size()).isEqualTo(1);
         assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();
     }
 
