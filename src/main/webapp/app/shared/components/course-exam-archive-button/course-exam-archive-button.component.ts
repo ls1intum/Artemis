@@ -211,29 +211,38 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    canCleanupCourse() {
-        if (this.archiveMode !== 'Course') {
-            return false;
+    canCleanup() {
+        let hasBeenArchived: boolean;
+        if (this.archiveMode === 'Exam' && this.exam) {
+            hasBeenArchived = !!this.exam.examArchivePath && this.exam.examArchivePath.length > 0;
+        } else {
+            hasBeenArchived = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
         }
-
-        // A course can only be cleaned up if the course has been archived.
-        const courseHasBeenArchived = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
-        return this.accountService.isAtLeastInstructorInCourse(this.course) && courseHasBeenArchived;
+        // A course / exam can only be cleaned up if the course / exam has been archived.
+        return this.accountService.isAtLeastInstructorInCourse(this.course) && hasBeenArchived;
     }
 
-    cleanupCourse() {
-        if (this.archiveMode !== 'Course') {
-            return;
+    cleanup() {
+        if (this.archiveMode === 'Exam' && this.exam) {
+            this.examService.cleanupExam(this.course.id!, this.exam.id!).subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => {
+                    this.dialogErrorSource.next(error.error.title);
+                },
+            });
+        } else {
+            this.courseService.cleanupCourse(this.course.id!).subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => {
+                    this.dialogErrorSource.next(error.error.title);
+                },
+            });
         }
-
-        this.courseService.cleanupCourse(this.course.id!).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
-                this.dialogErrorSource.next('');
-            },
-            error: (error) => {
-                this.dialogErrorSource.next(error.error.title);
-            },
-        });
     }
 }

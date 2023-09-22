@@ -24,7 +24,7 @@ services:
         hostname: bitbucket
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bitbucket:8.8.2
+        image: ghcr.io/ls1intum/artemis-bitbucket:8.13.1
         pull_policy: always
         volumes:
             - artemis-bitbucket-data:/var/atlassian/application-data/bitbucket
@@ -44,7 +44,7 @@ services:
         hostname: bamboo
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bamboo:9.2.1
+        image: ghcr.io/ls1intum/artemis-bamboo:9.3.3
         pull_policy: always
         volumes:
             - artemis-bamboo-data:/var/atlassian/application-data/bamboo
