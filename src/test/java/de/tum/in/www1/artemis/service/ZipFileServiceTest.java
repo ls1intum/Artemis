@@ -50,7 +50,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         var tempZipFile = Files.createTempFile("test", ".zip");
         zipFileService.createTemporaryZipFile(tempZipFile, List.of(), 5);
         assertThat(tempZipFile).exists();
-        verify(fileService).scheduleForDeletion(tempZipFile, 5L);
+        verify(fileService).schedulePathForDeletion(tempZipFile, 5L);
     }
 
 }
