@@ -105,7 +105,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private void addAttachmentToLecture() {
         this.attachmentDirectOfLecture = LectureFactory.generateAttachment(null);
-        this.attachmentDirectOfLecture.setLink("files/temp/example2.txt");
+        this.attachmentDirectOfLecture.setLink("/api/files/temp/example2.txt");
         this.attachmentDirectOfLecture.setLecture(this.lecture1);
         this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
         this.lecture1.addAttachments(this.attachmentDirectOfLecture);
