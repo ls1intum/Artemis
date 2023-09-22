@@ -2,8 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-update/working-time-control.component';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs';
+import { Exam } from 'app/entities/exam.model';
 
-const createTestExam = (duration: number) => ({ workingTime: duration, startDate: dayjs.unix(0), endDate: dayjs.unix(duration) });
+const createTestExam = (duration: number) => ({ workingTime: duration, startDate: dayjs.unix(0), endDate: dayjs.unix(duration) }) as Exam;
 
 describe('WorkingTimeControlComponent', () => {
     let component: WorkingTimeControlComponent;
@@ -64,7 +65,7 @@ describe('WorkingTimeControlComponent', () => {
     it('should not show relative working time if `relative` is false', async () => {
         // act
         component.relative = false;
-        component.exam = {};
+        component.exam = {} as Exam;
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -75,7 +76,7 @@ describe('WorkingTimeControlComponent', () => {
     it('should show relative working time if exam is present and `relative` is true', async () => {
         // act
         component.relative = true;
-        component.exam = {};
+        component.exam = {} as Exam;
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -86,7 +87,7 @@ describe('WorkingTimeControlComponent', () => {
     it('should disable inputs when `disabled` is true', async () => {
         // act
         component.disabled = true;
-        component.exam = {};
+        component.exam = {} as Exam;
         component.relative = true;
         fixture.detectChanges();
         await fixture.whenStable();
