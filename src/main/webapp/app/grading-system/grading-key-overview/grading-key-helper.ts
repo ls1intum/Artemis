@@ -6,7 +6,7 @@ export type GradingKeyUrlParams = {
     examId?: number;
     isExam: boolean;
     forBonus: boolean;
-    studentGrade?: string;
+    studentGradeOrBonusPointsOrGradeBonus?: string;
 };
 
 export function loadGradingKeyUrlParams(route: ActivatedRoute): GradingKeyUrlParams {
@@ -24,13 +24,13 @@ export function loadGradingKeyUrlParams(route: ActivatedRoute): GradingKeyUrlPar
     const forBonus = !!route.snapshot.data['forBonus'];
 
     /** If needed queryParam is available, it is available on {@link GradingKeyOverviewComponent} so no need to traverse the hierarchy like params above. */
-    const studentGrade = route.snapshot.queryParams['grade'];
+    const studentGradeOrBonusPointsOrGradeBonus = route.snapshot.queryParams['grade'];
 
     return {
         courseId,
         examId,
         forBonus,
         isExam,
-        studentGrade,
+        studentGradeOrBonusPointsOrGradeBonus: studentGradeOrBonusPointsOrGradeBonus,
     };
 }

@@ -33,18 +33,18 @@ export class GradingKeyOverviewComponent implements OnInit {
 
     title?: string;
     gradeSteps: GradeStep[] = [];
-    studentGrade?: string;
+    studentGradeOrBonusPointsOrGradeBonus?: string;
     isBonus = false;
     forBonus: boolean;
 
     ngOnInit(): void {
-        const { courseId, examId, forBonus, isExam, studentGrade } = loadGradingKeyUrlParams(this.route);
+        const { courseId, examId, forBonus, isExam, studentGradeOrBonusPointsOrGradeBonus } = loadGradingKeyUrlParams(this.route);
 
         this.courseId = courseId;
         this.examId = examId;
         this.forBonus = forBonus;
         this.isExam = isExam;
-        this.studentGrade = studentGrade;
+        this.studentGradeOrBonusPointsOrGradeBonus = studentGradeOrBonusPointsOrGradeBonus;
     }
 
     /**

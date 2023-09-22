@@ -74,7 +74,7 @@ describe('GradingKeyOverviewComponent', () => {
         expect(component).toBeTruthy();
         expect(component.examId).toBe(123);
         expect(component.courseId).toBe(345);
-        expect(component.studentGrade).toBe(studentGrade);
+        expect(component.studentGradeOrBonusPointsOrGradeBonus).toBe(studentGrade);
     });
 
     it('should print PDF', fakeAsync(() => {

@@ -22,7 +22,7 @@ export class GradingKeyTableComponent implements OnInit {
 
     readonly GradeEditMode = GradeEditMode;
 
-    @Input() studentGrade?: string;
+    @Input() studentGradeOrBonusPointsOrGradeBonus?: string;
     @Input() forBonus?: boolean;
 
     constructor(
@@ -47,12 +47,12 @@ export class GradingKeyTableComponent implements OnInit {
     hasPointsSet = false;
 
     ngOnInit(): void {
-        const { courseId, examId, forBonus, isExam, studentGrade } = loadGradingKeyUrlParams(this.route);
+        const { courseId, examId, forBonus, isExam, studentGradeOrBonusPointsOrGradeBonus } = loadGradingKeyUrlParams(this.route);
         this.courseId = courseId;
         this.examId = examId;
         this.forBonus = this.forBonus || forBonus;
         this.isExam = isExam;
-        this.studentGrade = this.studentGrade || studentGrade;
+        this.studentGradeOrBonusPointsOrGradeBonus = this.studentGradeOrBonusPointsOrGradeBonus || studentGradeOrBonusPointsOrGradeBonus;
 
         this.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
             if (gradeSteps) {
