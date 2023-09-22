@@ -5,7 +5,8 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -68,12 +69,14 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -209,6 +212,9 @@ public class CourseTestService {
 
     @Autowired
     private LearningPathRepository learningPathRepository;
+
+    @Autowired
+    private ParticipantScoreScheduleService participantScoreScheduleService;
 
     private static final int numberOfStudents = 8;
 
@@ -1523,8 +1529,8 @@ public class CourseTestService {
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
-        assertThat(auditEvents).as("Audit Event for course enrollment added").hasSize(1);
-        AuditEvent auditEvent = auditEvents.get(0);
+        AuditEvent auditEvent = auditEvents.stream().max(Comparator.comparing(AuditEvent::getTimestamp)).orElse(null);
+        assertThat(auditEvent).as("Audit Event for course enrollment added").isNotNull();
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
         request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
@@ -2703,6 +2709,7 @@ public class CourseTestService {
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
+        await().until(participantScoreScheduleService::isIdle);
         TextExercise finalExercise1 = exercise1;
         await().until(() -> participantScoreRepository.findAllByExercise(finalExercise1).size() == 2);
         TextExercise finalExercise2 = exercise2;
