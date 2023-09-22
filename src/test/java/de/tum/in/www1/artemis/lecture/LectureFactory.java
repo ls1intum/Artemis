@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -79,7 +78,7 @@ public class LectureFactory {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
         try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);

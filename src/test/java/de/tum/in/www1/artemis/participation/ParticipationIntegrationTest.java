@@ -373,6 +373,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
         programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, userLogin, repo, practiceMode);
+        repo.resetLocalRepo();
     }
 
     @Test
@@ -492,6 +493,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
+        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -547,6 +549,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(response.getIndividualDueDate()).isNotNull().isBefore(ZonedDateTime.now());
 
         verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(programmingExercise, participation);
+        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -562,6 +565,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        localRepo.resetLocalRepo();
     }
 
     @Test

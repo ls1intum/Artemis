@@ -322,7 +322,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     void exportInstructorRepositories() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
         // we export three repositories (template, solution, tests) and for each repository the temp directory and the directory with the zip file should be deleted
-        verify(fileService, times(6)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService, times(6)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -330,7 +330,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
         programmingExerciseTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
         // once for the temp directory and once for the directory with the zip file
-        verify(fileService, times(2)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService, times(2)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -350,8 +350,8 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(true);
         // we have a working directory and one directory for each repository
-        verify(fileService, times(4)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
-        verify(fileService).scheduleForDeletion(any(Path.class), eq(5L));
+        verify(fileService, times(4)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
+        verify(fileService).schedulePathForDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -389,7 +389,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     void importExerciseFromFile_exception_directoryDeleted() throws Exception {
         doThrow(new RuntimeException("Error")).when(zipFileService).extractZipFileRecursively(any(Path.class));
         programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -531,7 +531,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
         // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
         // the other one has two because the tests repository is also included.
-        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService, times(3)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test
@@ -540,7 +540,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
         programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
         // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
         // the other one has two because the tests repository is also included.
-        verify(fileService, times(3)).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService, times(3)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test

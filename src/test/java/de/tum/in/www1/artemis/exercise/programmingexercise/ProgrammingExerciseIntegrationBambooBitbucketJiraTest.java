@@ -821,8 +821,8 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
-        verify(fileService).scheduleForDeletion(any(Path.class), eq(1L));
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(5L));
+        verify(fileService).schedulePathForDeletion(any(Path.class), eq(1L));
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test

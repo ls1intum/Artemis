@@ -169,7 +169,7 @@ public class ProgrammingPlagiarismDetectionService {
     @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
-        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 60);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
@@ -245,9 +245,9 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the zip file
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
-        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
-        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report").toString();
-        final var reportFolderFile = new File(reportFolder);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
+        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report");
+        final var reportFolderFile = reportFolder.toFile();
 
         // Create directories.
         if (!reportFolderFile.mkdirs()) {
@@ -259,11 +259,11 @@ public class ProgrammingPlagiarismDetectionService {
         // Write JPlag report result to the file.
         log.info("Write JPlag report to file system and zip it");
         ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
-        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder);
+        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder.toString());
         // JPlag automatically zips the report
 
         var zipFile = new File(reportFolder + ".zip");
-        fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
+        fileService.schedulePathForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
         return zipFile;
     }
 

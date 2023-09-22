@@ -5,8 +5,8 @@ import static de.tum.in.www1.artemis.service.export.DataExportUtil.createDirecto
 import static de.tum.in.www1.artemis.service.export.DataExportUtil.retrieveCourseDirPath;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -149,7 +149,7 @@ public class DataExportExerciseCreationService {
 
         // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
         // --> we can delete it after use
-        var tempRepoWorkingDir = fileService.getTemporaryUniquePath(repoClonePath, 10);
+        var tempRepoWorkingDir = fileService.getTemporaryUniqueSubfolderPath(repoClonePath, 10);
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
                 exerciseDir, Collections.synchronizedList(new ArrayList<>()));
 
@@ -235,7 +235,7 @@ public class DataExportExerciseCreationService {
         }
 
         try (var modelAsPdf = apollonConversionService.get().convertModel(modelingSubmission.getModel())) {
-            Files.write(outputDir.resolve(fileName + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
+            FileUtils.writeByteArrayToFile(outputDir.resolve(fileName + PDF_FILE_EXTENSION).toFile(), modelAsPdf.readAllBytes());
         }
         catch (Exception e) {
             log.warn("Failed to include the model as pdf, going to include it as plain JSON file.");
@@ -254,11 +254,11 @@ public class DataExportExerciseCreationService {
      * @throws IOException if the file cannot be written
      */
     private void addModelJsonWithExplanationHowToView(String model, Path outputDir, String fileName) throws IOException {
-        Files.writeString(outputDir.resolve(fileName + ".json"), model);
+        FileUtils.writeStringToFile(outputDir.resolve(fileName + ".md").toFile(), model, StandardCharsets.UTF_8);
         String explanation = """
                 You can view your model if you go to [Apollon Modeling Editor](https://www.apollon.ase.in.tum.de) and click on File --> Import and select the .json file.
                 """;
-        Files.writeString(outputDir.resolve("view_model.md"), explanation);
+        FileUtils.writeStringToFile(outputDir.resolve("view_model.md").toFile(), explanation, StandardCharsets.UTF_8);
     }
 
     /**
@@ -271,7 +271,8 @@ public class DataExportExerciseCreationService {
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
         // text can be null which leads to an exception
         if (textSubmission.getText() != null) {
-            Files.writeString(outputDir.resolve("text_exercise_submission_" + textSubmission.getId() + "_text.txt"), textSubmission.getText());
+            FileUtils.writeStringToFile(outputDir.resolve("text_exercise_submission_" + textSubmission.getId() + "_text.txt").toFile(), textSubmission.getText(),
+                    StandardCharsets.UTF_8);
         }
         else {
             log.warn("Cannot include text submission content in data export because content is null for submission with id: {}", textSubmission.getId());
@@ -333,7 +334,8 @@ public class DataExportExerciseCreationService {
                         resultScoreAndFeedbacks.append("\n");
                     }
                 }
-                Files.writeString(outputDir.resolve("submission_" + submission.getId() + "_result_" + result.getId() + TXT_FILE_EXTENSION), resultScoreAndFeedbacks);
+                FileUtils.writeStringToFile(outputDir.resolve("submission_" + submission.getId() + "_result_" + result.getId() + TXT_FILE_EXTENSION).toFile(),
+                        resultScoreAndFeedbacks.toString(), StandardCharsets.UTF_8);
             }
             resultScoreAndFeedbacks = new StringBuilder();
         }
@@ -434,9 +436,9 @@ public class DataExportExerciseCreationService {
      * @param fileUploadSubmission the file upload submission for which the file should be copied
      * @throws IOException if the file cannot be copied
      */
-    private void copyFileUploadSubmissionFile(String submissionFilePath, Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
+    private void copyFileUploadSubmissionFile(Path submissionFilePath, Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
         try {
-            FileUtils.copyDirectory(new File(submissionFilePath), outputDir.toFile());
+            FileUtils.copyDirectory(submissionFilePath.toFile(), outputDir.toFile());
         }
         catch (IOException exception) {
             log.info("Cannot include submission for file upload exercise stored at {}", submissionFilePath);
@@ -453,8 +455,8 @@ public class DataExportExerciseCreationService {
      */
     private void addInfoThatFileForFileUploadSubmissionNoLongerExists(Path outputDir, FileUploadSubmission fileUploadSubmission) throws IOException {
         var exercise = fileUploadSubmission.getParticipation().getExercise();
-        Files.writeString(outputDir.resolve("submission_file_no_longer_exists.md"),
-                String.format("Your submitted file for the exercise %s no longer exists on the file system.", exercise));
+        FileUtils.writeStringToFile(outputDir.resolve("submission_file_no_longer_exists.md").toFile(),
+                String.format("Your submitted file for the exercise %s no longer exists on the file system.", exercise), StandardCharsets.UTF_8);
     }
 
     /**

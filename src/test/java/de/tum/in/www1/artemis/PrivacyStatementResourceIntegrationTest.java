@@ -5,10 +5,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -53,10 +54,9 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdatePrivacyStatement_cannotWriteFileInternalServerError() throws Exception {
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
-            mockedFiles.when(
-                    () -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE), eq(StandardOpenOption.TRUNCATE_EXISTING)))
+            mockedFileUtils.when(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)))
                     .thenThrow(new IOException());
             request.putWithResponseBody("/api/admin/privacy-statement", new PrivacyStatement("text", Language.GERMAN), PrivacyStatement.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -67,14 +67,12 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdatePrivacyStatement_directoryDoesntExist_createsDirectoryAndSavesFile() throws Exception {
         PrivacyStatement response;
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
 
             response = request.putWithResponseBody("/api/admin/privacy-statement", new PrivacyStatement("updatedText", Language.GERMAN), PrivacyStatement.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.createDirectories(any()));
-            mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
-                    eq(StandardOpenOption.TRUNCATE_EXISTING)));
-
+            mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)));
         }
         assertThat(response.getText()).isEqualTo("updatedText");
         assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
@@ -205,16 +203,14 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         PrivacyStatement response;
         PrivacyStatement requestBody = new PrivacyStatement(Language.GERMAN);
         requestBody.setText("Datenschutzerklärung");
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
 
             response = request.putWithResponseBody("/api/admin/privacy-statement", requestBody, PrivacyStatement.class, HttpStatus.OK);
-            mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
-                    eq(StandardOpenOption.TRUNCATE_EXISTING)));
+            mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)));
             // we explicitly check the method calls to ensure createDirectories is not called when the directory exists
             mockedFiles.verify(() -> Files.exists(any()));
             mockedFiles.verifyNoMoreInteractions();
-
         }
         assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
         assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
