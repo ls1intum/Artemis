@@ -2,11 +2,10 @@ package de.tum.in.www1.artemis.hestia.behavioral;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.util.HashSet;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -78,6 +77,11 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setTestwiseCoverageEnabled(true);
+    }
+
+    @AfterEach
+    void cleanup() throws IOException {
+        solutionRepo.resetLocalRepo();
     }
 
     private ProgrammingExerciseTestCase addTestCaseToExercise(String name) {
