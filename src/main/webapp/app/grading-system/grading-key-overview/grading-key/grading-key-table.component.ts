@@ -77,7 +77,7 @@ export class GradingKeyTableComponent implements OnInit {
             }
         });
 
-        this.gradingSystemService.hasPointsSet(this.gradeSteps);
+        this.hasPointsSet = this.gradingSystemService.hasPointsSet(this.gradeSteps);
     }
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
