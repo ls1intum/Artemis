@@ -109,6 +109,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     void tearDown() throws Exception {
         scheduleService.clearAllTasks();
         gitlabRequestMockProvider.reset();
+        studentRepository.resetLocalRepo();
     }
 
     private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, long timeoutInMs) {

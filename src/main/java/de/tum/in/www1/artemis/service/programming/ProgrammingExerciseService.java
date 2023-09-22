@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -566,7 +568,7 @@ public class ProgrammingExerciseService {
         // If not, then update the oracle file by rewriting it and push the changes.
         if (!Files.exists(structureOraclePath)) {
             try {
-                Files.write(structureOraclePath, structureOracleJSON.getBytes());
+                FileUtils.writeStringToFile(structureOraclePath.toFile(), structureOracleJSON, StandardCharsets.UTF_8);
                 gitService.stageAllChanges(testRepository);
                 gitService.commitAndPush(testRepository, "Generate the structure oracle file.", true, user);
                 return true;
@@ -586,7 +588,7 @@ public class ProgrammingExerciseService {
             }
             else {
                 try {
-                    Files.write(structureOraclePath, structureOracleJSON.getBytes());
+                    FileUtils.writeStringToFile(structureOraclePath.toFile(), structureOracleJSON, StandardCharsets.UTF_8);
                     gitService.stageAllChanges(testRepository);
                     gitService.commitAndPush(testRepository, "Update the structure oracle file.", true, user);
                     return true;

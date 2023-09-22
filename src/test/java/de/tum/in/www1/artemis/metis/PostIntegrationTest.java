@@ -7,10 +7,8 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import javax.mail.internet.MimeMessage;
+import javax.validation.*;
 import javax.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.AfterEach;
@@ -25,18 +23,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
-import de.tum.in.www1.artemis.domain.metis.UserRole;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
@@ -303,9 +295,10 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
+        postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(numberOfPostsBefore + 1);
         verify(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
+        verify(javaMailSender, timeout(4000).times(4)).send(any(MimeMessage.class));
     }
 
     @Test

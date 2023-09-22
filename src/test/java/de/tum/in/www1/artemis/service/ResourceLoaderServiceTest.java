@@ -132,9 +132,8 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
         // Mock the getResource() method.
         doReturn(true).when(resource).exists();
         doReturn(resourceUrl).when(resource).getURL();
-        doReturn(mock(InputStream.class)).when(resource).getInputStream();
+        doReturn(InputStream.nullInputStream()).when(resource).getInputStream();
 
-        // ResourcePatternResolver resourcePatternResolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
         doReturn(resource).when(resourceLoader).getResource(anyString());
 
         // Instantiate the class under test and invoke the method.

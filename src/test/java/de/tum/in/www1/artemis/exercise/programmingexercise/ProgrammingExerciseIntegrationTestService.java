@@ -1773,11 +1773,11 @@ class ProgrammingExerciseIntegrationTestService {
 
         Files.createDirectories(jPlagReposDir.resolve(projectKey));
         Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-1.java"));
-        Files.writeString(file1, exampleProgram);
+        FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
         Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
-        Files.writeString(file2, exampleProgram);
+        FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
 
-        doReturn(jPlagReposDir).when(fileService).getTemporaryUniquePath(any(Path.class), eq(60L));
+        doReturn(jPlagReposDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
         doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);

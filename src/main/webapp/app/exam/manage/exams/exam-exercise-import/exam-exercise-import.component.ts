@@ -5,6 +5,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { getIcon } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -43,6 +44,8 @@ export class ExamExerciseImportComponent implements OnInit {
     faProjectDiagram = faProjectDiagram;
     faKeyboard = faKeyboard;
     faFont = faFont;
+
+    getExerciseIcon = getIcon;
 
     constructor() {}
 
@@ -315,24 +318,5 @@ export class ExamExerciseImportComponent implements OnInit {
             }
         });
         return validConfiguration;
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    getExerciseIcon(exercise: Exercise): IconProp {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return this.faCheckDouble;
-            case ExerciseType.FILE_UPLOAD:
-                return this.faFileUpload;
-            case ExerciseType.MODELING:
-                return this.faProjectDiagram;
-            case ExerciseType.PROGRAMMING:
-                return this.faKeyboard;
-            default:
-                return this.faFont;
-        }
     }
 }

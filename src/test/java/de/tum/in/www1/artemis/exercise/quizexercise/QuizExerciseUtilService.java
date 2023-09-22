@@ -4,16 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -290,16 +290,16 @@ public class QuizExerciseUtilService {
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
-        var backgroundPathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "drag_and_drop_background.jpg");
-        var dragItemPathInFileSystem = Path.of(FilePathService.getDragItemFilePath(), "drag_item.jpg");
+        var backgroundPathInFileSystem = FilePathService.getDragAndDropBackgroundFilePath().resolve("drag_and_drop_background.jpg");
+        var dragItemPathInFileSystem = FilePathService.getDragItemFilePath().resolve("drag_item.jpg");
         if (Files.exists(backgroundPathInFileSystem)) {
             Files.delete(backgroundPathInFileSystem);
         }
         if (Files.exists(dragItemPathInFileSystem)) {
             Files.delete(dragItemPathInFileSystem);
         }
-        Files.copy(new ClassPathResource("test-data/data-export/drag_and_drop_background.jpg").getInputStream(), backgroundPathInFileSystem);
-        Files.copy(new ClassPathResource("test-data/data-export/drag_item.jpg").getInputStream(), dragItemPathInFileSystem);
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_and_drop_background.jpg"), backgroundPathInFileSystem.toFile());
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_item.jpg"), dragItemPathInFileSystem.toFile());
         dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);

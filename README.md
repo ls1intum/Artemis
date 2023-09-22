@@ -41,10 +41,11 @@
 15. **[Learning analytics](https://ls1intum.github.io/Artemis/user/learning-analytics/)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies.
 16. **[Adaptive Learning](https://ls1intum.github.io/Artemis/user/adaptive-learning/)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives.
 17. **[Tutorial Groups](https://ls1intum.github.io/Artemis/user/tutorialgroups/)**: Artemis support the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
-18. **[Scalable](https://ls1intum.github.io/Artemis/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-19. **[High user satisfaction](https://ls1intum.github.io/Artemis/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
-20. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
-21. **[Open-source](https://ls1intum.github.io/Artemis/dev/open-source/)**: Free to use with a large community and many active maintainers.
+18. **[Iris](https://artemis.cit.tum.de/about-iris)**: Artemis integrates Iris, a chatbot that supports students and instructors with common questions and tasks.
+19. **[Scalable](https://ls1intum.github.io/Artemis/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
+20. **[High user satisfaction](https://ls1intum.github.io/Artemis/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+21. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
+22. **[Open-source](https://ls1intum.github.io/Artemis/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 
