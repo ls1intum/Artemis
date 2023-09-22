@@ -105,8 +105,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         var postResponse = request.postWithMultipartFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file, ExamUser.class,
                 HttpStatus.OK);
+        var getResponse = request.get(postResponse.getSigningImagePath(), HttpStatus.OK, byte[].class);
 
-        // var getResponse = request.get("/api/files/exam-user/signatures/:examUserId/:filename", HttpStatus.OK, String.class);
+        assertThat(getResponse).isEqualTo(file.getBytes());
     }
 
     @Test
