@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +18,6 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -89,26 +90,29 @@ public class ExerciseDeletionService {
      * @param deleteRepositories if true, the repositories gets deleted
      */
     public void cleanup(Long exerciseId, boolean deleteRepositories) {
+        log.info("Cleanup all participations for exercise {} in parallel", exerciseId);
         Exercise exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
-        log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
+        if (!(exercise instanceof ProgrammingExercise)) {
+            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
+            return;
+        }
 
-        if (exercise instanceof ProgrammingExercise) {
-            for (StudentParticipation participation : exercise.getStudentParticipations()) {
+        // Cleanup in parallel to speedup the process
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
+            try {
                 participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
-            }
-
-            if (!deleteRepositories) {
-                return; // in this case, we are done
-            }
-
-            for (StudentParticipation participation : exercise.getStudentParticipations()) {
+                if (!deleteRepositories) {
+                    return; // in this case, we are done with the participation
+                }
                 participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
             }
-
-        }
-        else {
-            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
-        }
+            catch (Exception exception) {
+                log.error("Failed to clean the student participation {} for programming exercise {}", participation.getId(), exerciseId);
+            }
+        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+        // wait until all operations finish before returning
+        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
     }
 
     /**
