@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RatingService;
-import de.tum.in.www1.artemis.web.rest.dto.RatingDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -60,17 +59,17 @@ public class RatingResource {
      * GET /results/:resultId/rating : Return Rating referencing resultId or null
      *
      * @param resultId - Id of result that is referenced with the rating
-     * @return Rating or null
+     * @return saved star rating value or empty optional
      */
     @GetMapping("/results/{resultId}/rating")
     @EnforceAtLeastStudent
-    public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
+    public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
         // TODO allow for Instructors
         if (!authCheckService.isAdmin()) {
             checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
-        return ResponseEntity.ok(rating);
+        return ResponseEntity.ok(rating.map(Rating::getRating));
     }
 
     /**
@@ -78,17 +77,16 @@ public class RatingResource {
      *
      * @param resultId    - Id of result that is referenced with the rating that should be persisted
      * @param ratingValue - Value of the updated rating
-     * @return inserted Rating coverted into a DTO
+     * @return inserted star rating value
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
-    public ResponseEntity<RatingDTO> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
+    public ResponseEntity<Integer> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.saveRating(resultId, ratingValue);
-        RatingDTO ratingDTO = new RatingDTO(savedRating);
-        return ResponseEntity.created(new URI("/api/results/" + savedRating.getId() + "/rating")).body(ratingDTO);
+        return ResponseEntity.created(new URI("/api/results/" + savedRating.getId() + "/rating")).body(savedRating.getRating());
     }
 
     private void checkRating(int ratingValue) {
@@ -102,16 +100,15 @@ public class RatingResource {
      *
      * @param resultId    - Id of result that is referenced with the rating that should be updated
      * @param ratingValue - Value of the updated rating
-     * @return updated Rating converted into a DTO
+     * @return updated star rating value
      */
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
-    public ResponseEntity<RatingDTO> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
+    public ResponseEntity<Integer> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.updateRating(resultId, ratingValue);
-        RatingDTO ratingDTO = new RatingDTO(savedRating);
-        return ResponseEntity.ok(ratingDTO);
+        return ResponseEntity.ok(savedRating.getRating());
     }
 
     /**
@@ -126,7 +123,11 @@ public class RatingResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
-        responseRatings.forEach(rating -> rating.getResult().setSubmission(null));
+        responseRatings.forEach(rating -> {
+            rating.getResult().setSubmission(null);
+            rating.getResult().getParticipation().getExercise().setCourse(null);
+            rating.getResult().getParticipation().getExercise().setExerciseGroup(null);
+        });
         return ResponseEntity.ok(responseRatings);
     }
 
