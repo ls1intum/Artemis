@@ -160,6 +160,23 @@
             "editWorkingTime": {
                 "absolute": "Absolut",
                 "relative": "Änderung relativ zur normalen Bearbeitungszeit"
+            },
+            "events": {
+                "button": "Benachrichtigungen",
+                "type": {
+                    "examWideAnnouncement": "Klausurweite Ankündigung",
+                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert"
+                },
+                "from": "von",
+                "acknowledge": "Bestätigen",
+                "messages": {
+                    "workingTimeUpdate": {
+                        "titleEveryone": "Die Bearbeitungszeit der Klausur wurde geändert.",
+                        "titlePersonal": "Deine persönliche Bearbeitungszeit dieser Klausur wurde geändert.",
+                        "old": "Vorherige Bearbeitungszeit",
+                        "new": "Neue Bearbeitungszeit"
+                    }
+                }
             }
         },
         "examScores": {
@@ -274,8 +291,6 @@
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
-            "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
-            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}.",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
@@ -578,6 +593,7 @@
                     "testRun": "Abhalten eines Testdurchlaufs",
                     "exportResults": "Exportieren der Klausurergebnisse",
                     "editWorkingTime": "Bearbeiten der Prüfungsdauer",
+                    "createAnnouncement": "Erstellen einer Ankündigung",
                     "suspiciousBehavior": "Überprüfung von verdächtigem Verhalten"
                 },
                 "descriptionItem": {
@@ -594,6 +610,7 @@
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
                     "editWorkingTime": "Bis 5 Minuten vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
@@ -634,6 +651,15 @@
                 "duration": "Die neue Dauer der Prüfung beträgt <strong>{{ duration }}</strong>.",
                 "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+            },
+            "announcementCreate": {
+                "button": "Ankündigung erstellen",
+                "title": "Klausurweite Ankündigung erstellen",
+                "task": "Gib deine Ankündigung hier ein. Du kannst Markdown verwenden.",
+                "preview": "Vorschau",
+                "sendButton": "Ankündigung senden",
+                "sending": "Sende Ankündigung...",
+                "sent": "Ankündigung gesendet!"
             },
             "suspiciousBehavior": {
                 "title": "Verdächtiges Verhalten",

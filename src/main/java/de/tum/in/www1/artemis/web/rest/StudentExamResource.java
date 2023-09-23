@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
-import static de.tum.in.www1.artemis.config.Constants.STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -26,10 +25,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -41,7 +44,11 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
-import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -87,6 +94,10 @@ public class StudentExamResource {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
+    private final ExamLiveEventsService examLiveEventsService;
+
+    private final ExamLiveEventRepository examLiveEventRepository;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -100,7 +111,8 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository) {
+            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService,
+            ExamLiveEventRepository examLiveEventRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -118,6 +130,8 @@ public class StudentExamResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.websocketMessagingService = websocketMessagingService;
         this.submissionPolicyRepository = submissionPolicyRepository;
+        this.examLiveEventsService = examLiveEventsService;
+        this.examLiveEventRepository = examLiveEventRepository;
     }
 
     /**
@@ -201,6 +215,7 @@ public class StudentExamResource {
             throw new BadRequestException();
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        var originalWorkingTime = studentExam.getWorkingTime();
         studentExam.setWorkingTime(workingTime);
         var savedStudentExam = studentExamRepository.save(studentExam);
 
@@ -208,7 +223,7 @@ public class StudentExamResource {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             if (now.isAfter(exam.getVisibleDate())) {
                 instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
-                websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
+                examLiveEventsService.createWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());
             }
             if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
                 // potentially re-schedule clustering of modeling submissions (in case Compass is active)
@@ -470,6 +485,37 @@ public class StudentExamResource {
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
                 studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
         return ResponseEntity.ok(studentExamWithGradeDTO);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/live-events : Get all exam live events for the student exam of the requesting student.
+     * This will include all global events for the exam and all events for the specific student exam.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return the list of exam live events
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/live-events")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ExamLiveEventDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.currentTimeMillis();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
+
+        StudentExam studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + currentUser.getId() + " does not exist"));
+
+        if (studentExam.isTestRun()) {
+            throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");
+        }
+
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
+
+        List<ExamLiveEventDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
+                .toList();
+
+        log.info("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
+        return ResponseEntity.ok(examLiveEvents);
     }
 
     /**

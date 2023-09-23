@@ -1,0 +1,13 @@
+<div class="overlay-wrapper">
+    <div class="events-wrapper">
+        <ng-container *ngFor="let event of eventsToDisplay">
+            <jhi-exam-live-event
+                [event]="event"
+                *ngIf="event.eventType !== ExamLiveEventType.WORKING_TIME_UPDATE || isLatestEventOfItsType(event)"
+                [showAcknowledge]="unacknowledgedEvents.includes(event)"
+                (onAcknowledge)="acknowledgeEvent(event)"
+            />
+        </ng-container>
+    </div>
+    <button *ngIf="unacknowledgedEvents.length === 0" class="btn btn-primary w-100 mt-2" (click)="closeOverlay()">Close</button>
+</div>

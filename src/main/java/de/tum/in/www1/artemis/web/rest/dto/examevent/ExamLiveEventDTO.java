@@ -1,0 +1,53 @@
+package de.tum.in.www1.artemis.web.rest.dto.examevent;
+
+import java.time.Instant;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+/**
+ * A DTO for the {@link de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent} entity.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "eventType")
+// @formatter:off
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = ExamWideAnnouncementEventDTO.class, name = "examWideAnnouncement"),
+        @JsonSubTypes.Type(value = WorkingTimeUpdateEventDTO.class, name = "workingTimeUpdate"),
+})
+// @formatter:on
+public abstract class ExamLiveEventDTO {
+
+    private Long id;
+
+    private String createdBy;
+
+    private Instant createdDate;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Instant getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Instant createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public abstract String getEventType();
+}

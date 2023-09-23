@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -49,6 +48,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
@@ -115,13 +115,17 @@ public class ExamResource {
 
     private final ExamSessionService examSessionService;
 
+    private final ExamLiveEventsService examLiveEventsService;
+
+    private final ExamLiveEventRepository examLiveEventRepository;
+
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
             ChannelRepository channelRepository, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository) {
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -144,6 +148,8 @@ public class ExamResource {
         this.websocketMessagingService = websocketMessagingService;
         this.exerciseRepository = exerciseRepository;
         this.examSessionService = examSessionRepository;
+        this.examLiveEventsService = examLiveEventsService;
+        this.examLiveEventRepository = examLiveEventRepository;
     }
 
     /**
@@ -270,6 +276,8 @@ public class ExamResource {
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
+        User instructor = userRepository.getUser();
+
         // 2. Re-calculate the working times of all student exams
         var studentExams = studentExamRepository.findByExamId(examId);
         for (var studentExam : studentExams) {
@@ -289,7 +297,7 @@ public class ExamResource {
             var savedStudentExam = studentExamRepository.save(studentExam);
             // NOTE: if the exam is already visible, notify the student about the working time change
             if (now.isAfter(exam.getVisibleDate())) {
-                websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
+                examLiveEventsService.createWorkingTimeUpdateEvent(savedStudentExam, savedStudentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
             }
         }
 
@@ -304,6 +312,34 @@ public class ExamResource {
         }
 
         return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/announcements : Create a new announcement for the exam.
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam to which the announcement belongs
+     * @param message  the message of the announcement
+     * @return the ResponseEntity with status 200 (OK) and with the new announcement as body
+     */
+    @PostMapping("/courses/{courseId}/exams/{examId}/announcements")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ExamWideAnnouncementEventDTO> createExamAnnouncement(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody String message) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to create an announcement for exam with id {}", examId);
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        var exam = examRepository.findByIdElseThrow(examId);
+
+        if (!exam.isVisibleToStudents() || examDateService.isExamWithGracePeriodOver(exam)) {
+            throw new BadRequestAlertException("Exam is not visible or already over", "exam", "examNotVisibleOrOver");
+        }
+
+        var event = examLiveEventsService.createExamAnnouncementEvent(exam, message, userRepository.getUser());
+
+        log.debug("createExamAnnouncement took " + (System.currentTimeMillis() - start) + "ms for exam " + examId);
+        return ResponseEntity.ok(event.asDTO());
     }
 
     /**

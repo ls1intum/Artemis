@@ -1,0 +1,68 @@
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
+import { USER_DISPLAY_RELEVANT_EVENTS } from 'app/exam/participate/events/exam-live-events-button.component';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
+@Component({
+    selector: 'jhi-exam-live-events-overlay',
+    templateUrl: './exam-live-events-overlay.component.html',
+    styleUrls: ['./exam-live-events-overlay.component.scss'],
+})
+export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
+    private allLiveEventsSubscription?: Subscription;
+    private newLiveEventsSubscription?: Subscription;
+
+    unacknowledgedEvents: ExamLiveEvent[] = [];
+    eventsToDisplay?: ExamLiveEvent[];
+    events: ExamLiveEvent[] = [];
+
+    protected readonly ExamLiveEventType = ExamLiveEventType;
+
+    constructor(
+        private liveEventsService: ExamParticipationLiveEventsService,
+        private activeModal: NgbActiveModal,
+    ) {}
+
+    ngOnDestroy(): void {
+        this.allLiveEventsSubscription?.unsubscribe();
+        this.newLiveEventsSubscription?.unsubscribe();
+    }
+
+    ngOnInit(): void {
+        this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS).subscribe((events: ExamLiveEvent[]) => {
+            this.events = events;
+            if (!this.eventsToDisplay) {
+                this.updateEventsToDisplay();
+            }
+        });
+
+        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS).subscribe((event: ExamLiveEvent) => {
+            this.unacknowledgedEvents.unshift(event);
+            this.updateEventsToDisplay();
+        });
+    }
+
+    acknowledgeEvent(event: ExamLiveEvent) {
+        this.liveEventsService.acknowledgeEvent(event, true);
+        this.unacknowledgedEvents = this.unacknowledgedEvents.filter((e) => e.id !== event.id);
+        if (this.unacknowledgedEvents.length === 0) {
+            this.closeOverlay();
+            setTimeout(() => this.updateEventsToDisplay(), 250);
+        } else {
+            this.updateEventsToDisplay();
+        }
+    }
+
+    closeOverlay() {
+        this.activeModal.close('cancel');
+    }
+
+    updateEventsToDisplay() {
+        this.eventsToDisplay = this.unacknowledgedEvents.length > 0 ? this.unacknowledgedEvents : this.events;
+    }
+
+    isLatestEventOfItsType(event: ExamLiveEvent): boolean {
+        return this.events.filter((e) => e.eventType === event.eventType)[0]?.id === event.id;
+    }
+}

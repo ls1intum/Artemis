@@ -35,10 +35,9 @@ import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.comp
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
-
-const getWebSocketChannelForWorkingTimeChange = (studentExamId: number) => `/topic/studentExams/${studentExamId}/working-time-change-during-conduction`;
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -89,6 +88,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
+    liveEventsSubscription?: Subscription;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -133,6 +133,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private artemisDatePipe: ArtemisDatePipe,
+        private liveEventsService: ExamParticipationLiveEventsService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -188,6 +189,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 this.examParticipationService
                                     .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
                                     .subscribe((localExam: StudentExam) => {
+                                        // Keep the working time from the server
+                                        localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
+
                                         this.studentExam = localExam;
                                         this.loadingExam = false;
                                         this.examStarted(this.studentExam);
@@ -254,7 +258,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
-            // init studentExam
+            // Keep working time
+            studentExam.workingTime = this.studentExam.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
@@ -265,7 +270,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             if (!!this.testRunId || this.testExam) {
                 this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
                 this.initIndividualEndDates(this.testStartTime);
-                this.individualStudentEndDate = this.testStartTime.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
@@ -514,8 +518,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
         this.errorSubscription.unsubscribe();
         this.websocketSubscription?.unsubscribe();
+        this.liveEventsSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
-        this.websocketService.unsubscribe(getWebSocketChannelForWorkingTimeChange(this.studentExamId));
     }
 
     /**
@@ -526,20 +530,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
 
-        const channel = getWebSocketChannelForWorkingTimeChange(this.studentExam.id!);
-        this.websocketService.subscribe(channel);
-        this.websocketService.receive(channel).subscribe((workingTime: number) => {
-            const decreased = workingTime < (this.studentExam.workingTime ?? 0);
-            this.studentExam.workingTime = workingTime;
-            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime, 'seconds');
+        this.subscribeToWorkingTimeUpdates(startDate);
+    }
+
+    private subscribeToWorkingTimeUpdates(startDate: dayjs.Dayjs) {
+        if (this.liveEventsSubscription) {
+            this.liveEventsSubscription.unsubscribe();
+        }
+        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]).subscribe((event: WorkingTimeUpdateEvent) => {
+            // Create new object to make change detection work, otherwise the date will not update
+            this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
+            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
             this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
-            const dateFormat = startDate.isSame(this.individualStudentEndDate, 'day') ? 'time' : 'short';
-            const newIndividualStudentEndDateFormatted = this.artemisDatePipe.transform(this.individualStudentEndDate, dateFormat);
-            if (decreased) {
-                this.alertService.error('artemisApp.examParticipation.workingTimeDecreased', { date: newIndividualStudentEndDateFormatted });
-            } else {
-                this.alertService.success('artemisApp.examParticipation.workingTimeIncreased', { date: newIndividualStudentEndDateFormatted });
-            }
+            this.liveEventsService.acknowledgeEvent(event, false);
         });
     }
 
