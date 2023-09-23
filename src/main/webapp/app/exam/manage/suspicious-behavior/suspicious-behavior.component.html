@@ -5,64 +5,34 @@
 </p>
 
 <div>
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="different-student-exams-same-ip"
-        [(ngModel)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked"
-        (change)="updateAnalyzeButtonState()"
-    />
+    <input class="form-check-input" type="checkbox" id="different-student-exams-same-ip" [(ngModel)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked" />
     <label for="different-student-exams-same-ip">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress' | artemisTranslate }}</label>
 </div>
 
 <div>
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="different-student-exams-same-browser"
-        [(ngModel)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked"
-        (change)="updateAnalyzeButtonState()"
-    />
+    <input class="form-check-input" type="checkbox" id="different-student-exams-same-browser" [(ngModel)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked" />
     <label for="different-student-exams-same-browser">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate }}</label>
 </div>
 
 <div>
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="same-student-exam-different-ips"
-        [(ngModel)]="checkboxCriterionSameStudentExamDifferentIPAddressesChecked"
-        (change)="updateAnalyzeButtonState()"
-    />
+    <input class="form-check-input" type="checkbox" id="same-student-exam-different-ips" [(ngModel)]="checkboxCriterionSameStudentExamDifferentIPAddressesChecked" />
     <label for="same-student-exam-different-ips">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentIpAddress' | artemisTranslate }}</label>
 </div>
 
 <div>
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="same-student-exam-different-browser"
-        [(ngModel)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked"
-        (change)="updateAnalyzeButtonState()"
-    />
+    <input class="form-check-input" type="checkbox" id="same-student-exam-different-browser" [(ngModel)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked" />
     <label for="same-student-exam-different-browser">{{
         'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint' | artemisTranslate
     }}</label>
 </div>
 
 <div>
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="ip-outside-of-range"
-        [(ngModel)]="checkboxCriterionIPOutsideOfASpecificRangeChecked"
-        (change)="updateAnalyzeButtonState()"
-    />
+    <input class="form-check-input" type="checkbox" id="ip-outside-of-range" [(ngModel)]="checkboxCriterionIPOutsideOfASpecificRangeChecked" />
     <label for="ip-outside-of-range">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange' | artemisTranslate }}</label>
 </div>
 <div *ngIf="checkboxCriterionIPOutsideOfASpecificRangeChecked" class="form-group">
     <label for="ip-subnet">{{ 'artemisApp.examManagement.suspiciousBehavior.upperBoundIp' | artemisTranslate }}</label>
-    <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" (change)="updateAnalyzeButtonState()" />
+    <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" />
 </div>
 
 <div class="mt-3 mb-3">
@@ -70,7 +40,7 @@
     </jhi-button>
 </div>
 <div class="column">
-    <p *ngIf="suspiciousSessions?.length! >= 0">This exam has {{ suspiciousSessions?.length }} cases</p>
+    <p *ngIf="analyzed">This exam has {{ suspiciousSessions?.length }} cases</p>
     <button *ngIf="suspiciousSessions.length !== 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
         <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
     </button>

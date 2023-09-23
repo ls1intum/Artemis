@@ -9,6 +9,7 @@ import { cloneDeep } from 'lodash-es';
 })
 export class SuspiciousSessionsOverviewComponent implements OnInit {
     suspiciousSessions: SuspiciousExamSessions[] = [];
+    ipSubnet?: string;
 
     mapEnumToTranslationString(reason: SuspiciousSessionReason) {
         switch (reason) {
@@ -20,12 +21,13 @@ export class SuspiciousSessionsOverviewComponent implements OnInit {
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.differentIpAddress';
             case SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS:
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.differentBrowserFingerprint';
-            case SuspiciousSessionReason.IP_OUTSIDE_OF_RANGE:
+            case SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE:
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.ipOutsideOfRange';
         }
     }
 
     ngOnInit(): void {
         this.suspiciousSessions = cloneDeep(history.state.suspiciousSessions);
+        this.ipSubnet = history.state.ipSubnet;
     }
 }

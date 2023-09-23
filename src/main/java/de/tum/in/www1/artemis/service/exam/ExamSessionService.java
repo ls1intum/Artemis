@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.dto.*;
-import inet.ipaddr.AddressStringException;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 
@@ -132,12 +131,7 @@ public class ExamSessionService {
         if (analysisOptions.ipAddressOutsideOfRange()) {
             // seventh step find all sessions that have ip address outside of range
             examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
-            try {
-                findSessionsWithIPAddressOutsideOfRange(examSessions, ipSubnet.orElseThrow(), suspiciousExamSessions);
-            }
-            catch (AddressStringException | NullPointerException e) {
-                log.warn("Cannot analyze if IP address is outside of range because an exception was thrown while parsing any of the IP addresses: {}", e.getMessage());
-            }
+            findSessionsWithIPAddressOutsideOfRange(examSessions, ipSubnet.orElseThrow(), suspiciousExamSessions);
         }
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
     }
@@ -174,11 +168,10 @@ public class ExamSessionService {
         }
     }
 
-    private static void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipSubnet, Set<SuspiciousExamSessions> suspiciousExamSessions)
-            throws AddressStringException {
+    private void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipSubnet, Set<SuspiciousExamSessions> suspiciousExamSessions) {
         var examSessionsWithIPAddressOutsideOfRange = new HashSet<ExamSession>();
         for (var examSession : examSessions) {
-            if (!checkIPIsInGivenRange(examSession.getIpAddress(), ipSubnet)) {
+            if (!checkIPIsInGivenRange(ipSubnet, examSession.getIpAddress())) {
                 examSession.addSuspiciousReason(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
                 examSessionsWithIPAddressOutsideOfRange.add(examSession);
             }
@@ -188,13 +181,12 @@ public class ExamSessionService {
         }
     }
 
-    private static boolean checkIPIsInGivenRange(String ipSubnet, String ipAddress) {
+    private boolean checkIPIsInGivenRange(String ipSubnet, String ipAddress) {
         IpAddressMatcher ipAddressMatcher = new IpAddressMatcher(ipSubnet);
         // if they are not both IPv4 or IPv6, we cannot check if the address is in the subnet and return true
-        if (!checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV4)) {
-            return true;
-        }
-        if (!checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV6)) {
+        if (!checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV4)
+                && !checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV6)) {
+            log.info("IP address {} and subnet {} have different versions", ipAddress, ipSubnet);
             return true;
         }
         return ipAddressMatcher.matches(ipAddress);

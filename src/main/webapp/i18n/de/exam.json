@@ -654,7 +654,10 @@
                     "reasons": "Verdächtig aufgrund von:",
                     "case": "Fall",
                     "sameIpAddress": "Gleiche IP-Adresse",
-                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck"
+                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck",
+                    "differentIpAddress": "Verschiedene IP-Adressen",
+                    "differentBrowserFingerprint": "Verschiedene Browser-Fingerabdrücke",
+                    "ipOutsideOfRange": "IP-Adresse außerhalb des spezifizierten Bereichs {{ range }}"
                 }
             },
             "plagiarismCasesOverview": {

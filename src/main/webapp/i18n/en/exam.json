@@ -656,7 +656,10 @@
                     "reasons": "Suspicious because of:",
                     "case": "Case",
                     "sameIpAddress": "Same IP address",
-                    "sameBrowserFingerprint": "Same browser fingerprint"
+                    "sameBrowserFingerprint": "Same browser fingerprint",
+                    "differentIpAddress": "Different IP address",
+                    "differentBrowserFingerprint": "Different browser fingerprint",
+                    "ipOutsideOfRange": "IP address outside of range <span class='text-info'>{{ range }}</span>"
                 }
             },
             "plagiarismCasesOverview": {

@@ -26,6 +26,7 @@ export class SuspiciousBehaviorComponent implements OnInit {
     checkboxCriterionIPOutsideOfASpecificRangeChecked = false;
     ipSubnet?: string;
     analyzing = false;
+    analyzed = false;
 
     constructor(
         private suspiciousSessionsService: SuspiciousSessionsService,
@@ -73,12 +74,9 @@ export class SuspiciousBehaviorComponent implements OnInit {
 
     goToSuspiciousSessions() {
         this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'suspicious-behavior', 'suspicious-sessions'], {
-            state: { suspiciousSessions: this.suspiciousSessions },
+            state: { suspiciousSessions: this.suspiciousSessions, ipSubnet: this.ipSubnet },
         });
     }
-
-    updateAnalyzeButtonState() {}
-
     analyzeSessions() {
         const options = new SuspiciousSessionsAnalysisOptions(
             this.checkboxCriterionDifferentStudentExamsSameIPAddressChecked,
@@ -93,9 +91,11 @@ export class SuspiciousBehaviorComponent implements OnInit {
             next: (suspiciousSessions) => {
                 this.suspiciousSessions = suspiciousSessions;
                 this.analyzing = false;
+                this.analyzed = true;
             },
             error: () => {
                 this.analyzing = false;
+                this.analyzed = true;
             },
         });
     }

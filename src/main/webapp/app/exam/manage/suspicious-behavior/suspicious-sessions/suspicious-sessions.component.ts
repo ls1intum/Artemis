@@ -18,7 +18,7 @@ export class SuspiciousSessionsComponent implements OnInit {
         this.suspiciousIpAddress =
             this.isSuspiciousFor(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS) ||
             this.isSuspiciousFor(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES) ||
-            this.isSuspiciousFor(SuspiciousSessionReason.IP_OUTSIDE_OF_RANGE);
+            this.isSuspiciousFor(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
     }
 
     getStudentExamLink(studentExam: StudentExam) {
