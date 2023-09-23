@@ -12,14 +12,21 @@
     margin-right: 0 !important;
 }
 
-.learning-path-sidebar {
+.sticky-sidebar {
+    position: sticky;
+    top: 0;
+    text-align: center;
+}
+
+.path {
     display: flex;
     width: 100px;
-    height: 60vh;
-    overflow: scroll;
+    max-height: 65vh;
+    overflow-y: auto;
     scrollbar-width: thin;
 
     jhi-learning-path {
+        width: 100%;
         min-height: fit-content;
     }
 }

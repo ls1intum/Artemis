@@ -1,0 +1,10 @@
+<div class="path-wrapper">
+    <div *ngFor="let node of path; let last = last">
+        <div class="path-node">
+            <jhi-learning-path-graph-node id="{{ node.id }}" [class.current]="node.id === highlightedNode?.id" [courseId]="courseId" [node]="node"></jhi-learning-path-graph-node>
+        </div>
+        <div *ngIf="!last" class="path-edge">
+            <fa-icon [icon]="faChevronDown"></fa-icon>
+        </div>
+    </div>
+</div>

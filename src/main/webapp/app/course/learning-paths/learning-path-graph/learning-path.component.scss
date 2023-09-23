@@ -1,0 +1,21 @@
+.path-wrapper {
+}
+
+.path-node {
+    .node-icon-container {
+        display: block;
+        text-align: center;
+
+        fa-icon {
+            font-size: 3em;
+        }
+    }
+}
+
+.path-edge {
+    display: block;
+    text-align: center;
+    fa-icon {
+        font-size: 1em;
+    }
+}

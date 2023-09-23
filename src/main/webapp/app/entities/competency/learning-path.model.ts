@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
 import { Competency } from 'app/entities/competency.model';
 import { Edge, Node } from '@swimlane/ngx-graph';
+import { faCheckCircle, faCircle, faFlag, faFlagCheckered, faPlayCircle, faSignsPost } from '@fortawesome/free-solid-svg-icons';
 
 export class LearningPath implements BaseEntity {
     public id?: number;
@@ -32,6 +33,30 @@ export class NgxLearningPathNode implements Node {
     public linkedResourceParent?: number;
     public completed?: boolean;
     public label?: string;
+}
+
+export function getIcon(node: NgxLearningPathNode) {
+    // return generic icon if no type present
+    if (!node.type) {
+        return faCircle;
+    }
+
+    // return different icons for completed learning objects
+    if (node.type === NodeType.EXERCISE || node.type === NodeType.LECTURE_UNIT) {
+        if (node.completed) {
+            return faCheckCircle;
+        } else {
+            return faPlayCircle;
+        }
+    }
+
+    const icons = {
+        [NodeType.COMPETENCY_START]: faFlag,
+        [NodeType.COMPETENCY_END]: faFlagCheckered,
+        [NodeType.MATCH_START]: faSignsPost,
+        [NodeType.MATCH_END]: faCircle,
+    };
+    return icons[node.type];
 }
 
 export class NgxLearningPathEdge implements Edge {

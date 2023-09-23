@@ -16,9 +16,9 @@ class NodeDetailsData {
 
 @Component({
     selector: 'jhi-learning-path-graph-node',
-    templateUrl: './learning-path-graph-node.component.html',
+    templateUrl: './learning-path-node.component.html',
 })
-export class LearningPathGraphNodeComponent {
+export class LearningPathNodeComponent {
     @Input() courseId: number;
     @Input() node: NgxLearningPathNode;
 
