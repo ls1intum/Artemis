@@ -20,6 +20,7 @@ import org.json.JSONException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -750,6 +752,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateWorkingTimeLate() throws Exception {
         int newWorkingTime = 180 * 60;
+        int oldWorkingTime = studentExam1.getWorkingTime();
         exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
         exam1 = examRepository.save(exam1);
         StudentExam result = request.patchWithResponseBody(
@@ -757,7 +760,19 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
-        verify(websocketMessagingService, timeout(2000)).sendMessage("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+
+        // Create an ArgumentCaptor for the WebSocket message
+        ArgumentCaptor<WorkingTimeUpdateEventDTO> websocketEventCaptor = ArgumentCaptor.forClass(WorkingTimeUpdateEventDTO.class);
+
+        // Verify that the sendMessage method was called with the expected WebSocket event
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/studentExams/" + studentExam1.getId() + "/events"), websocketEventCaptor.capture());
+
+        // Get the captured WebSocket event
+        var capturedEvent = websocketEventCaptor.getValue();
+
+        // Assert the fields in the captured event
+        assertThat(capturedEvent.getNewWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(capturedEvent.getOldWorkingTime()).isEqualTo(oldWorkingTime);
     }
 
     @Test
