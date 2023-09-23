@@ -364,7 +364,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
                 .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
                 .then(() => this.scrollToBottom('smooth'))
-                .catch(this.handleIrisError);
+                .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
@@ -622,7 +622,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             .then(() => {
                 this.scrollToBottom('smooth');
             })
-            .catch(this.handleIrisError)
+            .catch((error) => this.handleIrisError(error))
             .finally(() => {
                 this.resendAnimationActive = false;
                 this.scrollToBottom('smooth');
@@ -630,15 +630,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     private handleIrisError(error: HttpErrorResponse) {
-        switch (error.status) {
-            case 403:
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_DISABLED));
-                break;
-            case 429:
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED));
-                break;
-            default:
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+        if (error.status === 403) {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_DISABLED));
+        } else if (error.status === 429) {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED));
+        } else {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
         }
     }
 
