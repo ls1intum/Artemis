@@ -675,6 +675,43 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExercise() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExercise(TEST_PREFIX);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportExerciseDetails();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportMCAnswersSubmission() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportMCAnswersSubmission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportSAAnswersSubmission() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportSAAnswersSubmission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportDragAndDropAnswersSubmission() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportDragAndDropSubmission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory() throws IOException {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
         doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise();

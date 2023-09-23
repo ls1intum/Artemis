@@ -979,6 +979,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
 
+    @Query("""
+            SELECT p FROM StudentParticipation p
+                  LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :exerciseId
+
+            """)
+    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(long exerciseId);
+
     /**
      * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.
      */

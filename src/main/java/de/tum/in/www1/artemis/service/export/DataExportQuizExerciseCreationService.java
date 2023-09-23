@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +16,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.QuizQuestionRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.DragAndDropQuizAnswerConversionService;
+import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 
 /**
  * A service to create the data export for quiz exercise participations.
@@ -33,11 +37,26 @@ public class DataExportQuizExerciseCreationService {
 
     private final DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public DataExportQuizExerciseCreationService(QuizSubmissionRepository quizSubmissionRepository, QuizQuestionRepository quizQuestionRepository,
-            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService) {
+            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, StudentParticipationRepository studentParticipationRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragAndDropQuizAnswerConversionService = dragAndDropQuizAnswerConversionService;
+        this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * Creates an export for an exercise participation of a quiz exercise.
+     *
+     * @param quizExercise   the quiz exercise for which the export should be created
+     * @param participation  the participation for which the export should be created
+     * @param outputDir      the directory in which the export should be stored
+     * @param includeResults true if the results should be included in the export (if the due date is over)
+     */
+    public void createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir, boolean includeResults) {
+        createQuizAnswersExport(quizExercise, participation, outputDir, includeResults, Optional.empty());
     }
 
     /**
@@ -48,14 +67,15 @@ public class DataExportQuizExerciseCreationService {
      * @param participation  the participation for which the export should be created
      * @param outputDir      the directory in which the export should be stored
      * @param includeResults true if the results should be included in the export (if the due date is over)
-     * @throws IOException if an error occurs while accessing the file system.
+     * @param exportErrors   an optional list of errors that occurred during the export
+     * @return true if the export was successful, false otherwise
      */
-    public void createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir, boolean includeResults) throws IOException {
+    private boolean createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir, boolean includeResults,
+            Optional<List<String>> exportErrors) {
         Set<QuizQuestion> quizQuestions = quizQuestionRepository.getQuizQuestionsByExerciseId(quizExercise.getId());
-        QuizSubmission quizSubmission;
-
+        boolean errorOccurred = false;
         for (var submission : participation.getSubmissions()) {
-            quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
+            QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
             List<String> multipleChoiceQuestionsSubmissions = new ArrayList<>();
             List<String> shortAnswerQuestionsSubmissions = new ArrayList<>();
             for (var question : quizQuestions) {
@@ -63,7 +83,14 @@ public class DataExportQuizExerciseCreationService {
                 // if this question wasn't answered, the submitted answer is null
                 if (submittedAnswer != null) {
                     if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
-                        dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
+                        try {
+                            dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
+                        }
+                        catch (Exception e) {
+                            errorOccurred = true;
+                            exportErrors.ifPresent(errors -> errors.add("Failed to export drag and drop answers for quiz submission " + submission.getId() + " of quiz exercise "
+                                    + quizExercise.getTitle() + " with id " + quizExercise.getId()));
+                        }
                     }
                     else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
                         shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
@@ -74,15 +101,57 @@ public class DataExportQuizExerciseCreationService {
                 }
             }
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
-                FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION).toFile(),
-                        StandardCharsets.UTF_8.name(), multipleChoiceQuestionsSubmissions);
+                try {
+                    FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION).toFile(),
+                            StandardCharsets.UTF_8.name(), multipleChoiceQuestionsSubmissions);
+                }
+                catch (IOException e) {
+                    errorOccurred = true;
+                    exportErrors.ifPresent(errors -> errors.add("Failed to export multiple choice answers for quiz submission " + submission.getId() + " of quiz exercise "
+                            + quizExercise.getTitle() + " with id " + quizExercise.getId()));
+                }
             }
             if (!shortAnswerQuestionsSubmissions.isEmpty()) {
-                FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers" + TXT_FILE_EXTENSION).toFile(),
-                        StandardCharsets.UTF_8.name(), shortAnswerQuestionsSubmissions);
+                try {
+                    FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers" + TXT_FILE_EXTENSION).toFile(),
+                            StandardCharsets.UTF_8.name(), shortAnswerQuestionsSubmissions);
+                }
+                catch (IOException e) {
+                    errorOccurred = true;
+                    exportErrors.ifPresent(errors -> errors.add("Failed to export short answer answers for quiz submission " + submission.getId() + " of quiz exercise "
+                            + quizExercise.getTitle() + " with id " + quizExercise.getId()));
+                }
             }
         }
+        return !errorOccurred;
+    }
 
+    public void exportStudentSubmissionsForArchival(QuizExercise quizExercise, Path exerciseDir, @NotNull List<String> exportErrors,
+            List<ArchivalReportEntry> archivalReportEntries) {
+        var participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissions(quizExercise.getId());
+        int participationsWithoutSubmission = 0;
+        int successfulExports = 0;
+        for (var participation : participations) {
+            if (participation.getSubmissions().isEmpty()) {
+                participationsWithoutSubmission++;
+                continue;
+            }
+            var outputDir = exerciseDir.resolve("participation-" + participation.getId() + "-" + participation.getParticipantIdentifier());
+            try {
+                DataExportUtil.createDirectoryIfNotExistent(outputDir);
+            }
+            catch (IOException e) {
+                exportErrors.add("Failed to create directory for quiz exercise participation " + participation.getId() + "of quiz exercise " + quizExercise.getTitle() + " with id "
+                        + quizExercise.getId() + ". Won't export this participation.");
+                continue;
+            }
+            boolean successful = createQuizAnswersExport(quizExercise, participation, outputDir, true, Optional.ofNullable(exportErrors));
+            if (successful) {
+                successfulExports++;
+            }
+        }
+        archivalReportEntries
+                .add(new ArchivalReportEntry(quizExercise, quizExercise.getSanitizedExerciseTitle(), participations.size(), successfulExports, participationsWithoutSubmission));
     }
 
     /**
