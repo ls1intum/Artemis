@@ -189,7 +189,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.submission s
             LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :#{#exerciseId}
-                AND (r.id = (SELECT max(id) FROM p.results)
+                AND (r.id = (SELECT max(r.id) FROM p.results WHERE r.rated = true)
                     OR r.assessmentType <> 'AUTOMATIC'
                     OR r IS NULL)
             """)
