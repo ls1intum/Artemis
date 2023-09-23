@@ -18,13 +18,8 @@ export class SuspiciousSessionsService {
             .set('ipOutsideOfRange', options.ipOutsideOfRange.toString());
 
         // If lowerBoundIP is provided, add it to the params
-        if (options.lowerBoundIP) {
-            params = params.set('lowerBoundIP', options.lowerBoundIP);
-        }
-
-        // If upperBoundIP is provided, add it to the params
-        if (options.upperBoundIP) {
-            params = params.set('upperBoundIP', options.upperBoundIP);
+        if (options.ipSubnet) {
+            params = params.set('ipSubnet', options.ipSubnet);
         }
         return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`, { params });
     }

@@ -24,8 +24,7 @@ export class SuspiciousBehaviorComponent implements OnInit {
     checkboxCriterionSameStudentExamDifferentIPAddressesChecked = false;
     checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked = false;
     checkboxCriterionIPOutsideOfASpecificRangeChecked = false;
-    lowerBoundIP?: string;
-    upperBoundIP?: string;
+    ipSubnet?: string;
     analyzing = false;
 
     constructor(
@@ -68,8 +67,7 @@ export class SuspiciousBehaviorComponent implements OnInit {
                 this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked ||
                 this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked ||
                 this.checkboxCriterionIPOutsideOfASpecificRangeChecked) &&
-            (!this.checkboxCriterionIPOutsideOfASpecificRangeChecked ||
-                (this.checkboxCriterionIPOutsideOfASpecificRangeChecked && !!this.lowerBoundIP?.trim().length && !!this.upperBoundIP?.trim().length))
+            (!this.checkboxCriterionIPOutsideOfASpecificRangeChecked || (this.checkboxCriterionIPOutsideOfASpecificRangeChecked && !!this.ipSubnet?.trim().length))
         );
     }
 
@@ -88,8 +86,7 @@ export class SuspiciousBehaviorComponent implements OnInit {
             this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked,
             this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked,
             this.checkboxCriterionIPOutsideOfASpecificRangeChecked,
-            this.lowerBoundIP,
-            this.upperBoundIP,
+            this.ipSubnet,
         );
         this.analyzing = true;
         this.suspiciousSessionsService.getSuspiciousSessions(this.courseId, this.examId, options).subscribe({

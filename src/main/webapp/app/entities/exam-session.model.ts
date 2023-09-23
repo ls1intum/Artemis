@@ -36,22 +36,19 @@ export class SuspiciousSessionsAnalysisOptions {
         sameStudentExamDifferentIPAddresses: boolean,
         sameStudentExamDifferentBrowserFingerprints: boolean,
         ipOutsideOfASpecificRange: boolean,
-        lowerBoundIP?: string,
-        upperBoundIP?: string,
+        ipSubnet?: string,
     ) {
         this.differentStudentExamsSameIPAddress = diffStudentExamsSameIPAddress;
         this.differentStudentExamsSameBrowserFingerprint = diffStudentExamsSameBrowserFingerprint;
         this.sameStudentExamDifferentIPAddresses = sameStudentExamDifferentIPAddresses;
         this.sameStudentExamDifferentBrowserFingerprints = sameStudentExamDifferentBrowserFingerprints;
         this.ipOutsideOfRange = ipOutsideOfASpecificRange;
-        this.lowerBoundIP = lowerBoundIP;
-        this.upperBoundIP = upperBoundIP;
+        this.ipSubnet = ipSubnet;
     }
     differentStudentExamsSameIPAddress = false;
     differentStudentExamsSameBrowserFingerprint = false;
     sameStudentExamDifferentIPAddresses = false;
     sameStudentExamDifferentBrowserFingerprints = false;
     ipOutsideOfRange = false;
-    lowerBoundIP?: string;
-    upperBoundIP?: string;
+    ipSubnet?: string;
 }

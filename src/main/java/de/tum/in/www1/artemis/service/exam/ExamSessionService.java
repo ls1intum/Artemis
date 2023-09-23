@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.*;
@@ -16,7 +17,6 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import inet.ipaddr.AddressStringException;
 import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressSeqRange;
 import inet.ipaddr.IPAddressString;
 
 /**
@@ -88,8 +88,7 @@ public class ExamSessionService {
      * @param examId id of the exam for which suspicious exam sessions shall be retrieved
      * @return set of suspicious exam sessions
      */
-    public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, @Nullable String lowerBound,
-            @Nullable String upperBound) {
+    public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, Optional<String> ipSubnet) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
@@ -134,7 +133,7 @@ public class ExamSessionService {
             // seventh step find all sessions that have ip address outside of range
             examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
             try {
-                findSessionsWithIPAddressOutsideOfRange(examSessions, lowerBound, upperBound, suspiciousExamSessions);
+                findSessionsWithIPAddressOutsideOfRange(examSessions, ipSubnet.orElseThrow(), suspiciousExamSessions);
             }
             catch (AddressStringException | NullPointerException e) {
                 log.warn("Cannot analyze if IP address is outside of range because an exception was thrown while parsing any of the IP addresses: {}", e.getMessage());
@@ -175,11 +174,11 @@ public class ExamSessionService {
         }
     }
 
-    private static void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipAddressLowerBound, String ipAddressUpperBound,
-            Set<SuspiciousExamSessions> suspiciousExamSessions) throws AddressStringException {
+    private static void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipSubnet, Set<SuspiciousExamSessions> suspiciousExamSessions)
+            throws AddressStringException {
         var examSessionsWithIPAddressOutsideOfRange = new HashSet<ExamSession>();
         for (var examSession : examSessions) {
-            if (!checkIPIsInGivenRange(examSession.getIpAddress(), ipAddressLowerBound, ipAddressUpperBound)) {
+            if (!checkIPIsInGivenRange(examSession.getIpAddress(), ipSubnet)) {
                 examSession.addSuspiciousReason(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
                 examSessionsWithIPAddressOutsideOfRange.add(examSession);
             }
@@ -189,13 +188,24 @@ public class ExamSessionService {
         }
     }
 
-    private static boolean checkIPIsInGivenRange(String inputIP, String rangeStartIP, String rangeEndIP) throws AddressStringException {
-        IPAddress startIPAddress = new IPAddressString(rangeStartIP).getAddress();
-        IPAddress endIPAddress = new IPAddressString(rangeEndIP).getAddress();
-        IPAddressSeqRange ipRange = startIPAddress.spanWithRange(endIPAddress);
-        IPAddress inputIPAddress = new IPAddressString(inputIP).toAddress();
+    private static boolean checkIPIsInGivenRange(String ipSubnet, String ipAddress) {
+        IpAddressMatcher ipAddressMatcher = new IpAddressMatcher(ipSubnet);
+        // if they are not both IPv4 or IPv6, we cannot check if the address is in the subnet and return true
+        if (!checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV4)) {
+            return true;
+        }
+        if (!checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV6)) {
+            return true;
+        }
+        return ipAddressMatcher.matches(ipAddress);
 
-        return ipRange.contains(inputIPAddress);
+    }
+
+    private static boolean checkIfSubnetAndAddressHaveTheSameVersion(String ipSubnet, String ipAddress, IPAddress.IPVersion version) {
+        var address = new IPAddressString(ipAddress).getAddress(version);
+        var ipSubnetAddress = new IPAddressString(ipSubnet).getAddress(version);
+        // one of them is not IPv4, we cannot check if the address is in the subnet and return true
+        return address != null && ipSubnetAddress != null;
     }
 
     /**
