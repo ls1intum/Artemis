@@ -210,7 +210,7 @@ public class FileUploadExerciseUtilService {
         fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
 
         // Create a dummy file
-        var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFileDir = Path.of("./").resolve(FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
         var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
         if (!Files.exists(uploadedFilePath)) {
             Files.createDirectories(uploadedFileDir);

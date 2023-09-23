@@ -473,6 +473,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
 
         deleteExamWithInstructor(testExam1);
+        repo.resetLocalRepo();
     }
 
     private void assertParticipationAndSubmissions(StudentExam response, User user) {

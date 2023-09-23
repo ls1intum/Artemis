@@ -1,15 +1,18 @@
-.main-container {
+.lp-participation-view-container {
     width: 100%;
     margin-left: 0;
 }
 
-.course-info-bar {
-    margin: 0 !important;
+.graph-wrapper {
+    max-width: min-content;
 }
 
-.tab-bar-exercise-details {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+.learning-object-wrapper {
+    border-style: none;
+}
+
+.exercise-wrapper {
+    padding: 1rem;
 }
 
 .sticky-sidebar {

@@ -7,7 +7,7 @@
             <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
         </div>
     </div>
-    <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
+    <div class="communication-wrapper col d-flex flex-grow-1 justify-end">
         <router-outlet
             *ngIf="lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))"
             class="ms-3"
