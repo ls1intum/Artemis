@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.LongFeedbackText;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 
-class FeedbackServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private FeedbackService feedbackService;

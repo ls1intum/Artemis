@@ -1694,12 +1694,13 @@ class ProgrammingExerciseIntegrationTestService {
         verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
                 participation2.getStudents());
 
-        userUtilService.changeUser(userPrefix + "instructor1");
-
-        var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Instructor get notified that lock operations were successful")
-                .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
-                .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
+        await().untilAsserted(() -> {
+            userUtilService.changeUser(userPrefix + "instructor1");
+            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+            assertThat(notifications).as("Instructor get notified that lock operations were successful")
+                    .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
+                    .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
+        });
     }
 
     void unlockAllRepositories_asStudent_forbidden() throws Exception {
