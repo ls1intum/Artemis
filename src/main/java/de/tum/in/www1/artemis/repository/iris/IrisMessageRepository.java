@@ -38,13 +38,13 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
     @Query("""
             SELECT COUNT(DISTINCT m)
             FROM IrisMessage m
-            LEFT JOIN m.session as s
+                LEFT JOIN m.session as s
             WHERE type(s) = de.tum.in.www1.artemis.domain.iris.session.IrisChatSession
-            AND s.user.id = :userId
-            AND m.sender = 'LLM'
-            AND m.sentAt BETWEEN :start AND :end
+                AND s.user.id = :userId
+                AND m.sender = 'LLM'
+                AND m.sentAt BETWEEN :start AND :end
             """)
-    int countLlmResponsesOfUserWithinTimeframe(Long userId, ZonedDateTime start, ZonedDateTime end);
+    int countLlmResponsesOfUserWithinTimeframe(@Param("userId") Long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     @NotNull
     default IrisMessage findByIdElseThrow(long messageId) throws EntityNotFoundException {
