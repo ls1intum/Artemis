@@ -157,8 +157,7 @@ public class LocalCIContainerService {
             throw new LocalCIException("Interrupted while waiting for command to complete", e);
         }
     }
-
-    public void prepareForDocker
+    
 
     /**
      * Retrieve an archive from a running Docker container.
@@ -239,7 +238,7 @@ public class LocalCIContainerService {
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
 
-        log.info("Hallo {}", localCIBuildScriptBasePath);
+        log.info("nein {}", localCIBuildScriptBasePath);
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
