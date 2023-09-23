@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
-import static org.mockito.Mockito.reset;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -34,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -44,7 +43,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -110,8 +109,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        gitlabRequestMockProvider.enableMockingOfRequests();
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
@@ -124,11 +123,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     @AfterEach
     void tearDown() throws Exception {
-        reset(gitService);
-        reset(bambooServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.tearDown();
-        bitbucketRequestMockProvider.reset();
-        bambooRequestMockProvider.reset();
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
@@ -153,6 +150,10 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
                 argumentBuilder.add(Arguments.of(language, null, false));
             }
             for (ProjectType projectType : projectTypes) {
+                // TODO: MAVEN_BLACKBOX Templates should be tested in the future!
+                if (projectType == ProjectType.MAVEN_BLACKBOX) {
+                    continue;
+                }
                 argumentBuilder.add(Arguments.of(language, projectType, false));
             }
 
@@ -161,6 +162,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
                     argumentBuilder.add(Arguments.of(language, null, true));
                 }
                 for (ProjectType projectType : projectTypes) {
+                    if (projectType == ProjectType.MAVEN_BLACKBOX) {
+                        continue;
+                    }
                     argumentBuilder.add(Arguments.of(language, projectType, true));
                 }
             }

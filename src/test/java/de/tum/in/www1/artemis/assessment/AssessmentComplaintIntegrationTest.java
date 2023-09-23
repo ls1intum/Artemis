@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 
-class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "assessmentcomplaintintegration";
 
@@ -364,8 +364,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
         request.putWithResponseBody("/api/complaint-responses/complaint/" + examExerciseComplaint.getId() + "/resolve", complaintResponse, ComplaintResponse.class, HttpStatus.OK);
-        TextSubmission finalTextSubmission = textSubmission;
-        await().untilAsserted(() -> assertThat(complaintRepo.findByResultId(finalTextSubmission.getId())).isPresent());
+
+        assertThat(textSubmission.getLatestResult()).isNotNull();
+        assertThat(complaintRepo.findByResultId(textSubmission.getLatestResult().getId())).isPresent();
+
+        Complaint finalExamExerciseComplaint = examExerciseComplaint;
+        await().untilAsserted(() -> assertThat(complaintResponseRepo.findByComplaint_Id(finalExamExerciseComplaint.getId())).isPresent());
     }
 
     @Test
