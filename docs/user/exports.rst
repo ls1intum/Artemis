@@ -60,7 +60,7 @@ To export the repositories click the |export| button and then the |download_repo
 
 Export exercise results
 -----------------------------------
-Export the results of a specific exercise. This is supported for all exercise types.
+Export the results of students for a specific exercise as a CSV file. This is supported for all exercise types.
 To export the results click the |export| button and then the |export_results| button on the |download_scores| page.
 
 Export quiz exercise
@@ -86,5 +86,5 @@ For exams you can export the scores by clicking the |download_scores| button on 
 Export user data
 ----------------
 Export all data Artemis stores about a specific user. This includes information such as name or email, exercise submissions, results, feedbacks the user received, messages they've sent.
-You can request a data export by clicking |privacy_statement| and |data_export|. Once the export has been created you will receive an email with a download link.
+You can request a data export by clicking |privacy_statement| in the page footer and |data_export|. Once the export has been created you will receive an email with a download link.
 
