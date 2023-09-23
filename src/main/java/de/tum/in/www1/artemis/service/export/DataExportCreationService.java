@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -113,7 +114,7 @@ public class DataExportCreationService {
     private void addReadmeFile(Path workingDirectory) throws IOException, URISyntaxException {
         var readmeInDataExportPath = workingDirectory.resolve("README.md");
         var readmeTemplatePath = Path.of("templates", "dataexport", "README.md");
-        Files.copy(resourceLoaderService.getResourceFilePath(readmeTemplatePath), readmeInDataExportPath);
+        FileUtils.copyFile(resourceLoaderService.getResourceFilePath(readmeTemplatePath).toFile(), readmeInDataExportPath.toFile());
     }
 
     /**
@@ -195,7 +196,7 @@ public class DataExportCreationService {
         }
         dataExport = dataExportRepository.save(dataExport);
         Path workingDirectory = Files.createTempDirectory(dataExportsPath, "data-export-working-dir");
-        fileService.scheduleForDirectoryDeletion(workingDirectory, 30);
+        fileService.scheduleDirectoryPathForRecursiveDeletion(workingDirectory, 30);
         dataExport.setDataExportState(DataExportState.IN_CREATION);
         dataExportRepository.save(dataExport);
         return workingDirectory;
