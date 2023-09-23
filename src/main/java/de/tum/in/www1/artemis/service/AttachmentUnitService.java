@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
@@ -25,6 +26,8 @@ public class AttachmentUnitService {
 
     private final FileService fileService;
 
+    private final FilePathService filePathService;
+
     private final CacheManager cacheManager;
 
     private final SlideSplitterService slideSplitterService;
@@ -32,10 +35,11 @@ public class AttachmentUnitService {
     private final SlideRepository slideRepository;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager) {
+            AttachmentRepository attachmentRepository, FileService fileService, FilePathService filePathService, CacheManager cacheManager) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
+        this.filePathService = filePathService;
         this.cacheManager = cacheManager;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
@@ -140,7 +144,7 @@ public class AttachmentUnitService {
      */
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename) {
         if (file != null && !file.isEmpty()) {
-            String filePath = fileService.handleSaveFile(file, keepFilename, false);
+            String filePath = fileService.handleSaveFile(file, keepFilename, false).toString();
             attachment.setLink(filePath);
             attachment.setUploadDate(ZonedDateTime.now());
         }
@@ -154,7 +158,7 @@ public class AttachmentUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
         if (file != null && !file.isEmpty()) {
-            this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink()));
+            this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink())).toString());
         }
     }
 

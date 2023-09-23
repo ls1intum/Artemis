@@ -13,13 +13,14 @@ export class LearningPathGraphSidebarComponent implements AfterViewInit {
     @Input() courseId: number;
     @Input() learningPathId: number;
     collapsed: boolean;
+
     // Icons
     faChevronLeft = faChevronLeft;
     faChevronRight = faChevronRight;
     faGripLinesVertical = faGripLinesVertical;
     faNetworkWired = faNetworkWired;
 
-    @ViewChild(`learningPathGraphComponent`, { static: false })
+    @ViewChild('learningPathGraphComponent', { static: false })
     learningPathGraphComponent: LearningPathGraphComponent;
 
     @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();

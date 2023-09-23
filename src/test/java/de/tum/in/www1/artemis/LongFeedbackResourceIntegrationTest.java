@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "longfeedbackintegration";
 
@@ -49,7 +49,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambo
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
         final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, LongFeedbackText.class);
-        assertThat(longFeedbackText.getId()).isEqualTo(feedback.getId());
+        assertThat(longFeedbackText.getFeedback().getId()).isEqualTo(feedback.getId());
     }
 
     @Test
@@ -58,7 +58,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambo
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
         final LongFeedbackText longFeedbackText = request.get(getUrl(resultStudent1.getId(), feedback.getId()), HttpStatus.OK, LongFeedbackText.class);
-        assertThat(longFeedbackText.getId()).isEqualTo(feedback.getId());
+        assertThat(longFeedbackText.getFeedback().getId()).isEqualTo(feedback.getId());
     }
 
     @Test

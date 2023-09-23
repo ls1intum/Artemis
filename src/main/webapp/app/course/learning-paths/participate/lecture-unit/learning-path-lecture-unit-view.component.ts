@@ -15,6 +15,7 @@ export interface LectureUnitCompletionEvent {
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit-view',
+    styleUrls: ['./learning-path-lecture-unit-view.component.scss'],
     templateUrl: './learning-path-lecture-unit-view.component.html',
 })
 export class LearningPathLectureUnitViewComponent {
@@ -23,6 +24,9 @@ export class LearningPathLectureUnitViewComponent {
     readonly LectureUnitType = LectureUnitType;
 
     discussionComponent?: DiscussionSectionComponent;
+
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
 
     constructor(
         private lectureUnitService: LectureUnitService,
@@ -39,9 +43,6 @@ export class LearningPathLectureUnitViewComponent {
             });
         }
     }
-
-    protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly isCommunicationEnabled = isCommunicationEnabled;
 
     /**
      * This function gets called if the router outlet gets activated. This is

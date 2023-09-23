@@ -1,5 +1,5 @@
-<div class="row mt-2 main-container">
-    <div class="col d-flex flex-grow-1 justify-end px-0 me-1" style="max-width: min-content">
+<div class="row mt-2 lp-participation-view-container">
+    <div class="col d-flex flex-grow-1 justify-end px-0 me-1 graph-wrapper">
         <jhi-learning-path-graph-sidebar
             *ngIf="learningPathId"
             [courseId]="courseId"
@@ -7,8 +7,8 @@
             (nodeClicked)="onNodeClicked($event)"
         ></jhi-learning-path-graph-sidebar>
     </div>
-    <div class="col pe-0 flex-grow-1" style="min-width: 200px">
-        <div class="card" style="border-style: none">
+    <div class="col pe-0 flex-grow-1">
+        <div class="card learning-object-wrapper" [class.exercise-wrapper]="exercise">
             <div *ngIf="!lectureUnit && !exercise">
                 <span jhiTranslate="artemisApp.learningPath.participate.noTaskSelected">No task selected</span>
             </div>

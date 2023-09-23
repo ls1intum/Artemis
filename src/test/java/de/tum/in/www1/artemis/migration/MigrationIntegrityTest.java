@@ -7,12 +7,12 @@ import java.util.SortedMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.config.migration.MigrationRegistry;
 import de.tum.in.www1.artemis.config.migration.MigrationService;
 
-class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class MigrationIntegrityTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private MigrationRegistry migrationRegistry;
