@@ -89,7 +89,7 @@ public class ProgrammingExerciseImportFromFileService {
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
-            fileService.scheduleForDirectoryDeletion(importExerciseDir, 5);
+            fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
         return importedProgrammingExercise;
     }
@@ -106,11 +106,10 @@ public class ProgrammingExerciseImportFromFileService {
             return;
         }
         try (var embeddedFiles = Files.list(embeddedFilesDir)) {
-            for (var file : embeddedFiles.toList()) {
-                var targetPath = Path.of(FilePathService.getMarkdownFilePath(), file.getFileName().toString());
-                // we need this check because the detection if a file exists of Files.copy seems not to work properly
+            for (Path file : embeddedFiles.toList()) {
+                Path targetPath = FilePathService.getMarkdownFilePath().resolve(file.getFileName());
                 if (!Files.exists(targetPath)) {
-                    Files.copy(file, targetPath);
+                    FileUtils.copyFile(file.toFile(), targetPath.toFile());
                 }
             }
         }
@@ -127,6 +126,7 @@ public class ProgrammingExerciseImportFromFileService {
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
+        // TODO: use the current instructor user for the commit
         gitService.commitAndPush(templateRepo, "Import template from file", true, null);
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);

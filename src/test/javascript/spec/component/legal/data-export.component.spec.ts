@@ -11,7 +11,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
 import { of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { DataExport } from 'app/entities/data-export.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
@@ -92,7 +91,7 @@ describe('DataExportComponent', () => {
     });
 
     it('should call data export service when data export is downloaded', () => {
-        const dataExportServiceSpy = jest.spyOn(dataExportService, 'downloadDataExport').mockReturnValue(of<HttpResponse<Blob>>({} as unknown as HttpResponse<Blob>));
+        const dataExportServiceSpy = jest.spyOn(dataExportService, 'downloadDataExport').mockImplementation();
         component.canDownload = true;
         component.dataExportId = 1;
         component.downloadDataExport();

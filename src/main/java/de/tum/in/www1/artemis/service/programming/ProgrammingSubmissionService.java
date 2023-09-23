@@ -150,12 +150,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
             participationService.resumeProgrammingExercise(programmingExerciseStudentParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
-            try {
-                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
-            }
-            catch (ContinuousIntegrationException ex) {
-                // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
-            }
+        }
+
+        // TODO: there might be cases in which Artemis should NOT trigger the build
+        try {
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
+        }
+        catch (ContinuousIntegrationException ex) {
+            // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
         }
 
         // There can't be two submissions for the same participation and commitHash!
@@ -272,7 +274,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
         var dueDate = ExerciseDateService.getDueDate(participation);
-        if (dueDate.isEmpty() || participation.isTestRun()) {
+        // Without a due date or in the practice mode, the student can always submit
+        if (dueDate.isEmpty() || participation.isPracticeMode()) {
             return true;
         }
         return dueDate.get().plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());

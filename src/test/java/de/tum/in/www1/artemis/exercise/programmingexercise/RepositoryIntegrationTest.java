@@ -136,6 +136,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
 
+    private LocalRepository templateRepository;
+
     private final List<BuildLogEntry> logs = new ArrayList<>();
 
     private final BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
@@ -184,7 +186,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo
-        LocalRepository templateRepository = new LocalRepository(defaultBranch);
+        templateRepository = new LocalRepository(defaultBranch);
         templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
 
         // add file to the template repo folder
@@ -240,6 +242,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void tearDown() throws IOException {
         reset(gitService);
         studentRepository.resetLocalRepo();
+        templateRepository.resetLocalRepo();
     }
 
     @Test
@@ -631,6 +634,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
 
         request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
+        instructorAssignmentRepository.resetLocalRepo();
     }
 
     @Test
@@ -888,7 +892,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise.setAssessmentType(AssessmentType.MANUAL);
         programmingExerciseRepository.save(programmingExercise);
 
-        participation.setTestRun(true);
+        participation.setPracticeMode(true);
         studentParticipationRepository.save(participation);
 
         testCommitChanges();

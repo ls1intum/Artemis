@@ -208,4 +208,21 @@ public class AuxiliaryRepositoryService {
         // limited to 500 characters.
         validateAuxiliaryRepositoryDescriptionLength(auxiliaryRepository);
     }
+
+    /**
+     * Checks if the given repository is an auxiliary repository of the given exercise.
+     *
+     * @param repositoryName the name of the repository to check.
+     * @param exercise       the exercise to check.
+     * @return true if the repository is an auxiliary repository of the exercise, false otherwise.
+     */
+    public boolean isAuxiliaryRepositoryOfExercise(String repositoryName, ProgrammingExercise exercise) {
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
+        for (AuxiliaryRepository repo : auxiliaryRepositories) {
+            if (repo.getName().equals(repositoryName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

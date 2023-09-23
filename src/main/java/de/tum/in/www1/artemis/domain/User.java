@@ -181,6 +181,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
+    @Nullable
+    @Column(name = "iris_accepted")
+    private ZonedDateTime irisAccepted = null;
+
     public String getLogin() {
         return login;
     }
@@ -460,5 +464,10 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
+    }
+
+    @Nullable
+    public ZonedDateTime getIrisAcceptedTimestamp() {
+        return irisAccepted;
     }
 }

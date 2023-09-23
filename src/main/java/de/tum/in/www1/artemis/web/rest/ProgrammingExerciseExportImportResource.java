@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
@@ -267,7 +268,7 @@ public class ProgrammingExerciseExportImportResource {
         long start = System.nanoTime();
         Path path;
         try {
-            path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
+            path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
         }
         catch (Exception e) {
             log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);

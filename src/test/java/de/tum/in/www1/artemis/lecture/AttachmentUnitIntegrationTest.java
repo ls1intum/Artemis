@@ -14,6 +14,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -37,7 +38,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
 
@@ -75,7 +76,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("files/temp/example.txt");
+        this.attachment.setLink("/api/files/temp/example.txt");
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
@@ -125,6 +126,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
      */
     private MockMultipartFile createAttachmentUnitPdf() throws IOException {
 
+        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
 
             for (int i = 1; i <= SLIDE_COUNT; i++) {
@@ -133,7 +136,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
                 if (i == 2) {
                     contentStream.beginText();
-                    contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                    contentStream.setFont(font, 12);
                     contentStream.newLineAtOffset(25, -15);
                     contentStream.showText("itp20..");
                     contentStream.newLineAtOffset(25, 500);
@@ -144,7 +147,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                     continue;
                 }
                 contentStream.beginText();
-                contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                contentStream.setFont(font, 12);
                 contentStream.newLineAtOffset(25, 500);
                 String text = "This is the sample document";
                 contentStream.showText(text);

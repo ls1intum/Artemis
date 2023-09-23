@@ -319,11 +319,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // the empty commit is not necessary for this test
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getParticipantIdentifier(), Set.of(instructor), true);
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
 
         // create multiple test runs for the same user (i.e. instructor1), login again because "createTestRun" invokes a server method with changes the authorization
         createTestRun(exam2);
@@ -476,6 +473,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
 
         deleteExamWithInstructor(testExam1);
+        repo.resetLocalRepo();
     }
 
     private void assertParticipationAndSubmissions(StudentExam response, User user) {
