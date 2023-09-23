@@ -12,9 +12,9 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ZipFileService zipFileService;
