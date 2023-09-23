@@ -2119,8 +2119,8 @@ public class ProgrammingExerciseTestService {
         exercise.setTemplateParticipation(generatedExercise.getTemplateParticipation());
         exercise.setSolutionParticipation(generatedExercise.getSolutionParticipation());
         assertThat(exercise).isEqualTo(generatedExercise);
-        assertThat(submissionRepository.findAllByParticipationId(exercise.getTemplateParticipation().getId()).size()).isEqualTo(1);
-        assertThat(submissionRepository.findAllByParticipationId(exercise.getSolutionParticipation().getId()).size()).isEqualTo(1);
+        assertThat(submissionRepository.findAllByParticipationId(exercise.getTemplateParticipation().getId())).hasSize(1);
+        assertThat(submissionRepository.findAllByParticipationId(exercise.getSolutionParticipation().getId())).hasSize(1);
         assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();
     }
 
