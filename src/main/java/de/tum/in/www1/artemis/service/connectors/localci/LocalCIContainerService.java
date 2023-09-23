@@ -46,6 +46,9 @@ public class LocalCIContainerService {
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
+    @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
+    String localCIBuildScriptBasePath;
+
     public LocalCIContainerService(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
     }
@@ -63,6 +66,9 @@ public class LocalCIContainerService {
     public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames,
             Path buildScriptPath) {
 
+        Bind bind = new Bind("artemis-data", new Volume("/supertest"));
+
+        /*
         Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
         binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
         binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
@@ -71,7 +77,13 @@ public class LocalCIContainerService {
         }
         binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptPath.toString(), new Volume("/script.sh"));
 
+
+
         return HostConfig.newHostConfig().withAutoRemove(true).withBinds(binds); // Automatically remove the container when it exits.
+
+         */
+
+        return HostConfig.newHostConfig().withAutoRemove(true).withBinds(bind); // Automatically remove the container when it exits.
     }
 
     /**
@@ -84,7 +96,7 @@ public class LocalCIContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, HostConfig volumeConfig, String branch, String commitHash) {
-        return dockerClient.createContainerCmd(dockerImage).withName(containerName)
+        return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -225,7 +237,9 @@ public class LocalCIContainerService {
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
 
-        Path scriptsPath = Path.of("local-ci-scripts");
+        log.info("Hallo {}", localCIBuildScriptBasePath);
+
+        Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
         if (!Files.exists(scriptsPath)) {
             try {
