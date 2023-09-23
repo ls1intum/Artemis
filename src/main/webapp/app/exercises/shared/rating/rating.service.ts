@@ -22,7 +22,7 @@ export class RatingService {
 
     /**
      * Get rating for "resultId" Result
-     * @param resultId - ud of result who's rating is received
+     * @param resultId - id of result who's rating is received
      */
     getRating(resultId: number): Observable<number | null> {
         return this.http.get<number | null>(this.ratingResourceUrl + `${resultId}/rating`);
