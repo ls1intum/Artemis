@@ -24,7 +24,7 @@
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
                     <span *ngIf="competency.optional" id="optional-badge" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
                 </h4>
-                <p *ngIf="competency.description" class="m-0">{{ competency.description }}</p>
+                <p *ngIf="competency.description" class="m-0" [innerHTML]="competency.description"></p>
                 <div *ngIf="isPrerequisite && competency.course">
                     <span class="badge bg-primary">{{ competency.course.title }}</span>
                     <span class="badge bg-secondary">{{ competency.course.semester }}</span>

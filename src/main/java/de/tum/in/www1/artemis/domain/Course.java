@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,10 +26,12 @@ import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfigu
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -47,7 +50,13 @@ public class Course extends DomainObject {
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FilePathService filePathService = new FilePathService();
+
+    @Transient
+    private final transient FileService fileService = new FileService();
+
+    @Transient
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevCourseIcon;
@@ -245,6 +254,10 @@ public class Course extends DomainObject {
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "iris_settings_id")
+    private IrisSettings irisSettings;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -674,8 +687,9 @@ public class Course extends DomainObject {
 
     @PrePersist
     public void beforeCreate() {
-        // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), getId());
+        if (courseIcon != null) {
+            courseIcon = entityFileService.moveTempFileBeforeEntityPersistence(courseIcon, FilePathService.getCourseIconFilePath(), false);
+        }
     }
 
     @PostPersist
@@ -689,13 +703,14 @@ public class Course extends DomainObject {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), getId());
+        courseIcon = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), false);
     }
 
     @PostRemove
     public void onDelete() {
-        // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, FilePathService.getCourseIconFilePath(), getId());
+        if (prevCourseIcon != null) {
+            fileService.schedulePathForDeletion(Path.of(prevCourseIcon), 0);
+        }
     }
 
     @Override
@@ -1014,5 +1029,13 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public IrisSettings getIrisSettings() {
+        return irisSettings;
+    }
+
+    public void setIrisSettings(IrisSettings irisSettings) {
+        this.irisSettings = irisSettings;
     }
 }
