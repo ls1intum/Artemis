@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
-class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "participantscoreintegrationtest";
 
@@ -137,6 +137,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         long getIdOfIndividualTextExerciseOfExam = examTextExercise.getId();
         participationUtilService.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
 
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(participantScoreScheduleService::isIdle);
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(examTextExercise).size() == 1);

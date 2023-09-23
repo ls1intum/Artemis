@@ -1,5 +1,6 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -46,12 +47,10 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     filteredProgrammingExercises: ProgrammingExercise[];
-    selectedProgrammingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
-    allChecked = false;
     // Used to make the repository links download the repositories instead of linking to Bitbucket/GitLab.
     localVCEnabled = false;
 
@@ -92,7 +91,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     ) {
         super(courseService, translateService, route, eventManager);
         this.programmingExercises = [];
-        this.selectedProgrammingExercises = [];
     }
 
     ngOnInit(): void {
@@ -127,7 +125,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                             );
                         }
                     }
-                    this.selectedProgrammingExercises = [];
+                    this.selectedExercises = [];
                 });
                 this.applyFilter();
                 this.emitExerciseCount(this.programmingExercises.length);
@@ -163,6 +161,27 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         });
     }
 
+    /**
+     * Deletes all the given programming exercises
+     * @param exercisesToDelete the exercise objects which are to be deleted
+     * @param event contains additional checks which are performed for all these exercises
+     */
+    deleteMultipleProgrammingExercises(exercisesToDelete: ProgrammingExercise[], event: { [key: string]: boolean }) {
+        const deletionObservables = exercisesToDelete.map((exercise) =>
+            this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
+        );
+        return merge(...deletionObservables).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'programmingExerciseListModification',
+                    content: 'Deleted selected programmingExercises',
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
     }
@@ -172,33 +191,12 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.applyFilter();
     }
 
-    toggleProgrammingExercise(programmingExercise: ProgrammingExercise) {
-        const programmingExerciseIndex = this.selectedProgrammingExercises.indexOf(programmingExercise);
-        if (programmingExerciseIndex !== -1) {
-            this.selectedProgrammingExercises.splice(programmingExerciseIndex, 1);
-        } else {
-            this.selectedProgrammingExercises.push(programmingExercise);
-        }
-    }
-
-    toggleAllProgrammingExercises() {
-        this.selectedProgrammingExercises = [];
-        if (!this.allChecked) {
-            this.selectedProgrammingExercises = this.selectedProgrammingExercises.concat(this.programmingExercises);
-        }
-        this.allChecked = !this.allChecked;
-    }
-
-    isExerciseSelected(programmingExercise: ProgrammingExercise) {
-        return this.selectedProgrammingExercises.includes(programmingExercise);
-    }
-
     openEditSelectedModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, {
             size: 'xl',
             backdrop: 'static',
         });
-        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
+        modalRef.componentInstance.selectedProgrammingExercises = this.selectedExercises;
         modalRef.closed.subscribe(() => {
             location.reload();
         });
@@ -209,7 +207,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      */
     checkConsistencies() {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exercisesToCheck = this.selectedProgrammingExercises;
+        modalRef.componentInstance.exercisesToCheck = this.selectedExercises;
     }
 
     /**

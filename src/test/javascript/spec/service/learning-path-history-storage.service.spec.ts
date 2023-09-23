@@ -22,10 +22,10 @@ describe('LearningPathHistoryStorageService', () => {
             });
     });
 
-    it('should return null if no previous is present', () => {
+    it('should return undefined if no previous is present', () => {
         expect(historyStorageService.hasPrevious(learningPathId)).toBeFalsy();
         const entry = historyStorageService.getPrevious(learningPathId);
-        expect(entry).toBeNull();
+        expect(entry).toBeUndefined();
     });
 
     it('should handle single lecture unit', () => {
