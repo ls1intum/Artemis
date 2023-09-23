@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.service.iris.exception.IrisException;
  * A service to send a message over the websocket to a specific user
  */
 @Service
+@Profile("iris")
 public class IrisWebsocketService {
 
     private static final String IRIS_WEBSOCKET_TOPIC_PREFIX = "/topic/iris";
