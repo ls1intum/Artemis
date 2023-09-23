@@ -103,11 +103,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
-        var postResponse = request.postWithMultipartFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file, ExamUser.class,
-                HttpStatus.OK);
-        var getResponse = request.get(postResponse.getSigningImagePath(), HttpStatus.OK, byte[].class);
+        ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+                ExamUser.class, HttpStatus.OK);
+        byte[] getUserSignatureResponse = request.get(updateExamUserResponse.getSigningImagePath(), HttpStatus.OK, byte[].class);
 
-        assertThat(getResponse).isEqualTo(file.getBytes());
+        assertThat(getUserSignatureResponse).isEqualTo(file.getBytes());
     }
 
     @Test
