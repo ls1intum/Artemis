@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.util.FileUtils;
  * Service responsible for initializing the database with specific testdata related to courses for use in integration tests.
  */
 @Service
-public class CourseUtilService {
+public class CourseUtilService {  // TODO: add javadoc
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
@@ -146,27 +146,51 @@ public class CourseUtilService {
         return createCourse(null);
     }
 
+    /**
+     * Creates and saves a course with the given id.
+     *
+     * @param id the id of the course.
+     * @return the newly created course.
+     */
     public Course createCourse(Long id) {
         Course course = CourseFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with messaging enabled.
+     *
+     * @return the newly created course.
+     */
     public Course createCourseWithMessagingEnabled() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithCustomStudentGroupName(String studentGroupName) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor");
-        return courseRepo.save(course);
-    }
-
+    /**
+     * Creates and saves a course with the given short name and student group name.
+     *
+     * @param studentGroupName the student group name of the course.
+     * @param shortName        the short name of the course.
+     * @return the new course.
+     */
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with organizations.
+     *
+     * @param name         the name of the organization.
+     * @param shortName    the short name of the organization.
+     * @param url          the url of the organization.
+     * @param description  the description of the organization.
+     * @param logoUrl      the url of the logo.
+     * @param emailPattern the email pattern of the organization.
+     * @return the new course.
+     */
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
@@ -177,6 +201,11 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves with organizations using default values.
+     *
+     * @return the new course.
+     */
     public Course createCourseWithOrganizations() {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
@@ -835,16 +864,6 @@ public class CourseUtilService {
         User user = userUtilService.createAndSaveUser(login);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepo.save(user);
-        return course;
-    }
-
-    public Course createCourseWithInstructorAndTextExercise(String userPrefix) {
-        Course course = this.createCourse();
-        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
-        studentParticipationRepo.save(participation);
-        course.addExercises(textExercise);
-        userUtilService.addUsers(userPrefix, 0, 0, 0, 1);
         return course;
     }
 

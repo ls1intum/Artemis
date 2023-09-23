@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfigu
 /**
  * Factory for creating Courses and related objects.
  */
-public class CourseFactory {
+public class CourseFactory { // TODO: add javadoc
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
