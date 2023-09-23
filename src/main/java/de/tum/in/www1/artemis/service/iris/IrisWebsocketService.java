@@ -79,9 +79,9 @@ public class IrisWebsocketService {
 
         private final Map<String, Object> translationParams;
 
-        private final IrisRateLimitService.RateLimitDTO rateLimit;
+        private final IrisRateLimitService.IrisRateLimitInformation rateLimit;
 
-        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.RateLimitDTO rateLimit) {
+        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimit) {
             this.rateLimit = rateLimit;
             this.type = IrisWebsocketMessageType.MESSAGE;
             this.message = message;
@@ -90,7 +90,7 @@ public class IrisWebsocketService {
             this.translationParams = null;
         }
 
-        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.RateLimitDTO rateLimit) {
+        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimit) {
             this.rateLimit = rateLimit;
             this.type = IrisWebsocketMessageType.ERROR;
             this.message = null;
@@ -119,7 +119,7 @@ public class IrisWebsocketService {
             return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
         }
 
-        public IrisRateLimitService.RateLimitDTO getRateLimit() {
+        public IrisRateLimitService.IrisRateLimitInformation getRateLimit() {
             return rateLimit;
         }
 
