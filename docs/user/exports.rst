@@ -73,7 +73,7 @@ To export the submissions click the |export_scores| button and then the |export_
 
 Export exercise results
 -----------------------------------
-Export the results of a specific exercise. This is supported for all exercise types.
+Export the results of students for a specific exercise as CSV file. This is supported for all exercise types.
 To export the results click the |export| button and then the |export_results| button on the |download_scores| page.
 
 Export course/exam scores
@@ -82,7 +82,6 @@ Export the scores of all students that participated in a specific course or exam
 The scores are exported in CSV format.
 To export the scores of a course click on the |scores_navigation_bar| tab in the course management navigation bar and then the |export_scores| button.
 For exams you can export the scores by clicking the |download_scores| button on the exam checklist page and then |export_scores| button.
-
 
 Export user data
 ----------------
