@@ -29,6 +29,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
+import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;
@@ -57,6 +58,7 @@ describe('ExamParticipationCoverComponent', () => {
                 MockComponent(ExamInformationComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisDatePipe),
+                MockComponent(ExamLiveEventsButtonComponent),
             ],
             providers: [
                 { provide: CourseManagementService, useClass: MockCourseManagementService },

@@ -176,29 +176,33 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
-                        if (!this.exam.testExam) {
-                            this.initIndividualEndDates(this.exam.startDate!);
-                        }
-
-                        // only show the summary if the student was able to submit on time.
-                        if (this.isOver() && this.studentExam.submitted) {
-                            this.loadAndDisplaySummary();
-                        } else {
-                            // Directly start the exam when we continue from a failed save
-                            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                                this.examParticipationService
-                                    .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
-                                    .subscribe((localExam: StudentExam) => {
-                                        // Keep the working time from the server
-                                        localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
-
-                                        this.studentExam = localExam;
-                                        this.loadingExam = false;
-                                        this.examStarted(this.studentExam);
-                                    });
-                            } else {
-                                this.loadingExam = false;
+                        try {
+                            if (!this.exam.testExam) {
+                                this.initIndividualEndDates(this.exam.startDate!);
                             }
+
+                            // only show the summary if the student was able to submit on time.
+                            if (this.isOver() && this.studentExam.submitted) {
+                                this.loadAndDisplaySummary();
+                            } else {
+                                // Directly start the exam when we continue from a failed save
+                                if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+                                    this.examParticipationService
+                                        .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
+                                        .subscribe((localExam: StudentExam) => {
+                                            // Keep the working time from the server
+                                            localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
+
+                                            this.studentExam = localExam;
+                                            this.loadingExam = false;
+                                            this.examStarted(this.studentExam);
+                                        });
+                                } else {
+                                    this.loadingExam = false;
+                                }
+                            }
+                        } catch (error) {
+                            console.log(error);
                         }
                     },
                     error: () => (this.loadingExam = false),
@@ -259,7 +263,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     examStarted(studentExam: StudentExam) {
         if (studentExam) {
             // Keep working time
-            studentExam.workingTime = this.studentExam.workingTime ?? studentExam.workingTime;
+            studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
