@@ -4,10 +4,13 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -32,10 +35,13 @@ public class SlideSplitterService {
 
     private final FileService fileService;
 
+    private final FilePathService filePathService;
+
     private final SlideRepository slideRepository;
 
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository) {
+    public SlideSplitterService(FileService fileService, FilePathService filePathService, SlideRepository slideRepository) {
         this.fileService = fileService;
+        this.filePathService = filePathService;
         this.slideRepository = slideRepository;
     }
 
@@ -46,9 +52,9 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
-        String attachmentPath = fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink());
-        File file = new File(attachmentPath);
-        try (PDDocument document = PDDocument.load(file)) {
+        Path attachmentPath = filePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
+        File file = attachmentPath.toFile();
+        try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
             splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename);
         }
@@ -76,7 +82,7 @@ public class SlideSplitterService {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
                 byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
                 MultipartFile slideFile = fileService.convertByteArrayToMultipart(fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + (page + 1), ".png", imageInByte);
-                String filePath = fileService.handleSaveFile(slideFile, true, false);
+                String filePath = fileService.handleSaveFile(slideFile, true, false).toString();
                 Slide slideEntity = new Slide();
                 slideEntity.setSlideImagePath(filePath);
                 slideEntity.setSlideNumber(page + 1);

@@ -78,6 +78,7 @@ public class ProgrammingExerciseImportFromFileService {
             checkRepositoriesExist(importExerciseDir);
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
+            // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
             if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
@@ -88,7 +89,7 @@ public class ProgrammingExerciseImportFromFileService {
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
-            fileService.scheduleForDirectoryDeletion(importExerciseDir, 5);
+            fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
         return importedProgrammingExercise;
     }
@@ -105,11 +106,10 @@ public class ProgrammingExerciseImportFromFileService {
             return;
         }
         try (var embeddedFiles = Files.list(embeddedFilesDir)) {
-            for (var file : embeddedFiles.toList()) {
-                var targetPath = Path.of(FilePathService.getMarkdownFilePath(), file.getFileName().toString());
-                // we need this check because the detection if a file exists of Files.copy seems not to work properly
+            for (Path file : embeddedFiles.toList()) {
+                Path targetPath = FilePathService.getMarkdownFilePath().resolve(file.getFileName());
                 if (!Files.exists(targetPath)) {
-                    Files.copy(file, targetPath);
+                    FileUtils.copyFile(file.toFile(), targetPath.toFile());
                 }
             }
         }
@@ -126,14 +126,15 @@ public class ProgrammingExerciseImportFromFileService {
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
+        // TODO: use the current instructor user for the commit
         gitService.commitAndPush(templateRepo, "Import template from file", true, null);
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);
     }
 
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) throws IOException {
+    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) {
         for (Repository repository : repositories) {
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toString(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
+            fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
         }
     }
 

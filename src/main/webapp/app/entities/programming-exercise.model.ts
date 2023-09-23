@@ -26,6 +26,7 @@ export enum ProgrammingLanguage {
 export enum ProjectType {
     MAVEN_MAVEN = 'MAVEN_MAVEN',
     PLAIN_MAVEN = 'PLAIN_MAVEN',
+    MAVEN_BLACKBOX = 'MAVEN_BLACKBOX',
     PLAIN_GRADLE = 'PLAIN_GRADLE',
     GRADLE_GRADLE = 'GRADLE_GRADLE',
     PLAIN = 'PLAIN',

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exam;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -303,7 +302,7 @@ public class ExamUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
-        exam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        exam.setWorkingTime(exam.getDuration());
         exam.setNumberOfCorrectionRoundsInExam(1);
         examRepository.save(exam);
         return exam;
@@ -334,7 +333,7 @@ public class ExamUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
-        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
+        exam.setWorkingTime(exam.getDuration());
         exam.setGracePeriod(180);
         exam = examRepository.save(exam);
         return exam;
@@ -346,7 +345,7 @@ public class ExamUtilService {
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
         exam.setPublishResultsDate(publishResultDate);
-        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
+        exam.setWorkingTime(exam.getDuration());
         exam.setGracePeriod(180);
         exam = examRepository.save(exam);
         return exam;
@@ -375,7 +374,7 @@ public class ExamUtilService {
         studentExam.setExam(exam);
         studentExam.setTestRun(false);
         studentExam.setUser(user);
-        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        studentExam.setWorkingTime(exam.getDuration());
         studentExamRepository.save(studentExam);
         return exam;
     }
@@ -440,7 +439,7 @@ public class ExamUtilService {
     public StudentExam addStudentExamWithUser(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
-        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        studentExam.setWorkingTime(exam.getDuration());
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
@@ -492,7 +491,7 @@ public class ExamUtilService {
     public StudentExam addStudentExamWithUser(Exam exam, User user, int additionalWorkingTime) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
-        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds() + additionalWorkingTime);
+        studentExam.setWorkingTime(exam.getDuration() + additionalWorkingTime);
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
@@ -703,7 +702,7 @@ public class ExamUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
-        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
+        exam.setWorkingTime(exam.getDuration());
     }
 
     public StudentExam addExercisesWithParticipationsAndSubmissionsToStudentExam(Exam exam, StudentExam studentExam, String validModel, URI localRepoPath) {
@@ -793,5 +792,24 @@ public class ExamUtilService {
         exerciseRepo.save(exercise);
 
         return studentExamRepository.save(studentExam);
+    }
+
+    /**
+     * gets the number of programming exercises in the exam
+     *
+     * @param examId id of the exam to be searched for programming exercises
+     * @return number of programming exercises in the exams
+     */
+    public int getNumberOfProgrammingExercises(Long examId) {
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+        int count = 0;
+        for (var exerciseGroup : exam.getExerciseGroups()) {
+            for (var exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 }

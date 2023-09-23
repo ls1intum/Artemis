@@ -9,7 +9,6 @@
             "download": "Download data export",
             "requestSuccess": "Successfully requested data export",
             "requestForUserSuccess": "Successfully requested data export for {{ login }}",
-            "downloadSuccess": "Successfully downloaded data export",
             "typeLoginToConfirm": "Please enter your login to confirm the data export request",
             "typeUserLoginToConfirm": "Please enter the login of the user to confirm the data export request",
             "confirmationQuestion": "Do you really want to request a data export?",

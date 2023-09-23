@@ -23,6 +23,8 @@ import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/as
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
+import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -36,6 +38,7 @@ import { CompetencySelectionComponent } from 'app/shared/competency-selection/co
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
+        ConfirmEntityNameComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
         JhiConnectionStatusComponent,
@@ -47,12 +50,14 @@ import { CompetencySelectionComponent } from 'app/shared/competency-selection/co
         ItemCountComponent,
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
+        StickyPopoverDirective,
     ],
     exports: [
         ArtemisSharedLibsModule,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         CircularProgressBarComponent,
+        ConfirmEntityNameComponent,
         LoadingIndicatorContainerComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
@@ -72,6 +77,7 @@ import { CompetencySelectionComponent } from 'app/shared/competency-selection/co
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
         CompetencySelectionComponent,
+        StickyPopoverDirective,
     ],
 })
 export class ArtemisSharedModule {}

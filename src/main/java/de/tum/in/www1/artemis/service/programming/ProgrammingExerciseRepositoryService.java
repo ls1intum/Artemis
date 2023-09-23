@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.isMavenProject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -295,16 +297,8 @@ public class ProgrammingExerciseRepositoryService {
 
         // First get files that are not dependent on the project type
         final Path templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(TEST_DIR);
-
-        // Java both supports Gradle and Maven as a test template
-        Path projectTemplatePath = templatePath;
-        if (projectType != null && projectType.isGradle()) {
-            projectTemplatePath = projectTemplatePath.resolve("gradle");
-        }
-        else {
-            projectTemplatePath = projectTemplatePath.resolve("maven");
-        }
-        projectTemplatePath = projectTemplatePath.resolve("projectTemplate");
+        // Java supports multiple variants as test template
+        final Path projectTemplatePath = getJavaProjectTemplatePath(templatePath, projectType);
 
         final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
         // keep the folder structure
@@ -313,6 +307,11 @@ public class ProgrammingExerciseRepositoryService {
         // These resources might override the programming language dependent resources as they are project type dependent.
         if (projectType != null) {
             setupJVMTestTemplateProjectTypeResources(resources, programmingExercise, repoLocalPath);
+        }
+
+        if (ProjectType.MAVEN_BLACKBOX.equals(projectType)) {
+            Path dejagnuLibFolderPath = repoLocalPath.resolve("testsuite").resolve("lib");
+            fileService.replaceVariablesInFilename(dejagnuLibFolderPath, PACKAGE_NAME_FILE_PLACEHOLDER, programmingExercise.getPackageName());
         }
 
         final Map<String, Boolean> sectionsMap = new HashMap<>();
@@ -330,6 +329,22 @@ public class ProgrammingExerciseRepositoryService {
 
         replacePlaceholders(programmingExercise, resources.repository);
         commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, user);
+    }
+
+    private static Path getJavaProjectTemplatePath(final Path templatePath, final ProjectType projectType) {
+        Path projectTemplatePath = templatePath;
+
+        if (projectType != null && projectType.isGradle()) {
+            projectTemplatePath = projectTemplatePath.resolve("gradle");
+        }
+        else if (ProjectType.MAVEN_BLACKBOX.equals(projectType)) {
+            projectTemplatePath = projectTemplatePath.resolve("blackbox");
+        }
+        else {
+            projectTemplatePath = projectTemplatePath.resolve("maven");
+        }
+
+        return projectTemplatePath.resolve("projectTemplate");
     }
 
     /**
@@ -378,7 +393,9 @@ public class ProgrammingExerciseRepositoryService {
 
         setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
-        fileService.copyResources(testFileResources, resources.prefix, packagePath, false);
+        if (programmingExercise.getProjectType() != ProjectType.MAVEN_BLACKBOX) {
+            fileService.copyResources(testFileResources, resources.prefix, packagePath, false);
+        }
 
         if (projectType != null) {
             overwriteProjectTypeSpecificFiles(resources, programmingExercise, packagePath);
@@ -406,7 +423,7 @@ public class ProgrammingExerciseRepositoryService {
             projectFileFileName = POM_XML;
         }
 
-        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath().toString(), activeFeatures);
+        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath(), activeFeatures);
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -455,7 +472,7 @@ public class ProgrammingExerciseRepositoryService {
         sectionsMap.put("sequential", true);
 
         // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
-        final boolean isMaven = ProjectType.isMavenProject(projectType);
+        final boolean isMaven = isMavenProject(projectType);
 
         final String projectFileName;
         if (isMaven) {
@@ -467,7 +484,7 @@ public class ProgrammingExerciseRepositoryService {
 
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath().toString(), sectionsMap);
+        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath(), sectionsMap);
 
         final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
@@ -527,9 +544,9 @@ public class ProgrammingExerciseRepositoryService {
         final Path packagePath = buildStagePath.toAbsolutePath().resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath();
 
         // staging project files are only required for maven
-        final boolean isMaven = ProjectType.isMavenProject(projectType);
+        final boolean isMaven = isMavenProject(projectType);
         if (isMaven && stagePomXml.isPresent()) {
-            Files.copy(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML));
+            FileUtils.copyFile(stagePomXml.get().getFile(), buildStagePath.resolve(POM_XML).toFile());
         }
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
@@ -566,8 +583,7 @@ public class ProgrammingExerciseRepositoryService {
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                fileService.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository).toString(), PACKAGE_NAME_FOLDER_PLACEHOLDER,
-                        programmingExercise.getPackageFolderName());
+                fileService.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
@@ -580,7 +596,7 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 
     /**
@@ -592,20 +608,23 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException Thrown if accessing repository files fails.
      */
     private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
-        final String repositoryLocalPath = getRepoAbsoluteLocalPath(repository).toString();
+        final Path repositoryLocalPath = getRepoAbsoluteLocalPath(repository);
         final String packageName = programmingExercise.getPackageName();
+        // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
+        // So usually, the name should not change.
+        final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, cleanPackageName);
 
-            replacements.put(PACKAGE_NAME_PLACEHOLDER, packageName);
+            replacements.put(PACKAGE_NAME_PLACEHOLDER, cleanPackageName);
         }
         else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
 
-            replacements.put(APP_NAME_PLACEHOLDER, packageName);
+            replacements.put(APP_NAME_PLACEHOLDER, cleanPackageName);
         }
     }
 

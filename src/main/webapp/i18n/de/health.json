@@ -28,7 +28,8 @@
             "hazelcast": "Hazelcast",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
-            "apollon": "Apollon Conversion Server"
+            "apollon": "Apollon Conversion Server",
+            "iris": "Pyris Server"
         },
         "table": {
             "service": "Dienst Name",

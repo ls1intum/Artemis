@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.lti;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
@@ -31,7 +32,10 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
+import tech.jhipster.security.RandomUtil;
 
 @Service
 public class LtiService {
@@ -50,12 +54,19 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
+    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    private final Optional<CIUserManagementService> optionalCIUserManagementService;
+
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService) {
+            JWTCookieService jwtCookieService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            Optional<CIUserManagementService> optionalCIUserManagementService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
+        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.optionalCIUserManagementService = optionalCIUserManagementService;
     }
 
     /**
@@ -112,11 +123,18 @@ public class LtiService {
             final User newUser;
             final var groups = new HashSet<String>();
             groups.add(LTI_GROUP_NAME);
-            newUser = userCreationService.createUser(username, null, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+
+            var password = RandomUtil.generatePassword();
+            newUser = userCreationService.createUser(username, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
+
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser, password));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser, password));
+
             log.info("Created new user {}", newUser);
             return newUser;
+
         });
 
         log.info("createNewUserFromLaunchRequest: {}", user);
