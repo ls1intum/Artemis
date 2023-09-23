@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -29,9 +28,6 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private RatingService ratingService;
-
-    @Autowired
-    private RatingRepository ratingRepo;
 
     @Autowired
     private UserUtilService userUtilService;
