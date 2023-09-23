@@ -219,7 +219,9 @@ public class LearningPathResource {
     public ResponseEntity<Long> getLearningPathId(@PathVariable Long courseId) {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.isStudentInCourse(course, null);
+        if (!authorizationCheckService.isStudentInCourse(course, null)) {
+            throw new BadRequestException("You are not a student in this course.");
+        }
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }

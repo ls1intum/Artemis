@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
@@ -20,7 +20,6 @@ import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/par
     selector: 'jhi-learning-path-container',
     styleUrls: ['./learning-path-container.component.scss'],
     templateUrl: './learning-path-container.component.html',
-    encapsulation: ViewEncapsulation.None,
 })
 export class LearningPathContainerComponent implements OnInit {
     @ViewChild('graphSidebar') graphSidebar: LearningPathGraphSidebarComponent;
@@ -30,9 +29,9 @@ export class LearningPathContainerComponent implements OnInit {
 
     learningObjectId?: number;
     lectureId?: number;
-    lecture: Lecture | undefined;
-    lectureUnit: LectureUnit | undefined;
-    exercise: Exercise | undefined;
+    lecture?: Lecture;
+    lectureUnit?: LectureUnit;
+    exercise?: Exercise;
 
     // icons
     faChevronLeft = faChevronLeft;
@@ -161,18 +160,19 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     onNodeClicked(node: NgxLearningPathNode) {
-        if (node.type === NodeType.LECTURE_UNIT || node.type === NodeType.EXERCISE) {
-            // reset state to avoid invalid states
-            this.undefineAll();
-            this.learningObjectId = node.linkedResource!;
-            this.lectureId = node.linkedResourceParent;
-            if (node.type === NodeType.LECTURE_UNIT) {
-                this.loadLectureUnit();
-                this.graphSidebar.learningPathGraphComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
-            } else if (node.type === NodeType.EXERCISE) {
-                this.loadExercise();
-                this.graphSidebar.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
-            }
+        if (node.type !== NodeType.LECTURE_UNIT && node.type !== NodeType.EXERCISE) {
+            return;
+        }
+        // reset state to avoid invalid states
+        this.undefineAll();
+        this.learningObjectId = node.linkedResource!;
+        this.lectureId = node.linkedResourceParent;
+        if (node.type === NodeType.LECTURE_UNIT) {
+            this.loadLectureUnit();
+            this.graphSidebar.learningPathGraphComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
+        } else if (node.type === NodeType.EXERCISE) {
+            this.loadExercise();
+            this.graphSidebar.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
         }
     }
 }

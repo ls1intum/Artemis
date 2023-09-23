@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
@@ -290,7 +289,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             Optional<Resource> templateResource = getFileByName(templateResources, filename);
             if (repoFile.isPresent() && templateResource.isPresent()) {
                 try (InputStream inputStream = templateResource.get().getInputStream()) {
-                    Files.copy(inputStream, repoFile.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    FileUtils.copyToFile(inputStream, repoFile.get());
                 }
             }
         }
