@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
@@ -19,7 +19,6 @@ import { ExerciseEntry, LearningPathHistoryStorageService, LectureUnitEntry } fr
     selector: 'jhi-learning-path-container',
     styleUrls: ['./learning-path-container.component.scss'],
     templateUrl: './learning-path-container.component.html',
-    encapsulation: ViewEncapsulation.None,
 })
 export class LearningPathContainerComponent implements OnInit {
     @Input() courseId: number;
@@ -27,9 +26,9 @@ export class LearningPathContainerComponent implements OnInit {
 
     learningObjectId: number;
     lectureId?: number;
-    lecture: Lecture | undefined;
-    lectureUnit: LectureUnit | undefined;
-    exercise: Exercise | undefined;
+    lecture?: Lecture;
+    lectureUnit?: LectureUnit;
+    exercise?: Exercise;
 
     // icons
     faChevronLeft = faChevronLeft;
@@ -144,21 +143,22 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     onNodeClicked(node: NgxLearningPathNode) {
-        if (node.type === NodeType.LECTURE_UNIT || node.type === NodeType.EXERCISE) {
-            if (this.lectureUnit?.id) {
-                this.learningPathHistoryStorageService.storeLectureUnit(this.learningPathId, this.lectureId!, this.lectureUnit.id);
-            } else if (this.exercise?.id) {
-                this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
-            }
-            // reset state to avoid invalid states
-            this.undefineAll();
-            this.learningObjectId = node.linkedResource!;
-            this.lectureId = node.linkedResourceParent;
-            if (node.type === NodeType.LECTURE_UNIT) {
-                this.loadLectureUnit();
-            } else if (node.type === NodeType.EXERCISE) {
-                this.loadExercise();
-            }
+        if (node.type !== NodeType.LECTURE_UNIT && node.type !== NodeType.EXERCISE) {
+            return;
+        }
+        if (this.lectureUnit?.id) {
+            this.learningPathHistoryStorageService.storeLectureUnit(this.learningPathId, this.lectureId!, this.lectureUnit.id);
+        } else if (this.exercise?.id) {
+            this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
+        }
+        // reset state to avoid invalid states
+        this.undefineAll();
+        this.learningObjectId = node.linkedResource!;
+        this.lectureId = node.linkedResourceParent;
+        if (node.type === NodeType.LECTURE_UNIT) {
+            this.loadLectureUnit();
+        } else if (node.type === NodeType.EXERCISE) {
+            this.loadExercise();
         }
     }
 }

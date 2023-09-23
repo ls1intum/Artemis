@@ -27,6 +27,7 @@ export class LearningPathHistoryStorageService {
     storeExercise(learningPathId: number, exerciseId: number) {
         this.store(learningPathId, new ExerciseEntry(exerciseId));
     }
+
     private store(learningPathId: number, entry: HistoryEntry) {
         if (!entry) {
             return;
@@ -56,7 +57,7 @@ export class LearningPathHistoryStorageService {
      */
     getPrevious(learningPathId: number) {
         if (!this.hasPrevious(learningPathId)) {
-            return null;
+            return undefined;
         }
         return this.learningPathHistories.get(learningPathId)!.pop();
     }

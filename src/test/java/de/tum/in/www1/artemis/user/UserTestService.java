@@ -19,6 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
@@ -120,8 +121,8 @@ public class UserTestService {
         assertThat(deletedUser.getLogin()).isNotEqualTo(originalUser.getLogin());
         assertThat(deletedUser.getPassword()).isNotEqualTo(originalUser.getPassword());
         assertThat(deletedUser.getEmail()).endsWith(Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
-        assertThat(deletedUser.getRegistrationNumber()).isEqualTo(null);
-        assertThat(deletedUser.getImageUrl()).isEqualTo(null);
+        assertThat(deletedUser.getRegistrationNumber()).isNull();
+        assertThat(deletedUser.getImageUrl()).isNull();
         assertThat(deletedUser.getActivated()).isFalse();
     }
 
@@ -219,6 +220,23 @@ public class UserTestService {
 
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
+    }
+
+    // Test
+    public void updateUserWithEmptyRoles() throws Exception {
+        student.setInternal(true);
+        student.setAuthorities(null);
+
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, "foobar1234", student.getGroups());
+
+        var managedUserVM = new ManagedUserVM(student, "foobar1234");
+
+        final var response = request.putWithResponseBody("/api/admin/users", managedUserVM, User.class, HttpStatus.OK);
+        assertThat(response).isNotNull();
+
+        // do not allow empty authorities
+        final var updatedUserInDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
     }
 
     // Test
@@ -341,12 +359,24 @@ public class UserTestService {
 
     // Test
     public void createInternalUser_asAdmin_isSuccessful() throws Exception {
+        createInternalUserIsSuccessful(Set.of(Role.STUDENT));
+    }
+
+    // Test
+    public void createInternalUserWithoutRoles_asAdmin_isSuccessful() throws Exception {
+        createInternalUserIsSuccessful(Collections.emptySet());
+    }
+
+    private void createInternalUserIsSuccessful(final Set<Role> roles) throws Exception {
         String password = "foobar1234";
         student.setId(null);
         student.setLogin("batman");
         student.setPassword(password);
         student.setEmail("batman@secret.invalid");
         student.setInternal(true);
+
+        final Set<Authority> authorities = roles.stream().map(Role::getAuthority).map(auth -> authorityRepository.findById(auth).orElseThrow()).collect(Collectors.toSet());
+        student.setAuthorities(authorities);
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
