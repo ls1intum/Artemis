@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.*;
-import de.tum.in.www1.artemis.service.iris.exception.IrisRateLimitExceededException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -85,10 +84,8 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
-        var rateLimit = rateLimitService.getRateLimit(user);
-        if (rateLimit.isRateLimitExceeded()) {
-            throw new IrisRateLimitExceededException(rateLimit);
-        }
+        rateLimitService.checkRateLimitElseThrow(user);
+
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
@@ -114,9 +111,7 @@ public class IrisMessageResource {
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
         var rateLimit = rateLimitService.getRateLimit(user);
-        if (rateLimit.isRateLimitExceeded()) {
-            throw new IrisRateLimitExceededException(rateLimit);
-        }
+        rateLimitService.checkRateLimitElseThrow(user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {

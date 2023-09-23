@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
+import de.tum.in.www1.artemis.service.iris.exception.IrisRateLimitExceededException;
 
 /**
  * Service for the rate limit of the iris chatbot.
@@ -41,6 +42,21 @@ public class IrisRateLimitService {
         var maxRateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
 
         return new IrisRateLimitInformation(currentRateLimit, maxRateLimit);
+    }
+
+    /**
+     * Checks if the rate limit of the given user is exceeded.
+     * If it is exceeded, an {@link IrisRateLimitExceededException} is thrown.
+     * See {@link #getRateLimit(User)} and {@link IrisRateLimitInformation#isRateLimitExceeded()} for more information.
+     *
+     * @param user the user
+     * @throws IrisRateLimitExceededException if the rate limit is exceeded
+     */
+    public void checkRateLimitElseThrow(User user) {
+        var rateLimit = getRateLimit(user);
+        if (rateLimit.isRateLimitExceeded()) {
+            throw new IrisRateLimitExceededException(rateLimit);
+        }
     }
 
     /**
