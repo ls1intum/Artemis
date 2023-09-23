@@ -40,6 +40,8 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Service
 public class GitLabCIService extends AbstractContinuousIntegrationService {
 
+    private static final String GITLAB_CI_FILE_EXTENSION = ".yml";
+
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
     private static final String VARIABLE_BUILD_DOCKER_IMAGE_NAME = "ARTEMIS_BUILD_DOCKER_IMAGE";
@@ -126,7 +128,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             project.setSharedRunnersEnabled(true);
             project.setAutoDevopsEnabled(false);
 
-            final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise);
+            final String buildPlanUrl = buildPlanService.generateBuildPlanURL(exercise) + "&file-extension=" + GITLAB_CI_FILE_EXTENSION;
             project.setCiConfigPath(buildPlanUrl);
 
             projectApi.updateProject(project);
