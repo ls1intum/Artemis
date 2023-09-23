@@ -13,8 +13,8 @@
                 </h3>
                 <div>
                     <div class="button-container">
-                        <span *ngIf="maxRateLimit >= 0" class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate"
-                            >{{ currentRateLimit }}/{{ maxRateLimit }}</span
+                        <span *ngIf="rateLimit >= 0" class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate"
+                            >{{ currentMessageCount }}/{{ rateLimit }}</span
                         >
                         <button *ngIf="isClearChatEnabled()" id="clear-chat-session" (click)="onClearSession(clearConfirmModal)" class="header-icon">
                             <fa-icon [icon]="faTrash"></fa-icon>
@@ -64,7 +64,7 @@
                                 style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
                                 (click)="resendMessage(message)"
                                 [disabled]="resendAnimationActive"
-                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && !this.isLoading && !(maxRateLimit >= 0 && currentRateLimit >= maxRateLimit)"
+                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && !this.isLoading && !(rateLimit >= 0 && currentMessageCount >= rateLimit)"
                             >
                                 <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
                             </button>

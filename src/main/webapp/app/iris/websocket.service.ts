@@ -21,9 +21,9 @@ export enum IrisWebsocketMessageType {
     ERROR = 'ERROR',
 }
 
-class RateLimitDTO {
-    currentRateLimit: number;
-    maxRateLimit: number;
+class IrisRateLimitInformation {
+    currentMessageCount: number;
+    rateLimit: number;
 }
 
 /**
@@ -35,7 +35,7 @@ export class IrisWebsocketDTO {
     message?: IrisMessage;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
-    rateLimit?: RateLimitDTO;
+    rateLimitInfo?: IrisRateLimitInformation;
 }
 
 /**
@@ -94,8 +94,8 @@ export class IrisWebsocketService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
-            if (websocketResponse.rateLimit) {
-                this.stateStore.dispatch(new RateLimitUpdatedAction(websocketResponse.rateLimit.currentRateLimit, websocketResponse.rateLimit.maxRateLimit));
+            if (websocketResponse.rateLimitInfo) {
+                this.stateStore.dispatch(new RateLimitUpdatedAction(websocketResponse.rateLimitInfo.currentMessageCount, websocketResponse.rateLimitInfo.rateLimit));
             }
 
             if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {

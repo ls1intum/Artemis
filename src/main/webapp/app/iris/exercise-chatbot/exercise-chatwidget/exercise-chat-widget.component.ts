@@ -115,8 +115,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     exerciseId: number;
     sessionService: IrisSessionService;
     shouldShowEmptyMessageError = false;
-    currentRateLimit: number;
-    maxRateLimit: number;
+    currentMessageCount: number;
+    rateLimit: number;
 
     // User preferences
     userAccepted: boolean;
@@ -177,8 +177,8 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             if (this.error) {
                 this.getConvertedErrorMap();
             }
-            this.currentRateLimit = state.currentRateLimit;
-            this.maxRateLimit = state.maxRateLimit;
+            this.currentMessageCount = state.currentMessageCount;
+            this.rateLimit = state.rateLimit;
         });
 
         // Focus on message textarea

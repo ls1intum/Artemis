@@ -378,8 +378,8 @@ describe('IrisStateStore', () => {
         expect(state).toStrictEqual({
             ...mockState,
             error: null,
-            currentRateLimit: 1,
-            maxRateLimit: 2,
+            currentMessageCount: 1,
+            rateLimit: 2,
         });
     });
 
@@ -395,8 +395,8 @@ describe('IrisStateStore', () => {
         expect(state).toStrictEqual({
             ...mockState,
             error: errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED],
-            currentRateLimit: 2,
-            maxRateLimit: 2,
+            currentMessageCount: 2,
+            rateLimit: 2,
         });
     });
 });

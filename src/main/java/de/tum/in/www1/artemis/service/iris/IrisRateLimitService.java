@@ -33,48 +33,48 @@ public class IrisRateLimitService {
      * @param user the user
      * @return the rate limit information
      */
-    public IrisRateLimitInformation getRateLimit(User user) {
+    public IrisRateLimitInformation getRateLimitInformation(User user) {
         var globalSettings = irisSettingsService.getGlobalSettings();
         var irisChatSettings = globalSettings.getIrisChatSettings();
         var start = ZonedDateTime.now().minusHours(3);
         var end = ZonedDateTime.now();
-        var currentRateLimit = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
-        var maxRateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
+        var currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
+        var rateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
 
-        return new IrisRateLimitInformation(currentRateLimit, maxRateLimit);
+        return new IrisRateLimitInformation(currentMessageCount, rateLimit);
     }
 
     /**
      * Checks if the rate limit of the given user is exceeded.
      * If it is exceeded, an {@link IrisRateLimitExceededException} is thrown.
-     * See {@link #getRateLimit(User)} and {@link IrisRateLimitInformation#isRateLimitExceeded()} for more information.
+     * See {@link #getRateLimitInformation(User)} and {@link IrisRateLimitInformation#isRateLimitExceeded()} for more information.
      *
      * @param user the user
      * @throws IrisRateLimitExceededException if the rate limit is exceeded
      */
     public void checkRateLimitElseThrow(User user) {
-        var rateLimit = getRateLimit(user);
-        if (rateLimit.isRateLimitExceeded()) {
-            throw new IrisRateLimitExceededException(rateLimit);
+        var rateLimitInfo = getRateLimitInformation(user);
+        if (rateLimitInfo.isRateLimitExceeded()) {
+            throw new IrisRateLimitExceededException(rateLimitInfo);
         }
     }
 
     /**
      * Contains information about the rate limit of a user.
      *
-     * @param currentRateLimit the current rate limit
-     * @param maxRateLimit     the max rate limit
+     * @param currentMessageCount the current rate limit
+     * @param rateLimit           the max rate limit
      */
-    public record IrisRateLimitInformation(int currentRateLimit, int maxRateLimit) {
+    public record IrisRateLimitInformation(int currentMessageCount, int rateLimit) {
 
         /**
          * Checks if the rate limit is exceeded.
-         * It is exceeded if the maxRateLimit is set and the currentRateLimit is greater or equal to the maxRateLimit.
+         * It is exceeded if the rateLimit is set and the currentMessageCount is greater or equal to the rateLimit.
          *
          * @return true if the rate limit is exceeded, false otherwise
          */
         public boolean isRateLimitExceeded() {
-            return maxRateLimit != -1 && currentRateLimit >= maxRateLimit;
+            return rateLimit != -1 && currentMessageCount >= rateLimit;
         }
     }
 }

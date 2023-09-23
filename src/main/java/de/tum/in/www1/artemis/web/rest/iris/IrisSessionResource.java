@@ -143,11 +143,11 @@ public class IrisSessionResource {
                     .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
         }
 
-        var rateLimit = irisRateLimitService.getRateLimit(user);
+        var rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
 
-        return ResponseEntity.ok(new IrisHealthDTO(specificModelStatus, rateLimit.currentRateLimit(), rateLimit.maxRateLimit()));
+        return ResponseEntity.ok(new IrisHealthDTO(specificModelStatus, rateLimitInfo.currentMessageCount(), rateLimitInfo.rateLimit()));
     }
 
-    public record IrisHealthDTO(boolean active, int currentRateLimit, int maxRateLimit) {
+    public record IrisHealthDTO(boolean active, int currentMessageCount, int rateLimit) {
     }
 }

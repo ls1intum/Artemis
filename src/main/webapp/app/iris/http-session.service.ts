@@ -6,8 +6,8 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 type EntityResponseType = HttpResponse<IrisSession>;
 export class HeartbeatDTO {
     active: boolean;
-    currentRateLimit: number;
-    maxRateLimit: number;
+    currentMessageCount: number;
+    rateLimit: number;
 }
 
 /**

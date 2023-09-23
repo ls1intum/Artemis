@@ -94,8 +94,8 @@ export class RateLimitUpdatedAction implements MessageStoreAction {
     readonly type: ActionType;
 
     public constructor(
-        public readonly currentRateLimit: number,
-        public readonly maxRateLimit: number,
+        public readonly currentMessageCount: number,
+        public readonly rateLimit: number,
     ) {
         this.type = ActionType.RATE_LIMIT_UPDATED;
     }
@@ -141,7 +141,7 @@ export class MessageStoreState {
         public numNewMessages: number,
         public error: IrisErrorType | null,
         public serverResponseTimeout: ReturnType<typeof setTimeout> | null,
-        public currentRateLimit: number,
-        public maxRateLimit: number,
+        public currentMessageCount: number,
+        public rateLimit: number,
     ) {}
 }

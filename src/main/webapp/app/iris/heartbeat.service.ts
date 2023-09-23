@@ -58,7 +58,7 @@ export class IrisHeartbeatService implements OnDestroy {
                     if (!response.body.active) {
                         this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_NOT_AVAILABLE));
                     }
-                    this.stateStore.dispatch(new RateLimitUpdatedAction(response.body!.currentRateLimit, response.body!.maxRateLimit));
+                    this.stateStore.dispatch(new RateLimitUpdatedAction(response.body!.currentMessageCount, response.body!.rateLimit));
                 } else {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_NOT_AVAILABLE));
                 }

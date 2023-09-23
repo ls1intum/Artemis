@@ -110,7 +110,6 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
-        var rateLimit = rateLimitService.getRateLimit(user);
         rateLimitService.checkRateLimitElseThrow(user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);

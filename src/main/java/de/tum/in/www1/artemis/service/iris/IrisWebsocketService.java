@@ -46,8 +46,8 @@ public class IrisWebsocketService {
         var user = ((IrisChatSession) irisMessage.getSession()).getUser();
         String userLogin = user.getLogin();
         String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
-        var rateLimit = rateLimitService.getRateLimit(user);
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage, rateLimit));
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage, rateLimitInfo));
     }
 
     /**
@@ -64,8 +64,8 @@ public class IrisWebsocketService {
         var user = ((IrisChatSession) irisSession).getUser();
         String userLogin = user.getLogin();
         String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
-        var rateLimit = rateLimitService.getRateLimit(user);
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(throwable, rateLimit));
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(throwable, rateLimitInfo));
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -81,10 +81,10 @@ public class IrisWebsocketService {
 
         private final Map<String, Object> translationParams;
 
-        private final IrisRateLimitService.IrisRateLimitInformation rateLimit;
+        private final IrisRateLimitService.IrisRateLimitInformation rateLimitInfo;
 
-        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimit) {
-            this.rateLimit = rateLimit;
+        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+            this.rateLimitInfo = rateLimitInfo;
             this.type = IrisWebsocketMessageType.MESSAGE;
             this.message = message;
             this.errorMessage = null;
@@ -92,8 +92,8 @@ public class IrisWebsocketService {
             this.translationParams = null;
         }
 
-        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimit) {
-            this.rateLimit = rateLimit;
+        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+            this.rateLimitInfo = rateLimitInfo;
             this.type = IrisWebsocketMessageType.ERROR;
             this.message = null;
             this.errorMessage = throwable.getMessage();
@@ -121,8 +121,8 @@ public class IrisWebsocketService {
             return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
         }
 
-        public IrisRateLimitService.IrisRateLimitInformation getRateLimit() {
-            return rateLimit;
+        public IrisRateLimitService.IrisRateLimitInformation getRateLimitInfo() {
+            return rateLimitInfo;
         }
 
         public enum IrisWebsocketMessageType {

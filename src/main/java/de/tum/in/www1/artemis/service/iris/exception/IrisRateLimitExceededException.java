@@ -13,12 +13,12 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
  */
 public class IrisRateLimitExceededException extends IrisException {
 
-    public IrisRateLimitExceededException(int currentRateLimit, int maxRateLimit) {
+    public IrisRateLimitExceededException(int currentMessageCount, int rateLimit) {
         super("You have exceeded the rate limit of Iris", Status.TOO_MANY_REQUESTS, "Iris", "artemisApp.exerciseChatbot.errors.rateLimitExceeded",
-                Map.of("currentRateLimit", currentRateLimit, "maxRateLimit", maxRateLimit));
+                Map.of("currentMessageCount", currentMessageCount, "rateLimit", rateLimit));
     }
 
     public IrisRateLimitExceededException(IrisRateLimitService.IrisRateLimitInformation rateLimit) {
-        this(rateLimit.currentRateLimit(), rateLimit.maxRateLimit());
+        this(rateLimit.currentMessageCount(), rateLimit.rateLimit());
     }
 }
