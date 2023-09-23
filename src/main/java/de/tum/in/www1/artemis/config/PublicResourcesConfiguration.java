@@ -82,7 +82,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
      */
     private static String getFileSystemPublicSubPathResourceLocation(String... subPaths) {
         var userDir = System.getProperty("user.dir");
-        var morePaths = Stream.concat(Stream.of("public"), Arrays.stream(subPaths)).toList().toArray(new String[1 + subPaths.length]);
+        var morePaths = Stream.concat(Stream.of("public"), Arrays.stream(subPaths)).toArray(String[]::new);
         return "file:" + Path.of(userDir, morePaths) + "/";
     }
 }

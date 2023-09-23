@@ -12,7 +12,9 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -183,5 +185,20 @@ public class PlagiarismResource {
             plagiarismResultRepository.deletePlagiarismResultsByIdNotAndExerciseId(plagiarismResultId, exerciseId);
         }
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /exercises/:exerciseId/potential-plagiarism-count : get the number of potential plagiarism cases for the given exercise
+     * This endpoint returns the number of plagiarism submissions for the given exercise excluding submissions of deleted users.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of plagiarism results
+     */
+    @GetMapping("exercises/{exerciseId}/potential-plagiarism-count")
+    @EnforceAtLeastInstructor
+    public long getNumberOfPotentialPlagiarismCasesForExercise(@PathVariable("exerciseId") long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        return plagiarismService.getNumberOfPotentialPlagiarismCasesForExercise(exerciseId);
     }
 }

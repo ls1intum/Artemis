@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,7 +24,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
@@ -159,52 +157,6 @@ public class ChannelService {
     }
 
     /**
-     * Adds all course students to the given channel asynchronously
-     *
-     * @param course  the course to add the students from
-     * @param channel the channel to add the students to
-     */
-    @Async
-    public void registerCourseStudentsToChannelAsynchronously(Course course, Channel channel) {
-        if (channel == null) {
-            return;
-        }
-        SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(true, false, false, List.of(), course, channel);
-    }
-
-    /**
-     * Adds tutors and instructors to the given channel asynchronously
-     *
-     * @param course  the course to add the tutors and instructors from
-     * @param channel the exam channel to add the users to
-     */
-    @Async
-    public void registerTutorsAndInstructorsToChannel(Course course, Channel channel) {
-        if (channel == null || !course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
-            return;
-        }
-        SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(false, true, true, List.of(), course, channel);
-    }
-
-    /**
-     * Adds users to the channel of the given exam asynchronously
-     *
-     * @param users list of user logins to register for the exam channel
-     * @param exam  exam to which channel the users should be added
-     */
-    @Async
-    public void registerUsersToExamChannel(List<String> users, Exam exam) {
-        Channel channel = channelRepository.findChannelByExamId(exam.getId());
-        if (channel == null) {
-            return;
-        }
-        SecurityUtils.setAuthorizationObject();
-        registerUsersToChannel(false, false, false, users, exam.getCourse(), channel);
-    }
-
-    /**
      * Register users to the newly created channel
      *
      * @param addAllStudents        if true, all students of the course will be added to the channel
@@ -293,7 +245,7 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a lecture and sets the channel name of the lecture accordingly. Also adds all course members asynchronously.
+     * Creates a channel for a lecture and sets the channel name of the lecture accordingly.
      *
      * @param lecture     the lecture to create the channel for
      * @param channelName the name of the channel
@@ -308,7 +260,7 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly. Also adds all course members asynchronously.
+     * Creates a channel for a course exercise and sets the channel name of the exercise accordingly.
      *
      * @param exercise    the exercise to create the channel for
      * @param channelName the name of the channel
@@ -324,19 +276,15 @@ public class ChannelService {
     }
 
     /**
-     * Creates a channel for a real exam and sets the channel name of the exam accordingly. Also adds all course members asynchronously.
+     * Creates a channel for a real exam and sets the channel name of the exam accordingly.
      *
      * @param exam        the exam to create the channel for
      * @param channelName the name of the channel
      * @return the created channel
      */
     public Channel createExamChannel(Exam exam, Optional<String> channelName) {
-        if (exam.isTestExam()) {
-            return null;
-        }
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setIsPublic(false);
-        channelToCreate.setIsCourseWide(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
@@ -389,21 +337,6 @@ public class ChannelService {
         }
         Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
         return updateChannelName(channel, updatedExam.getChannelName());
-    }
-
-    /**
-     * Removes users from an exam channel
-     *
-     * @param users  users to remove from the channel
-     * @param examId id of the exam the channel belongs to
-     */
-    public void deregisterUsersFromExamChannel(Set<User> users, Long examId) {
-        Channel channel = channelRepository.findChannelByExamId(examId);
-        if (channel == null) {
-            return;
-        }
-
-        conversationService.deregisterUsersFromAConversation(channel.getCourse(), users, channel);
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {

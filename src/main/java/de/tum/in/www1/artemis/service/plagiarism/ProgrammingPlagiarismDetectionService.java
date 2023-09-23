@@ -39,8 +39,8 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -169,7 +169,7 @@ public class ProgrammingPlagiarismDetectionService {
     @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
-        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 60);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
@@ -245,9 +245,9 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the zip file
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
-        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
-        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report").toString();
-        final var reportFolderFile = new File(reportFolder);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
+        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report");
+        final var reportFolderFile = reportFolder.toFile();
 
         // Create directories.
         if (!reportFolderFile.mkdirs()) {
@@ -259,11 +259,11 @@ public class ProgrammingPlagiarismDetectionService {
         // Write JPlag report result to the file.
         log.info("Write JPlag report to file system and zip it");
         ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
-        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder);
+        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder.toString());
         // JPlag automatically zips the report
 
         var zipFile = new File(reportFolder + ".zip");
-        fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
+        fileService.schedulePathForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
         return zipFile;
     }
 
@@ -330,7 +330,7 @@ public class ProgrammingPlagiarismDetectionService {
     public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
-        return studentParticipations.parallelStream().filter(participation -> !participation.isTestRun())
+        return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
                 .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
                 .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
                     Submission submission = participation.findLatestSubmission().orElse(null);

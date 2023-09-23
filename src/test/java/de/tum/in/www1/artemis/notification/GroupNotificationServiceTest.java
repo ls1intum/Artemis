@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "groupnotificationservice";
 
@@ -289,7 +289,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @Test
     void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -299,7 +299,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -309,7 +309,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(instanceMessageSendService, timeout(1500)).sendExerciseReleaseNotificationSchedule(any());
     }
 
