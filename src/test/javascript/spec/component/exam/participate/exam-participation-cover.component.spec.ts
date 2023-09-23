@@ -100,7 +100,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.exam.gracePeriod = 1;
         component.exam.startDate = now;
 
-        component.ngOnInit();
+        component.ngOnChanges();
         tick();
 
         expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
@@ -109,7 +109,7 @@ describe('ExamParticipationCoverComponent', () => {
         now = dayjs();
         component.startView = true;
         component.exam.startDate = now;
-        component.ngOnInit();
+        component.ngOnChanges();
 
         // Case TestRun
         now = dayjs();
@@ -117,7 +117,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.exam.gracePeriod = 1;
         component.testRunStartTime = now;
         component.studentExam.testRun = true;
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
 
         // Case test exam
@@ -127,7 +127,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.exam.gracePeriod = 1;
         component.exam.startDate = dayjs().subtract(4, 'hours');
 
-        component.ngOnInit();
+        component.ngOnChanges();
         tick();
 
         expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
@@ -136,6 +136,7 @@ describe('ExamParticipationCoverComponent', () => {
 
     it('should update confirmation', () => {
         fixture.detectChanges();
+        component.ngOnChanges();
 
         component.startView = true;
         component.updateConfirmation();
@@ -257,6 +258,7 @@ describe('ExamParticipationCoverComponent', () => {
 
     it('should get start button enabled and end button enabled', () => {
         fixture.detectChanges();
+        component.ngOnChanges();
         component.testRun = true;
         expect(component.startButtonEnabled).toBeFalse();
 
@@ -279,7 +281,7 @@ describe('ExamParticipationCoverComponent', () => {
     });
 
     it('should disable exam button', () => {
-        component.ngOnInit();
+        component.ngOnChanges();
         component.testRun = false;
         const now = dayjs();
         jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);

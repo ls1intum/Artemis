@@ -544,6 +544,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]).subscribe((event: WorkingTimeUpdateEvent) => {
             // Create new object to make change detection work, otherwise the date will not update
             this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
+            this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
             this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
             this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
             this.liveEventsService.acknowledgeEvent(event, false);
