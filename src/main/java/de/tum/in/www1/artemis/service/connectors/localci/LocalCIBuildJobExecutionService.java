@@ -201,14 +201,6 @@ public class LocalCIBuildJobExecutionService {
 
         localCIContainerService.startContainer(containerId);
 
-        localCIContainerService.copyIntoContainer(containerId, assignmentRepositoryPath, "/" + LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository");
-        localCIContainerService.copyIntoContainer(containerId, testsRepositoryPath, "/" + LocalCIBuildJobRepositoryType.TEST + "-repository");
-        localCIContainerService.copyIntoContainer(containerId, buildScriptPath, "/script.sh");
-
-        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            localCIContainerService.copyIntoContainer(containerId, auxiliaryRepositoriesPaths[i], "/" + auxiliaryRepositoryNames[i] + "-repository");
-        }
-
         log.info("Started container for build job " + containerName);
 
         localCIContainerService.runScriptInContainer(containerId);

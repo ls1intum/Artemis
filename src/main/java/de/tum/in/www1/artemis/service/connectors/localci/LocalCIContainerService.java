@@ -66,7 +66,7 @@ public class LocalCIContainerService {
     public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames,
             Path buildScriptPath) {
 
-        Bind bind = new Bind("artemis-data", new Volume("/supertest"));
+        Bind bind = new Bind("artemis-data", new Volume("/artemis-data"));
 
         /*
         Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
@@ -157,6 +157,8 @@ public class LocalCIContainerService {
             throw new LocalCIException("Interrupted while waiting for command to complete", e);
         }
     }
+
+    public void prepareForDocker
 
     /**
      * Retrieve an archive from a running Docker container.
