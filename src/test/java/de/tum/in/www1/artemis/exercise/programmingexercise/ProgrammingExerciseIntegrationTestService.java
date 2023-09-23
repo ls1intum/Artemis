@@ -1633,12 +1633,13 @@ class ProgrammingExerciseIntegrationTestService {
         verify(versionControlService, timeout(300)).setRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
                 participation2.getStudents());
 
-        userUtilService.changeUser(userPrefix + "instructor1");
-
-        var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Instructor get notified that lock operations were successful")
-                .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
-                .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
+        await().untilAsserted(() -> {
+            userUtilService.changeUser(userPrefix + "instructor1");
+            var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+            assertThat(notifications).as("Instructor get notified that lock operations were successful")
+                    .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION))
+                    .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
+        });
     }
 
     void unlockAllRepositories_asStudent_forbidden() throws Exception {
@@ -1772,11 +1773,11 @@ class ProgrammingExerciseIntegrationTestService {
 
         Files.createDirectories(jPlagReposDir.resolve(projectKey));
         Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-1.java"));
-        Files.writeString(file1, exampleProgram);
+        FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
         Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
-        Files.writeString(file2, exampleProgram);
+        FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
 
-        doReturn(jPlagReposDir).when(fileService).getTemporaryUniquePath(any(Path.class), eq(60L));
+        doReturn(jPlagReposDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
         doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
 
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);

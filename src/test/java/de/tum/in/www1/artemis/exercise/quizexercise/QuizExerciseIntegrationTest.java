@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exercise.quizexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -17,12 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -41,9 +39,8 @@ import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
-class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "quizexerciseintegration";
 
@@ -51,9 +48,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private QuizExerciseService quizExerciseService;
-
-    @Autowired
-    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -69,9 +63,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
-
-    @Autowired
-    private QuizExerciseUtilService quizUtilService;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -332,19 +323,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), quizMode);
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
 
-        String username = TEST_PREFIX + "student1";
-        final Principal principal = () -> username;
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        quizUtilService.prepareBatchForSubmitting(quizExercise, authentication, SecurityUtils.makeAuthorizationObject(username));
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // Quiz submissions are not yet in database
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
-
-        quizScheduleService.processCachedQuizSubmissions();
+        quizSubmission.submitted(true);
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         // Quiz submissions are now in database
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(1);
@@ -842,6 +824,24 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testAddAndStartQuizBatch() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
+
+        QuizBatch batch = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
+        request.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAddAndStartQuizBatch_AsStudentNotAllowed() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
+
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.FORBIDDEN);
+        request.put("/api/quiz-exercises/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPerformStartNow() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
@@ -912,12 +912,21 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
 
         request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, result);
-        if (result == HttpStatus.OK) {
-            // if joining was successful repeating the request should fail, otherwise with the same reason as the first attempt
-            result = HttpStatus.BAD_REQUEST;
-        }
+    }
 
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, result);
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    void testCannotPerformJoinTwice(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(2), quizMode);
+        QuizBatch batch = new QuizBatch();
+        batch.setStartTime(ZonedDateTime.now().minusMinutes(1));
+        batch.setPassword("1234");
+
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
+        quizScheduleService.joinQuizBatch(quizExercise, batch, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
     }
 
     /**

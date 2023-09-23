@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -310,7 +311,7 @@ public class ProgrammingExerciseRepositoryService {
 
         if (ProjectType.MAVEN_BLACKBOX.equals(projectType)) {
             Path dejagnuLibFolderPath = repoLocalPath.resolve("testsuite").resolve("lib");
-            fileService.replaceVariablesInFileName(dejagnuLibFolderPath.toString(), PACKAGE_NAME_FILE_PLACEHOLDER, programmingExercise.getPackageName());
+            fileService.replaceVariablesInFilename(dejagnuLibFolderPath, PACKAGE_NAME_FILE_PLACEHOLDER, programmingExercise.getPackageName());
         }
 
         final Map<String, Boolean> sectionsMap = new HashMap<>();
@@ -422,7 +423,7 @@ public class ProgrammingExerciseRepositoryService {
             projectFileFileName = POM_XML;
         }
 
-        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath().toString(), activeFeatures);
+        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileFileName).toAbsolutePath(), activeFeatures);
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -483,7 +484,7 @@ public class ProgrammingExerciseRepositoryService {
 
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath().toString(), sectionsMap);
+        fileService.replacePlaceholderSections(repoLocalPath.resolve(projectFileName).toAbsolutePath(), sectionsMap);
 
         final Optional<Resource> stagePomXml = getStagePomXml(templatePath, projectTemplatePath, isMaven);
 
@@ -545,7 +546,7 @@ public class ProgrammingExerciseRepositoryService {
         // staging project files are only required for maven
         final boolean isMaven = isMavenProject(projectType);
         if (isMaven && stagePomXml.isPresent()) {
-            Files.copy(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML));
+            FileUtils.copyFile(stagePomXml.get().getFile(), buildStagePath.resolve(POM_XML).toFile());
         }
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
@@ -582,8 +583,7 @@ public class ProgrammingExerciseRepositoryService {
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                fileService.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository).toString(), PACKAGE_NAME_FOLDER_PLACEHOLDER,
-                        programmingExercise.getPackageFolderName());
+                fileService.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
@@ -608,20 +608,23 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException Thrown if accessing repository files fails.
      */
     private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
-        final String repositoryLocalPath = getRepoAbsoluteLocalPath(repository).toString();
+        final Path repositoryLocalPath = getRepoAbsoluteLocalPath(repository);
         final String packageName = programmingExercise.getPackageName();
+        // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
+        // So usually, the name should not change.
+        final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, cleanPackageName);
 
-            replacements.put(PACKAGE_NAME_PLACEHOLDER, packageName);
+            replacements.put(PACKAGE_NAME_PLACEHOLDER, cleanPackageName);
         }
         else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
+            fileService.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
 
-            replacements.put(APP_NAME_PLACEHOLDER, packageName);
+            replacements.put(APP_NAME_PLACEHOLDER, cleanPackageName);
         }
     }
 

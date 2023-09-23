@@ -14,11 +14,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
-class BuildLogEntryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class BuildLogEntryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String GRADLE_SCENARIO = """
             Build ABC23H01E01 - AB12345 - Default Job #5 (MY-JOB) started building on agent ls1Agent-test.artemistest.in.tum.de, bamboo version: 8.2.5
