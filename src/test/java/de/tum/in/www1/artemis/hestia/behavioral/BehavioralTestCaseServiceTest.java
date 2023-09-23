@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.util.HashSet;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -18,7 +20,6 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.*;
@@ -41,9 +42,6 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
@@ -72,7 +70,7 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -148,7 +146,6 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @Timeout(1000)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationForSimpleExample() throws Exception {
         exercise = hestiaUtilTestService.setupSolution("Test.java", "A\nB\nC\nD\nE\nF\nG\nH", exercise, solutionRepo);
