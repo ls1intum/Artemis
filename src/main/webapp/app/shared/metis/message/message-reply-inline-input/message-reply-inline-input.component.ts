@@ -16,11 +16,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit {
     warningDismissed = false;
 
-    ngOnInit(): void {
-        super.ngOnInit();
-        this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
-    }
-
     constructor(
         protected metisService: MetisService,
         protected modalService: NgbModal,
@@ -28,6 +23,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         protected localStorageService: LocalStorageService,
     ) {
         super(metisService, modalService, formBuilder);
+    }
+
+    ngOnInit(): void {
+        super.ngOnInit();
+        this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
 
     /**

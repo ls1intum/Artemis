@@ -4,9 +4,8 @@ import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/utils/date.utils';
@@ -33,6 +32,7 @@ export class DataExportComponent implements OnInit {
     description: string;
     state?: DataExportState;
     dataExport: DataExport = new DataExport();
+    isAdmin = false;
 
     constructor(
         private dataExportService: DataExportService,
@@ -43,6 +43,7 @@ export class DataExportComponent implements OnInit {
 
     ngOnInit() {
         this.currentLogin = this.accountService.userIdentity?.login;
+        this.isAdmin = this.accountService.isAdmin();
         this.route.params.subscribe((params) => {
             if (params['id']) {
                 this.downloadMode = true;
@@ -94,9 +95,19 @@ export class DataExportComponent implements OnInit {
     }
 
     downloadDataExport() {
-        this.dataExportService.downloadDataExport(this.dataExportId).subscribe((response: HttpResponse<Blob>) => {
-            downloadZipFileFromResponse(response);
-            this.alertService.success('artemisApp.dataExport.downloadSuccess');
+        this.dataExportService.downloadDataExport(this.dataExportId);
+    }
+
+    requestExportForAnotherUser(login: string) {
+        this.dataExportService.requestDataExportForAnotherUser(login).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.alertService.success('artemisApp.dataExport.requestForUserSuccess', { login });
+            },
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.message);
+                this.alertService.error('artemisApp.dataExport.requestForUserError', { login });
+            },
         });
     }
 }

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, filter, switchMap } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -16,6 +16,11 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { onError } from 'app/shared/util/global.utils';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 
@@ -35,8 +40,10 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     tasks: ProgrammingExerciseServerSideTask[];
+    irisSettings?: IrisSettings;
 
     isSaving: boolean;
+    isGeneratingDescription: boolean;
     paramSub: Subscription;
 
     domainCommands = [new KatexCommand()];
@@ -51,9 +58,12 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         protected alertService: AlertService,
         private modalService: NgbModal,
+        protected codeHintService: CodeHintService,
         protected exerciseHintService: ExerciseHintService,
         private programmingExerciseService: ProgrammingExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        protected irisSettingsService: IrisSettingsService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -63,6 +73,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
             this.isSaving = false;
+            this.isGeneratingDescription = false;
         });
         this.route.data.subscribe(({ exerciseHint, exercise }) => {
             this.exercise = exercise;
@@ -80,6 +91,16 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                     this.exerciseHint.programmingExerciseTask = this.tasks[0];
                 }
             });
+
+            this.profileService
+                .getProfileInfo()
+                .pipe(
+                    filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                    switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise.id!)),
+                )
+                .subscribe((settings) => {
+                    this.irisSettings = settings;
+                });
         });
     }
 
@@ -134,6 +155,21 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         } else {
             this.subscribeToSaveResponse(this.exerciseHintService.create(this.exercise.id!, this.exerciseHint));
         }
+    }
+
+    generateDescriptionForCodeHint() {
+        this.isGeneratingDescription = true;
+        this.codeHintService.generateDescriptionForCodeHint(this.exercise.id!, this.exerciseHint.id!).subscribe({
+            next: (response) => {
+                this.exerciseHint.description = response.body!.description;
+                this.exerciseHint.content = response.body!.content;
+                this.isGeneratingDescription = false;
+            },
+            error: (error) => {
+                this.isGeneratingDescription = false;
+                onError(this.alertService, error);
+            },
+        });
     }
 
     protected subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseHint>>) {

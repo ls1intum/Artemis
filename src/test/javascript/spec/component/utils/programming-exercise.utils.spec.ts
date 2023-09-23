@@ -253,6 +253,21 @@ describe('ProgrammingExerciseUtils', () => {
             expect(url).toBe(expectedUrl);
         });
 
+        it('creates a commit url for a student submission in practice mode', () => {
+            const participantID = 'PID';
+            const participation = new ProgrammingExerciseStudentParticipation();
+            participation.repositoryUrl = 'repositoryUrl';
+            participation.testRun = true;
+            participation.participantIdentifier = participantID;
+            const submission = new ProgrammingSubmission();
+            submission.commitHash = commitHash;
+
+            const url = createCommitUrl(template, projectKey, participation, submission);
+
+            const expectedUrl = '/projects/pk/repos/pk-practice-' + participantID + '/commits/' + commitHash;
+            expect(url).toBe(expectedUrl);
+        });
+
         it('creates a commit url for a template submission', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
             const submission = new ProgrammingSubmission();

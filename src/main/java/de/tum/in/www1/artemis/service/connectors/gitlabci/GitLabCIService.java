@@ -244,11 +244,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        log.error("Unsupported action: GitLabCIService.performEmptySetupCommit()");
-    }
-
-    @Override
     public void deleteProject(String projectKey) {
         log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
         log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
@@ -325,7 +320,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, List<String> triggeredByRepositories) {
+            String newDefaultBranch) {
         log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
     }
 

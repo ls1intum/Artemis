@@ -16,11 +16,19 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { CodeHint } from 'app/entities/hestia/code-hint-model';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
+import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
     let fixture: ComponentFixture<ExerciseHintUpdateComponent>;
     let service: ExerciseHintService;
+    let codeHintService: CodeHintService;
     let programmingExerciseService: ProgrammingExerciseService;
 
     const task1 = new ProgrammingExerciseServerSideTask();
@@ -48,6 +56,8 @@ describe('ExerciseHint Management Update Component', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ExerciseHintService),
                 MockProvider(TranslateService),
+                MockProvider(IrisSettingsService),
+                MockProfileService,
                 { provide: ActivatedRoute, useValue: route },
             ],
         })
@@ -57,6 +67,7 @@ describe('ExerciseHint Management Update Component', () => {
                 comp = fixture.componentInstance;
 
                 service = TestBed.inject(ExerciseHintService);
+                codeHintService = TestBed.inject(CodeHintService);
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 flush();
             });
@@ -106,6 +117,82 @@ describe('ExerciseHint Management Update Component', () => {
         expect(comp.tasks).toEqual([task1, task2]);
         expect(comp.exerciseHint.programmingExerciseTask).toEqual(task1);
     }));
+
+    it('should update description and content using iris', fakeAsync(() => {
+        // GIVEN
+        const codeHint1 = new CodeHint();
+        codeHint1.id = 123;
+        codeHint1.programmingExerciseTask = task2;
+        const codeHint2 = new CodeHint();
+        codeHint2.id = 123;
+        codeHint2.programmingExerciseTask = task2;
+        codeHint2.content = 'Hello Content';
+        codeHint2.description = 'Hello Description';
+
+        jest.spyOn(codeHintService, 'generateDescriptionForCodeHint').mockReturnValue(of(new HttpResponse({ body: codeHint2 })));
+        comp.exerciseHint = codeHint1;
+        comp.courseId = 1;
+        comp.exercise = programmingExercise;
+
+        // WHEN
+        comp.generateDescriptionForCodeHint();
+        tick();
+
+        // THEN
+        expect(codeHintService.generateDescriptionForCodeHint).toHaveBeenCalledWith(15, 123);
+        expect(comp.isGeneratingDescription).toBeFalse();
+        expect(comp.exerciseHint.content).toBe('Hello Content');
+        expect(comp.exerciseHint.description).toBe('Hello Description');
+    }));
+
+    it.each<[string[]]>([[[]], [['iris']]])(
+        'should load iris settings only if profile iris is active',
+        fakeAsync((activeProfiles: string[]) => {
+            // Mock getProfileInfo to return activeProfiles
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
+
+            // Mock getTasksAndTestsExtractedFromProblemStatement
+            jest.spyOn(programmingExerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of([]));
+
+            const fakeSettings = {} as any as IrisSettings;
+
+            // Mock getCombinedProgrammingExerciseSettings
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
+            const getCombinedProgrammingExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings').mockReturnValue(of(fakeSettings));
+
+            // Run ngOnInit
+            comp.ngOnInit();
+            tick();
+
+            if (activeProfiles.includes('iris')) {
+                // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
+                expect(getCombinedProgrammingExerciseSettingsSpy).toHaveBeenCalledOnce();
+                expect(comp.irisSettings).toBe(fakeSettings);
+            } else {
+                // Should not have called getCombinedProgrammingExerciseSettings if 'iris' is not active
+                expect(getCombinedProgrammingExerciseSettingsSpy).not.toHaveBeenCalled();
+                expect(comp.irisSettings).toBeUndefined();
+            }
+        }),
+    );
+
+    it('should generate descriptions', () => {
+        const codeHint = new CodeHint();
+        codeHint.id = 123;
+        codeHint.programmingExerciseTask = task2;
+
+        comp.exerciseHint = codeHint;
+        comp.courseId = 1;
+        comp.exercise = programmingExercise;
+
+        const generateDescSpy = jest.spyOn(codeHintService, 'generateDescriptionForCodeHint');
+
+        comp.generateDescriptionForCodeHint();
+
+        expect(generateDescSpy).toHaveBeenCalledOnce();
+        expect(generateDescSpy).toHaveBeenCalledWith(15, 123);
+    });
 
     describe('save', () => {
         it('should call update service on save for existing entity', fakeAsync(() => {

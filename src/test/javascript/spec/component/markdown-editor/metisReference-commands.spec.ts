@@ -206,7 +206,6 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const selectedUnit: AttachmentUnit = metisLecture3.lectureUnits?.first() as AttachmentUnit;
         const shortLink = selectedUnit?.attachment ? selectedUnit?.attachment?.link!.split('attachments/')[1] : '';
         const referenceRouterLinkToLectureUnit = `[lecture-unit]${metisLecture3.lectureUnits?.first()?.name}(${shortLink})[/lecture-unit]`;
@@ -229,7 +228,6 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const selectedUnit: AttachmentUnit = metisLecture3.lectureUnits?.first() as AttachmentUnit;
         const selectedSlide: Slide = selectedUnit.slides?.first() as Slide;
         const shortLink = selectedSlide.slideImagePath!.split('attachments/')[1];

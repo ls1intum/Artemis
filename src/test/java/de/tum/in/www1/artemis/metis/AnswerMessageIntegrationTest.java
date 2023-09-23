@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -20,10 +20,11 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
-class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "answermessageint";
 
@@ -47,6 +48,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private List<Post> existingPostsWithAnswersCourseWide;
 
     private Long courseId;
+
+    @Autowired
+    private ConversationMessageRepository conversationMessageRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -179,6 +183,38 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsResolved_asAuthor() throws Exception {
+        // conversation post of student1 must be resolvable by them
+        AnswerPost resolvingAnswerPost = existingConversationPostsWithAnswers.get(3).getAnswers().iterator().next();
+        resolvingAnswerPost.setResolvesPost(true);
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + resolvingAnswerPost.getId(), resolvingAnswerPost,
+                AnswerPost.class, HttpStatus.OK);
+
+        assertThat(resolvingAnswerPost).isEqualTo(updatedAnswerPost);
+
+        // confirm that the post is marked as resolved when it has a resolving answer
+        assertThat(conversationMessageRepository.findMessagePostByIdElseThrow(updatedAnswerPost.getPost().getId()).isResolved()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testMarkMessageAsResolved_asTutor() throws Exception {
+        // conversation post of student1 must be resolvable by tutors
+        AnswerPost resolvingAnswerPost = existingConversationPostsWithAnswers.get(3).getAnswers().iterator().next();
+        resolvingAnswerPost.setResolvesPost(true);
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + resolvingAnswerPost.getId(), resolvingAnswerPost,
+                AnswerPost.class, HttpStatus.OK);
+
+        assertThat(resolvingAnswerPost).isEqualTo(updatedAnswerPost);
+
+        // confirm that the post is marked as resolved when it has a resolving answer
+        assertThat(conversationMessageRepository.findMessagePostByIdElseThrow(updatedAnswerPost.getPost().getId()).isResolved()).isTrue();
     }
 
     @Test

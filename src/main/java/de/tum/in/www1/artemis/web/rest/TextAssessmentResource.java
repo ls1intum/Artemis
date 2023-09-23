@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSendingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -65,13 +67,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final ResultService resultService;
 
+    private final Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
-            TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
+            TextSubmissionService textSubmissionService, ResultWebsocketService resultWebsocketService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository, SingleUserNotificationService singleUserNotificationService,
-            ResultService resultService) {
-        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
+            ResultService resultService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
+        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, resultWebsocketService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
 
         this.textAssessmentService = textAssessmentService;
@@ -83,6 +87,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.feedbackRepository = feedbackRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
+        this.athenaFeedbackSendingService = athenaFeedbackSendingService;
     }
 
     /**
@@ -112,7 +117,9 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, (TextExercise) result.getParticipation().getExercise(), response.getBody().getFeedbacks());
+            final var exercise = (TextExercise) result.getParticipation().getExercise();
+            final var feedbacksWithIds = response.getBody().getFeedbacks();
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
         }
 
         return response;
@@ -147,9 +154,12 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         final var response = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         if (response.getStatusCode().is2xxSuccessful()) {
+            final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
             final Submission submission = response.getBody().getSubmission();
             final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, textExerciseRepository.findByIdElseThrow(exerciseId), response.getBody().getFeedbacks());
+            final var feedbacksWithIds = response.getBody().getFeedbacks();
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
         return response;
     }
@@ -225,7 +235,9 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, response.getBody().getFeedbacks());
+            final var feedbacksWithIds = response.getBody().getFeedbacks();
+            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
 
         return response;
@@ -471,6 +483,15 @@ public class TextAssessmentResource extends AssessmentResource {
                 textBlockService.findAllBySubmissionId(textSubmission.getId());
                 textBlockService.saveAll(updatedTextBlocks);
             }
+        }
+    }
+
+    /**
+     * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
+     */
+    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.isFeedbackSuggestionsEnabled()) {
+            athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
         }
     }
 }

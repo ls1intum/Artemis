@@ -6,6 +6,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -55,24 +56,27 @@ public class LectureUnitProcessingService {
      */
     public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = PDDocument.load(file.getBytes())) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(file.getBytes())) {
             List<AttachmentUnit> units = new ArrayList<>();
             Splitter pdfSplitter = new Splitter();
 
             for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
+                // make sure output stream doesn't contain old data
+                outputStream.reset();
+
                 AttachmentUnit attachmentUnit = new AttachmentUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
 
                 pdfSplitter.setStartPage(lectureUnit.startPage());
                 pdfSplitter.setEndPage(lectureUnit.endPage());
-                pdfSplitter.setSplitAtPage(lectureUnit.endPage());
+                // split only based on start and end page
+                pdfSplitter.setSplitAtPage(document.getNumberOfPages());
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
-                if (lectureUnitInformationDTO.removeBreakSlides() || lectureUnitInformationDTO.removeSolutionSlides()) {
-                    removeBreakOrSolutionSlides(documentUnits.get(0), lectureUnitInformationDTO.removeBreakSlides(), lectureUnitInformationDTO.removeBreakSlidesKeyphrase(),
-                            lectureUnitInformationDTO.removeSolutionSlides(), lectureUnitInformationDTO.removeSolutionSlidesKeyphrase());
+                if (!lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases().isEmpty()) {
+                    removeSlidesContainingAnyKeyPhrases(documentUnits.get(0), lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
                 }
                 documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
                 documentUnits.get(0).save(outputStream);
@@ -97,16 +101,12 @@ public class LectureUnitProcessingService {
     }
 
     /**
-     * Removes the break slides or solution slides from the given document.
+     * Removes the slides containing any of the key phrases from the given document.
      *
-     * @param document                      document to remove break slides from
-     * @param removeBreakSlides             true if the break slides should be removed
-     * @param removeBreakSlidesKeyphrase    the keyword that identifies a break slide
-     * @param removeSolutionSlides          true if the example solution slides should be removed
-     * @param removeSolutionSlidesKeyphrase the keyword that identifies a example solution slide
+     * @param document                             document to remove slides from
+     * @param removeSlidesCommaSeparatedKeyPhrases key phrases that identify slides about to be removed
      */
-    private void removeBreakOrSolutionSlides(PDDocument document, boolean removeBreakSlides, String removeBreakSlidesKeyphrase, boolean removeSolutionSlides,
-            String removeSolutionSlidesKeyphrase) {
+    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String removeSlidesCommaSeparatedKeyPhrases) {
         try {
             PDFTextStripper pdfTextStripper = new PDFTextStripper();
             Splitter pdfSplitter = new Splitter();
@@ -118,10 +118,7 @@ public class LectureUnitProcessingService {
                 PDDocument currentPage = pages.get(index);
                 String slideText = pdfTextStripper.getText(currentPage);
 
-                if (removeBreakSlides && slideContainsKeyphrase(slideText, removeBreakSlidesKeyphrase)) {
-                    document.removePage(index);
-                }
-                else if (removeSolutionSlides && slideContainsKeyphrase(slideText, removeSolutionSlidesKeyphrase)) {
+                if (slideContainsKeyphrase(slideText, removeSlidesCommaSeparatedKeyPhrases)) {
                     document.removePage(index);
                 }
                 currentPage.close(); // make sure to close the document
@@ -133,8 +130,9 @@ public class LectureUnitProcessingService {
         }
     }
 
-    private boolean slideContainsKeyphrase(String slideText, String keyphrase) {
-        return slideText.contains(keyphrase);
+    private boolean slideContainsKeyphrase(String slideText, String removeSlidesCommaSeparatedKeyPhrases) {
+        String lowerCaseSlideText = slideText.toLowerCase();
+        return Arrays.stream(removeSlidesCommaSeparatedKeyPhrases.split(",")).anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase()));
     }
 
     /**
@@ -155,7 +153,7 @@ public class LectureUnitProcessingService {
                     .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
                     .toList();
             // return units information, maximum number of pages and by default remove break slides and remove solution slides are false
-            return new LectureUnitInformationDTO(units, numberOfPages, false, null, false, null);
+            return new LectureUnitInformationDTO(units, numberOfPages, null);
         }
         catch (IOException e) {
             log.error("Error while preparing the map with information", e);
@@ -172,7 +170,7 @@ public class LectureUnitProcessingService {
      * @return The prepared map
      */
     private Outline separateIntoUnits(MultipartFile file) throws IOException {
-        try (PDDocument document = PDDocument.load(file.getBytes())) {
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
             Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
             Splitter pdfSplitter = new Splitter();
             PDFTextStripper pdfStripper = new PDFTextStripper();

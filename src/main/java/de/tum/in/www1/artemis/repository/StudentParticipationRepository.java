@@ -58,7 +58,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT COUNT(p.id) > 0
             FROM StudentParticipation p
-            LEFT JOIN p.team.students ts
+                LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                 AND (p.student.id = :studentId OR ts.id = :studentId)
              """)
@@ -69,7 +69,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             WHERE p.testRun = false
-                AND p.exercise.exerciseGroup.exam.id = :#{#examId}
+                AND p.exercise.exerciseGroup.exam.id = :examId
                 AND r.rated = true
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
@@ -298,14 +298,25 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results
-            left join fetch p.submissions s
-            where p.exercise.id = :#{#exerciseId}
-                and p.student.id = :#{#studentId}
-                and (s.type <> 'ILLEGAL' or s.type is null)
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
              """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+             """)
+    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
             select distinct p from StudentParticipation p
@@ -480,16 +491,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query(value = """
-            SELECT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH p.results r
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.results r
             WHERE p.exercise.id = :#{#exerciseId}
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL
             """, countQuery = """
-            SELECT count(p) FROM StudentParticipation p
-            LEFT JOIN p.submissions s
-            LEFT JOIN p.results r
+            SELECT count(p)
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions s
+                LEFT JOIN p.results r
             WHERE p.exercise.id = :#{#exerciseId}
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL

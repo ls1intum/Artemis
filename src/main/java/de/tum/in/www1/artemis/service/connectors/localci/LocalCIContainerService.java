@@ -2,12 +2,14 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,8 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
 
-import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
@@ -39,33 +42,35 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
-    /**
-     * The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
-     * This path is provided as a Bean, because the retrieval is quite costly in the production environment (see {@link LocalCIConfiguration#buildScriptFilePath()}).
-     */
-    private final Path buildScriptFilePath;
-
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
-    public LocalCIContainerService(DockerClient dockerClient, Path buildScriptFilePath) {
+    public LocalCIContainerService(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
-        this.buildScriptFilePath = buildScriptFilePath;
     }
 
     /**
      * Configure the volumes of the container such that it can access the assignment repository, the test repository, and the build script.
      *
-     * @param assignmentRepositoryPath the path to the assignment repository in the file system
-     * @param testRepositoryPath       the path to the test repository in the file system
+     * @param assignmentRepositoryPath   the path to the assignment repository in the file system
+     * @param testRepositoryPath         the path to the test repository in the file system
+     * @param auxiliaryRepositoriesPaths the paths to the auxiliary repositories in the file system
+     * @param auxiliaryRepositoryNames   the names of the auxiliary repositories
+     * @param buildScriptPath            the path to the build script in the file system
      * @return the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
      */
-    public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath) {
-        return HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
-                .withBinds(
-                        new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository")),
-                        new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository")),
-                        new Bind(buildScriptFilePath.toString(), new Volume("/script.sh")));
+    public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames,
+            Path buildScriptPath) {
+
+        Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
+        binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
+        binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
+        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
+            binds[2 + i] = new Bind(auxiliaryRepositoriesPaths[i].toString(), new Volume("/" + auxiliaryRepositoryNames[i] + "-repository"));
+        }
+        binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptPath.toString(), new Volume("/script.sh"));
+
+        return HostConfig.newHostConfig().withAutoRemove(true).withBinds(binds); // Automatically remove the container when it exits.
     }
 
     /**
@@ -122,7 +127,7 @@ public class LocalCIContainerService {
         });
 
         try {
-            log.info("Started running the build script for build job in container with id " + containerId);
+            log.info("Started running the build script for build job in container with id {}", containerId);
             // Block until the latch reaches 0 or until the thread is interrupted.
             latch.await();
         }
@@ -195,5 +200,102 @@ public class LocalCIContainerService {
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
         ExecCreateCmdResponse createStopContainerFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
         dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+    }
+
+    /**
+     * Creates a build script for a given programming exercise.
+     * The build script is stored in a file in the local-ci-scripts directory.
+     * The build script is used to build the programming exercise in a Docker container.
+     *
+     * @param programmingExercise   the programming exercise for which to create the build script
+     * @param auxiliaryRepositories the auxiliary repositories of the programming exercise
+     * @return the path to the build script file
+     */
+    public Path createBuildScript(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> auxiliaryRepositories) {
+        Long programmingExerciseId = programmingExercise.getId();
+        boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
+
+        Path scriptsPath = Path.of("local-ci-scripts");
+
+        if (!Files.exists(scriptsPath)) {
+            try {
+                Files.createDirectory(scriptsPath);
+            }
+            catch (IOException e) {
+                throw new LocalCIException("Failed to create directory for local CI scripts", e);
+            }
+        }
+
+        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(programmingExerciseId.toString() + "-build.sh");
+
+        StringBuilder buildScript = new StringBuilder("""
+                #!/bin/bash
+                mkdir /repositories
+                cd /repositories
+                """);
+
+        // Checkout tasks
+        buildScript.append("""
+                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
+                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
+                """);
+
+        if (hasAuxiliaryRepositories) {
+            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
+                buildScript.append("git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
+            }
+        }
+
+        buildScript.append("""
+                cd assignment-repository
+                if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
+                    git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                    git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                fi
+                mkdir /repositories/test-repository/assignment
+                cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
+                """);
+
+        // Copy auxiliary repositories to checkout directories
+        if (hasAuxiliaryRepositories) {
+            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
+                buildScript.append("cp -a /repositories/").append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
+                        .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
+            }
+        }
+
+        buildScript.append("cd /repositories/test-repository\n");
+
+        // programming language specific tasks
+        buildScript.append("""
+                chmod +x gradlew
+                sed -i -e 's/\\r$//' gradlew
+                ./gradlew clean test""");
+
+        try {
+            FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Failed to create build script file", e);
+        }
+
+        return buildScriptPath;
+    }
+
+    /**
+     * Deletes the build script for a given programming exercise.
+     * The build script is stored in a file in the local-ci-scripts directory.
+     *
+     * @param exerciseID the ID of the programming exercise for which to delete the build script
+     */
+    public void deleteScriptFile(String exerciseID) {
+        Path scriptsPath = Path.of("local-ci-scripts");
+        Path buildScriptPath = scriptsPath.resolve(exerciseID + "-build.sh").toAbsolutePath();
+        try {
+            Files.deleteIfExists(buildScriptPath);
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Failed to delete build script file", e);
+        }
     }
 }

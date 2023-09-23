@@ -20,6 +20,11 @@
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
+            "cleanup": {
+                "successMessage": "Cleanup was successful. All build plans were deleted. Students can resume their participation.",
+                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories were deleted. All participations are marked as completed.",
+                "successMessageCleanup": "Cleanup was successful. All student repositories were deleted."
+            },
             "reset": {
                 "pleaseSelectOperations": "Please select the operations you want to perform on <strong>{{ title }}</strong>:",
                 "deleteBuildPlans": {
@@ -105,6 +110,7 @@
             "buildplans": "Build Plans",
             "buildplan": "Build Plan",
             "buildPlanEditor": "Build Plan Editor",
+            "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
@@ -525,6 +531,7 @@
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",

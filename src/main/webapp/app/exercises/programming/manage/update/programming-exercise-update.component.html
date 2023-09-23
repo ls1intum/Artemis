@@ -52,6 +52,7 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isExamMode]="isExamMode"
+                [isImport]="isImportFromExistingExercise || isImportFromFile"
             >
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty
@@ -70,6 +71,12 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
             ></jhi-programming-exercise-grading>
 
+            <jhi-exercise-update-notification
+                [exercise]="programmingExercise"
+                [isImport]="isImportFromExistingExercise || isImportFromFile"
+                [(notificationText)]="notificationText"
+            >
+            </jhi-exercise-update-notification>
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">
                     <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>

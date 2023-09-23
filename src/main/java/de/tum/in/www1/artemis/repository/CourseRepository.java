@@ -81,11 +81,21 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
-            SELECT DISTINCT c FROM Course c
+            SELECT DISTINCT c
+            FROM Course c
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = false
+            """)
+    List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
 
     /**
      * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
@@ -112,24 +122,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
-    @Query("""
-            SELECT DISTINCT c
-            FROM Course c
-                LEFT JOIN FETCH c.tutorialGroups tutorialGroups
-                LEFT JOIN tutorialGroups.teachingAssistant tutor
-                LEFT JOIN tutorialGroups.registrations registrations
-                LEFT JOIN registrations.student student
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
-                AND (student.id = :userId OR tutor.id = :userId)
-            """)
-    List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
-
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
+    Optional<Course> findWithEagerLearningPathsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "learningPaths", "learningPaths.competencies" })
+    Optional<Course> findWithEagerLearningPathsAndCompetenciesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures" })
     Optional<Course> findWithEagerLecturesById(long courseId);
@@ -162,6 +165,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
+
+    @Query("""
+                SELECT course
+                FROM Course course
+                    LEFT JOIN FETCH course.organizations
+                    LEFT JOIN FETCH course.competencies
+                    LEFT JOIN FETCH course.learningPaths
+                WHERE course.id = :courseId
+            """)
+    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndLearningPaths(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
@@ -244,6 +257,22 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
+    /**
+     * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
+     * Users that are part of multiple groups are NOT counted multiple times.
+     *
+     * @param courseId id of the course to count the members for
+     * @return number of users in the course
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT ug.userId)
+            FROM Course c
+            JOIN UserGroup ug
+            ON c.studentGroupName = ug.group OR c.teachingAssistantGroupName = ug.group OR c.editorGroupName = ug.group OR c.instructorGroupName = ug.group
+            WHERE c.id = :courseId
+            """)
+    Integer countCourseMembers(@Param("courseId") Long courseId);
+
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
         return findById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
@@ -269,6 +298,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerOrganizationsElseThrow(long courseId) throws EntityNotFoundException {
         return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerOrganizationsAndCompetenciesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
+        return findWithEagerOrganizationsAndCompetenciesAndLearningPaths(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
@@ -359,6 +393,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerCompetenciesByIdElseThrow(long courseId) {
         return findWithEagerCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
+        return findWithEagerLearningPathsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findWithEagerLearningPathsAndCompetenciesByIdElseThrow(long courseId) {
+        return findWithEagerLearningPathsAndCompetenciesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -191,7 +191,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             case FilterProp.NO_SUBMISSIONS:
                 return participation.submissionCount === 0;
             case FilterProp.NO_PRACTICE:
-                return !participation.testRun;
+                return !isPracticeMode(participation);
             case FilterProp.ALL:
             default:
                 return true;

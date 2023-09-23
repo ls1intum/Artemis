@@ -37,8 +37,10 @@ import {
     faLightbulb,
     faListAlt,
     faPencilAlt,
+    faRobot,
     faTable,
     faTimes,
+    faUserCheck,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -52,6 +54,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -85,6 +88,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     // Used to hide links to repositories and build plans when the "localvc" profile is active.
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
+    irisEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -112,6 +116,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faUsers = faUsers;
     faEye = faEye;
+    faUserCheck = faUserCheck;
+    faRobot = faRobot;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -184,8 +190,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                 this.programmingExercise.id!,
                             );
                         }
-                        this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
                     }
                 });
 
@@ -195,9 +203,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
                 this.loadGitDiffReport();
 
-                this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
-                    this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
-                });
+                // the build logs endpoint requires at least editor privileges
+                if (this.programmingExercise.isAtLeastEditor) {
+                    this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
+                        this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
+                    });
+                }
 
                 this.setLatestCoveredLineRatio();
 
@@ -408,6 +419,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     showGitDiff(): void {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
         modalRef.componentInstance.report = this.programmingExercise.gitDiffReport;
+    }
+
+    /**
+     * Shows the iris settings in a modal.
+     */
+    showIrisSettings(): void {
+        const modalRef = this.modalService.open(IrisProgrammingExerciseSettingsUpdateComponent, { size: 'xl' });
+        modalRef.componentInstance.programmingExerciseId = this.programmingExercise.id;
     }
 
     createStructuralSolutionEntries() {

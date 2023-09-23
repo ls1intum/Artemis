@@ -81,8 +81,8 @@
                         class="btn btn-info btn-sm me-1"
                         style="margin-bottom: 10px"
                     >
-                        <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
+                        <fa-icon [icon]="faUserCheck"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
@@ -172,6 +172,16 @@
                             <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
                         </button>
                     </span>
+                    <button
+                        *ngIf="irisEnabled"
+                        type="button"
+                        (click)="showIrisSettings()"
+                        class="btn btn-secondary btn-sm"
+                        ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
+                    >
+                        <fa-icon [icon]="faRobot"></fa-icon>
+                        <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
+                    </button>
                 </div>
                 <div>
                     <button
@@ -380,9 +390,11 @@
                                 </div>
                             </dt>
                             <dd>
-                                <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
-                                    auxiliaryRepository.repositoryUrl
-                                }}</a>
+                                <ng-container *ngif="!localVCEnabled">
+                                    <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
+                                        auxiliaryRepository.repositoryUrl
+                                    }}</a>
+                                </ng-container>
                             </dd>
                         </li>
                     </ul>

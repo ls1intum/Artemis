@@ -84,6 +84,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
     packageNamePatternForJavaKotlin =
         '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
+    // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
+    packageNamePatternForJavaBlackbox =
+        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*$';
     // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
     // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
     appNamePatternForSwift =
@@ -314,8 +317,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // update the project types for java programming exercises according to whether dependencies should be included
         if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA) {
-            if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
+            if (type == ProjectType.MAVEN_BLACKBOX) {
+                this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
+                this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
+                this.sequentialTestRunsAllowed = false;
+                this.testwiseCoverageAnalysisSupported = false;
+            } else if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+                this.sequentialTestRunsAllowed = true;
+                this.testwiseCoverageAnalysisSupported = true;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.MAVEN_MAVEN;
                 } else {
@@ -323,6 +333,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 }
             } else {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+                this.sequentialTestRunsAllowed = true;
+                this.testwiseCoverageAnalysisSupported = true;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.GRADLE_GRADLE;
                 } else {
@@ -389,8 +401,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                            this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                                this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
                             // we need the course id  to make the request to the server if it's an import from file
@@ -399,8 +411,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             }
                         } else if (params['courseId']) {
                             this.courseId = params['courseId'];
+                            this.isExamMode = false;
                             this.courseService.find(this.courseId).subscribe((res) => {
-                                this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
                                 if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
@@ -670,12 +682,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Sets the regex pattern for the package name for the selected programming language.
      *
      * @param language to choose from
+     * @param useBlackboxPattern whether to allow points in the regex
      */
-    setPackageNamePattern(language: ProgrammingLanguage) {
+    setPackageNamePattern(language: ProgrammingLanguage, useBlackboxPattern = false) {
         if (language === ProgrammingLanguage.SWIFT) {
             this.packageNamePattern = this.appNamePatternForSwift;
         } else {
-            this.packageNamePattern = this.packageNamePatternForJavaKotlin;
+            this.packageNamePattern = useBlackboxPattern ? this.packageNamePatternForJavaBlackbox : this.packageNamePatternForJavaKotlin;
         }
     }
 
@@ -695,6 +708,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         }
         this.selectedProjectType = projectType;
+        const useBlackboxPattern = projectType === ProjectType.MAVEN_BLACKBOX;
+        this.setPackageNamePattern(this.programmingExercise.programmingLanguage!, useBlackboxPattern);
         return projectType;
     }
 
@@ -737,7 +752,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
@@ -907,12 +922,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         } else {
             const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
+            const patternMatchJavaBlackbox: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaBlackbox);
             const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
-            if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
-                validationErrorReasons.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
-                    translateValues: {},
-                });
+            const projectTypeDependentPatternMatch: RegExpMatchArray | null =
+                this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX ? patternMatchJavaBlackbox : patternMatchJavaKotlin;
+
+            if (
+                this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA &&
+                (projectTypeDependentPatternMatch === null || projectTypeDependentPatternMatch.length === 0)
+            ) {
+                if (this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX) {
+                    validationErrorReasons.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA_BLACKBOX',
+                        translateValues: {},
+                    });
+                } else {
+                    validationErrorReasons.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                        translateValues: {},
+                    });
+                }
             } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
                 validationErrorReasons.push({
                     translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',

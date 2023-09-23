@@ -80,4 +80,10 @@ public class ExerciseUnit extends LectureUnit {
         this.releaseDate = null;
         this.competencies = new HashSet<>();
     }
+
+    // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
+    @Override
+    public String getType() {
+        return "exercise";
+    }
 }

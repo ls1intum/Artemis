@@ -10,26 +10,22 @@
     <div class="column d-flex justify-content-center align-content-center">
         <button
             *ngIf="!downloadMode"
-            id="request-data-export-btn"
-            jhiDeleteButton
-            [actionType]="ActionType.RequestDataExport"
-            [buttonSize]="ButtonSize.LARGE"
-            [buttonType]="ButtonType.PRIMARY"
-            [entityTitle]="currentLogin!"
-            [disabled]="!canRequestDataExport"
-            deleteQuestion="artemisApp.dataExport.confirmationQuestion"
-            (delete)="requestExport()"
+            jhiDataExportRequestButton
+            [adminDialog]="isAdmin"
+            [expectedLogin]="currentLogin!"
             [dialogError]="dialogError$"
-            [animation]="false"
-            deleteConfirmationText="artemisApp.dataExport.typeLoginToConfirm"
+            (dataExportRequest)="requestExport()"
+            (dataExportRequestForAnotherUser)="requestExportForAnotherUser($event)"
             class="mb-1"
+            [disabled]="!canRequestDataExport && !isAdmin"
         ></button>
         <jhi-button
             *ngIf="canDownload"
             id="download-data-export-btn"
             [btnSize]="ButtonSize.LARGE"
             [disabled]="!canDownload"
-            title="artemisApp.dataExport.download"
+            [tooltip]="'artemisApp.dataExport.download'"
+            [title]="'artemisApp.dataExport.download'"
             (onClick)="downloadDataExport()"
         ></jhi-button>
     </div>
@@ -38,7 +34,7 @@
             <span> {{ 'artemisApp.dataExport.lastRequestDate' | artemisTranslate }}</span>
             <span class="bold">{{ dataExport?.createdDate | artemisDate: 'long-date' }}</span>
         </p>
-        <p *ngIf="dataExport?.nextRequestDate && (state === DataExportState.DELETED || state === DataExportState.DOWNLOADED_DELETED)">
+        <p *ngIf="dataExport?.nextRequestDate && (state === DataExportState.DELETED || state === DataExportState.DOWNLOADED_DELETED) && !canRequestDataExport">
             <span> {{ 'artemisApp.dataExport.nextRequestDate' | artemisTranslate }}</span>
             <span class="bold">{{ dataExport?.nextRequestDate | artemisDate: 'long-date' }}</span>
         </p>

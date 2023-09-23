@@ -52,7 +52,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest
     @MethodSource("provideDataExportStatesAndExpectedToBeCreated")
-    void testScheduledCronTaskCreatesDataExports(DataExportState state, boolean shouldBeCreated) {
+    void testScheduledCronTaskCreatesDataExports(DataExportState state, boolean shouldBeCreated) throws InterruptedException {
         dataExportRepository.deleteAll();
         var dataExport = createDataExportWithState(state);
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
@@ -69,13 +69,13 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    void testScheduledCronTaskSendsEmailToAdminAboutSuccessfulDataExports() {
+    void testScheduledCronTaskSendsEmailToAdminAboutSuccessfulDataExports() throws InterruptedException {
         dataExportRepository.deleteAll();
         createDataExportWithState(DataExportState.REQUESTED);
         createDataExportWithState(DataExportState.REQUESTED);
         createDataExportWithState(DataExportState.REQUESTED);
         // first data export creation should fail, the subsequent ones should succeed
-        doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
+        doThrow(new RuntimeException("error")).doNothing().doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportsAfterCreation = dataExportRepository.findAllSuccessfullyCreatedDataExports();
         verify(mailService).sendSuccessfulDataExportsEmailToAdmin(any(User.class), anyString(), anyString(), eq(Set.copyOf(dataExportsAfterCreation)));
@@ -89,9 +89,9 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest
     @MethodSource("provideCreationDatesAndExpectedToDelete")
-    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) {
+    void testScheduledCronTaskDeletesOldDataExports(ZonedDateTime creationDate, DataExportState state, boolean shouldDelete) throws InterruptedException {
         var dataExport = createDataExportWithCreationDateAndState(creationDate, state);
-        doNothing().when(fileService).scheduleForDeletion(any(), anyLong());
+        doNothing().when(fileService).schedulePathForDeletion(any(), anyLong());
         var dataExportId = dataExport.getId();
         dataExportScheduleService.createDataExportsAndDeleteOldOnes();
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExportId);

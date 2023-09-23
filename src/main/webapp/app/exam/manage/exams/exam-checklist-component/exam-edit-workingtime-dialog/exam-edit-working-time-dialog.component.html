@@ -1,0 +1,55 @@
+<form name="workingTimeForm" (ngSubmit)="confirmUpdateWorkingTime()" #editForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span jhiTranslate="artemisApp.examManagement.editWorkingTime.title">Edit Exam Duration</span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body d-flex flex-column">
+        <div class="d-flex flex-column gap-4 align-items-start">
+            <jhi-working-time-control
+                name="workingTimeSeconds"
+                durationLabelText="artemisApp.examManagement.editWorkingTime.label"
+                [(ngModel)]="workingTimeSeconds"
+                [showRelative]="false"
+                [disabled]="isLoading"
+            />
+
+            <p
+                class="mb-0"
+                *ngIf="absoluteWorkingTimeDuration"
+                jhiTranslate="artemisApp.examManagement.editWorkingTime.duration"
+                [translateValues]="{ duration: absoluteWorkingTimeDuration }"
+            ></p>
+        </div>
+
+        <hr />
+
+        <div>
+            <p jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam.title }">Do you really want to edit the duration of the exam?</p>
+            <jhi-confirm-entity-name
+                confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
+                [entityName]="exam.title!"
+                [disabled]="isLoading"
+                [(ngModel)]="confirmEntityName"
+                name="confirmEntityName"
+            />
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="isLoading">
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button
+            id="confirm"
+            type="submit"
+            class="btn btn-warning"
+            [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeValid() ? 'not-allowed' : 'pointer'"
+            [disabled]="editForm.invalid || isLoading || !isWorkingTimeValid()"
+        >
+            <span *ngIf="isLoading"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+            <fa-icon *ngIf="!isLoading" [icon]="faCheck"></fa-icon>&nbsp;
+            <span jhiTranslate="entity.action.confirm">Confirm</span>
+        </button>
+    </div>
+</form>

@@ -16,6 +16,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -86,6 +87,156 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
+
+    /**
+     * Return the number of active exercises, grouped by exercise type
+     * If for one exercise type no exercise is active, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @param now the current time
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            	AND (e.dueDate >= :#{#now} OR e.dueDate IS NULL)
+            	AND (e.releaseDate <= :#{#now} OR e.releaseDate IS NULL)
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countActiveExercisesGroupByExerciseType(@Param("now") ZonedDateTime now);
+
+    /**
+     * Return the number of exercises, grouped by exercise type
+     * If for one exercise type no exercise exists, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countExercisesGroupByExerciseType();
+
+    /**
+     * Return the number of exercises that will end between minDate and maxDate, grouped by exercise type
+     * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :#{#minDate}
+            	AND e.dueDate <= :#{#maxDate}
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countExercisesWithEndDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Return the number of students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
+     * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :#{#minDate}
+            	AND e.dueDate <= :#{#maxDate}
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Return the number of active students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
+     * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @param minDate          the minimum due date
+     * @param maxDate          the maximum due date
+     * @param activeUserLogins a list of users that should be treated as active
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :#{#minDate}
+            	AND e.dueDate <= :#{#maxDate}
+                AND user.login IN :#{#activeUserLogins}
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
+
+    /**
+     * Return the number of exercises that will be released between minDate and maxDate, grouped by exercise type
+     * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @param minDate the minimum release date
+     * @param maxDate the maximum release date
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(e.id))
+            FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            	AND e.releaseDate >= :#{#minDate}
+            	AND e.releaseDate <= :#{#maxDate}
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Return the number of students that are part of an exercise that will be released between minDate and maxDate, grouped by exercise type
+     * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @param minDate the minimum release date
+     * @param maxDate the maximum release date
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.releaseDate >= :#{#minDate}
+            	AND e.releaseDate <= :#{#maxDate}
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
+            @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Return the number of active students that are part of an exercise that will be release between minDate and maxDate, grouped by exercise type
+     * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
+     *
+     * @param minDate          the minimum release date
+     * @param maxDate          the maximum release date
+     * @param activeUserLogins a list of users that should be treated as active
+     * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry(TYPE(e), COUNT(DISTINCT user.id))
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.releaseDate >= :#{#minDate}
+            	AND e.releaseDate <= :#{#maxDate}
+                AND user.login IN :#{#activeUserLogins}
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
 
     @Query("""
             SELECT e FROM Exercise e
@@ -318,6 +469,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
         return findByIdWithEagerParticipations(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
+    default Exercise findByIdWithEagerExampleSubmissionsElseThrow(Long exerciseId) {
+        return findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    }
+
     /**
      * Activates or deactivates the possibility for tutors to assess within the correction round
      *
@@ -349,4 +504,21 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                   OR students.id = :userId
              """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(long userId);
+
+    /**
+     * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}
+     *
+     * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
+     * @return a list of exercises with potential plagiarism
+     */
+    @Query("""
+                SELECT e
+                FROM Exercise e
+                    LEFT JOIN e.exerciseGroup eg
+                    WHERE eg IS NOT NULL
+                        AND eg.exam.id = :examId
+                        AND TYPE (e) IN (ModelingExercise, TextExercise, ProgrammingExercise)
+
+            """)
+    Set<Exercise> findAllExercisesWithPotentialPlagiarismByExamId(long examId);
 }

@@ -24,7 +24,8 @@ import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/s
 import { ArtemisExerciseUpdateWarningModule } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.module';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
-import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
+import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -49,7 +50,8 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisExerciseUpdateWarningModule,
         ExampleSubmissionsModule,
         ExerciseCategoriesModule,
-        TitleChannelNameModule,
+        ExerciseTitleChannelNameModule,
+        ExerciseUpdateNotificationModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],

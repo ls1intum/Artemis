@@ -1,0 +1,40 @@
+<div class="graph-container">
+    <ngx-graph
+        *ngIf="ngxLearningPath"
+        [links]="ngxLearningPath.edges"
+        [nodes]="ngxLearningPath.nodes"
+        [layout]="layout"
+        [layoutSettings]="{ orientation: 'TB' }"
+        [curve]="curve"
+        [draggingEnabled]="draggingEnabled"
+        [panningEnabled]="panningEnabled"
+        [enableZoom]="zoomEnabled"
+        [panOnZoom]="panOnZoom"
+        [update$]="update$"
+        [center$]="center$"
+        [zoomToFit$]="zoomToFit$"
+    >
+        <ng-template #defsTemplate>
+            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+            </svg:marker>
+        </ng-template>
+        <ng-template #nodeTemplate let-node>
+            <svg:g class="node" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
+                <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
+                    <jhi-learning-path-graph-node class="node" [courseId]="courseId" [node]="node" (click)="nodeClicked.emit(node)"></jhi-learning-path-graph-node>
+                </svg:foreignObject>
+            </svg:g>
+        </ng-template>
+        <ng-template #linkTemplate let-link>
+            <svg:g class="edge">
+                <svg:path class="line" stroke-width="2"></svg:path>
+            </svg:g>
+        </ng-template>
+        <ng-template #clusterTemplate let-cluster>
+            <svg:g class="node cluster">
+                <svg:rect rx="5" ry="5" [attr.width]="cluster.dimension.width" [attr.height]="cluster.dimension.height" [attr.fill]="cluster.data.color" />
+            </svg:g>
+        </ng-template>
+    </ngx-graph>
+</div>

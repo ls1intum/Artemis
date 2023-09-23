@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -66,6 +68,19 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     boolean existsByTitleAndCourse(String title, Course course);
 
     @Query("""
+            SELECT DISTINCT tutorialGroups.id
+            FROM Course c
+                LEFT JOIN c.tutorialGroups tutorialGroups
+                LEFT JOIN tutorialGroups.teachingAssistant tutor
+                LEFT JOIN tutorialGroups.registrations registrations
+                LEFT JOIN registrations.student student
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND (student.id = :userId OR tutor.id = :userId)
+            """)
+    Set<Long> findAllActiveTutorialGroupIdsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
+
+    @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.teachingAssistant
@@ -107,6 +122,8 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     Optional<TutorialGroup> findByTutorialGroupChannelId(Long channelId);
 
     boolean existsByTitleAndCourseId(String title, Long courseId);
+
+    Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
 
     @Transactional
     @Modifying

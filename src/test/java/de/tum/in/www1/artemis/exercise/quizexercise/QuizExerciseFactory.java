@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.validation.constraints.NotNull;
+
+import org.apache.commons.io.FileUtils;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -16,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.service.FilePathService;
 
 /**
  * Factory for creating QuizExercises and related objects.
@@ -183,7 +189,7 @@ public class QuizExerciseFactory {
 
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode, Course course) {
         QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, assessmentDueDate, course);
-        quizExercise.setTitle("my cool quiz title");
+        quizExercise.setTitle("new quiz");
 
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
@@ -318,7 +324,7 @@ public class QuizExerciseFactory {
 
     private static ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
         var shortAnswerQuestion = createShortAnswerQuestion();
-        shortAnswerQuestion.setText("This [-spot1] a [-spot 2] answer text");
+        shortAnswerQuestion.setText("This [-spot0] a [-spot 2] answer text");
         return shortAnswerQuestion;
     }
 
@@ -354,6 +360,13 @@ public class QuizExerciseFactory {
         dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().text("invalid drag item");
         dragItem4.setTempID(generateTempId());
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
+                    FilePathService.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
         var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);

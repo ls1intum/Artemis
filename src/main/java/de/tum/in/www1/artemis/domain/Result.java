@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
 import static de.tum.in.www1.artemis.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -27,7 +30,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * A Result.
@@ -210,8 +215,17 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
-        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
+    private void setRatedIfNotAfterDueDate(@NotNull Participation participation, @NotNull ZonedDateTime submissionDate) {
+        var optionalDueDate = ExerciseDateService.getDueDate(participation);
+        if (optionalDueDate.isEmpty()) {
+            this.rated = true;
+            return;
+        }
+        var dueDate = optionalDueDate.get();
+        if (getParticipation().getExercise() instanceof ProgrammingExercise) {
+            dueDate = dueDate.plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS);
+        }
+        this.rated = !submissionDate.isAfter(dueDate);
     }
 
     /**
@@ -219,20 +233,16 @@ public class Result extends DomainObject implements Comparable<Result> {
      * - the submission date is before the due date OR
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
-     *
-     * @param exerciseDueDate date after which no normal submission is considered rated.
-     * @param submission      to which the result belongs.
-     * @param participation   to wich the submission belongs
      */
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission, Participation participation) {
+    public void setRatedIfNotAfterDueDate() {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
-        else if (submission.getType() == SubmissionType.ILLEGAL || participation.isTestRun()) {
+        else if (submission.getType() == SubmissionType.ILLEGAL || participation.isPracticeMode()) {
             this.rated = false;
         }
         else {
-            setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
+            setRatedIfNotAfterDueDate(participation, submission.getSubmissionDate());
         }
     }
 
@@ -472,19 +482,30 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Removes all feedback details that should not be passed to the student.
      *
-     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
+     * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
      */
-    public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
-        feedbacks.removeIf(Feedback::isInvisible);
-
-        if (isBeforeDueDate) {
-            feedbacks.removeIf(Feedback::isAfterDueDate);
-        }
+    public void filterSensitiveFeedbacks(boolean removeHiddenFeedback) {
+        var filteredFeedback = createFilteredFeedbacks(removeHiddenFeedback);
+        setFeedbacks(filteredFeedback);
 
         // TODO: this is not good code!
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
         setTestCaseCount(testCaseFeedback.size());
         setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
+    }
+
+    /**
+     * Returns a new list that only contains feedback that should be passed to the student.
+     * Does not change the feedbacks attribute of this entity.
+     *
+     * @see ResultDTO
+     *
+     * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
+     * @return the new filtered list
+     */
+    public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback) {
+        return feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

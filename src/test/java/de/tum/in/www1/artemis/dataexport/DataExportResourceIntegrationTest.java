@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
-import de.tum.in.www1.artemis.service.dataexport.DataExportService;
+import de.tum.in.www1.artemis.service.export.DataExportService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.DataExportDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RequestDataExportDTO;
@@ -53,8 +53,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 0, 0, 1);
     }
 
     @AfterEach
@@ -86,14 +86,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setCreationFinishedDate(ZonedDateTime.now().minusDays(1));
         // rename file to avoid duplicates in the temp directory
         var newFilePath = TEST_DATA_EXPORT_BASE_FILE_PATH + ZonedDateTime.now().toEpochSecond();
-        Files.move(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH), Path.of(newFilePath));
+        FileUtils.moveFile(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH).toFile(), Path.of(newFilePath).toFile());
         dataExport.setFilePath(newFilePath);
         return dataExportRepository.save(dataExport);
     }
 
     private void restoreTestDataInitState(DataExport dataExport) throws IOException {
         // undo file renaming
-        Files.move(Path.of(dataExport.getFilePath()), Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH));
+        FileUtils.moveFile(Path.of(dataExport.getFilePath()).toFile(), Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH).toFile());
     }
 
     @Test
@@ -156,15 +156,26 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(value = DataExportState.class, names = { "IN_CREATION", "DOWNLOADED" })
-    void testCanDownload_dataExportInCorrectState_dataExportIdReturned() throws Exception {
+    @EnumSource(value = DataExportState.class, names = { "EMAIL_SENT", "DOWNLOADED" })
+    void testCanDownload_dataExportInCorrectState_dataExportIdReturned(DataExportState state) throws Exception {
         dataExportRepository.deleteAll();
         DataExport dataExport = new DataExport();
-        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setDataExportState(state);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
         var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isEqualTo(dataExport.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanDownload_multipleDataExportsInCorrectState_returnsLatest() throws Exception {
+        dataExportRepository.deleteAll();
+        initDataExport(DataExportState.DOWNLOADED);
+        var expectedDataExport = initDataExport(DataExportState.EMAIL_SENT);
+        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        assertThat(dataExportToDownload.id()).isEqualTo(expectedDataExport.getId());
+        assertThat(dataExportToDownload.dataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
     }
 
     @Test
@@ -285,7 +296,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteDataExportSchedulesDirectoryForDeletion_setsCorrectState(DataExportState state) {
         var dataExport = initDataExport(state);
-        doNothing().when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyInt());
+        doNothing().when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyInt());
         dataExportService.deleteDataExportAndSetDataExportState(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         if (state == DataExportState.DOWNLOADED) {
@@ -294,7 +305,27 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         else {
             assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.DELETED);
         }
-        verify(fileService).scheduleForDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+        verify(fileService).schedulePathForDeletion(Path.of(dataExportFromDb.getFilePath()), 2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRequestForAnotherUserInstructor_forbidden() throws Exception {
+        request.post("/api/admin/data-exports/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testRequestForAnotherUserAsAdmin_success() throws Exception {
+        var usernameToRequest = TEST_PREFIX + "student1";
+        dataExportRepository.deleteAll();
+        var response = request.postWithResponseBody("/api/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.OK);
+        assertThat(response.dataExportState()).isEqualTo(DataExportState.REQUESTED);
+        assertThat(response.createdDate()).isNotNull();
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(response.id());
+        assertThat(dataExportFromDb.getUser().getLogin()).isEqualTo(usernameToRequest);
+        assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.REQUESTED);
+        assertThat(dataExportFromDb.getCreatedBy()).isEqualTo(TEST_PREFIX + "admin");
     }
 
     private DataExport initDataExport(DataExportState state) {

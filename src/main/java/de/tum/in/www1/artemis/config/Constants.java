@@ -2,6 +2,11 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.regex.Pattern;
 
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+
 /**
  * Application constants.
  */
@@ -31,6 +36,19 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 5;
 
+    /**
+     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
+     * Submissions after the grace period exceeded will be flagged as illegal.
+     * <p>
+     * This is needed because locking programming exercise repositories might take up to 60 seconds,
+     * especially for exercises with many participants.
+     * If the student was able to successfully push their solution, this solution should still be graded, even if
+     * the push was a few seconds late.
+     *
+     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
+     */
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
+
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
@@ -59,6 +77,8 @@ public final class Constants {
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-\\s]*");
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
+
+    public static final String TUM_LDAP_EMAIL = "imHauptEMail";
 
     // NOTE: the following values for programming exercises are hard-coded at the moment
     public static final String TEST_REPO_NAME = "tests";
@@ -156,6 +176,10 @@ public final class Constants {
 
     public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
+    public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
+
+    public static final String CLEANUP_EXAM = "CLEANUP_EXAM";
+
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
     public static final String EDIT_EXERCISE = "EDIT_EXERCISE";
@@ -239,6 +263,8 @@ public final class Constants {
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
+    public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
+
     public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
 
     public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
@@ -280,6 +306,11 @@ public final class Constants {
      * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
      */
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
+
+    /**
+     * The name of the topic for notifying the client about changes in the exam working time.
+     */
+    public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
 
     private Constants() {
     }
