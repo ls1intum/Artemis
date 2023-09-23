@@ -181,7 +181,7 @@ export class TeamRequestInterceptorMock implements HttpInterceptor {
         if (request.url && request.url.indexOf(`${TeamService.resourceUrl(mockExercise.id!)}/${mockTeamFromServer.id}`) > -1) {
             return of(new HttpResponse({ status: 200, body: mockTeamFromServer }));
         }
-        if (request.url === `${SERVER_API_URL}api/exercises/${mockExercise.id}`) {
+        if (request.url === `api/exercises/${mockExercise.id}`) {
             return of(new HttpResponse({ status: 200, body: mockExercise }));
         }
         return next.handle(request);

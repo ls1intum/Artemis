@@ -20,12 +20,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,11 +44,23 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private FeatureToggleService featureToggleService;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private PersistentAuditEvent persAuditEvent;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal(TEST_PREFIX + "student1");
         persAuditEvent.setAuditEventDate(Instant.now());
@@ -72,15 +88,15 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "admin", roles = "ADMIN")
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
-        var course = database.addCourseWithOneProgrammingExercise();
-        var programmingExercise1 = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        var programmingExercise2 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
-        database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var programmingExercise1 = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
         doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).deleteProject(any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         mockDefaultBranch(programmingExercise1);
@@ -93,13 +109,12 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
-        request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.OK);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK);
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
-        request.put("/api/admin/management/feature-toggle", features, HttpStatus.OK);
+        request.put("/api/admin/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
@@ -107,7 +122,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
-        request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.FORBIDDEN);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
 
@@ -132,7 +146,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var auditEvent = auditEvents.get(0);
         var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
-        assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().get().getPrincipal());
+        assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().orElseThrow().getPrincipal());
     }
 
     @Test
@@ -140,7 +154,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void getAuditEvent() throws Exception {
         var auditEvent = request.get("/api/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvent).isNotNull();
-        var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).get();
+        var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).orElseThrow();
         assertThat(auditEventInDb.getPrincipal()).isEqualTo(auditEvent.getPrincipal());
     }
 }

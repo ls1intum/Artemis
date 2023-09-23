@@ -3,20 +3,25 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.organization.OrganizationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.util.Tuple;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Test for {@link TitleCacheEvictionService} that should evict entity titles from the title caches if the titles are
@@ -25,7 +30,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  * The service is not directly injected / used here as it listens to Hibernate events, so we just apply
  * CRUD operations on the entities it supports.
  */
-class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CacheManager cacheManager;
@@ -51,19 +56,37 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private ExerciseHintRepository exerciseHintRepository;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private OrganizationUtilService organizationUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteCourse() {
-        var course = database.addEmptyCourse();
+        var course = courseUtilService.addEmptyCourse();
         testCacheEvicted("courseTitle", () -> new Tuple<>(course.getId(), course.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    course.setTitle(UUID.randomUUID().toString());
+                    course.setTitle("testEvictsTitleOnUpdateTitleOrDeleteCourse");
                     courseRepository.save(course);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    course.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    course.setDescription("testEvictsTitleOnUpdateTitleOrDeleteCourse"); // Change some other values
                     courseRepository.save(course);
                     return false;
                 },
@@ -76,18 +99,18 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteExercise() {
-        var course = database.addCourseWithOneReleasedTextExercise();
+        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         var exercise = course.getExercises().stream().findAny().orElseThrow();
         testCacheEvicted("exerciseTitle", () -> new Tuple<>(exercise.getId(), exercise.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    exercise.setTitle(UUID.randomUUID().toString());
+                    exercise.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExercise");
                     exerciseRepository.save(exercise);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    exercise.setProblemStatement(UUID.randomUUID().toString()); // Change some other values
+                    exercise.setProblemStatement("testEvictsTitleOnUpdateTitleOrDeleteExercise"); // Change some other values
                     exerciseRepository.save(exercise);
                     return false;
                 },
@@ -100,17 +123,17 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteLecture() {
-        var lecture = database.createCourseWithLecture(true);
+        var lecture = lectureUtilService.createCourseWithLecture(true);
         testCacheEvicted("lectureTitle", () -> new Tuple<>(lecture.getId(), lecture.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    lecture.setTitle(UUID.randomUUID().toString());
+                    lecture.setTitle("testEvictsTitleOnUpdateTitleOrDeleteLecture");
                     lectureRepository.save(lecture);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    lecture.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    lecture.setDescription("testEvictsTitleOnUpdateTitleOrDeleteLecture"); // Change some other values
                     lectureRepository.save(lecture);
                     return false;
                 },
@@ -123,17 +146,17 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateNameOrDeleteOrganization() {
-        var org = database.createOrganization();
+        var org = organizationUtilService.createOrganization();
         testCacheEvicted("organizationTitle", () -> new Tuple<>(org.getId(), org.getName()), List.of(
                 // Should evict as we change the name
                 () -> {
-                    org.setName(UUID.randomUUID().toString());
+                    org.setName("testEvictsTitleOnUpdateNameOrDeleteOrganization");
                     organizationRepository.save(org);
                     return true;
                 },
                 // Should not evict as name remains the same
                 () -> {
-                    org.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    org.setDescription("testEvictsTitleOnUpdateNameOrDeleteOrganization"); // Change some other values
                     organizationRepository.save(org);
                     return false;
                 },
@@ -146,11 +169,11 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram() {
-        var apollonDiagram = apollonDiagramRepository.save(ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1"));
+        var apollonDiagram = apollonDiagramRepository.save(ModelingExerciseFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1"));
         testCacheEvicted("diagramTitle", () -> new Tuple<>(apollonDiagram.getId(), apollonDiagram.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    apollonDiagram.setTitle(UUID.randomUUID().toString());
+                    apollonDiagram.setTitle("testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram");
                     apollonDiagramRepository.save(apollonDiagram);
                     return true;
                 },
@@ -169,18 +192,18 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteExam() {
-        var course = database.createCourse();
-        var exam = database.addExam(course);
+        var course = courseUtilService.createCourse();
+        var exam = examUtilService.addExam(course);
         testCacheEvicted("examTitle", () -> new Tuple<>(exam.getId(), exam.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    exam.setTitle(UUID.randomUUID().toString());
+                    exam.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExam");
                     examRepository.save(exam);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    exam.setConfirmationEndText(UUID.randomUUID().toString()); // Change some other values
+                    exam.setConfirmationEndText("testEvictsTitleOnUpdateTitleOrDeleteExam"); // Change some other values
                     examRepository.save(exam);
                     return false;
                 },
@@ -193,27 +216,27 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteExerciseHint() {
-        var course = database.addCourseWithOneProgrammingExercise();
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
-        database.addHintsToExercise(exercise);
+        programmingExerciseUtilService.addHintsToExercise(exercise);
         var hint = exercise.getExerciseHints().stream().findFirst().orElseThrow();
         testCacheEvicted("exerciseHintTitle", () -> new Tuple<>(exercise.getId() + "-" + hint.getId(), hint.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    hint.setTitle(UUID.randomUUID().toString());
+                    hint.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint");
                     exerciseHintRepository.save(hint);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    hint.setDescription(UUID.randomUUID().toString()); // Change some other values
+                    hint.setDescription("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint"); // Change some other values
                     exerciseHintRepository.save(hint);
                     return false;
                 },
                 // Should not do something if the exercise is missing
                 () -> {
                     hint.setExercise(null);
-                    hint.setTitle(UUID.randomUUID().toString());
+                    hint.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExerciseHint");
                     exerciseHintRepository.save(hint);
                     return false;
                 },

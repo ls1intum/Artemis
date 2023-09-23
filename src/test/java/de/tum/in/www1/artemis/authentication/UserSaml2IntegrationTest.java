@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,11 +24,12 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.web.rest.UserJWTController;
+import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.open.UserJwtResource;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
- * Tests for {@link UserJWTController} and {@link SAML2Service}.
+ * Tests for {@link UserJwtResource} and {@link SAML2Service}.
  */
 class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
@@ -43,6 +44,9 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     @BeforeEach
     void setup() {
@@ -66,7 +70,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
     @Test
     void testAuthenticationRedirect() throws Exception {
-        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
+        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
         final String redirectTarget = request.getRedirectTarget("/saml2/authenticate", HttpStatus.FOUND);
         assertThat(redirectTarget).endsWith("/login");
     }
@@ -128,7 +132,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         authenticate(createPrincipal(""));
 
         assertStudentExists();
-        assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isNull();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isNull();
     }
 
     /**
@@ -150,7 +154,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
 
         assertStudentExists();
-        assertThat(this.database.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
     }
 
     /**
@@ -164,11 +168,11 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
         // Create user
         mockSAMLAuthentication();
-        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.OK);
         assertStudentExists();
 
         // Change Password
-        User student = userRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).get();
+        User student = userRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
         student.setPassword(passwordService.hashPassword(STUDENT_PASSWORD));
         userRepository.saveAndFlush(student);
 
@@ -177,7 +181,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        request.postWithoutResponseBody("/api/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
+        request.postWithoutResponseBody("/api/public/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
 
         // Check SAML Login afterwards ..
 
@@ -185,7 +189,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         // Mock existing SAML2 Auth
         mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
-        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     /**
@@ -197,13 +201,13 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
     void testInvalidAuthenticationSaml2Login() throws Exception {
         assertStudentNotExists();
         // Test whether authorizeSAML2 generates a no token
-        request.post("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
+        request.post("/api/public/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
         assertStudentNotExists();
     }
 
     private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
         mockSAMLAuthentication(principal);
-        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     private void mockSAMLAuthentication() throws Exception {
@@ -245,15 +249,15 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
     }
 
     private void assertStudentNotExists() {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login " + STUDENT_NAME + " does not exist in database");
+        assertThatIllegalArgumentException().isThrownBy(() -> userUtilService.getUserByLogin(STUDENT_NAME))
+                .withMessage("Provided login " + STUDENT_NAME + " does not exist in database");
     }
 
     private void assertStudentExists() {
-        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
     }
 
     private void assertRegistrationNumber(String registrationNumber) {
-        assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
     }
 }

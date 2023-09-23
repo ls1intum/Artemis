@@ -2,7 +2,6 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -11,6 +10,8 @@ import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
+import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -38,11 +39,13 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     repositoryPassword: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
+    localVCEnabled = false;
     user: User;
     cloneHeadline: string;
     wasCopied = false;
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
+    isPracticeMode: boolean | undefined;
 
     // Icons
     faDownload = faDownload;
@@ -63,14 +66,15 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         });
 
         // Get ssh information from the user
-        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
-            this.sshKeysUrl = info.sshKeysURL;
-            this.sshTemplateUrl = info.sshCloneURLTemplate;
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.sshKeysUrl = profileInfo.sshKeysURL;
+            this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
             this.sshEnabled = !!this.sshTemplateUrl;
-            if (info.versionControlUrl) {
-                this.versionControlUrl = info.versionControlUrl;
+            if (profileInfo.versionControlUrl) {
+                this.versionControlUrl = profileInfo.versionControlUrl;
             }
-            this.versionControlAccessTokenRequired = info.versionControlAccessToken;
+            this.versionControlAccessTokenRequired = profileInfo.versionControlAccessToken;
+            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
@@ -86,10 +90,9 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         if (this.participations?.length) {
             const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
             this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, shouldPreferPractice) ?? this.participations[0];
+            this.isPracticeMode = isPracticeMode(this.activeParticipation);
             this.cloneHeadline =
-                this.activeParticipation.testRun && !this.exercise?.exerciseGroup
-                    ? 'artemisApp.exerciseActions.clonePracticeRepository'
-                    : 'artemisApp.exerciseActions.cloneRatedRepository';
+                this.isPracticeMode && !this.exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
             this.isTeamParticipation = !!this.activeParticipation?.team;
         } else if (this.repositoryUrl) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
@@ -191,7 +194,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     switchPracticeMode() {
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !this.activeParticipation?.testRun)!;
-        this.cloneHeadline = this.activeParticipation.testRun ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
+        this.isPracticeMode = !this.isPracticeMode;
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
+        this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     }
 }

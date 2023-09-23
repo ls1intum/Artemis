@@ -11,9 +11,19 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 @Injectable({ providedIn: 'root' })
 export class CourseAdminService {
-    private resourceUrl = SERVER_API_URL + 'api/admin/courses';
+    private resourceUrl = 'api/admin/courses';
 
-    constructor(private http: HttpClient, private courseManagementService: CourseManagementService) {}
+    constructor(
+        private http: HttpClient,
+        private courseManagementService: CourseManagementService,
+    ) {}
+
+    /**
+     * finds all groups for all courses using a GET request
+     */
+    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
+    }
 
     /**
      * creates a course using a POST request

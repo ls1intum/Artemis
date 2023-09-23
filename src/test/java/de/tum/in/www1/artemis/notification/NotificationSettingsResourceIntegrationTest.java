@@ -12,17 +12,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
-class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "notificationsettingsresourrce";
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     private NotificationSetting settingA;
 
@@ -33,11 +37,11 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
      */
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        settingA = new NotificationSetting(student1, true, false, "notification.lecture-notification.attachment-changes");
-        settingsB = new NotificationSetting(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
+        settingA = new NotificationSetting(student1, true, false, true, "notification.lecture-notification.attachment-changes");
+        settingsB = new NotificationSetting(student1, false, false, true, "notification.exercise-notification.exercise-open-for-practice");
     }
 
     /**

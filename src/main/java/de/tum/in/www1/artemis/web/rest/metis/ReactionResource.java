@@ -5,11 +5,14 @@ import java.net.URISyntaxException;
 
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.ReactionService;
 
 /**
@@ -18,6 +21,8 @@ import de.tum.in.www1.artemis.service.metis.ReactionService;
 @RestController
 @RequestMapping("/api")
 public class ReactionResource {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final ReactionService reactionService;
 
@@ -34,10 +39,17 @@ public class ReactionResource {
      *         or with status 400 (Bad Request) if the checks on user, course or posting validity fail
      */
     @PostMapping("courses/{courseId}/postings/reactions")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
-        Reaction createdReaction = reactionService.createReaction(courseId, reaction);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/postings/reactions/" + createdReaction.getId())).body(createdReaction);
+        try {
+            Reaction createdReaction = reactionService.createReaction(courseId, reaction);
+            return ResponseEntity.created(new URI("/api/courses/" + courseId + "/postings/reactions/" + createdReaction.getId())).body(createdReaction);
+        }
+        catch (DataIntegrityViolationException ex) {
+            // this error can occur when multiple reactions are created at the exact same time, we log it, but doe not send it to the client
+            log.warn(ex.getMessage(), ex);
+            return ResponseEntity.ok(null);
+        }
     }
 
     /**
@@ -49,7 +61,7 @@ public class ReactionResource {
      *         or 400 (Bad Request) if the checks on user, course or posting validity fail
      */
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) throws URISyntaxException {
         reactionService.deleteReactionById(reactionId, courseId);
         return ResponseEntity.ok().build();

@@ -6,7 +6,7 @@ import { Result } from 'app/entities/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/entities/feedback.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -16,7 +16,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
@@ -39,13 +39,16 @@ export interface IResultService {
 
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
-    private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
-    private resultResourceUrl = SERVER_API_URL + 'api/results';
-    private participationResourceUrl = SERVER_API_URL + 'api/participations';
+    private exerciseResourceUrl = 'api/exercises';
+    private resultResourceUrl = 'api/results';
+    private participationResourceUrl = 'api/participations';
 
     private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
 
-    constructor(private http: HttpClient, private translateService: TranslateService) {}
+    constructor(
+        private http: HttpClient,
+        private translateService: TranslateService,
+    ) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http
@@ -128,7 +131,7 @@ export class ResultService implements IResultService {
             });
         }
 
-        let resultString = this.getBaseResultStringProgrammingExercise(result, exercise, relativeScore, points, buildAndTestMessage, short);
+        let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
         if (isResultPreliminary(result, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
@@ -140,21 +143,12 @@ export class ResultService implements IResultService {
     /**
      * Generates the result string for a programming exercise
      * @param result the result containing all necessary information like the achieved points
-     * @param exercise the exercise where the result belongs to
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      * @param buildAndTestMessage the string containing information about the build. Either about the build failure or the passed tests
      * @param short flag that indicates if the resultString should use the short format
-     * @private
      */
-    private getBaseResultStringProgrammingExercise(
-        result: Result,
-        exercise: ProgrammingExercise,
-        relativeScore: number,
-        points: number,
-        buildAndTestMessage: string,
-        short: boolean | undefined,
-    ): string {
+    private getBaseResultStringProgrammingExercise(result: Result, relativeScore: number, points: number, buildAndTestMessage: string, short: boolean | undefined): string {
         if (short) {
             if (!result.testCaseCount) {
                 return this.translateService.instant('artemisApp.result.resultString.programmingShort', {
@@ -300,8 +294,7 @@ export class ResultService implements IResultService {
 
     public static evaluateBadge(participation: Participation, result: Result): Badge {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
-            const studentParticipation = participation as StudentParticipation;
-            if (studentParticipation.testRun) {
+            if (isPracticeMode(participation)) {
                 return { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }

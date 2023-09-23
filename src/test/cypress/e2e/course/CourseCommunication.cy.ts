@@ -1,32 +1,34 @@
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { Course } from '../../../../main/webapp/app/entities/course.model';
-import { courseCommunication, courseManagementRequest, navigationBar } from '../../support/artemis';
-import { CourseWideContext } from '../../support/constants';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
-import { generateUUID, titleCaseWord } from '../../support/utils';
+import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
-// Common primitives
-let courseName: string;
-let courseShortName: string;
+import { communicationAPIRequest, courseCommunication, courseManagementAPIRequest, exerciseAPIRequest, navigationBar } from '../../support/artemis';
+import { CourseWideContext } from '../../support/constants';
+import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
+import { convertModelAfterMultiPart, titleCaseWord, titleLowercase } from '../../support/utils';
 
 describe('Course communication', () => {
     let course: Course;
-    let courseId: number;
+    let courseWithMessaging: Course;
 
     before('Create course', () => {
         cy.login(admin);
-        const uid = generateUUID();
-        courseName = 'Cypress course' + uid;
-        courseShortName = 'cypress' + uid;
-        courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseId = course.id!;
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addStudentToCourse(course, studentTwo);
-            courseManagementRequest.addStudentToCourse(course, studentThree);
+
+        courseManagementAPIRequest.createCourse({ allowMessaging: false }).then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addStudentToCourse(course, studentTwo);
+            courseManagementAPIRequest.addStudentToCourse(course, studentThree);
+        });
+
+        courseManagementAPIRequest.createCourse().then((response) => {
+            courseWithMessaging = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addInstructorToCourse(courseWithMessaging, instructor);
+            courseManagementAPIRequest.addStudentToCourse(courseWithMessaging, studentOne);
+            courseManagementAPIRequest.addStudentToCourse(courseWithMessaging, studentTwo);
+            courseManagementAPIRequest.addStudentToCourse(courseWithMessaging, studentThree);
         });
     });
 
@@ -34,10 +36,10 @@ describe('Course communication', () => {
         it('student should be able to create post', () => {
             cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseCommunication.newPost();
-            courseCommunication.selectContext(CourseWideContext.ORGANIZATION);
-            courseCommunication.setTitle('Cypress Test Post');
-            cy.fixture('loremIpsum.txt').then((text) => {
-                courseCommunication.setContent(text);
+            courseCommunication.selectContextInModal(CourseWideContext.ORGANIZATION);
+            courseCommunication.setTitleInModal('Test Post');
+            cy.fixture('loremIpsum-short.txt').then((text) => {
+                courseCommunication.setContentInModal(text);
             });
             courseCommunication.save();
         });
@@ -47,7 +49,7 @@ describe('Course communication', () => {
             const content = 'Pin Post Content';
             const context = CourseWideContext.RANDOM;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(instructor, `/courses/${course.id}/discussion`);
                 courseCommunication.pinPost(post.id);
@@ -59,7 +61,7 @@ describe('Course communication', () => {
         it('student should not be able to create announcement post', () => {
             cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseCommunication.newPost();
-            courseCommunication.getContextSelector().eq(0).should('not.contain', CourseWideContext.ANNOUNCEMENT);
+            courseCommunication.getContextSelectorInModal().eq(0).should('not.contain', CourseWideContext.ANNOUNCEMENT);
         });
 
         it('instructor should be able to create announcement post', () => {
@@ -67,9 +69,9 @@ describe('Course communication', () => {
             const content = 'Announcement Post Content';
             cy.login(instructor, `/courses/${course.id}/discussion`);
             courseCommunication.newPost();
-            courseCommunication.selectContext(CourseWideContext.ANNOUNCEMENT);
-            courseCommunication.setTitle(title);
-            courseCommunication.setContent(content);
+            courseCommunication.selectContextInModal(CourseWideContext.ANNOUNCEMENT);
+            courseCommunication.setTitleInModal(title);
+            courseCommunication.setContentInModal(content);
             courseCommunication.save();
             cy.login(studentTwo, `/courses/${course.id}/discussion`);
             navigationBar.openNotificationPanel();
@@ -78,7 +80,7 @@ describe('Course communication', () => {
                 .getNotifications()
                 .first()
                 .find('.notification-text')
-                .contains((`The course "` + courseName + `" got a new announcement: "` + content + `"`).substring(0, 300 - 1));
+                .contains((`The course "` + course.title + `" got a new announcement: "` + content + `"`).substring(0, 300 - 1));
         });
 
         it('instructor should be able to archive a post', () => {
@@ -86,7 +88,7 @@ describe('Course communication', () => {
             const content = 'Archive Post Content';
             const context = CourseWideContext.RANDOM;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(instructor, `/courses/${course.id}/discussion`);
                 courseCommunication.archivePost(post.id);
@@ -100,10 +102,10 @@ describe('Course communication', () => {
             const content = 'Answer Post Content';
             const context = CourseWideContext.TECH_SUPPORT;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
-                courseManagementRequest.createCoursePostReply(course, post, 'Answer Reply').then((response) => {
+                communicationAPIRequest.createCoursePostReply(course, post, 'Answer Reply').then((response) => {
                     const answerPost = response.body;
                     cy.login(instructor, `/courses/${course.id}/discussion`);
                     cy.reload();
@@ -120,7 +122,7 @@ describe('Course communication', () => {
             const content = 'Test Post Content';
             const context = CourseWideContext.TECH_SUPPORT;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 cy.reload();
@@ -133,7 +135,7 @@ describe('Course communication', () => {
             const content = 'Test Search Post Content';
             const context = CourseWideContext.TECH_SUPPORT;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 cy.reload();
@@ -147,7 +149,7 @@ describe('Course communication', () => {
             const content = 'Test Context Filter Post Content';
             const context = CourseWideContext.RANDOM;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 cy.reload();
@@ -161,7 +163,7 @@ describe('Course communication', () => {
             const content = 'Test Own Filter Post Content';
             const context = CourseWideContext.RANDOM;
             cy.login(studentThree, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 courseCommunication.filterByOwn();
                 courseCommunication.checkSinglePost(post.id, title, content, context);
@@ -173,7 +175,7 @@ describe('Course communication', () => {
             const content = 'Test Reply Post Content';
             const context = CourseWideContext.RANDOM;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 cy.reload();
@@ -193,7 +195,7 @@ describe('Course communication', () => {
             const content = 'Test React Post Content';
             const context = CourseWideContext.RANDOM;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 const emoji = 'tada';
@@ -210,7 +212,7 @@ describe('Course communication', () => {
             const newTitle = 'My Edited Test Post';
             const newContent = 'Test Edited Post Content';
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.reload();
                 courseCommunication.editPost(post.id, newTitle, newContent);
@@ -223,7 +225,7 @@ describe('Course communication', () => {
             const content = 'Test Delete Post Content';
             const context = CourseWideContext.RANDOM;
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
+            communicationAPIRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.reload();
                 courseCommunication.deletePost(post.id);
@@ -231,12 +233,12 @@ describe('Course communication', () => {
         });
     });
 
-    describe('Exercise communication', () => {
+    describe('Exercise communication via posts', () => {
         let textExercise: TextExercise;
 
         before('Create exercise', () => {
             cy.login(admin);
-            courseManagementRequest.createTextExercise({ course }).then((response) => {
+            exerciseAPIRequest.createTextExercise({ course }).then((response) => {
                 textExercise = response.body;
             });
         });
@@ -244,9 +246,8 @@ describe('Course communication', () => {
         it('students should be able to create posts within exercises', () => {
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
             courseCommunication.newPost();
-            courseCommunication.setTitle('Exercise Test Post');
-            cy.fixture('loremIpsum.txt').then((text) => {
-                courseCommunication.setContent(text);
+            cy.fixture('loremIpsum-short.txt').then((text) => {
+                courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
         });
@@ -255,12 +256,12 @@ describe('Course communication', () => {
             const title = 'Pin Test Exercise Post';
             const content = 'Pin Exercise Post Content';
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
-            courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
+            communicationAPIRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 cy.login(instructor, `/courses/${course.id}/exercises/${textExercise.id}`);
                 courseCommunication.pinPost(post.id);
                 cy.reload();
-                courseCommunication.checkSinglePostByPosition(0, title, content);
+                courseCommunication.checkSinglePostByPosition(0, undefined, content);
             });
         });
 
@@ -268,7 +269,7 @@ describe('Course communication', () => {
             const title = 'Archive Test Exercise Post';
             const content = 'Archive Exercise Post Content';
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
-            courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
+            communicationAPIRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 cy.login(instructor, `/courses/${course.id}/exercises/${textExercise.id}`);
                 courseCommunication.archivePost(post.id);
@@ -281,12 +282,12 @@ describe('Course communication', () => {
             const title = 'Exercise Search Test Post';
             const content = 'Exercise Search Test Post Content';
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
-            courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
+            communicationAPIRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/exercises/${textExercise.id}`);
                 cy.reload();
                 courseCommunication.searchForPost(title);
-                courseCommunication.checkSingleExercisePost(post.id, title, content);
+                courseCommunication.checkSingleExercisePost(post.id, content);
             });
         });
 
@@ -294,7 +295,7 @@ describe('Course communication', () => {
             const title = 'My Context Filter Test Exercise Post';
             const content = 'Test Context Filter Exercise Post Content';
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
-            courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
+            communicationAPIRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 cy.reload();
@@ -307,7 +308,7 @@ describe('Course communication', () => {
             const title = 'My Own Filter Test Exercise Post';
             const content = 'Test Own Filter Exercise Post Content';
             cy.login(studentThree, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
+            communicationAPIRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 courseCommunication.filterByOwn();
                 courseCommunication.checkSinglePost(post.id, title, content);
@@ -318,7 +319,7 @@ describe('Course communication', () => {
             const title = 'My Reply Test Post';
             const content = 'Test Reply Post Content';
             cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
-            courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
+            communicationAPIRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/exercises/${textExercise.id}`);
                 cy.reload();
@@ -337,7 +338,7 @@ describe('Course communication', () => {
             const title = 'My React Test Post';
             const content = 'Test React Post Content';
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
+            communicationAPIRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/exercises/${textExercise.id}`);
                 const emoji = 'tada';
@@ -348,12 +349,12 @@ describe('Course communication', () => {
         });
     });
 
-    describe('Lecture communication', () => {
+    describe('Lecture communication via posts', () => {
         let lecture: Lecture;
 
         before('Create lecture', () => {
             cy.login(admin);
-            courseManagementRequest.createLecture(course).then((response) => {
+            courseManagementAPIRequest.createLecture(course).then((response) => {
                 lecture = response.body;
             });
         });
@@ -361,9 +362,8 @@ describe('Course communication', () => {
         it('students should be able to create posts within lectures', () => {
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
             courseCommunication.newPost();
-            courseCommunication.setTitle('Lecture Test Post');
-            cy.fixture('loremIpsum.txt').then((text) => {
-                courseCommunication.setContent(text);
+            cy.fixture('loremIpsum-short.txt').then((text) => {
+                courseCommunication.setContentInline(text);
             });
             courseCommunication.save();
         });
@@ -372,12 +372,12 @@ describe('Course communication', () => {
             const title = 'Pin Test Lecture Post';
             const content = 'Pin Lecture Post Content';
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
-            courseManagementRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
+            communicationAPIRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
                 const post = response.body;
                 cy.login(instructor, `/courses/${course.id}/lectures/${lecture.id}`);
                 courseCommunication.pinPost(post.id);
                 cy.reload();
-                courseCommunication.checkSinglePostByPosition(0, title, content);
+                courseCommunication.checkSinglePostByPosition(0, undefined, content);
             });
         });
 
@@ -385,7 +385,7 @@ describe('Course communication', () => {
             const title = 'Archive Test Lecture Post';
             const content = 'Archive Lecture Post Content';
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
-            courseManagementRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
+            communicationAPIRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
                 const post = response.body;
                 cy.login(instructor, `/courses/${course.id}/lectures/${lecture.id}`);
                 courseCommunication.archivePost(post.id);
@@ -398,12 +398,12 @@ describe('Course communication', () => {
             const title = 'Exercise Search Test Post';
             const content = 'Exercise Search Test Post Content';
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
-            courseManagementRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
+            communicationAPIRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/lectures/${lecture.id}`);
                 cy.reload();
                 courseCommunication.searchForPost(title);
-                courseCommunication.checkSingleExercisePost(post.id, title, content);
+                courseCommunication.checkSingleExercisePost(post.id, content);
             });
         });
 
@@ -411,7 +411,7 @@ describe('Course communication', () => {
             const title = 'My Context Filter Test Lecture Post';
             const content = 'Test Context Filter Lecture Post Content';
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
-            courseManagementRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
+            communicationAPIRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 cy.reload();
@@ -424,7 +424,7 @@ describe('Course communication', () => {
             const title = 'My Own Filter Test Lecture Post';
             const content = 'Test Own Filter Lecture Post Content';
             cy.login(studentThree, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
+            communicationAPIRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
                 const post = response.body;
                 courseCommunication.filterByOwn();
                 courseCommunication.checkSinglePost(post.id, title, content);
@@ -435,7 +435,7 @@ describe('Course communication', () => {
             const title = 'My Reply Test Post';
             const content = 'Test Reply Post Content';
             cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
-            courseManagementRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
+            communicationAPIRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/lectures/${lecture.id}`);
                 cy.reload();
@@ -454,7 +454,7 @@ describe('Course communication', () => {
             const title = 'My React Test Post';
             const content = 'Test React Post Content';
             cy.login(studentOne, `/courses/${course.id}/discussion`);
-            courseManagementRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
+            communicationAPIRequest.createCourseLecturePost(course, lecture, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/lectures/${lecture.id}`);
                 const emoji = 'tada';
@@ -465,10 +465,150 @@ describe('Course communication', () => {
         });
     });
 
-    after('Delete Course', () => {
-        cy.login(admin);
-        if (courseId) {
-            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
-        }
+    describe('Exercise communication via channel', () => {
+        let textExercise: TextExercise;
+        let channel: Channel;
+
+        before('Create exercise', () => {
+            cy.login(admin);
+            exerciseAPIRequest.createTextExercise({ course: courseWithMessaging }).then((response) => {
+                textExercise = response.body;
+                textExercise.channelName = 'exercise-' + titleLowercase(textExercise.title!);
+                communicationAPIRequest.getExerciseChannel(textExercise.course!.id!, textExercise.id!).then((response) => {
+                    channel = response.body;
+                });
+            });
+        });
+
+        it('students should be able to create messages within exercises', () => {
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+            courseCommunication.newPost();
+            cy.fixture('loremIpsum-short.txt').then((text) => {
+                courseCommunication.setContentInline(text);
+            });
+            courseCommunication.saveMessage();
+        });
+
+        it('students should be able to search for exercise posts', () => {
+            const title = 'Exercise Search Test Post';
+            const content = 'Exercise Search Test Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+            communicationAPIRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                cy.reload();
+                courseCommunication.searchForPost(title);
+                courseCommunication.checkSingleExercisePost(post.id, content);
+            });
+        });
+
+        it('other students should be able to reply to an exercise post', () => {
+            const title = 'My Reply Test Post';
+            const content = 'Test Reply Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+            communicationAPIRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                cy.reload();
+                const replyText = 'My Test reply';
+                courseCommunication.openReply(post.id);
+                courseCommunication.replyWithMessage(post.id, replyText).then((intercept) => {
+                    const reply = intercept.response?.body;
+                    cy.login(studentOne, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                    courseCommunication.showReplies(post.id);
+                    courseCommunication.checkReply(reply.id, replyText);
+                });
+            });
+        });
+
+        it('other students should be able to react to an exercise post', () => {
+            const title = 'My React Test Post';
+            const content = 'Test React Post Content';
+            cy.login(studentOne, `/courses/${course.id}/discussion`);
+            communicationAPIRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/exercises/${textExercise.id}`);
+                const emoji = 'tada';
+                courseCommunication.react(post.id, emoji);
+                cy.reload();
+                courseCommunication.checkReaction(post.id, emoji);
+            });
+        });
+    });
+
+    describe('Lecture communication via channel', () => {
+        let lecture: Lecture;
+        let channel: Channel;
+
+        before('Create lecture', () => {
+            cy.login(admin);
+            courseManagementAPIRequest.createLecture(courseWithMessaging).then((response) => {
+                lecture = response.body;
+                lecture.channelName = 'lecture-' + titleLowercase(lecture.title!);
+                communicationAPIRequest.getLectureChannel(lecture.course!.id!, lecture.id!).then((response) => {
+                    channel = response.body;
+                });
+            });
+        });
+
+        it('students should be able to create messages within lecture', () => {
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+            courseCommunication.newPost();
+            cy.fixture('loremIpsum-short.txt').then((text) => {
+                courseCommunication.setContentInline(text);
+            });
+            courseCommunication.saveMessage();
+        });
+
+        it('students should be able to search for lecture posts', () => {
+            const title = 'Lecture Search Test Post';
+            const content = 'Lecture Search Test Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+            communicationAPIRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                cy.reload();
+                courseCommunication.searchForPost(title);
+                courseCommunication.checkSingleExercisePost(post.id, content);
+            });
+        });
+
+        it('other students should be able to reply to a lecture post', () => {
+            const title = 'My Reply Test Post';
+            const content = 'Test Reply Post Content';
+            cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+            communicationAPIRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                cy.reload();
+                const replyText = 'My Test reply';
+                courseCommunication.openReply(post.id);
+                courseCommunication.replyWithMessage(post.id, replyText).then((intercept) => {
+                    const reply = intercept.response?.body;
+                    cy.login(studentOne, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                    courseCommunication.showReplies(post.id);
+                    courseCommunication.checkReply(reply.id, replyText);
+                });
+            });
+        });
+
+        it('other students should be able to react to a lecture post', () => {
+            const title = 'My React Test Post';
+            const content = 'Test React Post Content';
+            cy.login(studentOne, `/courses/${course.id}/discussion`);
+            communicationAPIRequest.createCourseMessage(courseWithMessaging, channel.id!, 'channel', title + content).then((response) => {
+                const post = response.body;
+                cy.login(studentTwo, `/courses/${courseWithMessaging.id}/lectures/${lecture.id}`);
+                const emoji = 'tada';
+                courseCommunication.react(post.id, emoji);
+                cy.reload();
+                courseCommunication.checkReaction(post.id, emoji);
+            });
+        });
+    });
+
+    after('Delete Courses', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(courseWithMessaging, admin);
     });
 });

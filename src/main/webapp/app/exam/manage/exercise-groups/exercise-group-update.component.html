@@ -9,6 +9,9 @@
             <input class="form-check-input" type="checkbox" id="isMandatory" name="isMandatory" [(ngModel)]="exerciseGroup.isMandatory" />
             <label class="form-check-label" for="isMandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"> Mandatory </label>
         </div>
+        <ngb-alert [type]="alertType" [dismissible]="false">
+            <span>{{ 'artemisApp.examManagement.exerciseGroup.titleInfo' | artemisTranslate }}</span>
+        </ngb-alert>
         <div class="mt-3">
             <button type="button" class="btn btn-secondary" (click)="previousState()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>

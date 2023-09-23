@@ -1,5 +1,4 @@
-import { EXERCISE_BASE, POST } from '../../../constants';
-import { MODELING_EDITOR_CANVAS } from '../modeling/ModelingEditor';
+import { EXERCISE_BASE, MODELING_EDITOR_CANVAS, POST } from '../../../constants';
 
 export class DragAndDropQuiz {
     createDnDQuiz(title: string) {
@@ -14,7 +13,7 @@ export class DragAndDropQuiz {
     }
 
     setTitle(title: string) {
-        cy.get('#quiz-title').type(title);
+        cy.get('#field_title').type(title);
     }
 
     /**
@@ -24,7 +23,6 @@ export class DragAndDropQuiz {
      * @param y drop location on Y-axis
      */
     dragUsingCoordinates(x: number, y: number) {
-        // @ts-ignore https://github.com/4teamwork/cypress-drag-drop/issues/103
         cy.get('#modeling-editor-sidebar').children().eq(2).drag(MODELING_EDITOR_CANVAS, { target: { x, y } });
         cy.wait(200);
         cy.get(MODELING_EDITOR_CANVAS).trigger('pointerup');

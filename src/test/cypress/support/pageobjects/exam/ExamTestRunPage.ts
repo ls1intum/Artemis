@@ -1,5 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
+
 import { examStartEnd } from '../../artemis';
 import { BASE_API, DELETE, PATCH, POST } from '../../constants';
 import { CypressCredentials } from '../../users';
@@ -38,6 +39,10 @@ export class ExamTestRunPage {
 
     getTestRun(testRunId: number) {
         return cy.get(`#testrun-${testRunId}`);
+    }
+
+    getTestRunRibbon() {
+        return cy.get('#testRunRibbon');
     }
 
     openTestRunPage(course: Course, exam: Exam) {

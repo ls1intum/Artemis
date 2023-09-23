@@ -20,12 +20,12 @@ import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picke
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 const generateCsv = jest.fn();
-
-jest.mock('export-to-csv', () => ({
-    ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv,
-    })),
-}));
+jest.mock('export-to-csv', () => {
+    class MockExportToCsv {
+        generateCsv = generateCsv;
+    }
+    return { ExportToCsv: MockExportToCsv };
+});
 
 describe('Interval Grading System Component', () => {
     let comp: IntervalGradingSystemComponent;
@@ -124,7 +124,7 @@ describe('Interval Grading System Component', () => {
         expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
         expect(comp.firstPassingGrade).toBe('4.0');
         expect(comp.lowerBoundInclusivity).toBeTrue();
-        expect(comp.gradingScale.gradeSteps).toHaveLength(14);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(13);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.id).toBeUndefined();
             expect(gradeStep.gradeName).toBeDefined();
@@ -176,7 +176,7 @@ describe('Interval Grading System Component', () => {
         expect(newGradeStep.upperBoundPercentage).toBe(100);
         expect(newGradeStep.isPassingGrade).toBeTrue();
         expect(newGradeStep.lowerBoundInclusive).toBeTrue();
-        expect(newGradeStep.upperBoundInclusive).toBeTrue();
+        expect(newGradeStep.upperBoundInclusive).toBeFalse();
 
         // Previous gradeStep.upperBoundPercentage is already 100.
         expect(comp.getPercentageInterval(newGradeStep)).toBe(0);
@@ -334,13 +334,23 @@ describe('Interval Grading System Component', () => {
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(100);
     });
 
-    it('should create the initial step and the sticky step when grading scale is empty', () => {
+    it('should create the initial step when grading scale is empty', () => {
         comp.gradingScale = new GradingScale();
         comp.lowerBoundInclusivity = true;
 
         comp.createGradeStep();
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeFalse();
+
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundPercentage).toBe(0);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundPercentage).toBe(100);
+
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeFalse();
+
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundPercentage).toBe(100);
+
         expect(comp.gradingScale.gradeSteps).toHaveLength(2);
     });
 
@@ -363,9 +373,9 @@ describe('Interval Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeFalse();
 
         expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeFalse();
 
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeTrue();
         expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
     });
 

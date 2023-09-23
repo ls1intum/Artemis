@@ -1,0 +1,52 @@
+<div
+    class="node-icon-container"
+    *ngIf="node.type === NodeType.EXERCISE || node.type === NodeType.LECTURE_UNIT; else noTask"
+    [jhiStickyPopover]="popContentTask"
+    placement="right"
+    triggers="manual"
+>
+    <fa-icon *ngIf="node.completed" id="completed" [icon]="faCheckCircle" class="completed"></fa-icon>
+    <fa-icon *ngIf="!node.completed" id="not-completed" [icon]="faPlayCircle"></fa-icon>
+</div>
+<ng-template #noTask>
+    <div
+        class="node-icon-container"
+        *ngIf="node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END; else noCompetency"
+        [jhiStickyPopover]="popContentCompetency"
+        placement="right"
+        triggers="manual"
+    >
+        <fa-icon id="generic" [icon]="faCircle"></fa-icon>
+    </div>
+</ng-template>
+
+<ng-template #noCompetency>
+    <div class="node-icon-container">
+        <fa-icon id="match" [icon]="faCircle"></fa-icon>
+    </div>
+</ng-template>
+
+<ng-template #popContentTask>
+    <jhi-exercise-node-details
+        class="node-details"
+        *ngIf="node.type === NodeType.EXERCISE"
+        [exerciseId]="node.linkedResource!"
+        [(exercise)]="nodeDetailsData.exercise"
+    ></jhi-exercise-node-details>
+    <jhi-lecture-unit-node-details
+        class="node-details"
+        *ngIf="node.type === NodeType.LECTURE_UNIT"
+        [lectureUnitId]="node.linkedResource!"
+        [(lectureUnit)]="nodeDetailsData.lectureUnit"
+    ></jhi-lecture-unit-node-details>
+</ng-template>
+
+<ng-template #popContentCompetency>
+    <jhi-competency-node-details
+        class="node-details"
+        [courseId]="courseId"
+        [competencyId]="node.linkedResource!"
+        [(competency)]="nodeDetailsData.competency"
+        [(competencyProgress)]="nodeDetailsData.competencyProgress"
+    ></jhi-competency-node-details>
+</ng-template>

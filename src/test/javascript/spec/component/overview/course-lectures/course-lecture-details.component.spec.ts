@@ -14,7 +14,7 @@ import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
-import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
+import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -88,7 +88,7 @@ describe('CourseLectureDetails', () => {
                 ExerciseUnitComponent,
                 TextUnitComponent,
                 VideoUnitComponent,
-                LearningGoalsPopoverComponent,
+                CompetenciesPopoverComponent,
                 AlertOverlayComponent,
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
@@ -124,6 +124,7 @@ describe('CourseLectureDetails', () => {
                         params: of({ lectureId: '1', courseId: '1' }),
                     },
                 },
+                MockProvider(Router),
             ],
             schemas: [],
         })
@@ -171,6 +172,31 @@ describe('CourseLectureDetails', () => {
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).toBeNull();
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
+    }));
+
+    it('should display manage button when user is at least tutor', fakeAsync(() => {
+        lecture.course!.isAtLeastTutor = true;
+        fixture.detectChanges();
+
+        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
+        expect(manageLectureButton).not.toBeNull();
+    }));
+
+    it('should not display manage button when user is a student', fakeAsync(() => {
+        lecture.course!.isAtLeastTutor = false;
+        fixture.detectChanges();
+
+        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
+        expect(manageLectureButton).toBeNull();
+    }));
+
+    it('should redirect to lecture management', fakeAsync(() => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        fixture.detectChanges();
+
+        courseLecturesDetailsComponent.redirectToLectureManagement();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 456, 'lectures', 1]);
     }));
 
     it('should check attachment release date', fakeAsync(() => {

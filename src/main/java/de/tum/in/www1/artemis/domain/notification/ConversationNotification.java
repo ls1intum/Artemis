@@ -61,11 +61,12 @@ public class ConversationNotification extends Notification {
     }
 
     /**
-     * Websocket notification channel, for conversation notifications of a specific conversation
+     * Websocket notification channel, for conversation notifications of a specific user
      *
+     * @param userId id of user that should be notified
      * @return the channel
      */
-    public String getTopic() {
-        return "/topic/conversation/" + message.getConversation().getId() + "/notifications";
+    public String getTopic(long userId) {
+        return "/topic/user/" + userId + "/notifications/conversations";
     }
 }

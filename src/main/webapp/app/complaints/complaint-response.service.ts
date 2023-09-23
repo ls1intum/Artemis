@@ -11,9 +11,12 @@ type EntityResponseType = HttpResponse<ComplaintResponse>;
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintResponseService {
-    private resourceUrl = SERVER_API_URL + 'api/complaint-responses';
+    private resourceUrl = 'api/complaint-responses';
 
-    constructor(private http: HttpClient, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Checks if a complaint response is locked for the currently logged-in user

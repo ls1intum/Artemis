@@ -4,7 +4,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -21,11 +20,15 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "Q")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "multiple-choice"), @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop"),
-        @JsonSubTypes.Type(value = ShortAnswerQuestion.class, name = "short-answer") })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerQuestion.class, name = "short-answer") }
+)
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizQuestion extends DomainObject {
 
@@ -236,4 +239,10 @@ public abstract class QuizQuestion extends DomainObject {
      * @return a boolean which is true if the question-changes make an update necessary and false if not
      */
     public abstract boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion);
+
+    /**
+     * Initialize QuizQuestionStatistic of the implementor
+     *
+     */
+    public abstract void initializeStatistic();
 }

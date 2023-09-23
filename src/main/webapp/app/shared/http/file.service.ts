@@ -5,21 +5,22 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exerc
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
-    private resourceUrl = SERVER_API_URL + 'api/files';
+    private resourceUrl = 'api/files';
 
     constructor(private http: HttpClient) {}
 
     /**
      * Fetches the template file for the given programming language
-     * @param {string} filename
      * @param {ProgrammingLanguage} language
      * @param {ProjectType} projectType (if available)
      * @returns json test file
      */
-    getTemplateFile(filename: string, language?: ProgrammingLanguage, projectType?: ProjectType) {
-        const languagePrefix = language ? `${language}/` : '';
-        const projectTypePrefix = projectType ? `${projectType}/` : '';
-        return this.http.get<string>(`${this.resourceUrl}/templates/${languagePrefix}${projectTypePrefix}${filename}`, { responseType: 'text' as 'json' });
+    getTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType) {
+        const urlParts: string[] = [language];
+        if (projectType) {
+            urlParts.push(projectType);
+        }
+        return this.http.get<string>(`${this.resourceUrl}/templates/` + urlParts.join('/'), { responseType: 'text' as 'json' });
     }
 
     /**

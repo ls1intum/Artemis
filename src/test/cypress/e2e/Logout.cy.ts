@@ -1,8 +1,9 @@
-import { Course } from '../../../main/webapp/app/entities/course.model';
-import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
-import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../support/artemis';
-import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+
+import { courseManagementAPIRequest, courseOverview, exerciseAPIRequest, modelingExerciseEditor, navigationBar } from '../support/artemis';
 import { admin, studentOne, studentTwo } from '../support/users';
+import { convertModelAfterMultiPart } from '../support/utils';
 
 describe('Logout tests', () => {
     let course: Course;
@@ -11,9 +12,11 @@ describe('Logout tests', () => {
     before('Login as admin and create a course with a modeling exercise', () => {
         cy.login(admin);
 
-        courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
+        courseManagementAPIRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addStudentToCourse(course, studentTwo);
+            exerciseAPIRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
         });
@@ -21,7 +24,15 @@ describe('Logout tests', () => {
 
     it('Logs out by pressing OK when unsaved changes on exercise mode', () => {
         cy.login(studentOne);
-        startExerciseAndMakeChanges(course, modelingExercise);
+
+        const exerciseID = modelingExercise.id!;
+        cy.visit(`/courses/${course.id}/exercises`);
+        courseOverview.startExercise(exerciseID);
+        courseOverview.openRunningExercise(exerciseID);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 1);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 2);
+        navigationBar.logout();
+
         cy.on('window:confirm', (text) => {
             expect(text).to.contains('You have unsaved changes');
             return true;
@@ -31,7 +42,15 @@ describe('Logout tests', () => {
 
     it('Stays logged in by pressing cancel when trying to logout during unsaved changes on exercise mode', () => {
         cy.login(studentTwo);
-        startExerciseAndMakeChanges(course, modelingExercise);
+
+        const exerciseID = modelingExercise.id!;
+        cy.visit(`/courses/${course.id}/exercises`);
+        courseOverview.startExercise(exerciseID);
+        courseOverview.openRunningExercise(exerciseID);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 1);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 2);
+        navigationBar.logout();
+
         cy.on('window:confirm', (text) => {
             expect(text).to.contains('You have unsaved changes');
             return false;
@@ -40,21 +59,6 @@ describe('Logout tests', () => {
     });
 
     after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });
-
-const startExerciseAndMakeChanges = (course: Course, modelingExercise: ModelingExercise) => {
-    const exerciseID = modelingExercise.id!;
-    cy.visit(`/courses/${course.id}/exercises`);
-    cy.reloadUntilFound('#start-exercise-' + exerciseID);
-    courseOverview.startExercise(exerciseID);
-    cy.reloadUntilFound('#open-exercise-' + exerciseID);
-    courseOverview.openRunningExercise(exerciseID);
-    modelingExerciseEditor.addComponentToModel(exerciseID, 1);
-    modelingExerciseEditor.addComponentToModel(exerciseID, 2);
-    cy.get('#account-menu').click().get('#logout').click();
-};

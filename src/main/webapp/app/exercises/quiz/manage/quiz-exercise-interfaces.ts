@@ -9,10 +9,10 @@ export class Option {
 }
 
 export class Duration {
-    minutes?: number;
-    seconds?: number;
+    minutes: number;
+    seconds: number;
 
-    constructor(minutes?: number, seconds?: number) {
+    constructor(minutes: number, seconds: number) {
         this.minutes = minutes;
         this.seconds = seconds;
     }

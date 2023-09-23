@@ -1,0 +1,19 @@
+<ng-container *ngIf="numOfTasks > advisedMaxNumOfTasks; else tasksOk">
+    <div id="instruction_analysis_num-of-tasks-issues" class="editable-instruction-container__status__item">
+        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="tasksTooltipContent"></fa-icon>
+        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.issues">Task issues.</span>
+    </div>
+</ng-container>
+<ng-template #tasksOk>
+    <div id="instruction_analysis_num-of-tasks-ok" class="editable-instruction-container__status__item">
+        <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
+        <span class="text-info" jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.ok">Tasks ok.</span>
+    </div>
+</ng-template>
+<ng-template #tasksTooltipContent>
+    <div class="text-start w-100">
+        <div *ngIf="numOfTasks > advisedMaxNumOfTasks" class="text-start">
+            <span>{{ 'artemisApp.programmingExercise.tasksAnalysis.numOfTasks' | artemisTranslate: { number: numOfTasks, limit: advisedMaxNumOfTasks } }}</span>
+        </div>
+    </div>
+</ng-template>

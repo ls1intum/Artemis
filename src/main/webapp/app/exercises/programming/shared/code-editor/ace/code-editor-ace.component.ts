@@ -15,23 +15,37 @@ import 'brace/mode/assembly_x86';
 import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
-import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subscription, fromEvent, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    Output,
+    QueryList,
+    SimpleChanges,
+    ViewChild,
+    ViewChildren,
+    ViewEncapsulation,
+} from '@angular/core';
+import { Subscription, fromEvent } from 'rxjs';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash-es';
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
-import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
-import { faCircleNotch, faGear, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 
-export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
+export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
+export type FileSession = { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } };
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -43,6 +57,8 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
+    @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
+    inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     @Input()
     selectedFile: string;
     @Input()
@@ -86,31 +102,40 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     readonly Range = acequire('ace/range').Range;
 
-    readonly MAX_TAB_SIZE = MAX_TAB_SIZE;
-
     /** Ace Editor Options **/
     editorMode: string; // string or mode object
     isLoading = false;
     annotationsArray: Array<Annotation> = [];
     annotationChange: Subscription;
-    fileSession: { [fileName: string]: { code: string; cursor: { column: number; row: number } } } = {};
+    fileSession: FileSession = {};
     // Inline feedback variables
     fileFeedbacks: Feedback[];
-    lineCounter: any[] = [];
-    private elementArray: Element[] = [];
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
+    linesWithNewFeedback: number[] = []; // lines with new feedback, which is not yet saved, but must already be displayed to be editable
     editorSession: any;
     markerIds: number[] = [];
     gutterHighlights: Map<number, string[]> = new Map<number, string[]>();
     tabSize = 4;
 
     // Icons
-    farFileAlt = faFileAlt;
-    faPlusSquare = faPlusSquare;
-    faCircleNotch = faCircleNotch;
-    faGear = faGear;
+    readonly faPlusSquare = faPlusSquare;
+    readonly faCircleNotch = faCircleNotch;
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
+    /**
+     * Get all line numbers in the current editor session that have inline feedback or new feedback (which is only shown temporarily)
+     */
+    get linesWithInlineFeedbackShown(): number[] {
+        const lines = this.linesWithNewFeedback.concat(Object.keys(this.fileFeedbackPerLine).map((line) => parseInt(line)));
+        lines.sort((a, b) => a - b);
+        return lines;
+    }
+
+    constructor(
+        private repositoryFileService: CodeEditorRepositoryFileService,
+        private fileService: CodeEditorFileService,
+        protected localStorageService: LocalStorageService,
+        private changeDetectorRef: ChangeDetectorRef,
+    ) {}
 
     /**
      * @function ngAfterViewInit
@@ -150,7 +175,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         ) {
             // Current file has changed
             // Only load the file from server if there is nothing stored in the editorFileSessions
-            if (this.selectedFile && !this.fileSession[this.selectedFile]) {
+            if ((this.selectedFile && !this.fileSession[this.selectedFile]) || this.fileSession[this.selectedFile].loadingError) {
                 this.loadFile(this.selectedFile);
             } else {
                 this.initEditorAfterFileChange();
@@ -183,6 +208,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 }
             });
         }
+        // Remove open inline feedback widgets for new feedback
+        this.linesWithNewFeedback = [];
         // We first remove the annotationChange subscription so the initial setValue doesn't count as an insert
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
@@ -204,10 +231,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.displayAnnotations();
 
             // Setup inline feedbacks
-            // Get amount of lines of code in order to render for each line a corresponding inline feedback component
             if (this.isTutorAssessment) {
-                const lines = this.editor.getEditor().getSession().getLength();
-                this.lineCounter = new Array(lines);
                 if (!this.feedbacks) {
                     this.feedbacks = [];
                 }
@@ -237,24 +261,29 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     loadFile(fileName: string) {
         this.isLoading = true;
-        /** Query the repositoryFileService for the specified file in the repository */
-        this.repositoryFileService
-            .getFile(fileName)
-            .pipe(
-                tap((fileObj) => {
-                    this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
-                    // It is possible that the selected file has changed - in this case don't update the editor.
-                    if (this.selectedFile === fileName) {
-                        this.initEditorAfterFileChange();
-                    }
-                }),
-                catchError(() => {
-                    return of(null);
-                }),
-            )
-            .subscribe(() => {
-                this.isLoading = false;
-            });
+        this.repositoryFileService.getFile(fileName).subscribe({
+            next: (fileObj) => {
+                this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 }, loadingError: false };
+                this.finalizeLoading(fileName);
+            },
+            error: (error) => {
+                this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
+                if (error.message === ConnectionError.message) {
+                    this.onError.emit('loadingFailed' + error.message);
+                } else {
+                    this.onError.emit('loadingFailed');
+                }
+                this.finalizeLoading(fileName);
+            },
+        });
+    }
+
+    finalizeLoading(fileName: string) {
+        // It is possible that the selected file has changed - in this case don't update the editor.
+        if (this.selectedFile === fileName) {
+            this.initEditorAfterFileChange();
+        }
+        this.isLoading = false;
     }
 
     /**
@@ -276,7 +305,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.selectedFile && this.fileSession[this.selectedFile]) {
             if (this.fileSession[this.selectedFile].code !== code) {
                 const cursor = this.editor.getEditor().getCursorPosition();
-                this.fileSession[this.selectedFile] = { code, cursor };
+                this.fileSession[this.selectedFile] = { code, cursor, loadingError: false };
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
         }
@@ -285,6 +314,13 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
+        }
+        // remove all line widgets so that no old ones are displayed when the editor is opened again
+        if (this.editorSession?.widgetManager && this.editorSession?.lineWidgets) {
+            for (const line of this.linesWithInlineFeedbackShown) {
+                const widget = this.editorSession.lineWidgets.find((w: any) => w?.el === this.getInlineFeedbackNode(line));
+                this.editorSession.widgetManager.removeLineWidget(widget);
+            }
         }
     }
 
@@ -382,7 +418,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.annotationsArray = this.annotationsArray.filter((a) => a.fileName === fileChange.fileName);
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && this.selectedFile === fileChange.fileName) {
-            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 } } };
+            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } };
             this.initEditorAfterFileChange();
         }
         this.displayAnnotations();
@@ -424,7 +460,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     /**
      * Displays the inline feedback of a line of code using lineWidgets. We first go through all feedbacks of the selected file
-     * and create a lineWidget for each feedback. The elementArray contains all inline feedback components which have been added as lineWidget.
+     * and create a lineWidget for each feedback.
      */
     displayFeedbacks() {
         this.fileFeedbacks.forEach((feedback) => {
@@ -456,18 +492,24 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
+     * Get the wrapper div of an inline feedback as a DOM node
+     *
+     * @param line line of code where the feedback inline component is located
+     */
+    getInlineFeedbackNode(line: number): Element | undefined {
+        return this.inlineFeedbackComponents.find((c) => c.codeLine === line)?.elementRef.nativeElement;
+    }
+
+    /**
      * Add lineWidget for specific line of code.
      * @param line line of code where the feedback inline component will be added to.
      */
     addLineWidgetWithFeedback(line: number) {
-        // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
-        let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
-        if (!inlineFeedback) {
-            inlineFeedback = document.querySelector(`#test-${line}`);
-            if (inlineFeedback) {
-                this.elementArray.push(inlineFeedback);
-            }
-        }
+        // Create new feedback element from the DOM
+        this.linesWithNewFeedback = [...this.linesWithNewFeedback, line];
+        // Update DOM so that the new feedback DOM node exists
+        this.changeDetectorRef.detectChanges();
+        const inlineFeedback = this.getInlineFeedbackNode(line);
         if (inlineFeedback) {
             const lineWidget = {
                 row: line,
@@ -479,12 +521,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if (this.editorSession.lineWidgets) {
                 const displayedWidget = this.editorSession.lineWidgets.find((w: any) => w && w.row === lineWidget.row);
                 if (!displayedWidget) {
-                    lineWidget.el.className = 'inline-feedback';
                     this.editorSession.widgetManager.addLineWidget(lineWidget);
+                    lineWidget.el.querySelector('textarea')?.focus();
                 }
             } else {
-                lineWidget.el.className = 'inline-feedback';
                 this.editorSession.widgetManager.addLineWidget(lineWidget);
+                lineWidget.el.querySelector('textarea')?.focus();
             }
         }
     }
@@ -494,7 +536,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line Line of code which has inline feedback (lineWidget)
      */
     adjustLineWidgetHeight(line: number) {
-        const widget = this.editorSession.lineWidgets.find((w: any) => w && w.el?.id === 'test-' + line);
+        const widget = this.editorSession.lineWidgets.find((w: any) => w?.el === this.getInlineFeedbackNode(line));
         this.editorSession.widgetManager.removeLineWidget(widget);
         this.editorSession.widgetManager.addLineWidget(widget);
     }
@@ -513,6 +555,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         } else {
             this.feedbacks.push(feedback);
             this.fileFeedbackPerLine[line] = feedback;
+            // the feedback isn't new anymore
+            this.linesWithNewFeedback = this.linesWithNewFeedback.filter((l) => l !== line);
         }
         this.onUpdateFeedback.emit(this.feedbacks);
         this.adjustLineWidgetHeight(line);
@@ -523,11 +567,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param line
      */
     cancelFeedback(line: number) {
-        if (!this.fileFeedbackPerLine[line]) {
-            const widget = this.editorSession.lineWidgets.filter((w: any) => w && w.el?.id === 'test-' + line)[0];
-            this.editorSession.widgetManager.removeLineWidget(widget);
-        } else {
+        if (this.fileFeedbackPerLine[line]) {
+            // feedback exists, just re-align height
             this.adjustLineWidgetHeight(line);
+        } else {
+            const widget = this.editorSession.lineWidgets.filter((w: any) => w?.el === this.getInlineFeedbackNode(line))[0];
+            this.editorSession.widgetManager.removeLineWidget(widget);
+            // also remove from linesWithNewFeedback, it should not be shown anymore
+            this.linesWithNewFeedback = this.linesWithNewFeedback.filter((l) => l !== line);
         }
     }
 
@@ -567,12 +614,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         callback();
     }
 
-    /**
-     * Changes the tab size to a valid value in case it is not.
-     *
-     * Valid values are in range [1, {@link MAX_TAB_SIZE}].
-     */
-    validateTabSize(): void {
-        this.tabSize = Math.max(1, Math.min(this.tabSize, MAX_TAB_SIZE));
+    updateTabSize(event: number) {
+        this.tabSize = event;
     }
 }

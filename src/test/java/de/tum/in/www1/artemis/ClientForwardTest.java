@@ -7,7 +7,6 @@ import javax.servlet.http.Cookie;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
@@ -15,23 +14,16 @@ import org.springframework.test.web.servlet.ResultActions;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.web.rest.ClientForwardResource;
-import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
 /**
  * Test class for the ClientForwardController REST controller.
  *
  * @see ClientForwardResource
  */
-class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private JWTCookieService jwtCookieService;
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testManagementEndpoint() throws Exception {
-        request.getList("/management/logs", HttpStatus.OK, LoggerVM.class);
-    }
 
     @Test
     void testClientEndpoint() throws Exception {

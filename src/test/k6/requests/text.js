@@ -23,11 +23,13 @@ export function submitRandomTextAnswerExam(artemis, exercise, submissionId) {
 }
 
 export function newTextExercise(artemis, exerciseGroup, courseID) {
+    const exerciseName = nextAlphanumeric(5);
     const textExercise = {
         maxPoints: 1,
-        title: 'Text K6 ' + nextAlphanumeric(5),
+        title: 'Text K6 ' + exerciseName,
         type: 'text',
         mode: 'INDIVIDUAL',
+        channelName: 'exercise-' + exerciseName,
     };
 
     if (courseID) {
@@ -86,7 +88,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                     startIndex: 0,
                     endIndex: 123,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
                 {
@@ -94,7 +95,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
                     startIndex: 124,
                     endIndex: 231,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
                 {
@@ -102,7 +102,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
                     startIndex: 232,
                     endIndex: 334,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
                 {
@@ -110,7 +109,6 @@ export function assessTextSubmission(artemis, exerciseId, resultId) {
                     text: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
                     startIndex: 335,
                     endIndex: 445,
-                    numberOfAffectedSubmissions: 0,
                     type: 'AUTOMATIC',
                 },
             ],

@@ -2,8 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
+import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -62,7 +61,6 @@ export class Feedback implements BaseEntity {
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
-    public conflictingTextAssessments?: FeedbackConflict[];
     public suggestedFeedbackReference?: string;
     public suggestedFeedbackOriginSubmissionReference?: number;
     public suggestedFeedbackParticipationReference?: number;
@@ -215,6 +213,8 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
         feedbackText = feedback.text;
     }
 
+    // escape special characters like "<", ">", "&" to render them correctly
+    feedbackText = escapeString(feedbackText);
     return convertToHtmlLinebreaks(feedbackText);
 };
 /**

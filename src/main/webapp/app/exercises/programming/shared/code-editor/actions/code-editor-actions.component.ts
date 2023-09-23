@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -23,33 +24,23 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
 
-    @Input()
-    buildable = true;
-    @Input()
-    unsavedFiles: { [fileName: string]: string };
+    @Input() buildable = true;
+    @Input() unsavedFiles: { [fileName: string]: string };
     @Input() disableActions = false;
     @Input() disableAutoSave = false;
-    @Input()
-    get editorState() {
+    @Input() get editorState() {
         return this.editorStateValue;
     }
-    @Input()
-    get commitState() {
+    @Input() get commitState() {
         return this.commitStateValue;
     }
 
-    @Output()
-    commitStateChange = new EventEmitter<CommitState>();
-    @Output()
-    editorStateChange = new EventEmitter<EditorState>();
-    @Output()
-    isBuildingChange = new EventEmitter<boolean>();
-    @Output()
-    onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
-    @Output()
-    onRefreshFiles = new EventEmitter();
-    @Output()
-    onError = new EventEmitter<string>();
+    @Output() commitStateChange = new EventEmitter<CommitState>();
+    @Output() editorStateChange = new EventEmitter<EditorState>();
+    @Output() isBuildingChange = new EventEmitter<boolean>();
+    @Output() onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
+    @Output() onRefreshFiles = new EventEmitter();
+    @Output() onError = new EventEmitter<string>();
 
     isBuilding: boolean;
     editorStateValue: EditorState;
@@ -69,13 +60,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     faSync = faSync;
     farPlayCircle = faPlayCircle;
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
     }
 
-    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set editorState(editorState: EditorState) {
         this.editorStateValue = editorState;
         this.editorStateChange.emit(editorState);
@@ -202,7 +191,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 }),
             );
         }
-        return of(null);
+        return of(undefined);
     }
 
     /**
@@ -216,7 +205,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             return;
         }
         // If there are unsaved changes, save them before trying to commit again.
-        of(null)
+        of(undefined)
             .pipe(
                 tap(() => (this.commitState = CommitState.COMMITTING)),
                 switchMap(() => {
@@ -238,12 +227,23 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 }),
             )
             .subscribe({
-                error: (error: Error) => {
+                error: (error: HttpErrorResponse) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('submitFailed' + error.message);
                     } else {
                         this.onError.emit('submitFailed');
+                    }
+
+                    if (error.error.detail) {
+                        const detailMessage = error.error.detail;
+                        if (detailMessage.includes('submitBeforeStartDate')) {
+                            this.onError.emit('submitBeforeStartDate');
+                        } else if (detailMessage.includes('submitAfterDueDate')) {
+                            this.onError.emit('submitAfterDueDate');
+                        } else if (detailMessage.includes('submitAfterReachingSubmissionLimit')) {
+                            this.onError.emit('submitAfterReachingSubmissionLimit');
+                        }
                     }
                 },
             });

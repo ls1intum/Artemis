@@ -4,7 +4,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -50,15 +50,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     ) {}
 
     ngOnInit() {
-        if (this.exercise.id) {
-            this.exerciseService.getExerciseDetails(this.exercise.id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                if (exerciseResponse.body) {
-                    this.exercise = exerciseResponse.body!;
-                    if (this.exercise.studentParticipations?.length) {
-                        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
-                    }
-                }
-            });
+        if (this.exercise?.studentParticipations?.length) {
+            this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
         }
 
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {

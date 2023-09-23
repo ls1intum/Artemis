@@ -5,9 +5,9 @@ import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TestwiseCoverageTestUtil {
 
@@ -50,7 +50,8 @@ public class TestwiseCoverageTestUtil {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithCoverage() {
         var successfulTestNames = List.of("test1()", "test2()");
-        var bambooNotification = ModelFactory.generateBambooBuildResult("SOLUTION", null, null, null, successfulTestNames, Collections.emptyList(), new ArrayList<>());
+        var bambooNotification = ProgrammingExerciseFactory.generateBambooBuildResult("SOLUTION", null, null, null, successfulTestNames, Collections.emptyList(),
+                new ArrayList<>());
 
         // generate the coverage dto
         var linesByFileName1 = Map.ofEntries(Map.entry("BubbleSort.java", "15-17,23"));

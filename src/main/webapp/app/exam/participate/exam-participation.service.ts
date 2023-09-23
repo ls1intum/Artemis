@@ -8,14 +8,15 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
-export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
+export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -24,10 +25,14 @@ export class ExamParticipationService {
     private examExerciseIds: number[];
 
     public getResourceURL(courseId: number, examId: number): string {
-        return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
+        return `api/courses/${courseId}/exams/${examId}`;
     }
 
-    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private localStorageService: LocalStorageService,
+        private sessionStorage: SessionStorageService,
+    ) {}
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
@@ -79,6 +84,9 @@ export class ExamParticipationService {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
                 return ExamParticipationService.convertStudentExamFromServer(studentExam);
+            }),
+            tap((studentExam: StudentExam) => {
+                this.currentlyLoadedStudentExam.next(studentExam);
             }),
             catchError(() => {
                 const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
@@ -137,7 +145,7 @@ export class ExamParticipationService {
      * @returns a List of all StudentExams without Exercises per User and Course
      */
     public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
-        const url = `${SERVER_API_URL}api/courses/${courseId}/test-exams-per-user`;
+        const url = `api/courses/${courseId}/test-exams-per-user`;
         return this.httpClient
             .get<StudentExam[]>(url, { observe: 'response' })
             .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
@@ -155,18 +163,13 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExam: the student exam to submit
-     * @return returns the studentExam version of the server
      */
-    public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
+    public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
 
-        return this.httpClient.post<StudentExam>(url, studentExamCopy).pipe(
-            map((submittedStudentExam: StudentExam) => {
-                return ExamParticipationService.convertStudentExamFromServer(submittedStudentExam);
-            }),
-            tap((submittedStudentExam: StudentExam) => this.currentlyLoadedStudentExam.next(submittedStudentExam)),
+        return this.httpClient.post<void>(url, studentExamCopy).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
@@ -242,7 +245,7 @@ export class ExamParticipationService {
      * @param quizSubmission
      */
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
-        const url = `${SERVER_API_URL}api/exercises/${exerciseId}/submissions/exam`;
+        const url = `api/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 
@@ -261,9 +264,7 @@ export class ExamParticipationService {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
-            if (!exercise.exerciseGroup) {
-                exercise.exerciseGroup = { exam: studentExam.exam } as ExerciseGroup;
-            }
+            exercise.exerciseGroup = { ...exercise.exerciseGroup!, exam: studentExam.exam } as ExerciseGroup;
             return exercise;
         });
         return studentExam;
@@ -288,10 +289,22 @@ export class ExamParticipationService {
         return studentExam;
     }
 
-    public static getSubmissionForExercise(exercise: Exercise) {
-        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].submissions) {
+    public static getSubmissionForExercise(exercise: Exercise): Submission | undefined {
+        const studentParticipation = ExamParticipationService.getParticipationForExercise(exercise);
+        if (studentParticipation && studentParticipation.submissions) {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
-            return exercise.studentParticipations[0].submissions.last();
+            return studentParticipation.submissions.last();
+        }
+    }
+
+    /**
+     * Get the first participation for the given exercise.
+     * @param exercise the exercise for which to get the participation
+     * @return the first participation of the given exercise
+     */
+    public static getParticipationForExercise(exercise: Exercise): StudentParticipation | undefined {
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            return exercise.studentParticipations[0];
         }
     }
 
@@ -306,7 +319,6 @@ export class ExamParticipationService {
         if (exercise.type !== ExerciseType.PROGRAMMING) {
             return submission.isSynced ? 'synced' : 'notSynced';
         }
-        // programming exercise
         if (submission.submitted && submission.isSynced) {
             return 'submitted'; // You have submitted an exercise. You can submit again
         } else if (!submission.submitted && submission.isSynced) {

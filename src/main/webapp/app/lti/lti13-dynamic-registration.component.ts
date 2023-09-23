@@ -11,7 +11,10 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
     isRegistering = true;
     registeredSuccessfully: boolean;
 
-    constructor(private route: ActivatedRoute, private http: HttpClient) {}
+    constructor(
+        private route: ActivatedRoute,
+        private http: HttpClient,
+    ) {}
 
     /**
      * perform LTI 13 dynamic registration
@@ -36,7 +39,7 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
         }
 
         this.http
-            .post(`${SERVER_API_URL}/api/lti13/dynamic-registration/${this.courseId}`, null, { observe: 'response', params: httpParams })
+            .post(`api/lti13/dynamic-registration/${this.courseId}`, null, { observe: 'response', params: httpParams })
             .subscribe({
                 next: () => {
                     this.registeredSuccessfully = true;

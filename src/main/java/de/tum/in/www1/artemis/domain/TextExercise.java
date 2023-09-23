@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
-import java.util.List;
-
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,17 +19,13 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "text";
+    }
+
     @Column(name = "example_solution")
     private String exampleSolution;
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
-    @JsonIgnore
-    private List<TextCluster> clusters;
-
-    @ManyToOne
-    @JoinColumn(table = "text_exercise_details")
-    @JsonIgnore
-    private TextAssessmentKnowledge knowledge;
 
     public String getExampleSolution() {
         return exampleSolution;
@@ -41,8 +35,19 @@ public class TextExercise extends Exercise {
         this.exampleSolution = exampleSolution;
     }
 
-    public boolean isAutomaticAssessmentEnabled() {
+    @JsonIgnore
+    public boolean isFeedbackSuggestionsEnabled() {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
+    }
+
+    /**
+     * Disable feedback suggestions for this exercise by setting the assessment type to MANUAL.
+     * Only changes the assessment type if feedback suggestions are currently enabled.
+     */
+    public void disableFeedbackSuggestions() {
+        if (isFeedbackSuggestionsEnabled()) {
+            setAssessmentType(AssessmentType.MANUAL);
+        }
     }
 
     /**
@@ -64,14 +69,6 @@ public class TextExercise extends Exercise {
     @Override
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", exampleSolution='" + getExampleSolution() + "'" + "}";
-    }
-
-    public TextAssessmentKnowledge getKnowledge() {
-        return knowledge;
-    }
-
-    public void setKnowledge(TextAssessmentKnowledge knowledge) {
-        this.knowledge = knowledge;
     }
 
 }

@@ -14,6 +14,7 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './exercise-group-update.component.html',
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
+    readonly alertType = 'info';
     courseId: number;
     exam: Exam;
     exerciseGroup: ExerciseGroup;
@@ -22,7 +23,12 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
 
-    constructor(private route: ActivatedRoute, private router: Router, private exerciseGroupService: ExerciseGroupService, private alertService: AlertService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private exerciseGroupService: ExerciseGroupService,
+        private alertService: AlertService,
+    ) {}
 
     /**
      * Initialize the courseId and exerciseGroup
@@ -49,7 +55,6 @@ export class ExerciseGroupUpdateComponent implements OnInit {
         }
     }
 
-    // eslint-disable-next-line
     previousState() {
         this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exercise-groups']);
     }

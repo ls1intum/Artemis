@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
@@ -50,8 +49,6 @@ public class TutorialGroupService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
-    private final CourseRepository courseRepository;
-
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
@@ -59,7 +56,7 @@ public class TutorialGroupService {
     private final ConversationDTOService conversationDTOService;
 
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
+            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             ConversationDTOService conversationDTOService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
@@ -67,7 +64,6 @@ public class TutorialGroupService {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.singleUserNotificationService = singleUserNotificationService;
-        this.courseRepository = courseRepository;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
@@ -283,9 +279,8 @@ public class TutorialGroupService {
      * @param user The user for which to find the tutorial groups.
      * @return A list of tutorial groups for which the user should receive notifications.
      */
-    public List<TutorialGroup> findAllForNotifications(User user) {
-        return courseRepository.findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId()).stream()
-                .flatMap(course -> course.getTutorialGroups().stream()).collect(Collectors.toList());
+    public Set<Long> findAllForNotifications(User user) {
+        return tutorialGroupRepository.findAllActiveTutorialGroupIdsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId());
     }
 
     /**
@@ -324,8 +319,8 @@ public class TutorialGroupService {
             if (registration.student() == null) {
                 return false;
             }
-            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
-            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().login());
             return hasRegistrationNumber || hasLogin;
         }).collect(Collectors.toSet());
 
@@ -458,14 +453,14 @@ public class TutorialGroupService {
     private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
         return users.stream().filter(user -> {
             assert registration.student() != null; // should be the case as we filtered out all registrations without a student
-            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
-            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().login());
 
             if (hasRegistrationNumber && StringUtils.hasText(user.getRegistrationNumber())) {
-                return user.getRegistrationNumber().equals(registration.student().getRegistrationNumber().trim());
+                return user.getRegistrationNumber().equals(registration.student().registrationNumber().trim());
             }
             if (hasLogin && StringUtils.hasText(user.getLogin())) {
-                return user.getLogin().equals(registration.student().getLogin().trim());
+                return user.getLogin().equals(registration.student().login().trim());
             }
             return false;
         }).findFirst();
@@ -477,14 +472,14 @@ public class TutorialGroupService {
 
         for (var registration : registrations) {
             assert registration.student() != null; // should be the case as we filtered out all registrations without a student in the calling method
-            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
-            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().registrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().login());
 
             if (hasRegistrationNumber) {
-                registrationNumbersToSearchFor.add(registration.student().getRegistrationNumber().trim());
+                registrationNumbersToSearchFor.add(registration.student().registrationNumber().trim());
             }
             if (hasLogin) {
-                loginsToSearchFor.add(registration.student().getLogin().trim());
+                loginsToSearchFor.add(registration.student().login().trim());
             }
         }
 
@@ -604,8 +599,8 @@ public class TutorialGroupService {
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.getRegistrationNumber())
-                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.getLogin()));
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.registrationNumber())
+                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.login()));
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 

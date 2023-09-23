@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +36,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 @Component
@@ -47,12 +44,6 @@ public class BambooRequestMockProvider {
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
-
-    @Value("${artemis.continuous-integration.vcs-application-link-name}")
-    private String vcsApplicationLinkName;
-
-    @Autowired
-    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     @Autowired
     private ObjectMapper mapper;
@@ -88,6 +79,9 @@ public class BambooRequestMockProvider {
     public void reset() {
         if (mockServer != null) {
             mockServer.reset();
+        }
+        if (mockServerShortTimeout != null) {
+            mockServerShortTimeout.reset();
         }
     }
 
@@ -221,95 +215,32 @@ public class BambooRequestMockProvider {
         }
     }
 
-    public void mockAddTrigger(String buildPlanKey, String repository) throws URISyntaxException, IOException {
-        mockGetBuildPlanRepositoryList(buildPlanKey);
-
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        // we only support one very specific case here
-        parameters.add("repositoryTrigger", repository);
-        parameters.add("planKey", buildPlanKey);
-        parameters.add("triggerId", "-1");
-        parameters.add("createTriggerKey", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stashTrigger");
-        parameters.add("userDescription", null);
-        parameters.add("confirm", "true");
-        parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("decorator", "nothing");
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/createChainTrigger.action").queryParams(parameters).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
-    }
-
-    public void mockDeleteTrigger(String buildPlanKey, Long id) throws URISyntaxException {
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("triggerId", Long.toString(id));
-        parameters.add("confirm", "true");
-        parameters.add("decorator", "nothing");
-        parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("planKey", buildPlanKey);
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/deleteChainTrigger.action").queryParams(parameters).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
-    }
-
-    @NotNull
-    public List<BambooTriggerDTO> mockGetTriggerList(String buildPlanKey) throws IOException, URISyntaxException {
-        var triggerList = List.of(new BambooTriggerDTO(1L, "foo", "artemis"));
-
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("buildKey", buildPlanKey);
-        final var triggerListHtmlResponse = loadFileFromResources("test-data/bamboo-response/build-plan-trigger-list-response.html");
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/editChainTriggers.action").queryParams(parameters).build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(triggerListHtmlResponse));
-        return triggerList;
-    }
-
-    public void mockUpdateRepository(String buildPlanKey, BambooRepositoryDTO bambooRepository, BitbucketRepositoryDTO bitbucketRepository,
-            ApplicationLinksDTO.ApplicationLinkDTO applicationLink, String defaultBranch) throws URISyntaxException {
+    public void mockUpdateRepository(String buildPlanKey, BambooRepositoryDTO bambooRepository, String newRepoUrl, String defaultBranch) throws URISyntaxException {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
-        parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
+        parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.atlassian-bamboo-plugin-git:gitv2");
         parameters.add("repositoryName", bambooRepository.getName());
         parameters.add("repositoryId", Long.toString(bambooRepository.getId()));
         parameters.add("confirm", "true");
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("repository.stash.branch", defaultBranch);
-        parameters.add("repository.stash.repositoryId", bitbucketRepository.id());
-        parameters.add("repository.stash.repositorySlug", bitbucketRepository.slug());
-        parameters.add("repository.stash.projectKey", bitbucketRepository.project().key());
-        parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
-        parameters.add("repository.stash.server", applicationLink.getId());
+        parameters.add("repository.git.branch", defaultBranch);
+        parameters.add("repository.git.repositoryUrl", newRepoUrl);
+        parameters.add("repository.git.authenticationType", "PASSWORD");
+        parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
+        parameters.add("repository.git.useShallowClones", "true");
+        parameters.add("repository.git.commandTimeout", "180");
 
         URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/chain/admin/config/updateRepository.action").queryParams(parameters).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockUpdatePlanRepository(String buildPlanKey, String ciRepoName, String repoProjectKey, String defaultBranch) throws URISyntaxException, IOException {
+    public void mockUpdatePlanRepository(String buildPlanKey, String ciRepoName, String newRepoUrl, String defaultBranch) throws URISyntaxException, IOException {
         mockGetBuildPlanRepositoryList(buildPlanKey);
 
-        bitbucketRequestMockProvider.mockGetBitbucketRepository(repoProjectKey, buildPlanKey.toLowerCase());
-
         BambooRepositoryDTO bambooRepository = new BambooRepositoryDTO(Long.parseLong("296200357"), ciRepoName);
-        BitbucketRepositoryDTO bitbucketRepository = new BitbucketRepositoryDTO("asd", buildPlanKey.toLowerCase(), repoProjectKey, "ssh:cloneUrl");
 
-        ApplicationLinksDTO applicationLinksToBeReturned = createApplicationLink();
-        mockGetApplicationLinks(applicationLinksToBeReturned);
-        var applicationLink = applicationLinksToBeReturned.getApplicationLinks().get(0);
-
-        mockUpdateRepository(buildPlanKey, bambooRepository, bitbucketRepository, applicationLink, defaultBranch);
-    }
-
-    public ApplicationLinksDTO createApplicationLink() {
-        final var applicationLinks = new ApplicationLinksDTO();
-        final var applicationLink = new ApplicationLinksDTO.ApplicationLinkDTO();
-        applicationLink.setName(vcsApplicationLinkName);
-        applicationLink.setId("123b1230-e123-3123-9123-9123e2123123");
-        applicationLinks.setApplicationLinks(List.of(applicationLink));
-        return applicationLinks;
-    }
-
-    public void mockGetApplicationLinks(ApplicationLinksDTO applicationLinksToBeReturned) throws URISyntaxException, JsonProcessingException {
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/applinks/latest/applicationlink").queryParam("expand", "").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(applicationLinksToBeReturned)));
+        mockUpdateRepository(buildPlanKey, bambooRepository, newRepoUrl, defaultBranch);
     }
 
     public void mockGetBuildPlanRepositoryList(String buildPlanKey) throws IOException, URISyntaxException {

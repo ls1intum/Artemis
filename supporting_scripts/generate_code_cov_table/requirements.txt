@@ -1,0 +1,6 @@
+requests==2.31.0
+gitpython==3.1.35
+beautifulsoup4==4.12.2
+pyperclip==1.8.2
+python-dotenv==1.0.0
+tqdm==4.65.0

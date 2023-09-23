@@ -26,7 +26,11 @@ export class CourseLtiConfigurationComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
 
-    constructor(private route: ActivatedRoute, private sortService: SortService, private courseManagementService: CourseManagementService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private sortService: SortService,
+        private courseManagementService: CourseManagementService,
+    ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and fetches the exercises
@@ -68,7 +72,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
      * Gets the deep linking url
      */
     getDeepLinkingUrl(): string {
-        return `${location.origin}/api/lti13/deep-linking/${this.course.id}`; // Needs to match url in CustomLti13Configurer
+        return `${location.origin}/api/public/lti13/deep-linking/${this.course.id}`; // Needs to match url in CustomLti13Configurer
     }
 
     /**
@@ -89,21 +93,21 @@ export class CourseLtiConfigurationComponent implements OnInit {
      * Gets the initiate login url
      */
     getInitiateLoginUrl(): string {
-        return `${location.origin}/api/lti13/initiate-login/${this.onlineCourseConfiguration?.registrationId}`; // Needs to match uri in CustomLti13Configurer
+        return `${location.origin}/api/public/lti13/initiate-login/${this.onlineCourseConfiguration?.registrationId}`; // Needs to match uri in CustomLti13Configurer
     }
 
     /**
      * Gets the redirect uri
      */
     getRedirectUri(): string {
-        return `${location.origin}/api/lti13/auth-callback`; // Needs to match uri in CustomLti13Configurer
+        return `${location.origin}/api/public/lti13/auth-callback`; // Needs to match uri in CustomLti13Configurer
     }
 
     /**
      * Gets the LTI 1.0 launch url for an exercise
      */
     getExerciseLti10LaunchUrl(exercise: Exercise): string {
-        return `${location.origin}/api/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
+        return `${location.origin}/api/public/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
     }
 
     /**

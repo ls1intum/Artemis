@@ -14,6 +14,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-assessment-locks',
@@ -57,15 +58,14 @@ export class AssessmentLocksComponent implements OnInit {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
-    public async ngOnInit(): Promise<void> {
-        this.route.params.subscribe((params) => {
+    public ngOnInit() {
+        combineLatest([this.route.params, this.route.queryParams]).subscribe(([params, queryParams]) => {
             this.courseId = Number(params['courseId']);
             this.examId = Number(params['examId']);
-        });
-        this.route.queryParams.subscribe((queryParams) => {
             this.tutorId = Number(queryParams['tutorId']);
+
+            this.getAllLockedSubmissions();
         });
-        this.getAllLockedSubmissions();
     }
 
     /**

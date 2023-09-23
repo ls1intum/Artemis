@@ -177,7 +177,6 @@ export class StudentExamDetailComponent implements OnInit {
      *
      * Also makes sure that the latest result is correctly connected to the student’s submission.
      * @param exercise which should be included in the total points calculations.
-     * @private
      */
     private initExercise(exercise: Exercise) {
         if (exercise.studentParticipations?.[0]?.submissions?.[0]) {
@@ -188,7 +187,6 @@ export class StudentExamDetailComponent implements OnInit {
 
     /**
      * Updates the form values based on the working time of the student exam.
-     * @private
      */
     private initWorkingTimeForm() {
         this.setWorkingTimeDuration(this.studentExam.workingTime!);
@@ -207,7 +205,6 @@ export class StudentExamDetailComponent implements OnInit {
     /**
      * Updates the hours, minutes, and seconds values of the form.
      * @param seconds the total number of seconds of working time.
-     * @private
      */
     private setWorkingTimeDuration(seconds: number) {
         const workingTime = this.artemisDurationFromSecondsPipe.secondsToDuration(seconds);
@@ -225,7 +222,6 @@ export class StudentExamDetailComponent implements OnInit {
 
     /**
      * Calculates how many seconds the currently set working time has in total.
-     * @private
      */
     private getWorkingTimeSeconds(): number {
         const duration = {

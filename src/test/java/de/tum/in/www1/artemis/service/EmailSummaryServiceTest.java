@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
@@ -16,14 +17,17 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
-class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class EmailSummaryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "emailsummaryservice";
 
@@ -31,16 +35,33 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     private EmailSummaryService weeklyEmailSummaryService;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
     private CourseRepository courseRepository;
 
-    User userWithActivatedWeeklySummaries;
+    @Autowired
+    private UserUtilService userUtilService;
 
-    User userWithDeactivatedWeeklySummaries;
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    private User userWithActivatedWeeklySummaries;
+
+    private User userWithDeactivatedWeeklySummaries;
 
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
+
+    private Exercise exerciseWithoutAReleaseDate;
+
+    private Exercise exerciseReleasedYesterdayButAlreadyClosed;
+
+    private Exercise exerciseReleasedTomorrow;
+
+    private Exercise exerciseReleasedAMonthAgo;
 
     private static final String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student1";
 
@@ -51,45 +72,45 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @BeforeEach
     void setUp() {
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
-        this.userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
-        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false,
+        this.userWithDeactivatedWeeklySummaries = userUtilService.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        NotificationSetting deactivatedWeeklySummarySetting = new NotificationSetting(userWithDeactivatedWeeklySummaries, false, false, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(deactivatedWeeklySummarySetting);
 
         // preparation of the test data where a user activated weekly summaries
-        this.userWithActivatedWeeklySummaries = database.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
+        this.userWithActivatedWeeklySummaries = userUtilService.getUserByLogin(USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN);
 
-        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true,
+        NotificationSetting activatedWeeklySummarySetting = new NotificationSetting(userWithActivatedWeeklySummaries, false, true, true,
                 NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         notificationSettingRepository.save(activatedWeeklySummarySetting);
 
         // preparation of test course with exercises for weekly summary testing
         ZonedDateTime now = ZonedDateTime.now();
 
-        Course course = database.createCourse();
+        Course course = courseUtilService.createCourse();
         Set<Exercise> allTestExercises = new HashSet<>();
 
-        Exercise exerciseWithoutAReleaseDate = ModelFactory.generateTextExercise(null, null, null, course);
+        exerciseWithoutAReleaseDate = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseWithoutAReleaseDate.setTitle("exerciseWithoutAReleaseDate");
         allTestExercises.add(exerciseWithoutAReleaseDate);
 
-        exerciseReleasedYesterdayAndNotYetDue = ModelFactory.generateTextExercise(now.minusDays(1), null, null, course);
+        exerciseReleasedYesterdayAndNotYetDue = TextExerciseFactory.generateTextExercise(now.minusDays(1), null, null, course);
         exerciseReleasedYesterdayAndNotYetDue.setTitle("exerciseReleasedYesterdayAndNotYetDue");
         exerciseReleasedYesterdayAndNotYetDue.setDifficulty(DifficultyLevel.EASY);
         allTestExercises.add(exerciseReleasedYesterdayAndNotYetDue);
 
-        Exercise exerciseReleasedYesterdayButAlreadyClosed = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
+        exerciseReleasedYesterdayButAlreadyClosed = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(5), null, course);
         exerciseReleasedYesterdayButAlreadyClosed.setTitle("exerciseReleasedYesterdayButAlreadyClosed");
         allTestExercises.add(exerciseReleasedYesterdayButAlreadyClosed);
 
-        Exercise exerciseReleasedTomorrow = ModelFactory.generateTextExercise(now.plusDays(1), null, null, course);
+        exerciseReleasedTomorrow = TextExerciseFactory.generateTextExercise(now.plusDays(1), null, null, course);
         exerciseReleasedTomorrow.setTitle("exerciseReleasedTomorrow");
         allTestExercises.add(exerciseReleasedTomorrow);
 
-        Exercise exerciseReleasedAMonthAgo = ModelFactory.generateTextExercise(now.minusMonths(1), null, null, course);
+        exerciseReleasedAMonthAgo = TextExerciseFactory.generateTextExercise(now.minusMonths(1), null, null, course);
         exerciseReleasedAMonthAgo.setTitle("exerciseReleasedAMonthAgo");
         allTestExercises.add(exerciseReleasedAMonthAgo);
 
@@ -111,17 +132,19 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
 
-        when(exerciseRepository.findAllExercisesForSummary(any(), any())).thenReturn(Set.of(exerciseReleasedYesterdayAndNotYetDue));
-
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
         ArgumentCaptor<Set<Exercise>> captor = ArgumentCaptor.forClass(Set.class);
-        verify(mailService, timeout(5000).times(1)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());
-        verify(javaMailSender, timeout(5000).times(1)).send(any(MimeMessage.class));
+        verify(mailService, timeout(5000)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());
+        verify(javaMailSender, timeout(5000)).send(any(MimeMessage.class));
 
         Set<Exercise> capturedExerciseSet = captor.getValue();
+
         assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")
                 .contains(exerciseReleasedYesterdayAndNotYetDue);
-        assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
+
+        assertThat(capturedExerciseSet)
+                .doesNotContainAnyElementsOf(List.of(exerciseWithoutAReleaseDate, exerciseReleasedYesterdayButAlreadyClosed, exerciseReleasedTomorrow, exerciseReleasedAMonthAgo));
+
     }
 }

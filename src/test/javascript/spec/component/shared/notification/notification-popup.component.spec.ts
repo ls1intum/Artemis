@@ -6,12 +6,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReplaySubject } from 'rxjs';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import {
     LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
     NEW_MESSAGE_TITLE,
@@ -31,10 +29,8 @@ describe('Notification Popup Component', () => {
     let notificationPopupComponent: NotificationPopupComponent;
     let notificationPopupComponentFixture: ComponentFixture<NotificationPopupComponent>;
     let notificationService: NotificationService;
-    let accountService: AccountService;
     let examExerciseUpdateService: ExamExerciseUpdateService;
     let router: Router;
-    let artemisTranslatePipe: ArtemisTranslatePipe;
 
     const generateQuizNotification = (notificationId: number) => {
         const generatedNotification = {
@@ -72,7 +68,6 @@ describe('Notification Popup Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: ExamExerciseUpdateService, useClass: MockExamExerciseUpdateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
                 { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
@@ -83,24 +78,16 @@ describe('Notification Popup Component', () => {
                 notificationPopupComponentFixture = TestBed.createComponent(NotificationPopupComponent);
                 notificationPopupComponent = notificationPopupComponentFixture.componentInstance;
                 notificationService = TestBed.inject(NotificationService);
-                accountService = TestBed.inject(AccountService);
                 examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
-                artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
                 router = TestBed.inject(Router);
             });
     });
 
     describe('Initialization', () => {
-        it('should get authentication state', () => {
-            jest.spyOn(accountService, 'getAuthenticationState');
+        it('should subscribe to singular notification updates', () => {
+            jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications');
             notificationPopupComponent.ngOnInit();
-            expect(accountService.getAuthenticationState).toHaveBeenCalledOnce();
-        });
-
-        it('should subscribe to notification updates', () => {
-            jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
-            notificationPopupComponent.ngOnInit();
-            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
+            expect(notificationService.subscribeToSingleIncomingNotifications).toHaveBeenCalledOnce();
         });
     });
 
@@ -170,12 +157,12 @@ describe('Notification Popup Component', () => {
     describe('Websocket receive', () => {
         const replaceSubscribeToNotificationUpdatesUsingQuizNotification = () => {
             const replay = new ReplaySubject<Notification>();
-            jest.spyOn(notificationService, 'subscribeToNotificationUpdates').mockReturnValue(replay);
+            jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications').mockReturnValue(replay);
             replay.next(quizNotification);
         };
         const replaceSubscribeToNotificationUpdatesUsingExamExerciseUpdateNotification = () => {
             const replay = new ReplaySubject<Notification>();
-            jest.spyOn(notificationService, 'subscribeToNotificationUpdates').mockReturnValue(replay);
+            jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications').mockReturnValue(replay);
             replay.next(examExerciseUpdateNotification);
         };
 

@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
@@ -18,7 +18,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -27,7 +27,6 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -43,13 +42,15 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
+    styleUrls: ['../course-overview.scss', './course-exercise-detail.component.scss'],
     providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
@@ -66,6 +67,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     private currentUser: User;
     private exerciseId: number;
@@ -90,12 +92,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
-    hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
+    irisSettings?: IrisSettings;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -130,12 +132,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
-        private submissionService: ProgrammingSubmissionService,
         private complaintService: ComplaintService,
         private artemisMarkdown: ArtemisMarkdownService,
         private plagiarismCaseService: PlagiarismCasesService,
         private exerciseHintService: ExerciseHintService,
         private courseService: CourseManagementService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit() {
@@ -185,7 +187,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
-            this.getLatestRatedResult();
+            this.loadComplaintAndLatestRatedResult();
         });
         this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
             this.plagiarismCaseInfo = res.body ?? undefined;
@@ -198,7 +200,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
-        this.exerciseCategories = this.exercise.categories || [];
+        this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
 
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -209,21 +211,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
-                this.hasSubmissionPolicy = true;
             });
+
+            this.profileService
+                .getProfileInfo()
+                .pipe(
+                    filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                    switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!)),
+                )
+                .subscribe((settings) => {
+                    this.irisSettings = settings;
+                });
         }
 
         this.showIfExampleSolutionPresent(newExercise);
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
-
-        // Subscribe for late programming submissions to show the student a success message
-        if (this.exercise.type === ExerciseType.PROGRAMMING && hasExerciseDueDatePassed(this.exercise, this.gradedStudentParticipation)) {
-            this.subscribeForNewSubmissions();
-        }
 
         if (this.discussionComponent && this.exercise) {
             // We need to manually update the exercise property of the posts component
@@ -357,23 +362,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
     }
 
-    /**
-     * Subscribe for incoming (late) submissions to show a message if the student submitted after the due date.
-     */
-    subscribeForNewSubmissions() {
-        this.studentParticipations.forEach((participation) => {
-            this.submissionSubscription = this.submissionService
-                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                .getLatestPendingSubmissionByParticipationId(participation!.id!, this.exercise?.id!, true)
-                .subscribe(({ submission }) => {
-                    // Notify about received late submission
-                    if (submission && !participation.testRun && getExerciseDueDate(this.exercise!, participation)?.isBefore(submission.submissionDate)) {
-                        this.alertService.success('artemisApp.exercise.lateSubmissionReceived');
-                    }
-                });
-        });
-    }
-
     exerciseRatedBadge(result: Result): string {
         return result.rated ? 'bg-success' : 'bg-info';
     }
@@ -385,23 +373,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return this.sortedHistoryResults.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
-    get showResults(): boolean {
-        if (!this.sortedHistoryResults?.length) {
-            return false;
-        }
-
-        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.isAfterAssessmentDueDate;
-        } else {
-            return true;
-        }
-    }
-
     /**
-     * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
-     * For other exercise types it returns a rated result.
+     * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */
-    getLatestRatedResult() {
+    loadComplaintAndLatestRatedResult(): void {
         if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryResults?.length) {
             return;
         }
@@ -418,7 +393,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.gradedStudentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
+            return;
         }
 
         const ratedResults = this.gradedStudentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);
@@ -450,6 +425,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
+            instance.isCommunicationPage = false;
         }
     }
 

@@ -1,88 +1,5 @@
 <div class="row justify-content-center">
     <div *ngIf="course" class="col-12">
-        <jhi-header-course [course]="course"></jhi-header-course>
-        <div class="tab-bar tab-bar-course-detail">
-            <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="faListAlt"></fa-icon>
-                <span jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
-            </a>
-            <a [routerLink]="['/course-management', course.id, 'exams']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="faGraduationCap"></fa-icon>
-                <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
-            </a>
-            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1" id="lectures">
-                <fa-icon [icon]="faFilePdf"></fa-icon>
-                <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
-            </a>
-            <a *ngIf="isCommunicationEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="faComments"></fa-icon>
-                <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
-            </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'competency-management']" class="tab-item btn btn-primary btn-md ms-1">
-                <fa-icon [icon]="faFlag"></fa-icon>
-                <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Competency</span>
-            </a>
-            <a
-                [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
-                *ngIf="course.isAtLeastInstructor"
-                [routerLink]="['/course-management', course.id, 'tutorial-groups']"
-                class="tab-item btn btn-primary btn-md ms-1"
-            >
-                <fa-icon [icon]="faPersonChalkboard"></fa-icon>
-                <span jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
-            </a>
-            <div class="btn-group tab-item">
-                <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1 my-0">
-                    <fa-icon [icon]="faUserCheck"></fa-icon>
-                    <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
-                </a>
-                <div ngbDropdown *ngIf="course.isAtLeastInstructor" class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                    <button type="button" class="btn btn-info btn-md dropdown-toggle-split" ngbDropdownToggle></button>
-                    <div class="dropdown-menu" ngbDropdownMenu>
-                        <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn my-0">
-                            <fa-icon [icon]="faTable"></fa-icon>
-                            <span jhiTranslate="entity.action.scores">Scores</span>
-                        </a>
-                        <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn my-0">
-                            <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
-                        </a>
-                        <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn my-0">
-                            <fa-icon [icon]="faHeartBroken"></fa-icon>
-                            <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="faChartBar"></fa-icon>
-                <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
-            </a>
-            <div class="ms-auto">
-                <a *ngIf="course.isAtLeastInstructor" id="edit-course" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
-                    <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
-                </a>
-                <jhi-course-exam-archive-button
-                    *ngIf="course.isAtLeastInstructor"
-                    [archiveMode]="'Course'"
-                    [course]="course"
-                    class="archive-button ms-1"
-                ></jhi-course-exam-archive-button>
-                <button
-                    id="delete-course"
-                    class="tab-item btn btn-md ms-1 me-1"
-                    *jhiHasAnyAuthority="['ROLE_ADMIN']"
-                    [buttonSize]="ButtonSize.MEDIUM"
-                    jhiDeleteButton
-                    [entityTitle]="course.title || ''"
-                    deleteQuestion="artemisApp.course.delete.question"
-                    deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-                    (delete)="deleteCourse(course.id!)"
-                    [dialogError]="dialogError$"
-                >
-                    <fa-icon [icon]="faTimes"></fa-icon>
-                </button>
-            </div>
-        </div>
         <div class="row">
             <div class="col-xxl-4">
                 <div class="row">
@@ -226,10 +143,27 @@
                     <a [routerLink]="['/course-management', course?.id, 'lti-configuration']">LTI Configuration</a>
                 </dd>
             </ng-container>
-            <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
-            <dd id="course-presentation-score-enabled">
-                <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
-                <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
+            <dt><span jhiTranslate="artemisApp.course.registrationEnabled.title">Student Course Registration Enabled</span></dt>
+            <dd id="course-enrollment-enabled">
+                <span *ngIf="course.enrollmentEnabled">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                <span *ngIf="!course.enrollmentEnabled">{{ 'global.generic.no' | artemisTranslate }}</span>
+            </dd>
+            <dt *ngIf="course.enrollmentEnabled"><span jhiTranslate="artemisApp.course.enrollmentStartDate">Enrollment Start</span></dt>
+            <dd *ngIf="course.enrollmentEnabled" id="course-enrollment-start-date">
+                <span>{{ course.enrollmentStartDate | artemisDate }}</span>
+            </dd>
+            <dt *ngIf="course.enrollmentEnabled"><span jhiTranslate="artemisApp.course.enrollmentEndDate">Enrollment End</span></dt>
+            <dd *ngIf="course.enrollmentEnabled" id="course-enrollment-end-date">
+                <span>{{ course.enrollmentEndDate | artemisDate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.unenrollmentEnabled.title">Student Course Unenrollment Enabled</span></dt>
+            <dd *ngIf="course.enrollmentEnabled" id="course-unenrollment-enabled">
+                <span *ngIf="course.unenrollmentEnabled">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                <span *ngIf="!course.unenrollmentEnabled">{{ 'global.generic.no' | artemisTranslate }}</span>
+            </dd>
+            <dt *ngIf="course.unenrollmentEnabled"><span jhiTranslate="artemisApp.course.unenrollmentEndDate">Latest date to unenroll</span></dt>
+            <dd *ngIf="course.unenrollmentEnabled" id="course-unenrollment-end-date">
+                <span>{{ course.unenrollmentEndDate | artemisDate }}</span>
             </dd>
             <ng-container [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups">
                 <dt>
@@ -242,12 +176,6 @@
                     <div class="form-text">
                         {{ 'artemisApp.forms.configurationForm.timeZoneInput.beta' | artemisTranslate }}
                     </div>
-                </dd>
-            </ng-container>
-            <ng-container *ngIf="course.presentationScore !== 0">
-                <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
-                <dd id="course-presentation-score">
-                    <span>{{ course.presentationScore }}</span>
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxComplaints !== 0">
@@ -263,13 +191,13 @@
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxComplaintTimeDays !== 0">
-                <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Deadline for complaints in days after result date</span></dt>
+                <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Due date for complaints in days after result date</span></dt>
                 <dd id="course-max-time-days">
                     <span>{{ course.maxComplaintTimeDays }}</span>
                 </dd>
             </ng-container>
             <ng-container *ngIf="course.maxRequestMoreFeedbackTimeDays !== 0">
-                <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Deadline for more feedback requests in days after result date</span></dt>
+                <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Due date for more feedback requests in days after result date</span></dt>
                 <dd id="course-max-request-more-feedback-days">
                     <span>{{ course.maxRequestMoreFeedbackTimeDays }}</span>
                 </dd>

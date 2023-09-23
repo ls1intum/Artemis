@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
@@ -21,23 +20,14 @@ export class TextblockAssessmentCardComponent {
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
     @Input() readOnly: boolean;
-    @Input() isConflictingFeedback: boolean;
     @Input() isMissedFeedback: boolean;
-    @Input() conflictMode: boolean;
-    @Input() conflictType?: FeedbackConflictType;
-    @Input() isLeftConflictingFeedback: boolean;
     @Input() highlightDifferences: boolean;
     @Input() criteria?: GradingCriterion[];
 
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @Output() didDelete = new EventEmitter<TextBlockRef>();
-    @Output() onConflictsClicked = new EventEmitter<number>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
-
-    private get isSelectableConflict(): boolean {
-        return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
-    }
 
     constructor(
         public structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -49,19 +39,13 @@ export class TextblockAssessmentCardComponent {
 
     /**
      * Select a text block
-     * If it is conflict mode and this text block is already selected, then send null block to unselect it.
      * @param {boolean} autofocus - Enable autofocus (defaults to true)
      */
     select(autofocus = true): void {
-        if (this.readOnly && !this.isSelectableConflict) {
+        if (this.readOnly) {
             return;
         }
         if (this.textBlockRef && !this.textBlockRef.selectable) {
-            return;
-        }
-
-        if (this.isSelectableConflict && this.selected) {
-            this.didSelect.emit(undefined);
             return;
         }
 

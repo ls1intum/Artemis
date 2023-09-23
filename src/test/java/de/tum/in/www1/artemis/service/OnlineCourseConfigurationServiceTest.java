@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,9 +56,9 @@ class OnlineCourseConfigurationServiceTest {
 
         ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(onlineCourseConfiguration);
 
-        assertEquals(AuthorizationGrantType.IMPLICIT, clientRegistration.getAuthorizationGrantType());
+        assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.IMPLICIT);
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");
-        assertEquals("reg", clientRegistration.getRegistrationId());
-        assertEquals(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, clientRegistration.getRedirectUri());
+        assertThat(clientRegistration.getRegistrationId()).isEqualTo("reg");
+        assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH);
     }
 }

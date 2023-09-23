@@ -19,7 +19,10 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -65,6 +68,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -73,9 +78,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
+            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingMessagingService = programmingMessagingService;
@@ -87,26 +93,26 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.participationAuthCheckService = participationAuthCheckService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     /**
      * This method gets called if a new commit was pushed to the VCS
      *
-     * @param participationId The ID to the Participation, where the push happened
-     * @param requestBody     the body of the post request by the VCS.
+     * @param participation The Participation, where the push happened
+     * @param requestBody   the body of the post request by the VCS.
      * @return the ProgrammingSubmission for the last commitHash
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
+     * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation).
      */
-    public ProgrammingSubmission processNewProgrammingSubmission(Long participationId, Object requestBody)
+    public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Object requestBody)
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
+        var existingSubmissionCount = participation.getSubmissions().size();
         ZonedDateTime submissionDate = ZonedDateTime.now();
-        Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            throw new EntityNotFoundException("Programming Exercise Participation", participationId);
-        }
+        VersionControlService versionControl = versionControlService.orElseThrow();
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -114,63 +120,80 @@ public class ProgrammingSubmissionService extends SubmissionService {
         try {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
             // if the branch is different from main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
-            commit = versionControlService.get().getLastCommitDetails(requestBody);
+            commit = versionControl.getLastCommitDetails(requestBody);
             log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
                     commit.getBranch());
         }
         catch (Exception ex) {
-            log.error("Commit could not be parsed for submission from participation {}", programmingExerciseParticipation, ex);
+            log.error("Commit could not be parsed for submission from participation {}", participation, ex);
             throw new IllegalArgumentException(ex);
         }
 
-        String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingExerciseParticipation);
+        String branch = versionControl.getOrRetrieveBranchOfParticipation(participation);
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
-            throw new IllegalStateException(
-                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
+            throw new VersionControlException(
+                    "Submission for participation id " + participation.getId() + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
         }
         if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
                 && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
             // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
-            throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
+            throw new IllegalStateException("Submission for participation id " + participation.getId() + " based on an empty setup commit by Artemis will be ignored!");
         }
 
-        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
-                || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                && (participation.getBuildPlanId() == null || !participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
-            participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
+            participationService.resumeProgrammingExercise(programmingExerciseStudentParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
-            try {
-                continuousIntegrationTriggerService.get().triggerBuild(programmingExerciseParticipation);
-            }
-            catch (ContinuousIntegrationException ex) {
-                // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
-            }
+        }
+
+        // TODO: there might be cases in which Artemis should NOT trigger the build
+        try {
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
+        }
+        catch (ContinuousIntegrationException ex) {
+            // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
         }
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participationId, commit.getCommitHash());
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(),
+                commit.getCommitHash());
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + commit.getCommitHash() + " already exists!");
+            throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.getCommitHash() + " already exists!");
         }
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.getCommitHash());
-        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participationId);
+        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participation.getId());
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
-        programmingExerciseParticipation.addSubmission(programmingSubmission);
+        var programmingExercise = participation.getProgrammingExercise();
+        var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId());
+
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        checkForIllegalSubmission(participation, programmingSubmission, submissionPolicy);
+
+        participation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
-        updateGitDiffReport(programmingExerciseParticipation);
+        updateGitDiffReportForTemplateOrSolutionParticipation(participation);
+
+        // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
+        programmingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
+
+        // NOTE: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
+        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
+                && submissionPolicy instanceof LockRepositoryPolicy) {
+            // we set the participation to locked when the new submission count is at least as high as the submission limit
+            programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
+        }
 
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
@@ -181,7 +204,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param programmingExerciseParticipation The participation
      */
-    private void updateGitDiffReport(ProgrammingExerciseParticipation programmingExerciseParticipation) {
+    private void updateGitDiffReportForTemplateOrSolutionParticipation(ProgrammingExerciseParticipation programmingExerciseParticipation) {
         if (programmingExerciseParticipation instanceof TemplateProgrammingExerciseParticipation
                 || programmingExerciseParticipation instanceof SolutionProgrammingExerciseParticipation) {
             try {
@@ -194,29 +217,68 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * We check if a submission for an exam programming exercise is after the individual end date and a student is not allowed to submit anymore.
+     * We check if a submission for a programming exercise is after the individual end date and a student is not allowed to submit anymore.
      * If this is the case, the submission is set to {@link SubmissionType#ILLEGAL}.
      *
      * @param programmingExerciseParticipation current participation of the exam exercise
      * @param programmingSubmission            new created submission of the repository commit
      */
-    private void checkForIllegalExamSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
+    private void checkForIllegalSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission,
+            SubmissionPolicy submissionPolicy) {
         ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
-        boolean isExamExercise = programmingExercise.isExamExercise();
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
-            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
-            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
-                    : Optional.empty();
-            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get(), true)) {
-                final String message = "The student " + optionalStudentWithGroups.get().getLogin()
-                        + " just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
-                        + programmingExerciseParticipation.getId() + " for the exam programming exercise " + programmingExercise.getId();
-                programmingSubmission.setType(SubmissionType.ILLEGAL);
-                programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
-                log.warn(message);
-            }
+        // Students are not allowed to submit a programming exercise after the due date, if this happens we set the Submission to ILLEGAL
+        if (!(programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
         }
+        var optionalStudent = studentParticipation.getStudent();
+        var optionalStudentWithGroups = optionalStudent.flatMap(student -> userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()));
+        if (optionalStudentWithGroups.isEmpty()) {
+            return;
+        }
+        User student = optionalStudentWithGroups.get();
+
+        if (!isAllowedToSubmit(studentParticipation, student, programmingSubmission)) {
+            final String message = ("The student %s illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the "
+                    + "programming exercise \"%s\"").formatted(student.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
+            programmingSubmission.setType(SubmissionType.ILLEGAL);
+            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
+            log.warn(message);
+            return;
+        }
+
+        // we include submission policies here: if the student (for whatever reason) has more submission than allowed attempts, the submission would be illegal
+        if (exceedsSubmissionPolicy(studentParticipation, submissionPolicy)) {
+            final String message = "The student %s illegally submitted code after the submission policy lock limit %d in the participation %d for the programming exercise \"%s\""
+                    .formatted(student.getLogin(), submissionPolicy.getSubmissionLimit(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
+            programmingSubmission.setType(SubmissionType.ILLEGAL);
+            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
+            log.warn(message);
+        }
+    }
+
+    private boolean exceedsSubmissionPolicy(ProgrammingExerciseParticipation programmingExerciseParticipation, SubmissionPolicy submissionPolicy) {
+        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
+                && submissionPolicy instanceof LockRepositoryPolicy) {
+            return programmingExerciseParticipation.getSubmissions().size() > submissionPolicy.getSubmissionLimit();
+        }
+        return false;
+    }
+
+    private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups, ProgrammingSubmission programmingSubmission) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise.isExamExercise()) {
+            return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
+        }
+        return isAllowedToSubmitForCourseExercise(participation, programmingSubmission);
+    }
+
+    private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
+        var dueDate = ExerciseDateService.getDueDate(participation);
+        // Without a due date or in the practice mode, the student can always submit
+        if (dueDate.isEmpty() || participation.isPracticeMode()) {
+            return true;
+        }
+        return dueDate.get().plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
     }
 
     /**
@@ -395,10 +457,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode      - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
-    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
+    public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
         List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
@@ -524,7 +585,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
             Result existingResult = optionalExistingResult.get();
-            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(feedbackService::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
             for (Feedback feedback : automaticFeedbacks) {
                 feedback = feedbackRepository.save(feedback);
                 feedback.setResult(newResult);

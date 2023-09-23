@@ -34,7 +34,10 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
     faTimes = faTimes;
     faCalendar = faCalendarAlt;
 
-    public constructor(private tutorialGroupsService: TutorialGroupsService, private modalService: NgbModal) {}
+    public constructor(
+        private tutorialGroupsService: TutorialGroupsService,
+        private modalService: NgbModal,
+    ) {}
 
     openSessionDialog(event: MouseEvent) {
         event.stopPropagation();

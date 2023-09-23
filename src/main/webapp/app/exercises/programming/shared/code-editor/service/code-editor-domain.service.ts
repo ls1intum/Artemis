@@ -9,7 +9,7 @@ import { DomainChange, DomainParticipationChange, DomainTestRepositoryChange } f
 @Injectable({ providedIn: 'root' })
 export class DomainService {
     protected domain: DomainChange;
-    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | null>(null);
+    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | undefined>(undefined);
 
     constructor() {}
 
@@ -25,7 +25,7 @@ export class DomainService {
     /**
      * Subscribes to current subject.
      */
-    public subscribeDomainChange(): Observable<DomainChange | null> {
+    public subscribeDomainChange(): Observable<DomainChange | undefined> {
         return this.subject;
     }
 }

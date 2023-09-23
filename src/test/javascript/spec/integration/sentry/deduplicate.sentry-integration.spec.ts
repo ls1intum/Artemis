@@ -45,7 +45,7 @@ describe('ArtemisDeduplicateSentryIntegration', () => {
                         },
                     ],
                 },
-            } as any as Event),
+            }) as any as Event,
 
         // Test messages (no exception, but stacktrace)
         (value: string) =>
@@ -65,7 +65,7 @@ describe('ArtemisDeduplicateSentryIntegration', () => {
                         },
                     ],
                 },
-            } as any as Event),
+            }) as any as Event,
 
         // Test messages (no exception, no stacktrace)
         (value: string) =>
@@ -73,7 +73,7 @@ describe('ArtemisDeduplicateSentryIntegration', () => {
                 level: 'error',
                 timestamp: dayjs().valueOf(),
                 message: value,
-            } as any as Event),
+            }) as any as Event,
     ])(
         'should ignore exceptions and error messages that happened already in the last 5 minutes',
         fakeAsync((createEvent: (value: string) => Event) => {

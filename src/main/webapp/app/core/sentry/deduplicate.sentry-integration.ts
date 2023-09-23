@@ -1,4 +1,5 @@
-import { Event, EventProcessor, Hub, Integration } from '@sentry/types';
+import { Event, Hub } from '@sentry/angular-ivy';
+import { EventProcessor, Integration } from '@sentry/types';
 import { sha1Hex } from 'app/shared/util/crypto.utils';
 
 export class ArtemisDeduplicate implements Integration {
@@ -20,12 +21,15 @@ export class ArtemisDeduplicate implements Integration {
                     } else {
                         // Add event to seen events and schedule removal in 5 minutes (throttle)
                         this.observedEventHashes.push(eventHash);
-                        setTimeout(() => {
-                            const index = this.observedEventHashes.indexOf(eventHash);
-                            if (index >= 0) {
-                                this.observedEventHashes.splice(index, 1);
-                            }
-                        }, 5 * 60 * 1000);
+                        setTimeout(
+                            () => {
+                                const index = this.observedEventHashes.indexOf(eventHash);
+                                if (index >= 0) {
+                                    this.observedEventHashes.splice(index, 1);
+                                }
+                            },
+                            5 * 60 * 1000,
+                        );
                     }
                 } catch (e) {
                     console.error(e);

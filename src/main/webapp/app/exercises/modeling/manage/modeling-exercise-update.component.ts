@@ -28,7 +28,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
     @ViewChild(ModelingEditorComponent, { static: false })
@@ -47,7 +46,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
-
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     examCourseId?: number;
@@ -223,8 +221,12 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
-    private onSaveError(error: HttpErrorResponse): void {
-        onError(this.alertService, error);
+    private onSaveError(errorRes: HttpErrorResponse): void {
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
         this.isSaving = false;
     }
 

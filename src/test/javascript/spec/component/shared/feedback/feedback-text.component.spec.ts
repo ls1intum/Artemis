@@ -74,7 +74,7 @@ describe('FeedbackTextComponent', () => {
         comp.ngOnInit();
         tick();
 
-        expect(getLongFeedbackStub).toHaveBeenCalledOnceWith(1, 2);
+        expect(getLongFeedbackStub).toHaveBeenCalledExactlyOnceWith(1, 2);
         expect(comp.text).toBe(longFeedbackText.text);
         expect(comp.downloadText).toBeUndefined();
         expect(comp.downloadFilename).toBeUndefined();

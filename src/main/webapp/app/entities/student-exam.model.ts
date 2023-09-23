@@ -4,10 +4,13 @@ import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { ExamSession } from 'app/entities/exam-session.model';
-import { ExamActivity } from 'app/entities/exam-user-activity.model';
 
 export class StudentExam implements BaseEntity {
     public id?: number;
+    /**
+     * The individual working time per student in seconds
+     * The default working time of an exam is stored in exam.workingTime
+     */
     public workingTime?: number;
     public submitted?: boolean;
     public started?: boolean;
@@ -18,7 +21,6 @@ export class StudentExam implements BaseEntity {
     public exercises?: Exercise[];
     public examSessions?: ExamSession[];
     public startedDate?: dayjs.Dayjs;
-    public examActivity?: ExamActivity;
 
     // helper attribute
     public ended?: boolean;

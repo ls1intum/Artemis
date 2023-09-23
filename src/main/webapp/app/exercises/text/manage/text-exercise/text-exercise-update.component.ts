@@ -27,7 +27,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrls: ['../../../shared/exercise/_exercise-update.scss'],
 })
 export class TextExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -56,7 +55,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
-
     constructor(
         private alertService: AlertService,
         private textExerciseService: TextExerciseService,
@@ -90,6 +88,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
+
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
@@ -204,8 +203,12 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
-    private onSaveError(error: HttpErrorResponse) {
-        onError(this.alertService, error);
+    private onSaveError(errorRes: HttpErrorResponse) {
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
         this.isSaving = false;
     }
 }

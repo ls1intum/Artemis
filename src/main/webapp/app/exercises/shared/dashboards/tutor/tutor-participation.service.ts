@@ -12,9 +12,12 @@ export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorParticipationService {
-    public resourceUrl = SERVER_API_URL + 'api/exercises';
+    public resourceUrl = 'api/exercises';
 
-    constructor(private http: HttpClient, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Starts the exercise with the given ID for the current tutor. A tutor participation will be created and returned

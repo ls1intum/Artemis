@@ -190,7 +190,6 @@ export class BonusComponent implements OnInit {
      * @param bonusStrategy current bonus strategy
      * @param weight current weight
      * @param bonusToGradeSteps grade steps belonging to bonusTo grading scale, assumed to be sorted.
-     * @private
      */
     private checkBonusStrategyWeightMismatch(bonusStrategy: BonusStrategy, weight: number, bonusToGradeSteps: GradeStep[]) {
         switch (bonusStrategy) {
@@ -206,7 +205,7 @@ export class BonusComponent implements OnInit {
         }
     }
 
-    private setBonus(bonus: Bonus) {
+    setBonus(bonus: Bonus) {
         this.bonus = bonus;
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS:

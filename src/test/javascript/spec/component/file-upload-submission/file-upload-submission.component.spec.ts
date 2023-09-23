@@ -203,7 +203,7 @@ describe('FileUploadSubmissionComponent', () => {
         flush();
     }));
 
-    it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
@@ -222,7 +222,7 @@ describe('FileUploadSubmissionComponent', () => {
         flush();
     }));
 
-    it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
+    it('should allow to submit after the due date if the initialization date is after the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
         submission.participation!.initializationDate = dayjs().add(1, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
@@ -371,7 +371,7 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submitExercise();
 
         expect(comp.isActive).toBeFalse();
-        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDueDateMissed');
 
         submission.participation.exercise = undefined;
         comp.ngOnInit();
@@ -379,7 +379,7 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submitExercise();
 
         expect(comp.isActive).toBeFalse();
-        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDueDateMissed');
     });
 
     it('should set file name and type correctly', () => {

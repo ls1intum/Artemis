@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
@@ -18,7 +18,8 @@ import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
-    styleUrls: ['../../shared/quiz.scss'],
+    styleUrls: ['../quiz-exercise.scss', '../../shared/quiz.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
     @ViewChild('markdownEditor', { static: false })
@@ -63,7 +64,11 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private modalService: NgbModal,
+        private changeDetector: ChangeDetectorRef,
+    ) {}
 
     /**
      * Init the question editor text by parsing the markdown.

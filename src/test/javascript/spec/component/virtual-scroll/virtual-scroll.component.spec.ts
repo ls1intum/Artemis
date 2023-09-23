@@ -96,7 +96,7 @@ describe('VirtualScrollComponent', () => {
 
         expect(comp.previousItemsHeight).toHaveLength(metisCoursePosts.length);
         expect(prepareDataItemsSpy).toHaveBeenCalledOnce();
-        expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledTimes(0);
+        expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
     }));
 
     it('should set forceReloadChange flag to true when user navigates to specific post', fakeAsync(() => {
@@ -127,7 +127,7 @@ describe('VirtualScrollComponent', () => {
 
         expect(comp.domTreeItems).toHaveLength(3);
         expect(comp.domTreeItems[0].title).toBe(updatedTitle);
-        expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledTimes(0);
+        expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
     }));
 
     it('should not unintentionally scroll on clicking the text area of posting markdown editor component', fakeAsync(() => {
@@ -170,7 +170,7 @@ describe('VirtualScrollComponent', () => {
 
         expect(comp.windowScrollTop).toBe(comp.minItemHeight * 7);
         expect(prepareDataItemsSpy).toHaveBeenCalledTimes(2);
-        expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledTimes(0);
+        expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
         expect(comp.domTreeItems[0].id).toBe(2);
         expect(comp.domTreeItems[1].id).toBe(3);
         expect(comp.domTreeItems[2].id).toBe(5);

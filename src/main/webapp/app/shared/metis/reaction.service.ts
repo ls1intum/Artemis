@@ -9,7 +9,7 @@ type EntityResponseType = HttpResponse<Reaction>;
 
 @Injectable({ providedIn: 'root' })
 export class ReactionService {
-    public resourceUrl = SERVER_API_URL + 'api/courses/';
+    public resourceUrl = 'api/courses/';
 
     constructor(protected http: HttpClient) {}
 

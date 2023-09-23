@@ -9,10 +9,10 @@ export class MetricsService {
     constructor(private http: HttpClient) {}
 
     getMetrics(): Observable<Metrics> {
-        return this.http.get<Metrics>(SERVER_API_URL + 'management/jhimetrics');
+        return this.http.get<Metrics>('management/jhimetrics');
     }
 
     threadDump(): Observable<ThreadDump> {
-        return this.http.get<ThreadDump>(SERVER_API_URL + 'management/threaddump');
+        return this.http.get<ThreadDump>('management/threaddump');
     }
 }

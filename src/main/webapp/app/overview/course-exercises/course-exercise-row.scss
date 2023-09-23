@@ -10,13 +10,14 @@
         border: 1px solid var(--overview-blue-border-color);
         background-color: var(--overview-light-background-color);
         border-radius: 3px;
-        transition: box-shadow 0.1s linear;
+        transition: transform 0.2s linear;
         .row {
             min-height: 35px;
             align-items: center;
         }
         &:hover {
-            box-shadow: 0 2px 4px 0 var(--primary);
+            transform: scale(1.012);
+            background-color: var(--hover-slightly-darker-body-bg);
         }
         .exercise-link {
             color: #212529;
@@ -55,4 +56,21 @@
 .raised-actions {
     position: relative;
     z-index: 1;
+}
+
+.max-width {
+    @media (min-width: 768px) {
+        max-width: 90%;
+    }
+
+    @media (max-width: 767px) {
+        max-width: 100%;
+    }
+}
+
+.exercise-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }

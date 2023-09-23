@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
@@ -15,8 +15,9 @@ import {
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -49,9 +50,18 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     @Output()
     conversationFavoriteStatusChange = new EventEmitter<void>();
 
+    conversationAsChannel?: ChannelDTO;
+    channelSubTypeReferenceTranslationKey?: string;
+    channelSubTypeReferenceRouterLink?: string;
+
     faEllipsis = faEllipsis;
     faMessage = faMessage;
-    constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
+    constructor(
+        public conversationService: ConversationService,
+        private metisService: MetisService,
+        private alertService: AlertService,
+        private modalService: NgbModal,
+    ) {}
 
     get isConversationUnread(): boolean {
         // do not show unread count for open conversation that the user is currently reading
@@ -66,11 +76,9 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         return this.activeConversation && this.conversation && this.activeConversation.id! === this.conversation.id!;
     }
 
-    getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
 
     isOneToOneChat = isOneToOneChatDto;
-    getConversationName = this.conversationService.getConversationName;
 
     onHiddenClicked(event: MouseEvent) {
         event.stopPropagation();
@@ -117,6 +125,9 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
+        this.conversationAsChannel = getAsChannelDto(this.conversation);
+        this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
+        this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
     }
 
     ngOnDestroy() {

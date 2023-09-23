@@ -35,7 +35,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
     scrollListener: ((this: Document, ev: Event) => any) | undefined;
 
-    constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {
+    constructor(
+        private alertService: AlertService,
+        private renderer: Renderer2,
+        private modalService: NgbModal,
+        private guidedTourService: GuidedTourService,
+    ) {
         super();
     }
 
@@ -85,7 +90,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     /**
      * This is a hack to prevent the UI jumping to bottom when using popovers in Apollon while using Safari.
      * Other browsers do not show this behavior.
-     * @private
      */
     private setupSafariScrollFix() {
         // Detect Safari desktop: https://stackoverflow.com/a/52205049/7441850

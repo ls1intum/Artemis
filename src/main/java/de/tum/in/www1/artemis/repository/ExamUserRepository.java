@@ -38,13 +38,14 @@ public interface ExamUserRepository extends JpaRepository<ExamUser, Long> {
             FROM ExamUser examUser
                 LEFT JOIN examUser.exam exam
                 LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
-            WHERE (exam.id = :examId)
+            WHERE exam.id = :examId
             AND studentExams.started = true
-            AND examUser.signingImagePath IS NULL OR examUser.signingImagePath = ''
-            AND (examUser.didCheckImage = false
-                    OR examUser.didCheckLogin = false
-                    OR examUser.didCheckRegistrationNumber = false
-                    OR examUser.didCheckName = false)
+            AND (examUser.signingImagePath IS NULL
+                OR examUser.signingImagePath = ''
+                OR examUser.didCheckImage = false
+                OR examUser.didCheckLogin = false
+                OR examUser.didCheckRegistrationNumber = false
+                OR examUser.didCheckName = false)
             """)
     Set<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
 }

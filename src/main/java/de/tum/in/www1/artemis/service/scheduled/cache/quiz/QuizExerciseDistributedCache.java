@@ -162,8 +162,8 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     @Override
     public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
         /*
-         * Distributed Hazelcast objects will be automatically created and set up by Hazelcast, and are cached by the Hazelcast instance itself globally. This is a relatively
-         * lightweight operation.
+         * Distributed Hazelcast objects will be automatically created and set up by Hazelcast, and are cached by the Hazelcast instance itself globally.
+         * This is a relatively lightweight operation.
          */
         batches = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_BATCH);
         participations = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_PARTICIPATIONS);

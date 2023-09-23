@@ -7,8 +7,8 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  */
 @Entity
 @DiscriminatorValue(value = "SA")
-@JsonTypeName("short-answer")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
 
@@ -255,6 +254,12 @@ public class ShortAnswerQuestion extends QuizQuestion {
                     || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
         }
         return false;
+    }
+
+    @Override
+    @JsonIgnore
+    public void initializeStatistic() {
+        setQuizQuestionStatistic(new ShortAnswerQuestionStatistic());
     }
 
     /**

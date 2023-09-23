@@ -8,6 +8,7 @@ import java.net.URL;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
 
 @Profile("gitlab")
@@ -56,8 +57,8 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
-    @Value("${artemis.version-control.ci-token}")
-    private String ciToken;
+    @Value("${artemis.version-control.health-api-token:#{null}}")
+    private Optional<String> healthToken;
 
     private final UserRepository userRepository;
 
@@ -71,8 +72,9 @@ public class GitLabService extends AbstractVersionControlService {
 
     public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
             GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
@@ -91,7 +93,7 @@ public class GitLabService extends AbstractVersionControlService {
             }
 
             if (allowAccess) {
-                final RepositoryPermissions permissions = determineRepositoryPermissions(exercise);
+                final VersionControlRepositoryPermission permissions = determineRepositoryPermissions(exercise);
                 addMemberToRepository(participation.getVcsRepositoryUrl(), user, permissions);
             }
 
@@ -105,13 +107,13 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+    public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final Long userId = gitLabUserManagementService.getUserId(user.getLogin());
         final AccessLevel repositoryPermissions = permissionsToAccessLevel(permissions);
 
         try {
-            log.info("repositoryPath: {}, userId: {}", repositoryPath, userId);
+            log.info("Adding user {} with permissions {} to repository {}", userId, repositoryPermissions, repositoryPath);
             gitlab.getProjectApi().addMember(repositoryPath, userId, repositoryPermissions);
         }
         catch (GitLabApiException e) {
@@ -130,10 +132,10 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private static AccessLevel permissionsToAccessLevel(final RepositoryPermissions permissions) {
+    private static AccessLevel permissionsToAccessLevel(final VersionControlRepositoryPermission permissions) {
         return switch (permissions) {
-            case READ_ONLY -> REPORTER;
-            case READ_WRITE -> DEVELOPER;
+            case REPO_READ -> REPORTER;
+            case REPO_WRITE -> DEVELOPER;
         };
     }
 
@@ -235,34 +237,6 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryPath, e);
             }
         }, delayTime, delayTimeUnit);
-    }
-
-    @Override
-    public void addWebHooksForExercise(ProgrammingExercise exercise) {
-        super.addWebHooksForExercise(exercise);
-        final var projectKey = exercise.getProjectKey();
-
-        // Optional webhook from the version control system to the continuous integration system
-        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
-        final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
-        final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
-        if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
-            addAuthenticatedWebHook(exercise.getVcsTemplateRepositoryUrl(), templatePlanNotificationUrl.get(), "Artemis Exercise WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getVcsSolutionRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Solution WebHook", ciToken);
-            addAuthenticatedWebHook(exercise.getVcsTestRepositoryUrl(), solutionPlanNotificationUrl.get(), "Artemis Tests WebHook", ciToken);
-        }
-    }
-
-    @Override
-    public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            super.addWebHookForParticipation(participation);
-
-            // Webhook from the version control system to the continuous integration system
-            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
-            getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
-                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
-        }
     }
 
     @Override
@@ -429,7 +403,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param exercise    the exercise
      * @param accessLevel the access level to give
      */
-    private void addUsersToExerciseGroup(List<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
+    private void addUsersToExerciseGroup(Set<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
         for (final var user : users) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(user.getLogin());
@@ -472,7 +446,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
-        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user, RepositoryPermissions.READ_ONLY));
+        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user, VersionControlRepositoryPermission.REPO_READ));
     }
 
     /**
@@ -482,7 +456,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param user          The GitLab user
      * @param permissions   The new access level for the user
      */
-    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions) {
+    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions) {
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         try {
@@ -503,7 +477,10 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public ConnectorHealth health() {
         try {
-            final var uri = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString()).build().toUri();
+            UriComponentsBuilder builder = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString());
+            healthToken.ifPresent(token -> builder.queryParam("token", token));
+            URI uri = builder.build().toUri();
+
             final var healthResponse = shortTimeoutRestTemplate.getForObject(uri, JsonNode.class);
             final var status = healthResponse.get("status").asText();
             if (!status.equals("ok")) {

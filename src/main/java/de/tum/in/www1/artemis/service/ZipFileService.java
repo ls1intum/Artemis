@@ -12,33 +12,25 @@ import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
 import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import net.lingala.zip4j.ZipFile;
 
+/**
+ * A service class to create zip files
+ */
 @Service
 public class ZipFileService {
 
     private final Logger log = LoggerFactory.getLogger(ZipFileService.class);
 
-    /**
-     * Create a zip file of the given paths and save it in the zipFilePath
-     *
-     * @param zipFilePath     path where the zip file should be saved
-     * @param paths           multiple paths that should be zipped
-     * @param createParentDir if set to true, each zip file entry will be placed within its parent directory
-     * @throws IOException if an error occurred while zipping
-     */
-    public void createZipFile(Path zipFilePath, List<Path> paths, boolean createParentDir) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
-                var zipPath = createParentDir ? path : path.getFileName();
-                ZipEntry zipEntry = new ZipEntry(zipPath.toString());
-                copyToZipFile(zipOutputStream, path, zipEntry);
-            });
-        }
+    private final FileService fileService;
+
+    public ZipFileService(FileService fileService) {
+        this.fileService = fileService;
     }
 
     /**
@@ -46,11 +38,32 @@ public class ZipFileService {
      *
      * @param zipFilePath path where the zip file should be saved
      * @param paths       multiple paths that should be zipped
-     * @param pathsRoot   the root path relative to <code>paths</code>
      * @throws IOException if an error occurred while zipping
      */
-    public void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
-        createZipFileFromPathStream(zipFilePath, paths.stream(), pathsRoot, null);
+    public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+            for (var path : paths) {
+                if (Files.isReadable(path) && !Files.isDirectory(path)) {
+                    zipFile.addFile(path.toFile());
+                }
+                else if (Files.isReadable(path) && Files.isDirectory(path)) {
+                    zipFile.addFolder(path.toFile());
+                }
+            }
+        }
+    }
+
+    /**
+     * Create a zip file of the given paths and save it in the zipFilePath. The zipFilePath will be deleted after the specified delay.
+     *
+     * @param zipFilePath          path where the zip file should be saved
+     * @param paths                multiple paths that should be zipped
+     * @param deleteDelayInMinutes delay in minutes after which the zip is deleted
+     * @throws IOException if an error occurred while zipping
+     */
+    public void createTemporaryZipFile(Path zipFilePath, List<Path> paths, long deleteDelayInMinutes) throws IOException {
+        createZipFile(zipFilePath, paths);
+        fileService.schedulePathForDeletion(zipFilePath, deleteDelayInMinutes);
     }
 
     /**
@@ -107,7 +120,7 @@ public class ZipFileService {
         try {
             if (Files.exists(path)) {
                 zipOutputStream.putNextEntry(zipEntry);
-                Files.copy(path, zipOutputStream);
+                FileUtils.copyFile(path.toFile(), zipOutputStream);
                 zipOutputStream.closeEntry();
             }
         }

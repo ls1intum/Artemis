@@ -10,15 +10,14 @@ export type RepositoryExportOptions = {
     excludePracticeSubmissions: boolean;
     addParticipantName: boolean;
     combineStudentCommits: boolean;
-    anonymizeStudentCommits: boolean;
+    anonymizeRepository: boolean;
     normalizeCodeStyle: boolean;
-    hideStudentNameInZippedFolder: boolean;
 };
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentRepoExportService {
     // TODO: We should move this endpoint to api/programming-exercises.
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient) {}
 

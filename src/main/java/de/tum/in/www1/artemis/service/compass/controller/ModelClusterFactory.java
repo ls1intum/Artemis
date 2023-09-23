@@ -153,8 +153,6 @@ public class ModelClusterFactory {
         modelElement.setModelElementId(element.getJSONElementID());
         modelElement.setModelElementType(element.getType());
         modelElement.setSubmission(submission);
-        // set knowledge to model element
-        modelElement.setKnowledge(exercise.getKnowledge());
         cluster.addModelElement(modelElement);
     }
 }

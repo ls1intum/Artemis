@@ -7,7 +7,6 @@
             },
             "details": "Exercise details",
             "addCriterion": "Add a Grading Criterion",
-            "resultCount": "{{resultsLength}} results",
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
             "searchForStudents": "Search for students by login or name (comma separated)",
@@ -28,6 +27,7 @@
             "import": {
                 "attention": "Attention! ",
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "embeddedFilesWarning": "All embedded files are available in the problem statement after the import.",
                 "search": "Search for exercise",
                 "loading": "Loading...",
                 "searchInCourses": "Search in courses?",
@@ -100,8 +100,8 @@
             "pointsError": "Must be a number between 1 and 9999.",
             "bonusPoints": "Bonus Points",
             "bonusPointsError": "Must be a number between 0 and 9999.",
-            "includedInOverallScoreCourseLabel": "Should this exercise be included in the course score calculation?",
-            "includedInOverallScoreExamLabel": "Should this exercise be included in the exam score calculation?",
+            "includedInOverallScoreCourseLabel": "Include this exercise in the course score calculation",
+            "includedInOverallScoreExamLabel": "Include this exercise in the exam score calculation",
             "includedInOverallScore": "Included in Score",
             "includedCompletely": "Included",
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students.",
@@ -131,7 +131,8 @@
             },
             "categories": "Categories",
             "noCategory": "No Category",
-            "participations": "Participation",
+            "participation": "Participation",
+            "participations": "Participations",
             "submissions": "Submissions",
             "teams": "Teams",
             "export": {
@@ -179,6 +180,7 @@
             "showNoSubmissions": "Show No Submissions",
             "showNoPracticeMode": "Show only graded participations",
             "showingOnlyInRange": "Showing only results in range: {{ range }}",
+            "showingOfResults": "Showing {{ filtered }} of {{ total }} ({{ percent }}%) scores",
             "tagPlaceholder": "+ Category",
             "isProgramming": "This is a programming exercise",
             "isModeling": "This is a modeling exercise",
@@ -188,7 +190,6 @@
             "notificationText": "Optional: Notification about changes",
             "submissionSuccessful": "The submission was successful",
             "submissionUnsuccessful": "The submission was unsuccessful",
-            "lateSubmissionReceived": "Artemis received a late submission, please wait for the result and then scroll down to the result history to see more details.",
             "lateSubmissionResultReceived": "Artemis received an ungraded result for a late submission, please scroll down to see the score in the result history.",
             "resultCreationSuccessful": "The result was created successfully",
             "resultCreationUnsuccessful": "The result could not be created",
@@ -204,6 +205,9 @@
                     "undefined": "There has to be a title set!",
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!"
                 },
+                "channelName": {
+                    "empty": "There has to be a channel name set!"
+                },
                 "shortName": {
                     "undefined": "There has to be a short name set!",
                     "pattern": "The short name must begin with a letter and must not contain any special characters!",
@@ -214,7 +218,8 @@
                     "pattern": {
                         "JAVA": "The package name must consist of one or more valid Java identifiers separated by '.', e.g. \"net.java\"!",
                         "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
-                        "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!"
+                        "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!",
+                        "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects"
                     }
                 },
                 "points": {
@@ -248,7 +253,8 @@
                 }
             },
             "isUsedForTutorial": "Tutor needs to review",
-            "action": "Action"
+            "action": "Action",
+            "exerciseAssessmentDashboard": "Assessment Dashboard"
         }
     }
 }

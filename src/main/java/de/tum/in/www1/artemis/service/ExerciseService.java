@@ -18,8 +18,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
@@ -260,7 +260,7 @@ public class ExerciseService {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
         Course course = courses.stream().findFirst().get();
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, false);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
@@ -417,20 +417,21 @@ public class ExerciseService {
         }
 
         // get user's participation for the exercise
-        StudentParticipation participation = participations != null ? exercise.findRelevantParticipation(participations) : null;
+        List<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : new ArrayList<>();
 
         // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
         // if participation was not found in database
-        if (participation == null && exercise instanceof QuizExercise) {
-            QuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
+        if (relevantParticipations.isEmpty() && exercise instanceof QuizExercise) {
+            AbstractQuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
             if (submission.getSubmissionDate() != null) {
-                participation = new StudentParticipation().exercise(exercise);
-                participation.setInitializationState(InitializationState.INITIALIZED);
+                StudentParticipation quizParticipation = new StudentParticipation().exercise(exercise);
+                quizParticipation.setInitializationState(InitializationState.INITIALIZED);
+                relevantParticipations = List.of(quizParticipation);
             }
         }
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
-        if (participation != null) {
+        relevantParticipations.forEach(participation -> {
             // find the latest submission with a rated result, otherwise the latest submission with
             // an unrated result or alternatively the latest submission without a result
             Set<Submission> submissions = participation.getSubmissions();
@@ -461,13 +462,15 @@ public class ExerciseService {
             participation.setSubmissions(submission != null ? Set.of(submission) : null);
 
             participation.setResults(results);
+            if (submission != null) {
+                submission.setResults(new ArrayList<>(results));
+            }
 
             // remove inner exercise from participation
             participation.setExercise(null);
+        });
 
-            // add participation into an array
-            exercise.setStudentParticipations(Set.of(participation));
-        }
+        exercise.setStudentParticipations(new HashSet<>(relevantParticipations));
     }
 
     /**
@@ -603,17 +606,17 @@ public class ExerciseService {
      * @param exercise              the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
-        if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+            exerciseStatisticsDTO.setNoOfRatedAssessments(0L);
+            exerciseStatisticsDTO.setNoOfSubmissionsInTime(0L);
+            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(0D);
+        }
+        else {
             long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exercise.getId());
             long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
             exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
             exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
             exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
-        }
-        else {
-            exerciseStatisticsDTO.setNoOfRatedAssessments(0L);
-            exerciseStatisticsDTO.setNoOfSubmissionsInTime(0L);
-            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(0D);
         }
     }
 

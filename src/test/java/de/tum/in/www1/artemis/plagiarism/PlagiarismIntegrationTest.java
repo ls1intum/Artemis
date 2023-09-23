@@ -11,21 +11,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
-class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "plagiarismintegration";
 
@@ -41,6 +47,18 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -53,18 +71,24 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 3, 1, 1, 1);
-        course = database.addCourseWithOneFinishedTextExercise();
+        userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
+        course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+        textPlagiarismResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
+        var textSubmission = ParticipationFactory.generateTextSubmission("", Language.GERMAN, true);
 
+        var submission1 = participationUtilService.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        var submission2 = participationUtilService.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student2");
+        var submission3 = participationUtilService.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student3");
         plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison1.setStatus(CONFIRMED);
         var plagiarismSubmissionA1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA1.setStudentLogin(TEST_PREFIX + "student1");
+        plagiarismSubmissionA1.setSubmissionId(submission1.getId());
         var plagiarismSubmissionB1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB1.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionB1.setSubmissionId(submission2.getId());
         plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
         plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
         plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
@@ -74,8 +98,10 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         plagiarismComparison2.setStatus(NONE);
         var plagiarismSubmissionA2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA2.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionA2.setSubmissionId(submission2.getId());
         var plagiarismSubmissionB2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB2.setStudentLogin(TEST_PREFIX + "student3");
+        plagiarismSubmissionB2.setSubmissionId(submission3.getId());
         plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
         plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
         plagiarismComparison2 = plagiarismComparisonRepository.save(plagiarismComparison2);
@@ -199,5 +225,26 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true", HttpStatus.OK);
         var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismResultsForExercise_instructor_correct() throws Exception {
+        var results = request.get("/api/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.OK, Long.class);
+        assertThat(results).isEqualTo(4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNumberOfPlagiarismResultsForExercise_tutor_forbidden() throws Exception {
+        request.get("/api/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
+        courseUtilService.updateCourseGroups("abc", course, "");
+        request.get("/api/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
+        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL;
 import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL_UPPER_CASE;
-import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -27,9 +27,12 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
@@ -71,6 +74,15 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     protected AuthorityRepository authorityRepository;
 
+    @Autowired
+    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    protected CourseUtilService courseUtilService;
+
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
     private static final String USERNAME = TEST_PREFIX + "student1";
 
     protected ProgrammingExercise programmingExercise;
@@ -81,10 +93,10 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void setUp() {
-        course = database.addCourseWithOneProgrammingExercise();
-        database.addOnlineCourseConfigurationToCourse(course);
-        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        courseUtilService.addOnlineCourseConfigurationToCourse(course);
+        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
@@ -123,16 +135,16 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
         jiraRequestMockProvider.mockGetOrCreateUserLti(username, "", username, email, firstName, groups);
 
-        request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
+        request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
         final var user = userRepository.findOneByLogin(username).orElseThrow();
-        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
+        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).orElseThrow();
 
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
         assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
         assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
 
-        final var mrrobotUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).get();
+        final var mrrobotUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
         assertThat(mrrobotUser.getEmail()).isEqualTo(email);
         assertThat(mrrobotUser.getFirstName()).isEqualTo(firstName);
         assertThat(mrrobotUser.getGroups()).containsAll(groups);
@@ -159,7 +171,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
     }
 
@@ -178,7 +190,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
         var expectedResponseHeaders = new HashMap<String, String>();
         expectedResponseHeaders.put("x-artemisapp-error", "CAPTCHA required");
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.FORBIDDEN, httpHeaders, expectedResponseHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.FORBIDDEN, httpHeaders, expectedResponseHeaders);
         assertThat(response.getCookie("jwt")).isNull();
     }
 
@@ -196,7 +208,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
         // validation fails due to empty password is validated against min size
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.BAD_REQUEST, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.BAD_REQUEST, httpHeaders);
         assertThat(response.getCookie("jwt")).isNull();
     }
 }

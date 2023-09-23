@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
@@ -49,14 +49,14 @@ enum TestCaseBarTitle {
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
-                                        | artemisTranslate : { percentage: model.value.toFixed(2) }
+                                        | artemisTranslate: { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
                             <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                        | artemisTranslate : { percentage: model.bonus.toFixed(2) }
+                                        | artemisTranslate: { percentage: model.bonus.toFixed(2) }
                                 }}
                             </span>
                         </div>
@@ -64,14 +64,14 @@ enum TestCaseBarTitle {
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
-                                        | artemisTranslate : { percentage: model.weight.toFixed(2) }
+                                        | artemisTranslate: { percentage: model.weight.toFixed(2) }
                                 }}
                             </span>
                             <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                        | artemisTranslate : { percentage: model.value.toFixed(2) }
+                                        | artemisTranslate: { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
                         </div>
@@ -96,7 +96,7 @@ enum TestCaseBarTitle {
                         <b>{{ model.name }}</b>
                         <br />
                         <span>
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate : { percentage: model.value.toFixed(2) } }}
+                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
                         </span>
                     </ng-template>
                 </ngx-charts-bar-horizontal-stacked>
@@ -104,7 +104,7 @@ enum TestCaseBarTitle {
         </div>
     `,
 })
-export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
+export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnInit, OnChanges {
     @Input() testCases: ProgrammingExerciseTestCase[];
     @Input() testCaseStatsMap?: TestCaseStatsMap;
     @Input() totalParticipations?: number;
@@ -120,19 +120,25 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     // ngx
     // array containing the ngx-dedicated objects in order to display the weight and bonus chart
     ngxWeightData: NgxChartsMultiSeriesDataEntry[] = [
-        { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] },
-        { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'), series: [] as any[] },
+        { name: '', series: [] as any[] },
+        { name: '', series: [] as any[] },
     ];
     // array containing the ngx-dedicated objects in order to display the points chart
-    ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [
-        { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] },
-    ];
+    ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [{ name: '', series: [] as any[] }];
 
-    constructor(private translateService: TranslateService, private navigationUtilService: ArtemisNavigationUtilService) {
+    constructor(
+        private translateService: TranslateService,
+        private navigationUtilService: ArtemisNavigationUtilService,
+    ) {
         super();
+
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
         });
+    }
+
+    ngOnInit(): void {
+        this.updateTranslation();
     }
 
     ngOnChanges(): void {

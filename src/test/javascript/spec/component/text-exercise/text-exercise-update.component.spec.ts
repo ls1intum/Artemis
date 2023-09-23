@@ -49,7 +49,7 @@ describe('TextExercise Management Update Component', () => {
             const course = { id: 1 } as Course;
             const textExercise = new TextExercise(course, undefined);
             textExercise.id = 123;
-
+            textExercise.channelName = 'testChannel';
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
                 route.data = of({ textExercise });
@@ -173,6 +173,7 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
         const courseId = 1;
 
         beforeEach(() => {
@@ -205,6 +206,7 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
         const courseId = 1;
 
         beforeEach(() => {
@@ -233,6 +235,7 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
         const groupId = 1;
 
         beforeEach(() => {
@@ -263,6 +266,8 @@ describe('TextExercise Management Update Component', () => {
         textExercise.releaseDate = dayjs();
         textExercise.dueDate = dayjs();
         textExercise.assessmentDueDate = dayjs();
+        textExercise.channelName = 'testChannel';
+
         const groupId = 1;
 
         beforeEach(() => {

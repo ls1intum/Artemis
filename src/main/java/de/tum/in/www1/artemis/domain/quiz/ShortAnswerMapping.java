@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "short_answer_mapping")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerMapping extends DomainObject {
+public class ShortAnswerMapping extends DomainObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
     @Column(name = "short_answer_spot_index")
     @JsonView(QuizView.Before.class)

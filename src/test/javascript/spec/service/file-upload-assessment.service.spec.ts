@@ -59,7 +59,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/feedback`,
+                    url: `api/file-upload-submissions/${submissionId}/feedback`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -85,7 +85,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/feedback?submit=true`,
+                    url: `api/file-upload-submissions/${submissionId}/feedback?submit=true`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -100,7 +100,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/result`,
+                    url: `api/file-upload-submissions/${submissionId}/result`,
                     method: 'GET',
                 });
                 req.flush(returnedFromService);
@@ -129,7 +129,7 @@ describe('Modeling Assessment Service', () => {
                     .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId)
                     .pipe(take(1))
                     .subscribe((resp) => (httpExpectedResult = resp));
-                const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
+                const req = httpMock.expectOne({ url: `api/file-upload-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
                 req.flush(returnedFromService);
                 expect(httpExpectedResult.body).toEqual(expected);
             });
@@ -142,7 +142,7 @@ describe('Modeling Assessment Service', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 httpMock.expectOne({
-                    url: `${SERVER_API_URL}api/file-upload-submissions/${submissionId}/cancel-assessment`,
+                    url: `api/file-upload-submissions/${submissionId}/cancel-assessment`,
                     method: 'PUT',
                 });
                 expect(expectedResult).toEqual({});

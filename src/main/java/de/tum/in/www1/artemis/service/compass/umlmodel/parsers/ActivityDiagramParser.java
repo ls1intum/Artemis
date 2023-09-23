@@ -121,7 +121,7 @@ public class ActivityDiagramParser {
             return new UMLControlFlow(source, target, controlFlowJson.get(ELEMENT_ID).getAsString());
         }
         else {
-            throw new IOException("Control flow source or target not part of model!");
+            throw new IOException("Control flow source " + source + " or target " + target + " not part of model!");
         }
     }
 

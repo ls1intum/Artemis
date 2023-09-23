@@ -9,18 +9,17 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 
 @Entity
 @Table(name = "lecture_unit")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("L")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -39,12 +38,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Column(name = "release_date")
     protected ZonedDateTime releaseDate;
 
-    // This is explicitly required by Hibernate for the indexed collection (OrderColumn)
-    // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
-    @Column(name = "lecture_unit_order")
-    @Transient
-    private int order;
-
     @ManyToOne
     @JoinColumn(name = "lecture_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -55,7 +48,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @OrderBy("title")
     @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    protected Set<LearningGoal> learningGoals = new HashSet<>();
+    protected Set<Competency> competencies = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
@@ -67,10 +60,6 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     public void setName(String name) {
         this.name = name != null ? name.strip() : null;
-    }
-
-    public int getOrder() {
-        return order;
     }
 
     public Lecture getLecture() {
@@ -89,12 +78,12 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.releaseDate = releaseDate;
     }
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getCompetencies() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<Competency> competencies) {
+        this.competencies = competencies;
     }
 
     @JsonIgnore(false)
@@ -132,4 +121,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
     }
+
+    // Used to distinguish the type when used in a DTO, e.g., LectureUnitForLearningPathNodeDetailsDTO.
+    public abstract String getType();
 }

@@ -1,0 +1,40 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Migration-Check-Postgres Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        env_file:
+            - ./artemis/config/postgres.env
+            - ./artemis/config/cypress.env
+            - ./artemis/config/cypress-postgres.env
+            - ./artemis/config/migration-check.env
+        depends_on:
+            postgresql:
+                condition: service_healthy
+    postgresql:
+        extends:
+            file: ./postgres.yml
+            service: postgres
+    migration-check:
+        image: alpine
+        container_name: migration-check
+        command: /bin/sh -c "exit 0"
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-postgres-data:
+        name: artemis-postgres-data
+    artemis-data:
+        name: artemis-data

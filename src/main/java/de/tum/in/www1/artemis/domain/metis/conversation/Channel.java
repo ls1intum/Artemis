@@ -1,14 +1,18 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 
 @Entity
 @DiscriminatorValue("C")
@@ -19,7 +23,7 @@ public class Channel extends Conversation {
      * The name of the channel. Must be unique in the course.
      */
     @Column(name = "name")
-    @Size(min = 1, max = 20)
+    @Size(min = 1, max = 30)
     @NotBlank
     private String name;
 
@@ -62,6 +66,29 @@ public class Channel extends Conversation {
     @Column(name = "is_archived")
     @NotNull
     private Boolean isArchived;
+
+    /**
+     * Channels, that are meant to be seen by all course members by default, even if they haven't joined the channel yet, can be flagged with is_course_wide=true.
+     * A conversation_participant entry will be created on the fly for these channels as soon as an entry is needed.
+     */
+    @Column(name = "is_course_wide")
+    @NotNull
+    private boolean isCourseWide = false;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "lecture_id")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    private Lecture lecture;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "exercise_id")
+    @JsonIgnoreProperties("channel")
+    private Exercise exercise;
+
+    @OneToOne
+    @JoinColumn(unique = true, name = "exam_id")
+    @JsonIgnoreProperties("channel")
+    private Exam exam;
 
     @Nullable
     public String getName() {
@@ -113,5 +140,54 @@ public class Channel extends Conversation {
 
     public void setIsAnnouncementChannel(Boolean announcementChannel) {
         isAnnouncementChannel = announcementChannel;
+    }
+
+    public boolean getIsCourseWide() {
+        return isCourseWide;
+    }
+
+    public void setIsCourseWide(boolean isCourseWide) {
+        this.isCourseWide = isCourseWide;
+    }
+
+    public Lecture getLecture() {
+        return lecture;
+    }
+
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public Exam getExam() {
+        return exam;
+    }
+
+    public void setExam(Exam exam) {
+        this.exam = exam;
+    }
+
+    @Override
+    public String getHumanReadableNameForReceiver(User sender) {
+        return getName();
+    }
+
+    /**
+     * hide the details of the object, can be invoked before sending it as payload in a REST response or websocket message
+     */
+    @Override
+    public void hideDetails() {
+        // the following values are sometimes not needed when sending payloads to the client, so we allow to remove them
+        setLecture(null);
+        setExam(null);
+        setExercise(null);
+        super.hideDetails();
     }
 }

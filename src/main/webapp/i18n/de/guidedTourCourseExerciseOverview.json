@@ -30,7 +30,7 @@
                 "headline": "Kursinformation",
                 "content": "Diese Box listet Kursinformationen, wie etwa die Anzahl der Aufgaben und den Zeitraum des Kurses, auf."
             },
-            "upcomingDeadlines": {
+            "upcomingDueDates": {
                 "headline": "Bevorstehende Termine",
                 "content": "Hier siehst du welche Kursabgaben demnächst fällig sind."
             },

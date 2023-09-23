@@ -1,5 +1,4 @@
-import { PROGRAMMING_EXERCISE_BASE } from '../../../requests/CourseManagementRequests';
-import { POST } from '../../../constants';
+import { BASE_API, POST, PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the programming exercise creation page.
@@ -22,7 +21,7 @@ export class ProgrammingExerciseCreationPage {
     /**
      * @param programmingLanguage the programming language of the programming exercise
      */
-    setProgrammingLanguage(programmingLanguage: string) {
+    setProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
         cy.get('#field_programmingLanguage').select(programmingLanguage);
     }
 
@@ -56,5 +55,12 @@ export class ProgrammingExerciseCreationPage {
         cy.get('#save-entity').click();
         // Creating a programming exercise can take quite a while so we increase the default timeout here
         return cy.wait('@createProgrammingExercise', { timeout: 60000 });
+    }
+
+    import() {
+        cy.intercept(POST, BASE_API + 'programming-exercises/import/*').as('programmingExerciseImport');
+        cy.get('#save-entity').click();
+        // Creating a programming exercise can take quite a while so we increase the default timeout here
+        return cy.wait('@programmingExerciseImport', { timeout: 60000 });
     }
 }

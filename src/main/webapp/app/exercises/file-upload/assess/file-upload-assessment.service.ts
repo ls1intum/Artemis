@@ -13,7 +13,7 @@ export type EntityResponseType = HttpResponse<Result>;
     providedIn: 'root',
 })
 export class FileUploadAssessmentService {
-    private resourceUrl = SERVER_API_URL + 'api';
+    private resourceUrl = 'api';
 
     constructor(private http: HttpClient) {}
 

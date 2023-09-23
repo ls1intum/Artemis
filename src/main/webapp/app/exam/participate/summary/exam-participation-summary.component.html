@@ -1,10 +1,10 @@
 <div>
     <h2 id="exam-title">
         <ng-container *ngIf="!instructorView">
-            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate : { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
+            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
         </ng-container>
         <ng-container *ngIf="instructorView">
-            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate : { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
+            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
             <fa-icon [icon]="faPrint"></fa-icon>
@@ -73,7 +73,7 @@
                             >Plagiarism Case</span
                         >
                     </a>
-                    <ng-container *ngIf="exercise.exampleSolutionPublished">
+                    <ng-container *ngIf="exampleSolutionPublished">
                         <a
                             *ngIf="exercise.type !== PROGRAMMING"
                             class="btn btn-primary ms-2 float-end"
@@ -90,7 +90,7 @@
                     </ng-container>
                 </span>
                 <!-- prettier-ignore -->
-                <h5 class="exercise-title">{{ exercise.title }}
+                <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
                 [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
                         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                     <jhi-included-in-score-badge

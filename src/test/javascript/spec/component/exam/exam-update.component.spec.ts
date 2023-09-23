@@ -12,7 +12,7 @@ import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -40,6 +40,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 @Component({
     template: '',
@@ -56,6 +57,7 @@ describe('Exam Update Component', () => {
 
     const course = new Course();
     course.id = 1;
+    course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
         { path: 'course-management/:courseId/exams', component: DummyComponent },
@@ -90,6 +92,7 @@ describe('Exam Update Component', () => {
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
                     MockDirective(FeatureToggleDirective),
+                    MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -208,6 +211,14 @@ describe('Exam Update Component', () => {
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeFalse();
         });
+
+        it('should show channel name input for test exams', fakeAsync(() => {
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.channelName = 'test-exam';
+            component.ngOnInit();
+            tick();
+            expect(component.hideChannelNameInput).toBeFalse();
+        }));
 
         it('should validate the example solution publication date correctly', () => {
             const newExamWithoutExercises = new Exam();
@@ -495,6 +506,7 @@ describe('Exam Update Component', () => {
                     MockComponent(DifficultyBadgeComponent),
                     MockComponent(DocumentationButtonComponent),
                     MockDirective(FeatureToggleDirective),
+                    MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -582,7 +594,7 @@ describe('Exam Update Component', () => {
             expect(component.exam.studentExams).toBeUndefined();
         });
 
-        it('should  perform input of an examWithoutExercises with exercises successfully', () => {
+        it('should perform input of an examWithoutExercises with exercises successfully', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -599,7 +611,7 @@ describe('Exam Update Component', () => {
             expect(alertSpy).not.toHaveBeenCalled();
         });
 
-        it('should  trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
+        it('should trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -631,22 +643,27 @@ describe('Exam Update Component', () => {
             expect(alertSpy).toHaveBeenCalledOnce();
         });
 
-        it('should perform import of examWithoutExercises AND correctly process conflict exception from server', () => {
-            const preCheckError = new HttpErrorResponse({
-                error: { errorKey: 'examContainsProgrammingExercisesWithInvalidKey', numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
-                status: 400,
-            });
-            const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
-            const alertSpy = jest.spyOn(alertService, 'error');
+        it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
+            'should perform import of examWithoutExercises AND correctly process conflict exception from server',
+            (errorKey) => {
+                const preCheckError = new HttpErrorResponse({
+                    error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
+                    status: 400,
+                });
+                const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
+                const alertSpy = jest.spyOn(alertService, 'error');
 
-            fixture.detectChanges();
-            component.save();
+                fixture.detectChanges();
+                component.save();
 
-            expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, examForImport);
-            expect(alertSpy).toHaveBeenCalledOnce();
-            expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
-        });
+                expect(importSpy).toHaveBeenCalledWith(1, examForImport);
+                if (errorKey == 'invalidKey') {
+                    expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
+                } else {
+                    expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
+                }
+            },
+        );
 
         it('should perform input of exercise groups AND correctly process arbitrary exception from server', () => {
             const error = new HttpErrorResponse({

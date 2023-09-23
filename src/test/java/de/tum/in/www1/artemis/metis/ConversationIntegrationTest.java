@@ -2,30 +2,62 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
+import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "cvtest";
 
+    private final TextExerciseUtilService textExerciseUtilService;
+
+    private final ExerciseUtilService exerciseUtilService;
+
+    private final ExamUtilService examUtilService;
+
+    private final LectureUtilService lectureUtilService;
+
+    private final ConversationUtilService conversationUtilService;
+
+    @Autowired
+    public ConversationIntegrationTest(TextExerciseUtilService textExerciseUtilService, ExerciseUtilService exerciseUtilService, ExamUtilService examUtilService,
+            LectureUtilService lectureUtilService, ConversationUtilService conversationUtilService) {
+        this.textExerciseUtilService = textExerciseUtilService;
+        this.exerciseUtilService = exerciseUtilService;
+        this.examUtilService = examUtilService;
+        this.lectureUtilService = lectureUtilService;
+        this.conversationUtilService = conversationUtilService;
+    }
+
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        this.database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
+            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
         }
     }
 
@@ -55,7 +87,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getConversationsOfUser_shouldReturnConversationsWhereMember() throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX + "1");
         addUsersToConversation(channel.getId(), "tutor1");
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
@@ -64,10 +96,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
-        var channel2 = createChannel(false, RandomConversationNameGenerator.generateRandomConversationName());
+        var channel2 = createChannel(false, TEST_PREFIX + "2");
 
         // then
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         var convOfUsers = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
         assertThat(convOfUsers).hasSize(3); // the channel2 is not returned because the user is not a member
         assertThat(convOfUsers).extracting(ConversationDTO::getId).containsExactlyInAnyOrder(channel.getId(), groupChat.getId(), oneToOneChat.getId());
@@ -91,7 +123,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         // check that the channel moderator role is correctly set
         convOfUsers.stream().filter(conv -> conv.getId().equals(channel.getId())).findFirst().ifPresent(conv -> assertThat(((ChannelDTO) conv).getIsChannelModerator()).isTrue());
         // check that creator is correctly set
-        database.changeUser(testPrefix + "instructor1");
+        userUtilService.changeUser(testPrefix + "instructor1");
         var convOfInstructor = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
         // should be creator of all conversations
         assertThat(convOfInstructor).hasSize(4);
@@ -111,12 +143,68 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getConversationsOfUser_onlyFewDatabaseCalls() throws Exception {
+        // given
+        var channel = createChannel(false, TEST_PREFIX + "1");
+        addUsersToConversation(channel.getId(), "tutor1");
+
+        var groupChat = createGroupChat("tutor1");
+        hideConversation(groupChat.getId(), "tutor1");
+
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+        var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
+        this.resetWebsocketMock();
+        favoriteConversation(oneToOneChat.getId(), "tutor1");
+
+        var courseWideChannel = createChannel(false, TEST_PREFIX + "2");
+        conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
+        // then
+        // expected are 11 database calls independent of the number of conversations.
+        // 5 calls are for user authentication checks, 6 calls are made for retrieving conversation related data
+        assertThatDb(() -> request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(11);
+
+        // cleanup
+        conversationMessageRepository.deleteById(post.getId());
+        conversationRepository.deleteById(groupChat.getId());
+        conversationRepository.deleteById(oneToOneChat.getId());
+        conversationRepository.deleteById(channel.getId());
+        conversationRepository.deleteById(courseWideChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnChannelIfExerciseOrLectureOrExamHidden_asTutor() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "tutor1");
+        createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "tutor1");
+
+        List<ConversationDTO> channelsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, ConversationDTO.class);
+
+        assertThat(channelsOfUser).hasSize(6);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReturnChannelIfExerciseOrLectureOrExamHidden_asStudent() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "student1");
+        List<Long> visibleChannelIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "student1");
+
+        List<ConversationDTO> channelsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, ConversationDTO.class);
+
+        assertThat(channelsOfUser).hasSize(3);
+        channelsOfUser.forEach(conv -> assertThat(conv.getId()).isIn(visibleChannelIds));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void switchFavoriteStatus_shouldSwitchFavoriteStatus() throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isFavorite", String.valueOf(true));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, trueParams);
@@ -125,6 +213,25 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         falseParams.add("isFavorite", String.valueOf(false));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, falseParams);
         this.assertFavoriteStatus(channel.getId(), "tutor1", false);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void switchFavoriteStatus_shouldSwitchFavoriteStatus_IfNoParticipant() throws Exception {
+        // given
+        Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
+        // then
+        var trueParams = new LinkedMultiValueMap<String, String>();
+        trueParams.add("isFavorite", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, trueParams);
+        this.assertFavoriteStatus(channel.getId(), "student1", true);
+        var falseParams = new LinkedMultiValueMap<String, String>();
+        falseParams.add("isFavorite", String.valueOf(false));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, falseParams);
+        this.assertFavoriteStatus(channel.getId(), "student1", false);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -140,7 +247,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     void switchFavoriteStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -158,10 +265,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void switchHiddenStatus_shouldSwitchHiddenStatus() throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isHidden", String.valueOf(true));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, trueParams);
@@ -170,6 +277,25 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         falseParams.add("isHidden", String.valueOf(false));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
         this.assertHiddenStatus(channel.getId(), "tutor1", false);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void switchHiddenStatus_shouldSwitchHiddenStatus_IfNoParticipant() throws Exception {
+        // given
+        Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
+        // then
+        var trueParams = new LinkedMultiValueMap<String, String>();
+        trueParams.add("isHidden", String.valueOf(true));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, trueParams);
+        this.assertHiddenStatus(channel.getId(), "student1", true);
+        var falseParams = new LinkedMultiValueMap<String, String>();
+        falseParams.add("isHidden", String.valueOf(false));
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
+        this.assertHiddenStatus(channel.getId(), "student1", false);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -185,7 +311,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     void switchHiddenStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -209,7 +335,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     void searchConversationMembers_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         // given
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -230,14 +356,14 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchMembersOfConversation_shouldFindMembersWhereLoginOrNameMatches() throws Exception {
-        var channel = createChannel(false);
+        var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "student1");
         addUsersToConversation(channel.getId(), "editor1");
         addUsersToConversation(channel.getId(), "tutor1");
         grantChannelModeratorRole(channel.getId(), "tutor1");
 
         // search for students
-        database.changeUser(testPrefix + "tutor1");
+        userUtilService.changeUser(testPrefix + "tutor1");
         // <server>/api/courses/:courseId/conversations/:conversationId/members/search?loginOrName=:searchTerm&sort=firstName,asc&sort=lastName,asc&page=0&size=10
         // optional filter attribute to further : filter=INSTRUCTOR or EDITOR or TUTOR or STUDENT or CHANNEL_MODERATOR
         var params = new LinkedMultiValueMap<String, String>();
@@ -282,6 +408,26 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessages_shouldReturnCorrectValue_NoMessage() throws Exception {
+        boolean unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
+        assertThat(unreadMessages).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessages_shouldReturnCorrectValue_Message() throws Exception {
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+        this.postInConversation(oneToOneChat.getId(), "instructor1");
+
+        userUtilService.changeUser(testPrefix + "tutor1");
+
+        boolean unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
+        assertThat(unreadMessages).isTrue();
+    }
+
     private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelModerationRights,
             Boolean isChannelModerator) {
         assertThat(conversationDTO.getIsCreator()).isEqualTo(isCreator);
@@ -294,15 +440,31 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     private void assertFavoriteStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedFavoriteStatus) {
-        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
+        var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
-        assertThat(participant.get().getIsFavorite()).isEqualTo(expectedFavoriteStatus);
+        assertThat(participant.orElseThrow().getIsFavorite()).isEqualTo(expectedFavoriteStatus);
     }
 
     private void assertHiddenStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedHiddenStatus) {
-        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
+        var user = userUtilService.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
-        assertThat(participant.get().getIsHidden()).isEqualTo(expectedHiddenStatus);
+        assertThat(participant.orElseThrow().getIsHidden()).isEqualTo(expectedHiddenStatus);
+    }
+
+    private List<Long> createExerciseAndExamAndLectureChannels(Course course, ZonedDateTime visibleFrom, String userLoginWithoutPrefix) {
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, visibleFrom, visibleFrom, visibleFrom);
+        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
+        addUsersToConversation(exerciseChannel.getId(), userLoginWithoutPrefix);
+
+        Exam exam = examUtilService.addExam(course, visibleFrom, visibleFrom, visibleFrom);
+        Channel examChannel = examUtilService.addExamChannel(exam, "test");
+        addUsersToConversation(examChannel.getId(), userLoginWithoutPrefix);
+
+        Lecture lecture = lectureUtilService.createLecture(course, visibleFrom);
+        Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
+        addUsersToConversation(lectureChannel.getId(), userLoginWithoutPrefix);
+
+        return List.of(exerciseChannel.getId(), examChannel.getId(), lectureChannel.getId());
     }
 
 }

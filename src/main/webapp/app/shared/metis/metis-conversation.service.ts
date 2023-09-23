@@ -13,7 +13,6 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
@@ -46,7 +45,6 @@ export class MetisConversationService implements OnDestroy {
     private _isServiceSetup$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
     constructor(
-        private courseManagementService: CourseManagementService,
         private groupChatService: GroupChatService,
         private oneToOneChatService: OneToOneChatService,
         private channelService: ChannelService,
@@ -169,6 +167,10 @@ export class MetisConversationService implements OnDestroy {
                 this.activeConversation = conversation.body!;
             }),
             catchError((res: HttpErrorResponse) => {
+                if (!res.error?.skipAlert) {
+                    return of(null);
+                }
+
                 onError(this.alertService, res);
                 if (res.error && res.error.title) {
                     this.alertService.addErrorAlert(res.error.title, res.error.message, res.error.params);
@@ -187,7 +189,7 @@ export class MetisConversationService implements OnDestroy {
     public setUpConversationService = (course: Course): Observable<never> => {
         this._courseId = course.id!;
         this._course = course;
-        return this.conversationService.getConversationsOfUser(this._course.id ?? 0).pipe(
+        return this.conversationService.getConversationsOfUser(this._courseId).pipe(
             map((conversations: HttpResponse<ConversationDto[]>) => {
                 return conversations.body ?? [];
             }),
@@ -215,6 +217,24 @@ export class MetisConversationService implements OnDestroy {
             // service is ready to use and cached values can be received via the respective replay subjects
             switchMap(() => EMPTY),
         );
+    };
+
+    checkForUnreadMessages = (course: Course) => {
+        if (!course?.id) {
+            return;
+        }
+
+        this.conversationService.checkForUnreadMessages(course.id).subscribe({
+            next: (hasNewMessages) => {
+                if (hasNewMessages?.body !== this.hasUnreadMessages) {
+                    this.hasUnreadMessages = hasNewMessages?.body ?? false;
+                    this._hasUnreadMessages$.next(this.hasUnreadMessages);
+                }
+            },
+            error: (errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+            },
+        });
     };
 
     private hasUnreadMessagesCheck = (): void => {
@@ -273,7 +293,7 @@ export class MetisConversationService implements OnDestroy {
 
     private onConversationMembershipMessageReceived(websocketDTO: ConversationWebsocketDTO) {
         const conversationDTO = this.conversationService.convertServerDates(websocketDTO.conversation);
-        const action = websocketDTO.crudAction;
+        const action = websocketDTO.metisCrudAction;
 
         switch (action) {
             case MetisPostAction.CREATE:

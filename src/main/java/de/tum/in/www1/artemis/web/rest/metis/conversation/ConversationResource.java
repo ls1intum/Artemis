@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,17 +11,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -61,7 +62,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of conversations where the requesting user is a member
      */
     @GetMapping("/{courseId}/conversations")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
 
@@ -80,7 +81,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -98,13 +99,29 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /api/courses/:courseId/unread-messages : Checks for unread messages of the current user
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
+     */
+    @GetMapping("/{courseId}/unread-messages")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        return ResponseEntity.ok(conversationService.userHasUnreadMessages(courseId, requestingUser));
     }
 
     /**
@@ -118,7 +135,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
      */
     @GetMapping("/{courseId}/conversations/{conversationId}/members/search")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationUserDTO>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId,
             @RequestParam("loginOrName") String loginOrName, @RequestParam(value = "filter", required = false) ConversationMemberSearchFilters filter, Pageable pageable) {
         log.debug("REST request to get members of conversation : {} with login or name : {} in course: {}", conversationId, loginOrName, courseId);
@@ -131,8 +148,9 @@ public class ConversationResource extends ConversationManagementResource {
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        var isMember = conversationService.isMember(conversationId, requestingUser.getId());
-        if (!isMember) {
+        var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel channel && channel.getIsCourseWide())
+                || conversationService.isMember(conversationId, requestingUser.getId());
+        if (!isAllowedToSearchForMembers) {
             var atLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
             if (!atLeastInstructorInCourse) {
                 throw new AccessForbiddenException("Only members of a conversation or instructors can search the members of a conversation.");
@@ -167,18 +185,5 @@ public class ConversationResource extends ConversationManagementResource {
                         "conversationIdMismatch");
             }
         });
-    }
-
-    /**
-     * GET api/courses/conversations-for-notifications : Get all conversations for which the current user should receive notifications
-     *
-     * @return the list of Conversations for which the current user should receive notifications about
-     */
-    @GetMapping("/conversations-for-notifications")
-    @PreAuthorize("hasRole('USER')")
-    public List<Conversation> getAllConversationsForNotifications() {
-        log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        return conversationService.findAllConversationsForNotifications(user, false);
     }
 }

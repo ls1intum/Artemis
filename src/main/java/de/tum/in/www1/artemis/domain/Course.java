@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,14 +20,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -42,8 +47,16 @@ public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
 
+    private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
+
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FilePathService filePathService = new FilePathService();
+
+    @Transient
+    private final transient FileService fileService = new FileService();
+
+    @Transient
+    private final transient EntityFileService entityFileService = new EntityFileService(fileService, filePathService);
 
     @Transient
     private String prevCourseIcon;
@@ -84,6 +97,18 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime endDate;
 
+    @Column(name = "enrollment_start_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime enrollmentStartDate;
+
+    @Column(name = "enrollment_end_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime enrollmentEndDate;
+
+    @Column(name = "unenrollment_end_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime unenrollmentEndDate;
+
     @Column(name = "semester")
     @JsonView(QuizView.Before.class)
     private String semester;
@@ -115,6 +140,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
+    @Column(name = "info_sharing_messaging_code_of_conduct")
+    private String courseInformationSharingMessagingCodeOfConduct;
+
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
@@ -133,11 +161,11 @@ public class Course extends DomainObject {
 
     @Column(name = "max_complaint_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintTextLimit = 2000;
+    private int maxComplaintTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintResponseTextLimit = 2000;
+    private int maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -150,11 +178,14 @@ public class Course extends DomainObject {
     @Column(name = "course_icon")
     private String courseIcon;
 
-    @Column(name = "registration_enabled")
-    private Boolean registrationEnabled;
+    @Column(name = "registration_enabled") // TODO: rename column in database
+    private Boolean enrollmentEnabled;
 
-    @Column(name = "registration_confirmation_message")
-    private String registrationConfirmationMessage;
+    @Column(name = "registration_confirmation_message") // TODO: rename column in database
+    private String enrollmentConfirmationMessage;
+
+    @Column(name = "unenrollment_enabled")
+    private boolean unenrollmentEnabled = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -187,7 +218,14 @@ public class Course extends DomainObject {
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     @OrderBy("title")
-    private Set<LearningGoal> learningGoals = new HashSet<>();
+    private Set<Competency> competencies = new HashSet<>();
+
+    @Column(name = "learning_paths_enabled", nullable = false)
+    private boolean learningPathsEnabled = false;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("course")
+    private Set<LearningPath> learningPaths = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
@@ -210,12 +248,16 @@ public class Course extends DomainObject {
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
-    private Set<LearningGoal> prerequisites = new HashSet<>();
+    private Set<Competency> prerequisites = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "iris_settings_id")
+    private IrisSettings irisSettings;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -322,15 +364,56 @@ public class Course extends DomainObject {
         this.endDate = endDate;
     }
 
+    public ZonedDateTime getEnrollmentStartDate() {
+        return enrollmentStartDate;
+    }
+
+    public void setEnrollmentStartDate(ZonedDateTime enrollmentStartDate) {
+        this.enrollmentStartDate = enrollmentStartDate;
+    }
+
+    public ZonedDateTime getEnrollmentEndDate() {
+        return enrollmentEndDate;
+    }
+
+    public void setEnrollmentEndDate(ZonedDateTime enrollmentEndDate) {
+        this.enrollmentEndDate = enrollmentEndDate;
+    }
+
     /**
-     * Determine whether the current date is within the course period (after start, before end).
+     * Determine whether the current date is within the enrollment period (after start, before end).
      *
-     * @return true if the current date is within the course period, false otherwise
+     * @return true if the current date is within the enrollment period, false otherwise
      */
     @JsonIgnore
-    public boolean isActive() {
+    public boolean enrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
-        return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
+        return (getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now)) && (getEnrollmentEndDate() == null || getEnrollmentEndDate().isAfter(now));
+    }
+
+    public ZonedDateTime getUnenrollmentEndDate() {
+        return unenrollmentEndDate;
+    }
+
+    public void setUnenrollmentEndDate(ZonedDateTime unenrollmentEndDate) {
+        this.unenrollmentEndDate = unenrollmentEndDate;
+    }
+
+    /**
+     * Determine whether the current date is within the unenrollment period (after start, before end).
+     * <p>
+     * The unenrollment period starts with the enrollment start date and ends with the unenrollment end date if present,
+     * otherwise the course end date will be used as the end of the period.
+     *
+     * @return true if the current date is within the unenrollment period, false otherwise
+     */
+    @JsonIgnore
+    public boolean unenrollmentIsActive() {
+        ZonedDateTime now = ZonedDateTime.now();
+        final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
+                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
+        return startCondition && endCondition;
     }
 
     public String getSemester() {
@@ -413,12 +496,28 @@ public class Course extends DomainObject {
         this.maxComplaintTextLimit = maxComplaintTextLimit;
     }
 
+    @JsonIgnore
+    public int getMaxComplaintTextLimitForExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintTextLimit());
+        }
+        return getMaxComplaintTextLimit();
+    }
+
     public int getMaxComplaintResponseTextLimit() {
         return maxComplaintResponseTextLimit;
     }
 
     public void setMaxComplaintResponseTextLimit(int maxComplaintResponseTextLimit) {
         this.maxComplaintResponseTextLimit = maxComplaintResponseTextLimit;
+    }
+
+    @JsonIgnore
+    public int getMaxComplaintResponseTextLimitForExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return Math.max(DEFAULT_COMPLAINT_TEXT_LIMIT, getMaxComplaintResponseTextLimit());
+        }
+        return getMaxComplaintResponseTextLimit();
     }
 
     public boolean getComplaintsEnabled() {
@@ -464,20 +563,28 @@ public class Course extends DomainObject {
         this.courseIcon = courseIcon;
     }
 
-    public Boolean isRegistrationEnabled() {
-        return registrationEnabled;
+    public Boolean isEnrollmentEnabled() {
+        return enrollmentEnabled;
     }
 
-    public void setRegistrationEnabled(Boolean registrationEnabled) {
-        this.registrationEnabled = registrationEnabled;
+    public void setEnrollmentEnabled(Boolean enrollmentEnabled) {
+        this.enrollmentEnabled = enrollmentEnabled;
     }
 
-    public String getRegistrationConfirmationMessage() {
-        return registrationConfirmationMessage;
+    public String getEnrollmentConfirmationMessage() {
+        return enrollmentConfirmationMessage;
     }
 
-    public void setRegistrationConfirmationMessage(String registrationConfirmationMessage) {
-        this.registrationConfirmationMessage = registrationConfirmationMessage;
+    public void setEnrollmentConfirmationMessage(String enrollmentConfirmationMessage) {
+        this.enrollmentConfirmationMessage = enrollmentConfirmationMessage;
+    }
+
+    public boolean isUnenrollmentEnabled() {
+        return unenrollmentEnabled;
+    }
+
+    public void setUnenrollmentEnabled(boolean unenrollmentEnabled) {
+        this.unenrollmentEnabled = unenrollmentEnabled;
     }
 
     public Integer getPresentationScore() {
@@ -538,22 +645,22 @@ public class Course extends DomainObject {
         this.organizations = organizations;
     }
 
-    public Set<LearningGoal> getPrerequisites() {
+    public Set<Competency> getPrerequisites() {
         return prerequisites;
     }
 
-    public void setPrerequisites(Set<LearningGoal> prerequisites) {
+    public void setPrerequisites(Set<Competency> prerequisites) {
         this.prerequisites = prerequisites;
     }
 
-    public void addPrerequisite(LearningGoal learningGoal) {
-        this.prerequisites.add(learningGoal);
-        learningGoal.getConsecutiveCourses().add(this);
+    public void addPrerequisite(Competency competency) {
+        this.prerequisites.add(competency);
+        competency.getConsecutiveCourses().add(this);
     }
 
-    public void removePrerequisite(LearningGoal learningGoal) {
-        this.prerequisites.remove(learningGoal);
-        learningGoal.getConsecutiveCourses().remove(this);
+    public void removePrerequisite(Competency competency) {
+        this.prerequisites.remove(competency);
+        competency.getConsecutiveCourses().remove(this);
     }
 
     /*
@@ -580,8 +687,9 @@ public class Course extends DomainObject {
 
     @PrePersist
     public void beforeCreate() {
-        // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), getId());
+        if (courseIcon != null) {
+            courseIcon = entityFileService.moveTempFileBeforeEntityPersistence(courseIcon, FilePathService.getCourseIconFilePath(), false);
+        }
     }
 
     @PostPersist
@@ -595,13 +703,14 @@ public class Course extends DomainObject {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), getId());
+        courseIcon = entityFileService.handlePotentialFileUpdateBeforeEntityPersistence(getId(), prevCourseIcon, courseIcon, FilePathService.getCourseIconFilePath(), false);
     }
 
     @PostRemove
     public void onDelete() {
-        // delete old file if necessary
-        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, FilePathService.getCourseIconFilePath(), getId());
+        if (prevCourseIcon != null) {
+            fileService.schedulePathForDeletion(Path.of(prevCourseIcon), 0);
+        }
     }
 
     @Override
@@ -609,8 +718,10 @@ public class Course extends DomainObject {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
                 + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='"
-                + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
+                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
+                + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
+                + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
+                + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -645,12 +756,28 @@ public class Course extends DomainObject {
         return this.numberOfStudentsTransient;
     }
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getCompetencies() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<Competency> competencies) {
+        this.competencies = competencies;
+    }
+
+    public boolean getLearningPathsEnabled() {
+        return learningPathsEnabled;
+    }
+
+    public void setLearningPathsEnabled(boolean learningPathsEnabled) {
+        this.learningPathsEnabled = learningPathsEnabled;
+    }
+
+    public Set<LearningPath> getLearningPaths() {
+        return learningPaths;
+    }
+
+    public void setLearningPaths(Set<LearningPath> learningPaths) {
+        this.learningPaths = learningPaths;
     }
 
     public boolean hasCourseArchive() {
@@ -698,12 +825,11 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that only one of onlineCourse and registrationEnabled is selected
+     * Validates that only one of onlineCourse and enrollmentEnabled is selected
      */
-    public void validateOnlineCourseAndRegistrationEnabled() {
-        if (isOnlineCourse() && isRegistrationEnabled()) {
-            throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
-                    true);
+    public void validateOnlineCourseAndEnrollmentEnabled() {
+        if (isOnlineCourse() && isEnrollmentEnabled()) {
+            throw new BadRequestAlertException("Online course and enrollment enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseEnrollmentEnabledInvalid", true);
         }
     }
 
@@ -779,21 +905,89 @@ public class Course extends DomainObject {
         }
     }
 
-    public void validateRegistrationConfirmationMessage() {
-        if (getRegistrationConfirmationMessage() != null && getRegistrationConfirmationMessage().length() > 2000) {
-            throw new BadRequestAlertException("Confirmation registration message must be shorter than 2000 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
-                    true);
+    public void validateEnrollmentConfirmationMessage() {
+        if (getEnrollmentConfirmationMessage() != null && getEnrollmentConfirmationMessage().length() > 2000) {
+            throw new BadRequestAlertException("Confirmation enrollment message must be shorter than 2000 characters", ENTITY_NAME, "confirmationEnrollmentMessageInvalid", true);
         }
     }
 
     /**
-     * Returns true if the start and end date of the course fulfill all requirements
-     *
-     * @return true if the dates are valid
+     * Validates if the start and end dates of the course fulfill all requirements.
      */
-    @JsonIgnore
-    public boolean isValidStartAndEndDate() {
-        return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
+    public void validateStartAndEndDate() {
+        if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
+        }
+    }
+
+    /**
+     * Validates if the start and end date to enroll in the course fulfill all requirements.
+     * <p>
+     * The enrollment period is considered valid if
+     * <ul>
+     * <li>start and end date of the course are set and valid ({@link #validateStartAndEndDate()})</li>
+     * <li>start and end date of the enrollment period are in the correct order,</li>
+     * <li>and the start and end date of the enrollment is before the end date of the course.</li>
+     * </ul>
+     *
+     * @throws BadRequestAlertException
+     */
+    public void validateEnrollmentStartAndEndDate() {
+        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
+            return;
+        }
+        final String errorKey = "enrollmentPeriodInvalid";
+        if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
+            throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getStartDate() == null || getEndDate() == null) {
+            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
+        }
+
+        validateStartAndEndDate();
+
+        if (getEnrollmentStartDate().isAfter(getStartDate())) {
+            throw new BadRequestAlertException("Enrollment start date can not be after the start date of the course.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getEnrollmentEndDate().isAfter(getEndDate())) {
+            throw new BadRequestAlertException("Enrollment end can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
+        }
+    }
+
+    /**
+     * Validates if the end date to unenroll from the course fulfills all requirements.
+     * <p>
+     * The unenrollment end date is considered valid if
+     * <ul>
+     * <li>start and end date of the enrollment period are set and valid ({@link #validateEnrollmentStartAndEndDate()})</li>
+     * <li>the enrollment period ends before the unenrollment end date,</li>
+     * <li>and the end date for unenrollment is not after the end date of the course.</li>
+     * </ul>
+     *
+     * @throws BadRequestAlertException
+     */
+    public void validateUnenrollmentEndDate() {
+        if (getUnenrollmentEndDate() == null) {
+            return;
+        }
+
+        validateEnrollmentStartAndEndDate();
+
+        final String errorKey = "unenrollmentEndDateInvalid";
+
+        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
+            throw new BadRequestAlertException("Unenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (!getEnrollmentEndDate().isBefore(getUnenrollmentEndDate())) {
+            throw new BadRequestAlertException("End date for enrollment must be before the end date to unenroll.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getUnenrollmentEndDate().isAfter(getEndDate())) {
+            throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
+        }
     }
 
     /**
@@ -829,4 +1023,19 @@ public class Course extends DomainObject {
         this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
     }
 
+    public String getCourseInformationSharingMessagingCodeOfConduct() {
+        return this.courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
+        this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
+    }
+
+    public IrisSettings getIrisSettings() {
+        return irisSettings;
+    }
+
+    public void setIrisSettings(IrisSettings irisSettings) {
+        this.irisSettings = irisSettings;
+    }
 }

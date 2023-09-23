@@ -8,14 +8,15 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -31,6 +32,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     course: Course;
     activeConversation?: ConversationDto;
 
+    activeConversationAsChannel?: ChannelDTO;
+    channelSubTypeReferenceTranslationKey?: string;
+    channelSubTypeReferenceRouterLink?: string;
+
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
 
@@ -39,11 +44,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         // instantiated at course-conversation.component.ts
         public metisConversationService: MetisConversationService,
         public conversationService: ConversationService,
+        private metisService: MetisService,
     ) {}
 
-    getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
-    getConversationName = this.conversationService.getConversationName;
 
     canAddUsers = canAddUsersToConversation;
 
@@ -60,6 +64,9 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
+            this.activeConversationAsChannel = getAsChannelDto(conversation);
+            this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.activeConversationAsChannel?.subType);
+            this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.activeConversationAsChannel);
         });
     }
 

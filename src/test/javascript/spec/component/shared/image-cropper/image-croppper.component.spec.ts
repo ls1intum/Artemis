@@ -74,7 +74,7 @@ describe('ImageCropperComponent', () => {
 
             expect(resetCropperPositionSpy).toHaveBeenCalledOnce();
             expect(resetCropperPositionSpy).toHaveBeenCalledWith(sourceImage, cropper, settings);
-            expect(componentCropSpy).toHaveBeenCalledTimes(0);
+            expect(componentCropSpy).not.toHaveBeenCalled();
             expect(comp.imageVisible).toBeTrue();
         });
 
@@ -141,7 +141,7 @@ describe('ImageCropperComponent', () => {
             expect(startCropImageSpy).toHaveBeenCalledWith();
             expect(cropServiceCropSpy).toHaveBeenCalledOnce();
             expect(cropServiceCropSpy).toHaveBeenCalledWith(sourceImage, loadedImage, cropper, settings);
-            expect(imageCroppedSpy).toHaveBeenCalledTimes(0);
+            expect(imageCroppedSpy).not.toHaveBeenCalled();
             expect(res).toBeUndefined();
         });
     });
@@ -206,8 +206,8 @@ describe('ImageCropperComponent', () => {
 
             expect(loadImageFileSpy).toHaveBeenCalledOnce();
             expect(loadImageFileSpy).toHaveBeenCalledWith(file, settings);
-            expect(loadImageFromURLSpy).toHaveBeenCalledTimes(0);
-            expect(loadBase64ImageSpy).toHaveBeenCalledTimes(0);
+            expect(loadImageFromURLSpy).not.toHaveBeenCalled();
+            expect(loadBase64ImageSpy).not.toHaveBeenCalled();
         });
 
         it('should load from URL', () => {
@@ -219,8 +219,8 @@ describe('ImageCropperComponent', () => {
 
             expect(loadImageFromURLSpy).toHaveBeenCalledOnce();
             expect(loadImageFromURLSpy).toHaveBeenCalledWith(url, settings);
-            expect(loadImageFileSpy).toHaveBeenCalledTimes(0);
-            expect(loadBase64ImageSpy).toHaveBeenCalledTimes(0);
+            expect(loadImageFileSpy).not.toHaveBeenCalled();
+            expect(loadBase64ImageSpy).not.toHaveBeenCalled();
         });
 
         it('should load from Base64', () => {
@@ -232,8 +232,8 @@ describe('ImageCropperComponent', () => {
 
             expect(loadBase64ImageSpy).toHaveBeenCalledOnce();
             expect(loadBase64ImageSpy).toHaveBeenCalledWith(content, settings);
-            expect(loadImageFileSpy).toHaveBeenCalledTimes(0);
-            expect(loadImageFromURLSpy).toHaveBeenCalledTimes(0);
+            expect(loadImageFileSpy).not.toHaveBeenCalled();
+            expect(loadImageFromURLSpy).not.toHaveBeenCalled();
         });
 
         it('should load from event', () => {

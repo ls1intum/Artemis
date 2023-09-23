@@ -21,7 +21,7 @@ Build system
 ------------
 
 The build system is responsible for providing feedback to students when they work on programming exercises.
-Especially during lectures and before deadlines, a lot of students work simultaneously on their submissions, causing high load on the build system.
+Especially during lectures and before due dates, a lot of students work simultaneously on their submissions, causing high load on the build system.
 The build system must be scaled adequately in order to provide feedback within a reasonable time.
 
 More build agents can be added to the build system, guides can be found `here for Bamboo <https://confluence.atlassian.com/bamboo/bamboo-remote-agent-installation-guide-289276832.html>`_ and `here for Jenkins </dev/setup/jenkins-gitlab#build-agents>`_.

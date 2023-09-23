@@ -13,8 +13,8 @@ export enum FeatureToggle {
     ProgrammingExercises = 'ProgrammingExercises',
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
-    ExamLiveStatistics = 'ExamLiveStatistics',
     TutorialGroups = 'TutorialGroups',
+    LearningPaths = 'LearningPaths',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
@@ -26,7 +26,10 @@ export class FeatureToggleService {
     private subject: BehaviorSubject<ActiveFeatureToggles>;
     private subscriptionInitialized = false;
 
-    constructor(private websocketService: JhiWebsocketService, private http: HttpClient) {
+    constructor(
+        private websocketService: JhiWebsocketService,
+        private http: HttpClient,
+    ) {
         this.subject = new BehaviorSubject<ActiveFeatureToggles>(defaultActiveFeatureState);
     }
 
@@ -98,7 +101,7 @@ export class FeatureToggleService {
      * Setter method for the state of a feature toggle.
      */
     setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
-        const url = '/api/admin/management/feature-toggle';
+        const url = '/api/admin/feature-toggle';
         const toggleParam = { [featureToggle]: active };
         return this.http.put(url, toggleParam);
     }

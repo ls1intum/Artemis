@@ -7,11 +7,14 @@ import static de.tum.in.www1.artemis.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,25 +23,16 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -91,10 +85,6 @@ public class UserService {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final StudentScoreRepository studentScoreRepository;
-
-    private final LearningGoalProgressRepository learningGoalProgressRepository;
-
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -103,33 +93,10 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final ExerciseHintActivationRepository exerciseHintActivationRepository;
-
-    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
-
-    private final TutorialGroupRepository tutorialGroupRepository;
-
-    private final SingleUserNotificationRepository singleUserNotificationRepository;
-
-    private final NotificationRepository notificationRepository;
-
-    private final PostRepository postRepository;
-
-    private final ConversationRepository conversationRepository;
-
-    private final ConversationParticipantRepository conversationParticipantRepository;
-
-    private final OneToOneChatRepository oneToOneChatRepository;
-
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
-            LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
-            ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository,
-            PostRepository postRepository, ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository,
-            OneToOneChatRepository oneToOneChatRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, InstanceMessageSendService instanceMessageSendService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -141,18 +108,7 @@ public class UserService {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.studentScoreRepository = studentScoreRepository;
-        this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.exerciseHintActivationRepository = exerciseHintActivationRepository;
-        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
-        this.tutorialGroupRepository = tutorialGroupRepository;
-        this.singleUserNotificationRepository = singleUserNotificationRepository;
-        this.notificationRepository = notificationRepository;
-        this.postRepository = postRepository;
-        this.conversationRepository = conversationRepository;
-        this.conversationParticipantRepository = conversationParticipantRepository;
-        this.oneToOneChatRepository = oneToOneChatRepository;
     }
 
     /**
@@ -336,7 +292,9 @@ public class UserService {
             }
             catch (VersionControlException e) {
                 log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
-                deleteUser(savedNonActivatedUser);
+                userRepository.delete(savedNonActivatedUser);
+                clearUserCaches(savedNonActivatedUser);
+                userRepository.flush();
                 throw e;
             }
         });
@@ -384,24 +342,55 @@ public class UserService {
     }
 
     /**
-     * Searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and returns a new Artemis user.
-     * Also creates the user in the external user management (e.g. JIRA), in case this is activated
-     * Note: this method should only be used if the user does not yet exist in the database
+     * Creates a new Artemis user from LDAP in case this is active and a user with the login can be found
      *
-     * @param registrationNumber the matriculation number of the student
+     * @param login the login of the user
      * @return a new user or null if the LDAP user was not found
      */
-    public Optional<User> createUserFromLdap(String registrationNumber) {
-        if (!StringUtils.hasText(registrationNumber)) {
+    public Optional<User> createUserFromLdapWithLogin(String login) {
+        return findUserInLdap(login, () -> ldapUserService.orElseThrow().findByUsername(login));
+    }
+
+    /**
+     * Creates a new Artemis user from LDAP in case this is active and a user with the email can be found
+     *
+     * @param email the email of the user
+     * @return a new user or null if the LDAP user was not found
+     */
+    public Optional<User> createUserFromLdapWithEmail(String email) {
+        return findUserInLdap(email, () -> ldapUserService.orElseThrow().findByEmail(email));
+    }
+
+    /**
+     * Creates a new Artemis user from LDAP in case this is active and a user with the registration number can be found
+     *
+     * @param registrationNumber the matriculation number of the user
+     * @return a new user or null if the LDAP user was not found
+     */
+    public Optional<User> createUserFromLdapWithRegistrationNumber(String registrationNumber) {
+        return findUserInLdap(registrationNumber, () -> ldapUserService.orElseThrow().findByRegistrationNumber(registrationNumber));
+    }
+
+    /**
+     * Searches the (optional) LDAP service for a user with the given unique user identifier (e.g. login, email, registration number) and supplier function
+     * and returns a new Artemis user. Also creates the user in the external user management (e.g. JIRA), in case this is activated
+     * Note: this method should only be used if the user does not yet exist in the database
+     *
+     * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
+     * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByUsername(email)"
+     * @return a new user or null if the LDAP user was not found
+     */
+    private Optional<User> findUserInLdap(String userIdentifier, Supplier<Optional<LdapUserDto>> userSupplierFunction) {
+        if (!StringUtils.hasText(userIdentifier)) {
             return Optional.empty();
         }
         if (ldapUserService.isPresent()) {
-            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByRegistrationNumber(registrationNumber);
+            Optional<LdapUserDto> ldapUserOptional = userSupplierFunction.get();
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
+                log.info("Ldap User {} has login: {}", ldapUser.getFirstName() + " " + ldapUser.getFirstName(), ldapUser.getUsername());
 
-                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
+                // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number, or it is wrong
                 if (StringUtils.hasText(ldapUser.getUsername())) {
                     var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
                     if (existingUser.isPresent()) {
@@ -413,14 +402,14 @@ public class UserService {
 
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
                 User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
-                        registrationNumber, null, "en", false);
+                        ldapUser.getRegistrationNumber(), null, "en", false);
                 if (useExternalUserManagement) {
                     artemisAuthenticationProvider.createUserInExternalUserManagement(user);
                 }
                 return Optional.of(user);
             }
             else {
-                log.warn("Ldap User with registration number {} not found", registrationNumber);
+                log.warn("Ldap User with userIdentifier '{}' not found", userIdentifier);
             }
         }
         return Optional.empty();
@@ -455,84 +444,57 @@ public class UserService {
     }
 
     /**
-     * Delete user based on login string
+     * Performs soft-delete on the user based on login string
      *
      * @param login user login string
      */
-    @Transactional // ok because of delete
-    public void deleteUser(String login) {
-        // Delete the user in the connected VCS if necessary (e.g. for GitLab)
-        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteVcsUser(login));
-        // Delete the user in the local Artemis database
-        userRepository.findOneByLogin(login).ifPresent(user -> {
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(user));
-            deleteUser(user);
-            log.warn("Deleted User: {}", user);
+    public void softDeleteUser(String login) {
+        userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
+            user.setDeleted(true);
+            anonymizeUser(user);
+            log.warn("Soft Deleted User: {}", user);
         });
     }
 
-    @Transactional // ok because of delete
-    protected void deleteUser(User user) {
-        // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
-        // 1) All participation connected to the user (as student)
-        // 2) All notifications connected to the user (as author)
-        // 3) All results connected to the user (as assessor)
-        // 4) All complaints and complaints responses associated to the user
-        // 5) All student exams associated to the user
-        // 6) All LTIid and LTIOutcomeUrls associated to the user
-        // 7) All Post and AnswerPost
-        // 8) Remove the user from its teams
-        // 9) Delete the submissionVersion / remove the user from the submissionVersion
-        // 10) Delete the tutor participation
-        // 11) All tutorial group registrations of the student
-        // 12) Set teaching assistant to null for all tutorial groups taught by the user
+    /**
+     * Sets the properties of the user to random or dummy values, making it impossible to identify the user.
+     * Also updates the user in connectors and auth provider.
+     *
+     * @param user the user that should be anonymized
+     */
+    protected void anonymizeUser(User user) {
+        final String originalLogin = user.getLogin();
+        final Set<String> originalGroups = user.getGroups();
+        final String randomPassword = RandomUtil.generatePassword();
 
-        singleUserNotificationRepository.deleteByRecipientId(user.getId());
-        notificationRepository.removeAuthor(user.getId());
-        studentScoreRepository.deleteAllByUserId(user.getId());
-        learningGoalProgressRepository.deleteAllByUserId(user.getId());
-        exerciseHintActivationRepository.deleteAllByUser(user);
+        user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
+        user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
+        user.setLogin(RandomUtil.generateRandomAlphanumericString());
+        user.setPassword(randomPassword);
+        user.setEmail(RandomUtil.generateRandomAlphanumericString() + USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
+        user.setRegistrationNumber(null);
+        user.setImageUrl(null);
+        user.setActivated(false);
+        user.setGroups(Collections.emptySet());
 
-        deletePostsAndConversationRelatedObjects(user);
-
-        // deleting tutorial group registrations
-        tutorialGroupRegistrationRepository.deleteAllByStudent(user);
-        var taughtTutorialGroups = tutorialGroupRepository.findAllByTeachingAssistant(user);
-        for (var tutorialGroup : taughtTutorialGroups) {
-            tutorialGroup.setTeachingAssistant(null);
-        }
-        tutorialGroupRepository.saveAll(taughtTutorialGroups);
-
-        userRepository.delete(user);
+        userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
+
+        updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
     }
 
     /**
-     * Deletes the following objects:
-     * <ul>
-     * <li>Posts - belonging to the user, to Conversations created by the user, to OneToOneChats where the user
-     * is a participant</li>
-     * <li>OneToOneChats - where the user is a participant</li>
-     * <li>Conversations - created by the user</li>
-     * <li>ConversationParticipants - created by the user</li>
-     * </ul>
+     * Trys to find a user by the internal admin username
      *
-     * @param user the User instance for which the relevant objects should be deleted
+     * @return an Optional.emtpy() if no internal admin user is found, otherwise an optional with the internal admin user
      */
-    private void deletePostsAndConversationRelatedObjects(User user) {
-        // deleting Posts belonging to the conversations created by the user and belonging to the user
-        postRepository.deleteAllByConversationCreator(user);
-        postRepository.deleteAllByAuthor(user);
-
-        // deleting OneToOneChats where the user is a participant and Posts belonging to them
-        final Set<OneToOneChat> oneToOneChats = oneToOneChatRepository.findAllByParticipatingUser(user);
-        postRepository.deleteAllByConversationIn(oneToOneChats);
-        oneToOneChatRepository.deleteAll(oneToOneChats);
-
-        // deleting Conversations and ConversationParticipants created by the user
-        conversationRepository.deleteAllByCreator(user);
-        conversationParticipantRepository.deleteAllByUser(user);
+    public Optional<User> findInternalAdminUser() {
+        if (artemisInternalAdminUsername.isEmpty()) {
+            log.warn("The internal admin username is not configured and no internal admin user can be retrieved.");
+            return Optional.empty();
+        }
+        return userRepository.findOneByLogin(artemisInternalAdminUsername.get());
     }
 
     /**
@@ -656,7 +618,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        List<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
+        Set<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);
@@ -665,7 +627,7 @@ public class UserService {
     }
 
     /**
-     * add the user to the specified group and update in VCS (like GitLab) if used
+     * add the user to the specified group and update in VCS (like GitLab) if used, and registers the user to necessary channels
      *
      * @param user  the user
      * @param group the group
@@ -732,9 +694,9 @@ public class UserService {
     /**
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
-     *
+     * <p>
      * Steps:
-     *
+     * <p>
      * 1) we use the registration number and try to find the student in the Artemis user database
      * 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
      * management system
@@ -742,15 +704,30 @@ public class UserService {
      * 4) if we still cannot find the user, we try again using the email
      *
      * @param registrationNumber the registration number of the user
-     * @param courseGroupName    the courseGroup the user has to be added to
-     * @param courseGroupRole    the courseGroupRole enum
      * @param login              the login of the user
      * @param email              the email of the user
+     * @param courseGroupName    the courseGroup the user has to be added to
+     * @param courseGroupRole    the courseGroupRole enum
      * @return the found student, otherwise returns an empty optional
      */
-    public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login, String email) {
+    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName,
+            Role courseGroupRole) {
+        if (!StringUtils.hasText(login) && !StringUtils.hasText(email) && !StringUtils.hasText(registrationNumber)) {
+            // if none of the three values is specified, the user cannot be found
+            return Optional.empty();
+        }
         try {
-            var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            Optional<User> optionalStudent = Optional.empty();
+            if (StringUtils.hasText(login)) {
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(email)) {
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(registrationNumber)) {
+                optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            }
+
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
                 // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the
@@ -761,8 +738,17 @@ public class UserService {
                 return optionalStudent;
             }
 
-            optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber).or(() -> (this.createUserFromLdap(registrationNumber)))
-                    .or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByLogin(login))).or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByEmail(email)));
+            // In this case, the user was NOT found in the database! We can try to create it from the external user management, in case it is configured
+            if (StringUtils.hasText(login)) {
+                optionalStudent = createUserFromLdapWithLogin(login);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(email)) {
+                optionalStudent = createUserFromLdapWithEmail(email);
+            }
+            if (optionalStudent.isEmpty() && StringUtils.hasText(registrationNumber)) {
+                optionalStudent = createUserFromLdapWithRegistrationNumber(registrationNumber);
+            }
+
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
                 // the newly created user needs to get the rights to access the course
@@ -770,7 +756,7 @@ public class UserService {
                 return optionalStudent;
             }
 
-            log.warn("User with registration number '{}', login '{}' and email '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login, email);
+            log.warn("User with registration number '{}', login '{}' and email '{}' NOT found in Artemis user database NOR in connected LDAP", registrationNumber, login, email);
         }
         catch (Exception ex) {
             log.warn("Error while processing user with registration number {}", registrationNumber, ex);

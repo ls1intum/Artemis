@@ -9,9 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
@@ -19,10 +20,13 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
@@ -30,7 +34,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for managing Attachment.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class AttachmentResource {
 
     private final Logger log = LoggerFactory.getLogger(AttachmentResource.class);
@@ -50,59 +54,71 @@ public class AttachmentResource {
 
     private final FileService fileService;
 
+    private final FilePathService filePathService;
+
     private final CacheManager cacheManager;
 
     public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, FileService fileService, CacheManager cacheManager) {
+            UserRepository userRepository, FileService fileService, FilePathService filePathService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.fileService = fileService;
+        this.filePathService = filePathService;
         this.cacheManager = cacheManager;
     }
 
     /**
      * POST /attachments : Create a new attachment.
      *
-     * @param attachment the attachment to create
+     * @param attachment the attachment object to create
+     * @param file       the file to save
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment, or with status 400 (Bad Request) if the attachment has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/attachments")
-    @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Attachment> createAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
+    @PostMapping(value = "attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @EnforceAtLeastEditor
+    public ResponseEntity<Attachment> createAttachment(@RequestPart Attachment attachment, @RequestPart MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
-        if (attachment.getId() != null) {
-            throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idExists");
-        }
+        attachment.setId(null);
+
+        String pathString = fileService.handleSaveFile(file, false, false).toString();
+        attachment.setLink(pathString);
+
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
+        this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(result.getLink())).toString());
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
     /**
-     * PUT /attachments : Updates an existing attachment.
+     * PUT /attachments/:id : Updates an existing attachment.
      *
+     * @param attachmentId     the id of the attachment to save
      * @param attachment       the attachment to update
-     * @param notificationText text that will be send to student group
+     * @param file             the file to save if the file got changed (optional)
+     * @param notificationText text that will be sent to student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
      *         (Internal Server Error) if the attachment couldn't be updated
      */
-    @PutMapping("/attachments")
-    @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText) {
+    @PutMapping(value = "attachments/{attachmentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @EnforceAtLeastEditor
+    public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
-        if (attachment.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
-        }
+        attachment.setId(attachmentId);
 
         // Make sure that the original references are preserved.
-        Optional<Attachment> originalAttachment = attachmentRepository.findById(attachment.getId());
-        originalAttachment.ifPresent(value -> attachment.setAttachmentUnit(value.getAttachmentUnit()));
+        Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
+        attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
+
+        if (file != null) {
+            String pathString = fileService.handleSaveFile(file, false, false).toString();
+            attachment.setLink(pathString);
+        }
 
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
+        this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(result.getLink())).toString());
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -115,8 +131,8 @@ public class AttachmentResource {
      * @param id the id of the attachment to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the attachment, or with status 404 (Not Found)
      */
-    @GetMapping("/attachments/{id}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @GetMapping("attachments/{id}")
+    @EnforceAtLeastEditor
     public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
@@ -129,8 +145,8 @@ public class AttachmentResource {
      * @param lectureId the id of the lecture
      * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
      */
-    @GetMapping(value = "/lectures/{lectureId}/attachments")
-    @PreAuthorize("hasRole('TA')")
+    @GetMapping("lectures/{lectureId}/attachments")
+    @EnforceAtLeastTutor
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
         return attachmentRepository.findAllByLectureId(lectureId);
@@ -142,8 +158,8 @@ public class AttachmentResource {
      * @param attachmentId the id of the attachment to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/attachments/{attachmentId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @DeleteMapping("attachments/{attachmentId}")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(attachmentId);
@@ -157,7 +173,7 @@ public class AttachmentResource {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
             try {
-                this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
+                this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())).toString());
             }
             catch (RuntimeException exception) {
                 // this catch is required for deleting wrongly formatted attachment database entries

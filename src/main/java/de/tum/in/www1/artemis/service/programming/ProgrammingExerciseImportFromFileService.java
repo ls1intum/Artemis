@@ -19,15 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -73,21 +67,52 @@ public class ProgrammingExerciseImportFromFileService {
         if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
-        Path importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
-        Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
+        Path importExerciseDir = null;
+        ProgrammingExercise importedProgrammingExercise;
+        try {
+            importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
+            Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
-        zipFile.transferTo(exerciseFilePath);
-        zipFileService.extractZipFileRecursively(exerciseFilePath);
-        checkRepositoriesExist(importExerciseDir);
-        var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
-        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
-        var importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
-        if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
-            staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+            zipFile.transferTo(exerciseFilePath);
+            zipFileService.extractZipFileRecursively(exerciseFilePath);
+            checkRepositoriesExist(importExerciseDir);
+            var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
+            programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
+            // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
+            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
+            if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
+                staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
+            }
+            copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
+            importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
+            importedProgrammingExercise.setCourse(course);
         }
-        importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
-        importedProgrammingExercise.setCourse(course);
+        finally {
+            // want to make sure the directories are deleted, even if an exception is thrown
+            fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
+        }
         return importedProgrammingExercise;
+    }
+
+    /**
+     * Copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement
+     *
+     * @param importExerciseDir the directory where the extracted zip file is located
+     **/
+    private void copyEmbeddedFiles(Path importExerciseDir) throws IOException {
+        Path embeddedFilesDir = importExerciseDir.resolve("files");
+
+        if (!Files.exists(embeddedFilesDir)) {
+            return;
+        }
+        try (var embeddedFiles = Files.list(embeddedFilesDir)) {
+            for (Path file : embeddedFiles.toList()) {
+                Path targetPath = FilePathService.getMarkdownFilePath().resolve(file.getFileName());
+                if (!Files.exists(targetPath)) {
+                    FileUtils.copyFile(file.toFile(), targetPath.toFile());
+                }
+            }
+        }
     }
 
     private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName) throws IOException, GitAPIException, URISyntaxException {
@@ -101,14 +126,15 @@ public class ProgrammingExerciseImportFromFileService {
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
+        // TODO: use the current instructor user for the commit
         gitService.commitAndPush(templateRepo, "Import template from file", true, null);
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);
     }
 
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) throws IOException {
+    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) {
         for (Repository repository : repositories) {
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toString(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
+            fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
         }
     }
 

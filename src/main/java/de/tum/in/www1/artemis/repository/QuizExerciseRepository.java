@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data JPA repository for the QuizExercise entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
@@ -51,8 +50,8 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "learningGoals", "quizBatches" })
-    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndLearningGoalsById(Long quizExerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencies", "quizBatches" })
+    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
@@ -115,8 +114,8 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     }
 
     @NotNull
-    default QuizExercise findByIdWithQuestionsAndStatisticsAndLearningGoalsElseThrow(Long quizExerciseId) {
-        return findWithEagerQuestionsAndStatisticsAndLearningGoalsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+    default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(Long quizExerciseId) {
+        return findWithEagerQuestionsAndStatisticsAndCompetenciesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -22,6 +22,7 @@ import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/share
 import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 enum FilterProp {
     ALL = 'all',
@@ -54,6 +55,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
+
+    // Used to show the "Clone Repository URL" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
+    localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -153,6 +157,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
                         setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
+                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     });
                 }
             }
@@ -186,7 +191,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             case FilterProp.NO_SUBMISSIONS:
                 return participation.submissionCount === 0;
             case FilterProp.NO_PRACTICE:
-                return !participation.testRun;
+                return !isPracticeMode(participation);
             case FilterProp.ALL:
             default:
                 return true;
@@ -214,7 +219,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (!this.exercise.course) {
             return false;
         }
-        return this.exercise.isAtLeastTutor === true && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled === true;
+        return this.exercise.isAtLeastTutor === true && (this.exercise.course.presentationScore ?? 0) > 0 && this.exercise.presentationScoreEnabled === true;
     }
 
     checkGradedPresentationConfig(): boolean {
@@ -236,7 +241,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             return;
         }
         this.participationService.update(this.exercise, participation).subscribe({
-            error: () => this.alertService.error('artemisApp.participation.savePresentation.error'),
+            error: (res: HttpErrorResponse) => {
+                const error = res.error;
+                if (error && error.errorKey && error.errorKey === 'invalid.presentations.maxNumberOfPresentationsExceeded') {
+                    participation.presentationScore = undefined;
+                } else {
+                    this.alertService.error('artemisApp.participation.savePresentation.error');
+                }
+            },
+
             complete: () => {
                 this.participationsChangedPresentation.delete(participation.id!);
             },

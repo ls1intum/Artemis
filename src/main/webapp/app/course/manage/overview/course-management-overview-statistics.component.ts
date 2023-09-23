@@ -21,7 +21,6 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     @Input()
     course: Course;
 
-    loading = true;
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
     // Data
@@ -55,14 +54,12 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
 
     ngOnChanges() {
         if (this.initialStats) {
-            this.loading = false;
             this.createChartData();
         }
     }
 
     /**
      * Creates chart in order to visualize data provided by the inputs
-     * @private
      */
     private createChartData(): void {
         const set: any[] = [];
@@ -114,7 +111,6 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
 
     /**
      * Auxiliary method that ensures that the chart is translated directly when user selects a new language
-     * @private
      */
     private updateTranslation(): void {
         this.createChartLabels(this.currentOffsetToEndDate);

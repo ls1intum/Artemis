@@ -35,3 +35,24 @@ Place the webpage that should be shown in case of Artemis being unreachable (in 
 
         error_page 501 502 503 /service_down.html;
     }
+
+## Gather all Docker Compose-related tips here which are not relevant for developers!
+.. _docker_compose_setup_prod:
+
+Docker Compose Setup
+--------------------
+
+The :ref:`development section of the documentation <docker_compose_setup_dev>` provides a introduction to
+Docker Compose setups for Artemis.
+This section provides additional information for administrators.
+
+File Permissions
+^^^^^^^^^^^^^^^^
+If you use the production Docker Compose Setups (``artemis-prod-*.yml``) with bind mounts change
+the file permissions accordingly:
+
+.. code:: bash
+
+   sudo chown -R $(id -u):70 docker/.docker-data/artemis-postgres-data
+   sudo chown -R $(id -u):999 docker/.docker-data/artemis-mysql-data
+   sudo chown -R $(id -u):1337 docker/.docker-data/artemis-data

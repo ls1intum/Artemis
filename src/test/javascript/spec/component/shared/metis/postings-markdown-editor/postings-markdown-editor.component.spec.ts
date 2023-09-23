@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, Directive, EventEmitter, Input, Output } from '@angular/core';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
+import { MockProvider } from 'ng-mocks';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
 import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
@@ -15,6 +16,9 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { LectureService } from 'app/lecture/lecture.service';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
@@ -29,20 +33,26 @@ describe('PostingsMarkdownEditor', () => {
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
+    let lectureService: LectureService;
+    let findLectureWithDetailsSpy: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService)],
             declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
             schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
-                fixture.autoDetectChanges();
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
+                lectureService = TestBed.inject(LectureService);
+                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
+                const returnValue = of(new HttpResponse({ body: [], status: 200 }));
+                findLectureWithDetailsSpy.mockReturnValue(returnValue);
+                fixture.autoDetectChanges();
                 const mockMarkdownEditorElement = fixture.debugElement.query(By.directive(MockMarkdownEditorDirective));
                 mockMarkdownEditorDirective = mockMarkdownEditorElement.injector.get(MockMarkdownEditorDirective) as MockMarkdownEditorDirective;
                 component.ngOnInit();
@@ -62,7 +72,7 @@ describe('PostingsMarkdownEditor', () => {
             new CodeBlockCommand(),
             new LinkCommand(),
             new ExerciseReferenceCommand(metisService),
-            new LectureAttachmentReferenceCommand(metisService),
+            new LectureAttachmentReferenceCommand(metisService, lectureService),
         ]);
     });
 

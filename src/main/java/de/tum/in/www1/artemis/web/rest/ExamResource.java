@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -9,11 +10,13 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.time.*;
+import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +26,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -36,18 +35,19 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AssessmentDashboardService;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.security.annotations.*;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -65,11 +65,15 @@ public class ExamResource {
 
     private static final String ENTITY_NAME = "exam";
 
+    private final ChannelRepository channelRepository;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
+
+    private final ProfileService profileService;
 
     private final UserRepository userRepository;
 
@@ -101,15 +105,24 @@ public class ExamResource {
 
     private final ExamImportService examImportService;
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
-
     private final CustomAuditEventRepository auditEventRepository;
 
-    public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
-            ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
-            AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
-            AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
-            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
+    private final ChannelService channelService;
+
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExamSessionService examSessionService;
+
+    public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
+            ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
+            SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
+            TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
+            StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
+            ChannelRepository channelRepository, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository,
+            ExamSessionService examSessionRepository) {
+        this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -125,8 +138,12 @@ public class ExamResource {
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
         this.examImportService = examImportService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.auditEventRepository = auditEventRepository;
+        this.channelService = channelService;
+        this.channelRepository = channelRepository;
+        this.websocketMessagingService = websocketMessagingService;
+        this.exerciseRepository = exerciseRepository;
+        this.examSessionService = examSessionRepository;
     }
 
     /**
@@ -138,7 +155,7 @@ public class ExamResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Exam> createExam(@PathVariable Long courseId, @RequestBody Exam exam) throws URISyntaxException {
         log.debug("REST request to create an exam : {}", exam);
         if (exam.getId() != null) {
@@ -154,13 +171,11 @@ public class ExamResource {
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
-        Exam result = examRepository.save(exam);
+        Exam savedExam = examRepository.save(exam);
 
-        if (result.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
-        }
+        channelService.createExamChannel(savedExam, Optional.ofNullable(exam.getChannelName()));
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
     }
 
     /**
@@ -173,7 +188,7 @@ public class ExamResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
         if (updatedExam.getId() == null) {
@@ -197,22 +212,16 @@ public class ExamResource {
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
 
-        Exam result = examRepository.save(updatedExam);
+        Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
 
-        if (updatedExam.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
-        }
-        else {
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
-        }
-        examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), updatedExam.isMonitoring());
+        Exam savedExam = examRepository.save(updatedExam);
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -220,11 +229,81 @@ public class ExamResource {
 
         if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
             // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             examService.scheduleModelingExercises(examWithExercises);
         }
 
-        return ResponseEntity.ok(result);
+        if (updatedChannel != null) {
+            savedExam.setChannelName(updatedExam.getChannelName());
+        }
+
+        return ResponseEntity.ok(savedExam);
+    }
+
+    /**
+     * PATCH /courses/{courseId}/exams/{examId}/working-time : Update the working time of all exams
+     *
+     * @param courseId          the course ID to which the exam belong to
+     * @param examId            the exam ID the working time should be extended for
+     * @param workingTimeChange the working time change in seconds (can be positive or negative, but must not be 0)
+     * @return the ResponseEntity with status 200 (OK) and with the updated exam as body
+     */
+    @PatchMapping("/courses/{courseId}/exams/{examId}/working-time")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Integer workingTimeChange) {
+        log.debug("REST request to update the working time of exam with id {}", examId);
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        if (workingTimeChange == 0) {
+            throw new BadRequestException();
+        }
+
+        var now = now();
+
+        // We have to get exercise groups as `scheduleModelingExercises` needs them
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        var originalExamDuration = exam.getDuration();
+
+        // 1. Update the end date & working time of the exam
+        exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
+        exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
+        examRepository.save(exam);
+
+        // 2. Re-calculate the working times of all student exams
+        var studentExams = studentExamRepository.findByExamId(examId);
+        for (var studentExam : studentExams) {
+            Integer originalStudentWorkingTime = studentExam.getWorkingTime();
+            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
+            // NOTE: take the original working time extensions into account
+            if (originalTimeExtension == 0) {
+                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
+            }
+            else {
+                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
+                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
+                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
+                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
+                studentExam.setWorkingTime(adjustedWorkingTime);
+            }
+            var savedStudentExam = studentExamRepository.save(studentExam);
+            // NOTE: if the exam is already visible, notify the student about the working time change
+            if (now.isAfter(exam.getVisibleDate())) {
+                websocketMessagingService.sendMessage(STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC.formatted(savedStudentExam.getId()), savedStudentExam.getWorkingTime());
+            }
+        }
+
+        // NOTE: if the exam is already visible, notify instances about the working time change
+        if (now.isAfter(exam.getVisibleDate())) {
+            instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(exam.getId());
+        }
+
+        if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+            // potentially re-schedule clustering of modeling submissions (in case Compass is active)
+            examService.scheduleModelingExercises(exam);
+        }
+
+        return ResponseEntity.ok(exam);
     }
 
     /**
@@ -236,7 +315,7 @@ public class ExamResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exam-import")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
         log.debug("REST request to import an exam : {}", examToBeImported);
 
@@ -250,13 +329,8 @@ public class ExamResource {
         // Step 3: Validate the Exam dates
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
-        // Step 4: Import Exam with Exercises
+        // Step 4: Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
-
-        // Step 5: Set Exam Monitoring
-        if (examCopied.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(examCopied.getId());
-        }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examCopied.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
@@ -330,19 +404,19 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamForWorkingTimeConflictsElseThrow(Exam exam) {
-        int differenceStartEndDate = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        var examDuration = exam.getDuration();
 
         if (exam.isTestExam()) {
-            if (exam.getWorkingTime() > differenceStartEndDate || exam.getWorkingTime() < 1) {
+            if (exam.getWorkingTime() > examDuration || exam.getWorkingTime() < 1) {
                 throw new BadRequestAlertException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
             }
         }
-        else if (exam.getWorkingTime() != differenceStartEndDate) {
+        else if (exam.getWorkingTime() != examDuration) {
             /*
              * Set the working time to the time difference for real exams, if not done by the client. This can be an issue if the working time calculation in the client is not
              * performed (e.g. for Cypress-2E2-Tests). However, since the working time currently depends on the start- and end-date, we can do a server-side assignment
              */
-            exam.setWorkingTime(differenceStartEndDate);
+            exam.setWorkingTime(examDuration);
         }
     }
 
@@ -373,7 +447,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("exams/active")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page = examService.getAllActiveExams(pageable, user);
@@ -389,7 +463,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("exams")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
@@ -402,7 +476,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("exams/{examId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
         log.debug("REST request to get exam : {} for import with exercises", examId);
 
@@ -422,7 +496,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
             @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
@@ -435,7 +509,12 @@ public class ExamResource {
         }
 
         if (!withStudents && !withExerciseGroups) {
-            return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
+            Exam exam = examRepository.findByIdElseThrow(examId);
+            Channel channel = channelRepository.findChannelByExamId(exam.getId());
+            if (channel != null) {
+                exam.setChannelName(channel.getName());
+            }
+            return ResponseEntity.ok(exam);
         }
 
         if (withExerciseGroups) {
@@ -463,7 +542,7 @@ public class ExamResource {
      * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
      */
     @GetMapping("exams/{examId}/title")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         final var title = examRepository.getExamTitle(examId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -477,7 +556,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/statistics")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ExamChecklistDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam statistics: {}", examId);
 
@@ -500,7 +579,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/scores")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.info("REST request to get score for exam : {}", examId);
@@ -518,7 +597,7 @@ public class ExamResource {
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Exam> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard");
 
@@ -555,7 +634,7 @@ public class ExamResource {
      * @return data about an exam test run including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Exam> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard");
 
@@ -581,7 +660,7 @@ public class ExamResource {
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<StatsForDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request /courses/{courseId}/stats-for-exam-assessment-dashboard");
 
@@ -598,7 +677,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exams for Course : {}", courseId);
 
@@ -616,7 +695,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams-for-user")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<Exam>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
@@ -631,6 +710,28 @@ public class ExamResource {
     }
 
     /**
+     * DELETE /courses/{courseId}/exams/{examId}/cleanup : Cleans up an exam by deleting all student submissions.
+     *
+     * @param courseId  id of the course which in includes the exam
+     * @param examId    id of the exam to clean up
+     * @param principal the user that wants to cleanup the exam
+     * @return ResponseEntity with status
+     */
+    @DeleteMapping("courses/{courseId}/exams/{examId}/cleanup")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, @PathVariable Long examId, Principal principal) {
+        log.info("REST request to cleanup the exam : {}", examId);
+        final Exam exam = examRepository.findByIdElseThrow(examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        // Forbid cleaning the course if no archive has been created
+        if (!exam.hasExamArchive()) {
+            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+        }
+        examService.cleanupExam(examId, principal);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
      * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
@@ -639,17 +740,12 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
 
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        if (exam.isMonitoring()) {
-            // Cancel schedule of exam monitoring
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
-        }
 
         examDeletionService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
@@ -664,26 +760,16 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/reset")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Exam> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to reset exam : {}", examId);
 
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        if (exam.isMonitoring()) {
-            // Cancel schedule of exam monitoring
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
-        }
-
         examDeletionService.reset(exam.getId());
         Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         examService.setExamProperties(returnExam);
-
-        if (returnExam.isMonitoring()) {
-            // Schedule exam monitoring
-            instanceMessageSendService.sendExamMonitoringSchedule(examId);
-        }
 
         return ResponseEntity.ok(returnExam);
     }
@@ -698,7 +784,7 @@ public class ExamResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<StudentDTO> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
 
@@ -719,12 +805,7 @@ public class ExamResource {
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
-        var studentDto = new StudentDTO();
-        studentDto.setRegistrationNumber(student.getRegistrationNumber());
-        studentDto.setFirstName(student.getFirstName());
-        studentDto.setLastName(student.getLastName());
-        studentDto.setLogin(student.getLogin());
-        return ResponseEntity.ok().body(studentDto);
+        return ResponseEntity.ok().body(new StudentDTO(student));
     }
 
     /**
@@ -735,7 +816,7 @@ public class ExamResource {
      * @return the list of student exams with their corresponding users
      */
     @PostMapping("courses/{courseId}/exams/{examId}/generate-student-exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
@@ -750,8 +831,6 @@ public class ExamResource {
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
 
-        // Reschedule after creation (possible longer working time)
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
@@ -785,7 +864,7 @@ public class ExamResource {
      * @return the list of student exams with their corresponding users
      */
     @PostMapping("courses/{courseId}/exams/{examId}/generate-missing-student-exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate missing student exams for exam {}", examId);
@@ -796,8 +875,6 @@ public class ExamResource {
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
 
-        // Reschedule after creation (possible longer working time)
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
         log.info("Generated {} missing student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
@@ -818,7 +895,7 @@ public class ExamResource {
      * @return ResponseEntity the number of evaluated quiz exercises
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Integer> evaluateQuizExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to evaluate quiz exercises of exam {}", examId);
 
@@ -828,7 +905,7 @@ public class ExamResource {
             throw new BadRequestAlertException("There are still exams running, quizzes can only be evaluated once all exams are finished.", ENTITY_NAME,
                     "evaluateQuizExercisesTooEarly");
         }
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Evaluate quiz exercises is only allowed for real exams", ENTITY_NAME, "evaluateQuizExercisesOnlyForRealExams");
         }
@@ -848,8 +925,14 @@ public class ExamResource {
      * @return the number of unlocked exercises
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (profileService.isLocalVcsCi()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to unlock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -869,8 +952,14 @@ public class ExamResource {
      * @return the number of locked exercises
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
+        // LocalVCPushFilter.
+        if (profileService.isLocalVcsCi()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("REST request to lock all repositories of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -896,7 +985,7 @@ public class ExamResource {
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping("courses/{courseId}/exams/{examId}/students")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<ExamUserDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
 
@@ -914,7 +1003,7 @@ public class ExamResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/register-course-students")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
         // get all students enrolled in the course
         log.debug("REST request to add all students to exam {} with courseId {}", examId, courseId);
@@ -928,6 +1017,7 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
+
         return ResponseEntity.ok().body(null);
     }
 
@@ -943,7 +1033,7 @@ public class ExamResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> removeStudentFromExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
             @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
         log.debug("REST request to remove {} as student from exam : {}", studentLogin, examId);
@@ -976,7 +1066,7 @@ public class ExamResource {
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/students")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
         log.debug("REST request to remove all students from exam {} with courseId {}", examId, courseId);
@@ -1004,7 +1094,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/start")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
@@ -1021,7 +1111,7 @@ public class ExamResource {
      * @return the list of exercise groups
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups-order")
-    @PreAuthorize("hasRole('EDITOR')")
+    @EnforceAtLeastEditor
     public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
         log.debug("REST request to update the order of exercise groups of exam : {}", examId);
@@ -1060,7 +1150,7 @@ public class ExamResource {
      *         determined
      */
     @GetMapping("courses/{courseId}/exams/{examId}/latest-end-date")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get latest individual end date of exam : {}", examId);
 
@@ -1078,7 +1168,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/exams/{examId}/lockedSubmissions")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
@@ -1104,7 +1194,7 @@ public class ExamResource {
      * @return empty
      */
     @PutMapping("courses/{courseId}/exams/{examId}/archive")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to archive exam : {}", examId);
@@ -1133,7 +1223,7 @@ public class ExamResource {
      * @return ResponseEntity with status
      */
     @GetMapping("courses/{courseId}/exams/{examId}/download-archive")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Resource> downloadExamArchive(@PathVariable Long courseId, @PathVariable Long examId) throws FileNotFoundException {
         log.info("REST request to download archive of exam : {}", examId);
         final Exam exam = examRepository.findByIdElseThrow(examId);
@@ -1148,8 +1238,58 @@ public class ExamResource {
         Path archive = Path.of(examArchivesDirPath, exam.getExamArchivePath());
 
         File zipFile = archive.toFile();
+        ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(contentDisposition);
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().headers(headers).contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName())
+                .body(resource);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism : Get all exercises with potential plagiarism for exam.
+     * An exercise has potential plagiarism if Artemis supports plagiarism detection for it.
+     * This applies to the exercise types TEXT, MODELING and PROGRAMMING.
+     *
+     * @param courseId the id of the course the exam belongs to
+     * @param examId   the id of the exam for which to find exercises with potential plagiarism
+     * @return the list of exercises with potential plagiarism
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
+    @EnforceAtLeastInstructor
+    public List<ExerciseForPlagiarismCasesOverviewDTO> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all exercises with potential plagiarism cases for exam : {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesWithPotentialPlagiarismByExamId(examId);
+        List<ExerciseForPlagiarismCasesOverviewDTO> exerciseForPlagiarismCasesOverviewDTOS = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            var courseDTO = new CourseWithIdDTO(exercise.getExerciseGroup().getExam().getCourse().getId());
+            var examDTO = new ExamWithIdAndCourseDTO(exercise.getExerciseGroup().getExam().getId(), courseDTO);
+            var exerciseGroupDTO = new ExerciseGroupWithIdAndExamDTO(exercise.getExerciseGroup().getId(), examDTO);
+            ExerciseForPlagiarismCasesOverviewDTO exerciseForPlagiarismCasesOverviewDTO = new ExerciseForPlagiarismCasesOverviewDTO(exercise.getId(), exercise.getTitle(),
+                    exercise.getType(), exerciseGroupDTO);
+            exerciseForPlagiarismCasesOverviewDTOS.add(exerciseForPlagiarismCasesOverviewDTO);
+        }
+        return exerciseForPlagiarismCasesOverviewDTOS;
+
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/suspicious-sessions : Get all exam sessions that are suspicious for exam.
+     * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long)}
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return a set containing all tuples of exam sessions that are suspicious.
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
+    @EnforceAtLeastInstructor
+    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all exam sessions that are suspicious for exam : {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId);
     }
 
 }

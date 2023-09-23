@@ -5,37 +5,12 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 describe('TextSubmission Service', () => {
     let service: TextSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: TextSubmission;
-
-    const mockResponse = {
-        submissionExerciseType: 'text',
-        id: 1,
-        submitted: true,
-        type: 'MANUAL',
-        participation: {
-            type: 'student',
-            id: 1,
-            initializationState: 'FINISHED',
-            initializationDate: '2020-07-07T14:34:18.067248+02:00',
-            exercise: {
-                type: 'text',
-                id: 1,
-            },
-            participantIdentifier: 'ga27der',
-            participantName: 'Jonas Petry',
-        },
-        result: {
-            id: 5,
-            assessmentType: 'MANUAL',
-        },
-        submissionDate: '2020-07-07T14:34:25.194518+02:00',
-        durationInMinutes: 0,
-        text: 'Test\n\nTest\n\nTest',
-    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -89,26 +64,6 @@ describe('TextSubmission Service', () => {
         tick();
     }));
 
-    it('should not parse jwt from header', fakeAsync(() => {
-        service.getSubmissionWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).toBeUndefined();
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse);
-        tick();
-    }));
-
-    it('should parse jwt from header', fakeAsync(() => {
-        service.getSubmissionWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).toBe('12345');
-        });
-
-        const mockRequest = httpMock.expectOne({ method: 'GET' });
-        mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
-        tick();
-    }));
-
     it('should get textSubmission for exercise', fakeAsync(() => {
         const exerciseId = 1;
         elemDefault = new TextSubmission();
@@ -140,6 +95,26 @@ describe('TextSubmission Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(response.body).toEqual(expected);
+        tick();
+    }));
+
+    it('should get submission without assessment', fakeAsync(() => {
+        const exerciseId = 1;
+        elemDefault = new TextSubmission();
+        elemDefault.participation = new StudentParticipation();
+        const returnedFromService = elemDefault;
+        const expected = returnedFromService;
+
+        service
+            .getSubmissionWithoutAssessment(exerciseId)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp).toEqual(expected);
+            });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
         tick();
     }));
 });

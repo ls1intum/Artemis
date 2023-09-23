@@ -32,6 +32,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCourseId(long courseId);
 
     @Query("""
+            SELECT DISTINCT exam
+            FROM Exam exam
+            WHERE exam.course.id IN :courses
+            """)
+    List<Exam> findExamsInCourses(@Param("courses") Iterable<Long> courseId);
+
+    @Query("""
             SELECT DISTINCT ex
             FROM Exam ex
                 LEFT JOIN FETCH ex.exerciseGroups eg
@@ -91,11 +98,96 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Page<Exam> findAllActiveExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("toDate") ZonedDateTime toDate);
 
+    /**
+     * Count all active exams
+     *
+     * @param now Current time
+     * @return Number of active exams
+     */
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            WHERE exam.course.testCourse = false
+                AND exam.visibleDate >= :#{#now}
+                AND exam.endDate <= :#{#now}
+            """)
+    Integer countAllActiveExams(@Param("now") ZonedDateTime now);
+
+    /**
+     * Count all exams that end within the given dates.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return the number of exercises ending between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            WHERE exam.course.testCourse = false
+                AND exam.endDate >= :#{#minDate}
+                AND exam.endDate <= :#{#maxDate}
+            """)
+    Integer countExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Count all exam users for exams that end within the given dates.
+     *
+     * @param minDate the minimum due date
+     * @param maxDate the maximum due date
+     * @return the number of students registered in exams ending between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT examUsers.user.id)
+            FROM Exam exam
+            JOIN exam.examUsers examUsers
+            WHERE exam.course.testCourse = false
+                AND exam.endDate >= :#{#minDate}
+                AND exam.endDate <= :#{#maxDate}
+            """)
+    Integer countExamUsersInExamsWithEndDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Count all exams that start within the given dates.
+     *
+     * @param minDate the minimum start date
+     * @param maxDate the maximum start date
+     * @return the number of exercises starting between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            WHERE exam.course.testCourse = false
+                AND exam.startDate >= :#{#minDate}
+                AND exam.startDate <= :#{#maxDate}
+            """)
+    Integer countExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    /**
+     * Count all exam users for exams that start within the given dates.
+     *
+     * @param minDate the minimum start date
+     * @param maxDate the maximum start date
+     * @return the number of students registered in exams starting between minDate and maxDate
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT examUsers.user.id)
+            FROM Exam exam
+            JOIN exam.examUsers examUsers
+            WHERE exam.course.testCourse = false
+                AND exam.startDate >= :#{#minDate}
+                AND exam.startDate <= :#{#maxDate}
+            """)
+    Integer countExamUsersInExamsWithStartDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.studentParticipations",
+            "exerciseGroups.exercises.studentParticipations.submissions" })
+    Optional<Exam> findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
     Optional<Exam> findWithExamUsersById(long examId);

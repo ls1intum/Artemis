@@ -11,6 +11,6 @@ export class HealthService {
     }
 
     checkHealth(): Observable<any> {
-        return this.http.get(SERVER_API_URL + 'management/health');
+        return this.http.get('management/health');
     }
 }

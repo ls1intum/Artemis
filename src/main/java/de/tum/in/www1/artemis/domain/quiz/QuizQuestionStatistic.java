@@ -2,19 +2,16 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.DiscriminatorOptions;
-
 import com.fasterxml.jackson.annotation.*;
 
 @Entity
 @DiscriminatorValue(value = "Q")
-@DiscriminatorOptions(force = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionStatistic.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionStatistic.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionStatistic.class, name = "short-answer") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class QuizQuestionStatistic extends QuizStatistic {
+public abstract class QuizQuestionStatistic extends QuizStatistic implements QuizQuestionComponent<QuizQuestion> {
 
     @Column(name = "rated_correct_counter")
     private Integer ratedCorrectCounter = 0;
@@ -48,6 +45,11 @@ public abstract class QuizQuestionStatistic extends QuizStatistic {
 
     public void setQuizQuestion(QuizQuestion quizQuestion) {
         this.quizQuestion = quizQuestion;
+    }
+
+    @JsonIgnore
+    public void setQuestion(QuizQuestion quizQuestion) {
+        setQuizQuestion(quizQuestion);
     }
 
     /**

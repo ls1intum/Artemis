@@ -19,8 +19,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -33,10 +31,10 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     private UserRepository userRepo;
 
     @Autowired
-    private DatabaseUtilService database;
+    private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @Autowired
-    private GitlabRequestMockProvider gitlabRequestMockProvider;
+    private UserUtilService userUtilService;
 
     @BeforeEach
     void setUp() {
@@ -54,7 +52,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         String login = "abd123cd";
         String password = "this is a password";
         // setup user
-        User user = ModelFactory.generateActivatedUser(login);
+        User user = UserFactory.generateActivatedUser(login);
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword(password);
 
@@ -63,7 +61,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         gitlabRequestMockProvider.mockDeactivateUser(login, false);
 
         // make request
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
     }
 
     /**
@@ -76,7 +74,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     void testUnactivatedUserIsDeletedDespiteUnableToDeleteInGitlab() throws Exception {
         // create unactivated user in repo
         String testActivationKey = "testActivationKey";
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = UserFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
         user.setFirstName("Old Firstname");
         user.setActivationKey(testActivationKey);
@@ -95,7 +93,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
 
         // make request and assert Status Created
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
         // Assert that old user data was deleted and user was written to db
         Optional<User> updatedUser = userRepo.findOneByLogin(user.getLogin());
@@ -112,7 +110,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @Test
     void testFailureWhenTryingToDeleteActivatedUser() throws Exception {
         // create activated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cde");
+        User user = UserFactory.generateActivatedUser("ab123cde");
         user.setFirstName("Old Firstname");
         user = userRepo.save(user);
 
@@ -127,7 +125,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         gitlabRequestMockProvider.mockCreationOfUser(user.getLogin());
 
         // make request and assert Status 400
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
 
         // Assert that old user data is still there
         Optional<User> updatedUser = userRepo.findOneByLogin(user.getLogin());
@@ -140,7 +138,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdf");
+        User user = UserFactory.generateActivatedUser("ab123cdf");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -150,7 +148,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
 
         // make request and assert
         gitlabRequestMockProvider.mockCreateVcsUser(user, true);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
         // The account shouldn't be saved
         assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
@@ -158,7 +156,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         // make another request
         doReturn(new org.gitlab4j.api.models.User().withId(1L)).when(mock(UserApi.class)).getUser(user.getLogin());
         gitlabRequestMockProvider.mockCreateVcsUser(user, true);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
         // The account shouldn't be saved
         assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
@@ -168,7 +166,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldRegisterUserIfCanCreateAndDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdg");
+        User user = UserFactory.generateActivatedUser("ab123cdg");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -178,7 +176,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
 
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
         assertThat(userRepo.findOneByLogin(user.getLogin())).isPresent();
     }
@@ -187,7 +185,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldAbortRegistrationAndFailIfCannotDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdh");
+        User user = UserFactory.generateActivatedUser("ab123cdh");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -197,7 +195,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
 
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), true);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
         assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
     }
@@ -206,7 +204,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdi");
+        User user = UserFactory.generateActivatedUser("ab123cdi");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -216,7 +214,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
 
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
         Optional<User> registeredUser = userRepo.findOneByLogin(user.getLogin());
         assertThat(registeredUser).isPresent();
@@ -224,7 +222,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         // Activate the user
         gitlabRequestMockProvider.mockActivateUser(user.getLogin(), false);
         String activationKey = registeredUser.get().getActivationKey();
-        request.get("/api/activate?key=" + activationKey, HttpStatus.OK, Void.class);
+        request.get("/api/public/activate?key=" + activationKey, HttpStatus.OK, Void.class);
         verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyLong());
     }
 
@@ -232,7 +230,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldThrowErrorIfCannotActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cdj");
+        User user = UserFactory.generateActivatedUser("ab123cdj");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -241,7 +239,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         userVM.setPassword("password");
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
         Optional<User> registeredUser = userRepo.findOneByLogin(user.getLogin());
         assertThat(registeredUser).isPresent();
@@ -249,7 +247,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         // Activate the user
         gitlabRequestMockProvider.mockActivateUser(user.getLogin(), true);
         String activationKey = registeredUser.get().getActivationKey();
-        request.get("/api/activate?key=" + activationKey, HttpStatus.INTERNAL_SERVER_ERROR, Void.class);
+        request.get("/api/public/activate?key=" + activationKey, HttpStatus.INTERNAL_SERVER_ERROR, Void.class);
         verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyLong());
 
         assertThat(registeredUser.get().getActivationKey()).isNotNull();
@@ -268,7 +266,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         userVM.setPassword("password");
         gitlabRequestMockProvider.mockCreateVcsUser(newUser, false);
         gitlabRequestMockProvider.mockDeactivateUser(newUser.getLogin(), false);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -282,20 +280,20 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         userVM.setPassword("password");
         gitlabRequestMockProvider.mockCreateVcsUser(newUser, false);
         gitlabRequestMockProvider.mockDeactivateUser(newUser.getLogin(), false);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @NotNull
     private static User createUser(String newLogin, String email) {
-        User newUser = ModelFactory.generateActivatedUser(newLogin);
+        User newUser = UserFactory.generateActivatedUser(newLogin);
         newUser.setActivated(false);
         newUser.setEmail(email);
         return newUser;
     }
 
     private void createAndSaveUser(String login, String email) {
-        if (!database.userExistsWithLogin(login)) {
-            User user = ModelFactory.generateActivatedUser(login);
+        if (!userUtilService.userExistsWithLogin(login)) {
+            User user = UserFactory.generateActivatedUser(login);
             user.setEmail(email);
             user.setActivated(false);
             userRepo.save(user);
@@ -313,6 +311,6 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         userVM.setPassword("password");
         gitlabRequestMockProvider.mockCreateVcsUser(newUser, false);
         gitlabRequestMockProvider.mockDeactivateUser(newUser.getLogin(), false);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 }

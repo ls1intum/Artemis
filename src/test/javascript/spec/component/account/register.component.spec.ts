@@ -14,7 +14,7 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
-describe('Component Tests', () => {
+describe('Register Component Tests', () => {
     describe('RegisterComponent', () => {
         let fixture: ComponentFixture<RegisterComponent>;
         let comp: RegisterComponent;
@@ -45,6 +45,7 @@ describe('Component Tests', () => {
         });
 
         it('should ensure the two passwords entered match', () => {
+            comp.ngOnInit();
             comp.registerForm.patchValue({
                 password: 'password',
                 confirmPassword: 'non-matching',
@@ -59,6 +60,7 @@ describe('Component Tests', () => {
             [RegisterService],
             fakeAsync((service: RegisterService) => {
                 jest.spyOn(service, 'save').mockReturnValue(of({} as any));
+                comp.ngOnInit();
                 comp.registerForm.patchValue({
                     password: 'password',
                     confirmPassword: 'password',
@@ -90,6 +92,7 @@ describe('Component Tests', () => {
                         error: { type: LOGIN_ALREADY_USED_TYPE },
                     })),
                 );
+                comp.ngOnInit();
                 comp.registerForm.patchValue({
                     password: 'password',
                     confirmPassword: 'password',
@@ -113,6 +116,7 @@ describe('Component Tests', () => {
                         error: { type: EMAIL_ALREADY_USED_TYPE },
                     })),
                 );
+                comp.ngOnInit();
                 comp.registerForm.patchValue({
                     password: 'password',
                     confirmPassword: 'password',
@@ -135,6 +139,7 @@ describe('Component Tests', () => {
                         status: 503,
                     })),
                 );
+                comp.ngOnInit();
                 comp.registerForm.patchValue({
                     password: 'password',
                     confirmPassword: 'password',

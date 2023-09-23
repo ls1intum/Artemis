@@ -12,6 +12,7 @@ import { ComplaintResponseService } from 'app/complaints/complaint-response.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -23,10 +24,14 @@ export class SubmissionWithComplaintDTO {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
-    public resourceUrl = SERVER_API_URL + 'api/submissions';
-    public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
+    public resourceUrl = 'api/submissions';
+    public resourceUrlParticipation = 'api/participations';
 
-    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private complaintResponseService: ComplaintResponseService,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Delete an existing submission
@@ -181,7 +186,6 @@ export class SubmissionService {
      *
      * @param submission
      * @return convertedSubmission with set result and access rights
-     * @private
      */
     public convertSubmissionFromServer<T extends Submission>(submission: T): T {
         const convertedSubmission = this.convert(submission);
@@ -214,11 +218,11 @@ export class SubmissionService {
     /**
      * Converts the participation that is connected to the given submission from server to client format.
      * @param submission to which the conversion should be applied.
-     * @private
      */
     private static convertConnectedParticipationFromServer(submission: Submission): Submission {
         if (submission.participation) {
             submission.participation = ParticipationService.convertParticipationDatesFromServer(submission.participation);
+            ExerciseService.convertExerciseDatesFromServer(submission.participation?.exercise);
         }
         return submission;
     }

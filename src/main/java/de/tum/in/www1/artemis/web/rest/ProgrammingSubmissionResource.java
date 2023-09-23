@@ -5,12 +5,9 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -19,12 +16,13 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
@@ -65,8 +63,6 @@ public class ProgrammingSubmissionResource {
 
     private final SubmissionRepository submissionRepository;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final UserRepository userRepository;
@@ -75,10 +71,11 @@ public class ProgrammingSubmissionResource {
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingMessagingService programmingMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
-            AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            Optional<VersionControlService> versionControlService, UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            GradingCriterionRepository gradingCriterionRepository, SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
+            SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
+            ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
@@ -88,57 +85,11 @@ public class ProgrammingSubmissionResource {
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.versionControlService = versionControlService;
-        this.userRepository = userRepository;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.submissionRepository = submissionRepository;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.userRepository = userRepository;
         this.exerciseDateService = exerciseDateService;
-    }
-
-    /**
-     * POST /programming-submissions/:participationId : Notify the application about a new push to the VCS for the participation with Id participationId This API is invoked by the
-     * VCS Server at the push of a new commit
-     *
-     * @param participationId the participationId of the participation the repository is linked to
-     * @param requestBody     the body of the post request by the VCS.
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
-     */
-    @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
-    public ResponseEntity<?> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
-        log.debug("REST request to inform about new commit+push for participation: {}", participationId);
-
-        try {
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participationId, requestBody);
-            // Remove unnecessary information from the new submission.
-            submission.getParticipation().setSubmissions(null);
-            programmingMessagingService.notifyUserAboutSubmission(submission);
-        }
-        catch (IllegalArgumentException ex) {
-            log.error(
-                    "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
-                    participationId, requestBody, ex);
-            throw new BadRequestAlertException("Exception encountered when trying to extract the commit hash from the request body " + ex.getMessage(), "ProgrammingSubmission",
-                    "extractCommitHashNotPossible");
-        }
-        catch (IllegalStateException ex) {
-            if (!ex.getMessage().contains("empty setup commit")) {
-                log.warn("Processing submission for participation {} failed: {}", participationId, ex.getMessage());
-            }
-            // we return ok, because the problem is not on the side of the VCS Server and we don't want the VCS Server to kill the webhook if there are too many errors
-            return ResponseEntity.status(HttpStatus.OK).build();
-        }
-        catch (EntityNotFoundException ex) {
-            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
-                    participationId, participationId, requestBody, ex);
-            throw ex;
-        }
-
-        // Note: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
-        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     /**
@@ -151,8 +102,8 @@ public class ProgrammingSubmissionResource {
      *         not available.
      *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
-    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
-    @PreAuthorize("hasRole('USER')")
+    @PostMapping("programming-submissions/{participationId}/trigger-build")
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -186,14 +137,14 @@ public class ProgrammingSubmissionResource {
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
-     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the deadline or
-     *                            after the deadline by the INSTRUCTOR.
+     * @param lastGraded      if true, will not use the most recent submission, but the most recent GRADED submission. This submission could e.g. be created before the due date or
+     *                            after the due date by the INSTRUCTOR.
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the
      *         build is running.
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
-    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
-    @PreAuthorize("hasRole('USER')")
+    @PostMapping("programming-submissions/{participationId}/trigger-failed-build")
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         final Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -208,11 +159,11 @@ public class ProgrammingSubmissionResource {
         // if the build plan was not cleaned yet, we can try to access the current build state, as the build might still be running (because it was slow or queued)
         if (programmingExerciseParticipation.getBuildPlanId() != null) {
             // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
-            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(programmingExerciseParticipation);
+            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.orElseThrow().getBuildStatus(programmingExerciseParticipation);
             if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
                 // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
                 // This resets the pending submission timer in the client.
-                programmingMessagingService.notifyUserAboutSubmission(submission);
+                programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
                 return ResponseEntity.ok().build();
             }
         }
@@ -233,8 +184,8 @@ public class ProgrammingSubmissionResource {
      * @param exerciseId to identify the programming exercise.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
-    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build-all")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -248,14 +199,15 @@ public class ProgrammingSubmissionResource {
     /**
      * Trigger the CI of the provided participations of the given exercise.
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
+     * <p>
      * Note: If a participationId does not belong to the exercise, it will be ignored!
      *
      * @param exerciseId       to identify the programming exercise.
      * @param participationIds list of participation ids.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
-    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
         if (participationIds.isEmpty()) {
@@ -275,46 +227,6 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "exerciseId" programmingExercise.
-     * Problem with legacy programming exercises:
-     * The repositories (solution, template, student) are built automatically when a commit is pushed into the test repository.
-     * We have removed this trigger for newly created exercises, but can't remove it from legacy ones.
-     * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
-     * Therefore incoming build results will have to create new submissions with SubmissionType.OTHER.
-     *
-     * @param exerciseId  the id of the programmingExercise where the test cases got changed
-     * @param requestBody the body of the post request by the VCS.
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
-    public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
-        log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
-        // This is needed as a request using a custom query is made using the ExerciseRepository, but the user is not authenticated
-        // as the VCS-server performs the request
-        SecurityUtils.setAuthorizationObject();
-
-        String lastCommitHash = null;
-        try {
-            Commit commit = versionControlService.get().getLastCommitDetails(requestBody);
-            lastCommitHash = commit.getCommitHash();
-            log.info("create new programmingSubmission with commitHash: {} for exercise {}", lastCommitHash, exerciseId);
-        }
-        catch (Exception ex) {
-            log.debug(
-                    "Commit hash could not be parsed from test repository from exercise {}, the submission will be created with the latest commit hash of the solution repository.",
-                    exerciseId, ex);
-        }
-
-        // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
-        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitHash);
-        programmingMessagingService.notifyUserAboutSubmission(submission);
-        // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
-        programmingTriggerService.setTestCasesChanged(exerciseId, true);
-
-        return ResponseEntity.ok().build();
-    }
-
-    /**
      * GET /programming-submissions : get all the programming submissions for an exercise. It is possible to filter, to receive only the one that have been already submitted, or
      * only the one
      * assessed by the tutor who is doing the call.
@@ -326,8 +238,8 @@ public class ProgrammingSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
-    @GetMapping("/exercises/{exerciseId}/programming-submissions")
-    @PreAuthorize("hasRole('TA')")
+    @GetMapping("exercises/{exerciseId}/programming-submissions")
+    @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all programming submissions");
@@ -345,7 +257,7 @@ public class ProgrammingSubmissionResource {
                     correctionRound);
         }
         else {
-            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly, examMode);
+            programmingSubmissions = programmingSubmissionService.getProgrammingSubmissions(exerciseId, submittedOnly);
         }
 
         if (!examMode) {
@@ -361,8 +273,8 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
-    @GetMapping("/programming-submissions/{submissionId}/lock")
-    @PreAuthorize("hasRole('TA')")
+    @GetMapping("programming-submissions/{submissionId}/lock")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmission> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
@@ -426,8 +338,8 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound the correction round for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
-    @PreAuthorize("hasRole('TA')")
+    @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
+    @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
@@ -447,7 +359,7 @@ public class ProgrammingSubmissionResource {
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
         if (programmingExercise.getAllowManualFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            // Assess manual feedback request before the deadline
+            // Assess manual feedback request before the due date
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {

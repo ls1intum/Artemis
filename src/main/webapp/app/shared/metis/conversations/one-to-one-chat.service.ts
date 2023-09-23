@@ -7,9 +7,12 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 
 @Injectable({ providedIn: 'root' })
 export class OneToOneChatService {
-    public resourceUrl = SERVER_API_URL + '/api/courses/';
+    public resourceUrl = '/api/courses/';
 
-    constructor(private http: HttpClient, private conversationService: ConversationService) {}
+    constructor(
+        private http: HttpClient,
+        private conversationService: ConversationService,
+    ) {}
 
     create(courseId: number, loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> {
         return this.http

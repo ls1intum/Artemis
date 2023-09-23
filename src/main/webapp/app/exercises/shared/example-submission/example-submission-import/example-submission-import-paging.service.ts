@@ -10,7 +10,7 @@ type EntityResponseType = SearchResult<Submission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionImportPagingService extends PagingService {
-    private static readonly resourceUrl = SERVER_API_URL + 'api/exercises';
+    private static readonly resourceUrl = 'api/exercises';
 
     constructor(private http: HttpClient) {
         super();

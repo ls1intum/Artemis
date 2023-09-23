@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Bonus;
@@ -16,11 +15,13 @@ import de.tum.in.www1.artemis.domain.BonusStrategy;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.BonusRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
+import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -52,13 +53,19 @@ public class BonusResource {
 
     private final ExamAccessService examAccessService;
 
+    private final CourseScoreCalculationService courseScoreCalculationService;
+
+    private final CourseRepository courseRepository;
+
     public BonusResource(BonusService bonusService, BonusRepository bonusRepository, GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authCheckService,
-            ExamAccessService examAccessService) {
+            ExamAccessService examAccessService, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
         this.bonusService = bonusService;
         this.bonusRepository = bonusRepository;
         this.gradingScaleRepository = gradingScaleRepository;
         this.authCheckService = authCheckService;
         this.examAccessService = examAccessService;
+        this.courseScoreCalculationService = courseScoreCalculationService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -71,7 +78,7 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) with body the bonus if it exists and 404 (Not found) otherwise
      */
     @GetMapping("courses/{courseId}/exams/{examId}/bonus")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
         log.debug("REST request to get bonus for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
@@ -79,14 +86,21 @@ public class BonusResource {
         var bonus = bonusRepository.findAllByBonusToExamId(examId).stream().findAny().orElseThrow(() -> new EntityNotFoundException("BonusToGradingScale exam", examId));
         bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
         filterBonusForResponse(bonus, includeSourceGradeSteps);
+
+        GradingScale sourceGradingScale = bonus.getSourceGradingScale();
+        if (sourceGradingScale != null && sourceGradingScale.getCourse() != null) {
+            sourceGradingScale.getCourse().setMaxPoints((int) getSourceReachablePoints(sourceGradingScale));
+        }
+
         return ResponseEntity.ok(bonus);
     }
 
-    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double sourcePoints, GradingScale targetGradingScale,
-            GradingScale sourceGradingScale) {
+    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double bonusToAchievedPoints, Double sourceAchievedPoints,
+            Double sourceReachablePoints, GradingScale bonusToGradingScale, GradingScale sourceGradingScale) {
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
 
-        return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, sourceGradingScale, sourcePoints, calculationSign);
+        return bonusService.calculateGradeWithBonus(bonusStrategy, bonusToGradingScale, bonusToAchievedPoints, sourceGradingScale, sourceAchievedPoints, sourceReachablePoints,
+                calculationSign);
     }
 
     /**
@@ -104,7 +118,8 @@ public class BonusResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/bonus/calculate-raw")
     @EnforceAdmin
-    // TODO: Ignore this in automated tests as this is only used for testing purposes
+    // TODO: Remove the manual configuration once the endpoint gets it's final pre-authorization when the feature releases.
+    @ManualConfig
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 
@@ -114,7 +129,10 @@ public class BonusResource {
         var bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 
-        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, sourcePoints, bonusToGradingScale, sourceGradingScale);
+        double sourceReachablePoints = getSourceReachablePoints(sourceGradingScale);
+
+        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, sourcePoints, sourceReachablePoints, bonusToGradingScale,
+                sourceGradingScale);
         return ResponseEntity.ok(gradeWithBonus);
     }
 
@@ -128,7 +146,7 @@ public class BonusResource {
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("courses/{courseId}/exams/{examId}/bonus")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Bonus> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
         log.debug("REST request to create a bonus for exam: {}", examId);
         if (bonus.getId() != null) {
@@ -193,7 +211,7 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) with body the newly updated updatedBonus if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus updatedBonus) {
         log.debug("REST request to update a updatedBonus: {}", bonusId);
 
@@ -247,7 +265,7 @@ public class BonusResource {
      * @return ResponseEntity with status 200 (Ok) if the bonus is successfully deleted and 400 (Bad request) otherwise
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus: {}", bonusId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -256,6 +274,32 @@ public class BonusResource {
 
         bonusRepository.delete(bonus);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
+    }
+
+    /**
+     * Calculates the reachable points for the source grading scale.
+     * <br>
+     * If the source grading scale is an exam grading scale, the reachable points are the max points of the exam.
+     * If the source grading scale is a course grading scale, the reachable points are the sum of all exercise points (excluding optional and bonus points).
+     * <br>
+     * Note: The reachable points need to be calculated since the {@link Course#getMaxPoints()} method might return a value different to the actual achievable points of a course.
+     * This is only relevant for courses, since the instructors should be able to change the exam's max points and thereby the exam grades.
+     *
+     * @param sourceGradingScale the source grading scale
+     * @return the reachable points of a course or the max points of an exam
+     */
+    private double getSourceReachablePoints(GradingScale sourceGradingScale) {
+        if (sourceGradingScale == null) {
+            return 0.0;
+        }
+
+        double sourceReachablePoints = sourceGradingScale.getMaxPoints();
+        if (sourceGradingScale.getCourse() != null) {
+            // fetch course with exercises to calculate reachable points
+            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
+            sourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+        }
+        return sourceReachablePoints;
     }
 
 }

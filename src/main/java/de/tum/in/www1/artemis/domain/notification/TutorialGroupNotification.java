@@ -62,12 +62,13 @@ public class TutorialGroupNotification extends Notification {
     }
 
     /**
-     * Websocket notification channel for tutorial group notifications of a specific tutorial group
+     * Websocket notification channel for tutorial group notifications of a specific user
      *
+     * @param userId id of user that should be notified
      * @return the channel
      */
-    public String getTopic() {
-        return "/topic/tutorial-group/" + tutorialGroup.getId() + "/notifications";
+    public String getTopic(long userId) {
+        return "/topic/user/" + userId + "/notifications/tutorial-groups";
     }
 
     public NotificationType getNotificationType() {

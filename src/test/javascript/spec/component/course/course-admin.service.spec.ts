@@ -15,7 +15,7 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
-    const resourceUrl = SERVER_API_URL + 'api/admin/courses';
+    const resourceUrl = 'api/admin/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -41,7 +41,7 @@ describe('Course Admin Service', () => {
         course.lectures = undefined;
         course.startDate = undefined;
         course.endDate = undefined;
-        course.learningGoals = [];
+        course.competencies = [];
         course.prerequisites = [];
         returnedFromService = { ...course } as Course;
     });

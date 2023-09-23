@@ -11,9 +11,6 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
@@ -75,33 +72,58 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendTextExerciseInstantClustering(Long exerciseId) {
-        log.info("Sending schedule instant clustering for text exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.TEXT_EXERCISE_INSTANT_CLUSTERING, exerciseId);
+    public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
     }
 
     @Override
-    public void sendUnlockAllRepositories(Long exerciseId) {
+    public void sendUnlockAllStudentRepositories(Long exerciseId) {
         log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES, exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositories(Long exerciseId) {
-        log.info("Sending lock all repositories for programming exercise {} to broker.", exerciseId);
+    public void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all repositories and participations with a start date in the past and a due date in the future for programming exercise {} to broker.",
+                exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all student repositories with earlier start date and later due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all student participations with earlier start date and later due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Sending lock all student repositories and participations for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositories(Long exerciseId) {
+        log.info("Sending lock all student repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES, exerciseId);
     }
 
     @Override
-    public void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
-        log.info("Sending unlock all repositories without an individual due date before now for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_WITHOUT_EARLIER_DUE_DATE, exerciseId);
+    public void sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Sending lock all student repositories and participations with past due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
-        log.info("Sending lock all repositories without an individual due date after now for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_WITHOUT_LATER_DUE_DATE, exerciseId);
+    public void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Sending lock all student participations with past due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
     }
 
     @Override
@@ -129,20 +151,13 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    @FeatureToggle(Feature.ExamLiveStatistics)
-    public void sendExamMonitoringSchedule(Long examId) {
-        log.info("Sending schedule for exam monitoring {} to broker.", examId);
-        sendMessageDelayed(MessageTopic.EXAM_MONITORING_SCHEDULE, examId);
+    public void sendExamWorkingTimeChangeDuringConduction(Long examId) {
+        log.info("Sending schedule to reschedule exam {} to broker.", examId);
+        sendMessageDelayed(MessageTopic.EXAM_RESCHEDULE_DURING_CONDUCTION, examId);
     }
 
     @Override
-    public void sendExamMonitoringScheduleCancel(Long examId) {
-        log.info("Sending schedule cancel for exam monitoring {} to broker.", examId);
-        sendMessageDelayed(MessageTopic.EXAM_MONITORING_SCHEDULE_CANCEL, examId);
-    }
-
-    @Override
-    public void sendExamWorkingTimeChangeDuringConduction(Long studentExamId) {
+    public void sendStudentExamIndividualWorkingTimeChangeDuringConduction(Long studentExamId) {
         log.info("Sending schedule to reschedule student exam {} to broker.", studentExamId);
         sendMessageDelayed(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION, studentExamId);
     }
@@ -153,6 +168,7 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed(MessageTopic.PARTICIPANT_SCORE_SCHEDULE, exerciseId, participantId, resultId);
     }
 
+    // NOTE: Don't remove any of the following methods despite the warning.
     private void sendMessageDelayed(MessageTopic topic, Long payload) {
         exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }

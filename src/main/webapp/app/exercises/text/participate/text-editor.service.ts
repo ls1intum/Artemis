@@ -1,16 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { francAll } from 'franc-min';
 import { Language } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Injectable({ providedIn: 'root' })
 export class TextEditorService {
     constructor(private http: HttpClient) {}
 
     get(participationId: number): Observable<StudentParticipation> {
-        return this.http.get(`api/text-editor/${participationId}`, { responseType: 'json' });
+        return this.http
+            .get(`api/text-editor/${participationId}`, { responseType: 'json' })
+            .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 
     /**

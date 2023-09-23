@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
@@ -8,12 +7,12 @@ import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-se
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
-    public notificationSettingsResourceUrl = SERVER_API_URL + 'api/notification-settings';
+    public notificationSettingsResourceUrl = 'api/notification-settings';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
 
-    constructor(private accountService: AccountService, private http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
     // load methods
 

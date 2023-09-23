@@ -1,4 +1,4 @@
-.. _programming-exercises:
+.. _programming_exercises:
 
 Programming Exercise Adjustments
 --------------------------------
@@ -49,7 +49,8 @@ Templates
 Templates are shipped with Artemis (they can be found within the ``src/main/resources/templates`` folder in GitHub).
 These templates should fit well for many deployments, but one might want to change some of them for special deployments.
 
-As of now, you can overwrite the ``jenkins`` folders that is present within the ``src/main/resources/templates`` folder.
+As of now, you can overwrite the ``jenkins`` folders that is present within the ``src/main/resources/templates`` folder
+by placing a ``templates/`` directory with the same structure next to the Artemis ``.war`` archive.
 Files that are present in the file system will be used, if a file is not present in the file system,
 it is loaded from the classpath (e.g. the ``.war`` archive).
 
@@ -57,63 +58,125 @@ We plan to make other folders configurable as well, but this is not supported ye
 
 Jenkins Template
 """"""""""""""""
-The build process in Jenkins is stored in a ``config.xml``-file (``src/main/resources/templates/jenkins``)
-that shares common steps for all programming languages (e.g. triggering a build when a push to GitLab occurred).
-It is extended by a ``Jenkinsfile`` that is dependent on the used programming language which will be included
-in the generic ``config.xml`` file.
-The builds steps (including used docker images, the checkout process, the actual build steps,
-and the reporting of the results to Artemis) is included in the ``Jenkinsfile``.
 
-A sample ``Jenkinsfile`` can be found at ``src/main/resources/templates/jenkins/java/Jenkinsfile``.
-Note that the ``Jenkinsfile`` **must** start either
+The build process in Jenkins is stored in a ``config.xml``-file (in ``src/main/resources/templates/jenkins/``).
+It is extended by a ``Jenkinsfile`` in the same directory that will be placed inside the ``config.xml`` file.
+The ``Jenkinsfile`` handles the functionality shared by all programming languages like checking out the repositories and
+loading the actual exercise-specific pipeline script from the Artemis server.
 
-- with ``pipeline`` (there must not be a comment before pipeline, but there can be one at any other position,
-  if the Jenkinsfile-syntax allows it)
-- or the special comment ``// ARTEMIS: JenkinsPipeline`` in the first line.
+.. note::
 
-The variables ``#dockerImage``, ``#testRepository``, ``#assignmentRepository``, ``#jenkinsNotificationToken`` and
-``#notificationsUrl`` will automatically be replaced
-(for the normal Jenkinsfile, within the Jenkinsfile-staticCodeAnalysis, #staticCodeAnalysisScript is also replaced).
+    When overriding the ``Jenkinsfile`` with a custom one, note that it **must** start either
 
-You should not need to touch any of these variables, except the ``#dockerImage`` variable,
-if you want to use a different agent setup (e.g. a Kubernetes setup).
+    - with ``pipeline`` (there must not be a comment before pipeline, but there can be one at any other position,
+      if the Jenkinsfile-syntax allows it)
+    - or the special comment ``// ARTEMIS: JenkinsPipeline`` in the first line.
+
+The actual programming language or exercise-type specific pipeline steps are defined in the form of
+`scripted pipelines <https://www.jenkins.io/doc/book/pipeline/syntax/#scripted-pipeline>`_.
+In principle, this is a Groovy script which allows structuring the pipeline into smaller methods and allows
+conditionally executing steps, but inside still allows the core structure blocks from
+`declarative pipelines <https://www.jenkins.io/doc/book/pipeline/syntax/#declarative-pipeline>`_.
+You can override those ``pipeline.groovy`` files with the template mechanism described above.
+
+Inside the ``pipeline.groovy`` some placeholders exist that will be filled by Artemis upon exercise creation from the
+server or exercise settings:
+
+.. list-table:: ``pipeline.groovy`` placeholders
+  :widths: 25 50 25
+  :header-rows: 1
+
+  * - Variable
+    - Replacement
+    - Origin
+  * - ``#dockerImage``
+    - The container image that the tests will run in.
+    - Server configuration
+  * - ``#dockerArgs``
+    - Additional flags passed to Docker when starting the container.
+    - Server configuration
+  * - ``#isStaticCodeAnalysisEnabled``
+    - Defines if static code analysis should be performed.
+    - Exercise configuration
+  * - ``#isTestWiseCoverageEnabled``
+    - Defines if testwise coverage should be collected.
+    - Exercise configuration
+
+The ``pipeline.groovy`` file can be customized further by instructors after creating the exercise from within
+Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.
 
 
-Jenkins: Caching Example for Maven
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The Docker image used to run the maven-tests already contains a set of commonly used dependencies
+Caching example for Maven
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The container image used to run the maven-tests already contains a set of commonly used dependencies
 (see `artemis-maven-docker <https://github.com/ls1intum/artemis-maven-docker>`__).
 This significantly speeds up builds as the dependencies do not have to be downloaded every time a build is started.
-However, the dependencies included in the Docker image might not match the dependencies required in your tests
-(e.g. because you added new dependencies or the Docker image is outdated).
+However, the dependencies included in the container image might not match the dependencies required in your tests
+(e.g. because you added new dependencies or the container image is outdated).
 
 You can cache the maven-dependencies also on the machine that runs the builds
-(that means, outside the docker container) using the following steps:
+(that means, outside the container) by editing the ``pipeline.groovy`` template.
 
-Adjust the agent-args and add the environment block.
+Adjust the ``dockerFlags`` variable:
 
+.. code:: groovy
 
-.. code:: bash
+  dockerFlags = '#dockerArgs -v artemis_maven_cache:/maven_cache -e MAVEN_OPTS="-Dmaven.repo.local=/maven_cache/repository"'
 
-        agent {
-            docker {
-                image '#dockerImage'
-                label 'docker'
-                args '-v $HOME/maven-cache-docker:/var/maven'
-            }
-        }
-        environment {
-          JAVA_TOOL_OPTIONS = '-Duser.home=/var/maven'
-        }
-        stages {
-            stage('Checkout') {
-
-
-
-You have to add permissions to the folder (which will be located at the $HOME folder of the user that jenkins uses),
-e.g. with ``sudo chmod 777 maven-cache-docker -R``.
 
 Note that this might allow students to access shared resources (e.g. jars used by Maven), and they might be able
 to overwrite them.
 You can use `Ares <https://github.com/ls1intum/Ares>`__ to prevent this by restricting the resources
 the student's code can access.
+
+Alternatively, you can restrict the access to the mounted volume by changing the ``dockerFlags`` to
+
+.. code:: groovy
+
+  dockerFlags = '#dockerArgs -e MAVEN_OPTS="-Dmaven.repo.local=/maven_cache/repository"'
+
+and changing the ``testRunner`` method into
+
+.. code:: groovy
+
+  void testRunner() {
+      setDockerFlags()
+
+      docker.image(dockerImage).inside(dockerFlags) { c ->
+          runTestSteps()
+      }
+  }
+
+  private void setDockerFlags() {
+      if (isSolutionBuild) {
+          dockerFlags += " -v artemis_maven_cache:/maven_cache"
+      } else {
+          dockerFlags += " -v artemis_maven_cache:/maven_cache:ro"
+      }
+  }
+
+This mounts the cache as writeable only when executing the tests for the solution repository, and as read-only when
+running the tests for students’ code.
+
+
+Caching example for Gradle
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In case of always writeable caches you can set ``-e GRADLE_USER_HOME=/gradle_cache`` as part of the ``dockerFlags``
+instead of the ``MAVEN_OPTS`` like above.
+
+For read-only caches like in the Maven example, define ``setDockerFlags()`` as
+
+.. code:: groovy
+
+  private void setDockerFlags() {
+      if (isSolutionBuild) {
+          dockerFlags += ' -e GRADLE_USER_HOME="/gradle_cache"'
+          dockerFlags += ' -v artemis_gradle_cache:/gradle_cache'
+      } else {
+          dockerFlags += ' -e GRADLE_RO_DEP_CACHE="/gradle_cache/caches/"'
+          dockerFlags += ' -v artemis_gradle_cache:/gradle_cache:ro'
+      }
+  }
+

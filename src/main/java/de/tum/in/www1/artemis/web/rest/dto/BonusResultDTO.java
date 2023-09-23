@@ -10,5 +10,5 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BonusResultDTO(BonusStrategy bonusStrategy, String bonusFromTitle, Double studentPointsOfBonusSource, String bonusGrade, Double finalPoints, String finalGrade,
-        PlagiarismVerdict mostSeverePlagiarismVerdict, Integer achievedPresentationScore, Integer presentationScoreThreshold) {
+        PlagiarismVerdict mostSeverePlagiarismVerdict, Double achievedPresentationScore, Integer presentationScoreThreshold) {
 }

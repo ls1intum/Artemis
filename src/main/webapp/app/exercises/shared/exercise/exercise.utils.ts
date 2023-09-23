@@ -12,7 +12,7 @@ import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.servi
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 
 export enum EditType {
     IMPORT,
@@ -154,7 +154,7 @@ export const isStartExerciseAvailable = (exercise: Exercise, participation?: Stu
 export const isResumeExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
     const dueDate = participation?.individualDueDate ?? exercise.dueDate;
     // A normal participation may only be resumed before the due date, a testrun only afterwards
-    return (!dueDate || dayjs().isBefore(dueDate)) === !participation?.testRun;
+    return (!dueDate || dayjs().isBefore(dueDate)) === !isPracticeMode(participation);
 };
 
 /**
@@ -189,7 +189,7 @@ export const areManualResultsAllowed = (exercise: Exercise): boolean => {
         return !exercise.dueDate || dayjs().isAfter(exercise.dueDate);
     } else {
         const relevantDueDate = (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ?? exercise.dueDate;
-        return exercise.assessmentType !== AssessmentType.AUTOMATIC && !!relevantDueDate && dayjs().isAfter(relevantDueDate);
+        return exercise.assessmentType !== AssessmentType.AUTOMATIC && (!relevantDueDate || dayjs().isAfter(relevantDueDate));
     }
 };
 

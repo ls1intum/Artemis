@@ -7,6 +7,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -33,6 +34,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -44,6 +46,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
@@ -52,6 +55,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -69,7 +73,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public class CourseService {
 
     @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
+    private Path courseArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
@@ -105,9 +109,9 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final LearningGoalService learningGoalService;
+    private final CompetencyService competencyService;
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final CompetencyRepository competencyRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
 
@@ -135,6 +139,8 @@ public class CourseService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
+    private final PresentationPointsCalculationService presentationPointsCalculationService;
+
     private final TutorialGroupRepository tutorialGroupRepository;
 
     private final TutorialGroupService tutorialGroupService;
@@ -143,17 +149,21 @@ public class CourseService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
+    private final ConversationRepository conversationRepository;
+
+    private final LearningPathService learningPathService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, ExamDeletionService examDeletionService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
+            UserService userService, ExamDeletionService examDeletionService, CompetencyRepository competencyRepository, GroupNotificationService groupNotificationService,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, CompetencyService competencyService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository) {
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+            TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -167,11 +177,11 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.examDeletionService = examDeletionService;
-        this.learningGoalRepository = learningGoalRepository;
+        this.competencyRepository = competencyRepository;
         this.groupNotificationService = groupNotificationService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
-        this.learningGoalService = learningGoalService;
+        this.competencyService = competencyService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -185,21 +195,25 @@ public class CourseService {
         this.resultRepository = resultRepository;
         this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupService = tutorialGroupService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.conversationRepository = conversationRepository;
+        this.learningPathService = learningPathService;
     }
 
     /**
      * Note: The number of courses should not change
      *
-     * @param courses the courses for which the participations should be fetched
-     * @param user    the user for which the participations should be fetched
+     * @param courses         the courses for which the participations should be fetched
+     * @param user            the user for which the participations should be fetched
+     * @param includeTestRuns flag that indicates whether test run participations should be included
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user) {
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, boolean includeTestRuns) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }
@@ -234,23 +248,23 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
      * @param refresh  if the user requested an explicit refresh
-     * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
-        course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-        course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
-        course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
+        course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
+        course.setCompetencies(competencyService.findAllForCourse(course, user, refresh));
+        course.setPrerequisites(competencyService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
@@ -298,7 +312,7 @@ public class CourseService {
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             exerciseService.loadExerciseDetailsIfNecessary(course, user);
             course.setExams(allExams.stream().filter(ex -> ex.getCourse().getId().equals(course.getId())).collect(Collectors.toSet()));
-            course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+            course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
         }).toList();
 
         if (log.isDebugEnabled()) {
@@ -322,6 +336,17 @@ public class CourseService {
     }
 
     /**
+     * Gets all courses that the specified user can enroll in.
+     *
+     * @param user the user entity
+     * @return unmodifiable set of courses the student can enroll in
+     */
+    public Set<Course> findAllEnrollableForUser(User user) {
+        return courseRepository.findAllEnrollmentActiveWithOrganizationsAndPrerequisites(ZonedDateTime.now()).stream()
+                .filter(course -> !user.getGroups().contains(course.getStudentGroupName())).collect(Collectors.toSet());
+    }
+
+    /**
      * Deletes all elements associated with the course including:
      * <ul>
      * <li>The Course</li>
@@ -341,7 +366,8 @@ public class CourseService {
 
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
-        deleteLearningGoalsOfCourse(course);
+        deleteCompetenciesOfCourse(course);
+        deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
@@ -358,7 +384,12 @@ public class CourseService {
             }
         });
         tutorialGroupRepository.saveAll(tutorialGroups);
-        this.tutorialGroupRepository.deleteAllByCourse(course);
+        tutorialGroupRepository.deleteAllByCourse(course);
+    }
+
+    private void deleteConversationsOfCourse(Course course) {
+        // Posts and Conversation Participants should be automatically deleted due to cascade
+        conversationRepository.deleteAllByCourseId(course.getId());
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
@@ -408,9 +439,9 @@ public class CourseService {
         }
     }
 
-    private void deleteLearningGoalsOfCourse(Course course) {
-        for (LearningGoal learningGoal : course.getLearningGoals()) {
-            learningGoalRepository.deleteById(learningGoal.getId());
+    private void deleteCompetenciesOfCourse(Course course) {
+        for (Competency competency : course.getCompetencies()) {
+            competencyRepository.deleteById(competency.getId());
         }
     }
 
@@ -436,48 +467,67 @@ public class CourseService {
     }
 
     /**
-     * Registers a user in a course by adding them to the student group of the course
+     * Enrolls a user in a course by adding them to the student group of the course
      *
      * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
-    public void registerUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+    public void enrollUserForCourseOrThrow(User user, Course course) {
+        authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
-        final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.generateLearningPathForUser(course, user);
+        }
+        final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
+        log.info("User {} has successfully enrolled in course {}", user.getLogin(), course.getTitle());
     }
 
     /**
      * Add multiple users to the course so that they can access it
-     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: registration based on other user attributes (e.g. name) is currently NOT supported
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
      * <p>
-     * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
+     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      *
      * @param courseId    the id of the course
      * @param studentDTOs the list of students (with at least registration number)
      * @param courseGroup the group the students should be added to
-     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @return the list of students who could not be enrolled in the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getLearningPathsEnabled()) {
+            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+        }
         String courseGroupName = course.defineCourseGroupName(courseGroup);
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
-            var registrationNumber = studentDto.getRegistrationNumber();
-            var login = studentDto.getLogin();
-            var email = studentDto.getEmail();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login, email);
+            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName, courseGroupRole);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
+            }
+            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
+                learningPathService.generateLearningPathForUser(course, optionalStudent.get());
             }
         }
 
         return notFoundStudentsDTOs;
+    }
+
+    /**
+     * Unenroll a user from a course by removing them from the student group of the course
+     *
+     * @param user   The user that should get removed from the course
+     * @param course The course from which the user should be removed from
+     */
+    public void unenrollUserForCourseOrThrow(User user, Course course) {
+        authCheckService.checkUserAllowedToUnenrollFromCourseElseThrow(user, course);
+        userService.removeUserFromGroup(user, course.getStudentGroupName());
+        final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User {} has successfully unenrolled from course {}", user.getLogin(), course.getTitle());
     }
 
     /**
@@ -570,10 +620,11 @@ public class CourseService {
     /**
      * Fetches Course Management Detail View data from repository and returns a DTO
      *
-     * @param course the course for with the details should be calculated
+     * @param course       the course for with the details should be calculated
+     * @param gradingScale the grading scale for the course
      * @return The DTO for the course management detail view
      */
-    public CourseManagementDetailViewDTO getStatsForDetailView(Course course) {
+    public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {
 
         Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
         // For the average score we need to only consider scores which are included completely or as bonus
@@ -582,6 +633,17 @@ public class CourseService {
         Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
+
+        // calculate scores taking presentation points into account, if a grading scale is present and set for graded presentations
+        if (gradingScale != null && gradingScale.getCourse().equals(course) && gradingScale.getPresentationsNumber() != null && gradingScale.getPresentationsWeight() != null) {
+            double maxBaseScore = includedExercises.stream().filter(e -> !e.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_AS_BONUS))
+                    .map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
+            currentMaxAverageScore += presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, maxBaseScore);
+
+            double avgPresentationScore = studentParticipationRepository.getAvgPresentationScoreByCourseId(course.getId());
+            averageScoreForCourse = gradingScale.getPresentationsWeight() / 100.0 * avgPresentationScore
+                    + (100.0 - gradingScale.getPresentationsWeight()) / 100.0 * averageScoreForCourse;
+        }
 
         Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
 
@@ -678,6 +740,7 @@ public class CourseService {
      */
     @Async
     public void archiveCourse(Course course) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
         // Archiving a course is only possible after the course is over
@@ -686,13 +749,13 @@ public class CourseService {
         }
 
         // This contains possible errors encountered during the archive process
-        ArrayList<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
 
         try {
             // Create course archives directory if it doesn't exist
-            Files.createDirectories(Path.of(courseArchivesDirPath));
+            Files.createDirectories(courseArchivesDirPath);
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
             // Export the course to the archives' directory.
@@ -701,7 +764,7 @@ public class CourseService {
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
-                courseRepository.save(course);
+                courseRepository.saveAndFlush(course);
             }
             else {
                 groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
@@ -715,25 +778,29 @@ public class CourseService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
+        log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
      * Cleans up a course by cleaning up all exercises from that course. This deletes all student
-     * submissions. Note that a course has to be archived first before being cleaned up.
+     * repositories and build plans. Note that a course has to be archived first before being cleaned up.
      *
-     * @param courseId The id of the course to clean up
+     * @param courseId  The id of the course to clean up
+     * @param principal the user that wants to cleanup the course
      */
-    public void cleanupCourse(Long courseId) {
+    public void cleanupCourse(Long courseId, Principal principal) {
+        final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_COURSE, "course=" + courseId);
+        auditEventRepository.add(auditEvent);
         // Get the course with all exercises
-        var course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
+        var course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;
         }
 
         // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
-        // hibernate sometimes adds nulls to in the list of exercise groups to keep the order
-        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().map(Exam::getExerciseGroups).flatMap(Collection::stream)
+        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().flatMap(e -> e.getExerciseGroups().stream())
                 .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
@@ -741,8 +808,6 @@ public class CourseService {
             if (exercise instanceof ProgrammingExercise) {
                 exerciseDeletionService.cleanup(exercise.getId(), true);
             }
-
-            // TODO: extend exerciseDeletionService.cleanup to clean up all exercise types
         });
 
         log.info("The course {} has been cleaned up!", courseId);
@@ -756,7 +821,7 @@ public class CourseService {
      * @return list of users
      */
     @NotNull
-    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
+    public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllInGroup(groupName);
         usersInGroup.forEach(user -> {
@@ -962,7 +1027,7 @@ public class CourseService {
      *
      * @param usersInGroup user whose variables are removed
      */
-    private void removeUserVariables(List<User> usersInGroup) {
+    private void removeUserVariables(Iterable<User> usersInGroup) {
         usersInGroup.forEach(user -> {
             user.setLastNotificationRead(null);
             user.setActivationKey(null);

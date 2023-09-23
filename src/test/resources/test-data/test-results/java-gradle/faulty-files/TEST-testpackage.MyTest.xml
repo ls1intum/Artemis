@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wrongnodename name="testpackage.AttributeTest" tests="2" skipped="0" failures="2" errors="0" timestamp="2023-04-04T19:29:27" hostname="DE-ADN-4Q5Q8D3" time="0.066">
+  <properties/>
+  <testcase name="testAttributes[Context]" classname="testpackage.AttributeTest" time="0.044">
+    <failure message="org.opentest4j.AssertionFailedError: The exercise expects a class with the name Context in the package testpackage. You did not implement the class in the exercise." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: The exercise expects a class with the name Context in the package testpackage. You did not implement the class in the exercise.
+	at app//de.tum.in.test.api.structural.StructuralTestProvider.failure(StructuralTestProvider.java:423)
+	at app//de.tum.in.test.api.structural.StructuralTestProvider.findClassForTestType(StructuralTestProvider.java:105)
+	at app//de.tum.in.test.api.structural.AttributeTestProvider.testAttributes(AttributeTestProvider.java:79)
+	at app//de.tum.in.test.api.structural.AttributeTestProvider.lambda$generateTestsForAllClasses$0(AttributeTestProvider.java:56)
+	at app//org.junit.jupiter.engine.descriptor.DynamicTestTestDescriptor.lambda$execute$0(DynamicTestTestDescriptor.java:53)
+	at app//org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at app//de.tum.in.test.api.internal.TimeoutUtils.rethrowThrowableSafe(TimeoutUtils.java:47)
+	at app//de.tum.in.test.api.internal.TimeoutUtils.lambda$performTimeoutExecution$1(TimeoutUtils.java:42)
+	at java.base@17.0.3/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base@17.0.3/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base@17.0.3/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base@17.0.3/java.lang.Thread.run(Thread.java:833)
+</failure>
+  </testcase>
+  <testcase name="testAttributes[Policy]" classname="testpackage.AttributeTest" time="0.019">
+    <failure message="org.opentest4j.AssertionFailedError: The exercise expects a class with the name Policy in the package testpackage. You did not implement the class in the exercise." type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: The exercise expects a class with the name Policy in the package testpackage. You did not implement the class in the exercise.
+	at app//de.tum.in.test.api.structural.StructuralTestProvider.failure(StructuralTestProvider.java:423)
+	at app//de.tum.in.test.api.structural.StructuralTestProvider.findClassForTestType(StructuralTestProvider.java:105)
+	at app//de.tum.in.test.api.structural.AttributeTestProvider.testAttributes(AttributeTestProvider.java:79)
+	at app//de.tum.in.test.api.structural.AttributeTestProvider.lambda$generateTestsForAllClasses$0(AttributeTestProvider.java:56)
+	at app//org.junit.jupiter.engine.descriptor.DynamicTestTestDescriptor.lambda$execute$0(DynamicTestTestDescriptor.java:53)
+	at app//org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at app//de.tum.in.test.api.internal.TimeoutUtils.rethrowThrowableSafe(TimeoutUtils.java:47)
+	at app//de.tum.in.test.api.internal.TimeoutUtils.lambda$performTimeoutExecution$1(TimeoutUtils.java:42)
+	at java.base@17.0.3/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base@17.0.3/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base@17.0.3/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base@17.0.3/java.lang.Thread.run(Thread.java:833)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+NOTICE: The warning above is expected and the issue is already known.
+        Visit https://github.com/ls1intum/Ares/discussions/113 for more details.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[protected org.junit.jupiter.api.DynamicContainer testpackage.AttributeTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-1,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-1,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[protected org.junit.jupiter.api.DynamicContainer testpackage.AttributeTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-2,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-2,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[protected org.junit.jupiter.api.DynamicContainer testpackage.AttributeTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-3,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-3,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+]]></system-err>
+</wrongnodename>

@@ -13,5 +13,4 @@ Coding and design guidelines
    guidelines/client-design
    guidelines/database
    guidelines/criteria-builder
-   guidelines/development-process
    guidelines/language-guidelines

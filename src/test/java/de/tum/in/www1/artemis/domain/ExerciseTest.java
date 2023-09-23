@@ -1,87 +1,74 @@
 package de.tum.in.www1.artemis.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseFactory;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exam.ExamFactory;
+import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.service.ExerciseService;
 
-class ExerciseTest {
+class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
-    @Mock
+    private Course course;
+
     private Exercise exercise;
 
     private List<StudentParticipation> studentParticipations;
 
-    @Mock
-    private ExerciseGroup exerciseGroup;
-
-    @Mock
-    private Exam exam;
-
-    @Mock
     private StudentParticipation studentParticipationInitialized;
 
-    @Mock
     private StudentParticipation studentParticipationInactive;
 
-    @Mock
     private StudentParticipation studentParticipationFinished;
 
-    @Mock
     private StudentParticipation studentParticipationUninitialized;
 
-    @Mock
     private ProgrammingSubmission submission1;
 
-    @Mock
     private ProgrammingSubmission submission2;
 
-    @Mock
     private ProgrammingSubmission submission3;
 
-    @Mock
     private Result ratedResult;
 
-    @Mock
     private Result unratedResult;
 
-    @Mock
+    @Autowired
     private ExerciseService exerciseService;
-
-    private AutoCloseable closeable;
 
     @BeforeEach
     void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
+        course = CourseFactory.generateCourse(42L, null, null, null);
+        exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
 
-        exercise = mock(Exercise.class, CALLS_REAL_METHODS);
-        exerciseService = mock(ExerciseService.class, CALLS_REAL_METHODS);
-
-        when(studentParticipationInitialized.getInitializationState()).thenReturn(InitializationState.INITIALIZED);
-        when(studentParticipationInactive.getInitializationState()).thenReturn(InitializationState.INACTIVE);
-        when(studentParticipationFinished.getInitializationState()).thenReturn(InitializationState.FINISHED);
-        when(studentParticipationUninitialized.getInitializationState()).thenReturn(InitializationState.UNINITIALIZED);
-
-        when(studentParticipationInitialized.getExercise()).thenReturn(exercise);
-        when(studentParticipationInactive.getExercise()).thenReturn(exercise);
-        when(studentParticipationFinished.getExercise()).thenReturn(exercise);
-        when(studentParticipationUninitialized.getExercise()).thenReturn(exercise);
+        studentParticipationInitialized = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, exercise);
+        studentParticipationInactive = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INACTIVE, exercise);
+        studentParticipationFinished = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.FINISHED, exercise);
+        studentParticipationUninitialized = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.UNINITIALIZED, exercise);
 
         studentParticipations = Arrays.asList(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, studentParticipationInitialized);
+
+        ratedResult = new Result();
+        ratedResult.setRated(true);
+        unratedResult = new Result();
+        unratedResult.setRated(false);
 
         submission1 = new ProgrammingSubmission();
         submission2 = new ProgrammingSubmission();
@@ -99,97 +86,76 @@ class ExerciseTest {
         submission2.setCommitHash("bbbbb");
         submission3.setCommitHash("ccccc");
 
-        when(ratedResult.isRated()).thenReturn(true);
-        when(unratedResult.isRated()).thenReturn(false);
-
-        when(studentParticipationInitialized.getSubmissions()).thenReturn(Set.of(submission1, submission2, submission3));
-    }
-
-    @AfterEach
-    void reset() throws Exception {
-        if (closeable != null) {
-            closeable.close();
-        }
+        studentParticipationFinished.setSubmissions(Set.of(submission1, submission2, submission3));
     }
 
     @Test
     void findRelevantParticipation() {
-        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(studentParticipationInitialized);
-    }
-
-    @Test
-    void findRelevantParticipation_inactiveParticipation() {
-        StudentParticipation desiredStudentParticipationInactive = mock(StudentParticipation.class);
-        when(desiredStudentParticipationInactive.getInitializationState()).thenReturn(InitializationState.INACTIVE);
-        when(desiredStudentParticipationInactive.getExercise()).thenReturn(exercise);
-        studentParticipations = Arrays.asList(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, desiredStudentParticipationInactive);
-
-        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(desiredStudentParticipationInactive);
+        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
     @Test
     void findRelevantParticipation_empty() {
-        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(new ArrayList<>());
-        assertThat(relevantParticipation).isNull();
+        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(new ArrayList<>());
+        assertThat(relevantParticipations).isEmpty();
     }
 
     @Test
     void findRelevantParticipation_modelingExercise() {
-        ModelingExercise modelingExercise = mock(ModelingExercise.class, CALLS_REAL_METHODS);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(null, null, null, DiagramType.ClassDiagram, course);
 
-        when(studentParticipationInitialized.getExercise()).thenReturn(modelingExercise);
-        when(studentParticipationInactive.getExercise()).thenReturn(modelingExercise);
-        when(studentParticipationFinished.getExercise()).thenReturn(modelingExercise);
-        when(studentParticipationUninitialized.getExercise()).thenReturn(modelingExercise);
+        studentParticipationInitialized.setExercise(modelingExercise);
+        studentParticipationInactive.setExercise(modelingExercise);
+        studentParticipationFinished.setExercise(modelingExercise);
+        studentParticipationUninitialized.setExercise(modelingExercise);
 
-        StudentParticipation relevantParticipation = modelingExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(studentParticipationFinished);
+        List<StudentParticipation> relevantParticipations = modelingExercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
     @Test
     void findRelevantParticipation_textExercise() {
-        TextExercise textExercise = mock(TextExercise.class, CALLS_REAL_METHODS);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
 
-        when(studentParticipationInitialized.getExercise()).thenReturn(textExercise);
-        when(studentParticipationInactive.getExercise()).thenReturn(textExercise);
-        when(studentParticipationFinished.getExercise()).thenReturn(textExercise);
-        when(studentParticipationUninitialized.getExercise()).thenReturn(textExercise);
+        studentParticipationInitialized.setExercise(textExercise);
+        studentParticipationInactive.setExercise(textExercise);
+        studentParticipationFinished.setExercise(textExercise);
+        studentParticipationUninitialized.setExercise(textExercise);
 
-        StudentParticipation relevantParticipation = textExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(studentParticipationFinished);
+        List<StudentParticipation> relevantParticipations = textExercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
     /* Primarily the functionality of findAppropriateSubmissionByResults() is tested with the following tests */
 
     @Test
     void filterForCourseDashboard_filterSensitiveInformation() {
-        Result ratedResultTmp = new Result();
-        ratedResultTmp.setAssessor(mock(User.class));
-        ratedResultTmp.setRated(true);
-
-        submission1.setResults(List.of(ratedResultTmp));
-        submission2.setResults(List.of(ratedResultTmp));
-        submission3.setResults(List.of(ratedResultTmp));
+        exercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
+        ratedResult.setAssessor(new User());
+        ratedResult.setAssessmentType(AssessmentType.MANUAL);
+        ratedResult.setCompletionDate(ZonedDateTime.now().minusHours(2));
 
         exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
-        Result result = exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().getLatestResult();
+        var submissions = exercise.getStudentParticipations().iterator().next().getSubmissions();
+        // We should only get the one relevant submission to send to the client
+        assertThat(submissions).hasSize(1);
+        Result result = submissions.iterator().next().getLatestResult();
         assertThat(result.getAssessor()).isNull();
     }
 
     @Test
     void filterForCourseDashboard_nullParticipations() {
         exerciseService.filterForCourseDashboard(exercise, null, "student", true);
-        assertThat(exercise.getStudentParticipations()).isNull();
+        assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
     @Test
     void filterForCourseDashboard_nullSubmissions() {
-        when(studentParticipationInactive.getSubmissions()).thenReturn(null);
-        when(studentParticipationFinished.getSubmissions()).thenReturn(null);
-        when(studentParticipationUninitialized.getSubmissions()).thenReturn(null);
-        when(studentParticipationInitialized.getSubmissions()).thenReturn(null);
+        studentParticipationInactive.setSubmissions(null);
+        studentParticipationFinished.setSubmissions(null);
+        studentParticipationUninitialized.setSubmissions(null);
+        studentParticipationInitialized.setSubmissions(null);
 
         exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isNull();
@@ -198,18 +164,18 @@ class ExerciseTest {
     @Test
     void filterForCourseDashboard_emptyParticipations() {
         exerciseService.filterForCourseDashboard(exercise, new ArrayList<>(), "student", true);
-        assertThat(exercise.getStudentParticipations()).isNull();
+        assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
     @Test
     void filterForCourseDashboard_emptySubmissions() {
-        when(studentParticipationInactive.getSubmissions()).thenReturn(new HashSet<>());
-        when(studentParticipationFinished.getSubmissions()).thenReturn(new HashSet<>());
-        when(studentParticipationUninitialized.getSubmissions()).thenReturn(new HashSet<>());
-        when(studentParticipationInitialized.getSubmissions()).thenReturn(new HashSet<>());
+        studentParticipationInactive.setSubmissions(new HashSet<>());
+        studentParticipationFinished.setSubmissions(new HashSet<>());
+        studentParticipationUninitialized.setSubmissions(new HashSet<>());
+        studentParticipationInitialized.setSubmissions(new HashSet<>());
 
         exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(new HashSet<>());
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isNull();
     }
 
     @Test
@@ -264,11 +230,9 @@ class ExerciseTest {
 
     @Test
     void getExamViaExerciseGroupOrCourseMember_withExamExercise() {
-        Exercise examExercise = mock(Exercise.class, CALLS_REAL_METHODS);
-
-        when(examExercise.isExamExercise()).thenReturn(true);
-        when(examExercise.getExerciseGroup()).thenReturn(exerciseGroup);
-        when(exerciseGroup.getExam()).thenReturn(exam);
+        Exam exam = ExamFactory.generateExam(null);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
+        Exercise examExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
 
         Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();
         assertThat(result).isEqualTo(exam);
@@ -276,8 +240,8 @@ class ExerciseTest {
 
     @Test
     void getExamViaExerciseGroupOrCourseMember_withoutExamExercise() {
-        Exercise examExercise = mock(Exercise.class, CALLS_REAL_METHODS);
-        when(examExercise.isExamExercise()).thenReturn(false);
+        Exercise examExercise = TextExerciseFactory.generateTextExerciseForExam(null);
+
         Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();
         assertThat(result).isNull();
     }
@@ -292,5 +256,12 @@ class ExerciseTest {
         participations.add(participation);
 
         return participations;
+    }
+
+    @Test
+    void testSanitizedExerciseTitleDoesntContainAnyIllegalCharacters() {
+        Exercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Test?+#*                Exercise123%$§");
+        assertThat(exercise.getSanitizedExerciseTitle()).isEqualTo("Test_Exercise123");
     }
 }

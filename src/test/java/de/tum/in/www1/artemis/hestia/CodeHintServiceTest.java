@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.*;
 
@@ -10,21 +10,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "codehintservice";
 
@@ -43,13 +46,22 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        final Course course = database.addCourseWithOneProgrammingExercise();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     private ProgrammingExerciseTestCase addTestCaseToExercise(String name) {
@@ -67,7 +79,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var solutionEntry = new ProgrammingExerciseSolutionEntry();
         solutionEntry.setTestCase(testCase);
         solutionEntry.setLine(1);
-        solutionEntry.setCode(UUID.randomUUID().toString());
+        solutionEntry.setCode("code");
         return solutionEntryRepository.save(solutionEntry);
     }
 
@@ -251,7 +263,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var codeHint = addCodeHintToTask("codeHint", relatedTask, new HashSet<>(Collections.emptySet()));
 
         codeHint.setSolutionEntries(new HashSet<>(Set.of(invalidSolutionEntry)));
-        assertThrows(BadRequestAlertException.class, () -> codeHintService.updateSolutionEntriesForCodeHint(codeHint));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> codeHintService.updateSolutionEntriesForCodeHint(codeHint));
 
         var entriesForHint = solutionEntryRepository.findByCodeHintId(codeHint.getId());
         assertThat(entriesForHint).isEmpty();

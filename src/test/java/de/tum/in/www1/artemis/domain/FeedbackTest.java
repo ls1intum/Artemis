@@ -14,7 +14,7 @@ class FeedbackTest {
         feedback.setDetailTextTruncated(getText(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 100));
 
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
-        assertThat(feedback.getLongFeedbackText()).isNull();
+        assertThat(feedback.getLongFeedbackText()).isEmpty();
         assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 
@@ -33,7 +33,7 @@ class FeedbackTest {
         feedback.setDetailText("abc");
 
         assertThat(feedback.getDetailText()).isEqualTo("abc");
-        assertThat(feedback.getLongFeedbackText()).isNull();
+        assertThat(feedback.getLongFeedbackText()).isEmpty();
         assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 
@@ -43,7 +43,7 @@ class FeedbackTest {
         feedback.setDetailText(null);
 
         assertThat(feedback.getDetailText()).isNull();
-        assertThat(feedback.getLongFeedbackText()).isNull();
+        assertThat(feedback.getLongFeedbackText()).isEmpty();
         assertThat(feedback.getHasLongFeedbackText()).isFalse();
     }
 
@@ -55,7 +55,7 @@ class FeedbackTest {
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH);
         assertThat(feedback.getHasLongFeedbackText()).isTrue();
 
-        final LongFeedbackText longFeedbackText = feedback.getLongFeedbackText();
+        final LongFeedbackText longFeedbackText = feedback.getLongFeedback().orElseThrow();
         assertThat(longFeedbackText.getFeedback()).isSameAs(feedback);
         assertThat(longFeedbackText.getText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10);
     }
@@ -68,7 +68,7 @@ class FeedbackTest {
         assertThat(feedback.getDetailText()).hasSize(Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH);
         assertThat(feedback.getHasLongFeedbackText()).isTrue();
 
-        final LongFeedbackText longFeedbackText = feedback.getLongFeedbackText();
+        final LongFeedbackText longFeedbackText = feedback.getLongFeedback().orElseThrow();
         assertThat(longFeedbackText.getFeedback()).isSameAs(feedback);
         assertThat(longFeedbackText.getText()).hasSize(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH + 100);
     }
@@ -89,24 +89,8 @@ class FeedbackTest {
         final Feedback feedback = new Feedback();
         feedback.setDetailText(veryLongFeedback);
 
-        assertThat(feedback.getLongFeedbackText().getText()).hasSize(Constants.LONG_FEEDBACK_MAX_LENGTH);
-    }
-
-    @Test
-    void copyWithLongFeedback() {
-        final String feedbackText = getText(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH * 3);
-
-        final Feedback feedback = new Feedback();
-        feedback.setDetailText(feedbackText);
-
-        final Feedback copiedFeedback = feedback.copyFeedback();
-        assertThat(copiedFeedback.getHasLongFeedbackText()).isTrue();
-        assertThat(copiedFeedback.getDetailText()).hasSize(Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH);
-
-        final LongFeedbackText copiedLongFeedback = copiedFeedback.getLongFeedbackText();
-        assertThat(copiedLongFeedback).isNotNull();
-        assertThat(copiedLongFeedback.getText()).isEqualTo(feedbackText);
-        assertThat(copiedLongFeedback.getFeedback()).isSameAs(copiedFeedback);
+        final LongFeedbackText longFeedback = feedback.getLongFeedback().orElseThrow();
+        assertThat(longFeedback.getText()).hasSize(Constants.LONG_FEEDBACK_MAX_LENGTH);
     }
 
     private String getText(final int length) {

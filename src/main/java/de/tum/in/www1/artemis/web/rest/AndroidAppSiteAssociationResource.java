@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+
 /**
  * REST controller for the android assetlink.json
  */
@@ -32,6 +34,7 @@ public class AndroidAppSiteAssociationResource {
      * @return assetslinks as json
      */
     @GetMapping("/assetlinks.json")
+    @ManualConfig
     public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
         if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprints == null || sha256CertFingerprints.length() < 20) {
             log.debug("Android Assetlinks information is not configured!");

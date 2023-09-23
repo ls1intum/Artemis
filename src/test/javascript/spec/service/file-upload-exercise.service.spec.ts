@@ -69,12 +69,7 @@ describe('FileUploadExercise Service', () => {
     }));
 
     it('should update a FileUploadExercise', fakeAsync(() => {
-        const returnedFromService = Object.assign(
-            {
-                filePattern: 'bbbbbb',
-            },
-            elemDefault,
-        );
+        const returnedFromService = { ...elemDefault, filePattern: 'bbbbbb' };
 
         const expected = Object.assign({}, returnedFromService);
         service

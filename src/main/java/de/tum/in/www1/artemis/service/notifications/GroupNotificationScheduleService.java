@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import java.time.ZonedDateTime;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
@@ -137,7 +140,10 @@ public class GroupNotificationScheduleService {
      *
      * @param exercise that is created
      */
-    public void checkNotificationsForNewExercise(Exercise exercise) {
+    @Async
+    public void checkNotificationsForNewExerciseAsync(Exercise exercise) {
+        SecurityUtils.setAuthorizationObject(); // required for async
+        // TODO: in a course with 2000 participants, this can take really long, we should optimize this
         checkNotificationForExerciseRelease(exercise);
         checkNotificationForAssessmentDueDate(exercise);
     }
@@ -167,7 +173,7 @@ public class GroupNotificationScheduleService {
      * @param exercise that is created
      */
     private void checkNotificationForAssessmentDueDate(Exercise exercise) {
-        if (exercise.isCourseExercise() && exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+        if (exercise.isCourseExercise() && !ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }
     }

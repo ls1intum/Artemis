@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
@@ -11,8 +11,8 @@ class GuidedTourSettingTest {
         GuidedTourSetting guidedTourSetting = new GuidedTourSetting();
         guidedTourSetting = guidedTourSetting.guidedTourKey("guided_tour_key").guidedTourStep(5);
 
-        assertEquals(5, guidedTourSetting.getGuidedTourStep());
-        assertEquals("guided_tour_key", guidedTourSetting.getGuidedTourKey());
+        assertThat(guidedTourSetting.getGuidedTourStep()).isEqualTo(5);
+        assertThat(guidedTourSetting.getGuidedTourKey()).isEqualTo("guided_tour_key");
     }
 
     @Test
@@ -20,7 +20,7 @@ class GuidedTourSettingTest {
         GuidedTourSetting guidedTourSetting = new GuidedTourSetting();
         guidedTourSetting = guidedTourSetting.guidedTourStep(5).guidedTourKey("guided_tour_key");
 
-        assertEquals(5, guidedTourSetting.getGuidedTourStep());
-        assertEquals("guided_tour_key", guidedTourSetting.getGuidedTourKey());
+        assertThat(guidedTourSetting.getGuidedTourStep()).isEqualTo(5);
+        assertThat(guidedTourSetting.getGuidedTourKey()).isEqualTo("guided_tour_key");
     }
 }

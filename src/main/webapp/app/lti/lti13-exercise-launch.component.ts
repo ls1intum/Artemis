@@ -9,7 +9,10 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 export class Lti13ExerciseLaunchComponent implements OnInit {
     isLaunching: boolean;
 
-    constructor(private route: ActivatedRoute, private http: HttpClient) {
+    constructor(
+        private route: ActivatedRoute,
+        private http: HttpClient,
+    ) {
         this.isLaunching = true;
     }
 
@@ -39,7 +42,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
-            .post(SERVER_API_URL + '/api/lti13/auth-login', requestBody.toString(), {
+            .post('api/public/lti13/auth-login', requestBody.toString(), {
                 headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
             })
             .subscribe({

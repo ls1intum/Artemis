@@ -12,10 +12,10 @@ describe('ScoresStorageService', () => {
         participation2.id = 2;
 
         scoresStorageService.setStoredParticipationResults([
-            { successful: true, participation: participation1 },
-            { successful: false, participation: participation2 },
+            { score: 100, participationId: participation1.id },
+            { score: 0, participationId: participation2.id },
         ]);
-        expect(scoresStorageService.getStoredParticipationResult(1)).toEqual({ successful: true, participation: participation1 });
+        expect(scoresStorageService.getStoredParticipationResult(1)).toEqual({ score: 100, participationId: participation1.id });
         // Should return undefined for an unknown participation id.
         expect(scoresStorageService.getStoredParticipationResult(3)).toBeUndefined();
     });
@@ -24,7 +24,7 @@ describe('ScoresStorageService', () => {
         const scoresStorageService = new ScoresStorageService();
         const participation = new StudentParticipation();
         participation.id = 234;
-        scoresStorageService.setStoredParticipationResults([{ successful: true, participation }]);
+        scoresStorageService.setStoredParticipationResults([{ score: 100, participationId: participation.id }]);
         expect(scoresStorageService.getStoredParticipationResult(1)).toBeUndefined();
     });
 });

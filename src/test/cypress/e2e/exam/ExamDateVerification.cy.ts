@@ -1,21 +1,31 @@
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import dayjs from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs/esm';
-import { generateUUID } from '../../support/utils';
-import { courseManagementRequest, courseOverview, examNavigation, examStartEnd, textExerciseEditor } from '../../support/artemis';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+
+import {
+    courseManagementAPIRequest,
+    courseOverview,
+    examAPIRequests,
+    examNavigation,
+    examParticipation,
+    examStartEnd,
+    exerciseAPIRequest,
+    textExerciseEditor,
+} from '../../support/artemis';
 import { admin, studentOne } from '../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../support/utils';
 
 describe('Exam date verification', () => {
     let course: Course;
     let examTitle: string;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
+        courseManagementAPIRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
         });
     });
 
@@ -27,13 +37,14 @@ describe('Exam date verification', () => {
     describe('Exam timing', () => {
         let exam: Exam;
         it('Does not show exam before visible date', () => {
-            const examContent = new ExamBuilder(course)
-                .title(examTitle)
-                .visibleDate(dayjs().add(1, 'day'))
-                .startDate(dayjs().add(2, 'days'))
-                .endDate(dayjs().add(3, 'days'))
-                .build();
-            courseManagementRequest.createExam(examContent).then((response) => {
+            const examConfig: Exam = {
+                course,
+                title: examTitle,
+                visibleDate: dayjs().add(1, 'day'),
+                startDate: dayjs().add(2, 'days'),
+                endDate: dayjs().add(3, 'days'),
+            };
+            examAPIRequests.createExam(examConfig).then((response) => {
                 exam = response.body;
             });
             cy.login(studentOne, `/courses`);
@@ -44,15 +55,16 @@ describe('Exam date verification', () => {
         });
 
         it('Shows after visible date', () => {
-            const examContent = new ExamBuilder(course)
-                .title(examTitle)
-                .visibleDate(dayjs().subtract(5, 'days'))
-                .startDate(dayjs().add(2, 'days'))
-                .endDate(dayjs().add(3, 'days'))
-                .build();
-            courseManagementRequest.createExam(examContent).then((response) => {
+            const examConfig: Exam = {
+                course,
+                title: examTitle,
+                visibleDate: dayjs().subtract(5, 'days'),
+                startDate: dayjs().add(2, 'days'),
+                endDate: dayjs().add(3, 'days'),
+            };
+            examAPIRequests.createExam(examConfig).then((response) => {
                 exam = response.body;
-                courseManagementRequest.registerStudentForExam(exam, studentOne);
+                examAPIRequests.registerStudentForExam(exam, studentOne);
                 cy.login(studentOne, `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
                 courseOverview.openExamsTab();
@@ -63,29 +75,30 @@ describe('Exam date verification', () => {
 
         it('Student can start after start Date', () => {
             let exerciseGroup: ExerciseGroup;
-            const examContent = new ExamBuilder(course)
-                .title(examTitle)
-                .visibleDate(dayjs().subtract(3, 'days'))
-                .startDate(dayjs().subtract(2, 'days'))
-                .endDate(dayjs().add(3, 'days'))
-                .build();
-            courseManagementRequest.createExam(examContent).then((examResponse) => {
+            const examConfig: Exam = {
+                course,
+                title: examTitle,
+                visibleDate: dayjs().subtract(3, 'days'),
+                startDate: dayjs().subtract(2, 'days'),
+                endDate: dayjs().add(3, 'days'),
+            };
+            examAPIRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequest.registerStudentForExam(exam, studentOne);
-                courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
+                examAPIRequests.registerStudentForExam(exam, studentOne);
+                examAPIRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
+                    exerciseAPIRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         const exercise = exerciseResponse.body;
-                        courseManagementRequest.generateMissingIndividualExams(exam);
-                        courseManagementRequest.prepareExerciseStartForExam(exam);
+                        examAPIRequests.generateMissingIndividualExams(exam);
+                        examAPIRequests.prepareExerciseStartForExam(exam);
                         cy.login(studentOne, `/courses/${course.id}/exams`);
                         courseOverview.openExam(exam.id!);
                         cy.url().should('contain', `/exams/${exam.id}`);
                         cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
                         examNavigation.openExerciseAtIndex(0);
-                        cy.fixture('loremIpsum.txt').then((submission) => {
-                            textExerciseEditor.typeSubmission(exercise.id, submission);
+                        cy.fixture('loremIpsum-short.txt').then((submission) => {
+                            textExerciseEditor.typeSubmission(exercise.id!, submission);
                         });
                         examNavigation.clickSave();
                     });
@@ -96,45 +109,43 @@ describe('Exam date verification', () => {
         it('Exam ends after end time', () => {
             let exerciseGroup: ExerciseGroup;
             const examEnd = dayjs().add(30, 'seconds');
-            const examContent = new ExamBuilder(course).title(examTitle).visibleDate(dayjs().subtract(3, 'days')).startDate(dayjs().subtract(2, 'days')).endDate(examEnd).build();
-            courseManagementRequest.createExam(examContent).then((examResponse) => {
+            const examConfig: Exam = {
+                course,
+                title: examTitle,
+                visibleDate: dayjs().subtract(3, 'days'),
+                startDate: dayjs().subtract(2, 'days'),
+                endDate: examEnd,
+            };
+            examAPIRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
-                courseManagementRequest.registerStudentForExam(exam, studentOne);
-                courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
+                examAPIRequests.registerStudentForExam(exam, studentOne);
+                examAPIRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
+                    exerciseAPIRequest.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
                         const exercise = exerciseResponse.body;
-                        courseManagementRequest.generateMissingIndividualExams(exam);
-                        courseManagementRequest.prepareExerciseStartForExam(exam);
+                        examAPIRequests.generateMissingIndividualExams(exam);
+                        examAPIRequests.prepareExerciseStartForExam(exam);
                         cy.login(studentOne, `/courses/${course.id}/exams`);
                         courseOverview.openExam(exam.id!);
                         cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
                         examNavigation.openExerciseAtIndex(0);
-                        cy.fixture('loremIpsum.txt').then((submissionText) => {
-                            textExerciseEditor.typeSubmission(exercise.id, submissionText);
+                        cy.fixture('loremIpsum-short.txt').then((submissionText) => {
+                            textExerciseEditor.typeSubmission(exercise.id!, submissionText);
                         });
                         examNavigation.clickSave();
                         if (examEnd.isAfter(dayjs())) {
                             cy.wait(examEnd.diff(dayjs()));
                         }
-                        cy.get('#exam-finished-title').should('contain.text', exam.title, { timeout: 40000 });
+                        examParticipation.checkExamFinishedTitle(exam.title!);
                         examStartEnd.finishExam();
                     });
                 });
             });
         });
-
-        afterEach(() => {
-            cy.login(admin);
-            courseManagementRequest.deleteExam(exam);
-        });
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

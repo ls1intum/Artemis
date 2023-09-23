@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { LanguageStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -11,9 +12,8 @@ export class ProgrammingExerciseLanguageComponent {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
-    @Input() isImportFromExistingExercise: boolean;
-    @Input() isImportFromFile: boolean;
     @Input() programmingExercise: ProgrammingExercise;
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
-    @Input() languageStepInputs: LanguageStepInputs;
+    faQuestionCircle = faQuestionCircle;
 }

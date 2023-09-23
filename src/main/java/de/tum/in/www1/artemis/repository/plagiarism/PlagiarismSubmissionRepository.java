@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface PlagiarismSubmissionRepository extends JpaRepository<PlagiarismSubmission<?>, Long> {
 

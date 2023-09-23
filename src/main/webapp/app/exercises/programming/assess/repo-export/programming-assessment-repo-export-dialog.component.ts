@@ -47,9 +47,8 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             excludePracticeSubmissions: false,
             addParticipantName: true,
             combineStudentCommits: true,
-            anonymizeStudentCommits: false,
+            anonymizeRepository: false,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
-            hideStudentNameInZippedFolder: false,
         };
         this.isRepoExportForMultipleExercises = this.programmingExercises.length > 1;
         this.isAtLeastInstructor = this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor);
@@ -71,7 +70,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             if (this.participationIdList?.length) {
                 // We anonymize the assessment process ("double-blind").
                 this.repositoryExportOptions.addParticipantName = false;
-                this.repositoryExportOptions.hideStudentNameInZippedFolder = true;
+                this.repositoryExportOptions.anonymizeRepository = true;
                 this.repoExportService.exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions).subscribe({
                     next: this.handleExportRepoResponse,
                     error: () => {

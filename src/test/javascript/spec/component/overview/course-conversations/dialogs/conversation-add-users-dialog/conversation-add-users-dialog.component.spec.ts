@@ -62,7 +62,6 @@ examples.forEach((activeConversation) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ConversationAddUsersDialogComponent);
             component = fixture.componentInstance;
-            component.getConversationName = () => 'dummy';
             fixture.detectChanges();
             initializeDialog(component, fixture, { course, activeConversation });
         });
@@ -110,11 +109,7 @@ examples.forEach((activeConversation) => {
                 jest.spyOn(groupChatService, 'addUsersToGroupChat').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
                 form.formSubmitted.emit(addUsersFormData);
                 expect(groupChatService.addUsersToGroupChat).toHaveBeenCalledOnce();
-                expect(groupChatService.addUsersToGroupChat).toHaveBeenCalledWith(
-                    course.id,
-                    activeConversation.id,
-                    addUsersFormData.selectedUsers?.map((user) => user.login),
-                );
+                expect(groupChatService.addUsersToGroupChat).toHaveBeenCalledWith(course.id, activeConversation.id, addUsersFormData.selectedUsers?.map((user) => user.login));
                 expect(activeModal.close).toHaveBeenCalledOnce();
             }
         });

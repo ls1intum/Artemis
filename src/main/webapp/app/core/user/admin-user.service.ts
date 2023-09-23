@@ -8,7 +8,7 @@ import { UserFilter } from 'app/admin/user-management/user-management.component'
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
-    public resourceUrl = SERVER_API_URL + 'api/admin/users';
+    public resourceUrl = 'api/admin/users';
 
     constructor(private http: HttpClient) {}
 

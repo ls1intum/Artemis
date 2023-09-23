@@ -19,7 +19,7 @@ BUILD_ROOT=$(realpath ..)
 
 # run hidden tests before this date, this should be somtimes before the release of the exercise
 HIDDEN_START=$(date -d 'TZ="Europe/Berlin" 2020-01-01 00:00' +%s)
-# run hidden tests after this date, this should be somtimes after the deadline and before the run of the after due tests
+# run hidden tests after this date, this should be somtimes after the due date and before the run of the after due tests
 HIDDEN_END=$(date -d 'TZ="Europe/Berlin" 2030-01-01 00:00' +%s)
 NOW=$(date +%s)
 RUN_HIDDEN=false

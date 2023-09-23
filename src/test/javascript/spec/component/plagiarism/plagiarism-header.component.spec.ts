@@ -12,6 +12,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { HttpResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
@@ -50,6 +51,18 @@ describe('Plagiarism Header Component', () => {
         comp.confirmPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
+        expect(comp.disableConfirmDenyButton).toBeTrue();
+    });
+
+    it('should disable confirm button if plagiarism status is dirty', () => {
+        comp.comparison.status = PlagiarismStatus.NONE;
+        comp.disableConfirmDenyButton = true;
+
+        const nativeElement = fixture.nativeElement;
+        const button = nativeElement.querySelector("[data-qa='confirm-plagiarism-button']") as ButtonComponent;
+        fixture.detectChanges();
+
+        expect(button.disabled).toBeTrue();
     });
 
     it('should deny a plagiarism', () => {
@@ -57,6 +70,18 @@ describe('Plagiarism Header Component', () => {
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
+        expect(comp.disableConfirmDenyButton).toBeTrue();
+    });
+
+    it('should disable deny button if plagiarism status is dirty', () => {
+        comp.comparison.status = PlagiarismStatus.NONE;
+        comp.disableConfirmDenyButton = true;
+
+        const nativeElement = fixture.nativeElement;
+        const button = nativeElement.querySelector("[data-qa='deny-plagiarism-button']") as ButtonComponent;
+        fixture.detectChanges();
+
+        expect(button.disabled).toBeTrue();
     });
 
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
@@ -69,6 +94,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
         expect(modalSpy).toHaveBeenCalledOnce();
+        expect(comp.disableConfirmDenyButton).toBeTrue();
     });
 
     it('should update the plagiarism status', fakeAsync(() => {
@@ -81,6 +107,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
         expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
+        expect(comp.disableConfirmDenyButton).toBeFalse();
     }));
 
     it('should emit when expanding left split view pane', () => {

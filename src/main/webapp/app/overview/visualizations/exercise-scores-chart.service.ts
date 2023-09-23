@@ -23,7 +23,7 @@ export class ExerciseScoresDTO {
  */
 @Injectable({ providedIn: 'root' })
 export class ExerciseScoresChartService {
-    public resourceUrl = SERVER_API_URL + 'api';
+    public resourceUrl = 'api';
 
     constructor(private http: HttpClient) {}
     /**

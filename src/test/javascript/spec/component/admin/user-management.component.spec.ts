@@ -192,7 +192,7 @@ describe('UserManagementComponent', () => {
 
         expect(identitySpy).toHaveBeenCalledOnce();
         expect(profileSpy).toHaveBeenCalledOnce();
-        expect(comp.currentAccount).toEqual({ id: 99 });
+        expect(comp.currentAccount).toEqual({ id: 99, login: 'admin' });
 
         expect(comp.page).toBe(1);
         expect(comp.predicate).toBe('id');
@@ -228,7 +228,7 @@ describe('UserManagementComponent', () => {
         comp.deleteUser('test');
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
-        const reqD = httpMock.expectOne(SERVER_API_URL + 'api/admin/users/test');
+        const reqD = httpMock.expectOne('api/admin/users/test');
         reqD.flush(null, { status, statusText });
 
         if (status === 200) {

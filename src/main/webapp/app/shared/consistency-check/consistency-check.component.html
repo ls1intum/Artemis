@@ -37,12 +37,12 @@
                         <tr *ngFor="let error of inconsistencies">
                             <td>
                                 <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
-                                    <ngb-highlight [result]="error.programmingExercise!.title!"></ngb-highlight>
+                                    <span>{{ error.programmingExercise!.title }}</span>
                                 </a>
-                                <ngb-highlight *ngIf="error.programmingExerciseCourseId == undefined" [result]="error.programmingExercise!.title!"></ngb-highlight>
+                                <span *ngIf="error.programmingExerciseCourseId == undefined">{{ error.programmingExercise!.title }}</span>
                             </td>
                             <td>
-                                <ngb-highlight [jhiTranslate]="'artemisApp.consistencyCheck.error.' + error.type"></ngb-highlight>
+                                <span [jhiTranslate]="'artemisApp.consistencyCheck.error.' + error.type"></span>
                             </td>
                         </tr>
                     </tbody>

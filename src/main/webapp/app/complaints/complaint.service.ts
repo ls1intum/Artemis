@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
@@ -32,10 +32,13 @@ export interface IComplaintService {
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintService implements IComplaintService {
-    private apiUrl = SERVER_API_URL + 'api';
+    private apiUrl = 'api';
     private resourceUrl = this.apiUrl + '/complaints';
 
-    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
+    constructor(
+        private http: HttpClient,
+        private complaintResponseService: ComplaintResponseService,
+    ) {}
 
     /**
      * Checks if a complaint is locked for the currently logged-in user
@@ -244,7 +247,8 @@ export class ComplaintService implements IComplaintService {
         if (
             !result?.completionDate ||
             (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments) ||
-            (!exercise.allowComplaintsForAutomaticAssessments && !result.rated)
+            (!exercise.allowComplaintsForAutomaticAssessments && !result.rated) ||
+            exercise.type === ExerciseType.QUIZ
         ) {
             return undefined;
         }
@@ -259,7 +263,10 @@ export class ComplaintService implements IComplaintService {
         }
         const complaintStartDate = dayjs.max(possibleComplaintStartDates);
 
-        return dayjs().isBefore(complaintStartDate) ? undefined : complaintStartDate.add(complaintTimeFrame, 'days');
+        if (!complaintStartDate || dayjs().isBefore(complaintStartDate)) {
+            return undefined;
+        }
+        return complaintStartDate.add(complaintTimeFrame, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {

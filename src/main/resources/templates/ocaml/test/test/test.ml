@@ -2,7 +2,7 @@
 
     This template is set up to test submissions in public tests with a few
     hand-picked inputs and then to use qcheck for comprehensive tests after the
-    submission deadline.
+    submission due date.
 
     if some things here appear to be somewhat complicated, it is most likely
     to reuse as much code as possible between public and hidden tests and to
@@ -68,7 +68,7 @@ let joinTests test =
 let handle_exn func =
   Printexc.record_backtrace false; (* change to true to attempt to show a backtrace to students; note that it is mostly useless *)
   let result =
-    try 
+    try
       Ok (func ())
     with
     | e -> Error (Printexc.get_backtrace (), e)
@@ -151,7 +151,7 @@ let starts_with_arb = QCheck.(pair small_string small_string)
 let make_test name chk arb arg = QCheck.Test.make ~name ~count:1 QCheck.(map_same_type (Fun.const arg) arb |> QCheck.set_shrink (Fun.const QCheck.Iter.empty)) chk |> to_ounit_single
 
 
-(** a function that checks if the students submission if correct for some input (use tuples if the functions has more than one argument) 
+(** a function that checks if the students submission if correct for some input (use tuples if the functions has more than one argument)
     usually it is enough to just call assert_equal like this
     the printer argument is for the result type of the tested function
     if there is more than one possible result, it is usually possible to provide a custom comparison function cmp that takes care of the differences

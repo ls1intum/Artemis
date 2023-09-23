@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import ch.qos.logback.classic.Logger;
@@ -40,7 +42,23 @@ public class LoggerVM {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(name, level);
+    }
+
+    @Override
     public String toString() {
         return "LoggerVM{" + "name='" + name + '\'' + ", level='" + level + '\'' + '}';
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object instanceof LoggerVM loggerVM) {
+            return Objects.equals(name, loggerVM.name) && Objects.equals(level, loggerVM.level);
+        }
+        return false;
     }
 }

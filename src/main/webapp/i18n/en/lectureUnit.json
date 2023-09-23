@@ -124,11 +124,12 @@
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
                 "pageTitle": "Process units",
                 "addUnit": "Add unit",
-                "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units.",
+                "lectureFileToolTip": "Please select to enable the automatic separation of lecture units.",
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
-                "removeBreakSlide": "Remove Break slide",
-                "removeBreakSlideTooltip": "If the slide contains the word 'Break' it will remove the slide from the unit.",
+                "removeSlides": "Remove slides",
+                "removeSlidesInfo": "All slides that contain any of the following key phrases will be removed from all units. Multiple key phrases are comma-separated; key phrases are not case-sensitive. For example: 'Break, Solution slides'",
+                "removeSlidesPlaceholder": "Example: 'Break, Solution slides'",
                 "validation": {
                     "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",
                     "empty": {
@@ -147,7 +148,8 @@
                     "releaseDate": "Release Date",
                     "startPage": "Start Page",
                     "endPage": "End Page"
-                }
+                },
+                "processTimeInfo": "The processing of the lecture units can take a few seconds. Please be patient."
             },
             "createAttachmentUnit": {
                 "title": "Create Attachment Unit",
@@ -165,8 +167,8 @@
                 "version": "Version",
                 "fileRequiredValidationError": "You must select a file to upload.",
                 "chooseFile": "Choose File",
-                "fileTooBig": "File is too big!",
-                "fileLimitation": "Max. file size 20 MB",
+                "fileTooBig": "File is too big! The maximum file size is 20 MB.",
+                "fileLimitation": "(max. size 20 MB)",
                 "fileLimitationTooltip": "Supported types: {{ extensions }}"
             },
             "editAttachmentUnit": {

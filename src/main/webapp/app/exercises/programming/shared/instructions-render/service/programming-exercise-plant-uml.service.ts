@@ -7,14 +7,17 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
-    private resourceUrl = SERVER_API_URL + 'api/plantuml';
+    private resourceUrl = 'api/plantuml';
     private encoder: HttpParameterCodec;
 
     /**
      * Cacheable configuration
      */
 
-    constructor(private http: HttpClient, private themeService: ThemeService) {
+    constructor(
+        private http: HttpClient,
+        private themeService: ThemeService,
+    ) {
         this.encoder = new HttpUrlCustomEncoder();
     }
 

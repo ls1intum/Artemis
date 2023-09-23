@@ -21,8 +21,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
 export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
-    @Input()
-    filteredExerciseIDs: number[];
+    @Input() filteredExerciseIDs: number[];
 
     courseId: number;
     isLoading = false;
@@ -33,7 +32,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     readonly Math = Math;
     readonly ExerciseType = ExerciseType;
     readonly convertToMapKey = ChartExerciseTypeFilter.convertToMapKey;
-    readonly typeFilter = this.exerciseTypeFilter;
 
     // Icons
     faFilter = faFilter;
@@ -60,7 +58,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
-        private exerciseTypeFilter: ChartExerciseTypeFilter,
+        public exerciseTypeFilter: ChartExerciseTypeFilter, // used in html, therefore it must be public
         private translateService: TranslateService,
     ) {
         this.translateService.onLangChange.subscribe(() => {
@@ -116,7 +114,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
      * visualize the scores and pushes them to ngxData and backUpData
      * @param exerciseScoresDTOs array of objects containing the students score, the average score for this exercise and
      * the max score achieved for this exercise by a student as well as other detailed information of the exericse
-     * @private
      */
     private addData(exerciseScoresDTOs: ExerciseScoresDTO[]): void {
         this.ngxData = [];
@@ -208,7 +205,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     /**
      * Auxiliary method that instantiated the translations for the exercise.
      * As we subscribe to language changes, this ensures that the chart is translated instantly if the user changes the language
-     * @private
      */
     private setTranslations(): void {
         this.xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');

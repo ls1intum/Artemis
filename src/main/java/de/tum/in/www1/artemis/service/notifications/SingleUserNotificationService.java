@@ -5,14 +5,12 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -29,7 +27,8 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.MailService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Service
 public class SingleUserNotificationService {
@@ -38,21 +37,21 @@ public class SingleUserNotificationService {
 
     private final UserRepository userRepository;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final WebsocketMessagingService websocketMessagingService;
 
-    private final MailService mailService;
+    private final GeneralInstantNotificationService notificationService;
 
     private final NotificationSettingsService notificationSettingsService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
-            SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService,
+            WebsocketMessagingService websocketMessagingService, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
-        this.messagingTemplate = messagingTemplate;
-        this.mailService = mailService;
+        this.websocketMessagingService = websocketMessagingService;
+        this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -84,9 +83,10 @@ public class SingleUserNotificationService {
                     ((ConversationNotificationSubject) notificationSubject).responsibleUser);
             case CONVERSATION_NEW_REPLY_MESSAGE -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
                     ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
+            case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(singleUserNotification, notificationSubject);
+        saveAndSend(singleUserNotification, notificationSubject, author);
     }
 
     /**
@@ -169,7 +169,7 @@ public class SingleUserNotificationService {
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         // only send the notification now if no assessment due date was set or if it is in the past
-        if (exercise.isCourseExercise() && (exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
             notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }
@@ -203,6 +203,24 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
         notifyRecipientWithNotificationType(exercise, FILE_SUBMISSION_SUCCESSFUL, recipient, null);
+    }
+
+    /**
+     * Notify user about the successful creation of a data export.
+     *
+     * @param dataExport the data export that was created
+     */
+    public void notifyUserAboutDataExportCreation(DataExport dataExport) {
+        notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_CREATED, dataExport.getUser(), null);
+    }
+
+    /**
+     * Notify user about the failure of the creation of a data export.
+     *
+     * @param dataExport the data export that could not be created
+     */
+    public void notifyUserAboutDataExportFailure(DataExport dataExport) {
+        notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_FAILED, dataExport.getUser(), null);
     }
 
     /**
@@ -341,27 +359,29 @@ public class SingleUserNotificationService {
      * @param responsibleUser the responsibleUser sending the message reply
      */
     public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, null);
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, responsibleUser);
     }
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
-     * Also creates and sends an email.
+     * Also creates and sends an instant notification.
      *
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
      */
-    private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
+    private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author) {
         // do not save notifications that are not relevant for the user
         if (shouldNotificationBeSaved(notification)) {
             singleUserNotificationRepository.save(notification);
         }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
-        boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(), WEBAPP);
-        if (isAllowedBySettings) {
-            messagingTemplate.convertAndSend(notification.getTopic(), notification);
-            prepareSingleUserNotificationEmail(notification, notificationSubject);
+        boolean isWebappNotificationAllowed = notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification,
+                notification.getRecipient(), WEBAPP);
+        if (isWebappNotificationAllowed) {
+            websocketMessagingService.sendMessage(notification.getTopic(), notification);
         }
+
+        prepareSingleUserInstantNotification(notification, notificationSubject, author);
     }
 
     private boolean shouldNotificationBeSaved(SingleUserNotification notification) {
@@ -379,21 +399,21 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
-     * If the checks are successful creates and sends a corresponding email
+     * Checks if an instant notification should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
+     * If the checks are successful creates and sends a corresponding instant notification
      *
      * @param notification        that should be checked
      * @param notificationSubject which information will be extracted to create the email
      */
-    private void prepareSingleUserNotificationEmail(SingleUserNotification notification, Object notificationSubject) {
+    private void prepareSingleUserInstantNotification(SingleUserNotification notification, Object notificationSubject, User author) {
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
+
+        // If the notification is about a reply and the author is also the recipient, we skip send. Do not notify the sender of the message about their own message!
+        boolean skipSend = type == CONVERSATION_NEW_REPLY_MESSAGE && Objects.equals(notification.getRecipient().getId(), author.getId());
+
         // checks if this notification type has email support
-        if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
-            boolean isAllowedBySettingsForEmail = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(),
-                    EMAIL);
-            if (isAllowedBySettingsForEmail) {
-                mailService.sendNotificationEmail(notification, notification.getRecipient(), notificationSubject);
-            }
+        if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type) && !skipSend) {
+            notificationService.sendNotification(notification, notification.getRecipient(), notificationSubject);
         }
     }
 }

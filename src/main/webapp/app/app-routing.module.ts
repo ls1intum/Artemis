@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -20,6 +21,14 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./account/account.module').then((m) => m.ArtemisAccountModule),
                 },
                 {
+                    path: 'privacy',
+                    loadChildren: () => import('./core/legal/privacy.module').then((m) => m.ArtemisPrivacyModule),
+                },
+                {
+                    path: 'imprint',
+                    loadChildren: () => import('./core/legal/imprint.module').then((m) => m.ArtemisImprintModule),
+                },
+                {
                     path: 'about',
                     loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
                 },
@@ -34,7 +43,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'courses/:courseId/competencies/:competencyId',
-                    loadChildren: () => import('./overview/course-learning-goals/course-learning-goals-details.module').then((m) => m.ArtemisCourseLearningGoalsDetailsModule),
+                    loadChildren: () => import('./overview/course-competencies/course-competencies-details.module').then((m) => m.ArtemisCourseCompetenciesDetailsModule),
                 },
                 {
                     path: 'courses/:courseId/tutorial-groups/:tutorialGroupId',
@@ -111,6 +120,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'lti',
                     loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
+                },
+                {
+                    path: 'about-iris',
+                    component: AboutIrisComponent,
+                    pathMatch: 'full',
                 },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },

@@ -11,11 +11,12 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
+import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 /**
@@ -27,9 +28,6 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 public class ConsistencyCheckTestService {
 
     @Autowired
-    private DatabaseUtilService database;
-
-    @Autowired
     private RequestUtilService request;
 
     @Autowired
@@ -38,14 +36,20 @@ public class ConsistencyCheckTestService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
     public Course course;
 
     private MockDelegate mockDelegate;
 
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
-        course = database.addCourseWithOneProgrammingExercise();
-        User user = database.createAndSaveUser("instructor1");
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        User user = userUtilService.createAndSaveUser("instructor1");
         Set<String> groups = new HashSet<>();
         groups.add(course.getInstructorGroupName());
         user.setGroups(groups);

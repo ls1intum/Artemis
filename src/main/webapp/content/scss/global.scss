@@ -13,7 +13,9 @@
 
 // Smooth transition between themes
 * {
-    transition: background-color 0.2s, background 0.2s;
+    transition:
+        background-color 0.2s,
+        background 0.2s;
 }
 
 /* ==============================================================
@@ -35,7 +37,7 @@ h4 {
 
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
-a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):hover {
+a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):not(.tab-link):hover {
     color: $link-color;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
@@ -46,7 +48,7 @@ a {
     text-decoration: none !important;
 }
 
-a:not(.btn):hover {
+a:not(.btn):not(.tab-link):hover {
     text-decoration: underline !important;
 }
 
@@ -475,15 +477,6 @@ span.result:hover {
     font-weight: normal;
 }
 
-span.clickable-result {
-    text-decoration: underline;
-}
-
-span.clickable-result:hover {
-    text-decoration: underline;
-    cursor: pointer;
-}
-
 span.score {
     font-weight: bold;
 }
@@ -500,7 +493,12 @@ bold {
 .positive {
     padding: 2px 4px;
     border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, Courier New, monospace;
+    font-family:
+        Menlo,
+        Monaco,
+        Consolas,
+        Courier New,
+        monospace;
 }
 
 .negative {
@@ -552,7 +550,12 @@ pre {
     padding: 2px 4px;
     font-size: 90%;
     border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, Courier New, monospace;
+    font-family:
+        Menlo,
+        Monaco,
+        Consolas,
+        Courier New,
+        monospace;
 }
 
 .code-success {
@@ -700,7 +703,7 @@ Course Info Bar
 ========================================================================== */
 .course-info-bar {
     background-color: $artemis-dark;
-    padding: 1rem 1rem;
+    padding: 0.5rem 1rem;
     margin: -1rem -1rem 0 -1rem;
     display: flex;
     color: $white;
@@ -738,6 +741,15 @@ Course Info Bar
         margin-bottom: 0 !important;
         display: inline;
     }
+}
+
+/* Make PlantUML outputs responsive */
+[id^='plantUml-'] {
+    display: flex;
+}
+
+[id^='plantUml-'] > * {
+    height: 100% !important;
 }
 
 .ngb-tooltip-window {
@@ -938,6 +950,14 @@ Course Info Bar
     box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
 }
 
+.mat-select-panel {
+    background: $metis-course-discussion-select-bg;
+    -webkit-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    -moz-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    min-width: fit-content;
+}
+
 .mat-form-field-outline {
     top: -0.1rem !important;
     color: $mat-form-field-outline;
@@ -972,4 +992,8 @@ Course Info Bar
     .connection-warning-popover .popover-body .ng-fa-icon {
         display: none;
     }
+}
+
+body.transparent-background {
+    background: transparent;
 }

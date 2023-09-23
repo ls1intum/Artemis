@@ -42,7 +42,10 @@ export class FeatureOverviewComponent implements OnInit {
     features: Feature[];
     targetAudience = TargetAudience.INSTRUCTORS;
 
-    constructor(private route: ActivatedRoute, private profileService: ProfileService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private profileService: ProfileService,
+    ) {}
 
     /**
      * Initialises the feature overview page either for students or for instructors, depending on the url.
@@ -365,15 +368,6 @@ export class FeatureOverviewComponent implements OnInit {
             '/content/images/feature-overview/instructors/grade_key_editor.png',
         );
 
-        const featureLiveStatistics = new Feature(
-            'featureOverview.instructor.feature.liveStatistics.title',
-            'featureOverview.instructor.feature.liveStatistics.shortDescription',
-            'featureOverview.instructor.feature.liveStatistics.descriptionTextOne',
-            faEye,
-            undefined,
-            '/content/images/feature-overview/instructors/exam_live_statistics_section_overview_section.png',
-        );
-
         this.features = [
             featureCreateConductAssess,
             featureConfiguration,
@@ -391,7 +385,6 @@ export class FeatureOverviewComponent implements OnInit {
             featureStatistics,
             featureChecklist,
             featureGradeKey,
-            featureLiveStatistics,
         ];
     }
 
@@ -439,9 +432,8 @@ class Feature {
     /**
      * Math.random should be unique because of its seeding algorithm.
      * Convert it to base 36 (numbers + letters), and grab the first 9 characters after the decimal.
-     * @private
      */
-    setId(): string {
+    private setId(): string {
         return '_' + Math.random().toString(36).slice(2, 11);
     }
 

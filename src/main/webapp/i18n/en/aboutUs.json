@@ -50,8 +50,14 @@
             "learningAnalytics": {
                 "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and competencies."
             },
+            "adaptiveLearning": {
+                "text": "<a href={{ adaptiveLearningUrl }}>Adaptive learning:</a> Define competencies and learning goals. Track the progress of students and provide individual feedback."
+            },
             "tutorialGroups": {
                 "text": "<a href={{ tutorialGroupsUrl }}>Tutorial Groups:</a> Manage the tutorial groups of a course. Plan the sessions, assign responsible tutors, register students and track the attendance."
+            },
+            "iris": {
+                "text": "<a href={{ irisUrl }}>Iris:</a> Artemis integrates Iris, a chatbot that supports students and instructors with common questions and tasks."
             },
             "scalable": {
                 "text": "<a href={{ scalingUrl }}>Scalable</a> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
@@ -67,8 +73,12 @@
             },
             "getInTouch": "Get in touch",
             "contributors": "Individual contributors",
-            "projectManager": "Project Manager",
-            "website": "Website"
+            "website": "Website",
+            "roles": {
+                "projectManager": "Project Manager",
+                "administrator": "System Administrator",
+                "exerciseManagement": "Exercise Management"
+            }
         }
     }
 }

@@ -22,20 +22,23 @@ import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consiste
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
+import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
         LoadingIndicatorContainerComponent,
         CircularProgressBarComponent,
-        LearningGoalSelectionComponent,
+        CompetencySelectionComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
         ExtensionPointDirective,
         SecuredImageComponent,
         DeleteButtonDirective,
         DeleteDialogComponent,
+        ConfirmEntityNameComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
         JhiConnectionStatusComponent,
@@ -47,12 +50,14 @@ import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selecti
         ItemCountComponent,
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
+        StickyPopoverDirective,
     ],
     exports: [
         ArtemisSharedLibsModule,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         CircularProgressBarComponent,
+        ConfirmEntityNameComponent,
         LoadingIndicatorContainerComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
@@ -71,7 +76,8 @@ import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selecti
         ItemCountComponent,
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
-        LearningGoalSelectionComponent,
+        CompetencySelectionComponent,
+        StickyPopoverDirective,
     ],
 })
 export class ArtemisSharedModule {}

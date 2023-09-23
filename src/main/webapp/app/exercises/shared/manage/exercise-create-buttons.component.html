@@ -1,0 +1,17 @@
+<div *ngIf="course?.isAtLeastEditor" class="d-flex flex-wrap justify-content-end">
+    <button
+        [id]="'create-' + exerciseType + '-exercise'"
+        class="btn btn-primary jh-create-entity text-truncate mb-1 me-1"
+        [routerLink]="['/course-management', course.id, this.exerciseType + '-exercises', 'new']"
+        queryParamsHandling="merge"
+    >
+        <fa-icon [icon]="faPlus"></fa-icon>
+        <span [jhiTranslate]="'artemisApp.' + translationLabel + 'Exercise.home.createLabel'">Create new Exercise</span>
+        <fa-icon [icon]="getExerciseTypeIcon(exerciseType)"></fa-icon>
+    </button>
+    <button [id]="'import-' + exerciseType + '-exercise'" class="btn btn-primary jh-create-entity text-truncate mb-1 me-1" (click)="openImportModal()">
+        <fa-icon [icon]="faFileImport"></fa-icon>
+        <span [jhiTranslate]="'artemisApp.' + translationLabel + 'Exercise.home.importLabel'">Import Exercise</span>
+        <fa-icon [icon]="getExerciseTypeIcon(exerciseType)"></fa-icon>
+    </button>
+</div>

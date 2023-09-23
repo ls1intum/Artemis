@@ -22,6 +22,11 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextSubmission extends Submission {
 
+    @Override
+    public String getSubmissionExerciseType() {
+        return "text";
+    }
+
     private static final int MAX_EXCERPT_LENGTH = 100;
 
     @Column(name = "text")

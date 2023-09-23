@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
@@ -31,6 +32,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
         HelpIconComponentWithoutTranslationComponent,
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
+        ChecklistCheckComponent,
         CloneRepoButtonComponent,
         ResetRepoButtonComponent,
         CopyIconButtonComponent,
@@ -53,6 +55,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
         HelpIconComponentWithoutTranslationComponent,
         ConfirmAutofocusButtonComponent,
         CloneRepoButtonComponent,
+        ChecklistCheckComponent,
         ResetRepoButtonComponent,
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,

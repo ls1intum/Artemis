@@ -1,33 +1,34 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
     styleUrls: ['../../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseGradingComponent {
+export class ProgrammingExerciseGradingComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly AssessmentType = AssessmentType;
+    readonly faQuestionCircle = faQuestionCircle;
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
-    @Input() isImportFromExistingExercise: boolean;
-    @Input() isImport: boolean;
-    @Input() isExamMode: boolean;
     @Input() programmingExercise: ProgrammingExercise;
-    @Input() showSummary = false;
+    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
-    @Input() gradingInputs: GradingStepInputs;
-
-    faQuestionCircle = faQuestionCircle;
+    editPolicyUrl: string;
 
     constructor(private translateService: TranslateService) {}
+
+    ngOnInit(): void {
+        this.setEditPolicyPageLink();
+    }
 
     getGradingSummary() {
         const summary = [];
@@ -89,5 +90,18 @@ export class ProgrammingExerciseGradingComponent {
 
     replacePlaceholder(placeholderWithDelimiters: string, placeholderWithoutDelimiters: any, replacements: any) {
         return Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters;
+    }
+
+    private setEditPolicyPageLink(): void {
+        const linkParts = [
+            'course-management',
+            getCourseFromExercise(this.programmingExercise)?.id,
+            ...(this.programmingExercise?.exerciseGroup?.exam ? ['exams', this.programmingExercise.exerciseGroup.exam.id] : []),
+            'programming-exercises',
+            this.programmingExercise.id,
+            'grading',
+            'submission-policy',
+        ];
+        this.editPolicyUrl = linkParts.join('/');
     }
 } /* istanbul ignore next */

@@ -12,7 +12,7 @@ import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-up
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
-import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
+import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
@@ -32,7 +32,7 @@ describe('LectureWizardComponent', () => {
                 LectureUpdateWizardComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(LectureUpdateWizardStepComponent),
-                MockComponent(LectureUpdateWizardLearningGoalsComponent),
+                MockComponent(LectureUpdateWizardCompetenciesComponent),
                 MockComponent(LectureUpdateWizardUnitsComponent),
                 MockComponent(LectureUpdateWizardAttachmentsComponent),
                 MockComponent(LectureUpdateWizardPeriodComponent),

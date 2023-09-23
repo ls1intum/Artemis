@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
@@ -28,6 +29,18 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @Column(name = "branch")
     @JsonView(QuizView.Before.class)
     private String branch;
+
+    /**
+     * Defines if the participation is locked, i.e. if the student can currently not make any submissions.
+     * This takes into account: the start date of the exercise (or the exam), the (individual) due date, and the lock repository policy.
+     * Course exercise practice repositories and instructor exam test run repositories will never be locked.
+     *
+     * Important: this boolean flag must only be used for course programming exercises and is irrelevant for exam programming exercises!!!
+     *
+     */
+    @Column(name = "locked")
+    @JsonView(QuizView.Before.class)
+    private boolean locked;
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -53,12 +66,28 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.buildPlanId = buildPlanId;
     }
 
+    /**
+     * Getter for the stored default branch of the participation.
+     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation)} if you are not sure that the value was already
+     * set in the Artemis database
+     *
+     * @return the name of the default branch or null if not yet stored in Artemis
+     */
     public String getBranch() {
         return branch;
     }
 
     public void setBranch(String branch) {
         this.branch = branch;
+    }
+
+    @Override
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public void setLocked(boolean locked) {
+        this.locked = locked;
     }
 
     @Override
@@ -77,6 +106,11 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @Override
     public void setProgrammingExercise(ProgrammingExercise programmingExercise) {
         setExercise(programmingExercise);
+    }
+
+    @Override
+    public String getType() {
+        return "programming";
     }
 
     @Override

@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.URI;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,14 +32,14 @@ public class LectureImportService {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final FileService fileService;
+    private final FilePathService filePathService;
 
     public LectureImportService(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
-            FileService fileService) {
+            FilePathService filePathService) {
         this.lectureRepository = lectureRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
-        this.fileService = fileService;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -57,6 +59,7 @@ public class LectureImportService {
         lecture.setDescription(importedLecture.getDescription());
         lecture.setStartDate(importedLecture.getStartDate());
         lecture.setEndDate(importedLecture.getEndDate());
+        lecture.setVisibleDate(importedLecture.getVisibleDate());
 
         lecture = lectureRepository.save(lecture);
         course.addLectures(lecture);
@@ -150,15 +153,15 @@ public class LectureImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = Path.of(fileService.actualPathForPublicPath(importedAttachment.getLink()));
-        Path tempPath = Path.of(FilePathService.getTempFilePath(), oldPath.getFileName().toString());
+        Path oldPath = filePathService.actualPathForPublicPath(URI.create(importedAttachment.getLink()));
+        Path tempPath = FilePathService.getTempFilePath().resolve(oldPath.getFileName());
 
         try {
             log.debug("Copying attachment file from {} to {}", oldPath, tempPath);
-            Files.copy(oldPath, tempPath, StandardCopyOption.REPLACE_EXISTING);
+            FileUtils.copyFile(oldPath.toFile(), tempPath.toFile(), REPLACE_EXISTING);
 
             // File was copied to a temp directory and will be moved once we persist the attachment
-            attachment.setLink(fileService.publicPathForActualPath(tempPath.toString(), null));
+            attachment.setLink(filePathService.publicPathForActualPath(tempPath, null).toString());
         }
         catch (IOException e) {
             log.error("Error while copying file", e);

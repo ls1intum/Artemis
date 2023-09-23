@@ -4,8 +4,8 @@ import { Component } from '@angular/core';
     selector: 'jhi-orion-course-exercise-details',
     template: `
         <jhi-course-exercise-details>
-            <ng-template #overrideStudentActions let-exercise="exercise" let-showResult="showResult" let-courseId="courseId">
-                <jhi-orion-exercise-details-student-actions [exercise]="exercise" [showResult]="showResult" [courseId]="courseId"></jhi-orion-exercise-details-student-actions>
+            <ng-template #overrideStudentActions let-exercise="exercise" let-courseId="courseId">
+                <jhi-orion-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId"></jhi-orion-exercise-details-student-actions>
             </ng-template>
         </jhi-course-exercise-details>
     `,

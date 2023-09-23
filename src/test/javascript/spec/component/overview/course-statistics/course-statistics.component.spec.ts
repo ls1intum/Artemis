@@ -1,34 +1,34 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
+import { CourseScores } from 'app/course/course-scores/course-scores';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { Course } from 'app/entities/course.model';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
+import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
+import { CourseStatisticsComponent, NgxExercise } from 'app/overview/course-statistics/course-statistics.component';
+import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../test.module';
-import { ActivatedRoute } from '@angular/router';
-import { By } from '@angular/platform-browser';
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { RouterTestingModule } from '@angular/router/testing';
-import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { CourseScores } from 'app/course/course-scores/course-scores';
-import { Result } from 'app/entities/result.model';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -322,7 +322,7 @@ describe('CourseStatisticsComponent', () => {
     course.teachingAssistantGroupName = 'artemis-dev';
     course.instructorGroupName = 'artemis-dev';
     course.onlineCourse = false;
-    course.registrationEnabled = false;
+    course.enrollmentEnabled = false;
     course.exercises = [];
     course.presentationScore = 1;
 
@@ -331,7 +331,7 @@ describe('CourseStatisticsComponent', () => {
             imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
             declarations: [
                 CourseStatisticsComponent,
-                MockComponent(CourseLearningGoalsComponent),
+                MockComponent(CourseCompetenciesComponent),
                 MockComponent(ExerciseScoresChartComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockTranslateValuesDirective,
@@ -360,14 +360,14 @@ describe('CourseStatisticsComponent', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
-        const mockParticipationResult: Result = { rated: true, score: 100 };
+        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
         jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
         // Include all exercises
         comp.toggleNotIncludedInScoreExercises();
         fixture.detectChanges();
-        expect(comp.ngxExerciseGroups).toHaveLength(4);
+        expect(comp.ngxExerciseGroups.size).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
@@ -375,7 +375,7 @@ describe('CourseStatisticsComponent', () => {
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.presentationScore ');
 
-        const programming: any = comp.ngxExerciseGroups[0][0];
+        const programming: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.PROGRAMMING)![0];
         expect(programming.series).toHaveLength(6);
         expect(programming.series[2].isProgrammingExercise).toBeTrue();
     });
@@ -384,12 +384,12 @@ describe('CourseStatisticsComponent', () => {
         const courseToAdd = { ...course };
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
-        const mockParticipationResult: Result = { rated: true, score: 100 };
+        const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
         jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
         fixture.detectChanges();
         comp.ngOnInit();
 
-        let exercises = comp.ngxExerciseGroups[0];
+        let exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -397,7 +397,7 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        exercises = comp.ngxExerciseGroups[0];
+        exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -406,7 +406,7 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        exercises = comp.ngxExerciseGroups[0];
+        exercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
         expect(exercises[0].name).toBe('Until 18:20');
         expect(exercises[1].name).toBe('Until 18:20 too');
         expect(exercises[2].name).toBe('test 17.06. 1');
@@ -418,14 +418,14 @@ describe('CourseStatisticsComponent', () => {
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockScoresPerExerciseType: Map<ExerciseType, CourseScores> = new Map<ExerciseType, CourseScores>();
-        const mockCourseScores: CourseScores = new CourseScores(36, 36, { absoluteScore: 20, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        const mockCourseScores: CourseScores = new CourseScores(36, 36, 0, { absoluteScore: 20, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         mockScoresPerExerciseType.set(ExerciseType.MODELING, mockCourseScores);
         jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScoresPerExerciseType);
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
-        expect(comp.ngxExerciseGroups).toHaveLength(1);
-        const exercise: any = comp.ngxExerciseGroups[0][0];
+        expect(comp.ngxExerciseGroups.size).toBe(1);
+        const exercise: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.MODELING)![0];
         expect(exercise.absoluteScore).toBe(20);
         expect(exercise.reachablePoints).toBe(36);
         expect(exercise.overallMaxPoints).toBe(36);
@@ -480,13 +480,16 @@ describe('CourseStatisticsComponent', () => {
         });
 
         it('should filter optional exercises correctly', () => {
-            const mockParticipationResult: Result = { rated: true, score: 100 };
+            const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
             jest.spyOn(scoresStorageService, 'getStoredParticipationResult').mockReturnValue(mockParticipationResult);
             comp.toggleNotIncludedInScoreExercises();
 
             expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();
-            expect(comp.ngxExerciseGroups).toHaveLength(3);
-            expect(comp.ngxExerciseGroups[0][0].name).toBe('Until 18:20 too');
+            expect(comp.ngxExerciseGroups.size).toBe(3);
+            const modelingExercises = comp.ngxExerciseGroups.get(ExerciseType.MODELING)!;
+            expect(modelingExercises).toHaveLength(5);
+            expect(modelingExercises[0].name).toBe('Until 18:20');
+            expect(modelingExercises[1].name).toBe('Until 18:20 too');
         });
 
         it('should toggle categories', () => {

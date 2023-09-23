@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-public abstract class CacheHandler<K> {
+public abstract class CacheHandler<K, C extends Cache> {
 
     private final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
 
     protected final HazelcastInstance hazelcastInstance;
 
-    protected final IMap<K, Cache> cache;
+    protected final IMap<K, C> cache;
 
     protected CacheHandler(HazelcastInstance hazelcastInstance, String name) {
         this.hazelcastInstance = hazelcastInstance;
@@ -30,7 +30,7 @@ public abstract class CacheHandler<K> {
      * @return a snapshot of all {@link Cache}s in this cache, cannot be modified (apart from transient properties)
      * @implNote This is the {@linkplain Map#values() value collection} of the map of this cache.
      */
-    public Collection<Cache> getAllCaches() {
+    public Collection<C> getAllCaches() {
         // We do that here to avoid the distributed query of IMap.values() and its deserialization and benefit from the near cache.
         // due to concurrency, we need the filter here
         return cache.keySet().stream().map(this::getCacheFor).filter(Objects::nonNull).toList();
@@ -43,7 +43,7 @@ public abstract class CacheHandler<K> {
      * @return a {@link Cache} object, can be null
      * @implNote This is just a {@linkplain Map#get(Object) get} operation on the map of the cache.
      */
-    public Cache getCacheFor(K key) {
+    public C getCacheFor(K key) {
         return cache.get(key);
     }
 
@@ -52,7 +52,7 @@ public abstract class CacheHandler<K> {
      *
      * @return empty {@link Cache}
      */
-    protected abstract Cache emptyCacheValue();
+    protected abstract C emptyCacheValue();
 
     /**
      * Only for reading from cache
@@ -60,7 +60,7 @@ public abstract class CacheHandler<K> {
      * @param key the id of the value, must not be null
      * @return a {@link Cache} object, never null but potentially empty
      */
-    public Cache getReadCacheFor(K key) {
+    public C getReadCacheFor(K key) {
         return cache.getOrDefault(key, emptyCacheValue());
     }
 
@@ -70,7 +70,7 @@ public abstract class CacheHandler<K> {
      * @param key identifier of the cache
      * @return created {@link Cache}
      */
-    protected abstract Cache createDistributedCacheValue(K key);
+    protected abstract C createDistributedCacheValue(K key);
 
     /**
      * Only for the modification of transient properties, e.g. the exercise and the maps.
@@ -81,7 +81,7 @@ public abstract class CacheHandler<K> {
      * @return a {@link Cache} object, never null and never empty
      */
     // TODO: rename method
-    public Cache getTransientWriteCacheFor(K key) {
+    public C getTransientWriteCacheFor(K key) {
         // Look for a cache
         var cached = cache.get(key);
         // If it exists, just return it
@@ -119,7 +119,7 @@ public abstract class CacheHandler<K> {
      * @param writeOperation gets non-null and has to return non-null.
      * @implNote This operation locks the cache for the given <code>quizExerciseId</code> while the operation is executed. This prevents simultaneous writes.
      */
-    public void performCacheWrite(K key, UnaryOperator<Cache> writeOperation) {
+    public void performCacheWrite(K key, UnaryOperator<C> writeOperation) {
         cache.lock(key);
         try {
             logger.info("Write cache {}", key);
@@ -141,10 +141,10 @@ public abstract class CacheHandler<K> {
      * @param writeOperation gets non-null and has to return non-null.
      * @implNote This operation locks the cache for the given <code>quizExerciseId</code> while the operation is executed. This prevents simultaneous writes.
      */
-    public void performCacheWriteIfPresent(K key, UnaryOperator<Cache> writeOperation) {
+    public void performCacheWriteIfPresent(K key, UnaryOperator<C> writeOperation) {
         cache.lock(key);
         try {
-            Cache cached = cache.get(key);
+            C cached = cache.get(key);
             if (cached != null) {
                 logger.info("Write cache {}", key);
                 cache.set(key, writeOperation.apply(cached));

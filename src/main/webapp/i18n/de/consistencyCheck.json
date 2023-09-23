@@ -10,12 +10,15 @@
                 "VCS_PROJECT_MISSING": "Fehlendes VCS Projekt",
                 "TEMPLATE_REPO_MISSING": "Fehlendes Vorlagen-Repository",
                 "SOLUTION_REPO_MISSING": "Fehlendes Lösung-Repository",
+                "AUXILIARY_REPO_MISSING": "Fehlendes Hilfs-Repository",
                 "TEST_REPO_MISSING": "Fehlendes Test-Repository",
                 "TEMPLATE_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Vorlage",
-                "SOLUTION_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Lösung"
+                "SOLUTION_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Lösung",
+                "programmingExerciseImportFailed": "Importieren der Programmieraufgabe fehlgeschlagen, da die Quellaufgabe inkonsistent ist. Bitte öffne die Konsistenzprüfung der Quellaufgabe für Details."
             },
             "noInconsistencies": "Keine Inkonsistenzen gefunden",
-            "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden"
+            "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden",
+            "inconsistenciesFoundAlert": "Es wurden Inkonsistenzen in der Programmieraufgabe gefunden. Bitte öffne die Konsistenzprüfung für Details."
         }
     }
 }

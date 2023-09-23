@@ -17,19 +17,19 @@ import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
-    styles: ['span { display: inline-block; line-height: 1.25 }'],
+    styleUrls: ['./result.component.scss'],
 })
 
 /**
@@ -47,7 +47,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
-    @Input() short = false;
+    @Input() short = true;
     @Input() result?: Result;
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
@@ -66,15 +66,16 @@ export class ResultComponent implements OnInit, OnChanges {
     latestDueDate: dayjs.Dayjs | undefined;
 
     // Icons
-    faCircleNotch = faCircleNotch;
-    faFile = faFile;
-    farCircle = faCircle;
-    faExclamationCircle = faExclamationCircle;
+    readonly faCircleNotch = faCircleNotch;
+    readonly faFile = faFile;
+    readonly farCircle = faCircle;
+    readonly faExclamationCircle = faExclamationCircle;
+    readonly faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private participationService: ParticipationService,
-        private translate: TranslateService,
+        private translateService: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
         private exerciseService: ExerciseService,
@@ -128,7 +129,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
         this.evaluate();
 
-        this.translate.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
                 this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             }
@@ -190,7 +191,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
-            !(this.participation as ProgrammingExerciseStudentParticipation).testRun &&
+            !isPracticeMode(this.participation) &&
             isResultPreliminary(this.result!, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {

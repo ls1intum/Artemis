@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
@@ -40,14 +41,21 @@ public class StatisticsService {
 
     private final TeamRepository teamRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final GradingScaleRepository gradingScaleRepository;
+
     public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository, CourseRepository courseRepository,
-            ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository) {
+            ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository, StudentParticipationRepository studentParticipationRepository,
+            GradingScaleRepository gradingScaleRepository) {
         this.statisticsRepository = statisticsRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.gradingScaleRepository = gradingScaleRepository;
     }
 
     /**
@@ -137,7 +145,7 @@ public class StatisticsService {
         Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        double averageScoreForCourse = Objects.requireNonNullElse(participantScoreRepository.findAvgScore(includedExercises), 0.0);
         List<CourseStatisticsAverageScore> averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
         sortAfterReleaseDate(averageScoreForExercises);
         averageScoreForExercises.forEach(exercise -> {
@@ -148,8 +156,17 @@ public class StatisticsService {
             exercise.setCategories(fittingExercise.getCategories());
         });
 
-        double average = averageScoreForCourse != null && averageScoreForCourse > 0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
-        return new CourseManagementStatisticsDTO(average, averageScoreForExercises);
+        // if a grading scale is present and set for graded presentations, calculate average score taking presentation points into account,
+        GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
+        if (averageScoreForCourse > 0.0 && gradingScale != null && gradingScale.getCourse() != null && gradingScale.getPresentationsWeight() != null
+                && gradingScale.getCourse().getId().equals(courseId) && gradingScale.getPresentationsNumber() != null) {
+            double avgPresentationScore = studentParticipationRepository.getAvgPresentationScoreByCourseId(course.getId());
+            averageScoreForCourse = gradingScale.getPresentationsWeight() / 100.0 * avgPresentationScore
+                    + (100.0 - gradingScale.getPresentationsWeight()) / 100.0 * averageScoreForCourse;
+        }
+
+        averageScoreForCourse = roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course);
+        return new CourseManagementStatisticsDTO(averageScoreForCourse, averageScoreForExercises);
     }
 
     /**

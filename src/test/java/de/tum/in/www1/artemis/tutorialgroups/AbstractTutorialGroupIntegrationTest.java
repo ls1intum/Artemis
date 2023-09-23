@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -15,7 +14,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.course.CourseTestService;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
@@ -29,22 +30,18 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
-import de.tum.in.www1.artemis.util.CourseTestService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
 /**
  * Contains useful methods for testing the tutorial groups feature.
  */
-abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     CourseTestService courseTestService;
 
     @Autowired
     UserRepository userRepository;
-
-    @Autowired
-    DatabaseUtilService databaseUtilService;
 
     @Autowired
     CourseRepository courseRepository;
@@ -82,6 +79,15 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     @Autowired
     TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
+    @Autowired
+    TutorialGroupUtilService tutorialGroupUtilService;
+
+    @Autowired
+    CourseUtilService courseUtilService;
+
+    @Autowired
+    UserUtilService userUtilService;
+
     Long exampleCourseId;
 
     Long exampleConfigurationId;
@@ -107,11 +113,11 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     @BeforeEach
     void setupTestScenario() {
         this.testPrefix = getTestPrefix();
-        var course = this.database.createCourse();
+        var course = courseUtilService.createCourse();
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
         exampleCourseId = course.getId();
-        exampleConfigurationId = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
+        exampleConfigurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
     }
 
     // === Abstract Methods ===
@@ -140,17 +146,17 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     // === UTILS ===
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate) {
-        return databaseUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate), null);
+        return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate), null);
     }
 
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate, Integer attendanceCount) {
-        return databaseUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate),
+        return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate),
                 attendanceCount);
     }
 
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
-        tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).get());
+        tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).orElseThrow());
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
         tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
@@ -173,27 +179,27 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     TutorialGroup buildAndSaveTutorialGroupWithoutSchedule(String tutorLogin, String... studentLogins) {
         Set<User> students = Set.of();
         if (studentLogins != null) {
-            students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).get()).collect(Collectors.toSet());
+            students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).orElseThrow()).collect(Collectors.toSet());
         }
-        return databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + tutorLogin).get(), students);
+        return tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
+                userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow(), students);
     }
 
     TutorialGroup buildTutorialGroupWithoutSchedule(String tutorLogin) {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
+        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).orElseThrow();
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
-        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).get());
+        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
         return tutorialGroup;
     }
 
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
+        var course = courseRepository.findWithEagerCompetenciesById(exampleCourseId).orElseThrow();
         var newTutorialGroup = new TutorialGroup();
         newTutorialGroup.setCourse(course);
         newTutorialGroup.setTitle(generateRandomTitle());
-        newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).get());
+        newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
 
         newTutorialGroup.setTutorialGroupSchedule(this.buildExampleSchedule(validFromInclusive, validToInclusive));
 
@@ -333,7 +339,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
         private static final String ALL_CHARS = LOWERCASE_LETTERS + NUMBERS;
 
-        private static final SecureRandom RANDOM = new SecureRandom();
+        private static final Random RANDOM = new Random(1042001L);
 
         public static String generateRandomTitle() {
             StringBuilder sb = new StringBuilder();

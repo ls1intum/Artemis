@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -33,6 +33,8 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 /**
  * Filter properties for a result
@@ -73,6 +75,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         new Range(90, 100),
     ];
 
+    @ViewChild('exportPopover')
+    private exportPopover: NgbPopover;
+
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
@@ -84,6 +89,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     rangeFilter?: Range;
 
     resultCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
+    participationsPerFilter: Map<FilterProp, number> = new Map();
 
     isLoading: boolean;
 
@@ -92,6 +98,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     cancelConfirmationText: string;
 
     correctionRoundIndices: number[] = [];
+
+    localVCEnabled = false;
 
     // Icons
     faBan = faBan;
@@ -182,6 +190,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 participation.results![index].durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
             participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
+            if (participation.results?.[0].submission) {
+                participation.submissions = [participation.results?.[0].submission];
+            }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -189,9 +200,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             if (programmingExercise.projectKey) {
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, programmingExercise.projectKey);
+                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                 });
             }
         }
+
+        for (const filter of Object.values(FilterProp)) {
+            if (this.isFilterRelevantForConfiguration(filter)) {
+                this.participationsPerFilter.set(filter, this.filteredParticipations.filter((participation) => this.filterParticipationsByProp(participation, filter)).length);
+            }
+        }
+
         this.isLoading = false;
     }
 
@@ -210,15 +229,16 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     /**
      * Predicate used to filter participations by the current filter prop setting
      * @param participation Participation for which to evaluate the predicate
+     * @param filterProp the filter that should be used to determine if the participation should be included or excluded
      */
-    filterParticipationsByProp = (participation: Participation): boolean => {
-        switch (this.resultCriteria.filterProp) {
+    filterParticipationsByProp = (participation: Participation, filterProp = this.resultCriteria.filterProp): boolean => {
+        switch (filterProp) {
             case FilterProp.SUCCESSFUL:
                 return !!participation.results?.[0]?.successful;
             case FilterProp.UNSUCCESSFUL:
                 return !participation.results?.[0]?.successful;
             case FilterProp.BUILD_FAILED:
-                return !!(participation.results?.[0]?.submission && (participation.results?.[0]?.submission as ProgrammingSubmission).buildFailed);
+                return !!(participation.submissions?.[0] && (participation.submissions?.[0] as ProgrammingSubmission).buildFailed);
             case FilterProp.MANUAL:
                 return !!participation.results?.[0] && Result.isManualResult(participation.results[0]!);
             case FilterProp.AUTOMATIC:
@@ -230,6 +250,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 return true;
         }
     };
+
+    isFilterRelevantForConfiguration(filterProp: FilterProp): boolean {
+        switch (filterProp) {
+            case FilterProp.BUILD_FAILED:
+                return this.exercise.type === ExerciseType.PROGRAMMING;
+            case FilterProp.MANUAL:
+            case FilterProp.AUTOMATIC:
+                return this.newManualResultAllowed || !!this.exercise.allowComplaintsForAutomaticAssessments;
+            case FilterProp.LOCKED:
+                return this.newManualResultAllowed && !!this.exercise.isAtLeastInstructor;
+            default:
+                return true;
+        }
+    }
 
     /**
      * Returns the build plan id for a participation
@@ -388,8 +422,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     getAssessmentLink(participation: Participation, correctionRound = 0) {
-        const newAssessment = !participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound].assessmentType === AssessmentType.AUTOMATIC;
-        if (!this.exercise.type || !this.exercise.id || !this.course.id || (!participation.results?.[correctionRound]?.submission?.id && !newAssessment)) {
+        if (!this.exercise.type || !this.exercise.id || !this.course.id || !participation.submissions?.[0]?.id) {
             return;
         }
         return getLinkToSubmissionAssessment(
@@ -397,10 +430,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.course.id,
             this.exercise.id,
             participation.id,
-            newAssessment ? 'new' : participation.results![correctionRound].submission!.id!,
+            participation.submissions?.[0]?.id,
             this.exercise.exerciseGroup?.exam?.id,
             this.exercise.exerciseGroup?.id,
             participation.results?.[correctionRound]?.id,
         );
+    }
+
+    /**
+     * Close popover for export options, since it would obstruct the newly opened modal
+     */
+    closeExportPopover() {
+        this.exportPopover?.close();
     }
 }

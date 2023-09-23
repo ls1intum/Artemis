@@ -1,5 +1,5 @@
-Cypress Bamboo Plans
-====================
+E2E Testing based on Cypress
+============================
 
 **Background**
 
@@ -18,6 +18,206 @@ the external services (Jira, Bitbucket and Bamboo) and connect them directly wit
 Therefore, the current setup only dynamically deploys the Artemis server and configures it to connect to
 the prelive system, which is already properly setup in the university data center.
 
+
+Local Cypress Setup
+-------------------
+Sometimes developers need to set up Cypress locally, in order to debug failing E2E tests or write new tests.
+Follow these steps to create your local cypress instance:
+
+1. Install dependencies
+
+  First head into the cypress folder by using ``cd /src/test/cypress``. Now run ``npm install``.
+
+2. Customize Cypress settings
+
+  To connect cypress to our local Artemis instance, we need to adjust some configurations. 
+  First we need to set the URL or IP of the Artemis instance in the ``cypress.config.ts`` file.
+  Adjust the ``baseUrl`` setting to fit your setup (e.g. ``baseUrl: 'http://localhost:9000',``)
+
+3. Adjust user settings
+
+  We also need to adjust the user setting, which will determine the usernames and passwords, that cypress
+  will use. These settings are located within the ``cypress.env.json`` file. If you use the Atlassian setup,
+  the file should typically look like this:
+   
+  .. code-block:: json
+
+    {
+      "username": "artemis_test_user_USERID",
+      "password": "artemis_test_user_USERID",
+      "adminUsername": "artemis_admin",
+      "adminPassword": "artemis_admin",
+      "allowGroupCustomization": true,
+      "studentGroupName": "students",
+      "tutorGroupName": "tutors",
+      "editorGroupName": "editors",
+      "instructorGroupName": "instructors"
+    }
+
+  The ``USERID`` part will be automatically replaced by different user ids. These are set within the ``support/users.ts`` file. 
+  For a typical local installation the IDs are:
+    - studentOne: 1
+    - studentTwo: 2
+    - studentThree: 3
+    - instructor: 16
+    - tutor: 6
+
+  For cypress to use the correct IDs, you have to adjust the code like this:
+
+  .. code-block:: ts
+
+    export const USER_ID = {
+      studentOne: 1,
+      studentTwo: 2,
+      studentThree: 3,
+      instructor: 16,
+      tutor: 6,
+    };
+
+4. Open Cypress browser
+
+  If you want to use a different browser than chrome, you can set this within the ``package.json`` file
+  within the cypress subfolder like this ``"cypress:open": "cypress open --browser=edge",``.
+  To now run the test suites selectively instead of in full, we need to open the cypress
+  browser, which is by default chrome by running the following command ``npm run cypress:open``.
+  Now select ``E2E Testing``, followed by ``Start E2E testing in ...``. A new browser window
+  should open, which should look like this:
+
+  .. figure:: cypress/cypress-open-screenshot.png
+    :align: center
+    :alt: Cypress cypress-open-screenshot
+
+  You can now click on any test suite and it should run. 
+
+.. warning::
+  **IMPORTANT**: If you run the E2E tests for the first time, always run the ``ImportUsers.ts`` tests first,
+  since it will create the necessary users.
+
+
+Debug using Sorry Cypress
+-------------------------
+
+Since the E2E tests are sometimes hard to debug, we provide a dashboard, that allows to inspect the 
+CI run and even watch a video of the UI interaction with Artemis in that run. 
+
+It's based on Sorry Cypress a open source and selfhostable alternative to the paid cypress cloud.
+
+The dashboard itself can be access here: https://sorry-cypress.ase.cit.tum.de/
+
+To access it, you need these basic auth credentials (sorry cypress itself does not provide an auth 
+system, so we are forced to use nginx basic auth here). You can find these credentials on our confluence page:
+https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
+
+After that you will see the initial dashboard. 
+
+You first have to select a project in the left sidebar (mysql or postgresql):
+
+  .. figure:: cypress/sorry-cypress-dashboard.png
+    :align: center
+    :alt: Sorry Cypress dashboard
+
+Now you get a list of the last runs. In the top right you can enter your branch name to filter the runs.
+
+  .. figure:: cypress/sorry-cypress-runs.png
+    :align: center
+    :alt: Sorry Cypress last runs
+
+The name of the run consists of the branch name followed by the run number. The last part is MySQL or 
+PostgreSQL depending on the run environment. If you are in the MySQL project, you will of course only see the MySQL runs. 
+
+If you now click on the run, you can see detailed information about the test suites (corresponding 
+to components within Artemis). For each suite there is information about the run time, the successful/failed/flaky/skipped/ignored tests:
+
+  .. figure:: cypress/sorry-cypress-run.png
+    :align: center
+    :alt: Sorry Cypress single run
+
+If you want to further debug one test suite, just click on it.  
+
+  .. figure:: cypress/sorry-cypress-test.png
+    :align: center
+    :alt: Sorry Cypress single test
+
+Here you can see the single tests on the left and a video on the right. This is a screen capture of 
+the actual run and can tremendously help debug failing E2E tests. 
+
+Sometimes the video can be a little bit to fast to debug easily. Just download the video on your 
+computer and play it with a video player, that allows you to slow the video down. 
+
+.. note::
+  For maintenance reasons videos are deleted after 14 days. So if you have a failing test, debug 
+  it before this period to get access to the video. 
+
+
+Best practice when writing new E2E tests
+----------------------------------------
+
+**Understanding the System and Requirements**
+
+Before writing tests, a deep understanding of the system and its requirements is crucial. 
+This understanding guides determining what needs testing and what defines a successful test. 
+The best way to understand is to consolidate the original system`s developer or a person actively working on this
+component.
+
+**Identify Main Test Scenarios** 
+
+Identify what are the main ways the component is supposed to be used. Try
+the action with all involved user roles and test as many different inputs as
+feasible.
+
+**Identify Edge Test Scenarios**
+
+Next to the main test scenarios, there are also edge case scenarios. These
+tests include inputs/actions that are not supposed to be performed (e.g. enter
+a too-long input into a field) and test the error-handling capabilities of the
+platform.
+
+**Write Tests as Development Progresses**
+
+Rather than leaving testing until the end, write tests alongside each piece of
+functionality. This approach ensures the code remains testable and makes
+identifying and fixing issues as they arise easier.
+
+**Keep Tests Focused**
+
+Keep each test focused on one specific aspect of the code. If a test fails, it is
+easier to identify the issue when it does not check multiple functionalities at
+the same time.
+
+**Make Tests Independent**
+
+Tests should operate independently from each other and external factors like
+the current date or time. Each test should be isolated. Use API calls for unrelated tasks, such as creating a
+course, and UI interaction for the appropriate testing steps. This also involves
+setting up a clean environment for every test suite.
+
+**Use Descriptive Test Names**
+
+Ensure each test name clearly describes what the test does. This strategy
+makes the test suite easier to understand and quickly identifies which test
+has failed.
+
+**Use Similar Test Setups**
+
+Avoid using different setups for each test suit. For example, always check
+for the same HTTP response when deleting a course.
+
+**Do Not Ignore Failing Tests**
+
+If a test consistently fails, pay attention to it. Investigate as soon as possible
+and fx the issue, or update the test if the requirements have changed.
+
+**Regularly Review and Refactor Your Tests**
+
+Tests, like code, can accumulate technical debt. Regular reviews for duplication, 
+unnecessary complexity, and other issues help maintain tests and enhance reliability.
+
+**Use HTML IDs instead of classes or other attributes**
+
+When searching for a single element within the DOM of an HTML page, try to use ID selectors as much as possible. 
+They are more reliable since there can only be one element with this ID on one single page according to the HTML
+
+
 Artemis Deployment on Bamboo Build Agent
 ----------------------------------------
 Every execution of the Cypress test suite requires its own deployment of Artemis.
@@ -26,61 +226,61 @@ Using ``docker compose`` we can start a MySQL database and the Artemis server lo
 connect it to the prelive system in the university data center.
 
 .. figure:: cypress/cypress_bamboo_deployment_diagram.svg
-   :align: center
-   :alt: Artemis Deployment on Bamboo Build Agent for Cypress
+  :align: center
+  :alt: Artemis Deployment on Bamboo Build Agent for Cypress
 
-   Artemis Deployment on Bamboo Build Agent for Cypress
+  Artemis Deployment on Bamboo Build Agent for Cypress
 
 In total there are three Docker containers started in the Bamboo build agent:
 
 1. MySQL
 
-   This container starts a MySQL database and exposes it on port 3306.
-   The container automatically creates a new database 'Artemis' and configures it
-   with the recommended settings for Artemis.
-   The Cypress setup reuses the already existing
-   `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml>`__
-   from the standard Artemis Docker setup.
+  This container starts a MySQL database and exposes it on port 3306.
+  The container automatically creates a new database 'Artemis' and configures it
+  with the recommended settings for Artemis.
+  The Cypress setup reuses the already existing
+  `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/docker/mysql.yml>`__
+  from the standard Artemis Docker setup.
 
 2. Artemis
 
-   The Docker image for the Artemis container is created from the already existing
-   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
-   When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file)
-   from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
-   Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
-   for the Artemis server.
+  The Docker image for the Artemis container is created from the already existing
+  `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
+  When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file)
+  from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
+  Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
+  for the Artemis server.
 
-   The main configuration of the Artemis server is contained in the
-   `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/application.yml>`__.
-   However, this file does not contain any security relevant information.
-   Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
-   the Docker container via environment variables.
-   This information is accessible to the Bamboo build agent via
-   `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
+  The main configuration of the Artemis server is contained in the
+  `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/docker/cypress/application.yml>`__.
+  However, this file does not contain any security relevant information.
+  Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to
+  the Docker container via environment variables.
+  This information is accessible to the Bamboo build agent via
+  `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
 
-   The Artemis container is also configured to
-   `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__
-   the MySQL container and uses
-   `health checks <https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck>`__
-   to wait until the MySQL container is up and running.
+  The Artemis container is also configured to
+  `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__
+  the MySQL container and uses
+  `health checks <https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck>`__
+  to wait until the MySQL container is up and running.
 
 3. Cypress
 
-   Cypress offers a `variety of docker images <https://github.com/cypress-io/cypress-docker-images>`__
-   to execute Cypress tests.
-   We use an image which has the Cypress operating system dependencies and a Chrome browser installed.
-   However, Cypress itself is not installed in
-   `these images <https://github.com/cypress-io/cypress-docker-images/tree/master/browsers>`__.
-   This is convenient for us because the image is smaller and the Artemis Cypress project requires
-   additional dependencies to fully function.
-   Therefore, the Artemis Cypress Docker container is configured to install all dependencies
-   (using :code:`npm ci`) upon start. This will also install Cypress itself.
-   Afterwards the Artemis Cypress test suite is executed.
+  Cypress offers a `variety of docker images <https://github.com/cypress-io/cypress-docker-images>`__
+  to execute Cypress tests.
+  We use an image which has the Cypress operating system dependencies and a Chrome browser installed.
+  However, Cypress itself is not installed in
+  `these images <https://github.com/cypress-io/cypress-docker-images/tree/master/browsers>`__.
+  This is convenient for us because the image is smaller and the Artemis Cypress project requires
+  additional dependencies to fully function.
+  Therefore, the Artemis Cypress Docker container is configured to install all dependencies
+  (using :code:`npm ci`) upon start. This will also install Cypress itself.
+  Afterwards the Artemis Cypress test suite is executed.
 
-   The necessary configuration for the Cypress test suite is also passed in via environment variables.
-   Furthermore, the Cypress container depends on the Artemis container and is only started
-   once Artemis has been fully booted.
+  The necessary configuration for the Cypress test suite is also passed in via environment variables.
+  Furthermore, the Cypress container depends on the Artemis container and is only started
+  once Artemis has been fully booted.
 
 **Bamboo webhook**
 
@@ -107,36 +307,6 @@ of the Cypress test suite, since the new Artemis executable first has to be buil
 (requires access to this GitHub repository) **not** for external ones.
 In case you need access rights, please contact the maintainer `Stephan Krusche <https://github.com/krusche>`__.
 
-Automatic flaky test detection based on changed code
-----------------------------------------------------
-In addition to our regular Cypress execution, we also run a special experimental build plan that attempts to detect
-flaky tests based on the changed code. To do this, we have some special Docker configurations that are specific to this
-`build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AECF>`__.
-
-1. Docker Image Extensions
-
-   We extend the existing `Dockerfile <./docker/artemis/Dockerfile>`__ to create the Docker image for the Artemis
-   container. For the flaky test detection build plan, we need to change the Artemis startup and add the :code:`unzip`
-   dependency. To do this, we have a special Dockerfile that extends the original one and adds these changes. The
-   Dockerfile can be found `here <./docker/cypress/coverage.Dockerfile>`__. To do this, the regular image
-   has to be built and tagged with :code:`artemis:coverage-latest`.
-
-   Additionally, we need Java in the Cypress container for the flaky test detection, so we have a special Dockerfile for
-   the Cypress container that extends the original one and adds the Java installation. This Dockerfile can be found
-   `here <./docker/cypress/cypress.Dockerfile>`__.
-
-2. Docker Compose Changes
-
-   The Docker Compose file for the flaky test detection is located
-   `here <./docker/cypress/cypress-E2E-tests-coverage-override.yml>`__. This file includes some overrides for the regular
-   Docker Compose file. The main differences are that we use the extended Dockerfiles for the Artemis and Cypress
-   containers, and we also change the Cypress startup command to include our coverage analysis. To use the overrides,
-   you can run the following command: :code:`docker-compose -f cypress-E2E-tests.yml -f cypress-E2E-tests-coverage-override.yml up`.
-
-This setup allows us to run the flaky test detection build plan in parallel with the regular Cypress build plan. If
-there is no overlap between the changed code and the files covered by failed tests, we label plan executions with the
-:code:`suspected-flaky` label.
-
 Artemis Deployment in Test Environment
 --------------------------------------
 There is another build plan on Bamboo which executes the Cypress test suite.
@@ -146,10 +316,10 @@ and executes the Cypress test suite against it.
 This build plan is automatically executed every 8 hours and verifies that test server 3 is working properly.
 
 .. figure:: cypress/cypress_test_environment_deployment_diagram.svg
-   :align: center
-   :alt: Artemis Deployment on test environment for Cypress
+  :align: center
+  :alt: Artemis Deployment on test environment for Cypress
 
-   Artemis Deployment on test environment for Cypress
+  Artemis Deployment on test environment for Cypress
 
 The difference of this setup is that the Artemis server is deployed on a separate environment which already contains
 the necessary configuration files for the Artemis server to connect to the prelive system.

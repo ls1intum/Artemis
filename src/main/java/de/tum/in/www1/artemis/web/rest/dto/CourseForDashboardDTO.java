@@ -5,7 +5,6 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Result;
 
 /**
  * Returned by the for-dashboard resources.
@@ -23,5 +22,5 @@ import de.tum.in.www1.artemis.domain.Result;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
-        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, List<Result> participationResults) {
+        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, List<ParticipationResultDTO> participationResults) {
 }

@@ -5,8 +5,6 @@ import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { filter, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Location } from '@angular/common';
 
@@ -25,17 +23,16 @@ export class TextAssessmentAnalytics {
     private route: ActivatedRoute;
     public analyticsEnabled = false;
 
-    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService, public location: Location) {
+    constructor(
+        protected assessmentsService: TextAssessmentService,
+        protected accountService: AccountService,
+        private profileService: ProfileService,
+        public location: Location,
+    ) {
         // retrieve the analytics enabled status from the profile info and set to current property
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                tap((info: ProfileInfo) => {
-                    this.analyticsEnabled = Boolean(info.textAssessmentAnalyticsEnabled);
-                }),
-            )
-            .subscribe();
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.analyticsEnabled = profileInfo.textAssessmentAnalyticsEnabled || false;
+        });
     }
 
     /**
@@ -73,7 +70,6 @@ export class TextAssessmentAnalytics {
     /**
      * Subscribes to the route parameters and updates the respective id's accordingly.
      * Avoids having to set the id on the component's side.
-     * @private
      */
     private subscribeToRouteParameters() {
         this.route.params.subscribe((params) => {

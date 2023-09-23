@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.N
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,23 +14,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -72,16 +67,22 @@ public class NotificationResource {
      * @return the filtered list of notifications based on current user settings
      */
     @GetMapping("notifications")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
+        long start = System.nanoTime();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser).stream().map(DomainObject::getId).collect(Collectors.toSet());
-        log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
-        Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
-        Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
-                notificationSettings);
-        Set<String> deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
-        final ZonedDateTime hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
+        log.info("REST request to get notifications page {} with size {} for current user {} filtered by settings", pageable.getPageNumber(), pageable.getPageSize(),
+                currentUser.getLogin());
+        var tutorialGroupIds = tutorialGroupService.findAllForNotifications(currentUser);
+        var notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
+        var deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP, notificationSettings);
+        var deactivatedTitles = notificationSettingsService.convertNotificationTypesToTitles(deactivatedTypes);
+        // Note: at the moment, we only support to show notifications from the last month, because without a proper date the query below becomes too slow
+        var hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
+        var notificationDateLimit = ZonedDateTime.now().minusMonths(1);
+        if (hideNotificationsUntilDate == null || hideNotificationsUntilDate.isBefore(notificationDateLimit)) {
+            hideNotificationsUntilDate = notificationDateLimit;
+        }
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
             page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate, tutorialGroupIds,
@@ -92,6 +93,7 @@ public class NotificationResource {
                     deactivatedTitles, tutorialGroupIds, TITLES_TO_NOT_LOAD_NOTIFICATION, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        log.info("Load notifications for user {} done in {}", currentUser.getLogin(), TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 }

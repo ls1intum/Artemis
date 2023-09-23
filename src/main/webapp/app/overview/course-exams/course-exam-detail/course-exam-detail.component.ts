@@ -94,7 +94,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             return;
         }
         if (dayjs(this.exam.startDate).isAfter(dayjs())) {
-            if (dayjs(this.exam.startDate).diff(dayjs(), `s`) < 600) {
+            if (dayjs(this.exam.startDate).diff(dayjs(), 's') < 600) {
                 this.examState = ExamState.IMMINENT;
             } else {
                 this.examState = ExamState.UPCOMING;

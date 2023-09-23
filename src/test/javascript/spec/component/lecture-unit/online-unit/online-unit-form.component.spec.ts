@@ -10,7 +10,7 @@ import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
@@ -24,7 +24,7 @@ describe('OnlineUnitFormComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
-                MockComponent(LearningGoalSelectionComponent),
+                MockComponent(CompetencySelectionComponent),
             ],
             providers: [MockProvider(OnlineUnitService)],
         })
@@ -111,7 +111,7 @@ describe('OnlineUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
-                learningGoals: null,
+                competencies: null,
                 source: 'https://www.example.com',
             });
 

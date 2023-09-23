@@ -5,6 +5,7 @@ on:
     types: [closed]
 
 jobs:
+  # If a PR is closed the docker image should be deleted to save space
   purge-image:
     name: Delete image from ghcr.io
     runs-on: ubuntu-latest
@@ -17,3 +18,22 @@ jobs:
           token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
           tag: pr-${{ github.event.pull_request.number }}
           untagged-older-than: 28
+
+  # If a PR is closed it should no longer lock any testservers
+  remove-testserver-locks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: |
+            lock:artemis-test1
+            lock:artemis-test2
+            lock:artemis-test3
+            lock:artemis-test4
+            lock:artemis-test5
+            lock:artemis-test6
+            lock:artemis-test7
+            lock:artemis-test8
+            lock:artemis-test9
+            lock:artemis-test10

@@ -15,6 +15,9 @@
             "onlyYou": "Nur du",
             "archived": "Archiviert",
             "sendMessage": "Senden",
+            "goToExercise": "Zur Aufgabe gehen",
+            "goToLecture": "Zur Vorlesung gehen",
+            "goToExam": "Zur Klausur gehen",
             "conversationMessages": {
                 "searchLabel": "Nachrichten durchsuchen",
                 "clearSearch": "Suche löschen",
@@ -35,6 +38,10 @@
                 "notFound": "Keine Konversation gefunden",
                 "favorites": "Favoriten",
                 "channels": "Kanäle",
+                "generalChannels": "Allgemein",
+                "exerciseChannels": "Aufgaben",
+                "lectureChannels": "Vorlesungen",
+                "examChannels": "Klausuren",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
                 "groupChats": "Gruppen-Chats",
@@ -99,6 +106,7 @@
                 "remove": "Nutzer:in entfernen"
             },
             "conversationSettings": {
+                "settingsUnavailable": "Keine Einstellungen möglich",
                 "actions": {
                     "leave": "Konversation verlassen",
                     "archiveChannel": "Kanal archivieren",
@@ -181,7 +189,13 @@
                 }
             },
             "channelOverview": {
-                "title": "Alle Kanäle im Kurs {{ courseTitle }}",
+                "title": {
+                    "general": "Alle allgemeinen Kanäle im Kurs {{ courseTitle }}",
+                    "exercise": "Alle Aufgabenkanäle im Kurs {{ courseTitle }}",
+                    "lecture": "Alle Vorlesungskanäle im Kurs {{ courseTitle }}",
+                    "exam": "Alle Klausurkanäle im Kurs {{ courseTitle }}"
+                },
+                "otherChannels": "Andere Kanäle",
                 "createChannelButton": "Erstelle einen neuen Kanal",
                 "channelItem": {
                     "joined:": "Beigetreten",

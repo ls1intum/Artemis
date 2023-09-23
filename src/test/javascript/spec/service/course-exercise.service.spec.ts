@@ -24,7 +24,7 @@ describe('Course Management Service', () => {
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
-    const resourceUrl = SERVER_API_URL + 'api/courses';
+    const resourceUrl = 'api/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -187,7 +187,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('POST', SERVER_API_URL + `api/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion('POST', `api/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
@@ -215,7 +215,7 @@ describe('Course Management Service', () => {
 
             requestAndExpectDateConversion(
                 'POST',
-                SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+                `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
                 returnedFromService,
                 participation.exercise,
                 true,
@@ -244,13 +244,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion(
-            'PUT',
-            SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`,
-            returnedFromService,
-            participation.exercise,
-            true,
-        );
+        requestAndExpectDateConversion('PUT', `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));

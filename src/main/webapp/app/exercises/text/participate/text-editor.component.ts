@@ -1,5 +1,4 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,14 +8,11 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import dayjs from 'dayjs/esm';
 import { Subject, merge } from 'rxjs';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -53,7 +49,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submissionObservable = this.buildSubmissionObservable();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
-    isAllowedToSubmitAfterDeadline: boolean;
+    isAllowedToSubmitAfterDueDate: boolean;
     // answer is the text that is stored in the user interface
     answer: string;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
@@ -69,14 +65,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     constructor(
         private route: ActivatedRoute,
-        private textExerciseService: TextExerciseService,
-        private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
-        private resultService: ResultService,
         private alertService: AlertService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
@@ -110,14 +101,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (participation.submissions?.length) {
             this.submission = participation.submissions[0] as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-            if (this.submission && this.submission.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
+            if (this.submission?.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = this.submission.latestResult!;
                 this.result.participation = participation;
             }
             // if one of the submissions results has a complaint, we get it
             this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
 
-            if (this.submission && this.submission.text) {
+            if (this.submission?.text) {
                 this.answer = this.submission.text;
             }
         }
@@ -149,12 +140,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.textExercise.dueDate && this.participation.initializationDate && dayjs(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
         const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
 
-        this.isAllowedToSubmitAfterDeadline = !!isInitializationAfterDueDate;
+        this.isAllowedToSubmitAfterDueDate = !!isInitializationAfterDueDate;
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
     /**
-     * True, if the deadline is after the current date, or there is no deadline, or the exercise is always active
+     * True, if the due date is after the current date, or there is no due date, or the exercise is always active
      */
     get isActive(): boolean {
         const isActive =
@@ -165,16 +156,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     get submitButtonTooltip(): string {
-        if (this.isAllowedToSubmitAfterDeadline) {
-            return 'entity.action.submitDeadlineMissedTooltip';
+        if (this.isAllowedToSubmitAfterDueDate) {
+            return 'entity.action.submitDueDateMissedTooltip';
         }
         if (this.isActive && !this.textExercise.dueDate) {
-            return 'entity.action.submitNoDeadlineTooltip';
+            return 'entity.action.submitNoDueDateTooltip';
         } else if (this.isActive) {
             return 'entity.action.submitTooltip';
         }
 
-        return 'entity.action.deadlineMissedTooltip';
+        return 'entity.action.dueDateMissedTooltip';
     }
 
     /**
@@ -237,10 +228,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 }
                 this.isSaving = false;
 
-                if (!this.isAllowedToSubmitAfterDeadline) {
+                if (!this.isAllowedToSubmitAfterDueDate) {
                     this.alertService.success('entity.action.submitSuccessfulAlert');
                 } else {
-                    this.alertService.warning('entity.action.submitDeadlineMissedAlert');
+                    this.alertService.warning('entity.action.submitDueDateMissedAlert');
                 }
             },
             error: (err: HttpErrorResponse) => {

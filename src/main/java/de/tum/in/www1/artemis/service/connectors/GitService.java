@@ -42,8 +42,8 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -52,13 +52,19 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
+
+    private final Environment environment;
+
+    private final ProfileService profileService;
 
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
@@ -97,8 +103,6 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    private final FileService fileService;
-
     private final ZipFileService zipFileService;
 
     private TransportConfigCallback sshCallback;
@@ -111,12 +115,13 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(FileService fileService, ZipFileService zipFileService) {
+    public GitService(Environment environment, ProfileService profileService, ZipFileService zipFileService) {
+        this.profileService = profileService;
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-        this.fileService = fileService;
+        this.environment = environment;
         this.zipFileService = zipFileService;
     }
 
@@ -176,7 +181,7 @@ public class GitService {
             @Override
             public char[] getPassphrase(URIish uri, int attempt) {
                 // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
-                if (gitSshPrivateKeyPath.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
+                if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
                     return gitSshPrivateKeyPassphrase.get().toCharArray();
                 }
                 else {
@@ -230,7 +235,7 @@ public class GitService {
             public HostConfig lookupDefault(String hostName, int port, String userName) {
                 return lookup(hostName, port, userName);
             }
-        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
+        }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.orElseThrow())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
 
         sshCallback = transport -> {
             if (transport instanceof SshTransport sshTransport) {
@@ -252,12 +257,29 @@ public class GitService {
         return getGitUri(vcsRepositoryUrl).toString();
     }
 
+    /**
+     * Get the URI for a {@link VcsRepositoryUrl}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
+     * used.
+     * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
+     * For Bitbucket and GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
+     * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
+     *
+     * @param vcsRepositoryUrl the {@link VcsRepositoryUrl} for which to get the URI
+     * @return the URI (SSH, HTTP(S), or local path)
+     * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
+     */
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+        if (profileService.isLocalVcsCi()) {
+            // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
+            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(vcsRepositoryUrl.toString(), gitUrl);
+            String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
+            return localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toUri();
+        }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }
 
     private URI getSshUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        URI templateUri = new URI(sshUrlTemplate.get());
+        URI templateUri = new URI(sshUrlTemplate.orElseThrow());
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUrl.getURI();
@@ -587,6 +609,7 @@ public class GitService {
             StoredConfig gitRepoConfig = repository.getConfig();
             gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
             gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
 
@@ -616,8 +639,20 @@ public class GitService {
      */
     public void commit(Repository repo, String message) throws GitAPIException {
         try (Git git = new Git(repo)) {
-            git.commit().setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
         }
+    }
+
+    /**
+     * Creates a CommitCommand and sets signing to false. Egit uses the local git configuration and if signing of
+     * commits is enabled, tests will fail because it will not be able to actually sign the commit.
+     * This method makes sure that signing is disabled and commits work on systems regardless of the local git configuration.
+     *
+     * @param git Git Repository Object.
+     * @return CommitCommand with signing set to false.
+     */
+    public static CommitCommand commit(Git git) {
+        return git.commit().setSign(false);
     }
 
     /**
@@ -633,38 +668,10 @@ public class GitService {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            git.commit().setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+            GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
-        }
-    }
-
-    /**
-     * The remote uri of the target repo is still the uri of the source repo.
-     * We need to change it to the uri of the target repo.
-     * The content to be copied then gets pushed to the new repo.
-     *
-     * @param targetRepo    Local target repo
-     * @param targetRepoUrl URI of targets repo
-     * @throws GitAPIException if the repo could not be pushed
-     */
-    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl) throws GitAPIException {
-        try (Git git = new Git(targetRepo)) {
-            // overwrite the old remote uri with the target uri
-            git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
-            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURI());
-
-            String oldBranch = git.getRepository().getBranch();
-            if (!defaultBranch.equals(oldBranch)) {
-                git.branchRename().setNewName(defaultBranch).setOldName(oldBranch).call();
-            }
-
-            // push the source content to the new remote
-            pushCommand(git).call();
-        }
-        catch (URISyntaxException | IOException e) {
-            log.error("Error while pushing to remote target: ", e);
         }
     }
 
@@ -878,8 +885,6 @@ public class GitService {
      * @param lastValidSubmission       The last valid submission from the database or empty, if not found
      * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
-
-    @Transactional(readOnly = true) // TODO: remove transactional
     public void filterLateSubmissions(Repository repository, Optional<Submission> lastValidSubmission, ZonedDateTime filterLateSubmissionsDate) {
         if (filterLateSubmissionsDate == null) {
             // No date set in client and exercise has no due date
@@ -896,13 +901,13 @@ public class GitService {
             }
             else {
                 log.debug("Last valid submission is not present for participation");
-                // Get last commit before deadline
+                // Get last commit before due date
                 Date since = Date.from(Instant.EPOCH);
                 Date until = Date.from(filterLateSubmissionsDate.toInstant());
                 RevFilter between = CommitTimeRevFilter.between(since, until);
                 Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
-                RevCommit latestCommitBeforeDeadline = commits.iterator().next();
-                commitHash = latestCommitBeforeDeadline.getId().getName();
+                RevCommit latestCommitBeforeDueDate = commits.iterator().next();
+                commitHash = latestCommitBeforeDueDate.getId().getName();
             }
             log.debug("Last commit hash is {}", commitHash);
 
@@ -950,7 +955,7 @@ public class GitService {
             var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
             var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
-            studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
+            GitService.commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -964,7 +969,7 @@ public class GitService {
 
     /**
      * Removes all author information from the commits on the currently active branch.
-     * Also removes all remotes since they contain data about the student.
+     * Also removes all remotes and FETCH_HEAD since they contain data about the student.
      * Also deletes the .git/logs folder to prevent restoring commits from reflogs
      *
      * @param repository          Local Repository Object.
@@ -1004,7 +1009,7 @@ public class GitService {
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
                     PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
-                    studentGit.commit().setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                    GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
             // Delete copy branch
@@ -1026,6 +1031,10 @@ public class GitService {
             // Delete .git/logs/ folder to delete git reflogs
             Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
             FileUtils.deleteDirectory(logsPath.toFile());
+
+            // Delete FETCH_HEAD containing the url of the last fetch
+            Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
+            Files.deleteIfExists(fetchHeadPath);
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
             log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -1153,7 +1162,7 @@ public class GitService {
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
-                git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
+                GitService.commit(git).setAmend(true).setMessage(firstCommit.getFullMessage()).call();
                 log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
                 pushCommand(git).setForce(true).call();
             }
@@ -1167,7 +1176,7 @@ public class GitService {
             log.debug("Did not combine the repository {} as there were no changes to commit. Exception: {}", repo, ex.getMessage());
         }
         catch (GitAPIException ex) {
-            log.error("Could not combine repository {} due to exception: {}", repo, ex);
+            log.error("Could not combine repository {} due to exception:", repo, ex);
             throw ex;
         }
     }
@@ -1242,7 +1251,7 @@ public class GitService {
         // The zip filename is either the student login, team short name or some default string.
         var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
-        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String zipRepoName = FileService.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }

@@ -22,10 +22,25 @@
             },
             "cleanup": {
                 "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studierenden können ihre Teilnahme wieder aufnehmen.",
-                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
+                "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet.",
+                "successMessageCleanup": "Die Bereinigung verlief erfolgreich. Alle Studierenden Repositories wurden gelöscht."
             },
             "reset": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studierenden-Repositories und Studierenden-Build-Pläne gelöscht werden."
+                "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "deleteBuildPlans": {
+                    "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
+                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
+                },
+                "deleteRepositories": {
+                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
+                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
+                },
+                "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
+                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfen Sie sorgfältig, ob dies die gewünschte Aktion ist, bevor Sie den Vorgang fortsetzen.",
+                "recreateBuildPlans": "Erstelle Build-Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "successMessage": "Das Zurücksetzen war erfolgreich.",
+                "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
             },
             "detail": {
                 "title": "Programmieraufgabe",
@@ -35,22 +50,23 @@
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
-                    "difficultyStepTitle": "Schwierigkeit",
+                    "difficultyStepTitle": "Modus",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem",
+                    "infrastructureStepTitle": "Infrastruktur"
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "Allgemeine Informationen",
-                    "generalInfoStepMessage": "Füge allgemeine Informationen über die neue Übung hinzu.",
-                    "difficultyStepTitle": "Schwierigkeit",
-                    "difficultyStepMessage": "Lege die Schwierigkeit für die neue Übung fest.",
+                    "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
+                    "difficultyStepTitle": "Modus",
+                    "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Programmiersprache",
-                    "languageStepMessage": "Lege die gewählte Programmiersprache sowie den Projekttyp für die neue Übung fest.",
-                    "gradingStepTitle": "Benotung",
-                    "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
+                    "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
                     "problemStepTitle": "Aufgabenstellung",
-                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
+                    "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
+                    "gradingStepTitle": "Benotung",
+                    "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
                 },
                 "gradingLabels": {
                     "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",
@@ -82,6 +98,9 @@
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
             "buildplans": "Build-Pläne",
+            "buildplan": "Build-Plan",
+            "buildPlanEditor": "Build-Plan-Editor",
+            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
@@ -187,6 +206,11 @@
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
                 "invalidTestCase": "Der Testfall '{{id}}' konnte nicht im Test-Repository gefunden werden."
+            },
+            "tasksAnalysis": {
+                "issues": "Aufgabenprobleme.",
+                "ok": "Aufgaben ok.",
+                "numOfTasks": "Die Anzahl der Aufgaben sollte {{limit}} nicht überschreiten. Derzeit gibt es {{number}} Aufgaben."
             },
             "hintsAnalysis": {
                 "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",
@@ -318,9 +342,9 @@
                     "title": "Alle Änderungen in einem Commit zusammenfassen",
                     "tooltip": "Fasst alle Commits eines Studierenden in einem einzigen Commit für leichtere Korrektur zusammen"
                 },
-                "anonymizeStudentCommits": {
-                    "title": "Alle Änderungen von Studierenden anonymisieren",
-                    "tooltip": "Verberge die Namen der Studierenden in Commits für eine unvoreingenommene Bewertung"
+                "anonymizeRepository": {
+                    "title": "Repository anonymisieren",
+                    "tooltip": "Verberge die Namen der Studierenden in Commits und Ordnernamen für eine unvoreingenommene Bewertung"
                 },
                 "normalizeCodeStyle": {
                     "title": "Code-Style normalisieren",
@@ -333,7 +357,7 @@
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
             "resubmitSingle": "Neues Ergebnis für Teilnahme erzeugen",
             "resubmitConfirmManualResultOverride": "Das letzte Ergebnis ist ein manuelles Ergebnis, das heißt es wurde von Tutor:innen bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für die Studierenden angezeigt.",
-            "resubmitAllConfirmAfterDeadline": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
+            "resubmitAllConfirmAfterDueDate": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
             "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte wende dich an entsprechende Tutor:innen.",
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
@@ -345,6 +369,7 @@
             "resultETA": "Ergebniswartezeit: {{eta}}",
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
             "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
+            "channelNameTooltip": "Es wird automatisch ein kursübergreifender Kanal mit diesem Namen erstellt. Der Name kann jederzeit geändert werden.",
             "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
             "projectTypeTooltip": "Dieser Wert legt den Projekttypen von Vorlagen- und Lösungs-Repository fest.",
             "testRepositoryProjectTypeTooltip": "Dieser Wert legt den Projekttypen des Test-Repository fest.",
@@ -363,7 +388,7 @@
                 "assessmentTypeTooltipManualAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Eine manuelle Bewertung durch Tutor:innen und Beschwerden von Studierenden, falls möglich",
                 "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können die Aufgabe ab diesem Datum sehen. Sollte kein Startdatum festgelegt sein können Studierende auch ab diesem Datum die Aufgabe beginnen.",
                 "startDateTooltip": "Das Startdatum der Aufgabe. Falls dieses gesetzt ist, können Studierende vor diesem Datum die Aufgabe nur ansehen aber diese noch nicht bearbeiten.",
-                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
+                "dueDateTooltip": "Die finale Einreichungsfrist, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
@@ -374,18 +399,18 @@
                 "notSet": "nicht gesetzt",
                 "allowFeedbackRequests": "Feedbackanfragen erlauben",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
-                "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Abgabefrist anfragen, um Feedback zu erhalten.",
+                "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
                 "feedbackRequestsDisabled": "Korrekturanfragen sind nicht möglich",
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "complaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen, die ein Tutor danach bewerten kann.",
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
-                "releaseTestsWithExampleSolution": "Tests veröffentlichen",
-                "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Deadline zum Download bereit gestellt werden."
+                "releaseTestsWithExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
+                "releaseTestsWithExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag nach der Einreichungsfrist zum Download bereit gestellt werden."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
-                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
+                "tooltip": "Dein Repository ist gesperrt, weil die Einreichungsfrist abgelaufen ist oder du das Einreichungslimit erreicht hast. Du kannst weiterhin deinen Code einsehen, aber keine Änderungen vornehmen."
             },
             "preview": {
                 "label": "Vorschau",
@@ -450,7 +475,7 @@
                 "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
                 "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
                 "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
-                "submissionsAllowed": "erlaubte Abgaben",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} erlaubte Abgaben",
                 "none": {
                     "optionLabel": "Keine"
                 },
@@ -485,6 +510,7 @@
                 "submissionLimitTitle": "Abgabelimit",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
+                "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
                 "submissionLimitWarning": {
                     "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
@@ -506,6 +532,7 @@
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",

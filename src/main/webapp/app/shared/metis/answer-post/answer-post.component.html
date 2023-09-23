@@ -4,10 +4,11 @@
         [isReadOnlyMode]="isReadOnlyMode"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
         [isCourseMessagesPage]="isCourseMessagesPage"
+        [isCommunicationPage]="isCommunicationPage"
         [lastReadDate]="lastReadDate"
     >
     </jhi-answer-post-header>
-    <jhi-posting-content *ngIf="!createAnswerPostModal.isInputOpen" [content]="posting.content"> </jhi-posting-content>
+    <jhi-posting-content *ngIf="!createAnswerPostModal.isInputOpen" [content]="posting.content" [isEdited]="!!posting.updatedDate"> </jhi-posting-content>
     <ng-container #createEditAnswerPostContainer></ng-container>
     <jhi-answer-post-footer
         [isReadOnlyMode]="isReadOnlyMode"

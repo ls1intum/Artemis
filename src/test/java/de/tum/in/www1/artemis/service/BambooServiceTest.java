@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
@@ -11,8 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.programmingexercise.ContinuousIntegrationTestService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ContinuousIntegrationTestService;
 
 class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -36,23 +33,6 @@ class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
         continuousIntegrationTestService.tearDown();
-    }
-
-    /**
-     * This method tests if the local repo is deleted if the exercise cannot be accessed
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1")
-    void performEmptySetupCommitWithNullExercise() {
-        // test performEmptyCommit() with empty exercise
-        continuousIntegrationTestService.getParticipation().setProgrammingExercise(null);
-        continuousIntegrationService.performEmptySetupCommit(continuousIntegrationTestService.getParticipation());
-
-        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(continuousIntegrationTestService.getLocalRepo().localRepoFile.toPath(), null);
-        assertThat(repo).as("local repository has been deleted").isNull();
-
-        Repository originRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(continuousIntegrationTestService.getLocalRepo().originRepoFile.toPath(), null);
-        assertThat(originRepo).as("origin repository has not been deleted").isNotNull();
     }
 
     @Test

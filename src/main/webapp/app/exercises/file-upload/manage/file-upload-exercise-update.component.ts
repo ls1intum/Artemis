@@ -24,7 +24,6 @@ import { switchMap, tap } from 'rxjs/operators';
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
-    styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -161,6 +160,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
+
         new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.fileUploadExercise, this.isExamMode, this.notificationText)
             .subscribe({
@@ -178,6 +178,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     validateDate() {
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
+
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercise categories
@@ -199,6 +200,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
+        if (error.error && error.error.title) {
+            this.alertService.addErrorAlert(error.error.title, error.error.message, error.error.params);
+        }
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
         this.alertService.addAlert({
             type: AlertType.DANGER,

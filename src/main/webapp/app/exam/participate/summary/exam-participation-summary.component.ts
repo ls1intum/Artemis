@@ -38,6 +38,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      */
     private _studentExam: StudentExam;
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
+    exampleSolutionPublished = false;
 
     get studentExam(): StudentExam {
         return this._studentExam;
@@ -113,10 +114,21 @@ export class ExamParticipationSummaryComponent implements OnInit {
                 });
         }
 
+        this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
+
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
     private tryLoadPlagiarismCaseInfosForStudent() {
+        // If the exam has not yet ended, or we're only a few minutes after the end, we can assume that there are no plagiarism cases yet.
+        // We should avoid trying to load them to reduce server load.
+        if (this.studentExam?.exam?.endDate) {
+            const endDateWithTimeExtension = dayjs(this.studentExam.exam.endDate).add(2, 'hours');
+            if (dayjs().isBefore(endDateWithTimeExtension)) {
+                return;
+            }
+        }
+
         const exerciseIds = this.studentExam?.exercises?.map((exercise) => exercise.id!);
         if (exerciseIds?.length && this.courseId) {
             this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId, exerciseIds).subscribe((res) => {
@@ -127,7 +139,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     private isExamResultPublished() {
         const exam = this.studentExam.exam;
-        return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
+        return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     getIcon(exerciseType: ExerciseType) {

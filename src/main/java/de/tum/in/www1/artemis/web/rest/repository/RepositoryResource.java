@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,23 +15,27 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -51,9 +53,9 @@ public abstract class RepositoryResource {
 
     protected final Logger log = LoggerFactory.getLogger(RepositoryResource.class);
 
-    protected final AuthorizationCheckService authCheckService;
+    private final ProfileService profileService;
 
-    protected final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    protected final AuthorizationCheckService authCheckService;
 
     protected final GitService gitService;
 
@@ -67,17 +69,20 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService) {
+    private final Optional<LocalCIConnectorService> localCIConnectorService;
+
+    public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
+            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
+            RepositoryAccessService repositoryAccessService, Optional<LocalCIConnectorService> localCIConnectorService) {
+        this.profileService = profileService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.versionControlService = versionControlService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
+        this.localCIConnectorService = localCIConnectorService;
     }
 
     /**
@@ -146,6 +151,8 @@ public abstract class RepositoryResource {
             HttpHeaders responseHeaders = new HttpHeaders();
             var contentType = repositoryService.getFileType(repository, filename);
             responseHeaders.add("Content-Type", contentType);
+            // Prevent the file from being interpreted as HTML by the browser when opened directly:
+            responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
             return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
         });
     }
@@ -154,17 +161,17 @@ public abstract class RepositoryResource {
      * Create new file.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @param filename of the file to create.
+     * @param filePath of the file to create.
      * @param request  to retrieve input stream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) {
-        log.debug("REST request to create file {} for domainId : {}", filename, domainId);
+    public ResponseEntity<Void> createFile(Long domainId, String filePath, HttpServletRequest request) {
+        log.debug("REST request to create file {} for domainId : {}", filePath, domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             InputStream inputStream = request.getInputStream();
-            repositoryService.createFile(repository, filename, inputStream);
+            repositoryService.createFile(repository, filePath, inputStream);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -173,17 +180,17 @@ public abstract class RepositoryResource {
      * Create new folder.
      *
      * @param domainId   that serves as an abstract identifier for retrieving the repository.
-     * @param folderName of the folder to create.
+     * @param folderPath of the folder to create.
      * @param request    to retrieve inputStream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) {
-        log.debug("REST request to create file {} for domainId : {}", folderName, domainId);
+    public ResponseEntity<Void> createFolder(Long domainId, String folderPath, HttpServletRequest request) {
+        log.debug("REST request to create file {} for domainId : {}", folderPath, domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             InputStream inputStream = request.getInputStream();
-            repositoryService.createFolder(repository, folderName, inputStream);
+            repositoryService.createFolder(repository, folderPath, inputStream);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -253,6 +260,12 @@ public abstract class RepositoryResource {
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             repositoryService.commitChanges(repository, user);
+            // Trigger a build, and process the result. Only implemented for local CI.
+            // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
+            // that notify the CI system when the commit happens and thus trigger the build.
+            if (profileService.isLocalVcsCi()) {
+                localCIConnectorService.orElseThrow().processNewPush(null, repository);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -320,15 +333,19 @@ public abstract class RepositoryResource {
             responseEntitySuccess = executor.exec();
         }
         catch (IllegalArgumentException | FileAlreadyExistsException ex) {
+            log.error("Illegal argument during operation or file already exists", ex);
             throw new BadRequestAlertException("Illegal argument during operation or file already exists", "Repository", "illegalArgumentFileAlreadyExists");
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
+            log.error("CheckoutConflictException | WrongRepositoryStateException during repository operation", ex);
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         catch (FileNotFoundException ex) {
+            log.error("FileNotFoundException during repository operation", ex);
             throw new EntityNotFoundException("File not found");
         }
-        catch (GitAPIException | IOException ex) {
+        catch (GitAPIException | IOException | ContinuousIntegrationException ex) {
+            log.error("GitAPIException | IOException | ContinuousIntegrationException during repository operation", ex);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;
@@ -373,7 +390,7 @@ public abstract class RepositoryResource {
         }
 
         InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
-        Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+        FileUtils.copyToFile(inputStream, file.get());
         inputStream.close();
     }
 }

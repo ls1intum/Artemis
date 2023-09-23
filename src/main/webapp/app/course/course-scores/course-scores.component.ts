@@ -13,12 +13,12 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
-import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
@@ -38,6 +38,7 @@ import {
     GRADE_KEY,
     NAME_KEY,
     POINTS_KEY,
+    PRESENTATION_POINTS_KEY,
     PRESENTATION_SCORE_KEY,
     REGISTRATION_NUMBER_KEY,
     SCORE_KEY,
@@ -83,12 +84,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     // max values
     maxNumberOfPointsPerExerciseType = new Map<ExerciseType, number>();
     maxNumberOfOverallPoints = 0;
+    maxNumberOfPresentationPoints = 0;
 
     // average values
     averageNumberOfParticipatedExercises = 0;
     averageNumberOfSuccessfulExercises = 0;
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
+    averageNumberOfPresentationPoints = 0;
 
     // note: these represent the course scores using the participation score table. We might switch to this new
     // calculation method completely if it is confirmed that it produces correct results
@@ -127,6 +130,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     faSort = faSort;
     faDownload = faDownload;
     faSpinner = faSpinner;
+    faClipboard = faClipboard;
 
     constructor(
         private route: ActivatedRoute,
@@ -179,7 +183,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Initialize the component with the given course.
      * @param course The course which should be displayed.
-     * @private
      */
     private initializeWithCourse(course: Course) {
         this.course = course;
@@ -191,7 +194,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Makes sure the exercise titles are unique.
-     * @private
      */
     private initializeExerciseTitles() {
         if (!this.course.exercises) {
@@ -220,7 +222,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Determines the exercises of the course that are included in the score calculation.
-     * @private
      */
     private determineExercisesIncludedInScore(course: Course): Array<Exercise> {
         return course
@@ -234,7 +235,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Returns all exercise types for which the course has at least one exercise.
-     * @private
      */
     private filterExercisesTypesWithExercises(): Array<ExerciseType> {
         return this.exerciseTypes.filter((exerciseType) => {
@@ -257,6 +257,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(
             ([participationsOfCourse, courseScoresResult, gradingScaleResponse, plagiarismCases]) => {
                 this.allParticipationsOfCourse = participationsOfCourse;
+                if (gradingScaleResponse.body) {
+                    this.setUpGradingScale(gradingScaleResponse.body);
+                }
 
                 this.calculateExerciseLevelStatistics();
                 this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
@@ -264,8 +267,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 this.calculateStudentLevelStatistics();
 
                 // if grading scale exists set properties
-                if (gradingScaleResponse.body) {
-                    this.calculateGradingScaleInformation(gradingScaleResponse.body, plagiarismCases.body ?? undefined);
+                if (this.gradingScaleExists) {
+                    this.calculateGradingScaleInformation(plagiarismCases.body ?? undefined);
                 }
 
                 // comparing with calculation from course scores (using new participation score table)
@@ -301,7 +304,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Checks that the score calculated on the server for the student matches the score calculated in the client.
      * @param student The student for which the score should be checked.
-     * @private
      */
     private checkStudentScoreCalculation(student: CourseScoresStudentStatistics) {
         const overAllPoints = roundValueSpecifiedByCourseSettings(student.overallPoints, this.course);
@@ -365,6 +367,22 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const maxNumberOfPointsPerExerciseTypeElement of this.maxNumberOfPointsPerExerciseType) {
             this.maxNumberOfOverallPoints += maxNumberOfPointsPerExerciseTypeElement[1];
         }
+
+        this.calculateReachablePresentationPoints();
+    }
+
+    /**
+     * Calculates the reachable presentation points and adds them to the max number of overall points
+     */
+    private calculateReachablePresentationPoints() {
+        const presentationsNumber = this.gradingScale?.presentationsNumber ?? 0;
+        const presentationsWeight = this.gradingScale?.presentationsWeight ?? 0;
+        if (this.maxNumberOfOverallPoints > 0 && presentationsNumber > 0 && presentationsWeight > 0 && presentationsWeight < 100) {
+            const reachablePointsWithPresentation = (-this.maxNumberOfOverallPoints / (presentationsWeight - 100)) * 100;
+            const reachablePresentationPoints = (reachablePointsWithPresentation * presentationsWeight) / 100.0;
+            this.maxNumberOfPresentationPoints = roundValueSpecifiedByCourseSettings(reachablePresentationPoints, this.course);
+            this.maxNumberOfOverallPoints += this.maxNumberOfPresentationPoints;
+        }
     }
 
     /**
@@ -394,6 +412,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     );
                 }
             }
+
+            this.addPresentationPointsForStudent(student);
         });
 
         for (const exerciseType of this.exerciseTypes) {
@@ -402,6 +422,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         this.averageNumberOfOverallPoints = average(this.students.map((student) => student.overallPoints));
+        this.averageNumberOfPresentationPoints = average(this.students.map((student) => student.presentationPoints));
         this.averageNumberOfSuccessfulExercises = average(this.students.map((student) => student.numberOfSuccessfulExercises));
         this.averageNumberOfParticipatedExercises = average(this.students.map((student) => student.numberOfParticipatedExercises));
 
@@ -418,9 +439,23 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Updates the students statistics with the presentation points.
+     * @param student
+     */
+    private addPresentationPointsForStudent(student: CourseScoresStudentStatistics) {
+        const presentationsNumber = this.gradingScale?.presentationsNumber ?? 0;
+        if (student.presentationScore > 0 && presentationsNumber > 0 && this.maxNumberOfPresentationPoints > 0) {
+            const presentationPointAvg = student.presentationScore / presentationsNumber!;
+            const presentationPoints = (this.maxNumberOfPresentationPoints * presentationPointAvg) / 100.0;
+
+            student.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, this.course);
+            student.overallPoints += student.presentationPoints;
+        }
+    }
+
+    /**
      * Goes through all participations and collects the found students.
      * @return A map of the student`s id to the student.
-     * @private
      */
     private mapStudentIdToStudentStatistics(): Map<number, CourseScoresStudentStatistics> {
         const studentsMap = new Map<number, CourseScoresStudentStatistics>();
@@ -449,7 +484,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Updates the student statistics with their result in the given exercise.
      * @param student The student that should be updated.
      * @param exercise The exercise that should be included in the statistics.
-     * @private
      */
     private updateStudentStatisticsWithExerciseResults(student: CourseScoresStudentStatistics, exercise: Exercise) {
         const relevantMaxPoints = exercise.maxPoints!;
@@ -492,23 +526,28 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Sets grading scale related properties
-     * @param gradingScale the grading scale for the course
-     * @param plagiarismCases the list of plagiarism cases involving the students of the course
+     * Sets the grading scale
+     * @param gradingScale
      */
-    calculateGradingScaleInformation(gradingScale: GradingScale, plagiarismCases?: PlagiarismCase[]) {
+    setUpGradingScale(gradingScale: GradingScale) {
         this.gradingScaleExists = true;
         this.gradingScale = gradingScale;
         this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
         this.isBonus = this.gradingScale.gradeType === GradeType.BONUS;
         this.maxGrade = this.gradingSystemService.maxGrade(this.gradingScale.gradeSteps);
+    }
 
-        if (this.maxNumberOfOverallPoints >= 0) {
+    /**
+     * Sets grading scale related properties
+     * @param plagiarismCases the list of plagiarism cases involving the students of the course
+     */
+    calculateGradingScaleInformation(plagiarismCases?: PlagiarismCase[]) {
+        if (this.maxNumberOfOverallPoints >= 0 && this.gradingScale) {
             const plagiarismMap = this.createStudentPlagiarismMap(plagiarismCases);
             const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
             this.averageGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentage)!.gradeName;
             for (const student of this.students) {
-                student.gradeStep = this.findStudentGradeStep(student, gradingScale, plagiarismMap);
+                student.gradeStep = this.findStudentGradeStep(student, this.gradingScale, plagiarismMap);
             }
         }
 
@@ -629,7 +668,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Constructs a new builder for a new CSV row.
      * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
-     * @private
      */
     private newRowBuilder(csvExportOptions?: CsvExportOptions): ExportRowBuilder {
         if (csvExportOptions) {
@@ -641,7 +679,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates the list of columns that should be part of the exported CSV or Excel file.
-     * @private
      */
     private generateExportColumnNames(): Array<string> {
         const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
@@ -650,6 +687,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             keys.push(...this.exercisesPerType.get(exerciseType)!.map((exercise) => exercise.title!));
             keys.push(ExportRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY));
             keys.push(ExportRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY));
+        }
+
+        if (this.maxNumberOfPresentationPoints > 0) {
+            keys.push(PRESENTATION_POINTS_KEY, PRESENTATION_SCORE_KEY);
         }
 
         keys.push(COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY);
@@ -669,7 +710,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Generates a row used in the export file consisting of statistics for the given student.
      * @param student The student for which an export row should be created.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateStudentStatisticsExportRow(student: CourseScoresStudentStatistics, csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.newRowBuilder(csvExportOptions);
@@ -696,6 +736,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rowData.setExerciseTypeScore(exerciseType, exerciseScoresPerType);
         }
 
+        if (this.maxNumberOfPresentationPoints > 0) {
+            const presentationScore = roundScorePercentSpecifiedByCourseSettings(student.presentationPoints / this.maxNumberOfPresentationPoints, this.course);
+            rowData.setPoints(PRESENTATION_POINTS_KEY, student.presentationPoints);
+            rowData.setScore(PRESENTATION_SCORE_KEY, presentationScore);
+        }
+
         const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
         rowData.setPoints(COURSE_OVERALL_POINTS_KEY, student.overallPoints);
         rowData.setScore(COURSE_OVERALL_SCORE_KEY, overallScore);
@@ -712,7 +758,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the maximum values of the various statistics.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowMaxValues(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Max', csvExportOptions);
@@ -724,6 +769,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             });
             rowData.setExerciseTypePoints(exerciseType, this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
             rowData.setExerciseTypeScore(exerciseType, 100);
+        }
+
+        if (this.maxNumberOfPresentationPoints > 0) {
+            rowData.setPoints(PRESENTATION_POINTS_KEY, this.maxNumberOfPresentationPoints);
+            rowData.setScore(PRESENTATION_SCORE_KEY, 100);
         }
 
         rowData.setPoints(COURSE_OVERALL_POINTS_KEY, this.maxNumberOfOverallPoints);
@@ -741,7 +791,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the average values of the various statistics.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowAverageValues(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Average', csvExportOptions);
@@ -762,6 +811,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rowData.setExerciseTypeScore(exerciseType, averageScore);
         }
 
+        if (this.maxNumberOfPresentationPoints > 0) {
+            const averagePresentationScore = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfPresentationPoints / this.maxNumberOfPresentationPoints, this.course);
+            rowData.setPoints(PRESENTATION_POINTS_KEY, this.averageNumberOfPresentationPoints);
+            rowData.setScore(PRESENTATION_SCORE_KEY, averagePresentationScore);
+        }
+
         const averageOverallScore = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
         rowData.setPoints(COURSE_OVERALL_POINTS_KEY, this.averageNumberOfOverallPoints);
         rowData.setScore(COURSE_OVERALL_SCORE_KEY, averageOverallScore);
@@ -778,7 +833,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported Csv with information about the number of participants.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowParticipation(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Number of Participations', csvExportOptions);
@@ -799,7 +853,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported Csv with information about the number of successful participants.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
-     * @private
      */
     private generateExportRowSuccessfulParticipation(csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.prepareEmptyExportRow('Number of Successful Participations', csvExportOptions);
@@ -830,9 +883,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         emptyLine.set(EMAIL_KEY, '');
         emptyLine.set(REGISTRATION_NUMBER_KEY, '');
 
-        emptyLine.set(COURSE_OVERALL_POINTS_KEY, '');
-        emptyLine.set(COURSE_OVERALL_SCORE_KEY, '');
-
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
@@ -841,6 +891,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             emptyLine.setExerciseTypePoints(exerciseType, '');
             emptyLine.setExerciseTypeScore(exerciseType, '');
         }
+
+        if (this.maxNumberOfPresentationPoints > 0) {
+            emptyLine.set(PRESENTATION_POINTS_KEY, '');
+            emptyLine.set(PRESENTATION_SCORE_KEY, '');
+        }
+
+        emptyLine.set(COURSE_OVERALL_POINTS_KEY, '');
+        emptyLine.set(COURSE_OVERALL_SCORE_KEY, '');
 
         if (this.course.presentationScore) {
             emptyLine.set(PRESENTATION_SCORE_KEY, '');
@@ -854,7 +912,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Puts the given value into the grading scale column of the Export row.
      * @param exportRow The row in which the value should be stored.
      * @param value The value that should be stored in the row.
-     * @private
      */
     private setExportRowGradeValue(exportRow: ExportRow, value: string | number | undefined) {
         if (this.gradingScaleExists) {
@@ -872,7 +929,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Compares them by due date first, then title.
      * @param e1 Some exercise.
      * @param e2 Another exercise.
-     * @private
      */
     private static compareExercises(e1: Exercise, e2: Exercise): number {
         if (e1.dueDate! > e2.dueDate!) {
@@ -893,7 +949,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Filters the course exercises and returns the exercises that are already released or do not have a release date
      * @param course the course whose exercises are filtered
-     * @private
      */
     private determineReleasedExercises(course: Course): Exercise[] {
         return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs()));
@@ -902,7 +957,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the average of given scores and returns it rounded based on course settings
      * @param scores the scores the average should be computed of
-     * @private
      */
     private calculateAverageScore(scores: number[]): number {
         return roundScorePercentSpecifiedByCourseSettings(mean(scores), this.course);
@@ -911,7 +965,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the average of given points and returns it rounded based on course settings
      * @param points the points the average should be computed of
-     * @private
      */
     private calculateAveragePoints(points: number[]): number {
         return roundValueSpecifiedByCourseSettings(mean(points), this.course);
@@ -920,7 +973,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the median of given scores and returns it rounded based on course settings
      * @param scores the scores the median should be computed of
-     * @private
      */
     private calculateMedianScore(scores: number[]): number {
         return roundScorePercentSpecifiedByCourseSettings(median(scores), this.course);
@@ -929,7 +981,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Computes the median of given points and returns it rounded based on course settings
      * @param points the points the median should be computed of
-     * @private
      */
     private calculateMedianPoints(points: number[]): number {
         return roundValueSpecifiedByCourseSettings(median(points), this.course);
@@ -937,17 +988,16 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Sets the statistical values displayed in the table next to the distribution chart
-     * @private
      */
     private calculateAverageAndMedianScores(): void {
-        const allCoursePoints = sum(this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0));
+        const allCoursePoints = sum(this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0)) + this.maxNumberOfPresentationPoints;
         const includedPointsPerStudent = this.students.map((student) => student.overallPoints);
         // average points and score included
         const scores = includedPointsPerStudent.map((point) => point / this.maxNumberOfOverallPoints);
         this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
 
         // average points and score total
-        const achievedPointsTotal = this.students.map((student) => sum(Array.from(student.pointsPerExercise.values())));
+        const achievedPointsTotal = this.students.map((student) => sum(Array.from(student.pointsPerExercise.values())) + student.presentationPoints);
         const averageScores = achievedPointsTotal.map((totalPoints) => totalPoints / allCoursePoints);
 
         this.averagePointsTotal = this.calculateAveragePoints(achievedPointsTotal);

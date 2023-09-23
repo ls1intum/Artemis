@@ -1,4 +1,5 @@
 import { BASE_API, GET } from '../../constants';
+
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
  */
@@ -12,12 +13,13 @@ export class ExerciseResultPage {
     }
 
     shouldShowScore(percentage: number) {
+        cy.reloadUntilFound('#submission-result-graded');
         cy.contains(`${percentage}%`).should('be.visible');
     }
 
-    clickViewSubmission() {
+    clickOpenExercise(exerciseId: number) {
         cy.intercept(GET, BASE_API + 'results/*/rating').as('getResults');
-        cy.get('#view-submission').click();
+        cy.get('#open-exercise-' + exerciseId).click();
         return cy.wait('@getResults');
     }
 

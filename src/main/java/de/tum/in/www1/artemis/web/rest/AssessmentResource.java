@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,12 +16,13 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 public abstract class AssessmentResource {
 
@@ -40,7 +40,7 @@ public abstract class AssessmentResource {
 
     protected final ExamService examService;
 
-    protected final WebsocketMessagingService messagingService;
+    protected final ResultWebsocketService resultWebsocketService;
 
     protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
@@ -49,7 +49,7 @@ public abstract class AssessmentResource {
     protected final SingleUserNotificationService singleUserNotificationService;
 
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
-            ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ResultRepository resultRepository, ExamService examService, ResultWebsocketService resultWebsocketService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -57,7 +57,7 @@ public abstract class AssessmentResource {
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
         this.examService = examService;
-        this.messagingService = messagingService;
+        this.resultWebsocketService = resultWebsocketService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
@@ -121,7 +121,7 @@ public abstract class AssessmentResource {
 
         Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
         if (submit) {
-            result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            result = assessmentService.submitManualAssessment(result.getId(), exercise);
             Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
             if (optionalStudent.isPresent()) {
                 singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
@@ -132,8 +132,8 @@ public abstract class AssessmentResource {
         if (!isAtLeastInstructor) {
             participation.filterSensitiveInformation();
         }
-        if (submit && (participation.getExercise().getAssessmentDueDate() == null || participation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingService.broadcastNewResult(result.getParticipation(), result);
+        if (submit && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+            resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
     }

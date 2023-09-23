@@ -21,6 +21,9 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { SortService } from 'app/shared/service/sort.service';
+import { Result } from 'app/entities/result.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -32,14 +35,25 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
+export type ProgrammingExerciseResetOptions = {
+    deleteBuildPlans: boolean;
+    deleteRepositories: boolean;
+    deleteParticipationsSubmissionsAndResults: boolean;
+    recreateBuildPlans: boolean;
+};
+
 // TODO: we should use a proper enum here
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(
+        private http: HttpClient,
+        private exerciseService: ExerciseService,
+        private sortService: SortService,
+    ) {}
 
     /**
      * Sets a new programming exercise up
@@ -63,11 +77,18 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Recreates the BASE and SOLUTION build plan for this exercise
-     * @param exerciseId of the programming exercise for which the build plans should be recreated
+     * Resets a programming exercise with the given exerciseId by performing a set of operations
+     * as specified in the ProgrammingExerciseResetOptions. The available operations include:
+     * 1. Recreating the BASE and SOLUTION build plans for the exercise.
+     * 2. Deleting all student participations associated with the exercise.
+     * 3. Deleting student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
+     *
+     * @param { number } exerciseId - Id of the programming exercise that should be reset.
+     * @param { ProgrammingExerciseResetOptions } options - Configuration options specifying which operations to perform during the exercise reset.
+     * @returns { Observable<string> } - An Observable that returns a string response.
      */
-    recreateBuildPlans(exerciseId: number): Observable<string> {
-        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/recreate-build-plans`, { responseType: 'text' });
+    reset(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/reset`, options, { responseType: 'text' });
     }
 
     /**
@@ -240,6 +261,60 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Finds the programming exercise for the given exerciseId with the template and solution participation and their latest result each.
+     * @param programmingExerciseId of the programming exercise to retrieve
+     */
+    findWithTemplateAndSolutionParticipationAndLatestResults(programmingExerciseId: number): Observable<EntityResponseType> {
+        return this.findWithTemplateAndSolutionParticipation(programmingExerciseId, true).pipe(
+            map((response) => {
+                if (response.body) {
+                    this.setLatestResultForTemplateAndSolution(response.body);
+                }
+                return response;
+            }),
+        );
+    }
+
+    private setLatestResultForTemplateAndSolution(programmingExercise: ProgrammingExercise) {
+        if (programmingExercise.templateParticipation) {
+            const latestTemplateResult = this.getLatestResult(programmingExercise.templateParticipation);
+            if (latestTemplateResult) {
+                programmingExercise.templateParticipation.results = [latestTemplateResult];
+            }
+            // This is needed to access the exercise in the result details
+            programmingExercise.templateParticipation.programmingExercise = programmingExercise;
+        }
+
+        if (programmingExercise.solutionParticipation) {
+            const latestSolutionResult = this.getLatestResult(programmingExercise.solutionParticipation);
+            if (latestSolutionResult) {
+                programmingExercise.solutionParticipation.results = [latestSolutionResult];
+            }
+            // This is needed to access the exercise in the result details
+            programmingExercise.solutionParticipation.programmingExercise = programmingExercise;
+        }
+    }
+
+    /**
+     * Finds the result that has the latest submission date.
+     *
+     * @param participation Some participation.
+     */
+    getLatestResult(participation: Participation): Result | undefined {
+        const submissions = participation.submissions;
+        if (!submissions || submissions.length === 0) {
+            return;
+        }
+
+        // important: sort to get the latest submission (the order of the server can be random)
+        this.sortService.sortByProperty(submissions, 'submissionDate', true);
+        const results = submissions.sort().last()?.results;
+        if (results && results.length > 0) {
+            return results.last();
+        }
+    }
+
+    /**
      * Reconnecting the missing submission of a submission's result
      *
      * @param submissions where the results have no reference to its submission
@@ -348,8 +423,12 @@ export class ProgrammingExerciseService {
      * @param repositoryType
      * @param auxiliaryRepositoryId
      */
-    exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType, auxiliaryRepositoryId: number): Observable<HttpResponse<Blob>> {
-        if (repositoryType === 'AUXILIARY') {
+    exportInstructorRepository(
+        exerciseId: number,
+        repositoryType: ProgrammingExerciseInstructorRepositoryType,
+        auxiliaryRepositoryId: number | undefined,
+    ): Observable<HttpResponse<Blob>> {
+        if (repositoryType === 'AUXILIARY' && auxiliaryRepositoryId !== undefined) {
             return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository/${auxiliaryRepositoryId}`, {
                 observe: 'response',
                 responseType: 'blob',

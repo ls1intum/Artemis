@@ -1,8 +1,15 @@
-import { ResultTemplateStatus, getResultIconClass, getTextColorClass, getUnreferencedFeedback, isOnlyCompilationTested } from 'app/exercises/shared/result/result.utils';
-import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
+import {
+    ResultTemplateStatus,
+    breakCircularResultBackReferences,
+    getResultIconClass,
+    getTextColorClass,
+    getUnreferencedFeedback,
+    isOnlyCompilationTested,
+} from 'app/exercises/shared/result/result.utils';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -111,5 +118,50 @@ describe('ResultUtils', () => {
         },
     ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
         expect(getResultIconClass(result, templateStatus!)).toBe(expected);
+    });
+
+    describe('circular reference breaker', () => {
+        const baseParticipation = {} as Participation;
+        const baseSubmission = {
+            participation: baseParticipation,
+        } as Submission;
+        const baseResult = {
+            submission: baseSubmission,
+            participation: baseParticipation,
+        } as Result;
+
+        it('should break a reference from the participation results back to the result', () => {
+            baseParticipation.results = [baseResult];
+            breakCircularResultBackReferences(baseResult);
+            expect(baseParticipation.results).toEqual([]);
+        });
+
+        it('should break a reference from the submission results back to the result', () => {
+            baseSubmission.results = [baseResult];
+            breakCircularResultBackReferences(baseResult);
+            expect(baseSubmission.results).toEqual([]);
+        });
+
+        it('should break a reference chain result -> submission -> participation -> result', () => {
+            // do not use baseParticipation here, otherwise the direct reference result -> participation is identical
+            baseResult.submission!.participation = {
+                results: [baseResult],
+            } as Participation;
+
+            breakCircularResultBackReferences(baseResult);
+
+            expect(baseSubmission.results).toEqual([]);
+        });
+
+        it('should break a reference from feedbacks back to the result', () => {
+            const feedback = {
+                result: baseResult,
+            } as Feedback;
+            baseResult.feedbacks = [feedback];
+
+            breakCircularResultBackReferences(baseResult);
+
+            expect(baseResult.feedbacks[0].result).toBeUndefined();
+        });
     });
 });

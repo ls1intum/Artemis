@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -57,8 +59,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
-    @Value("${spring.prometheus.monitoringIp:#{null}}")
-    private Optional<String> monitoringIpAddress;
+    @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
+    private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
             CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
@@ -103,7 +105,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     ROLE_INSTRUCTOR > ROLE_EDITOR
                     ROLE_EDITOR > ROLE_TA
                     ROLE_TA > ROLE_USER
-                    ROLE_USER > ROLE_ANONYMOUS
                 """);
         return roleHierarchy;
     }
@@ -118,19 +119,18 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/api-docs/**")
             .antMatchers("/api.html")
-            .antMatchers("/test/**")
-            .antMatchers(CustomLti13Configurer.JWKS_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
-        web.ignoring()
-            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*");
+            .antMatchers("/test/**");
         // @formatter:on
+    }
+
+    /**
+     * Only allow the configured IP addresses to access the prometheus endpoint
+     *
+     * @return an access check like "hasIpAddress('127.0.0.1') or hasIpAddress('::1')" that can be used as argument for
+     *         {@link org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer.AuthorizedUrl#access(String)}}
+     */
+    private String getMonitoringAccessDefinition() {
+        return monitoringIpAddresses.stream().map(ip -> String.format("hasIpAddress(\"%s\")", ip)).collect(Collectors.joining(" or "));
     }
 
     @Override
@@ -162,23 +162,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
+            // api
             .authorizeRequests()
-            .antMatchers("/api/register").permitAll()
-            .antMatchers("/api/activate").permitAll()
-            .antMatchers("/api/authenticate").permitAll()
-            .antMatchers("/api/account/reset-password/init").permitAll()
-            .antMatchers("/api/account/reset-password/finish").permitAll()
-            .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/lti13/auth-callback").permitAll()
-            .antMatchers("/api/programming-exercises/*/build-plan").permitAll()
-            .antMatchers("/api/**").authenticated()
+            .antMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+            .antMatchers("/api/public/**").permitAll()
+            // TODO: Remove the following three lines in June 2024 together with LegacyResource
+            .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/lti/launch/*").permitAll()
             .antMatchers("/websocket/**").permitAll()
-            .antMatchers("/management/health").permitAll()
-            .antMatchers("/management/info").permitAll()
-            // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
-            .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
-            .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
-            .antMatchers("/time").permitAll()
+            .antMatchers("/.well-known/jwks.json").permitAll()
+            .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
+            .antMatchers("/api/**").authenticated()
         .and()
             .apply(securityConfigurerAdapter());
 

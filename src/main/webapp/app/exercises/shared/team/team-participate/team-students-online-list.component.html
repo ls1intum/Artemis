@@ -12,7 +12,7 @@
                     <fa-icon class="student-status" [icon]="faCircle" size="sm"></fa-icon>
                 </ng-template>
             </div>
-            <span class="student-name">{{ student.name }} <span *ngIf="isSelf(student)" class="text-muted">(you)</span></span>
+            <span class="student-name">{{ student.name }} <span *ngIf="isSelf(student)" class="text-body-secondary">(you)</span></span>
             <span
                 *ngIf="isOther(student) && lastActionDate(student)"
                 ngbTooltip="{{ lastActionDate(student)!.fromNow() }}"

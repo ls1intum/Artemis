@@ -1,4 +1,4 @@
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitForLearningPathNodeDetailsDTO, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -15,9 +15,12 @@ type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
     providedIn: 'root',
 })
 export class LectureUnitService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
-    constructor(private httpClient: HttpClient, private attachmentService: AttachmentService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private attachmentService: AttachmentService,
+    ) {}
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
         // Send an ordered list of ids of the lecture units
@@ -134,5 +137,11 @@ export class LectureUnitService {
         } else {
             return lectureUnit.releaseDate;
         }
+    }
+
+    getLectureUnitForLearningPathNodeDetails(lectureUnitId: number) {
+        return this.httpClient.get<LectureUnitForLearningPathNodeDetailsDTO>(`${this.resourceURL}/lecture-units/${lectureUnitId}/for-learning-path-node-details`, {
+            observe: 'response',
+        });
     }
 }

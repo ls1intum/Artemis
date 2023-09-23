@@ -26,7 +26,12 @@ export class EditAttachmentUnitComponent implements OnInit {
     lectureId: number;
     notificationText: string;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private attachmentUnitService: AttachmentUnitService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private attachmentUnitService: AttachmentUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -57,7 +62,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                             description: this.attachmentUnit.description,
                             releaseDate: this.attachment.releaseDate,
                             version: this.attachment.version,
-                            learningGoals: this.attachmentUnit.learningGoals,
+                            competencies: this.attachmentUnit.competencies,
                         },
                         fileProperties: {
                             fileName: this.attachment.link,
@@ -69,7 +74,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     }
 
     updateAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText, learningGoals } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, competencies } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // optional update notification text for students
@@ -83,7 +88,7 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachment.attachmentType = AttachmentType.FILE;
         // === Setting attachmentUnit ===
         this.attachmentUnit.description = description;
-        this.attachmentUnit.learningGoals = learningGoals;
+        this.attachmentUnit.competencies = competencies;
 
         this.isLoading = true;
 

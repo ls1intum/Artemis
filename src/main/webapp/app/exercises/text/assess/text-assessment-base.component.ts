@@ -18,7 +18,7 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
     /*
-     * Base Component for TextSubmissionAssessmentComponent and TextFeedbackConflictsComponent since they share a lot of same functions.
+     * Base Component for TextSubmissionAssessmentComponent and ExampleTextSubmissionComponent since they share a lot of same functions.
      */
 
     exercise?: TextExercise;
@@ -92,7 +92,19 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
                     console.error('Overlapping AUTOMATIC Text Blocks!', previousRef, ref);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
-                    console.error('Overlapping MANUAL Text Blocks!', previousRef, ref);
+                    // Make sure to select a TextBlockRef that has a feedback.
+                    let selectedRef = ref;
+                    if (!selectedRef.feedback) {
+                        selectedRef = previousRef;
+                    }
+
+                    // Non-overlapping part of previousRef and ref should be added as a new text block (otherwise, some text is lost)
+                    // But before, make sure that the selectedRef does not already cover the exact same range (otherwise, duplicate text blocks will appear)
+                    if (selectedRef.block!.startIndex != previousRef.block!.startIndex! && selectedRef.block!.endIndex != nextIndex) {
+                        TextAssessmentBaseComponent.addTextBlockByIndices(previousRef.block!.startIndex!, nextIndex, submission!, textBlockRefs);
+                    }
+
+                    ref = selectedRef;
                 } else {
                     // Find which block is Manual and only keep that one. Automatic block is stored in `unusedTextBlockRefs` in case we need to restore.
                     switch (TextBlockType.MANUAL) {
@@ -131,7 +143,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
             newRef.block.startIndex = startIndex;
             newRef.block.endIndex = endIndex;
             newRef.block.setTextFromSubmission(submission!);
-            newRef.block.computeId();
         }
         textBlockRefs.push(newRef);
     }

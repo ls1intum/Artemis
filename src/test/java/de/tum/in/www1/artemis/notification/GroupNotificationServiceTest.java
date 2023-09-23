@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -16,7 +17,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -25,11 +27,14 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
-class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "groupnotificationservice";
 
@@ -50,6 +55,15 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     private Exercise exercise;
 
@@ -118,35 +132,35 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @BeforeEach
     void setUp() {
-        course = database.createCourse();
+        course = courseUtilService.createCourse();
         course.setInstructorGroupName(TEST_PREFIX + "instructors");
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutors");
         course.setEditorGroupName(TEST_PREFIX + "editors");
         course.setStudentGroupName(TEST_PREFIX + "students");
         course.setTitle(COURSE_TITLE);
 
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
-        student = database.getUserByLogin(TEST_PREFIX + "student1");
+        student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setGroups(Set.of(TEST_PREFIX + "students"));
         userRepository.save(student);
 
-        instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.setGroups(Set.of(TEST_PREFIX + "instructors"));
         userRepository.save(instructor);
 
         archiveErrors = new ArrayList<>();
 
-        exam = database.addExam(course);
+        exam = examUtilService.addExam(course);
         examRepository.save(exam);
 
         lecture = new Lecture();
         lecture.setCourse(course);
         lecture.setTitle(LECTURE_TITLE);
 
-        exercise = ModelFactory.generateTextExercise(null, null, null, course);
+        exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(exercise);
-        updatedExercise = ModelFactory.generateTextExercise(null, null, null, course);
+        updatedExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(updatedExercise);
 
         attachment = new Attachment();
@@ -159,7 +173,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         examExercise.setExerciseGroup(exerciseGroup);
         examExercise.setProblemStatement(EXAM_PROBLEM_STATEMENT);
 
-        quizExercise = database.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
+        quizExercise = QuizExerciseFactory.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
         exerciseRepository.save(quizExercise);
 
         programmingExercise = new ProgrammingExercise();
@@ -179,7 +193,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         answerPost.setContent(ANSWER_POST_CONTENT);
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser(TEST_PREFIX + "instructor1");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         // store the current notification count to let tests work even if notifications are created in other tests
         notificationCountBeforeTest = notificationRepository.findAll().size();
@@ -196,13 +210,31 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      * @param numberOfGroupsAndCalls    indicates the expected number of notifications created/saved.
      *                                      This number depends on the number of different groups. For each different group one separate call is needed.
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
+     * @return last captured notification
      */
-    private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
+    private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
+        return verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(numberOfGroupsAndCalls, expectedNotificationTitle, 0);
+    }
+
+    /**
+     * Auxiliary method that checks if the groupNotificationRepository was called successfully with the correct notification (type)
+     *
+     * @param numberOfGroupsAndCalls    indicates the expected number of notifications created/saved.
+     *                                      This number depends on the number of different groups. For each different group one separate call is needed.
+     * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
+     * @param index                     the notification at this index (counting from the end of the notifications list) gets returned
+     * @return the captured notification at the given index
+     */
+    private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
+        await().untilAsserted(
+                () -> assertThat(notificationRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
+                        .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
+
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
-                .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest);
+
+        return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
@@ -215,7 +247,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
     /**
@@ -225,7 +257,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
     /**
@@ -235,7 +267,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
         examExercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(examExercise, null);
-        verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
     /**
@@ -245,9 +277,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
         exercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
-        verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
     /// CheckNotificationForExerciseRelease
@@ -257,8 +289,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @Test
     void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
+        verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
@@ -267,8 +299,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
+        verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
     /**
@@ -277,8 +309,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
-        verify(instanceMessageSendService, times(1)).sendExerciseReleaseNotificationSchedule(any());
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
+        verify(instanceMessageSendService, timeout(1500)).sendExerciseReleaseNotificationSchedule(any());
     }
 
     /// CheckAndCreateAppropriateNotificationsWhenUpdatingExercise
@@ -296,7 +328,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT);
 
-        verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService).notifyAboutExerciseUpdate(any(), any());
 
         // Exercise Released Notifications
         verify(groupNotificationService, times(expectNotifyAboutExerciseReleaseNow ? 1 : 0)).notifyAllGroupsAboutReleasedExercise(any());
@@ -349,17 +381,23 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      * @param notificationSettingIdentifier of the corresponding notification type
      */
     private void prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
-        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, notificationSettingIdentifier);
+        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, true, notificationSettingIdentifier);
         notificationSettingRepository.save(notificationSetting);
     }
 
     /**
      * Checks if an email was created and send
-     *
-     * @param times how often the email should have been sent
      */
-    private void verifyEmail(int times) {
-        verify(javaMailSender, timeout(1500).times(times)).createMimeMessage();
+    private void verifyEmail() {
+        verify(javaMailSender, timeout(1500)).createMimeMessage();
+    }
+
+    /**
+     * Checks if a push to android and iOS was created and send
+     */
+    private void verifyPush(Notification notification, Set<User> users, Object notificationSubject) {
+        verify(applePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
+        verify(firebasePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
     }
 
     /**
@@ -367,9 +405,11 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @Test
     void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
+        var countBefore = notificationRepository.count();
         attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        assertThat(notificationRepository.findAll()).as("No notification should be created/saved").isEmpty();
+        var countAfter = notificationRepository.count();
+        assertThat(countAfter).as("No notification should be created/saved").isEqualTo(countBefore);
     }
 
     /**
@@ -386,132 +426,98 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         prepareNotificationSettingForTest(student, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
 
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(1, ATTACHMENT_CHANGE_TITLE);
+        Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ATTACHMENT_CHANGE_TITLE);
 
-        verifyEmail(1);
+        verifyEmail();
+        verifyPush(notification, Set.of(student), attachment);
     }
 
-    /**
-     * Test for notifyStudentGroupAboutExercisePractice method
-     */
     @Test
     void testNotifyStudentGroupAboutExercisePractice() {
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
-        verifyRepositoryCallWithCorrectNotification(1, EXERCISE_PRACTICE_TITLE);
-        verifyEmail(1);
+        Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXERCISE_PRACTICE_TITLE);
+
+        verifyEmail();
+        verifyPush(notification, Set.of(student), exercise);
     }
 
-    /**
-     * Test for notifyStudentGroupAboutQuizExerciseStart method
-     */
     @Test
     void testNotifyStudentGroupAboutQuizExerciseStart() {
         groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
-        verifyRepositoryCallWithCorrectNotification(1, QUIZ_EXERCISE_STARTED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, QUIZ_EXERCISE_STARTED_TITLE);
     }
 
-    /**
-     * Test for notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate method
-     */
     @Test
     void testNotifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(3, EXERCISE_UPDATED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, EXERCISE_UPDATED_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutReleasedExercise method
-     */
     @Test
     void testNotifyAllGroupsAboutReleasedExercise() {
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED);
         groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
         verify(javaMailSender, timeout(1500).atLeastOnce()).createMimeMessage();
     }
 
-    /**
-     * Test for notifyEditorAndInstructorGroupAboutExerciseUpdate method
-     */
     @Test
     void testNotifyEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(2, EXERCISE_UPDATED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, EXERCISE_UPDATED_TITLE);
     }
 
-    /**
-     * Test for notifyEditorAndInstructorGroupAboutExerciseUpdate method
-     */
     @Test
     void testNotifyAllGroupsAboutNewPostForExercise() {
         groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_EXERCISE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_EXERCISE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise method
-     */
     @Test
     void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(2, DUPLICATE_TEST_CASE_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, DUPLICATE_TEST_CASE_TITLE);
     }
 
-    /**
-     * Test for notifyInstructorGroupAboutIllegalSubmissionsForExercise method
-     */
     @Test
     void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotification(1, ILLEGAL_SUBMISSION_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ILLEGAL_SUBMISSION_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutNewPostForLecture method
-     */
     @Test
     void testNotifyAllGroupsAboutNewPostForLecture() {
         groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_LECTURE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_LECTURE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutNewCoursePost method
-     */
     @Test
     void testNotifyAllGroupsAboutNewCoursePost() {
         groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_COURSE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_COURSE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost method
-     */
     @Test
     void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise method
-     */
     @Test
     void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
-    /**
-     * Test for notifyAllGroupsAboutNewAnnouncement method
-     */
     @Test
     void testNotifyAllGroupsAboutNewAnnouncement() {
         prepareNotificationSettingForTest(student, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST);
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
-        verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE);
-        verifyEmail(2);
+        Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE, 3);
+
+        verifyEmail();
+        verifyPush(notification, Set.of(student), post);
     }
 
     /**
@@ -520,7 +526,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_LECTURE_POST_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
     /**
@@ -530,7 +536,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testNotifyInstructorGroupAboutChangedTestCasesForProgrammingExercise() {
         prepareNotificationSettingForTest(instructor, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED);
         groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
-        verifyRepositoryCallWithCorrectNotification(2, PROGRAMMING_TEST_CASES_CHANGED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, PROGRAMMING_TEST_CASES_CHANGED_TITLE);
     }
 
     // Course Archiving
@@ -541,7 +547,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveStarted() {
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_STARTED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_STARTED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, COURSE_ARCHIVE_STARTED_TITLE);
     }
 
     /**
@@ -550,7 +556,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFailed() {
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FAILED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_FAILED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, COURSE_ARCHIVE_FAILED_TITLE);
     }
 
     /**
@@ -559,7 +565,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFinished() {
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FINISHED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_FINISHED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, COURSE_ARCHIVE_FINISHED_TITLE);
     }
 
     // Exam Archiving
@@ -570,7 +576,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveStarted() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_STARTED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_STARTED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXAM_ARCHIVE_STARTED_TITLE);
     }
 
     /**
@@ -579,7 +585,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFailed() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FAILED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FAILED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXAM_ARCHIVE_FAILED_TITLE);
     }
 
     /**
@@ -588,6 +594,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFinished() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FINISHED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FINISHED_TITLE);
+        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXAM_ARCHIVE_FINISHED_TITLE);
     }
 }

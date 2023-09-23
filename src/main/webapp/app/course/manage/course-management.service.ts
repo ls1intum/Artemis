@@ -33,7 +33,7 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrl = 'api/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
@@ -160,7 +160,8 @@ export class CourseManagementService {
     }
 
     /**
-     * finds one course using a GET request
+     * Finds one course using a GET request.
+     * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
      * @param userRefresh whether this is a user-initiated refresh (default: false)
      */
@@ -244,7 +245,7 @@ export class CourseManagementService {
      */
     findAllForRegistration(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
     }
 
@@ -253,7 +254,7 @@ export class CourseManagementService {
      */
     findOneForRegistration(courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
@@ -262,9 +263,25 @@ export class CourseManagementService {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<User>) => {
+    registerForCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
+                if (res.body != undefined) {
+                    this.accountService.syncGroups(res.body);
+                }
+                return res;
+            }),
+        );
+    }
+
+    /**
+     * unenroll from course with the provided unique identifier using a POST request
+     * NB: the body is null, because the server can identify the user anyway
+     * @param courseId - the id of the course
+     */
+    unenrollFromCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<string[]>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
                 }
@@ -400,11 +417,9 @@ export class CourseManagementService {
      * if the archive does not exist.
      * @param courseId The id of the course
      */
-    downloadCourseArchive(courseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/download-archive`, {
-            observe: 'response',
-            responseType: 'blob',
-        });
+    downloadCourseArchive(courseId: number): void {
+        const url = `${this.resourceUrl}/${courseId}/download-archive`;
+        window.open(url, '_blank');
     }
 
     /**
@@ -485,13 +500,12 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course EntityResponses.
      * @param courseRes
-     * @private
      */
     processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
-        this.setLearningGoalsIfNone(courseRes);
+        this.setCompetenciesIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
         this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
@@ -501,7 +515,6 @@ export class CourseManagementService {
     /**
      * This method bundles recurring conversion steps for Course processCourseEntityArrayResponseType.
      * @param courseRes
-     * @private
      */
     private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
         this.convertTutorialGroupsDatesFromServer(courseRes);
@@ -526,6 +539,9 @@ export class CourseManagementService {
         return Object.assign({}, course, {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
+            enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
+            enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
+            unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
         });
     }
 
@@ -586,7 +602,6 @@ export class CourseManagementService {
     /**
      * Converts the exercise category json string into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body && res.body.exercises) {
@@ -598,7 +613,6 @@ export class CourseManagementService {
     /**
      * Converts an array of exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
-     * @private
      */
     private convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
@@ -619,13 +633,13 @@ export class CourseManagementService {
     }
 
     /**
-     * Set the learning goals and prerequisites to an empty array if undefined
+     * Set the competencies and prerequisites to an empty array if undefined
      * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
      * @param res The server response containing a course object
      */
-    private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
+    private setCompetenciesIfNone(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.learningGoals = res.body.learningGoals || [];
+            res.body.competencies = res.body.competencies || [];
             res.body.prerequisites = res.body.prerequisites || [];
         }
         return res;

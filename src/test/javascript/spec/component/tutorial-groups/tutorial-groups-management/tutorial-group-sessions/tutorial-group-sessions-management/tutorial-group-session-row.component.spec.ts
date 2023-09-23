@@ -83,7 +83,7 @@ describe('TutorialGroupSessionRowComponent', () => {
         fixture.whenStable().then(() => {
             expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
             expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
-            expect(attendanceChangedSpy).toHaveBeenCalledTimes(0);
+            expect(attendanceChangedSpy).not.toHaveBeenCalled();
             expect(component.attendanceDiffersFromPersistedValue).toBeFalse();
             expect(component.session.attendanceCount).toBe(component.persistedAttendanceCount);
         });

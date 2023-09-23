@@ -30,7 +30,7 @@ export enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
     /**
      * A regular, finished result is available.
-     * Can be rated (counts toward the score) or not rated (after the deadline for practice).
+     * Can be rated (counts toward the score) or not rated (after the due date for practice).
      */
     HAS_RESULT = 'HAS_RESULT',
     /**
@@ -109,7 +109,7 @@ export const evaluateTemplateStatus = (
     result: Result | undefined,
     isBuilding: boolean,
     missingResultInfo = MissingResultInformation.NONE,
-) => {
+): ResultTemplateStatus => {
     // Fallback if participation is not set
     if (!participation || !exercise) {
         if (!result) {
@@ -307,7 +307,6 @@ export const isManualResult = (result?: Result) => {
  *
  * @param results list of results to extract the test case names from
  * @return list of extracted test case names
- * @private
  */
 export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
     const testCasesNames: Set<string> = new Set();
@@ -330,7 +329,6 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
  * @param result from which the test case results should be extracted
  * @param testCaseNames list containing the test names
  * @param withFeedback if true, the feedback's full text is included in case of failed test case
- * @private
  */
 export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[], withFeedback?: boolean): TestCaseResult[] {
     const testCaseResults: TestCaseResult[] = [];
@@ -355,7 +353,6 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
  * If no feedback is found for the given test case name, null is returned.
  * @param feedbacks the list of result feedbacks to search in
  * @param testCase the name of the test case to search for
- * @private
  */
 export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
     if (!feedbacks) {
@@ -363,4 +360,27 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
     }
     const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
     return i !== -1 ? feedbacks[i] : null;
+}
+
+/**
+ * Removes references from the {@link Participation}, {@link Submission}, and {@link Feedback} back to the result itself.
+ *
+ * To be used before sending data to the server.
+ * Otherwise, no valid JSON can be constructed.
+ *
+ * @param result Some result.
+ */
+export function breakCircularResultBackReferences(result: Result) {
+    if (result.participation?.results) {
+        result.participation.results = [];
+    }
+    if (result.submission?.participation?.results) {
+        result.submission.participation.results = [];
+    }
+    if (result.submission?.results) {
+        result.submission.results = [];
+    }
+    if (result.feedbacks) {
+        result.feedbacks.forEach((feedback) => (feedback.result = undefined));
+    }
 }

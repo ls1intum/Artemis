@@ -10,9 +10,13 @@ type EntityResponseType = HttpResponse<SystemNotification>;
 
 @Injectable({ providedIn: 'root' })
 export class AdminSystemNotificationService {
-    public resourceUrl = SERVER_API_URL + 'api/admin/system-notifications';
+    public resourceUrl = 'api/admin/system-notifications';
 
-    constructor(private router: Router, private http: HttpClient, private systemNotificationService: SystemNotificationService) {}
+    constructor(
+        private router: Router,
+        private http: HttpClient,
+        private systemNotificationService: SystemNotificationService,
+    ) {}
 
     /**
      * Create a notification on the server using a POST request.

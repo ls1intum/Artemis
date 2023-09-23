@@ -23,6 +23,7 @@ describe('External Submission Dialog', () => {
         activeModal = {
             dismiss: jest.fn(),
             close: jest.fn(),
+            update: jest.fn(),
         };
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],

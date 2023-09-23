@@ -3,25 +3,28 @@
 # ===================================================================
 
 artemis:
-    course-archives-path: ./exports/server-integration-test/courses         # a folder in which archived courses and exams are stored.
+    course-archives-path: ./exports/server-integration-test/courses # a folder in which archived courses and exams are stored.
+    legal-path: ./legal/server-integration-test                     # a folder in which legal files (privacy statement, imprint) are stored.
     repo-clone-path: ./repos/server-integration-test
     repo-download-clone-path: ./repos-download/server-integration-test
+    data-export-path: ./data-exports/server-integration-test
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
         use-external: true
         external:
             url: https://user-management.fake.fake
-            user: fake-username
+            user: fake-username-um
             password: fake-password
             admin-group-name: admins
         ldap:
-            url: <url>
-            user-dn: <user-dn>
-            password: <password>
-            base: <base>
+            url: https://ldap.fake.fake
+            user-dn: fake-username-ldap
+            password: fake-password
+            base: ou=users,ou=data,ou=prod,ou=iauth,dc=tum,dc=de
         internal-admin:
             username: artemis_admin
             password: artemis_admin
+            email: "admin@localhost"
         registration:
             enabled: true
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@[a-zA-Z0-9_\-\.]+\.[a-zA-Z]{2,5}'
@@ -29,21 +32,19 @@ artemis:
         course-registration:
             allowed-username-pattern: .*
     version-control:
-        user: fake-username
+        user: fake-username-vc
         password: fake-password
         url: https://version-control.fake.fake
         token: fake-token
-        ci-token: fake-Token
+        health-api-token: fake-token
         ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
         ssh-keys-url-path: /plugins/servlet/ssh/account/keys
         default-branch: main
     continuous-integration:
-        user: fake-username
+        user: fake-username-ci
         password: fake-password
         token: fake-token
         url: https://continuous-integration.fake.fake
-        vcs-application-link-name: Fake Application Link Name
-        empty-commit-necessary: true
         secret-push-token: fake-token-hash
         vcs-credentials: fake-key
         artemis-authentication-token-key: fake-key
@@ -52,9 +53,8 @@ artemis:
     git:
         name: Artemis
         email: artemis@in.tum.de
-    athene:
-        url: http://localhost
-        base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-        token-validity-in-seconds: 10800
+    athena:
+        url: http://localhost:5000
+        secret: abcdef12345
     apollon:
         conversion-service-url: http://localhost:8080

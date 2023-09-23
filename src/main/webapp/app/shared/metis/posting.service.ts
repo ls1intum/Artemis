@@ -19,6 +19,7 @@ export abstract class PostingService<T extends Posting> {
         return {
             ...posting,
             creationDate: convertDateFromClient(posting.creationDate),
+            updatedDate: convertDateFromClient(posting.updatedDate),
         };
     }
 
@@ -30,6 +31,7 @@ export abstract class PostingService<T extends Posting> {
     protected convertPostingResponseDateFromServer(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
             res.body.creationDate = convertDateFromServer(res.body.creationDate);
+            res.body.updatedDate = convertDateFromServer(res.body.updatedDate);
         }
         return res;
     }

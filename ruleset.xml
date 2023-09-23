@@ -131,7 +131,10 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
     <rule ref="category/java/errorprone.xml/ProperLogger"/>
     <rule ref="category/java/errorprone.xml/ReturnFromFinallyBlock"/>
     <rule ref="category/java/codestyle.xml/ShortMethodName"/>
-    <rule ref="category/java/codestyle.xml/ShortVariable"/>
+    <rule ref="category/java/codestyle.xml/ShortVariable">
+        // It's okay to use short variable names in DTOs, e.g. "id" or "name"
+        <exclude-pattern>.*/de/tum/in/www1/artemis/web/rest/dto/.*</exclude-pattern>
+    </rule>
     <rule ref="category/java/design.xml/SimplifiedTernary"/>
     <rule ref="category/java/design.xml/SimplifyBooleanAssertion"/>
     <rule ref="category/java/design.xml/SimplifyBooleanExpressions"/>
@@ -167,28 +170,6 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
     <rule ref="category/java/errorprone.xml/UselessOperationOnImmutable"/>
     <rule ref="category/java/codestyle.xml/UselessQualifiedThis"/>
     <rule ref="category/java/bestpractices.xml/JUnit5TestShouldBePackagePrivate" />
-    <rule name="DontUseCollectorsToList"
-          language="java"
-          message="Don't use Collectors.toList()"
-          class="net.sourceforge.pmd.lang.rule.XPathRule">
-        <description>
-            <![CDATA[
-                Collectors.toList() should not be used.
-                Use the .toList() for an unmodifiable list or .collect(Collectors.toCollection(ArrayList::new)) for a modifiable list.
-            ]]>
-        </description>
-        <priority>3</priority>
-        <properties>
-            <property name="version" value="2.0"/>
-            <property name="xpath">
-                <value>
-                    <![CDATA[
-                        //PrimaryPrefix[Name[@Image = "Collectors.toList" or @Image = "toList"]]
-                    ]]>
-                </value>
-            </property>
-        </properties>
-    </rule>
 
     // all JSP rules
     <rule ref="category/jsp/bestpractices.xml"/>

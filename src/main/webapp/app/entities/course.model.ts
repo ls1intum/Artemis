@@ -4,13 +4,14 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Competency } from 'app/entities/competency.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { LearningPath } from 'app/entities/competency/learning-path.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -50,6 +51,9 @@ export class Course implements BaseEntity {
     public instructorGroupName?: string;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
+    public enrollmentStartDate?: dayjs.Dayjs;
+    public enrollmentEndDate?: dayjs.Dayjs;
+    public unenrollmentEndDate?: dayjs.Dayjs;
     public semester?: string;
     public testCourse?: boolean;
     public language?: Language;
@@ -57,8 +61,9 @@ export class Course implements BaseEntity {
     public color?: string;
     public courseIcon?: string;
     public onlineCourse?: boolean;
-    public registrationEnabled?: boolean;
-    public registrationConfirmationMessage?: string;
+    public enrollmentEnabled?: boolean;
+    public enrollmentConfirmationMessage?: string;
+    public unenrollmentEnabled?: boolean;
     public presentationScore?: number;
     public maxComplaints?: number;
     public maxTeamComplaints?: number;
@@ -83,13 +88,16 @@ export class Course implements BaseEntity {
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
-    public learningGoals?: LearningGoal[];
-    public prerequisites?: LearningGoal[];
+    public competencies?: Competency[];
+    public prerequisites?: Competency[];
+    public learningPathsEnabled?: boolean;
+    public learningPaths?: LearningPath[];
     public exams?: Exam[];
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
     public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+    public courseInformationSharingMessagingCodeOfConduct?: string;
 
     // helper attributes
     public isAtLeastTutor?: boolean;
@@ -107,7 +115,7 @@ export class Course implements BaseEntity {
         this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
 
-        this.registrationEnabled = false; // default value
+        this.enrollmentEnabled = false; // default value
         this.presentationScore = 0; // default value
         this.maxComplaints = 3; // default value
         this.maxTeamComplaints = 3; // default value

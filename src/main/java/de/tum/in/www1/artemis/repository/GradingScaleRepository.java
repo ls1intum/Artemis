@@ -164,6 +164,19 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
 
+    /**
+     * Find grading scales for courses
+     *
+     * @param courseIds the courses to which the grading scales belong
+     * @return a set of grading scales for the courses
+     */
+    @Query("""
+                SELECT gs
+                FROM GradingScale gs
+                WHERE gs.course.id IN :courseIds
+            """)
+    Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
+
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
     Optional<GradingScale> findWithEagerBonusFromByBonusFromId(@Param("bonusId") Long bonusId);
 
@@ -202,26 +215,6 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             return highestGradeStep.orElseThrow(() -> new EntityNotFoundException("No grade steps available"));
         }
         throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
-    }
-
-    /**
-     * Maps a grade point to a valid grade step within the grading scale or throws an exception if no match was found.
-     * The percentage is calculated by using the given points and the max points from the grading scale.
-     *
-     * @param points       the grade points to be mapped
-     * @param gradingScale the grading scale with the grade steps
-     * @return grade step corresponding to the given points
-     * @see #matchPercentageToGradeStep(double, Long)
-     */
-    default GradeStep matchPointsToGradeStep(double points, GradingScale gradingScale) {
-        int maxPoints = gradingScale.getMaxPoints();
-        if (maxPoints <= 0) {
-            throw new BadRequestAlertException("Max points for the grading scale must be set to a value greater than 0", "gradingScale", "invalidMaxPoints");
-        }
-
-        double percentage = points / maxPoints * 100.0;
-
-        return this.matchPercentageToGradeStep(percentage, gradingScale.getGradeSteps());
     }
 
     /**

@@ -56,7 +56,6 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.loading).toBeFalse();
         expect(component.ngxData[0].series[0].value).toBe(0);
         expect(component.ngxData[0].series[1].value).toBe(0);
         expect(component.ngxData[0].series[2].value).toBe(0);

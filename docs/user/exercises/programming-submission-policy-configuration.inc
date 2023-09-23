@@ -15,7 +15,7 @@ Choosing the right submission policy configuration depends on the exercise and y
 In general, lock repository and submission penalty policies combat trial-and-error solving approaches.
 
 **1. None**
-When selecting no submission policy, exercise participants can submit their solution as often as they want until the deadline.
+When selecting no submission policy, exercise participants can submit their solution as often as they want until the due date.
 
 .. figure:: programming/submission-policy-none-form.png
           :align: center
@@ -36,7 +36,7 @@ After that, Artemis locks the participation repository, so the participant can n
     Artemis attempts to lock the repository again and sets the newly generated result to |not-graded|.
 
 **3. Submission Penalty**
-Participants can submit as often as they want until the deadline, however, for each submission exceeding the submission limit,
+Participants can submit as often as they want until the due date, however, for each submission exceeding the submission limit,
 the *exceeding submission limit penalty* is deducted from the participant's score. The exceeding submission limit penalty must be
 provided as a positive number of points.
 

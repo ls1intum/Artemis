@@ -29,6 +29,9 @@ public class BitbucketInfoContributor implements InfoContributor {
         // Store server url
         builder.withDetail(Constants.VERSION_CONTROL_URL, bitbucketServerUrl);
 
+        // Store name of the version control system
+        builder.withDetail(Constants.VERSION_CONTROL_NAME, "Bitbucket");
+
         // Store commit hash url template
         String commitHashPathTemplate = "/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}";
         String commitHashUrlTemplate = bitbucketServerUrl + commitHashPathTemplate;

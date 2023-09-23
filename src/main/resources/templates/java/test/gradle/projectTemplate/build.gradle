@@ -2,10 +2,10 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '5.0.13'
+    id 'com.github.spotbugs' version '5.1.1'
     // %static-code-analysis-stop%
     // %record-testwise-coverage-start%
-    id 'com.teamscale' version '29.1.2'
+    id 'com.teamscale' version '30.1.1'
     // %record-testwise-coverage-stop%
 }
 
@@ -21,8 +21,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.11.3'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'
+    implementation 'org.apache.commons:commons-lang3:3.13.0'
 
     // testImplementation(':${exerciseNamePomXml}')
     // testImplementation(':${exerciseNamePomXml}-Solution')
@@ -79,6 +79,7 @@ sourceSets {
 
 def forbiddenPackageFolders = [ //(2)
                                 "$studentOutputDir/ch/qos/logback/",
+                                "$studentOutputDir/com/github/javaparser/",
                                 "$studentOutputDir/com/intellij/",
                                 "$studentOutputDir/com/sun/",
                                 "$studentOutputDir/de/tum/in/test/api/",

@@ -17,19 +17,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExportToCsv } from 'export-to-csv';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
 const generateCsv = jest.fn();
-
-jest.mock('export-to-csv', () => ({
-    ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv,
-    })),
-}));
+jest.mock('export-to-csv', () => {
+    class MockExportToCsv {
+        generateCsv = generateCsv;
+    }
+    return { ExportToCsv: MockExportToCsv };
+});
 
 describe('Detailed Grading System Component', () => {
     let comp: DetailedGradingSystemComponent;
@@ -42,6 +41,7 @@ describe('Detailed Grading System Component', () => {
     const route = { parent: { params: of({ courseId: 1, examId: 1 }) } } as any as ActivatedRoute;
 
     const gradeStep1: GradeStep = {
+        id: 1,
         gradeName: 'Fail',
         lowerBoundPercentage: 0,
         upperBoundPercentage: 40,
@@ -50,6 +50,7 @@ describe('Detailed Grading System Component', () => {
         isPassingGrade: false,
     };
     const gradeStep2: GradeStep = {
+        id: 2,
         gradeName: 'Pass',
         lowerBoundPercentage: 40,
         upperBoundPercentage: 80,
@@ -58,6 +59,7 @@ describe('Detailed Grading System Component', () => {
         isPassingGrade: true,
     };
     const gradeStep3: GradeStep = {
+        id: 3,
         gradeName: 'Excellent',
         lowerBoundPercentage: 80,
         upperBoundPercentage: 100,
@@ -183,7 +185,7 @@ describe('Detailed Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[3].upperBoundPercentage).toBe(100);
         expect(comp.gradingScale.gradeSteps[3].isPassingGrade).toBeTrue();
         expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeFalse();
     });
 
     it('should delete grade names correctly', () => {
@@ -268,6 +270,22 @@ describe('Detailed Grading System Component', () => {
     });
 
     it('should determine lower bound inclusivity correctly', () => {
+        comp.setBoundInclusivity();
+
+        expect(comp.lowerBoundInclusivity).toBeTrue();
+    });
+
+    it('should determine lower bound inclusivity correctly when using a step above 100%', () => {
+        comp.gradingScale.gradeSteps.push({
+            id: 4,
+            gradeName: 'Super Excellent',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 150,
+            lowerBoundInclusive: false,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        });
+
         comp.setBoundInclusivity();
 
         expect(comp.lowerBoundInclusivity).toBeTrue();
@@ -782,8 +800,7 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-        expect(ExportToCsv).toHaveBeenCalledTimes(2);
-        expect(generateCsv).toHaveBeenCalledTimes(2);
+        expect(generateCsv).toHaveBeenCalled();
     });
 
     it('should not show grading steps above max points warning', () => {

@@ -1,0 +1,35 @@
+<div class="panel-wrapper col-12 col-md-8 col-lg-6">
+    <div class="panel-header">{{ 'artemisApp.exercise.details' | artemisTranslate }}</div>
+
+    <div class="vertLine"></div>
+    <div class="panel-body">
+        <div class="row mb-1" *ngIf="exercise.releaseDate">
+            <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.releaseDate' | artemisTranslate }}</div>
+            <div class="col-4">{{ exercise.releaseDate | artemisDate }}</div>
+        </div>
+        <div class="row mb-1" *ngIf="exercise.startDate">
+            <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.startDate' | artemisTranslate }}</div>
+            <div class="col-4">{{ exercise.startDate | artemisDate }}</div>
+        </div>
+        <div class="row mb-1">
+            <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}</div>
+            <div class="col-4">{{ dueDate ? (dueDate | artemisDate) : ('artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate) }}</div>
+        </div>
+        <div class="row mb-1" *ngIf="exercise.exampleSolutionPublicationDate">
+            <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDate' | artemisTranslate }}</div>
+            <div class="col-4">{{ exercise.exampleSolutionPublicationDate | artemisDate }}</div>
+        </div>
+        <div class="row mb-1" *ngIf="exercise.assessmentDueDate">
+            <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}</div>
+            <div class="col-4">{{ exercise.assessmentDueDate | artemisDate }}</div>
+        </div>
+        <div class="row mb-1" *ngIf="individualComplaintDueDate">
+            <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}</div>
+            <div class="col-4">{{ individualComplaintDueDate | artemisDate }}</div>
+        </div>
+        <div class="row mb-1" *ngIf="dueDate && !individualComplaintDueDate">
+            <div class="col-8">{{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}</div>
+            <div class="col-4">{{ (canComplainLaterOn ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</div>
+        </div>
+    </div>
+</div>

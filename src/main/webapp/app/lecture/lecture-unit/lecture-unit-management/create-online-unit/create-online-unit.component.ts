@@ -20,7 +20,12 @@ export class CreateOnlineUnitComponent implements OnInit {
     lectureId: number;
     courseId: number;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private onlineUnitService: OnlineUnitService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private onlineUnitService: OnlineUnitService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;
@@ -36,13 +41,13 @@ export class CreateOnlineUnitComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source, learningGoals } = formData;
+        const { name, description, releaseDate, source, competencies } = formData;
 
         this.onlineUnitToCreate.name = name || undefined;
         this.onlineUnitToCreate.releaseDate = releaseDate || undefined;
         this.onlineUnitToCreate.description = description || undefined;
         this.onlineUnitToCreate.source = source || undefined;
-        this.onlineUnitToCreate.learningGoals = learningGoals || [];
+        this.onlineUnitToCreate.competencies = competencies || [];
 
         this.isLoading = true;
 

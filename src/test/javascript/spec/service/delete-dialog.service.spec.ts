@@ -8,6 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { MockComponent } from 'ng-mocks';
+import { ButtonType } from 'app/shared/components/button.component';
 
 describe('Delete Dialog Service', () => {
     let service: DeleteDialogService;
@@ -33,8 +34,10 @@ describe('Delete Dialog Service', () => {
             dialogError: new Observable<string>(),
             entityTitle: 'title',
             deleteQuestion: 'artemisApp.exercise.delete.question',
+            translateValues: {},
             deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
             actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
             delete: new EventEmitter<any>(),
             requireConfirmationOnlyForAdditionalChecks: false,
         };

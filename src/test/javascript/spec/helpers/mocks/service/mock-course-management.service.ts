@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { User } from '@sentry/browser';
+import { User } from '@sentry/angular-ivy';
 import { EntityArrayResponseType } from 'app/course/manage/course-management.service';
 
 export class MockCourseManagementService {
@@ -26,7 +26,6 @@ export class MockCourseManagementService {
     };
 
     coursesForNotificationsMock: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
-    // this method is used in notification.service.spec
     getCoursesForNotifications = () => {
         return this.coursesForNotificationsMock.asObservable();
     };

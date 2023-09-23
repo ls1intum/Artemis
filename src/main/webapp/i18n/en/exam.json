@@ -20,7 +20,12 @@
                 "room": "Room",
                 "seat": "Seat",
                 "saveImages": "Save Images",
-                "numberOfImagesSaved": "Images saved"
+                "numberOfImagesSaved": "Images saved",
+                "attendanceStatus": "Status",
+                "attendanceStatusTitle": "Exam Attendance Status",
+                "attendanceCheckFailed": "Attendance check failed",
+                "attendanceCheckPassed": "Attendance check passed",
+                "didNotAttend": "Did not attend"
             },
             "overview": {
                 "start": "Start: {{start}}",
@@ -129,6 +134,10 @@
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
             "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
+            "cleanup": {
+                "title": "Cleanup",
+                "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-danger'>NOT</strong> be undone!"
+            },
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
@@ -148,6 +157,10 @@
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",
                 "showNew": "Only show new Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolute",
+                "relative": "Change relative to regular working time"
             }
         },
         "examScores": {
@@ -193,6 +206,7 @@
             "overallGradeColumn": "Overall Grade",
             "overallBonusColumn": "Overall Bonus Points",
             "bonusGradeColumn": "Bonus Grade",
+            "bonusPointsColumn": "Bonus Points",
             "finalGradeColumn": "Final Grade",
             "passedColumn": "Passed",
             "mostSeverePlagiarismVerdictColumn": "Plagiarism Verdict",
@@ -251,6 +265,7 @@
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
             "submitted": "You have submitted a solution for this exercise. You can still work on it and submit again.",
+            "submittedSubmissionLimitReached": "You have submitted a solution for this exercise. You cannot submit again as you have reached the submission limit.",
             "notSubmitted": "Exercise not submitted",
             "notSavedOrSubmitted": "You have unsubmitted changes",
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
@@ -263,7 +278,13 @@
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
             "namePlaceholder": "Enter your full name here",
             "workingTimeIncreased": "The end of working time was extended until {{ date }}.",
-            "workingTimeDecreased": "The end of working time was shortened until {{ date }}."
+            "workingTimeDecreased": "The end of working time was shortened until {{ date }}.",
+            "submissionSuccessful": {
+                "title": "Your exam has been submitted successfully!",
+                "noActionRequired": "Artemis does not require any further action and this window can be closed.",
+                "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
+                "button": "Show exam summary{{countdown}}"
+            }
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -277,7 +298,9 @@
             "browserFingerprintHash": "Browser Fingerprint",
             "instanceId": "Browser Instance ID",
             "ipAddress": "IP Address",
-            "createdDate": "Created Date"
+            "createdDate": "Created Date",
+            "studentExamId": "Exam ID",
+            "userLogin": "Login"
         },
         "studentExams": {
             "title": "Student exams",
@@ -288,7 +311,7 @@
             "assessUnsubmittedStudentExams": "Assess unsubmitted exams",
             "unlockAllRepositories": "Unlock all repositories",
             "lockAllRepositories": "Lock all repositories",
-            "unlockAllRepositoriesModalText": "All repositories will be immediately unlocked! Students will be able to clone & push even if the exam is not started yet!\n\nThis operation is automatically performed once the exam is set to visible, therefore this operation should only be used manually if the automatic unlock failed!",
+            "unlockAllRepositoriesModalText": "All repositories will be immediately unlocked! Students will be able to clone & push even if the exam is not started yet!\n\nThis operation is automatically performed 5 minutes before the exam starts, therefore this operation should only be used manually if the automatic unlock failed!",
             "lockAllRepositoriesModalText": "All repositories will be immediately locked! Students will be no longer be able to push even if the exam is still running!\nThis will also affect students with extended working time!\n\nThis operation is automatically performed once the exam is over, therefore this operation should only be used manually if the automatic lock failed!",
             "searchForStudents": "Search for students by login or name (comma separated)",
             "student": "Student",
@@ -395,7 +418,7 @@
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
-                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
             },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
@@ -407,7 +430,6 @@
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment",
             "examChecklist": "Exam Checklist",
-            "examMonitoring": "Exam live statistics",
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
@@ -423,12 +445,6 @@
             },
             "import": {
                 "search": "Search for exam"
-            },
-            "monitoring": {
-                "enable": {
-                    "title": "Enable exam live statistics",
-                    "description": "The exam live statistics collects the student's interactions with the exam and provides further opportunities for statistics."
-                }
             },
             "testRun": {
                 "testRun": "Test Run",
@@ -460,13 +476,14 @@
                 "registrationNumberNotChecked": "Registration number was not checked",
                 "noSignature": "No signature",
                 "registeredStudents": "Registered students",
-                "notCheckedStudents": "Not checked students",
+                "notCheckedStudents": "Number of students not checked",
+                "allStudentsCheckedPassed": "All the students have been checked successfully",
                 "searchResults": "search results",
                 "usersPerPage": "{{number}} students per page",
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "checks": "Checks",
-                "signingImagePath": "Signature",
+                "attendanceChecks": "Attendance Checks",
                 "searchStudents": "Search students by name or login",
                 "searchNoResults": "No students found",
                 "login": "Login",
@@ -501,6 +518,7 @@
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",
+                "titleInfo": "The title of the exercise group is shown to the students as the name of the exercise.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
@@ -514,6 +532,8 @@
                     "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
                     "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! The short name must begin with a letter, must not contain any special characters and must be at least 3 characters long",
                     "invalidKey": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)",
+                    "duplicatedProgrammingExerciseShortName": "Multiple programming exercises in the exam have the same short name. Please choose a different short name!",
+                    "duplicatedProgrammingExerciseTitle": "Multiple programming exercises in the exam have the same title. Please choose a different title!",
                     "invalidExerciseConfiguration": "One or more of the values specified are invalid. Please change them before importing",
                     "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
                     "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups."
@@ -552,14 +572,15 @@
                     "generateStudentExams": "Generate all student exams",
                     "prepareExerciseStart": "Prepare exercise start",
                     "examDetails": "Fill out all exam details",
-                    "examMonitoring": "Exam live statistics dashboard",
                     "conductExam": "Conduct the exam",
                     "assessAllSubmissions": "Assess all submissions",
                     "publishResults": "Publish the exam results",
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
-                    "exportResults": "Export the exam results"
+                    "exportResults": "Export the exam results",
+                    "editWorkingTime": "Edit the exam duration",
+                    "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
@@ -567,14 +588,15 @@
                     "generateStudentExams": "You need to generate exams for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally, the commits of the templates in programming exercises will be combined into one commit.",
                     "prepareExerciseStart": "You need to prepare the exercises before the exam starts.",
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
-                    "examMonitoring": "You can view students' actions during the exam and analyze the resulting data. To use this feature, you must enable it in the exam configuration.",
                     "conductExam": "On the student exam page you can see which students have already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file."
+                    "exportResults": "Exports the exam results as a .csv file.",
+                    "editWorkingTime": "Until five minutes before the end of the exam, you can extend its duration.",
+                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
@@ -607,117 +629,38 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants"
                 }
-            }
-        },
-        "examMonitoring": {
-            "title": "Exam live statistics",
-            "description": "The exam live statistics dashboard allows instructors to view students' actions during the exam and analyze the resulting data.",
-            "enable": "Enable",
-            "disable": "Disable",
-            "enabled": "Enabled",
-            "globallyDisabled": "Globally disabled",
-            "disabled": "Disabled",
-            "table": {
-                "panelHeader": "Exam Information",
-                "panelDescriptionHeader": "Details",
-                "title": "Title",
-                "start": "Start",
-                "end": "End",
-                "students": "Registered students",
-                "exercises": "Exercises",
-                "exerciseGroups": "Exercise groups"
             },
-            "menu": {
-                "overview": {
-                    "title": "Overview"
-                },
-                "exercises": {
-                    "title": "Exercises",
-                    "description": "Shows the current participation of the students in the respective exercise and exercise groups",
-                    "groups": "Exercise Groups",
-                    "exercisesPerPage": "{{number}} exercises per page",
-                    "showAllExercises": "Show all exercises",
-                    "id": "Exercise",
-                    "exerciseGroup.id": "Exercise group",
-                    "_title": "Title",
-                    "type": "Type"
-                },
-                "activity-log": {
-                    "title": "Activity log",
-                    "description": "Shows the past and current activities of active students",
-                    "actionsPerPage": "{{number}} actions per page",
-                    "showAllActions": "Show all actions",
-                    "studentExamId": "Exam-ID",
-                    "timestamp": "Timestamp",
-                    "type": "Category",
-                    "detail": "Detail",
-                    "forced": "Forced",
-                    "failed": "Failed",
-                    "automatically": "Automatically",
-                    "connected": "Connected",
-                    "notConnected": "Not connected"
+            "editWorkingTime": {
+                "title": "Edit Exam Duration",
+                "label": "Exam duration change",
+                "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
+                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+            },
+            "suspiciousBehavior": {
+                "title": "Suspicious Behavior",
+                "examSessionDescription": "Whenever a student enters a exam, a session is created for the student. This session is the combination of IP address, session token, user agent, browser fingerprint, browser instance ID and a timestamp.",
+                "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
+                "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
+                "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessions": {
+                    "title": "Suspicious Sessions",
+                    "view": "View Suspicious Sessions",
+                    "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
+                    "reasons": "Suspicious because of:",
+                    "case": "Case",
+                    "sameIpAddress": "Same IP address",
+                    "sameBrowserFingerprint": "Same browser fingerprint"
                 }
             },
-            "charts": {
-                "exercise-chart": {
-                    "name": "Current number of students per exercise grouped by exercise group",
-                    "tooltip": "Shows the current number of students per exercise grouped by exercise group",
-                    "xAxisLabel": "Number of students",
-                    "yAxisLabel": "Exercises",
-                    "legendTitle": "Exercises"
-                },
-                "exercise-group-chart": {
-                    "name": "Current number of students per exercise group",
-                    "tooltip": "Shows the current number of students per exercise group",
-                    "xAxisLabel": "Number of students",
-                    "yAxisLabel": "Exercise Groups",
-                    "legendTitle": "Exercise Groups"
-                },
-                "exercise-submission-chart": {
-                    "name": "Number of first submissions per exercise",
-                    "tooltip": "Shows the number of first submissions per exercise",
-                    "xAxisLabel": "Amount of submissions",
-                    "yAxisLabel": "Exercises",
-                    "legendTitle": "Exercises"
-                },
-                "exercise-navigation-chart": {
-                    "name": "Number of first navigations per exercise",
-                    "tooltip": "Shows the number of first navigations per exercise",
-                    "xAxisLabel": "Amount of navigations",
-                    "yAxisLabel": "Exercises",
-                    "legendTitle": "Exercises"
-                },
-                "exercise-detail-current-chart": {
-                    "name": "Current number of students",
-                    "tooltip": "Shows the current number of students"
-                },
-                "exercise-detail-navigation-chart": {
-                    "name": "Number of first navigations",
-                    "tooltip": "Shows the number of first navigations"
-                },
-                "exercise-detail-submission-chart": {
-                    "name": "Number of first submissions",
-                    "tooltip": "Shows the number of first submissions"
-                },
-                "average-actions-chart": {
-                    "name": "Average number of actions per student",
-                    "tooltip": "Shows the average number of actions per student",
-                    "xAxisLabel": "Timestamp",
-                    "yAxisLabel": "Actions"
-                },
-                "total-actions-chart": {
-                    "name": "Total number of actions",
-                    "tooltip": "Shows the total number of actions",
-                    "xAxisLabel": "Timestamp",
-                    "yAxisLabel": "Actions"
-                },
-                "category-actions-chart": {
-                    "name": "Total number of actions per category",
-                    "tooltip": "Shows the total number of actions per category",
-                    "xAxisLabel": "Timestamp",
-                    "yAxisLabel": "Actions",
-                    "legendTitle": "Categories"
-                }
+            "plagiarismCasesOverview": {
+                "title": "Plagiarism Cases Overview",
+                "exerciseName": "Exercise",
+                "numberOfResults": "Number of potential plagiarism cases",
+                "numberOfCases": "Number of plagiarism cases",
+                "actions": "Actions",
+                "viewResultsOrRunDetection": "View Results or Run Detection",
+                "viewCases": "View Cases"
             }
         },
         "studentExamDetail": {
@@ -747,7 +690,6 @@
             "noSessions": "No Sessions"
         },
         "studentExam": {
-            "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
             "alreadySubmitted": "You have already submitted.",
             "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
             "handInFailed": "Submission of your exam failed. Please try again!"

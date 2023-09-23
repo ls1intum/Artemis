@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -12,6 +11,8 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
@@ -23,15 +24,15 @@ public class ProgrammingMessagingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final ResultWebsocketService resultWebsocketService;
 
     private final LtiNewResultService ltiNewResultService;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            SimpMessageSendingOperations messagingTemplate, LtiNewResultService ltiNewResultService) {
+            ResultWebsocketService resultWebsocketService, LtiNewResultService ltiNewResultService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
-        this.messagingTemplate = messagingTemplate;
+        this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
     }
 
@@ -51,17 +52,18 @@ public class ProgrammingMessagingService {
      * Notify user on a new programming submission.
      *
      * @param submission ProgrammingSubmission
+     * @param exerciseId used to build the correct topic
      */
-    public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
+    public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
+        var submissionDTO = SubmissionDTO.of(submission);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            // no need to send all exercise details here
-            submission.getParticipation().setExercise(null);
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
         }
 
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            var topicDestination = getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId());
-            messagingTemplate.convertAndSend(topicDestination, submission);
+        // send an update to tutors, editors and instructors about submissions for template and solution participations
+        if (!(submission.getParticipation() instanceof StudentParticipation)) {
+            var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
+            websocketMessagingService.sendMessage(topicDestination, submissionDTO);
         }
     }
 
@@ -77,11 +79,11 @@ public class ProgrammingMessagingService {
      */
     public void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
         if (participation instanceof StudentParticipation studentParticipation) {
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
         }
 
         if (participation != null && participation.getExercise() != null) {
-            messagingTemplate.convertAndSend(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
+            websocketMessagingService.sendMessage(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
         }
     }
 
@@ -134,7 +136,7 @@ public class ProgrammingMessagingService {
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
         log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
         // notify user via websocket
-        websocketMessagingService.broadcastNewResult((Participation) participation, result);
+        resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations

@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "privacyStatement": {
+            "title": "Privacy Statement",
+            "updatePrivacyStatement": "Update Privacy Statement",
+            "createOrEditLabel": "Create or edit privacy statement",
+            "unsavedChangesWarning": "Your privacy statement contains unsaved changes. Do you really want to change the language and discard all unsaved changes?",
+            "language": {
+                "de": "German",
+                "en": "English"
+            },
+            "unsaved": "Unsaved",
+            "saved": "Saved",
+            "saving": "Saving",
+            "unsavedTooltip": "You have unsaved changes. Please save your changes before you change the language or leave the page.",
+            "savedTooltip": "Your changes are saved.",
+            "savingTooltip": "Your changes are being saved."
+        }
+    }
+}

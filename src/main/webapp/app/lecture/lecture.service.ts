@@ -14,7 +14,7 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
-    public resourceUrl = SERVER_API_URL + 'api/lectures';
+    public resourceUrl = 'api/lectures';
 
     constructor(
         protected http: HttpClient,
@@ -61,6 +61,23 @@ export class LectureService {
         );
     }
 
+    findWithDetailsWithSlides(lectureId: number): Observable<EntityResponseType> {
+        return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}/details-with-slides`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                if (res.body) {
+                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                    if (res.body.posts === undefined) {
+                        res.body.posts = [];
+                    }
+                }
+                this.convertLectureResponseDatesFromServer(res);
+                this.setAccessRightsLecture(res.body);
+                this.sendTitlesToEntityTitleService(res?.body);
+                return res;
+            }),
+        );
+    }
+
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http.get<Lecture[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
@@ -74,6 +91,18 @@ export class LectureService {
         return this.http
             .get<Lecture[]>(`api/courses/${courseId}/lectures`, {
                 params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
+    }
+
+    findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Lecture[]>(`api/courses/${courseId}/lectures-with-slides`, {
                 observe: 'response',
             })
             .pipe(
@@ -114,6 +143,7 @@ export class LectureService {
         const copy: Lecture = Object.assign({}, lecture, {
             startDate: convertDateFromClient(lecture.startDate),
             endDate: convertDateFromClient(lecture.endDate),
+            visibleDate: convertDateFromClient(lecture.visibleDate),
         });
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
@@ -129,6 +159,7 @@ export class LectureService {
         if (res.body) {
             res.body.startDate = convertDateFromServer(res.body.startDate);
             res.body.endDate = convertDateFromServer(res.body.endDate);
+            res.body.visibleDate = convertDateFromServer(res.body.visibleDate);
             if (res.body.lectureUnits) {
                 res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
             }
@@ -176,6 +207,7 @@ export class LectureService {
         if (lecture) {
             lecture.startDate = convertDateFromServer(lecture.startDate);
             lecture.endDate = convertDateFromServer(lecture.endDate);
+            lecture.visibleDate = convertDateFromServer(lecture.visibleDate);
             if (lecture.lectureUnits) {
                 lecture.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(lecture.lectureUnits);
             }

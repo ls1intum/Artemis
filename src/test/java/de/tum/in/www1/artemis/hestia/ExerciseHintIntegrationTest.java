@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -21,12 +21,16 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exercisehintintegration";
 
@@ -54,6 +58,18 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
     private ProgrammingExercise exercise;
 
     private ProgrammingExercise exerciseLite;
@@ -68,17 +84,17 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void initTestCase() {
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        final ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final ProgrammingExercise programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
-        database.addUsers(TEST_PREFIX, 2, 2, 1, 2);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
         programmingExerciseTestCaseRepository
                 .saveAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList());
         exerciseLite = exerciseRepository.findByIdElseThrow(programmingExercise.getId());
-        exercise = database.loadProgrammingExerciseWithEagerReferences(exerciseLite);
-        database.addHintsToExercise(exercise);
-        database.addTasksToProgrammingExercise(exercise);
+        exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exerciseLite);
+        programmingExerciseUtilService.addHintsToExercise(exercise);
+        programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
 
         List<ProgrammingExerciseTask> sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
@@ -94,7 +110,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void queryAllAvailableHintsForAnExercise() throws Exception {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, user.getLogin());
+        studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getLogin());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -126,7 +142,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void activateHintForAnExercise() throws Exception {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, user.getLogin());
+        studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getLogin());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -177,9 +193,10 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateNotActivatedHintForAnExerciseForbidden() throws Exception {
+        long sizeBefore = exerciseHintActivationRepository.count();
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + exerciseHint.getId() + "/rating/" + 4, null, HttpStatus.NOT_FOUND,
                 null);
-        assertThat(exerciseHintActivationRepository.count()).isEqualTo(0);
+        assertThat(exerciseHintActivationRepository.count()).isEqualTo(sizeBefore);
     }
 
     @Test
@@ -403,7 +420,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createHintWithInvalidExerciseIds() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
 
         ExerciseHint exerciseHint = new ExerciseHint();
@@ -416,7 +433,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateHintWithInvalidExerciseIds() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
 
         exerciseHint.setTitle("New Title");
@@ -427,7 +444,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getHintTitleWithInvalidExerciseIds() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
 
         request.get("/api/programming-exercises/" + unrelatedExercise.getId() + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
@@ -436,7 +453,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getExerciseHintWithInvalidExerciseIds() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
 
         request.get("/api/programming-exercises/" + unrelatedExercise.getId() + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT, String.class);
@@ -445,7 +462,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteHintWithInvalidExerciseIds() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var unrelatedExercise = course.getExercises().stream().findFirst().orElseThrow();
 
         request.delete("/api/programming-exercises/" + unrelatedExercise.getId() + "/exercise-hints/" + exerciseHint.getId(), HttpStatus.CONFLICT);
@@ -458,7 +475,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private void addResultWithSuccessfulTestCases(Collection<ProgrammingExerciseTestCase> successfulTestCases) {
-        var submission = database.createProgrammingSubmission(studentParticipation, false);
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false);
         Result result = new Result().participation(submission.getParticipation()).assessmentType(AssessmentType.AUTOMATIC).score(0D).rated(true)
                 .completionDate(ZonedDateTime.now().plusSeconds(timeOffset++));
         result = resultRepository.save(result);
@@ -472,7 +489,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             feedback.setText(testCase.getTestName());
             feedback.setVisibility(Visibility.ALWAYS);
             feedback.setType(FeedbackType.AUTOMATIC);
-            database.addFeedbackToResult(feedback, result);
+            participationUtilService.addFeedbackToResult(feedback, result);
         }
     }
 }

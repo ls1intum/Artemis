@@ -146,4 +146,20 @@ public class ExerciseDateService {
             return Optional.ofNullable(exercise.getDueDate());
         }
     }
+
+    /**
+     * Checks if the current time is after the assessment due date
+     * and manual results can be published to the student.
+     *
+     * Returns true if the assessment due date is null.
+     *
+     * @param exercise to check the assessment due date
+     * @return true if the assessment due date is in the past
+     */
+    public static boolean isAfterAssessmentDueDate(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            return exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished();
+        }
+        return exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+    }
 }

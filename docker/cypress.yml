@@ -1,0 +1,39 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Cypress base service
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-cypress:
+        # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
+        image: docker.io/cypress/browsers:node-18.16.0-chrome-114.0.5735.133-1-ff-114.0.2-edge-114.0.1823.51-1
+        pull_policy: always
+        environment:
+            CYPRESS_baseUrl: "https://artemis-nginx"
+            CYPRESS_video: "${bamboo_cypress_video_enabled}"
+            CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
+            CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
+            CYPRESS_username: "${bamboo_cypress_username_template}"
+            CYPRESS_password: "${bamboo_cypress_password_template}"
+            CYPRESS_allowGroupCustomization: "true"
+            CYPRESS_studentGroupName: "artemis-e2etest-students"
+            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
+            CYPRESS_editorGroupName: "artemis-e2etest-editors"
+            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
+            CYPRESS_createUsers: "${bamboo_cypress_create_users}"
+            SORRY_CYPRESS_KEY: "${bamboo_sorry_cypress_record_secret}"
+            SORRY_CYPRESS_URL: "${bamboo_sorry_cypress_url}"
+            SORRY_CYPRESS_BUILD_ID: "${bamboo_buildNumber}"
+            SORRY_CYPRESS_BRANCH_NAME: "${bamboo_planRepository_branchName}"
+            SORRY_CYPRESS_RERUN_COUNT: "${bamboo_RerunBuildTriggerReason_noOfRetries}"
+            SORRY_CYPRESS_PROJECT_ID: "artemis-mysql"
+            NO_COLOR: "1"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
+        volumes:
+            - ..:/app/artemis
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis

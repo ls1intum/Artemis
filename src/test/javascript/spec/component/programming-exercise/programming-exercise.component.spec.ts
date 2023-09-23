@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
@@ -17,12 +16,9 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
-import { MockDirective } from 'ng-mocks';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -38,10 +34,10 @@ describe('ProgrammingExercise Management Component', () => {
 
     let comp: ProgrammingExerciseComponent;
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
-    let service: CourseExerciseService;
+    let courseExerciseService: CourseExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let exerciseService: ExerciseService;
     let modalService: NgbModal;
+    let alertService: AlertService;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -55,6 +51,7 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .overrideTemplate(ProgrammingExerciseComponent, '')
@@ -62,10 +59,10 @@ describe('ProgrammingExercise Management Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(CourseExerciseService);
+        courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
         modalService = fixture.debugElement.injector.get(NgbModal);
+        alertService = fixture.debugElement.injector.get(AlertService);
 
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
     });
@@ -77,7 +74,7 @@ describe('ProgrammingExercise Management Component', () => {
     it('should call load all on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(service, 'findAllProgrammingExercisesForCourse').mockReturnValue(
+        jest.spyOn(courseExerciseService, 'findAllProgrammingExercisesForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [programmingExercise],
@@ -92,46 +89,9 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findAllProgrammingExercisesForCourse).toHaveBeenCalledTimes(2);
+        expect(courseExerciseService.findAllProgrammingExercisesForCourse).toHaveBeenCalledTimes(2);
         expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
         expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
-    });
-
-    it('should reset exercise', () => {
-        const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(exerciseService, 'reset').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: undefined,
-                    headers,
-                }),
-            ),
-        );
-        const mockSubscriber = jest.fn();
-        comp.dialogError$.subscribe(mockSubscriber);
-
-        comp.course = course;
-        comp.ngOnInit();
-        comp.resetProgrammingExercise(456);
-        expect(exerciseService.reset).toHaveBeenCalledWith(456);
-        expect(exerciseService.reset).toHaveBeenCalledOnce();
-        expect(mockSubscriber).toHaveBeenCalledWith('');
-        expect(mockSubscriber).toHaveBeenCalledOnce();
-    });
-
-    it('should not reset exercise on error', () => {
-        const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(() => httpErrorResponse));
-        const mockSubscriber = jest.fn();
-        comp.dialogError$.subscribe(mockSubscriber);
-
-        comp.course = course;
-        comp.ngOnInit();
-        comp.resetProgrammingExercise(456);
-        expect(exerciseService.reset).toHaveBeenCalledWith(456);
-        expect(exerciseService.reset).toHaveBeenCalledOnce();
-        expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
-        expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
     it('should delete exercise', () => {
@@ -156,6 +116,29 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
+    it('should delete multiple exercises', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    headers,
+                }),
+            ),
+        );
+        const mockSubscriber = jest.fn();
+        comp.dialogError$.subscribe(mockSubscriber);
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.deleteMultipleProgrammingExercises([{ id: 441 }, { id: 442 }, { id: 443 }] as ProgrammingExercise[], {
+            deleteStudentReposBuildPlans: true,
+            deleteBaseReposBuildPlans: true,
+        });
+        expect(programmingExerciseService.delete).toHaveBeenCalledTimes(3);
+        expect(mockSubscriber).toHaveBeenCalledTimes(3);
+    });
+
     it('should not delete exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => httpErrorResponse));
@@ -169,19 +152,6 @@ describe('ProgrammingExercise Management Component', () => {
         expect(programmingExerciseService.delete).toHaveBeenCalledOnce();
         expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
         expect(mockSubscriber).toHaveBeenCalledOnce();
-    });
-
-    it.each([undefined, 456])('should open import modal', (id) => {
-        const mockReturnValue = {
-            result: Promise.resolve({ id } as ProgrammingExercise),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
-        comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
     });
 
     it('should open edit selected modal', () => {
@@ -198,6 +168,19 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('should return exercise id', () => {
         expect(comp.trackId(0, programmingExercise)).toBe(456);
+    });
+
+    it('should download the repository', () => {
+        // GIVEN
+        const exportRepositoryStub = jest.spyOn(programmingExerciseService, 'exportInstructorRepository').mockReturnValue(of(new HttpResponse<Blob>()));
+        const alertSuccessStub = jest.spyOn(alertService, 'success');
+
+        // WHEN
+        comp.downloadRepository(programmingExercise.id, 'TEMPLATE');
+
+        // THEN
+        expect(exportRepositoryStub).toHaveBeenCalledOnce();
+        expect(alertSuccessStub).toHaveBeenCalledOnce();
     });
 
     describe('ProgrammingExercise Search Exercises', () => {
@@ -241,41 +224,41 @@ describe('ProgrammingExercise Management Component', () => {
     describe('ProgrammingExercise Select Exercises', () => {
         it('should add selected exercise to list', () => {
             // WHEN
-            comp.toggleProgrammingExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedProgrammingExercises[0]).toContainEntry(['id', programmingExercise.id]);
+            expect(comp.selectedExercises[0]).toContainEntry(['id', programmingExercise.id]);
         });
 
         it('should remove selected exercise to list', () => {
             // WHEN
-            comp.toggleProgrammingExercise(programmingExercise);
-            comp.toggleProgrammingExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedProgrammingExercises).toHaveLength(0);
+            expect(comp.selectedExercises).toHaveLength(0);
         });
 
         it('should select all', () => {
             // WHEN
-            comp.toggleAllProgrammingExercises();
+            comp.toggleMultipleExercises(comp.programmingExercises);
 
             // THEN
-            expect(comp.selectedProgrammingExercises).toHaveLength(comp.programmingExercises.length);
+            expect(comp.selectedExercises).toHaveLength(comp.programmingExercises.length);
         });
 
         it('should deselect all', () => {
             // WHEN
-            comp.toggleAllProgrammingExercises(); // Select all
-            comp.toggleAllProgrammingExercises(); // Deselect all
+            comp.toggleMultipleExercises(comp.programmingExercises); // Select all
+            comp.toggleMultipleExercises(comp.programmingExercises); // Deselect all
 
             // THEN
-            expect(comp.selectedProgrammingExercises).toHaveLength(0);
+            expect(comp.selectedExercises).toHaveLength(0);
         });
 
         it('should check correctly if selected', () => {
             // WHEN
-            comp.toggleProgrammingExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
 
             // THEN
             expect(comp.isExerciseSelected(programmingExercise)).toBeTrue();

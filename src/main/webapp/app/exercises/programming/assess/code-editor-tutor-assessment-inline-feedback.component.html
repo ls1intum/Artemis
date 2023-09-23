@@ -1,5 +1,5 @@
 <div
-    id="inline-feedback"
+    id="code-editor-inline-feedback-{{ codeLine }}"
     class="alert p-1 border rounded"
     [style.max-width]="'780px'"
     [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
@@ -30,6 +30,7 @@
                     class="form-control"
                     rows="5"
                     [(ngModel)]="feedback.detailText"
+                    #detailText
                     [readOnly]="viewOnly"
                     [placeholder]="
                         feedback.gradingInstruction!
@@ -53,8 +54,18 @@
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button *ngIf="feedback.type === MANUAL" type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm me-1">
-                <fa-icon [icon]="faTrashAlt"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
+            <button
+                *ngIf="feedback.type === MANUAL"
+                jhiDeleteButton
+                [buttonSize]="ButtonSize.MEDIUM"
+                [translateValues]="{ text: feedback.detailText }"
+                deleteQuestion="artemisApp.feedback.delete.question"
+                type="submit"
+                (delete)="deleteFeedback()"
+                [dialogError]="dialogError$"
+                class="btn btn-danger btn-sm me-1"
+            >
+                <fa-icon [icon]="faTrashAlt"></fa-icon>
             </button>
             <button id="feedback-save" type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
                 <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>

@@ -1,34 +1,53 @@
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { Course } from 'app/entities/course.model';
-import day from 'dayjs/esm';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseAssessment, courseManagementRequest, exerciseAssessment, exerciseResult, modelingExerciseAssessment, modelingExerciseFeedback } from '../../../support/artemis';
-import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import dayjs from 'dayjs/esm';
 
-describe('Modeling Exercise Assessment Spec', () => {
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+
+import {
+    courseAssessment,
+    courseManagement,
+    courseManagementAPIRequest,
+    exerciseAPIRequest,
+    exerciseAssessment,
+    exerciseResult,
+    modelingExerciseAssessment,
+    modelingExerciseFeedback,
+} from '../../../support/artemis';
+import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import { convertModelAfterMultiPart } from '../../../support/utils';
+
+describe('Modeling Exercise Assessment', () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
 
-    before('Log in as admin and create a course', () => {
-        createCourseWithModelingExercise().then(() => {
-            makeModelingSubmissionAsStudent();
-            updateExerciseDueDate();
-        });
-    });
-
-    after('Delete test course', () => {
+    before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.deleteCourse(course.id!);
+        courseManagementAPIRequest.createCourse().then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
+            exerciseAPIRequest.createModelingExercise({ course }).then((modelingResponse) => {
+                modelingExercise = modelingResponse.body;
+                cy.login(studentOne);
+                cy.wait(500);
+                exerciseAPIRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
+                    exerciseAPIRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
+                    cy.login(instructor);
+                    exerciseAPIRequest.updateModelingExerciseDueDate(modelingExercise, dayjs().add(5, 'seconds'));
+                });
+            });
+        });
     });
 
     it('Tutor can assess a submission', () => {
         cy.login(tutor, '/course-management');
-        cy.get(`[href="/course-management/${course.id}/assessment-dashboard"]`).click();
-        cy.url().should('contain', `/course-management/${course.id}/assessment-dashboard`);
+        courseManagement.openAssessmentDashboardOfCourse(course.id!);
+        cy.wait(500);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
-        cy.get('#assessmentLockedCurrentUser').should('be.visible');
+        exerciseAssessment.getLockedMessage().should('be.visible');
         modelingExerciseAssessment.addNewFeedback(1, 'Thanks, good job.');
         modelingExerciseAssessment.openAssessmentForComponent(1);
         modelingExerciseAssessment.assessComponent(-1, 'False');
@@ -42,20 +61,19 @@ describe('Modeling Exercise Assessment Spec', () => {
     describe('Handling complaints', () => {
         before(() => {
             cy.login(admin);
-            courseManagementRequest
-                .updateModelingExerciseAssessmentDueDate(modelingExercise, day())
+            exerciseAPIRequest
+                .updateModelingExerciseAssessmentDueDate(modelingExercise, dayjs())
                 .its('body')
                 .then((exercise) => {
                     modelingExercise = exercise;
                 });
-            cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         });
 
         it('Student can view the assessment and complain', () => {
             cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
             exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             exerciseResult.shouldShowScore(20);
-            exerciseResult.clickViewSubmission();
+            exerciseResult.clickOpenExercise(modelingExercise.id!);
             modelingExerciseFeedback.shouldShowScore(20);
             modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');
@@ -69,28 +87,7 @@ describe('Modeling Exercise Assessment Spec', () => {
         });
     });
 
-    function createCourseWithModelingExercise() {
-        cy.login(admin);
-        return courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
-            courseManagementRequest.createModelingExercise({ course }).then((modelingResponse) => {
-                modelingExercise = modelingResponse.body;
-            });
-        });
-    }
-
-    function makeModelingSubmissionAsStudent() {
-        cy.login(studentOne);
-        courseManagementRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
-            courseManagementRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
-        });
-    }
-
-    function updateExerciseDueDate() {
-        cy.login(admin);
-        courseManagementRequest.updateModelingExerciseDueDate(modelingExercise, day().add(5, 'seconds'));
-    }
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
+    });
 });

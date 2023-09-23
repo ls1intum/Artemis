@@ -11,9 +11,12 @@ export type EntityResponseType = HttpResponse<Bonus>;
 
 @Injectable({ providedIn: 'root' })
 export class BonusService {
-    public resourceUrl = SERVER_API_URL + 'api';
+    public resourceUrl = 'api';
 
-    constructor(private http: HttpClient, private gradingSystemService: GradingSystemService) {}
+    constructor(
+        private http: HttpClient,
+        private gradingSystemService: GradingSystemService,
+    ) {}
 
     /**
      * Deletes the bonus.
@@ -81,7 +84,6 @@ export class BonusService {
      * diagnosis purposes by filtering out irrelevant parts.
      *
      * @param bonus to be sent to the server
-     * @private
      */
     private filterBonusForRequest(bonus: Bonus) {
         return {
@@ -248,7 +250,6 @@ export class BonusService {
      * As opposed to % operator, this method always returns a non-negative number.
      * @param n as in n mod m
      * @param m as in n mod m
-     * @private
      */
     private modulo(n: number, m: number) {
         return ((n % m) + m) % m;

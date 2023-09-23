@@ -32,6 +32,9 @@ public class GitlabInfoContributor implements InfoContributor {
         // Store server url
         builder.withDetail(Constants.VERSION_CONTROL_URL, gitlabServerUrl);
 
+        // Store name of the version control system
+        builder.withDetail(Constants.VERSION_CONTROL_NAME, "GitLab");
+
         // Store commit hash url template
         String commitHashPathTemplate = "/{projectKey}/{repoSlug}/-/commit/{commitHash}";
         String commitHashUrlTemplate = gitlabServerUrl + commitHashPathTemplate;

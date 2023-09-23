@@ -124,7 +124,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * and sets the inclusivity and first passing grade properties
      *
      * @param gradingScale the grading scale retrieved from the get request
-     * @private
      */
     handleFindResponse(gradingScale?: GradingScale): void {
         if (gradingScale) {
@@ -155,6 +154,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         } else {
             this.gradingScale.course = this.course;
             this.gradingScale.course!.maxPoints = this.maxPoints;
+            this.gradingScale.course!.presentationScore = this.presentationsConfig.presentationScore;
         }
         if (this.existingGradingScale) {
             if (this.isExam) {
@@ -290,7 +290,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * -- the presentationScore must be above 0
      * - if the presentationType is GRADED:
      * -- the presentationsNumber must be a whole number above 0
-     * -- the presentationsWeight must be between 0 and 100
+     * -- the presentationsWeight must be between 0 and 99
      * -- the presentationScore must be 0 or undefined
      */
     validPresentationsConfig(): boolean {
@@ -299,8 +299,10 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            // The presentationScore must be 0 or undefined // edit in followup, when presentationScore is moved to
-            // grading key page
+            // The presentationScore must be 0 or undefined
+            if (this.presentationsConfig.presentationScore !== undefined) {
+                return false;
+            }
         }
         if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
             // The presentationsNumber and presentationsWeight must be undefined
@@ -327,7 +329,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             if (
                 this.presentationsConfig.presentationsWeight === undefined ||
                 this.presentationsConfig.presentationsWeight < 0 ||
-                this.presentationsConfig.presentationsWeight > 100
+                this.presentationsConfig.presentationsWeight > 99
             ) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
                 return false;
@@ -360,7 +362,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * and sets the existingGradingScale property
      *
      * @param newGradingScale the grading scale that was just saved
-     * @private
      */
     private handleSaveResponse(newGradingScale?: GradingScale): void {
         if (newGradingScale) {
@@ -465,7 +466,12 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * Called on initialization
      */
     setBoundInclusivity(): void {
+        const lastStepId = this.gradingScale.gradeSteps.last()?.id;
         this.lowerBoundInclusivity = this.gradingScale.gradeSteps.every((gradeStep) => {
+            if (gradeStep.id === lastStepId) {
+                // ignore the last grade step since its inclusivity gets set differently.
+                return true;
+            }
             return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0;
         });
     }
@@ -539,7 +545,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             upperBoundPercentage: 100,
             isPassingGrade: true,
             lowerBoundInclusive: this.lowerBoundInclusivity,
-            upperBoundInclusive: true,
+            upperBoundInclusive: !this.lowerBoundInclusivity,
         };
         this.setPoints(gradeStep, true);
         this.setPoints(gradeStep, false);
@@ -718,9 +724,8 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * Import grade steps from csv file
      * @param event the read event
      * @param csvFile the csv file
-     * @private
      */
-    async readGradingStepsFromCSVFile(event: any, csvFile: File) {
+    private async readGradingStepsFromCSVFile(event: any, csvFile: File) {
         let csvGradeSteps: CsvGradeStep[] = [];
         try {
             csvGradeSteps = await this.parseCSVFile(csvFile);
@@ -758,7 +763,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                     lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage]) : undefined,
                     upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage] ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage]) : undefined,
                     ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade] === 'TRUE' }),
-                } as GradeStep),
+                }) as GradeStep,
         );
     }
 

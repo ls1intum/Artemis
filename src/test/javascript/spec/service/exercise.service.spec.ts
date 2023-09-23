@@ -243,24 +243,27 @@ describe('Exercise Service', () => {
     });
 
     it('should fill & empty example modeling solution', () => {
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...modelingExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...modelingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty example text solution', () => {
         const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
         expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
         expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
 
@@ -268,15 +271,17 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty example file upload solution', () => {
         const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
         expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
         expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
 
@@ -284,23 +289,25 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty example programming exercise solution', () => {
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
-        expect(exampleSolutionInfo.programmingExercise?.exampleSolutionPublished).toBeTrue();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
 
-        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublished: false }, artemisMarkdown);
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().add(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
-        expect(exampleSolutionInfo.programmingExercise?.exampleSolutionPublished).toBeFalse();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
     });
 
     it('should determine is included in score string', () => {
@@ -400,7 +407,7 @@ describe('Exercise Service', () => {
         });
         const expectedReturnedExercise = { id: exercise.id } as Exercise;
 
-        const expectedUrl = `${SERVER_API_URL}api/exercises`;
+        const expectedUrl = `api/exercises`;
         let result$: Observable<EntityResponseType>;
         let method: string;
         if (action === 'create') {
@@ -452,7 +459,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/details`,
+            url: `api/exercises/${exerciseId}/details`,
             method: 'GET',
         });
 
@@ -471,7 +478,7 @@ describe('Exercise Service', () => {
 
         const expectedReturnedExercise = {
             id: exerciseId,
-            exampleSolutionPublished: true,
+            exampleSolutionPublicationDate: dayjs().subtract(1, 'm'),
             exampleSolution: 'Example solution',
         } as TextExercise;
 
@@ -481,7 +488,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/example-solution`,
+            url: `api/exercises/${exerciseId}/example-solution`,
             method: 'GET',
         });
 
@@ -498,25 +505,7 @@ describe('Exercise Service', () => {
         service.reset(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/reset`,
-            method: 'DELETE',
-        });
-    });
-
-    it('should send a cleanup request', () => {
-        const exerciseId = 126;
-
-        service.cleanup(exerciseId, true).subscribe();
-
-        httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=true`,
-            method: 'DELETE',
-        });
-
-        service.cleanup(exerciseId, false).subscribe();
-
-        httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=false`,
+            url: `api/exercises/${exerciseId}/reset`,
             method: 'DELETE',
         });
     });
@@ -527,8 +516,27 @@ describe('Exercise Service', () => {
         service.toggleSecondCorrection(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/toggle-second-correction`,
+            url: `api/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
         });
+    });
+
+    it('should correctly send the exercise name to the title service', () => {
+        const entityTitleService = TestBed.inject(EntityTitleService);
+        const examExerciseForStudent = { id: 1, title: 'exercise', exerciseGroup: { id: 1, title: 'exercise group' } } as Exercise;
+        const examExerciseForTutor = { ...examExerciseForStudent, isAtLeastTutor: true } as Exercise;
+        const courseExerciseForStudent = { ...examExerciseForStudent, exerciseGroup: undefined, course: { id: 2, title: 'course' } } as Exercise;
+        const courseExerciseForTutor = { ...courseExerciseForStudent, isAtLeastTutor: true } as Exercise;
+        const entityTitleServiceSpy = jest.spyOn(entityTitleService, 'setTitle');
+        service.sendExerciseTitleToTitleService(examExerciseForStudent);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise group');
+        service.sendExerciseTitleToTitleService(examExerciseForTutor);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
+        service.sendExerciseTitleToTitleService(courseExerciseForStudent);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.COURSE, [2], 'course');
+        service.sendExerciseTitleToTitleService(courseExerciseForTutor);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.COURSE, [2], 'course');
     });
 });

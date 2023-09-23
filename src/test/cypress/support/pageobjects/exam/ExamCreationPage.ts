@@ -1,4 +1,5 @@
 import dayjs from 'dayjs/esm';
+
 import { BASE_API, POST, PUT } from '../../constants';
 import { enterDate } from '../../utils';
 
@@ -11,7 +12,7 @@ export class ExamCreationPage {
      * @param title the exam title
      */
     setTitle(title: string) {
-        cy.get('#title').clear().type(title);
+        cy.get('#field_title').clear().type(title);
     }
 
     /**

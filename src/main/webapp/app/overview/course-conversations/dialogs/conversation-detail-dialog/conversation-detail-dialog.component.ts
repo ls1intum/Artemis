@@ -19,12 +19,9 @@ export enum ConversationDetailTabs {
     templateUrl: './conversation-detail-dialog.component.html',
 })
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
-    @Input()
-    public activeConversation: ConversationDto;
-    @Input()
-    course: Course;
-    @Input()
-    selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
+    @Input() public activeConversation: ConversationDto;
+    @Input() course: Course;
+    @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
 
@@ -35,12 +32,14 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     isOneToOneChat = isOneToOneChatDto;
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
-    getConversationName = this.conversationService.getConversationName;
 
     changesWerePerformed = false;
 
     Tabs = ConversationDetailTabs;
-    constructor(activeModal: NgbActiveModal, private conversationService: ConversationService) {
+    constructor(
+        activeModal: NgbActiveModal,
+        public conversationService: ConversationService,
+    ) {
         super(activeModal);
     }
 

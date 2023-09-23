@@ -27,11 +27,11 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  * and that allow for {@linkplain #performCacheWrite(Long, UnaryOperator) atomic writes} (including an
  * {@linkplain #performCacheWriteIfPresent(Long, UnaryOperator) if-present variant}).
  */
-final class QuizCache extends CacheHandler<Long> {
+final class QuizCache extends CacheHandler<Long, QuizExerciseCache> {
 
     private final Logger logger = LoggerFactory.getLogger(QuizCache.class);
 
-    private static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
+    static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
 
     private final ITopic<QuizExercise> cachedQuizExerciseUpdates;
 
@@ -66,12 +66,12 @@ final class QuizCache extends CacheHandler<Long> {
     }
 
     @Override
-    protected Cache emptyCacheValue() {
+    protected QuizExerciseCache emptyCacheValue() {
         return QuizExerciseCache.empty();
     }
 
     @Override
-    protected Cache createDistributedCacheValue(Long exerciseId) {
+    protected QuizExerciseCache createDistributedCacheValue(Long exerciseId) {
         var distributedCache = new QuizExerciseDistributedCache(exerciseId);
         distributedCache.setHazelcastInstance(hazelcastInstance);
 
@@ -109,6 +109,6 @@ final class QuizCache extends CacheHandler<Long> {
      */
     private void updateQuizExerciseLocally(QuizExercise quizExercise) {
         logger.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
-        ((QuizExerciseCache) getTransientWriteCacheFor(quizExercise.getId())).setExercise(quizExercise);
+        getTransientWriteCacheFor(quizExercise.getId()).setExercise(quizExercise);
     }
 }

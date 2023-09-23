@@ -3,22 +3,28 @@ package de.tum.in.www1.artemis.service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * Service Implementation for managing Exercise.
@@ -50,20 +56,17 @@ public class ExerciseDeletionService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+    private final TextExerciseService textExerciseService;
 
-    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
+    private final ChannelRepository channelRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
-
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final ChannelService channelService;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ModelingExerciseRepository modelingExerciseRepository,
-            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
+            ChannelRepository channelRepository, ChannelService channelService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -75,10 +78,9 @@ public class ExerciseDeletionService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
-        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
-        this.textExerciseRepository = textExerciseRepository;
-        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.textExerciseService = textExerciseService;
+        this.channelRepository = channelRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -88,26 +90,29 @@ public class ExerciseDeletionService {
      * @param deleteRepositories if true, the repositories gets deleted
      */
     public void cleanup(Long exerciseId, boolean deleteRepositories) {
+        log.info("Cleanup all participations for exercise {} in parallel", exerciseId);
         Exercise exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
-        log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
+        if (!(exercise instanceof ProgrammingExercise)) {
+            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
+            return;
+        }
 
-        if (exercise instanceof ProgrammingExercise) {
-            for (StudentParticipation participation : exercise.getStudentParticipations()) {
+        // Cleanup in parallel to speedup the process
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
+            try {
                 participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
-            }
-
-            if (!deleteRepositories) {
-                return; // in this case, we are done
-            }
-
-            for (StudentParticipation participation : exercise.getStudentParticipations()) {
+                if (!deleteRepositories) {
+                    return; // in this case, we are done with the participation
+                }
                 participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
             }
-
-        }
-        else {
-            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
-        }
+            catch (Exception exception) {
+                log.error("Failed to clean the student participation {} for programming exercise {}", participation.getId(), exerciseId);
+            }
+        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+        // wait until all operations finish before returning
+        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
     }
 
     /**
@@ -120,8 +125,13 @@ public class ExerciseDeletionService {
      *                                         all other exercise types)
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
-        var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
+        var exercise = exerciseRepository.findByIdWithCompetenciesElseThrow(exerciseId);
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
+
+        long start = System.nanoTime();
+        Channel exreciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
+        channelService.deleteChannel(exreciseChannel);
+        log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
@@ -130,8 +140,13 @@ public class ExerciseDeletionService {
             modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
 
+        if (exercise instanceof TextExercise) {
+            log.info("Cancel scheduled operations of exercise {}", exercise.getId());
+            textExerciseService.cancelScheduledOperations(exerciseId);
+        }
+
         // delete all exercise units linking to the exercise
-        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
+        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithCompetenciesBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }
@@ -143,7 +158,7 @@ public class ExerciseDeletionService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
-        exercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
         exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmissionService.deleteById(exampleSubmission.getId()));
         exercise.setExampleSubmissions(new HashSet<>());
 
@@ -166,31 +181,6 @@ public class ExerciseDeletionService {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
-            // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
-            if (exercise instanceof TextExercise textExercise) {
-                // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
-                textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
-                if (textExercise.getKnowledge() != null) {
-                    long knowledgeId = textExercise.getKnowledge().getId();
-                    // Remove knowledge to avoid foreign key constraint exception
-                    textExercise.setKnowledge(null);
-                    textExerciseRepository.save(textExercise);
-                    textAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
-                }
-            }
-            // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
-            else if (exercise instanceof ModelingExercise modelingExercise) {
-                // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
-                modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
-                if (modelingExercise.getKnowledge() != null) {
-                    long knowledgeId = modelingExercise.getKnowledge().getId();
-                    // Remove knowledge to avoid foreign key constraint exception
-                    modelingExercise.setKnowledge(null);
-                    modelingExerciseRepository.save(modelingExercise);
-                    modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
-                }
-            }
-
             // fetch the exercise again to allow Hibernate to delete it properly
             exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
             exerciseRepository.delete(exercise);

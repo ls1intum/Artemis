@@ -9,9 +9,12 @@ type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseGroupService {
-    public resourceUrl = SERVER_API_URL + 'api/courses';
+    public resourceUrl = 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(
+        private router: Router,
+        private http: HttpClient,
+    ) {}
 
     /**
      * Create an exercise group on the server using a POST request.

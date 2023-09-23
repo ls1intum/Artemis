@@ -47,8 +47,8 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     height = 500;
 
     showYAxisLabel = true;
-    yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-    xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+    yAxisLabel: string;
+    xAxisLabel: string;
 
     helpIconTooltip: string;
 
@@ -62,9 +62,14 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     } as Color;
     backupDomain: string[];
 
-    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {}
+    constructor(
+        private gradingSystemService: GradingSystemService,
+        private translateService: TranslateService,
+    ) {}
 
     ngOnInit() {
+        this.setupAxisLabels();
+
         this.translateService.onLangChange.subscribe(() => {
             this.setupAxisLabels();
         });
@@ -105,7 +110,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * they will be set to default labels in createChart.
      * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
      * If no grading key exists, this default configuration is presented to the user.
-     * @private
      */
     private generateDefaultNgxChartsSetting(): void {
         this.ngxData = [];
@@ -131,7 +135,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Creates the chart labels displaying the intervals each bar covers depending on the existence and state of a grading key
-     * @private
      */
     private createChartLabels(): void {
         if (this.gradingScaleExists) {
@@ -198,7 +201,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     /**
      * Auxiliary method that increases the represented value of the bar covering the given score by 1
      * @param percentageOrGradeName the score or grade name that should be included in the distribution
-     * @private
      */
     private addToHistogram(percentageOrGradeName: number | string): void {
         // Update histogram data structure
@@ -208,7 +210,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Sets up the distribution chart for given scores
-     * @private
      */
     private createChart(): void {
         this.generateDefaultNgxChartsSetting();
@@ -223,7 +224,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Determines and returns the maximum value displayed on the y-axis
-     * @private
      */
     private calculateTickMax(): number {
         const histogramData = this.ngxData.map((dataPack) => dataPack.value);
@@ -233,7 +233,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Determines and returns the translation path for the tooltip that is displayed when hovering over the help icon next to the legend
-     * @private
      */
     private determineHelpIconTooltip(): string {
         if (this.gradingScaleExists) {
@@ -251,7 +250,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * Auxiliary method that returns the bar color of the grade step in the chart
      * @param gradeStep the grade step that should be colored
      * @returns the color that the given grade step should receive in the chart
-     * @private
      */
     private getGradeStepColor(gradeStep: GradeStep): string {
         if (this.isBonus) {
@@ -275,7 +273,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * If a grading scale exists that is bonus, all bars with a lower bound < 40% are colored yellow as well
      * If a grading scale exists that is not bonus, all bars representing a score that does not pass the exam are colored red
      * In either case, all bars above the thresholds remain grey
-     * @private
      */
     private setupChartColoring(): void {
         this.ngxColor.domain = [];
@@ -299,7 +296,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Auxiliary method in order to keep the chart translation sensitive
-     * @private
      */
     private setupAxisLabels(): void {
         this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
@@ -314,7 +310,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Auxiliary method that returns the translation path for the tooltip if a grading scale exists that is not Bonus
-     * @private
      */
     private getHelpIconTooltipNotBonus(): string {
         if (this.isCourseScore) {
@@ -326,7 +321,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Auxiliary method that returns the translation path for the tooltip if no grading scale exists
-     * @private
      */
     private getHelpIconNoGradingScale(): string {
         if (this.isCourseScore) {
@@ -338,7 +332,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Highlights the score passed to the component by its parent component (if any is set).
-     * @private
      */
     private highlightScore(): void {
         if (this.scoreToHighlight === undefined) {

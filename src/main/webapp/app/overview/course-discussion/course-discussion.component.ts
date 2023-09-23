@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { CourseWideContext, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { Subscription, combineLatest } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -8,11 +8,11 @@ import { Lecture } from 'app/entities/lecture.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { FormBuilder } from '@angular/forms';
-import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -46,6 +46,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
+        private courseStorageService: CourseStorageService,
     ) {
         super(metisService);
     }
@@ -60,32 +61,16 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             queryParams: this.activatedRoute.parent!.parent!.queryParams,
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             const { params, queryParams } = routeParams;
-            const courseId = params.courseId;
+            const courseId = +params.courseId;
             this.searchText = queryParams.searchText;
-            this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
-                if (res.body !== undefined) {
-                    this.course = res.body!;
-                    if (this.course?.lectures) {
-                        this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
-                    }
-                    if (this.course?.exercises) {
-                        this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
-                    }
-                    this.metisService.setCourse(this.course!);
-                    this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({
-                        courseId: this.course!.id,
-                        searchText: this.searchText ? this.searchText : undefined,
-                        postSortCriterion: this.currentSortCriterion,
-                        sortingOrder: this.currentSortDirection,
-                        pagingEnabled: this.pagingEnabled,
-                        page: this.page - 1,
-                        pageSize: this.itemsPerPage,
-                    });
-                    this.resetCurrentFilter();
-                    this.createEmptyPost();
-                    this.resetFormGroup();
-                }
+
+            this.course = this.courseStorageService.getCourse(courseId);
+            if (this.course) {
+                this.onCourseLoad(this.course);
+            }
+
+            this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
+                this.onCourseLoad(course);
             });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
@@ -97,12 +82,36 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         });
     }
 
+    onCourseLoad(course: Course) {
+        this.course = course;
+        if (this.course?.lectures) {
+            this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
+        }
+        if (this.course?.exercises) {
+            this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
+        }
+        this.metisService.setCourse(this.course!);
+        this.metisService.setPageType(this.pageType);
+        this.metisService.getFilteredPosts({
+            courseId: this.course!.id,
+            searchText: this.searchText ? this.searchText : undefined,
+            postSortCriterion: this.currentSortCriterion,
+            sortingOrder: this.currentSortDirection,
+            pagingEnabled: this.pagingEnabled,
+            page: this.page - 1,
+            pageSize: this.itemsPerPage,
+        });
+        this.resetCurrentFilter();
+        this.createEmptyPost();
+        this.resetFormGroup();
+    }
+
     /**
      * by default, the form group fields are set to show all posts in a course by descending creation date
      */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
-            context: [this.currentPostContextFilter],
+            context: [[]],
             sortBy: [PostSortCriterion.CREATION_DATE],
             filterToUnresolved: false,
             filterToOwn: false,
@@ -131,6 +140,25 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.page = 1;
         // will scroll to the top of the posts
         this.forceReload = true;
+
+        const lectureIds: number[] = [];
+        const exerciseIds: number[] = [];
+        const courseWideContexts: CourseWideContext[] = [];
+
+        for (const context of this.formGroup.get('context')?.value || []) {
+            if (context.lectureId) {
+                lectureIds.push(context.lectureId);
+            } else if (context.exerciseId) {
+                exerciseIds.push(context.exerciseId);
+            } else if (context.courseWideContext) {
+                courseWideContexts.push(context.courseWideContext);
+            }
+        }
+
+        this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
+        this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
+        this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
+
         super.onSelectContext();
     }
 
@@ -148,7 +176,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * required for distinguishing different select options for the context selector,
      * Angular needs to be able to identify the currently selected option
      */
-    compareContextFilterOptionFn(option1: PostContextFilter, option2: PostContextFilter) {
+    compareContextFilterOptionFn(option1: any, option2: any) {
         if (option1.exerciseId && option2.exerciseId) {
             return option1.exerciseId === option2.exerciseId;
         } else if (option1.lectureId && option2.lectureId) {
@@ -190,9 +218,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      **/
     createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(
-            this.currentPostContextFilter.courseWideContext,
-            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
-            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
+            this.currentPostContextFilter.courseWideContexts?.[0],
+            this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseIds?.[0]),
+            this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureIds?.[0]),
         );
     }
     /**
@@ -206,11 +234,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
-            courseId: undefined,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
-            ...this.formGroup.get('context')?.value,
+            ...this.currentPostContextFilter,
+            courseId: this.course?.id,
             searchText: this.searchText,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
@@ -229,9 +254,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     private resetCurrentFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course!.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
+            courseWideContexts: undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
             searchText: undefined,
             filterToUnresolved: false,
             filterToOwn: false,

@@ -81,7 +81,7 @@ describe('Submission Service', () => {
             .findAllSubmissionsOfParticipation(participationId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/participations/${participationId}/submissions`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `api/participations/${participationId}/submissions`, method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));

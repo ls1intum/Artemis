@@ -1,14 +1,23 @@
 .edit-overlay {
     position: absolute;
+    display: inline-flex;
     left: 0;
     right: 0;
-    top: -1px;
-    display: flex;
     justify-content: center;
-    align-items: center;
-    background-color: var(--lecture-attachment-edit-overlay-color);
     z-index: 9;
     font-size: 18px;
-    height: calc(100% + 1px);
-    border: none;
+    box-shadow: none;
+}
+
+.edit-overlay-container {
+    background-color: var(--lecture-attachment-edit-overlay-color);
+}
+
+.edit-overlay-container > td {
+    opacity: 10%;
+}
+
+.edit-overlay-container > td > a {
+    pointer-events: none;
+    cursor: default;
 }

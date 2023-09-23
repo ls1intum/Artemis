@@ -3,17 +3,15 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
     '@angular/service-worker', '@danielmoncada/angular-datetime-picker', '@flaviosantoro92/ngx-datatable', 'd3-color', 'd3-interpolate', 'd3-transition', 'd3-brush',
-    'd3-drag', 'd3-selection', 'ngx-infinite-scroll'].join('|');
+    'd3-drag', 'd3-selection', 'd3-scale', 'd3-array', 'd3-format', 'd3-shape', 'd3-path', 'd3-ease', 'd3-time', 'd3-hierarchy', 'ngx-infinite-scroll', 'internmap'].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
 } = require('./tsconfig.json');
-const environment = require('./webpack/environment');
 
 module.exports = {
     globalSetup: 'jest-preset-angular/global-setup',
     globals: {
-        ...environment,
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
@@ -60,9 +58,9 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 85.6,
-            branches: 72.4,
-            functions: 79.1,
-            lines: 85.6,
+            branches: 72.8,
+            functions: 79.4,
+            lines: 85.8,
         },
     },
     coverageReporters: ["clover", "json", "lcov", "text-summary"],

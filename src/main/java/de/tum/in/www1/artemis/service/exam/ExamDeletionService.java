@@ -23,9 +23,12 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class ExamDeletionService {
@@ -50,9 +53,13 @@ public class ExamDeletionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ChannelRepository channelRepository;
+
+    private final ChannelService channelService;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -62,6 +69,8 @@ public class ExamDeletionService {
         this.studentExamRepository = studentExamRepository;
         this.gradingScaleRepository = gradingScaleRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.channelRepository = channelRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -85,6 +94,9 @@ public class ExamDeletionService {
         log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
+
+        Channel examChannel = channelRepository.findChannelByExamId(examId);
+        channelService.deleteChannel(examChannel);
 
         // first delete test runs to avoid issues later
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);

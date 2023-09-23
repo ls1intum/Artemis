@@ -6,18 +6,15 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -29,6 +26,7 @@ import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
  * This service contains utility functionality that verifies a changelog to prevent corruption and executes a given changelog.
  */
 @Service
+@Profile("scheduling")
 public class MigrationService {
 
     private final Logger log = LoggerFactory.getLogger(MigrationService.class);
@@ -153,6 +151,6 @@ public class MigrationService {
     }
 
     private String toMD5(String string) {
-        return Hex.encodeHexString(messageDigest.digest(string.getBytes(StandardCharsets.UTF_8)));
+        return HexFormat.of().formatHex(messageDigest.digest(string.getBytes(StandardCharsets.UTF_8)));
     }
 }

@@ -24,15 +24,13 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     private static final String LOGIN_INITIATION_PATH = "/initiate-login";
 
-    public static final String LTI13_BASE_PATH = "/api/lti13";
+    public static final String LTI13_BASE_PATH = "/api/public/lti13";
 
     public static final String LTI13_LOGIN_PATH = LTI13_BASE_PATH + LOGIN_PATH;
 
     public static final String LTI13_LOGIN_INITIATION_PATH = LTI13_BASE_PATH + LOGIN_INITIATION_PATH;
 
     public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
-
-    public static final String JWKS_PATH = "/.well-known/jwks.json";
 
     public CustomLti13Configurer() {
         super.ltiPath(LTI13_BASE_PATH);

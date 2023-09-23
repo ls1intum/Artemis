@@ -216,7 +216,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.createEditVideoUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledTimes(0);
+            expect(createStub).not.toHaveBeenCalled();
         });
     }));
 
@@ -276,7 +276,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.createEditTextUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledTimes(0);
+            expect(createStub).not.toHaveBeenCalled();
         });
     }));
 
@@ -420,7 +420,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.createEditOnlineUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledTimes(0);
+            expect(createStub).not.toHaveBeenCalled();
         });
     }));
 
@@ -623,7 +623,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.createEditAttachmentUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledTimes(0);
+            expect(createStub).not.toHaveBeenCalled();
         });
     }));
 

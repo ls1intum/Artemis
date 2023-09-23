@@ -26,9 +26,13 @@ export class ProgrammingExerciseTaskService {
 
     ignoreInactive = true;
 
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    public resourceUrl = 'api/programming-exercises';
 
-    constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
+    constructor(
+        private http: HttpClient,
+        private alertService: AlertService,
+        private gradingService: ProgrammingExerciseGradingService,
+    ) {}
 
     get totalWeights() {
         return sum(this.testCases.map(({ weight }) => weight ?? 0));
@@ -258,7 +262,6 @@ export class ProgrammingExerciseTaskService {
 /**
  * Gets a single value from a list if there is only one unique value. otherwise returns undefined
  * @param values
- * @private
  */
 const getSingleValue = (values: any[]) => {
     const set = new Set(values);

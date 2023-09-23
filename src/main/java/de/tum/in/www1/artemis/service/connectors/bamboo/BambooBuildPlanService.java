@@ -18,7 +18,8 @@ import org.springframework.stereotype.Service;
 
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
-import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
+import com.atlassian.bamboo.specs.api.builders.credentials.SharedCredentialsIdentifier;
+import com.atlassian.bamboo.specs.api.builders.credentials.SharedCredentialsScope;
 import com.atlassian.bamboo.specs.api.builders.docker.DockerConfiguration;
 import com.atlassian.bamboo.specs.api.builders.notification.AnyNotificationRecipient;
 import com.atlassian.bamboo.specs.api.builders.notification.Notification;
@@ -37,24 +38,20 @@ import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifie
 import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
 import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
-import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
-import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
+import com.atlassian.bamboo.specs.builders.repository.git.GitRepository;
 import com.atlassian.bamboo.specs.builders.task.*;
-import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
-import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
@@ -71,8 +68,10 @@ public class BambooBuildPlanService {
     @Value("${server.url}")
     private URL artemisServerUrl;
 
-    @Value("${artemis.continuous-integration.vcs-application-link-name}")
-    private String vcsApplicationLinkName;
+    private final BambooInternalUrlService bambooInternalUrlService;
+
+    @Value("${artemis.version-control.user}")
+    private String gitUser;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -82,39 +81,39 @@ public class BambooBuildPlanService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final UrlService urlService;
+
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService, BambooInternalUrlService bambooInternalUrlService) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.versionControlService = versionControlService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.urlService = urlService;
+        this.bambooInternalUrlService = bambooInternalUrlService;
     }
 
     /**
      * Creates a Build Plan for a Programming Exercise
      *
-     * @param programmingExercise    programming exercise with the required
-     *                                   information to create the base build plan
-     * @param planKey                the key of the build plan
-     * @param repositoryName         the slug of the assignment repository (used to
-     *                                   separate between exercise and solution), i.e.
-     *                                   the unique identifier
-     * @param testRepositoryName     the slug of the test repository, i.e. the
-     *                                   unique identifier
-     * @param solutionRepositoryName the slug of the solution repository, i.e. the
-     *                                   unique identifier
-     * @param auxiliaryRepositories  List of auxiliary repositories to be included in
-     *                                   the build plan
+     * @param programmingExercise   programming exercise with the required
+     *                                  information to create the base build plan
+     * @param planKey               the key of the build plan
+     * @param repositoryUrl         the url of the assignment repository
+     * @param testRepositoryUrl     the url of the test repository
+     * @param solutionRepositoryUrl the url of the solution repository
+     * @param auxiliaryRepositories List of auxiliary repositories to be included in
+     *                                  the build plan
      */
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName, String solutionRepositoryName,
-            List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl,
+            VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
         final boolean recordTestwiseCoverage = Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && "SOLUTION".equals(planKey);
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
-                programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)
+        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl, programmingExercise.getCheckoutSolutionRepository(),
+                solutionRepositoryUrl, auxiliaryRepositories)
                         .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
                                 programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
                                 recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
@@ -379,34 +378,29 @@ public class BambooBuildPlanService {
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
 
-    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
-            boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug, List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
-        List<VcsRepositoryIdentifier> vcsTriggerRepositories = new ArrayList<>();
-        // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
-        vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
-        // Trigger the build when a commit is pushed to the TEST_REPO only for the
-        // solution repository!
-        if (planKey.equals(BuildPlanType.SOLUTION.getName())) {
-            vcsTriggerRepositories.add(new VcsRepositoryIdentifier(TEST_REPO_NAME));
-        }
+    // TODO: aux repos also need to have a URL and not a slug
+    private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, VcsRepositoryUrl assignmentRepoUrl,
+            VcsRepositoryUrl testRepoUrl, boolean checkoutSolutionRepository, VcsRepositoryUrl solutionRepoUrl,
+            List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
+
+        VersionControlService versionControl = versionControlService.orElseThrow();
 
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
-        planRepositories.add(
-                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName, versionControlService.get().getDefaultBranchOfRepository(projectKey, repositoryName)));
-        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug,
-                versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsTestRepositorySlug)));
-        for (var repo : auxiliaryRepositories) {
-            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug(),
-                    versionControlService.get().getDefaultBranchOfRepository(projectKey, repo.repositorySlug())));
+        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, bambooInternalUrlService.toInternalVcsUrl(assignmentRepoUrl).toString(),
+                versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(assignmentRepoUrl))));
+        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, bambooInternalUrlService.toInternalVcsUrl(testRepoUrl).toString(),
+                versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(testRepoUrl))));
+        for (var auxRepo : auxiliaryRepositories) {
+            planRepositories.add(createBuildPlanRepository(auxRepo.name(), bambooInternalUrlService.toInternalVcsUrl(auxRepo.repositoryUrl()).toString(),
+                    versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(auxRepo.repositoryUrl()))));
         }
         if (checkoutSolutionRepository) {
-            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug,
-                    versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsSolutionRepositorySlug)));
+            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, bambooInternalUrlService.toInternalVcsUrl(solutionRepoUrl).toString(),
+                    versionControl.getDefaultBranchOfRepository(projectKey, urlService.getRepositorySlugFromRepositoryUrl(solutionRepoUrl))));
         }
 
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
                 .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true)).planRepositories(planRepositories.toArray(VcsRepository[]::new))
-                .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(vcsTriggerRepositories.toArray(new VcsRepositoryIdentifier[0])))
                 .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
@@ -435,12 +429,10 @@ public class BambooBuildPlanService {
                         .recipientString(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH));
     }
 
-    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String branch) {
-        return new BitbucketServerRepository().name(name).branch(branch).repositoryViewer(new BitbucketServerRepositoryViewer())
-                .server(new ApplicationLink().name(vcsApplicationLinkName))
-                // make sure to use lower case to avoid problems in change detection between
-                // Bamboo and Bitbucket
-                .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
+    private GitRepository createBuildPlanRepository(String name, String repositoryUrl, String branch) {
+        return new GitRepository().name(name).branch(branch).authentication(new SharedCredentialsIdentifier(gitUser).scope(SharedCredentialsScope.GLOBAL))
+                .url(repositoryUrl.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
+                // TODO: can we leave this empty?
                 .changeDetection(new VcsChangeDetection());
     }
 

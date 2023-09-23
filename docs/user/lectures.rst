@@ -131,7 +131,7 @@ Competencies
 --------------
 
 Instructors can create competencies, which are desired learning objectives, and link lecture units to them.
-See :ref:`Learning Analytics <learning-analytics>` for more information.
+See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 
 
 .. |lectures-overview| image:: lectures/lectures-overview.png

@@ -39,11 +39,9 @@
                 [submission]="submission!"
                 [(textBlockRefs)]="textBlockRefs"
                 [readOnly]="readOnly"
-                [conflictMode]="false"
                 [highlightDifferences]="highlightDifferences"
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
-                (onConflictsClicked)="navigateToConflictingSubmissions($event)"
                 [criteria]="exercise!.gradingCriteria"
             ></jhi-text-assessment-area>
             <!--endregion-->

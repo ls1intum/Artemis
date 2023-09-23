@@ -5,14 +5,9 @@
         [textBlockRef]="ref"
         [selected]="selectedRef === ref"
         [readOnly]="readOnly"
-        [isConflictingFeedback]="!!isConflictingFeedbackMap?.get(ref)"
-        [conflictType]="conflictTypeMap?.get(ref)"
-        [conflictMode]="conflictMode"
-        [isLeftConflictingFeedback]="isLeftConflictingFeedback"
         (didSelect)="didSelectRef($event)"
         (didChange)="textBlockRefsChangeEmit()"
         (didDelete)="removeTextBlockRef($event)"
-        (onConflictsClicked)="onConflictsClicked.emit($event)"
         [highlightDifferences]="highlightDifferences"
         [criteria]="criteria"
     ></jhi-textblock-assessment-card>
@@ -30,9 +25,9 @@
 
 <div>
     <span class="badge bg-primary mb-2" id="text-assessment-word-count">
-        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate : { count: wordCount } }}
+        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
     </span>
     <span class="badge bg-primary mb-2" id="text-assessment-character-count">
-        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate : { count: characterCount } }}
+        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
     </span>
 </div>

@@ -39,8 +39,8 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -48,7 +48,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public class ProgrammingPlagiarismDetectionService {
 
     @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
+    private Path repoDownloadClonePath;
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingPlagiarismDetectionService.class);
 
@@ -169,7 +169,7 @@ public class ProgrammingPlagiarismDetectionService {
     @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
-        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
@@ -177,11 +177,11 @@ public class ProgrammingPlagiarismDetectionService {
             throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
         }
 
-        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString());
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
-        final var repoFolder = Path.of(targetPath, projectKey).toFile();
+        final var repoFolder = targetPath.resolve(projectKey).toFile();
         final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
@@ -189,7 +189,7 @@ public class ProgrammingPlagiarismDetectionService {
                 // JPlag expects a value between 0.0 and 1.0
                 .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
         if (templateRepoName != null) {
-            var templateFolder = Path.of(targetPath, projectKey, templateRepoName).toFile();
+            var templateFolder = targetPath.resolve(projectKey).resolve(templateRepoName).toFile();
             options = options.withBaseCodeSubmissionDirectory(templateFolder);
         }
 
@@ -217,8 +217,10 @@ public class ProgrammingPlagiarismDetectionService {
                 throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
             }
         }
+        finally {
+            cleanupResourcesAsync(programmingExercise, repositories, targetPath);
+        }
 
-        cleanupResourcesAsync(programmingExercise, repositories, targetPath);
         return result;
     }
 
@@ -243,35 +245,35 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the zip file
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
-        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        final var reportFolder = Path.of(targetPath, programmingExercise.getProjectKey() + " JPlag Report").toString();
-        final var reportFolderFile = new File(reportFolder);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
+        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report");
+        final var reportFolderFile = reportFolder.toFile();
 
         // Create directories.
         if (!reportFolderFile.mkdirs()) {
             log.error("Cannot generate JPlag report because directories couldn't be created: {}", reportFolder);
+            // this error is unlikely to happen
             return null;
         }
 
         // Write JPlag report result to the file.
         log.info("Write JPlag report to file system and zip it");
         ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
-        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder);
+        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder.toString());
         // JPlag automatically zips the report
 
         var zipFile = new File(reportFolder + ".zip");
-        fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
-        fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 2);
+        fileService.schedulePathForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
         return zipFile;
     }
 
-    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {
+    private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final Path targetPath) {
         executor.schedule(() -> {
-            log.info("Will delete local repositories for programming exercise {}", programmingExercise.getId());
+            log.info("Will delete local repositories for programming exercise {} after plagiarism check", programmingExercise.getId());
             deleteLocalRepositories(repositories);
             // delete project root folder in the repos download folder
             programmingExerciseExportService.deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
-            log.info("Delete repositories done for programming exercise {}", programmingExercise.getId());
+            log.info("Delete local repositories done for programming exercise {} after plagiarism check", programmingExercise.getId());
         }, 10, TimeUnit.SECONDS);
     }
 
@@ -328,7 +330,7 @@ public class ProgrammingPlagiarismDetectionService {
     public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
-        return studentParticipations.parallelStream().filter(participation -> !participation.isTestRun())
+        return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
                 .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
                 .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
                     Submission submission = participation.findLatestSubmission().orElse(null);

@@ -7,6 +7,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
+import { Exercise } from 'app/entities/exercise.model';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
@@ -14,8 +15,8 @@ export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
-    private resourceUrlExercises = SERVER_API_URL + 'api/exercises';
+    private resourceUrl = 'api/courses';
+    private resourceUrlExercises = 'api/exercises';
 
     constructor(private http: HttpClient) {}
 
@@ -130,5 +131,15 @@ export class PlagiarismCasesService {
             params,
             observe: 'response',
         });
+    }
+    public getNumberOfPlagiarismCasesForExercise(exercise: Exercise): Observable<number> {
+        let courseId: number;
+        if (exercise.exerciseGroup) {
+            courseId = exercise.exerciseGroup.exam!.course!.id!;
+        } else {
+            courseId = exercise.course!.id!;
+        }
+        const exerciseId = exercise!.id;
+        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-cases-count`);
     }
 }

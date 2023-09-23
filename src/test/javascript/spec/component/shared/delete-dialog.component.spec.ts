@@ -14,6 +14,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import '@angular/localize/init';
+import { ButtonType } from 'app/shared/components/button.component';
 
 describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
@@ -47,13 +48,15 @@ describe('DeleteDialogComponent', () => {
         comp.deleteQuestion = 'artemisApp.exercise.delete.question';
         comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
         comp.dialogError = new Observable<string>();
+        comp.buttonType = ButtonType.ERROR;
         fixture.detectChanges();
 
         const closeButton = fixture.debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
         expect(closeSpy).toHaveBeenCalledOnce();
-
+        expect(comp.warningTextColor).toBe('text-danger');
+        expect(comp.useFaCheckIcon).toBeFalse();
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
@@ -69,6 +72,7 @@ describe('DeleteDialogComponent', () => {
         comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
         comp.confirmEntityName = '';
         comp.dialogError = new Observable<string>();
+        comp.buttonType = ButtonType.ERROR;
         fixture.detectChanges();
         let submitButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(submitButton.nativeElement.disabled).toBeTrue();
@@ -94,6 +98,7 @@ describe('DeleteDialogComponent', () => {
         const dialogErrorSource = new Subject<string>();
         comp.dialogError = dialogErrorSource.asObservable();
         comp.delete = new EventEmitter<{ [p: string]: boolean }>();
+        comp.buttonType = ButtonType.ERROR;
         fixture.detectChanges();
         let deleteButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(deleteButton.nativeElement.disabled).toBeFalse();

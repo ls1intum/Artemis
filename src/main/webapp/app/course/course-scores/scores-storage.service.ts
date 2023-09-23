@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
+import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 
 /**
@@ -24,7 +24,7 @@ export class ScoresStorageService {
     /**
      * This map stores the {@link Result} object for each {@link Participation} of the currently logged-in user. The number is the id of the participation.
      */
-    private storedParticipationResults: Map<number, Result> = new Map();
+    private storedParticipationResults: Map<number, ParticipationResultDTO> = new Map();
 
     getStoredTotalScores(courseId: number): CourseScores | undefined {
         return this.storedTotalScores.get(courseId);
@@ -42,13 +42,13 @@ export class ScoresStorageService {
         this.storedScoresPerExerciseType.set(courseId, scoresPerExerciseType);
     }
 
-    getStoredParticipationResult(participationId: number): Result | undefined {
+    getStoredParticipationResult(participationId: number): ParticipationResultDTO | undefined {
         return this.storedParticipationResults.get(participationId);
     }
 
-    setStoredParticipationResults(participationResults?: Result[]): void {
-        for (const result of participationResults ?? []) {
-            this.storedParticipationResults.set(result.participation!.id!, result);
+    setStoredParticipationResults(participationResults?: ParticipationResultDTO[]): void {
+        for (const participationResult of participationResults ?? []) {
+            this.storedParticipationResults.set(participationResult.participationId, participationResult);
         }
     }
 }

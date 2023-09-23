@@ -8,14 +8,25 @@ import { StaticCodeAnalysisCategory } from 'app/entities/static-code-analysis-ca
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 export class ProgrammingExerciseTestCaseUpdate {
-    constructor(public id?: number, public weight?: number, public bonusPoints?: number, public bonusMultiplier?: number, public visibility?: Visibility) {}
+    constructor(
+        public id?: number,
+        public weight?: number,
+        public bonusPoints?: number,
+        public bonusMultiplier?: number,
+        public visibility?: Visibility,
+    ) {}
 
     static from(testCase: ProgrammingExerciseTestCase) {
         return new ProgrammingExerciseTestCaseUpdate(testCase.id, testCase.weight, testCase.bonusPoints, testCase.bonusMultiplier, testCase.visibility);
     }
 }
 export class StaticCodeAnalysisCategoryUpdate {
-    constructor(public id?: number, public penalty?: number, public maxPenalty?: number, public state?: string) {}
+    constructor(
+        public id?: number,
+        public penalty?: number,
+        public maxPenalty?: number,
+        public state?: string,
+    ) {}
 
     static from(category: StaticCodeAnalysisCategory) {
         return new StaticCodeAnalysisCategoryUpdate(category.id, category.penalty, category.maxPenalty, category.state);
@@ -36,12 +47,15 @@ export interface IProgrammingExerciseGradingService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    public resourceUrl = 'api/programming-exercises';
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
+    constructor(
+        private jhiWebsocketService: JhiWebsocketService,
+        private http: HttpClient,
+    ) {}
 
     /**
      * On destroy unsubscribe all connections.

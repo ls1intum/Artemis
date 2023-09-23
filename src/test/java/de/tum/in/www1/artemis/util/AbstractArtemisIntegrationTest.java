@@ -13,21 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.*;
+import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
+import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -79,10 +75,16 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected MailService mailService;
 
     @SpyBean
-    protected WebsocketMessagingService websocketMessagingService;
+    protected GeneralInstantNotificationService generalInstantNotificationService;
 
     @SpyBean
-    protected SimpMessageSendingOperations messagingTemplate;
+    protected FirebasePushNotificationService firebasePushNotificationService;
+
+    @SpyBean
+    protected ApplePushNotificationService applePushNotificationService;
+
+    @SpyBean
+    protected WebsocketMessagingService websocketMessagingService;
 
     @SpyBean
     protected ProgrammingTriggerService programmingTriggerService;
@@ -114,17 +116,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected TextBlockService textBlockService;
 
-    @SpyBean
-    protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    @SpyBean
-    protected ExerciseRepository exerciseRepository;
-
     @Autowired
     protected QuizScheduleService quizScheduleService;
-
-    @Autowired
-    protected DatabaseUtilService database;
 
     @Autowired
     protected RequestUtilService request;
@@ -137,7 +130,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
-    @AfterEach()
+    @AfterEach
     void stopQuizScheduler() {
         quizScheduleService.stopSchedule();
         quizScheduleService.clearAllQuizData();
@@ -150,9 +143,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     protected void resetSpyBeans() {
         Mockito.reset(lti10Service, gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
-                websocketMessagingService, messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService,
-                programmingExerciseParticipationService, urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService,
-                programmingExerciseStudentParticipationRepository, exerciseRepository);
+                websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
+                urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService);
     }
 
     @Override

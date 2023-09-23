@@ -20,7 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
@@ -28,11 +29,13 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "reactionintegration";
 
@@ -44,6 +47,15 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -66,11 +78,11 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        userUtilService.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
-        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
+        existingPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
 
         // filters existing posts with conversation
@@ -153,8 +165,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
 
-        // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        // try again: the post "silently" fails with a 200
+        var response = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.OK);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -180,8 +193,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
-        // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        // try again: the post "silently" fails with a 200
+        var response = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.OK);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -261,8 +275,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.DESCENDING;
 
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
@@ -298,8 +312,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.ASCENDING;
 
-        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
         Post postReactedOn = existingPostsWithAnswers.get(0);
         createVoteReactionOnPost(postReactedOn, student1);
@@ -396,12 +410,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
-        Course dummyCourse = database.createCourse();
+        Course dummyCourse = courseUtilService.createCourse();
         Post postToReactOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
 
         request.delete("/api/courses/" + dummyCourse.getCourseIcon() + "/postings/reactions/" + reactionToSaveOnPost.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(postToReactOn.getReactions()).hasSameSizeAs(postRepository.findById(postToReactOn.getId()).get().getReactions());
+        assertThat(postToReactOn.getReactions()).hasSameSizeAs(postRepository.findById(postToReactOn.getId()).orElseThrow().getReactions());
     }
 
     @Test
@@ -475,6 +489,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(createdReaction.getPost()).isEqualTo(expectedReaction.getPost());
         assertThat(createdReaction.getAnswerPost()).isEqualTo(expectedReaction.getAnswerPost());
 
-        database.assertSensitiveInformationHidden(createdReaction);
+        conversationUtilService.assertSensitiveInformationHidden(createdReaction);
     }
 }

@@ -12,10 +12,25 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChartBar,
+    faCircleNotch,
+    faClipboard,
+    faComment,
+    faComments,
+    faEye,
+    faFilePdf,
+    faFlag,
+    faGraduationCap,
+    faListAlt,
+    faPersonChalkboard,
+    faSync,
+    faTable,
+    faTimes,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -25,7 +40,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
+    styleUrls: ['course-overview.scss', '../shared/tab-bar/tab-bar.scss'],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -41,6 +56,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     public messagesRouteLoaded: boolean;
 
     private conversationServiceInstantiated = false;
+    private checkedForUnreadMessages = false;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -61,8 +77,22 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
     // Icons
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faTable = faTable;
+    faFlag = faFlag;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
+    faFilePdf = faFilePdf;
+    faComment = faComment;
+    faComments = faComments;
+    faClipboard = faClipboard;
+    faGraduationCap = faGraduationCap;
+    faPersonChalkboard = faPersonChalkboard;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
+
     FeatureToggle = FeatureToggle;
 
     readonly isMessagingEnabled = isMessagingEnabled;
@@ -72,7 +102,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
         private courseStorageService: CourseStorageService,
-        private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -100,11 +129,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
-        this.setUpConversationService();
     }
 
     private setUpConversationService() {
-        if (isMessagingEnabled(this.course) && !this.conversationServiceInstantiated) {
+        if (!isMessagingEnabled(this.course)) {
+            return;
+        }
+
+        if (!this.conversationServiceInstantiated && this.messagesRouteLoaded) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -115,6 +147,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                         this.subscribeToHasUnreadMessages();
                     },
                 });
+        } else if (!this.checkedForUnreadMessages) {
+            this.metisConversationService.checkForUnreadMessages(this.course!);
+            this.subscribeToHasUnreadMessages();
+            this.checkedForUnreadMessages = true;
         }
     }
 
@@ -140,6 +176,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+
+        this.setUpConversationService();
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
@@ -216,7 +254,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Fetch the course from the server including all exercises, lectures, exams and learning goals
+     * Fetch the course from the server including all exercises, lectures, exams and competencies
      * @param refresh Whether this is a force refresh (displays loader animation)
      */
     loadCourse(refresh = false): Observable<void> {
@@ -227,7 +265,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.course = res.body;
                 }
 
-                this.setUpConversationService();
+                if (refresh) {
+                    this.setUpConversationService();
+                }
 
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             }),
@@ -254,7 +294,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         // Start fetching, even if we don't subscribe to the result.
         // This enables just calling this method to refresh the course, without subscribing to it:
         this.loadCourseSubscription?.unsubscribe();
-        this.loadCourseSubscription = observable.subscribe();
+        if (refresh) {
+            this.loadCourseSubscription = observable.subscribe();
+        }
         return observable;
     }
 
@@ -305,10 +347,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Check if the course has any learning goals or prerequisites
+     * Check if the course has any competencies or prerequisites
      */
-    hasLearningGoals(): boolean {
-        return !!(this.course?.learningGoals?.length || this.course?.prerequisites?.length);
+    hasCompetencies(): boolean {
+        return !!(this.course?.competencies?.length || this.course?.prerequisites?.length);
     }
 
     /**

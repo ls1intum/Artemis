@@ -6,10 +6,10 @@ import java.net.URISyntaxException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.AnswerPostService;
 
 /**
@@ -37,7 +37,7 @@ public class AnswerPostResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/answer-posts")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) throws URISyntaxException {
         AnswerPost createdAnswerPost = answerPostService.createAnswerPost(courseId, answerPost);
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
@@ -53,7 +53,7 @@ public class AnswerPostResource {
      *         or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
      */
     @PutMapping("courses/{courseId}/answer-posts/{answerPostId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId, @RequestBody AnswerPost answerPost) {
         AnswerPost updatedAnswerPost = answerPostService.updateAnswerPost(courseId, answerPostId, answerPost);
         return new ResponseEntity<>(updatedAnswerPost, null, HttpStatus.OK);
@@ -68,7 +68,7 @@ public class AnswerPostResource {
      *         or 400 (Bad Request) if the checks on user or course validity fail
      */
     @DeleteMapping("courses/{courseId}/answer-posts/{answerPostId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId) {
         answerPostService.deleteAnswerPostById(courseId, answerPostId);
         return ResponseEntity.ok().build();

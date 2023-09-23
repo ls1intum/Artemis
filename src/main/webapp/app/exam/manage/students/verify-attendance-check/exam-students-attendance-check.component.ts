@@ -12,7 +12,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faCheck, faInfoCircle, faPlus, faSort, faUpload, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -24,7 +24,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
-    readonly SERVER_API_URL = SERVER_API_URL;
     readonly missingImage = '/content/images/missing_image.png';
 
     courseId: number;
@@ -42,6 +41,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     isLoading = false;
     isSearching = false;
     hasExamStarted = false;
+    hasExamEnded = false;
     searchFailed = false;
     searchNoResults = false;
     isTransitioning = false;
@@ -53,6 +53,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     faInfoCircle = faInfoCircle;
     faUpload = faUpload;
     faCheck = faCheck;
+    faTimes = faTimes;
     faXmark = faXmark;
     faSort = faSort;
 
@@ -73,15 +74,16 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
             this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
+            this.hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
             this.isTestExam = this.exam.testExam!;
-            this.isLoading = false;
         });
         if (this.hasExamStarted) {
             this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({
                 next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
                     this.allExamUsersAttendanceCheck = res.body!;
+                    this.isLoading = false;
                 },
-                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                error: (error: HttpErrorResponse) => this.onError(error.message),
             });
         }
     }
@@ -98,6 +100,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     onError(error: string) {
         this.alertService.error(error);
         this.isTransitioning = false;
+        this.isLoading = false;
     }
 
     sortRows() {

@@ -1,4 +1,4 @@
-import { BASE_API, EXERCISE_TYPE, POST } from '../../constants';
+import { BASE_API, ExerciseType, POST } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -35,11 +35,11 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     rejectComplaint(response: string, examMode: boolean) {
-        return super.rejectComplaint(response, examMode, EXERCISE_TYPE.Text);
+        return super.rejectComplaint(response, examMode, ExerciseType.TEXT);
     }
 
     acceptComplaint(response: string, examMode: boolean) {
-        return super.acceptComplaint(response, examMode, EXERCISE_TYPE.Text);
+        return super.acceptComplaint(response, examMode, ExerciseType.TEXT);
     }
 
     getWordCountElement() {

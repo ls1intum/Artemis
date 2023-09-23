@@ -29,6 +29,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -83,6 +84,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
     packageNamePatternForJavaKotlin =
         '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
+    // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
+    packageNamePatternForJavaBlackbox =
+        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*$';
     // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
     // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
     appNamePatternForSwift =
@@ -313,8 +317,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // update the project types for java programming exercises according to whether dependencies should be included
         if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA) {
-            if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
+            if (type == ProjectType.MAVEN_BLACKBOX) {
+                this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
+                this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
+                this.sequentialTestRunsAllowed = false;
+                this.testwiseCoverageAnalysisSupported = false;
+            } else if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+                this.sequentialTestRunsAllowed = true;
+                this.testwiseCoverageAnalysisSupported = true;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.MAVEN_MAVEN;
                 } else {
@@ -322,6 +333,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 }
             } else {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+                this.sequentialTestRunsAllowed = true;
+                this.testwiseCoverageAnalysisSupported = true;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.GRADLE_GRADLE;
                 } else {
@@ -388,8 +401,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                            this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                                this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
                             // we need the course id  to make the request to the server if it's an import from file
@@ -398,8 +411,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             }
                         } else if (params['courseId']) {
                             this.courseId = params['courseId'];
+                            this.isExamMode = false;
                             this.courseService.find(this.courseId).subscribe((res) => {
-                                this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
                                 if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
@@ -625,11 +638,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('X-artemisApp-alert')!;
+        let errorMessage;
+        let disableTranslation;
+        // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
+        if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
+            errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
+            disableTranslation = false;
+        } else {
+            errorMessage = error.headers.get('X-artemisApp-alert')!;
+            disableTranslation = true;
+        }
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
-            disableTranslation: true,
+            disableTranslation: disableTranslation,
         });
         this.isSaving = false;
         window.scrollTo(0, 0);
@@ -660,12 +682,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Sets the regex pattern for the package name for the selected programming language.
      *
      * @param language to choose from
+     * @param useBlackboxPattern whether to allow points in the regex
      */
-    setPackageNamePattern(language: ProgrammingLanguage) {
+    setPackageNamePattern(language: ProgrammingLanguage, useBlackboxPattern = false) {
         if (language === ProgrammingLanguage.SWIFT) {
             this.packageNamePattern = this.appNamePatternForSwift;
         } else {
-            this.packageNamePattern = this.packageNamePatternForJavaKotlin;
+            this.packageNamePattern = useBlackboxPattern ? this.packageNamePatternForJavaBlackbox : this.packageNamePatternForJavaKotlin;
         }
     }
 
@@ -685,6 +708,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         }
         this.selectedProjectType = projectType;
+        const useBlackboxPattern = projectType === ProjectType.MAVEN_BLACKBOX;
+        this.setPackageNamePattern(this.programmingExercise.programmingLanguage!, useBlackboxPattern);
         return projectType;
     }
 
@@ -727,7 +752,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
@@ -742,9 +767,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     /**
      * checking if at least one of Online Editor or Offline Ide is selected
      */
-    validIdeSelection() {
-        return this.programmingExercise.allowOnlineEditor || this.programmingExercise.allowOfflineIde;
-    }
+    validIdeSelection = () => {
+        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde;
+    };
 
     isEventInsideTextArea(event: Event): boolean {
         if (event.target instanceof Element) {
@@ -763,6 +788,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         if (forStep >= 1) {
             this.validateExerciseTitle(validationErrorReasons);
+            this.validateExerciseChannelName(validationErrorReasons);
             this.validateExerciseShortName(validationErrorReasons);
             this.validateExerciseAuxiliryRepositories(validationErrorReasons);
         }
@@ -772,14 +798,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         if (forStep >= 4) {
+            this.validateExerciseIdeSelection(validationErrorReasons);
+        }
+
+        if (forStep >= 5) {
             this.validateExercisePoints(validationErrorReasons);
             this.validateExerciseBonusPoints(validationErrorReasons);
             this.validateExerciseSCAMaxPenalty(validationErrorReasons);
             this.validateExerciseSubmissionLimit(validationErrorReasons);
-        }
-
-        if (forStep >= 5) {
-            this.validateExerciseIdeSelection(validationErrorReasons);
         }
 
         return validationErrorReasons;
@@ -794,6 +820,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (this.programmingExercise.title.match(this.titleNamePattern) === null || this.programmingExercise.title?.match(this.titleNamePattern)?.length === 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+        }
+    }
+
+    private validateExerciseChannelName(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.channelName === '') {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.channelName.empty',
                 translateValues: {},
             });
         }
@@ -887,12 +922,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         } else {
             const patternMatchJavaKotlin: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaKotlin);
+            const patternMatchJavaBlackbox: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.packageNamePatternForJavaBlackbox);
             const patternMatchSwift: RegExpMatchArray | null = this.programmingExercise.packageName.match(this.appNamePatternForSwift);
-            if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
-                validationErrorReasons.push({
-                    translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
-                    translateValues: {},
-                });
+            const projectTypeDependentPatternMatch: RegExpMatchArray | null =
+                this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX ? patternMatchJavaBlackbox : patternMatchJavaKotlin;
+
+            if (
+                this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA &&
+                (projectTypeDependentPatternMatch === null || projectTypeDependentPatternMatch.length === 0)
+            ) {
+                if (this.programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX) {
+                    validationErrorReasons.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA_BLACKBOX',
+                        translateValues: {},
+                    });
+                } else {
+                    validationErrorReasons.push({
+                        translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                        translateValues: {},
+                    });
+                }
             } else if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN && (patternMatchJavaKotlin === null || patternMatchJavaKotlin.length === 0)) {
                 validationErrorReasons.push({
                     translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
@@ -979,25 +1028,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
-    getInfoStepInputs() {
+    getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
+            isImportFromFile: this.isImportFromFile,
+            isImportFromExistingExercise: this.isImportFromExistingExercise,
+            showSummary: false,
+            isEdit: this.isEdit,
+            isExamMode: this.isExamMode,
+            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
+            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             updateRepositoryName: this.updateRepositoryName,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
             refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             exerciseCategories: this.exerciseCategories,
             existingCategories: this.existingCategories,
             updateCategories: this.categoriesChanged,
-        };
-    }
-
-    getLanguageStepInputs() {
-        return {
             appNamePatternForSwift: this.appNamePatternForSwift,
             modePickerOptions: this.modePickerOptions,
             withDependencies: this.withDependencies,
@@ -1010,31 +1061,22 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             projectTypes: this.projectTypes,
             selectedProjectType: this.selectedProjectType,
             onProjectTypeChange: this.projectTypeChanged,
-        };
-    }
-
-    getGradingStepInputs() {
-        return {
+            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
+            testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
             staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
             maxPenaltyPattern: this.maxPenaltyPattern,
-        };
-    }
-
-    getProblemStepInputs() {
-        return {
             problemStatementLoaded: this.problemStatementLoaded,
             templateParticipationResultLoaded: this.templateParticipationResultLoaded,
             hasUnsavedChanges: this.hasUnsavedChanges,
             rerenderSubject: this.rerenderSubject.asObservable(),
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
             recreateBuildPlans: this.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
-            selectedProjectType: this.selectedProjectType,
+            publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
+            recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
         };
     }
 }

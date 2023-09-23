@@ -33,10 +33,15 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialogModule } from '@angular/material/dialog';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
+import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
+import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
+import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
+import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
 
 @NgModule({
     imports: [
@@ -57,6 +62,8 @@ import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/messa
         MatAutocompleteModule,
         MatSelectModule,
         MatFormFieldModule,
+        MatDialogModule,
+        LinkPreviewModule,
     ],
     declarations: [
         PostingThreadComponent,
@@ -73,6 +80,9 @@ import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/messa
         AnswerPostComponent,
         PostingContentComponent,
         PostingContentPartComponent,
+        LinkPreviewComponent,
+        LinkPreviewContainerComponent,
+        EnlargeSlideImageComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
         MessageInlineInputComponent,
@@ -97,6 +107,9 @@ import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/messa
         AnswerPostComponent,
         PostingContentComponent,
         PostingContentPartComponent,
+        LinkPreviewComponent,
+        LinkPreviewContainerComponent,
+        EnlargeSlideImageComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
         MessageInlineInputComponent,

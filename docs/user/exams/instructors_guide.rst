@@ -202,20 +202,33 @@ During the exam creation and configuration, you can create your exam and configu
 
         Configure the Grading of a Programming Exercise
 
+.. _register_students:
+
 1.5 Register Students
 ^^^^^^^^^^^^^^^^^^^^^
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
     1. Add students manually by searching via the search bar.
-    2. Bulk import students using a ``CSV`` file. You can do this by pressing the |import_students| button.
-    3. Register every student in the course. You can do this by pressing the |register_course_students| button.
+    2. To import multiple students, click on the |import_students| button and provide a ``CSV`` file in the Import Users dialog. The required fields in the ``CSV`` file include the ``registrationNumber`` and the ``login``, while ``email``, ``firstname``, ``lastname``, ``seat``, and ``room`` are optional. Note that the ``room`` and ``seat`` fields are only necessary for the exam participation check. You can find an example file here: :download:`csv <instructor/example_import_students.csv>`. To begin the import, press the |import_students_button| button.
+
+    .. _figure_import_student:
+    .. figure:: instructor/import_students_dialog.png
+        :alt: Import Students Dialog
+        :align: center
+        :width: 60%
+
+        Import Students Dialog
+
+    3. Register every student in the course by pressing the |register_course_students| button.
 
 .. note::
     Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
 
+.. note::
+    Artemis also supports validating participants signatures for on-site exams.
+    For more information, please see :ref:`Exam Participation Checker <exam_participation_checker>`.
+
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user’s :ref:`student exam <student_exams>`.
-
-
 
 .. figure:: instructor/add_students.png
    :alt: Register Students
@@ -328,12 +341,6 @@ During the exam creation and configuration, you can create your exam and configu
 
    Exam Status Overview
 
-1.9 Live Statistics
-^^^^^^^^^^^^^^^^^^^
-
-Artemis can collect live statistics about the student behaviour during the exam.
-For more details, please visit the :ref:`live statistics <live_statistics>` page.
-
 .. _exam_conduction:
 
 2. **Conduction**
@@ -444,10 +451,23 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
+3.4 Exam Timeline
+^^^^^^^^^^^^^^^^^
+- Artemis stores the current state of a submission for text, modeling, and quiz exercises every 30s or whenever the student clicks the save button.
+- As instructor, you have the possibility to view all those states as well as the submissions for file-upload or programming exercises using the exam timeline.
+- The exam timeline is available on the details page of a student exam when the student exam has been submitted by clicking on the button |exam_timeline|. If the exam has not been submitted yet, the exam timeline button is disabled and shows an explanatory tooltip.
+- The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigate between different exercises using the navigation bar below the timeline
+- For programming exercises, you can view a git diff between the currently selected submission and the previous submission or the template of this exercise.
+
+.. figure:: instructor/exam_timeline_example.png
+     :alt: Exam timeline
+     :align: center
+
+
 
 .. _exam_grading_key:
 
-3.4 Grading Key
+3.5 Grading Key
 ^^^^^^^^^^^^^^^
 - Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
 - Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
@@ -560,6 +580,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |assess_test_runs| image:: instructor/buttons/assess_test_runs.png
 .. |assess_unsubmitted_student_exams| image:: instructor/buttons/assess_unsubmitted_student_exams.png
 .. |check_plagiarism| image:: instructor/buttons/check_plagiarism.png
+.. |exam_timeline| image:: instructor/buttons/exam_timeline.png
 .. |configure_grading| image:: instructor/buttons/configure_grading.png
 .. |course_management| image:: instructor/buttons/course_management.png
 .. |create_new_exam| image:: instructor/buttons/create_new_exam.png
@@ -581,6 +602,9 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |view| image:: instructor/buttons/view.png
 .. |submissions| image:: instructor/buttons/submissions.png
 .. |import_students| image:: instructor/buttons/import_students.png
+.. |import_students_button| image:: instructor/buttons/import_students_button.png
+.. |verify_attendance| image:: instructor/buttons/verify_attendance.png
+    :height: 40
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png

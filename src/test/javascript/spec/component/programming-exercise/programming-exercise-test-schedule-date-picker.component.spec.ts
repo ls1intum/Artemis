@@ -48,15 +48,6 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
             });
     });
 
-    it('should not change date when set date is undefined', () => {
-        comp.selectedDate = selectedDate;
-        const spy = jest.spyOn(comp, '_onChange');
-        comp.writeValue(undefined);
-
-        expect(comp.selectedDate).toEqual(selectedDate);
-        expect(spy).not.toHaveBeenCalled();
-    });
-
     it('should not change date when value is reference-equal to selected date', () => {
         const spy = jest.spyOn(comp, '_onChange');
         comp.writeValue(selectedDate);
@@ -88,7 +79,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         const spy = jest.spyOn(comp.onDateReset, 'emit');
         comp.resetDate();
 
-        expect(comp.selectedDate).toBeNull();
+        expect(comp.selectedDate).toBeUndefined();
         expect(spy).toHaveBeenCalledOnce();
     });
 });

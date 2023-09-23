@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -24,9 +25,13 @@ public class TextExerciseService {
 
     private final ExerciseSpecificationService exerciseSpecificationService;
 
-    public TextExerciseService(TextExerciseRepository textExerciseRepository, ExerciseSpecificationService exerciseSpecificationService) {
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    public TextExerciseService(TextExerciseRepository textExerciseRepository, ExerciseSpecificationService exerciseSpecificationService,
+            InstanceMessageSendService instanceMessageSendService) {
         this.textExerciseRepository = textExerciseRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -50,5 +55,9 @@ public class TextExerciseService {
         Specification<TextExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<TextExercise> exercisePage = textExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    public void cancelScheduledOperations(long exerciseId) {
+        instanceMessageSendService.sendTextExerciseScheduleCancel(exerciseId);
     }
 }

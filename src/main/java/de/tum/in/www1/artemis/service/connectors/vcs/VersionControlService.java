@@ -98,8 +98,8 @@ public interface VersionControlService {
     /**
      * Creates a repository on the VCS.
      *
-     * @param repoName         The name of repository
      * @param projectKey       The key of the project that contains the repository (must exist)
+     * @param repoName         The name of the repository
      * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
      * @throws VersionControlException if the repository could not be created
      */
@@ -120,7 +120,7 @@ public interface VersionControlService {
      * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
      * @param sourceRepositoryName The name of the repository which should be copied
      * @param sourceBranch         The default branch of the source repository
-     * @param targetProjectKey     The key of the target project to which to copy the new plan to
+     * @param targetProjectKey     The key of the target project to which to copy the new repository to
      * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
@@ -135,11 +135,7 @@ public interface VersionControlService {
      * @param user          User which to add to the repository
      * @param permissions   The permissions the user should get for the repository.
      */
-    void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions);
-
-    enum RepositoryPermissions {
-        READ_ONLY, READ_WRITE
-    }
+    void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, VersionControlRepositoryPermission permissions);
 
     /**
      * Remove the user from the repository

@@ -14,11 +14,14 @@ import org.springframework.util.StreamUtils;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.ci.AbstractBuildPlanCreator;
 
 @Service
 @Profile("gitlabci")
-public class GitLabCIBuildPlanService {
+public class GitLabCIBuildPlanService extends AbstractBuildPlanCreator {
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIBuildPlanService.class);
 
@@ -26,7 +29,10 @@ public class GitLabCIBuildPlanService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public GitLabCIBuildPlanService(ResourceLoaderService resourceLoaderService) {
+    public GitLabCIBuildPlanService(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ResourceLoaderService resourceLoaderService) {
+        super(buildPlanRepository, programmingExerciseRepository);
+
         this.resourceLoaderService = resourceLoaderService;
     }
 
@@ -36,6 +42,7 @@ public class GitLabCIBuildPlanService {
      * @param programmingExercise the programming exercise for which to get the build plan
      * @return the default build plan
      */
+    @Override
     public String generateDefaultBuildPlan(ProgrammingExercise programmingExercise) {
         final Optional<String> projectTypeName = getProjectTypeName(programmingExercise);
         final Path resourcePath = buildResourcePath(programmingExercise.getProgrammingLanguage(), projectTypeName, programmingExercise.hasSequentialTestRuns());

@@ -1,11 +1,11 @@
-import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { generateUUID } from '../../../support/utils';
+import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+
 import {
     courseManagement,
-    courseManagementRequest,
+    courseManagementAPIRequest,
+    examAPIRequests,
     examExerciseGroupCreation,
     examExerciseGroups,
     examManagement,
@@ -16,24 +16,24 @@ import {
     textExerciseCreation,
 } from '../../../support/artemis';
 import { admin, instructor, studentOne } from '../../../support/users';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 // Common primitives
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
-let groupCount = 0;
-let createdGroup: ExerciseGroup;
 
 describe('Test Exam management', () => {
     let course: Course;
     let exam: Exam;
+    let createdGroup: ExerciseGroup;
+    let groupCount = 0;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            const examConfig = new ExamBuilder(course).title(examTitle).testExam().build();
-            courseManagementRequest.createExam(examConfig).then((examResponse) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
+            course = convertModelAfterMultiPart(response);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            examAPIRequests.createExam({ course, title: examTitle, testExam: true }).then((examResponse) => {
                 exam = examResponse.body;
             });
         });
@@ -44,7 +44,7 @@ describe('Test Exam management', () => {
 
         before(() => {
             cy.login(instructor);
-            courseManagementRequest.addExerciseGroupForExam(exam).then((response) => {
+            examAPIRequests.addExerciseGroupForExam(exam).then((response) => {
                 exerciseGroup = response.body;
                 groupCount++;
             });
@@ -57,7 +57,7 @@ describe('Test Exam management', () => {
         it('Create exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
             examExerciseGroups.clickAddExerciseGroup();
@@ -138,7 +138,7 @@ describe('Test Exam management', () => {
         it('Delete an exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
             let group = exerciseGroup;
@@ -150,10 +150,7 @@ describe('Test Exam management', () => {
         });
     });
 
-    after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+    after('Delete course', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });

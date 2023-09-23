@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -17,6 +16,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -60,7 +61,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
     @PostMapping("/complaint-responses/complaint/{complaintId}/create-lock")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -77,7 +78,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
     @PostMapping("/complaint-responses/complaint/{complaintId}/refresh-lock")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -94,7 +95,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (Ok)
      */
     @DeleteMapping("/complaint-responses/complaint/{complaintId}/remove-lock")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -110,7 +111,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
     @PutMapping("/complaint-responses/complaint/{complaintId}/resolve")
-    @PreAuthorize("hasRole('TA')")
+    @EnforceAtLeastTutor
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -129,7 +130,7 @@ public class ComplaintResponseResource {
      */
     // TODO: change URL to /complaint-responses?complaintId={complaintId}
     @GetMapping("/complaint-responses/complaint/{complaintId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);

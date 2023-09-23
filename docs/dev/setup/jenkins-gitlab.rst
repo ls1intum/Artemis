@@ -1,3 +1,5 @@
+.. _Jenkins and GitLab Setup:
+
 Jenkins and GitLab Setup
 ------------------------
 
@@ -57,12 +59,10 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         user: root
         password: artemis_admin # created in Gitlab Server Quickstart step 2
         token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
-        ci-token: jenkins-secret-token # pre-generated or replaced in Automated Jenkins Server step 3
     continuous-integration:
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
-        empty-commit-necessary: true
         secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
@@ -125,10 +125,15 @@ both are set up correctly and follow these steps:
         INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_ADMIN");
         INSERT INTO `artemis`.`jhi_user_authority` (`user_id`, `authority_name`) VALUES (1,"ROLE_USER");
 
-4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username,
-email, and password are the same as the user from the database:
+4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username and
+email are the same as the user from the database:
 
 .. figure:: setup/jenkins-gitlab/gitlab_admin_user.png
+
+5. Edit the new admin user (``http://your-gitlab-domain/admin/users/artemis_admin/edit``) to set the password to the
+same value as in the database:
+
+.. figure:: setup/jenkins-gitlab/gitlab_admin_user_password.png
 
 Starting the Artemis server should now succeed.
 
@@ -188,9 +193,9 @@ tokens instead of the predefined ones.
 
    ::
 
-        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save!"
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_api', 'read_user', 'read_repository', 'write_repository', 'sudo'], name: 'Artemis Admin Token', expires_at: 365.days.from_now); token.set_token('artemis-gitlab-token'); token.save!"
 
-   | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and
+   | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens?name=Artemis+Admin+token&scopes=api,read_api,read_user,read_repository,write_repository,sudo`` and
      generate a token with all scopes.
    | Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the
      ``docker/gitlab/gitlab-local-setup.sh`` file.
@@ -325,7 +330,7 @@ GitLab Access Token
    .. figure:: setup/jenkins-gitlab/gitlab_access_tokens_button.png
       :align: center
 
-10. Create a new token named “Artemis” and give it **all** rights.
+10. Create a new token named “Artemis” and give it rights ``api``, ``read_api``, ``read_user``, ``read_repository``, ``write_repository``, and ``sudo``.
 
    .. figure:: setup/jenkins-gitlab/artemis_gitlab_access_token.png
       :align: center
@@ -469,7 +474,7 @@ do either do it manually or using the following command:
 
     ::
 
-        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save!"
+        docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_repository'], name: 'Jenkins', expires_at: 365.days.from_now); token.set_token('jenkins-gitlab-token'); token.save!"
 
 
 
@@ -483,11 +488,11 @@ do either do it manually or using the following command:
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
    in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-3. You need to generate the `ci-token` and `secret-push-token`.
+3. You need to generate the `secret-push-token`.
 
    ..
        Workaround as long as Github Issue 5973 (Default Push Notifications GitLab → Jenkins not working)
-       for now just generate the ci-token and secret-push-token manually
+       for now just generate the secret-push-token manually
 
    As there is currently an `open issue with the presets for Jenkins in Development environments <https://github.com/ls1intum/Artemis/issues/5973>`__,
    follow the steps described in
@@ -508,7 +513,6 @@ do either do it manually or using the following command:
             url: http://localhost:8081
             user: artemis_admin
             password: artemis_admin
-            ci-token: # pre-generated or replaced in Automated Jenkins Server step 3
         continuous-integration:
             user: artemis_admin
             password: artemis_admin
@@ -747,7 +751,7 @@ Choose “Download now and install after restart” and checking the
 Timestamper Configuration
 """""""""""""""""""""""""
 
-Go to *Manage Jenkins → Configure System*. There you will find the
+Go to *Manage Jenkins → System Configuration → Configure*. There you will find the
 Timestamper configuration, use the following value for both formats:
 
 ::
@@ -768,8 +772,8 @@ JUnit formatted results to any URL.
 You can download the current release of the plugin
 `here <https://github.com/ls1intum/jenkins-server-notification-plugin/releases>`__
 (Download the **.hpi** file). Go to the Jenkins plugin page (*Manage
-Jenkins → Manage Plugins*) and install the downloaded file under the
-*Advanced* tab under *Upload Plugin*
+Jenkins → System Configuration → Plugins*) and install the downloaded file under the
+*Advanced settings* tab under *Deploy Plugin*
 
 .. figure:: setup/jenkins-gitlab/jenkins_custom_plugin.png
    :align: center
@@ -777,7 +781,7 @@ Jenkins → Manage Plugins*) and install the downloaded file under the
 Jenkins Credentials
 """""""""""""""""""
 
-Go to *Manage Jenkins -> Security -> Manage Credentials → Jenkins → Global credentials* and create the
+Go to *Manage Jenkins → Security → Credentials → Jenkins → Global credentials* and create the
 following credentials
 
 GitLab API Token
@@ -799,7 +803,7 @@ GitLab API Token
    4. Leave the ID field blank
    5. The description is up to you
 
-3. Go to the Jenkins settings *Manage Jenkins → Configure System*. There
+3. Go to the Jenkins settings *Manage Jenkins → System*. There
    you will find the GitLab settings. Fill in the URL of your GitLab
    instance and select the just created API token in the credentials
    dropdown. After you click on “Test Connection”, everything should
@@ -931,8 +935,6 @@ the following steps:
     .. code:: yaml
 
        artemis:
-           version-control:
-               ci-token: $gitlab-push-token
            continuous-integration:
                secret-push-token: $some-long-encrypted-value
 
@@ -1016,7 +1018,8 @@ You can either run the builds locally (that means on the machine that hosts Jenk
 Configuring local build agents
 """"""""""""""""""""""""""""""
 
-Go to `Manage Jenkins` > `Manage Nodes and Clouds` > `master`
+Go to `Manage Jenkins` → `Nodes` → `Built-In Node` → `Configure`
+
 Configure your master node like this  (adjust the number of executors, if needed). Make sure to add the docker label.
 
    .. figure:: setup/jenkins-gitlab/jenkins_local_node.png
@@ -1074,9 +1077,11 @@ Add agent in Jenkins:
 
 1. Open Jenkins in your browser (e.g. localhost:8082)
 
-2. Go to Manage Jenkins -> Manage Credentials -> (global) -> Add Credentials
+2. Go to Manage Jenkins → Credentials → System → Global credentials (unrestricted) → Add Credentials
 
     - Kind: SSH Username with private key
+
+    - Scope: Global (Jenkins, nodes, items, all child items, etc)
 
     - ID: leave blank
 
@@ -1084,16 +1089,16 @@ Add agent in Jenkins:
 
     - Username: jenkins
 
-    - Private Key: <content of the previous generated private key> (e.g /root/.ssh/id_rsa)
+    - Private Key: <content of the previously generated private key> (e.g /root/.ssh/id_rsa)
 
-    - Passphrase: <the previous entered passphrase> (you can leave it blank if none has been specified)
+    - Passphrase: <the previously entered passphrase> (you can leave it blank if none has been specified)
 
    .. figure:: setup/jenkins-gitlab/alternative_jenkins_node_credentials.png
       :align: center
 
-3. Go to Manage Jenkins -> Manage Nodes and Clouds -> New Node
+3. Go to Manage Jenkins → Nodes → New Node
 
-    - Node name: Up to you (e.g. Docker)
+    - Node name: Up to you (e.g. Docker agent node)
 
     - Check 'Permanent Agent'
 
@@ -1226,10 +1231,10 @@ access control in Jenkins.
 This enables specific Artemis users to access build plans and execute actions such as triggering a build.
 This section explains the changes required in Jenkins in order to set up build plan access control:
 
-1. Navigate to Manage Jenkins -> Manage Plugins -> Installed and make sure that you have the
+1. Navigate to Manage Jenkins → Plugins → Installed plugins and make sure that you have the
    `Matrix Authorization Strategy <https://plugins.jenkins.io/matrix-auth/>`__ plugin installed
 
-2. Navigate to Manage Jenkins -> Configure Global Security and navigate to the "Authorization" section
+2. Navigate to Manage Jenkins → Security and navigate to the "Authorization" section
 
 3. Select the "Project-based Matrix Authorization Strategy" option
 
@@ -1249,7 +1254,7 @@ Caching
 ^^^^^^^
 
 You can configure caching for e.g. Maven repositories.
-See :ref:`programming-exercises` for more details.
+See :ref:`this section in the administration documentation <programming_exercises>` for more details.
 
 
 Separate NGINX Configurations

@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.util.UserTestService;
+import de.tum.in.www1.artemis.user.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -49,6 +49,12 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_asAdmin_isSuccessful() throws Exception {
         userTestService.updateUser_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateUserEmptyRoles() throws Exception {
+        userTestService.updateUserWithEmptyRoles();
     }
 
     @Test
@@ -128,6 +134,15 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void createInternalUserWithoutRoles_asAdmin_isSuccessful() throws Exception {
+        bitbucketRequestMockProvider.mockUserDoesNotExist("batman");
+        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", TEST_PREFIX + "student1First " + TEST_PREFIX + "student1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        userTestService.createInternalUserWithoutRoles_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_asAdmin_hasId() throws Exception {
         userTestService.createUser_asAdmin_hasId();
     }
@@ -160,32 +175,40 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
         userTestService.createUser_withExternalUserManagement();
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
-        bitbucketRequestMockProvider.mockDeleteUser(userTestService.getStudent().getLogin(), false);
-        bitbucketRequestMockProvider.mockEraseDeletedUser(userTestService.getStudent().getLogin());
-        request.delete("/api/admin/users/" + userTestService.getStudent().getLogin(), HttpStatus.OK);
-    }
-
+    /**
+     * Tests if the deletion of a user by admin succeeds
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockDeleteUser(TEST_PREFIX + "student1", false);
-        bitbucketRequestMockProvider.mockEraseDeletedUser(TEST_PREFIX + "student1");
+        bitbucketRequestMockProvider.mockUpdateAnyUserDetails(false, 1);
+        bitbucketRequestMockProvider.mockUpdateAnyUserPassword(false, 1);
+        bitbucketRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
+        jiraRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
         userTestService.deleteUser_isSuccessful();
     }
 
+    /**
+     * Tests if the deletion of the current user by themselves fails.
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
+    void deleteSelf_isNotSuccessful() throws Exception {
+        userTestService.deleteSelf_isNotSuccessful("admin");
     }
 
+    /**
+     * Tests if attempting to delete a number of users, including the current user works as expected.
+     * The expected behavior is the deletion of all users except the current user.
+     */
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUsers() throws Exception {
-        userTestService.deleteUsers();
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "ADMIN")
+    void deleteUsers_isSuccessfulForAllUsersExceptSelf() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateAnyUserDetails(false, 4);
+        bitbucketRequestMockProvider.mockUpdateAnyUserPassword(false, 4);
+        bitbucketRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
+        jiraRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
+        userTestService.deleteUsers(TEST_PREFIX + "tutor1");
     }
 
     @Test
