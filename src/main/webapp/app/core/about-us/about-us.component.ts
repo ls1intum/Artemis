@@ -41,6 +41,7 @@ export class AboutUsComponent implements OnInit {
         ['learningAnalytics', { learningAnalyticsUrl: 'https://ls1intum.github.io/Artemis/user/learning-analytics/' }],
         ['adaptiveLearning', { adaptiveLearningUrl: 'https://ls1intum.github.io/Artemis/user/adaptive-learning/' }],
         ['tutorialGroups', { tutorialGroupsUrl: 'https://ls1intum.github.io/Artemis/user/tutorialgroups/' }],
+        ['iris', { irisUrl: 'https://artemis.cit.tum.de/about-iris' }],
         ['scalable', { scalingUrl: 'https://ls1intum.github.io/Artemis/user/scaling/' }],
         ['highUserSatisfaction', { userExperienceUrl: 'https://ls1intum.github.io/Artemis/user/user-experience/' }],
         ['customizable', { customizableUrl: 'https://ls1intum.github.io/Artemis/user/courses/customizable' }],

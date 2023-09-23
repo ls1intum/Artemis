@@ -2,13 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,6 +14,7 @@ import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -200,13 +199,10 @@ public class ResourceLoaderService {
         }
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
-            InputStream resourceInputStream = resource.getInputStream();
-
             Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
-            Files.copy(resourceInputStream, resourcePath, StandardCopyOption.REPLACE_EXISTING);
-            resourceInputStream.close();
-            // Delete the temporary file when the JVM exits.
-            resourcePath.toFile().deleteOnExit();
+            File file = resourcePath.toFile();
+            file.deleteOnExit();
+            FileUtils.copyInputStreamToFile(resource.getInputStream(), file);
             return resourcePath;
         }
         throw new IllegalArgumentException("Unsupported protocol: " + resourceUrl.getProtocol());
