@@ -79,7 +79,6 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         super.resetSpyBeans();
     }
 
-    // @RepeatedTest(200)
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
