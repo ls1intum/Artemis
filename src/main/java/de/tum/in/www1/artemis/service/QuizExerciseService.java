@@ -380,7 +380,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the public path of the saved image
      */
     private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long questionId) throws IOException {
-        Path savePath = fileService.generateFilePath("dnd_image_", FilenameUtils.getExtension(file.getOriginalFilename()), basePath);
+        String clearFileName = FileService.sanitizeFilename(FilenameUtils.getExtension(Objects.requireNonNull(file.getOriginalFilename())));
+        Path savePath = fileService.generateFilePath("dnd_image_", clearFileName, basePath);
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
         return filePathService.publicPathForActualPathOrThrow(savePath, questionId);
     }
