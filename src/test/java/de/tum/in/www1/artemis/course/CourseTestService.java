@@ -3087,10 +3087,10 @@ public class CourseTestService {
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);
-
+        await().until(() -> !Files.exists(path));
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
-        assertThat(path.toFile()).as("course icon file was deleted correctly").doesNotExist();
+        assertThat(path).as("course icon file was deleted correctly").doesNotExist();
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
