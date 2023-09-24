@@ -209,9 +209,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam.course = new Course();
         studentExam.ended = true;
         studentExam.submitted = true;
-        console.log(studentExam.submitted);
         comp.ngOnInit();
-        console.log(studentExam.submitted);
         expect(loadStudentExamSpy).toHaveBeenCalledTimes(2);
         expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExamWithExercises);
@@ -453,6 +451,7 @@ describe('ExamParticipationComponent', () => {
         beforeEach(() => {
             comp.studentExam = { id: 3, workingTime: 420, numberOfExamSessions: 0 };
             comp.studentExamId = comp.studentExam.id!;
+            examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         });
 
         it('should correctly increase working time', () => {
