@@ -74,7 +74,6 @@ export class ExamParticipationLiveEventsService {
         });
 
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
-            console.log(studentExam);
             // Ignore updates if the loaded student exam is the same as the one we already have
             if (studentExam?.id === this.studentExamId) {
                 return;
@@ -137,7 +136,7 @@ export class ExamParticipationLiveEventsService {
     private subscribeToExamLiveEvents() {
         this.currentWebsocketChannel = `/topic/studentExams/${this.studentExamId}/events`;
         this.websocketService.subscribe(this.currentWebsocketChannel);
-        this.currentWebsocketReceiveSubscription = this.currentWebsocketReceiveSubscription = this.websocketService
+        this.currentWebsocketReceiveSubscription = this.websocketService
             .receive(this.currentWebsocketChannel)
             .pipe(
                 map((event: ExamLiveEvent) => {
@@ -228,7 +227,7 @@ export class ExamParticipationLiveEventsService {
             tap((event: ExamLiveEvent) => this.setEventAcknowledgeTimestamps(event)),
             distinct((event) => event.id),
         );
-        setTimeout(() => this.replayEvents(), 100);
+        setTimeout(() => this.replayEvents());
         return observable;
     }
 
@@ -253,7 +252,6 @@ export class ExamParticipationLiveEventsService {
     }
 
     private setEventAcknowledgeTimestamps(event: ExamLiveEvent) {
-        console.log(event, this.lastAcknowledgedEventStatus?.acknowledgedEvents[String(event.id)]);
         const unixTimestamps = this.lastAcknowledgedEventStatus?.acknowledgedEvents[String(event.id)];
         if (!unixTimestamps) {
             return;
