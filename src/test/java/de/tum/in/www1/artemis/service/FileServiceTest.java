@@ -382,40 +382,41 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Valid() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
                 URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/"))).doesNotThrowAnyException();
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_Path() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
-                () -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/temp/backgrounds/1/../../../exam-users/signatures/some-file.png"),
-                        URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/")));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
+                URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../../exam-users/signatures/some-file.png"),
+                URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/")));
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_SubPath() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
                         URI.create("/api/" + FilePathService.getDragItemFilePath() + "/")));
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Valid() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/drag-items/1/PictureFile.jpg"),
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg"),
                 URI.create("/api/" + FilePathService.getDragItemFilePath() + "/"))).doesNotThrowAnyException();
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Path() {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
-                URI.create("/api/files/temp/backgrounds/1/../../../exam-users/signatures/some-file.png"), URI.create("/api/" + FilePathService.getDragItemFilePath() + "/")));
+                URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../../exam-users/signatures/some-file.png"),
+                URI.create("/api/" + FilePathService.getDragItemFilePath() + "/")));
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_SubPath() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/drag-items/1/PictureFile.jpg"),
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg"),
                         URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/")));
     }
 }
