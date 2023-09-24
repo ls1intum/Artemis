@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -13,6 +11,9 @@ import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -44,6 +45,8 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
+@Execution(ExecutionMode.CONCURRENT)
+@ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling" })

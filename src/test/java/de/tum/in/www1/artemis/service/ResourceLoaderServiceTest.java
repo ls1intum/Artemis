@@ -25,9 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ResourceLoaderService resourceLoaderService;
@@ -132,9 +132,8 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         // Mock the getResource() method.
         doReturn(true).when(resource).exists();
         doReturn(resourceUrl).when(resource).getURL();
-        doReturn(mock(InputStream.class)).when(resource).getInputStream();
+        doReturn(InputStream.nullInputStream()).when(resource).getInputStream();
 
-        // ResourcePatternResolver resourcePatternResolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
         doReturn(resource).when(resourceLoader).getResource(anyString());
 
         // Instantiate the class under test and invoke the method.
