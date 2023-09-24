@@ -120,6 +120,4 @@ describe('FileUploadStageComponent', () => {
 
         expect(fileServiceStub).toHaveBeenCalledOnce();
     });
-
-    // nocheckin: Multiple files test
 });
