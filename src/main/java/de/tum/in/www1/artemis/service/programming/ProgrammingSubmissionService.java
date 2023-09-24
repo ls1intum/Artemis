@@ -613,18 +613,22 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param programmingExercise exercise that needs submissions for its template and solution repository
      */
     public void createInitialSubmissions(ProgrammingExercise programmingExercise) {
-        ProgrammingSubmission solutionSubmission = (ProgrammingSubmission) submissionRepository.initializeSubmission(programmingExercise.getSolutionParticipation(),
-                programmingExercise, SubmissionType.INSTRUCTOR);
-        var latestHash = gitService.getLastCommitHash(programmingExercise.getVcsSolutionRepositoryUrl());
-        solutionSubmission.setCommitHash(latestHash.getName());
-        solutionSubmission.setSubmissionDate(ZonedDateTime.now());
-        submissionRepository.save(solutionSubmission);
+        createInitialSubmission(programmingExercise, programmingExercise.getSolutionParticipation());
+        createInitialSubmission(programmingExercise, programmingExercise.getTemplateParticipation());
+    }
 
-        ProgrammingSubmission templateSubmission = (ProgrammingSubmission) submissionRepository.initializeSubmission(programmingExercise.getTemplateParticipation(),
-                programmingExercise, SubmissionType.INSTRUCTOR);
-        latestHash = gitService.getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
-        templateSubmission.setCommitHash(latestHash.getName());
-        templateSubmission.setSubmissionDate(ZonedDateTime.now());
-        submissionRepository.save(templateSubmission);
+    /**
+     * Creates an initial submission of an {@link AbstractBaseProgrammingExerciseParticipation} with the current commit hash
+     * in the repository
+     *
+     * @param programmingExercise Exercise for which the participation is created
+     * @param participation       Template or Solution Participation
+     */
+    private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
+        ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
+        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUrl());
+        submission.setCommitHash(latestHash.getName());
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submissionRepository.save(submission);
     }
 }
