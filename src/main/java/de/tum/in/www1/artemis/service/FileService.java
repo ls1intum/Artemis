@@ -255,12 +255,15 @@ public class FileService implements DisposableBean {
      * @param subPath URI to check
      * @throws IllegalArgumentException if the provided path does not contain the provided sub-path
      */
-    public static void sanitizeByCheckingIfPathContainsSubPathElseThrow(@NotNull URI path, @NotNull URI subPath) {
+    public static void sanitizeByCheckingIfPathContainsSubPathElseThrow(@NotNull URI path, @NotNull URI subPath, @Nullable URI legacySubPath) {
         // Removes redundant elements (e.g. ../ or ./) from the path and subPath
         URI normalisedPath = path.normalize();
         URI normalisedSubPath = subPath.normalize();
+        URI normalisedLegacySubPath = legacySubPath != null ? legacySubPath.normalize() : null;
+        boolean normalisedPathStartsWithNormalisedSubPath = normalisedPath.getPath().startsWith(normalisedSubPath.getPath());
+        boolean normalisedPathStartsWithNormalisedLegacySubPath = normalisedLegacySubPath != null && normalisedPath.getPath().startsWith(normalisedLegacySubPath.getPath());
         // Check whether the normalisedPath starts with the normalisedSubPath
-        if (!normalisedPath.getPath().startsWith(normalisedSubPath.getPath())) {
+        if (!normalisedPathStartsWithNormalisedSubPath && !normalisedPathStartsWithNormalisedLegacySubPath) {
             throw new IllegalArgumentException("Path is not valid!");
         }
     }

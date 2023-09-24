@@ -106,9 +106,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 if (dndQuestion.getBackgroundFilePath() != null) {
                     URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
                     URI backgroundFileIntendedPath = URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/");
+                    URI oldBackgroundFileIntendedPath = URI.create("/api/" + "files/drag-and-drop/backgrounds" + "/");
                     // Check whether pictureFilePublicPath is actually a picture file path
-                    // (which is the case when its path starts with pictureFileIntendedPath)
-                    FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
+                    // (which is the case when its path starts with the path backgroundFileIntendedPath (after https://github.com/ls1intum/Artemis/pull/7038)
+                    // or with the path /api/files/drag-and-drop/backgrounds/ (before https://github.com/ls1intum/Artemis/pull/7038))
+                    FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath, oldBackgroundFileIntendedPath);
                     // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
                     Path oldPath = filePathService.actualPathForPublicPath(backgroundFilePublicPath);
                     Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
@@ -128,9 +130,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
                     if (dragItem.getPictureFilePath() != null) {
                         URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
                         URI pictureFileIntendedPath = URI.create("/api/" + FilePathService.getDragItemFilePath() + "/");
+                        URI oldPictureFileIntendedPath = URI.create("/api/" + "files/drag-and-drop/drag-items" + "/");
                         // Check whether pictureFilePublicPath is actually a picture file path
-                        // (which is the case when its path starts with pictureFileIntendedPath)
-                        FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
+                        // (which is the case when its path starts with the path pictureFileIntendedPath (after https://github.com/ls1intum/Artemis/pull/7038)
+                        // or with the path /api/files/drag-and-drop/drag-items/ (before https://github.com/ls1intum/Artemis/pull/7038))
+                        FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath, oldPictureFileIntendedPath);
                         // Need to copy the file and get a new path, same as above
                         Path oldDragItemPath = filePathService.actualPathForPublicPath(pictureFilePublicPath);
                         Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());

@@ -44,6 +44,30 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     // the resource loader allows to load resources from the file system for this prefix
     private final Path overridableBasePath = Path.of("templates", "jenkins");
 
+    private static final URI VALIDCURRENTBACKGROUNDPATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
+
+    private static final URI VALIDCURRENTINTENDEDBACKGROUNDPATH = URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/");
+
+    private static final URI INVALIDCURRENTBACKGROUNDPATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
+
+    private static final URI VALIDLEGACYBACKGROUNDPATH = URI.create("/api/files/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
+
+    private static final URI VALIDLEGACYINTENDEDBACKGROUNDPATH = URI.create("/api/" + "files/drag-and-drop/backgrounds" + "/");
+
+    private static final URI INVALIDLEGACYBACKGROUNDPATH = URI.create("/api/files/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
+
+    private static final URI VALIDCURRENTDRAGITEMPATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
+
+    private static final URI VALIDCURRENTINTENDEDDRAGITEMPATH = URI.create("/api/" + FilePathService.getDragItemFilePath() + "/");
+
+    private static final URI INVALIDCURRENTDRAGITEMPATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
+
+    private static final URI VALIDLEGACYDRAGITEMPATH = URI.create("/api/files/drag-and-drop/drag-items/1/PictureFile.jpg");
+
+    private static final URI VALIDLEGACYINTENDEDDRAGITEMPATH = URI.create("/api/" + "files/drag-and-drop/drag-items" + "/");
+
+    private static final URI INVALIDLEGACYDRAGITEMPATH = URI.create("/api/files/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
+
     @AfterEach
     void cleanup() throws IOException {
         Files.deleteIfExists(javaPath);
@@ -382,41 +406,51 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Valid() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
-                URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/"))).doesNotThrowAnyException();
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(VALIDCURRENTBACKGROUNDPATH, VALIDCURRENTINTENDEDBACKGROUNDPATH,
+                VALIDLEGACYINTENDEDBACKGROUNDPATH)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Legacy_Valid() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(VALIDLEGACYBACKGROUNDPATH, VALIDCURRENTINTENDEDBACKGROUNDPATH,
+                VALIDLEGACYINTENDEDBACKGROUNDPATH)).doesNotThrowAnyException();
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_Path() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
-                URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../../exam-users/signatures/some-file.png"),
-                URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/")));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(INVALIDCURRENTBACKGROUNDPATH,
+                VALIDCURRENTINTENDEDBACKGROUNDPATH, VALIDLEGACYINTENDEDBACKGROUNDPATH));
     }
 
     @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_SubPath() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg"),
-                        URI.create("/api/" + FilePathService.getDragItemFilePath() + "/")));
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_Legacy_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(INVALIDLEGACYBACKGROUNDPATH,
+                VALIDCURRENTINTENDEDBACKGROUNDPATH, VALIDLEGACYINTENDEDBACKGROUNDPATH));
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Valid() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg"),
-                URI.create("/api/" + FilePathService.getDragItemFilePath() + "/"))).doesNotThrowAnyException();
+        assertThatCode(
+                () -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(VALIDCURRENTDRAGITEMPATH, VALIDCURRENTINTENDEDDRAGITEMPATH, VALIDLEGACYINTENDEDDRAGITEMPATH))
+                        .doesNotThrowAnyException();
+    }
+
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Legacy_Valid() {
+        assertThatCode(
+                () -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(VALIDLEGACYDRAGITEMPATH, VALIDCURRENTINTENDEDDRAGITEMPATH, VALIDLEGACYINTENDEDDRAGITEMPATH))
+                        .doesNotThrowAnyException();
     }
 
     @Test
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Path() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
-                URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../../exam-users/signatures/some-file.png"),
-                URI.create("/api/" + FilePathService.getDragItemFilePath() + "/")));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
+                () -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(INVALIDCURRENTDRAGITEMPATH, VALIDCURRENTINTENDEDDRAGITEMPATH, VALIDLEGACYINTENDEDDRAGITEMPATH));
     }
 
     @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_SubPath() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg"),
-                        URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/")));
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Legacy_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
+                () -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(INVALIDLEGACYDRAGITEMPATH, VALIDCURRENTINTENDEDDRAGITEMPATH, VALIDLEGACYINTENDEDDRAGITEMPATH));
     }
 }
