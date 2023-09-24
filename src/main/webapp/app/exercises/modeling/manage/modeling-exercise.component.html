@@ -2,6 +2,9 @@
     <table class="table table-striped">
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(modelingExercises)" />
+                </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -20,6 +23,9 @@
         </thead>
         <tbody>
             <tr *ngFor="let modelingExercise of filteredModelingExercises; trackBy: trackId" id="{{ 'exercise-card-' + modelingExercise.id }}">
+                <td *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(modelingExercise)" [ngModel]="isExerciseSelected(modelingExercise)" />
+                </td>
                 <td>
                     <a
                         *ngIf="modelingExercise.isAtLeastEditor; else showId"
@@ -112,4 +118,18 @@
             </tr>
         </tbody>
     </table>
+    <div *ngIf="selectedExercises.length > 0">
+        <button
+            *ngIf="course.isAtLeastInstructor"
+            jhiDeleteButton
+            [entityTitle]="'Delete All Modeling Exercises'"
+            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+            (delete)="deleteMultipleExercises(selectedExercises, modelingExerciseService)"
+            [dialogError]="dialogError$"
+            id="delete-all-quiz"
+            class="mb-1"
+        >
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+    </div>
 </div>

@@ -116,6 +116,29 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
+    it('should delete multiple exercises', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    headers,
+                }),
+            ),
+        );
+        const mockSubscriber = jest.fn();
+        comp.dialogError$.subscribe(mockSubscriber);
+
+        comp.course = course;
+        comp.ngOnInit();
+        comp.deleteMultipleProgrammingExercises([{ id: 441 }, { id: 442 }, { id: 443 }] as ProgrammingExercise[], {
+            deleteStudentReposBuildPlans: true,
+            deleteBaseReposBuildPlans: true,
+        });
+        expect(programmingExerciseService.delete).toHaveBeenCalledTimes(3);
+        expect(mockSubscriber).toHaveBeenCalledTimes(3);
+    });
+
     it('should not delete exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => httpErrorResponse));
@@ -201,41 +224,41 @@ describe('ProgrammingExercise Management Component', () => {
     describe('ProgrammingExercise Select Exercises', () => {
         it('should add selected exercise to list', () => {
             // WHEN
-            comp.toggleProgrammingExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedProgrammingExercises[0]).toContainEntry(['id', programmingExercise.id]);
+            expect(comp.selectedExercises[0]).toContainEntry(['id', programmingExercise.id]);
         });
 
         it('should remove selected exercise to list', () => {
             // WHEN
-            comp.toggleProgrammingExercise(programmingExercise);
-            comp.toggleProgrammingExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedProgrammingExercises).toHaveLength(0);
+            expect(comp.selectedExercises).toHaveLength(0);
         });
 
         it('should select all', () => {
             // WHEN
-            comp.toggleAllProgrammingExercises();
+            comp.toggleMultipleExercises(comp.programmingExercises);
 
             // THEN
-            expect(comp.selectedProgrammingExercises).toHaveLength(comp.programmingExercises.length);
+            expect(comp.selectedExercises).toHaveLength(comp.programmingExercises.length);
         });
 
         it('should deselect all', () => {
             // WHEN
-            comp.toggleAllProgrammingExercises(); // Select all
-            comp.toggleAllProgrammingExercises(); // Deselect all
+            comp.toggleMultipleExercises(comp.programmingExercises); // Select all
+            comp.toggleMultipleExercises(comp.programmingExercises); // Deselect all
 
             // THEN
-            expect(comp.selectedProgrammingExercises).toHaveLength(0);
+            expect(comp.selectedExercises).toHaveLength(0);
         });
 
         it('should check correctly if selected', () => {
             // WHEN
-            comp.toggleProgrammingExercise(programmingExercise);
+            comp.toggleExercise(programmingExercise);
 
             // THEN
             expect(comp.isExerciseSelected(programmingExercise)).toBeTrue();
