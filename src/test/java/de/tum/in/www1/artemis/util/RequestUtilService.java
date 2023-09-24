@@ -14,6 +14,7 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -355,7 +356,7 @@ public class RequestUtilService {
             return null;
         }
         final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
-        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+        FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
     }
@@ -573,7 +574,7 @@ public class RequestUtilService {
         String tmpDirectory = System.getProperty("java.io.tmpdir");
         var filename = res.getResponse().getHeader("filename");
         var tmpFile = Files.createFile(Path.of(tmpDirectory, filename));
-        Files.write(tmpFile, res.getResponse().getContentAsByteArray());
+        FileUtils.writeByteArrayToFile(tmpFile.toFile(), res.getResponse().getContentAsByteArray());
         return tmpFile.toFile();
     }
 

@@ -82,7 +82,7 @@ public abstract class SubmissionExportService {
      * @return the zipped file with the exported submissions
      */
     public List<Path> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
-        Path outputDir = fileService.getTemporaryUniquePath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
+        Path outputDir = fileService.getTemporaryUniqueSubfolderPath(submissionExportPath, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
         return exportStudentSubmissions(exerciseId, submissionExportOptions, true, outputDir, new ArrayList<>(), new ArrayList<>());
     }
 

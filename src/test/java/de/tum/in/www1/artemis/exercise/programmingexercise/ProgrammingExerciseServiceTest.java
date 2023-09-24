@@ -10,13 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexservice";
 
@@ -31,6 +32,9 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     private ProgrammingExercise programmingExercise1;
 
@@ -59,7 +63,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise2);
 
-        List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithBuildAndTestAfterDueDateInFuture();
+        List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithBuildAndTestAfterDueDateInFuture();
         assertThat(programmingExercises).contains(programmingExercise1).doesNotContain(programmingExercise2);
     }
 }

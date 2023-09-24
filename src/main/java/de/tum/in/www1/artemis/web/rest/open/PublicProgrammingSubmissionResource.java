@@ -14,12 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
-import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -42,21 +45,21 @@ public class PublicProgrammingSubmissionResource {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
     private final ProgrammingTriggerService programmingTriggerService;
 
     private final ParticipationRepository participationRepository;
 
-    private final LtiNewResultService ltiNewResultService;
-
     public PublicProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService,
-            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository,
-            LtiNewResultService ltiNewResultService) {
+            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
+            ProgrammingTriggerService programmingTriggerService, ParticipationRepository participationRepository) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.versionControlService = versionControlService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingTriggerService = programmingTriggerService;
         this.participationRepository = participationRepository;
-        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**
@@ -69,7 +72,7 @@ public class PublicProgrammingSubmissionResource {
      */
     @PostMapping("programming-submissions/{participationId}")
     @EnforceNothing
-    public ResponseEntity<?> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
+    public ResponseEntity<Void> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
         log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
         try {
@@ -80,10 +83,6 @@ public class PublicProgrammingSubmissionResource {
             Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
             if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
                 throw new EntityNotFoundException("Programming Exercise Participation", participationId);
-            }
-
-            if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                ltiNewResultService.onNewResult((StudentParticipation) participation);
             }
 
             ProgrammingSubmission newProgrammingSubmission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
@@ -158,6 +157,15 @@ public class PublicProgrammingSubmissionResource {
         programmingMessagingService.notifyUserAboutSubmission(submission, exerciseId);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingTriggerService.setTestCasesChanged(exerciseId, true);
+
+        // Artemis should trigger the solution build when tests change
+        try {
+            var solutionParticipation = (SolutionProgrammingExerciseParticipation) submission.getParticipation();
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(solutionParticipation);
+        }
+        catch (ContinuousIntegrationException ex) {
+            // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
+        }
 
         return ResponseEntity.ok().build();
     }

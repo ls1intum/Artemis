@@ -5,6 +5,10 @@ package de.tum.in.www1.artemis.service.iris;
  */
 public final class IrisConstants {
 
+    private IrisConstants() {
+        // Utility class for constants
+    }
+
     // The default guidance template for the chat feature
     public static final String DEFAULT_CHAT_TEMPLATE = """
             {{#system~}}
