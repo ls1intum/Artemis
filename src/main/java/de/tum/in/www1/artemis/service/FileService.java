@@ -249,11 +249,10 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Checks whether a path (defined by a URI) contains a certain sub-path (defined by a URI).
      *
-     * @param path    URI to be checked
-     * @param subPath URI to check
-     * @throws IllegalArgumentException if the provided path does not contain the provided sub-path
+     * @param path          URI to check if it contains the sub-pat
+     * @param subPath       sub-path URI (used after <a href="https://github.com/ls1intum/Artemis/pull/7038">#7038</a>) to search for
+     * @param legacySubPath legacy-sub-path URI (used before <a href="https://github.com/ls1intum/Artemis/pull/7038">#7038</a>) to search for
      */
     public static void sanitizeByCheckingIfPathContainsSubPathElseThrow(@NotNull URI path, @NotNull URI subPath, @Nullable URI legacySubPath) {
         // Removes redundant elements (e.g. ../ or ./) from the path and subPath
