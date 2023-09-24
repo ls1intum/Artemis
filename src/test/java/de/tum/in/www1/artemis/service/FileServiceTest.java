@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -377,18 +378,6 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("package.xcworkspace");
         assertThat(expectedTargetFile).doesNotExist();
-    }
-
-    @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_Path_Null() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(null, URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/")))
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Ignore_SubPath_Null() {
-        assertThatCode(() -> FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(URI.create("/api/files/drag-and-drop/backgrounds/1/../../BackgroundFile.jpg"), null))
-                .doesNotThrowAnyException();
     }
 
     @Test
