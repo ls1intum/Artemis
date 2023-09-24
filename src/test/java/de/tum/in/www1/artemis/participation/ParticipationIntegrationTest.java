@@ -611,6 +611,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         result2.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.save(result2);
         Result result3 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        Result notGradedResult = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        notGradedResult.setRated(false);
+        resultRepository.save(notGradedResult);
 
         Submission onlySubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, students.get(2), "asdf");
 
