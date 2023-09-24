@@ -256,13 +256,11 @@ public class FileService implements DisposableBean {
      * @throws IllegalArgumentException if the provided path does not start with the provided sub-path or the provided legacy-sub-path
      */
     public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NotNull URI path, @NotNull URI subPath) {
-        // Removes redundant elements (e.g. ../ or ./) from the path and sub-path and extracts their paths as strings
+        // Removes redundant elements (e.g. ../ or ./) from the path and sub-path
         URI normalisedPath = path.normalize();
-        String stringPath = normalisedPath.getPath();
         URI normalisedSubPath = subPath.normalize();
-        String stringSubPath = normalisedSubPath.getPath();
-        // Indicates whether the stringPath starts with the stringSubPath
-        boolean normalisedPathStartsWithNormalisedSubPath = stringPath.startsWith(stringSubPath);
+        // Indicates whether the path starts with the subPath
+        boolean normalisedPathStartsWithNormalisedSubPath = normalisedPath.getPath().startsWith(normalisedSubPath.getPath());
         // Throws a IllegalArgumentException in case the normalisedPath does not start with the normalisedSubPath
         if (!normalisedPathStartsWithNormalisedSubPath) {
             throw new IllegalArgumentException("Path is not valid!");
