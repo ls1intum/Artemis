@@ -154,16 +154,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
 
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            LEFT JOIN FETCH r.assessor
-            LEFT JOIN FETCH r.feedbacks f
-            LEFT JOIN FETCH f.testCase
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
-            AND p.testRun = :testRun
+                AND p.testRun = :testRun
             """)
-    List<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacks(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
+    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") Long exerciseId,
+            @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT DISTINCT p
@@ -176,7 +178,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.student.id = :studentId
                 AND p.testRun = :testRun
             """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(@Param("exerciseId") Long exerciseId,
+    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(@Param("exerciseId") Long exerciseId,
             @Param("studentId") Long studentId, @Param("testRun") boolean testRun);
 
     /**
@@ -233,7 +235,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     LEFT JOIN pr.submission prs
                     WHERE pr.assessmentType = 'AUTOMATIC' AND (prs.type <> 'ILLEGAL' OR prs.type IS NULL)))
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all participations without individual due date for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
@@ -241,8 +243,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId Exercise id.
      * @return participations for the exercise.
      */
-    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(Long exerciseId) {
-        return findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    default List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(Long exerciseId) {
+        return findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null)
+                .toList();
     }
 
     @Query("""
@@ -257,7 +260,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     LEFT JOIN pr.submission prs
                     WHERE pr.assessmentType = 'AUTOMATIC' AND (prs.type <> 'ILLEGAL' OR prs.type IS NULL)))
             """)
-    Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacks(@Param("participationId") Long participationId);
+    Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacksAndTestCases(@Param("participationId") Long participationId);
 
     // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
     @Query("""
@@ -271,10 +274,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                  AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
                  AND (r.assessmentType = 'MANUAL' OR r.assessmentType = 'SEMI_AUTOMATIC')
             """)
-    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCases(@Param("exerciseId") Long exerciseId);
 
-    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(Long exerciseId) {
-        return findByExerciseIdWithManualResultAndFeedbacks(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
+    default List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(Long exerciseId) {
+        return findByExerciseIdWithManualResultAndFeedbacksAndTestCases(exerciseId).stream().filter(participation -> participation.getIndividualDueDate() == null).toList();
     }
 
     @Query("""

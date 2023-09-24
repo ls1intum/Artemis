@@ -383,9 +383,9 @@ public class ProgrammingExerciseGradingService {
 
         final List<StudentParticipation> studentParticipations = new ArrayList<>();
         // We only update the latest automatic results here, later manual assessments are not affected
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCases(exercise.getId()));
         // Also update manual results
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksAndTestCases(exercise.getId()));
 
         final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
 
@@ -407,9 +407,9 @@ public class ProgrammingExerciseGradingService {
 
         final List<StudentParticipation> studentParticipations = new ArrayList<>();
         // We only update the latest automatic results here, later manual assessments are not affected
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(exercise.getId()));
         // Also update manual results
-        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksAndTestCasesWithoutIndividualDueDate(exercise.getId()));
 
         final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
 
@@ -430,7 +430,7 @@ public class ProgrammingExerciseGradingService {
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
         final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
 
-        final Optional<Result> updatedAutomaticResult = studentParticipationRepository.findByIdWithLatestAutomaticResultAndFeedbacks(participation.getId())
+        final Optional<Result> updatedAutomaticResult = studentParticipationRepository.findByIdWithLatestAutomaticResultAndFeedbacksAndTestCases(participation.getId())
                 .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
         final Optional<Result> updatedManualResult = studentParticipationRepository.findByIdWithManualResultAndFeedbacks(participation.getId())
                 .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
@@ -464,11 +464,11 @@ public class ProgrammingExerciseGradingService {
      */
     private Stream<Result> updateTemplateAndSolutionResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> testCases) {
         final Optional<Result> templateResult = templateProgrammingExerciseParticipationRepository
-                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(templateParticipation -> updateLatestResult(exercise, templateParticipation, testCases, testCases, testCases, false));
 
         final Optional<Result> solutionResult = solutionProgrammingExerciseParticipationRepository
-                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(solutionParticipation -> updateLatestResult(exercise, solutionParticipation, testCases, testCases, testCases, false));
 
         return Stream.of(templateResult, solutionResult).flatMap(Optional::stream);

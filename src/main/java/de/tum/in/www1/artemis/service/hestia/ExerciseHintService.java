@@ -235,11 +235,11 @@ public class ExerciseHintService {
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
         List<Submission> submissions = new ArrayList<>();
 
-        var ratedStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(exercise.getId(), student.getId(),
-                false);
+        var ratedStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(exercise.getId(),
+                student.getId(), false);
         ratedStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
 
-        var practiceStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(exercise.getId(),
+        var practiceStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(exercise.getId(),
                 student.getId(), true);
         practiceStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
 

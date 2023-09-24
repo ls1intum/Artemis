@@ -28,6 +28,9 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
+/**
+ * Service for creating feedback for programming exercises.
+ */
 @Service
 public class ProgrammingExerciseFeedbackCreationService {
 

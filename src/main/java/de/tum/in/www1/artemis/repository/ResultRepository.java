@@ -58,7 +58,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.feedbacks f
                 LEFT JOIN FETCH f.testCase
-                LEFT JOIN FETCH f.testCase
             WHERE r.completionDate =
                 (SELECT max(rr.completionDate) FROM Result rr
                     WHERE rr.assessmentType = 'AUTOMATIC'
@@ -72,10 +71,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
-    Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
@@ -646,15 +645,15 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
         if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }
         else {
-            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }
     }
 
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)
+        return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
     }
 

@@ -65,7 +65,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.assessor" })
-    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
+    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksTestCasesAssessorById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
@@ -85,18 +85,12 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @return the programming submission with the given id
      */
     @NotNull
-    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessor(long submissionId) {
-        return findWithEagerResultsFeedbacksAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
+    default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
+        return findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Programming Submission", submissionId));
     }
 
     @NotNull
     default ProgrammingSubmission findByResultIdElseThrow(Long resultId) {
         return findByResultId(resultId).orElseThrow(() -> new EntityNotFoundException("Programming Submission for Result", resultId));
-    }
-
-    @NotNull
-    default ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessorElseThrow(Long submissionId) {
-        return findWithEagerResultsFeedbacksAssessorById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 }

@@ -541,7 +541,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the locked programming submission
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithEagerResultsFeedbacksAssessorElseThrow(submissionId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
         var manualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
