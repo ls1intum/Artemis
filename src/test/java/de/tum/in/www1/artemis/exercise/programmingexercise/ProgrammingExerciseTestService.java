@@ -142,6 +142,9 @@ public class ProgrammingExerciseTestService {
     private SubmissionRepository submissionRepository;
 
     @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
@@ -2119,8 +2122,16 @@ public class ProgrammingExerciseTestService {
         exercise.setTemplateParticipation(generatedExercise.getTemplateParticipation());
         exercise.setSolutionParticipation(generatedExercise.getSolutionParticipation());
         assertThat(exercise).isEqualTo(generatedExercise);
-        assertThat(submissionRepository.findAllByParticipationId(exercise.getTemplateParticipation().getId())).hasSize(1);
-        assertThat(submissionRepository.findAllByParticipationId(exercise.getSolutionParticipation().getId())).hasSize(1);
+        var templateSubmissions = submissionRepository.findAllByParticipationId(exercise.getTemplateParticipation().getId());
+        assertThat(templateSubmissions).hasSize(1);
+        Optional<ProgrammingSubmission> templateSubmission = programmingSubmissionRepository.findById(templateSubmissions.get(0).getId());
+        assertThat(templateSubmission.isPresent()).isTrue();
+        assertThat(templateSubmission.get().getType()).isEqualTo(SubmissionType.INSTRUCTOR);
+        var solutionSubmissions = submissionRepository.findAllByParticipationId(exercise.getSolutionParticipation().getId());
+        assertThat(solutionSubmissions).hasSize(1);
+        Optional<ProgrammingSubmission> solutionSubmission = programmingSubmissionRepository.findById(solutionSubmissions.get(0).getId());
+        assertThat(solutionSubmission.isPresent()).isTrue();
+        assertThat(solutionSubmission.get().getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();
     }
 
