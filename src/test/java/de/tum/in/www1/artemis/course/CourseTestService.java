@@ -1927,6 +1927,9 @@ public class CourseTestService {
     public void testArchiveCourseWithQuizExercise(String userPrefix) throws Exception {
         var course = courseUtilService.createCourse();
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.INDIVIDUAL);
+        quizExercise = exerciseRepo.save(quizExercise);
+        participationUtilService.createAndSaveParticipationForExercise(quizExercise, userPrefix + "student2");
         var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()));
         assertThat(archivePath).isNotEmpty();
         extractAndAssertContent(archivePath.orElseThrow(), quizSubmission);
@@ -1957,7 +1960,7 @@ public class CourseTestService {
     public void testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory() throws IOException {
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         var course = courseUtilService.createCourse();
-        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
         try (MockedStatic<DataExportUtil> mockedFiles = mockStatic(DataExportUtil.class)) {
             mockedFiles.when(() -> DataExportUtil.createDirectoryIfNotExistent(any())).thenThrow(new IOException());
             var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
