@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto.examevent;
 
 import java.time.Instant;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -47,5 +48,20 @@ public abstract class ExamLiveEventDTO {
 
     public void setCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        ExamLiveEventDTO that = (ExamLiveEventDTO) o;
+        return Objects.equals(id, that.id) && Objects.equals(createdBy, that.createdBy) && Objects.equals(createdDate, that.createdDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, createdBy, createdDate);
     }
 }
