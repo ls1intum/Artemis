@@ -105,11 +105,11 @@ public class RequestUtilService {
         }
         builder.file(json);
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
@@ -715,7 +715,7 @@ public class RequestUtilService {
      * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
      */
-    private void restoreSecurityContext() {
+    public void restoreSecurityContext() {
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
     }
 

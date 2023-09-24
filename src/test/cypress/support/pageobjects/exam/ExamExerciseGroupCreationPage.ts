@@ -5,6 +5,8 @@ import { examAPIRequests, exerciseAPIRequest } from '../../artemis';
 import { AdditionalData, BASE_API, Exercise, ExerciseType, PUT } from '../../constants';
 import { POST } from '../../constants';
 import { generateUUID } from '../../utils';
+import { convertModelAfterMultiPart } from '../../requests/CourseManagementRequests';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.
@@ -33,10 +35,12 @@ export class ExamExerciseGroupCreationPage {
     addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): Promise<Exercise> {
         return new Promise((resolve) => {
             this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, (response) => {
-                if (exerciseType == ExerciseType.QUIZ) {
-                    additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
+                let exercise = { ...response.body, additionalData };
+                if (exerciseType == EXERCISE_TYPE.Quiz) {
+                    const quiz = convertModelAfterMultiPart(response) as QuizExercise;
+                    additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
+                    exercise = { ...quiz, additionalData };
                 }
-                const exercise = { ...response.body, additionalData };
                 resolve(exercise);
             });
         });

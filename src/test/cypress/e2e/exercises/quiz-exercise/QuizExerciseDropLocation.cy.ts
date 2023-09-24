@@ -6,6 +6,7 @@ import { convertModelAfterMultiPart } from '../../../support/utils';
 
 let course: Course;
 
+// TODO: fix this test. Fails only on CI. Locally it works and manual testing also works.
 describe.skip('Quiz Exercise Drop Location Spec', () => {
     before('Create course', () => {
         cy.login(admin);
