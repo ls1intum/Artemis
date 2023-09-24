@@ -1657,7 +1657,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         return quizExerciseDatabase;
     }
 
-    private void createdQuizAssert(QuizExercise quizExercise) {
+    private void createdQuizAssert(QuizExercise quizExercise) throws Exception {
         // General assertions
         assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were saved").hasSize(3);
         assertThat(quizExercise.getDuration()).as("Quiz duration was correctly set").isEqualTo(3600);
@@ -1719,6 +1719,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dragItems.get(2).getPictureFilePath()).as("Picture file path for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
+
+                assertThat(request.get(dragAndDropQuestion.getBackgroundFilePath(), HttpStatus.OK, byte[].class)).isNotEmpty();
+
+                for (DragItem dragItem : dragItems) {
+                    if (dragItem.getPictureFilePath() != null) {
+                        assertThat(request.get(dragItem.getPictureFilePath(), HttpStatus.OK, byte[].class)).isNotEmpty();
+                    }
+                }
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(2);
