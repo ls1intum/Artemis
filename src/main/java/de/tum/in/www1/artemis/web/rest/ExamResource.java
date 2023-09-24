@@ -332,8 +332,8 @@ public class ExamResource {
 
         var exam = examRepository.findByIdElseThrow(examId);
 
-        if (!exam.isVisibleToStudents() || examDateService.isExamWithGracePeriodOver(exam)) {
-            throw new BadRequestAlertException("Exam is not visible or already over", "exam", "examNotVisibleOrOver");
+        if (!exam.isVisibleToStudents()) {
+            throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
         }
 
         var event = examLiveEventsService.createExamAnnouncementEvent(exam, message, userRepository.getUser());

@@ -28,8 +28,7 @@ export class ExamLiveAnnouncementCreateModalComponent {
     textContent: string;
     html?: SafeHtml;
 
-    // 0 = not submitted, 1 = submitting, 2 = submitted
-    status: number = 0;
+    status: 'not_submitted' | 'submitting' | 'submitted' = 'not_submitted';
 
     announcement?: ExamWideAnnouncementEvent;
 
@@ -44,14 +43,14 @@ export class ExamLiveAnnouncementCreateModalComponent {
     ) {}
 
     submitAnnouncement() {
-        this.status = 1;
+        this.status = 'submitting';
         this.examManagementService.createAnnouncement(this.courseId, this.examId, this.textContent).subscribe({
             next: (event: ExamWideAnnouncementEvent) => {
-                this.status = 2;
+                this.status = 'submitted';
                 this.announcement = event;
             },
             error: () => {
-                this.status = 0;
+                this.status = 'not_submitted';
             },
         });
     }

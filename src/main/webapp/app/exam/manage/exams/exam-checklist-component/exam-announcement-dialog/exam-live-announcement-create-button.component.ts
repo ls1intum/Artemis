@@ -39,24 +39,14 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     private checkAnnouncementCreationAllowed() {
         const now = dayjs();
 
-        // Exam must be visible ...
-        const isVisible = !!this.exam.visibleDate?.isBefore(now);
-        // ... and not be completely over, including grace period
-        const endWithGracePeriod = this.exam.endDate?.add(this.exam.gracePeriod || 0, 'seconds');
-        const isNotOver = !!endWithGracePeriod?.isAfter(now);
+        this.announcementCreationAllowed = !!this.exam.visibleDate?.isBefore(now);
 
-        this.announcementCreationAllowed = isVisible && isNotOver;
-
-        // Run the check again at the next relevant time
-        let nextCheckTimeout: number | undefined;
-        if (isVisible) {
-            nextCheckTimeout = this.exam.startDate?.diff(now);
-        } else if (isNotOver) {
-            nextCheckTimeout = endWithGracePeriod?.diff(now);
-        }
-
-        if (nextCheckTimeout) {
-            this.timeoutRef = setTimeout(this.checkAnnouncementCreationAllowed.bind(this), nextCheckTimeout);
+        // Run the check again at the visible date
+        if (!this.announcementCreationAllowed) {
+            const nextCheckTimeout = this.exam.visibleDate?.diff(now);
+            if (nextCheckTimeout) {
+                this.timeoutRef = setTimeout(this.checkAnnouncementCreationAllowed.bind(this), nextCheckTimeout);
+            }
         }
     }
 

@@ -34,9 +34,4 @@ public class WorkingTimeUpdateEventDTO extends ExamLiveEventDTO {
     public void setCourseWide(boolean courseWide) {
         this.courseWide = courseWide;
     }
-
-    @Override
-    public String getEventType() {
-        return "workingTimeUpdate";
-    }
 }

@@ -48,6 +48,4 @@ public abstract class ExamLiveEventDTO {
     public void setCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
     }
-
-    public abstract String getEventType();
 }
