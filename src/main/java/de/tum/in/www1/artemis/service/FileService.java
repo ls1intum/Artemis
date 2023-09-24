@@ -79,6 +79,10 @@ public class FileService implements DisposableBean {
 
     public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
 
+    public static final String BACKGROUND_FILE_SUBPATH = "/api/files/drag-and-drop/backgrounds/";
+
+    public static final String PICTURE_FILE_SUBPATH = "/api/files/drag-and-drop/drag-items/";
+
     /**
      * Filenames for which the template filename differs from the filename it should have in the repository.
      */

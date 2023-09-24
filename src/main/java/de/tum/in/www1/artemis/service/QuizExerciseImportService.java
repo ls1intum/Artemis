@@ -105,7 +105,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
                 if (dndQuestion.getBackgroundFilePath() != null) {
                     URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
-                    URI backgroundFileIntendedPath = URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/");
+                    URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
                     // Check whether pictureFilePublicPath is actually a picture file path
                     // (which is the case when its path starts with the path backgroundFileIntendedPath)
                     FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
@@ -127,7 +127,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
                     dragItem.setQuestion(dndQuestion);
                     if (dragItem.getPictureFilePath() != null) {
                         URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
-                        URI pictureFileIntendedPath = URI.create("/api/" + FilePathService.getDragItemFilePath() + "/");
+                        URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
                         // Check whether pictureFilePublicPath is actually a picture file path
                         // (which is the case when its path starts with the path pictureFileIntendedPath)
                         FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
