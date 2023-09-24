@@ -123,6 +123,9 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         if (!(fullSession instanceof IrisChatSession chatSession)) {
             throw new BadRequestException("Trying to get Iris response for session " + session.getId() + " without exercise");
         }
+        if (((IrisChatSession) fullSession).getExercise().isExamExercise()) {
+            throw new BadRequestException("Iris is not supported for exam exercises");
+        }
         var exercise = chatSession.getExercise();
         parameters.put("exercise", exercise);
         parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());

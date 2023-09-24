@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -360,6 +361,9 @@ public class IrisSettingsService {
      * @return the saved Iris settings
      */
     public IrisSettings saveIrisSettings(ProgrammingExercise exercise, IrisSettings settings) {
+        if (exercise.isExamExercise()) {
+            throw new BadRequestException("Iris is not supported for exam exercises");
+        }
         var existingSettingsOptional = getIrisSettings(exercise);
         if (existingSettingsOptional.isPresent()) {
             var existingSettings = existingSettingsOptional.get();

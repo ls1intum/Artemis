@@ -58,6 +58,9 @@ public class IrisSessionService {
      * @return The created session
      */
     public IrisSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+        if (exercise.isExamExercise()) {
+            throw new BadRequestException("Iris is not supported for exam exercises");
+        }
         var irisSession = new IrisChatSession();
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
