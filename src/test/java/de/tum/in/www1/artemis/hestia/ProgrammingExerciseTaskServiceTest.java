@@ -186,6 +186,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getTasksWithoutInactiveFiltersOutInactive() {
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
