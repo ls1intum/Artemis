@@ -249,7 +249,7 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Checks whether the path starts with the provided sub-path or the provided legacy-sub-path
+     * Checks whether the path starts with the provided sub-path.
      *
      * @param path    URI to check if it starts with the sub-pat
      * @param subPath sub-path URI to search for
