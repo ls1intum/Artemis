@@ -45,7 +45,7 @@ The table below showcases the types of exercises supported by Artemis and their 
 
 LTI 1.3 Instructor Guide
 ---------------------------
-Instructors can configure Artemis online courses through LTI to LMSs.
+Instructors can configure Artemis online courses through LTI to Learning Management Systems (e.g. Moodle, edX).
 Below given steps for how to configure Artemis over LTI with Moodle.
 
 Enable Online Course for LTI Configuration
@@ -56,11 +56,11 @@ Artemis Steps
 """""""""""""
 To enable the Online Course setting in Artemis, follow the steps below:\
 
-#. Access Course Management: Start by logging into your Artemis account. Locate and click on the |course-management| option. This section provides an overview of all the courses you're handling.\
-#. Select the Desired Course: From the list of available courses, navigate to the course you wish to configure for LTI integration.\
-#. Edit Course Settings: On the course overview page, you'll find an |course_edit| button, located at the top right corner. Clicking this will allow you to modify various course settings.\
-#. Locate the Online Course Checkbox: As you scroll through the course settings, you'll come across a checkbox labeled Online Course. This particular setting is essential for enabling LTI configurability.\
-#. Activate LTI Configuration: To finalize the process, simply check the Online Course checkbox. By doing so, you're activating the LTI configuration settings for that specific course. Make sure to save any changes made.\
+#. Access Course Management: Start by logging into your Artemis account. Locate and click on the |course-management| option.
+#. Select the Desired Course: From the list of available courses, navigate to the course you wish to configure for LTI integration.
+#. Edit Course Settings: On the course overview page, you'll find an |course_edit| button, located at the top right corner. Clicking this will allow you to modify various course settings.
+#. Locate the Online Course Checkbox: As you scroll through the course settings, you'll come across a checkbox labeled Online Course. This particular setting is essential for enabling LTI configurability.
+#. Activate LTI Configuration: To finalize the process, simply check the Online Course checkbox. By doing so, you're activating the LTI configuration settings for that specific course. Make sure to save any changes made.
 
 .. figure:: lti/enable_onlinecourse.png
     :align: center
@@ -78,18 +78,18 @@ Artemis Steps
 
 To set up the LTI 1.3 integration in Artemis, follow the steps outlined below:
 
-#. Access Course Management: Begin by logging into your Artemis account. Click on the  |course-management| option.\
-#. Choose the Relevant Course: From the list of courses, select the one you wish to configure for LTI integration. This will lead you to the course's settings and details.\
-#. Navigate to Course Details: Once inside the course settings, scroll down until you find the Course Details section.\
-#. Access LTI Configuration: Within the Course Details section, you'll find an option labeled LTI Configuration. Click on it to access the LTI settings for the course.\
+#. Access Course Management: Begin by logging into your Artemis account. Click on the  |course-management| option.
+#. Choose the Relevant Course: From the list of courses, select the one you wish to configure for LTI integration. This will lead you to the course's settings and details.
+#. Navigate to Course Details: Once inside the course settings, scroll down until you find the Course Details section.
+#. Access LTI Configuration: Within the Course Details section, you'll find an option labeled LTI Configuration. Click on it to access the LTI settings for the course.
 
     .. figure:: lti/lticonfiguration_link.png
         :align: center
         :width: 700
         :alt: Locate LTI Configuration
 
-#. Switch to LTI 1.3 Tab: Inside the LTI Configuration, there will be multiple tabs related to different LTI versions. Click on the LTI 1.3 tab to access the settings specific to this version.\
-#. Retrieve Dynamic Registration URL: In the LTI 1.3 settings, locate the Dynamic Registration URL. This URL is essential for integrating Artemis with Moodle. Copy this URL for use in the subsequent Moodle configuration steps.\
+#. Switch to LTI 1.3 Tab: Inside the LTI Configuration, there will be multiple tabs related to different LTI versions. Click on the LTI 1.3 tab to access the settings specific to this version.
+#. Retrieve Dynamic Registration URL: In the LTI 1.3 settings, locate the Dynamic Registration URL. This URL is essential for integrating Artemis with Moodle. Copy this URL for use in the subsequent Moodle configuration steps.
 
 .. figure:: lti/lticonfiguration_tab.png
     :align: center
