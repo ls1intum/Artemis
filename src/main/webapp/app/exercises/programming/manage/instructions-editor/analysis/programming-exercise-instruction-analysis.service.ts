@@ -78,7 +78,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc.get(lineNumber);
-            const issueValues = lineNumberValues ? lineNumberValues[issueType] ?? [] : [];
+            const issueValues = lineNumberValues?.[issueType] ?? [];
             acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
             return acc;
         };

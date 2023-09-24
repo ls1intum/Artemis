@@ -49,13 +49,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
      * to be checked since the oracle would not create structural tests for invalid names.
      */
-    private static final String METHOD_TEST_REGEX = "testMethods\\[.+]";
-
-    private static final String ATTRIBUTES_TEST_REGEX = "testAttributes\\[.+]";
-
-    private static final String CONSTRUCTORS_TEST_REGEX = "testConstructors\\[.+]";
-
-    private static final String CLASS_TEST_REGEX = "testClass\\[.+]";
+    private static final Pattern STRUCTURAL_TEST_PATTERN = Pattern.compile("test(Methods|Attributes|Constructors|Class)\\[.+]");
 
     private final ProfileService profileService;
 
@@ -302,7 +296,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             testCaseRepository.saveAll(testCasesToSave);
             programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             // Update the test cases in the problem statement.
-            // This handles the case if the problem statement already contains the name of test case
+            // This handles the case if the problem statement already contains the name of a test case
             // that got later pushed into the test repository. Since this test case now exists,
             // the problem statement should now refer to its id.
             programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
@@ -317,9 +311,14 @@ public class ProgrammingExerciseFeedbackCreationService {
         // We compare the new generated test cases from feedback with the existing test cases from the database
         return existingTestCases.stream().filter(existing -> {
             Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
-            // Either the test case was active and is not part of the feedback anymore OR was not active before and is now part of the feedback again.
-            return (matchingTestCase.isEmpty() && existing.isActive()) || (matchingTestCase.isPresent() && matchingTestCase.get().isActive() && !existing.isActive());
+            // Either the test case was active and is not part of the feedback anymore
+            boolean existingTestCaseRemoved = matchingTestCase.isEmpty() && existing.isActive();
+            // OR was not active before and is now part of the feedback again.
+            boolean inactiveTestReactivated = matchingTestCase.isPresent() && matchingTestCase.get().isActive() && !existing.isActive();
+            return existingTestCaseRemoved || inactiveTestReactivated;
         }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
+        // If an existing test gets reactivated, we reuse its grading settings (weight, visibility, etc.).
+        // The instructor should not need to enter these settings again.
     }
 
     /**
@@ -342,8 +341,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         testCases.forEach(testCase -> {
             String testCaseName = testCase.getTestName();
             // set type depending on the test case name
-            if (testCaseName.matches(METHOD_TEST_REGEX) || testCaseName.matches(ATTRIBUTES_TEST_REGEX) || testCaseName.matches(CONSTRUCTORS_TEST_REGEX)
-                    || testCaseName.matches(CLASS_TEST_REGEX)) {
+            if (STRUCTURAL_TEST_PATTERN.matcher(testCaseName).matches()) {
                 testCase.setType(ProgrammingExerciseTestCaseType.STRUCTURAL);
             }
             else {

@@ -22,6 +22,9 @@ export type TaskResult = {
     };
 };
 
+const testIdRegex = /<testid>(\\d+)<\/testid>/;
+const testSplitRegex = /,(?![^(]*?\))/;
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseInstructionService {
     /**
@@ -85,7 +88,7 @@ export class ProgrammingExerciseInstructionService {
         // Otherwise, use the id directly provided within the <testid> section.
         // split the tests by "," only when there is not a closing bracket without a previous opening bracket
         return testList
-            .split(/,(?![^(]*?\))/)
+            .split(testSplitRegex)
             .map((text) => text.trim())
             .map((text) => {
                 // -1 to indicate a not found test
@@ -95,7 +98,7 @@ export class ProgrammingExerciseInstructionService {
 
     public convertProblemStatementTextToTestId(test: string, testCases?: ProgrammingExerciseTestCase[]): number | undefined {
         // If the text contains <testid> and </testid>, directly use the number inside
-        const match = RegExp('<testid>(\\d+)</testid>').exec(test);
+        const match = testIdRegex.exec(test);
         if (match) {
             // If there already is an id, return it directly
             return parseInt(match[1]);

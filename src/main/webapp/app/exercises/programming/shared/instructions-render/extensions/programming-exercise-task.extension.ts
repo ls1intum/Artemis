@@ -11,21 +11,21 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
 
+/**
+ * Regular expression for finding tasks.
+ * A Task starts with the identifier `[task]` and the task name in square brackets.
+ * This gets followed by a list of test cases in parentheses.
+ * @example [task][Implement BubbleSort](testBubbleSort)
+ *
+ * The regular expression is used to find all tasks inside a problem statement and therefore uses the global flag.
+ *
+ * This is coupled to the value used in `ProgrammingExerciseTaskService` in the server.
+ * If you change the regex, make sure to change it in all places!
+ */
+const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
-    /**
-     * Regular expression for finding tasks.
-     * A Task starts with the identifier `[task]` and the task name in square brackets.
-     * This gets followed by a list of test cases in parentheses.
-     * @example [task][Implement BubbleSort](testBubbleSort)
-     *
-     * The regular expression is used to find all tasks inside a problem statement and therefore uses the global flag.
-     *
-     * This is coupled to the value used in `ProgrammingExerciseTaskService` in the server.
-     * If you change the regex, make sure to change it in all places!
-     */
-    private readonly taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
-
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
 
@@ -114,7 +114,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         const extension: ShowdownExtension = {
             type: 'lang',
             filter: (problemStatement: string) => {
-                const tasks = Array.from(problemStatement.matchAll(this.taskRegex));
+                const tasks = Array.from(problemStatement.matchAll(taskRegex));
                 if (tasks) {
                     return this.createTasks(problemStatement, tasks);
                 }

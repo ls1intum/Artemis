@@ -186,7 +186,6 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getTasksWithoutInactiveFiltersOutInactive() {
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
@@ -218,9 +217,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
         assertThat(actualTasks).hasSize(1);
 
         var actualTestCases = actualTasks.stream().findFirst().get().getTestCases();
-        assertThat(actualTestCases).allMatch(ProgrammingExerciseTestCase::isActive);
-        assertThat(actualTestCases).hasSize(2);
-
+        assertThat(actualTestCases).hasSize(2).allMatch(ProgrammingExerciseTestCase::isActive);
     }
 
     @Test

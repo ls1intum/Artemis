@@ -239,18 +239,6 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
-     * Replaces a comma separated list of test case names with their corresponding id replacement.
-     * If no matching test case exists (e.g. due to a typo), we keep the test name.
-     * <p>
-     * Example: {@code testBubbleSort(),doesNotExists -> <testid>27</testid>,doesNotExists }
-     */
-    private String extractTestCaseIdReplacementsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
-        var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
-
-        return testCaseNames.stream().map(testName -> convertTestNameToTestIdReplacement(testName, testCases)).collect(Collectors.joining(","));
-    }
-
-    /**
      * Converts a test name to its id-reference replacement in the problem statement.
      * Example: {@code testBubbleSort() -> <testid>27</testid>}
      *
@@ -266,12 +254,6 @@ public class ProgrammingExerciseTaskService {
             }
         }
         return testName;
-    }
-
-    private String extractTestNamesFromTestIds(String capturedTestCaseIds, Set<ProgrammingExerciseTestCase> testCases) {
-        var capturedTestIds = extractTestCaseNames(capturedTestCaseIds);
-
-        return capturedTestIds.stream().map(tc -> convertTestIdToTestName(tc, testCases)).collect(Collectors.joining(","));
     }
 
     private String convertTestIdToTestName(String testId, Set<ProgrammingExerciseTestCase> testCases) {
@@ -382,6 +364,18 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
+     * Replaces a comma separated list of test case names with their corresponding id replacement.
+     * If no matching test case exists (e.g. due to a typo), we keep the test name.
+     * <p>
+     * Example: {@code testBubbleSort(),doesNotExists -> <testid>27</testid>,doesNotExists }
+     */
+    private String extractTestCaseIdReplacementsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
+        var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
+
+        return testCaseNames.stream().map(testName -> convertTestNameToTestIdReplacement(testName, testCases)).collect(Collectors.joining(","));
+    }
+
+    /**
      * Prepares a saved problem statement (with test ids) for editors.
      * Replaces the test ids with test names.
      * The problem statement of the passed exercise gets changed, but the result does not get saved.
@@ -392,6 +386,12 @@ public class ProgrammingExerciseTaskService {
         // Also replace inactive test cases; don't send any testids (e.g. ids referring to previoulsy active test cases) to the editor.
         // The client will then show a warning that the mentioned test name no longer exists.
         replaceInProblemStatement(exercise, this::extractTestNamesFromTestIds, false);
+    }
+
+    private String extractTestNamesFromTestIds(String capturedTestCaseIds, Set<ProgrammingExerciseTestCase> testCases) {
+        var capturedTestIds = extractTestCaseNames(capturedTestCaseIds);
+
+        return capturedTestIds.stream().map(tc -> convertTestIdToTestName(tc, testCases)).collect(Collectors.joining(","));
     }
 
     private void replaceInProblemStatement(ProgrammingExercise exercise, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer, boolean onlyActive) {
@@ -417,6 +417,15 @@ public class ProgrammingExerciseTaskService {
         exercise.setProblemStatement(problemStatement);
     }
 
+    /**
+     * Looks for all tasks in the given problem statement, and replaces its mentioned test cases using the given replacer method.
+     * Replacer methods are e.g. extractTestCaseIdReplacementsFromNames or extractTestNamesFromTestIds.
+     *
+     * @param problemStatement the problem statement to replace the tasks
+     * @param testCases        all test cases of the exercise, used to look up the new value to use
+     * @param replacer         the replacer method that gets executed when a test case gets found
+     * @return the new problem statement
+     */
     private String replaceTaskTests(String problemStatement, Set<ProgrammingExerciseTestCase> testCases, BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer) {
         Matcher matcher = TASK_PATTERN.matcher(problemStatement);
 
@@ -434,20 +443,29 @@ public class ProgrammingExerciseTaskService {
         });
     }
 
+    /**
+     * Looks for all test cases integrated into plantuml diagrams in the given problem statement, and replaces its test case using the given replacer method.
+     * Replacer methods are e.g. extractTestCaseIdReplacementsFromNames or extractTestNamesFromTestIds.
+     *
+     * @param problemStatement the problem statement to replace the plantuml diagram tests
+     * @param testCases        all test cases of the exercise, used to look up the new value to use
+     * @param replacer         the replacer method that gets executed when a test case gets found
+     * @return the new problem statement
+     */
     private String replacePlantUMLTestCases(String problemStatement, Set<ProgrammingExerciseTestCase> testCases,
             BiFunction<String, Set<ProgrammingExerciseTestCase>, String> replacer) {
         Matcher matcher = PLANTUML_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
-            // matchResult: Full UML diagramg (everything between @startuml and @enduml)
+            // matchResult: Full UML diagram (everything between @startuml and @enduml)
             String diagram = matchResult.group();
             Matcher tests = TESTSCOLOR_PATTERN.matcher(diagram);
             return tests.replaceAll(testsMatchResult -> {
                 // testsMatchResult: one testscolor instance, e.g. testsColor(testAttributes[BubbleSort])
                 String fullMatch = testsMatchResult.group();
-                // group 1: test names, e.g testAttributes[BubbleSort]
+                // group 1: test name, e.g testAttributes[BubbleSort]
                 String testNames = testsMatchResult.group(1);
-                // ids to insert, e.g. <testid>15</testid>
+                // id to insert, e.g. <testid>15</testid>
                 String testIds = replacer.apply(testNames, testCases);
                 return fullMatch.replace(testNames, testIds);
             });
