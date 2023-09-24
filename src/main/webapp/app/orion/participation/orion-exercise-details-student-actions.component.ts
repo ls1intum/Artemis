@@ -70,6 +70,17 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
      * this ensures feedback changes won't break the plugin and the endpoint stays extensible
      */
     initializeFeedback() {
-        this.orionConnectorService.initializeFeedback(this.exercise.studentParticipations as ProgrammingExerciseStudentParticipation[]);
+        const participations = this.exercise.studentParticipations as ProgrammingExerciseStudentParticipation[];
+        const connectorService = this.orionConnectorService;
+        participations?.forEach(function (participation) {
+            participation.results?.forEach(function (result) {
+                if (result.rated !== undefined && result.rated) {
+                    if (result.feedbacks !== undefined) {
+                        connectorService.initializeFeedback(result.feedbacks);
+                    }
+                    return;
+                }
+            });
+        });
     }
 }

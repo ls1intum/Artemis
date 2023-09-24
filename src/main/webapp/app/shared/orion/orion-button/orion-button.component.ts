@@ -26,6 +26,8 @@ export class OrionButtonComponent {
     // Indirect handler to disable clicking while loading
     @Output() clickHandler = new EventEmitter<void>();
 
+    protected readonly OrionButtonType = OrionButtonType;
+
     // Icons
     faCircleNotch = faCircleNotch;
     faRotateRight = faRotateRight;
@@ -46,6 +48,4 @@ export class OrionButtonComponent {
             this.clickHandler.emit();
         }
     }
-
-    protected readonly OrionButtonType = OrionButtonType;
 }

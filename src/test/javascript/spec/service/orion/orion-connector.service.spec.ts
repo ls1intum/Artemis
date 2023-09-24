@@ -12,8 +12,6 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { AlertService } from 'app/core/util/alert.service';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Result } from 'app/entities/result.model';
 
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
@@ -243,52 +241,41 @@ describe('OrionConnectorService', () => {
     it('should forward initializeFeedback', () => {
         const programmingExerciseStudentParticipation = [
             {
-                id: 2,
-                results: [
-                    {
-                        id: 3,
-                        rated: true,
-                        feedbacks: [
-                            {
-                                credits: 0,
-                                detailText: 'some text',
-                                reference: 'file',
-                                text: 'some text with line',
-                                type: FeedbackType.MANUAL,
-                                gradingInstruction: undefined,
-                                line: undefined,
-                                path: undefined,
-                            } as Feedback,
-                            {
-                                credits: 1,
-                                detailText: 'some text2',
-                                reference: 'file2',
-                                text: 'some text with line2',
-                                type: FeedbackType.MANUAL,
-                                gradingInstruction: undefined,
-                                line: undefined,
-                                path: undefined,
-                            } as Feedback,
-                            {
-                                credits: -1,
-                                detailText: 'some text3',
-                                reference: 'file3',
-                                text: 'some text with line3',
-                                type: FeedbackType.MANUAL,
-                                gradingInstruction: undefined,
-                                line: undefined,
-                                path: undefined,
-                            } as Feedback,
-                        ],
-                    } as Result,
-                ],
-            } as ProgrammingExerciseStudentParticipation,
+                credits: 0,
+                detailText: 'some text',
+                reference: 'file',
+                text: 'some text with line',
+                type: FeedbackType.MANUAL,
+                gradingInstruction: undefined,
+                line: undefined,
+                path: undefined,
+            } as Feedback,
+            {
+                credits: 1,
+                detailText: 'some text2',
+                reference: 'file2',
+                text: 'some text with line2',
+                type: FeedbackType.MANUAL,
+                gradingInstruction: undefined,
+                line: undefined,
+                path: undefined,
+            } as Feedback,
+            {
+                credits: -1,
+                detailText: 'some text3',
+                reference: 'file3',
+                text: 'some text with line3',
+                type: FeedbackType.MANUAL,
+                gradingInstruction: undefined,
+                line: undefined,
+                path: undefined,
+            } as Feedback,
         ];
         serviceUnderTest.initializeFeedback(programmingExerciseStudentParticipation);
 
         expect((window as any).orionExerciseConnector.initializeFeedback).toHaveBeenCalledOnce();
         expect((window as any).orionExerciseConnector.initializeFeedback).toHaveBeenCalledWith(
-            '[{"id":2,"results":[{"id":3,"rated":true,"feedbacks":[{"credits":0,"detailText":"some text","reference":"file","text":"some text with line","type":"MANUAL"},{"credits":1,"detailText":"some text2","reference":"file2","text":"some text with line2","type":"MANUAL"},{"credits":-1,"detailText":"some text3","reference":"file3","text":"some text with line3","type":"MANUAL"}]}]}]',
+            '[{"credits":0,"detailText":"some text","reference":"file","text":"some text with line","type":"MANUAL"},{"credits":1,"detailText":"some text2","reference":"file2","text":"some text with line2","type":"MANUAL"},{"credits":-1,"detailText":"some text3","reference":"file3","text":"some text with line3","type":"MANUAL"}]',
         );
     });
 });

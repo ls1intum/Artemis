@@ -73,9 +73,9 @@ export interface OrionExerciseConnector {
 
     /**
      * Initializes the feedback comments for a student. See {@link OrionConnectorService} for details
-     * @param programmingExerciseStudentParticipation a string containing an array of {@link ProgrammingExerciseStudentParticipation}
+     * @param feedbacks a string containing an array of {@link Feedback}
      */
-    initializeFeedback(programmingExerciseStudentParticipation: string): void;
+    initializeFeedback(feedbacks: string): void;
 }
 
 export interface OrionVCSConnector {

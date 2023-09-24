@@ -20,7 +20,7 @@ export class OrionProgrammingExerciseComponent implements OnInit {
     @Output() filteredExerciseCount = new EventEmitter<number>();
 
     readonly ExerciseView = ExerciseView;
-
+    protected readonly OrionButtonType = OrionButtonType;
     orionState: OrionState;
 
     constructor(
@@ -57,6 +57,4 @@ export class OrionProgrammingExerciseComponent implements OnInit {
             this.orionConnectorService.log(error);
         }
     }
-
-    protected readonly OrionButtonType = OrionButtonType;
 }
