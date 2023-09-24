@@ -104,14 +104,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
                 if (dndQuestion.getBackgroundFilePath() != null) {
-                    // Check whether dndQuestion.getBackgroundFilePath() is actually a background file path
-                    // (which is the case when its path starts with "/api/files/drag-and-drop/backgrounds/")
-                    FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
-                            // Turn dndQuestion.getBackgroundFilePath() into a URI analog to
-                            // https://github.com/ls1intum/Artemis/pull/7038/files#diff-d41031bc9d88710f3ba653294756465029245a3d3a8d1af479b8a6498c254bd3
-                            URI.create(dndQuestion.getBackgroundFilePath()), URI.create("/api/" + FileService.DRAG_AND_DROP_BACKGROUND_SUBPATH + "/"));
+                    URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
+                    URI backgroundFileIntendedPath = URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/");
+                    // Check whether pictureFilePublicPath is actually a picture file path
+                    // (which is the case when its path starts with pictureFileIntendedPath)
+                    FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
                     // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-                    Path oldPath = filePathService.actualPathForPublicPath(URI.create(dndQuestion.getBackgroundFilePath()));
+                    Path oldPath = filePathService.actualPathForPublicPath(backgroundFilePublicPath);
                     Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
                     dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
                 }
@@ -127,14 +126,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
                     dragItem.setId(null);
                     dragItem.setQuestion(dndQuestion);
                     if (dragItem.getPictureFilePath() != null) {
-                        // Check whether dndQuestion.getBackgroundFilePath() is actually a background file path
-                        // (which is the case when its path starts with "/api/files/drag-and-drop/backgrounds/")
-                        FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(
-                                // Turn dragItem.getPictureFilePath() into a URI analog to
-                                // https://github.com/ls1intum/Artemis/pull/7038/files#diff-d41031bc9d88710f3ba653294756465029245a3d3a8d1af479b8a6498c254bd3
-                                URI.create(dragItem.getPictureFilePath()), URI.create("/api/" + FileService.DRAG_AND_DROP_PICTURE_SUBPATH + "/"));
+                        URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
+                        URI pictureFileIntendedPath = URI.create("/api/" + FilePathService.getDragItemFilePath() + "/");
+                        // Check whether pictureFilePublicPath is actually a picture file path
+                        // (which is the case when its path starts with pictureFileIntendedPath)
+                        FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
                         // Need to copy the file and get a new path, same as above
-                        Path oldDragItemPath = filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath()));
+                        Path oldDragItemPath = filePathService.actualPathForPublicPath(pictureFilePublicPath);
                         Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
                         dragItem.setPictureFilePath(filePathService.publicPathForActualPath(newDragItemPath, null).toString());
                     }

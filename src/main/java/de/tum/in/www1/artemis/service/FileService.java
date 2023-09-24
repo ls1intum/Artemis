@@ -75,10 +75,6 @@ public class FileService implements DisposableBean {
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
-    public static final String DRAG_AND_DROP_BACKGROUND_SUBPATH = "files/drag-and-drop/backgrounds";
-
-    public static final String DRAG_AND_DROP_PICTURE_SUBPATH = "files/drag-and-drop/drag-items";
-
     public static final String MARKDOWN_FILE_SUBPATH = "/api/files/markdown/";
 
     public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
