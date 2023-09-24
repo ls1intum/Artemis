@@ -4,6 +4,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,6 +21,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface LearningPathRepository extends JpaRepository<LearningPath, Long> {
 
     Optional<LearningPath> findByCourseIdAndUserId(long courseId, long userId);
+
+    default LearningPath findByCourseIdAndUserIdElseThrow(long courseId, long userId) {
+        return findByCourseIdAndUserId(courseId, userId).orElseThrow(() -> new EntityNotFoundException("LearningPath"));
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies" })
     Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId);
@@ -40,4 +46,13 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
             WHERE learningPath.course.id = :courseId AND learningPath.user.isDeleted = false AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnits", "competencies.lectureUnits.completedUsers", "competencies.exercises",
+            "competencies.exercises.studentParticipations" })
+    Optional<LearningPath> findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId);
+
+    @NotNull
+    default LearningPath findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {
+        return findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
+    }
 }

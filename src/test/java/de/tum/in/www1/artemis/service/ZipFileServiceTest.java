@@ -12,9 +12,9 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ZipFileService zipFileService;
@@ -50,7 +50,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         var tempZipFile = Files.createTempFile("test", ".zip");
         zipFileService.createTemporaryZipFile(tempZipFile, List.of(), 5);
         assertThat(tempZipFile).exists();
-        verify(fileService).scheduleForDeletion(tempZipFile, 5L);
+        verify(fileService).schedulePathForDeletion(tempZipFile, 5L);
     }
 
 }

@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -155,8 +156,7 @@ public class LegalDocumentService {
             if (!Files.exists(legalDocumentsBasePath)) {
                 Files.createDirectories(legalDocumentsBasePath);
             }
-            Files.writeString(getLegalDocumentPath(legalDocument.getLanguage(), legalDocument.getType()), legalDocument.getText(), StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING);
+            FileUtils.writeStringToFile(getLegalDocumentPath(legalDocument.getLanguage(), legalDocument.getType()).toFile(), legalDocument.getText(), StandardCharsets.UTF_8);
             return legalDocument;
         }
         catch (IOException e) {

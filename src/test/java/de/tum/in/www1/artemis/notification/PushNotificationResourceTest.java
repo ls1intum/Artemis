@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationRegiste
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationUnregisterRequest;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     UserRepository userRepository;
