@@ -9,6 +9,7 @@ import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
+import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
     let component: ExamLiveAnnouncementCreateModalComponent;
@@ -49,7 +50,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
     });
 
     it('should handle successful announcement submission', () => {
-        const testingSubject = new Subject();
+        const testingSubject = new Subject<ExamWideAnnouncementEvent>();
         jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(testingSubject.asObservable());
         component.submitAnnouncement();
         expect(component.status).toBe('submitting');
@@ -60,7 +61,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         expect(contentSpan.nativeElement.innerHTML).toBe('Sending announcement...');
         expect(mockExamManagementService.createAnnouncement).toHaveBeenCalled();
 
-        testingSubject.next({ id: 1, text: 'new announcement' });
+        testingSubject.next({ id: 1, text: 'new announcement' } as any as ExamWideAnnouncementEvent);
         fixture.detectChanges();
         expect(component.status).toBe('submitted');
 

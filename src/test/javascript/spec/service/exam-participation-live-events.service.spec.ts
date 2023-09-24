@@ -29,7 +29,7 @@ describe('ExamParticipationLiveEventsService', () => {
             retrieve: jest.fn(),
         } as unknown as LocalStorageService;
 
-        mockWebsocketService = new MockWebsocketService();
+        mockWebsocketService = new MockWebsocketService() as any as JhiWebsocketService;
         mockWebsocketService['state'] = websocketConnectionStateSubject.asObservable();
 
         TestBed.configureTestingModule({
@@ -55,12 +55,13 @@ describe('ExamParticipationLiveEventsService', () => {
     });
 
     it('should correctly react to websocket connection state and refetch events', fakeAsync(() => {
+        // @ts-ignore
         const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents');
 
         tick(6000);
         expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
 
-        websocketConnectionStateSubject.next({ connected: true });
+        websocketConnectionStateSubject.next({ connected: true } as any as ConnectionState);
 
         const mockEvents: ExamLiveEvent[] = [
             {
@@ -79,9 +80,14 @@ describe('ExamParticipationLiveEventsService', () => {
     }));
 
     it('should correctly react to a student exam change and refetch events and subscribe to ws', fakeAsync(async () => {
+        // @ts-ignore
         const unsubscribeFromExamLiveEventsSpy = jest.spyOn(service, 'unsubscribeFromExamLiveEvents');
         const websocketSubscribeSpy = jest.spyOn(mockWebsocketService, 'subscribe');
+
+        // @ts-ignore
         const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents').mockReturnValue(undefined);
+
+        // @ts-ignore
         const replayEventsSpy = jest.spyOn(service, 'replayEvents');
 
         const websocketStreamSubject = new Subject<any>();
@@ -101,7 +107,7 @@ describe('ExamParticipationLiveEventsService', () => {
             }),
         );
 
-        service['currentWebsocketReceiveSubscription'] = { unsubscribe: jest.fn() };
+        service['currentWebsocketReceiveSubscription'] = { unsubscribe: jest.fn() } as any;
         service['currentWebsocketChannel'] = '123';
 
         currentlyLoadedStudentExamSubject.next({ id: 2, exam: { id: 2, course: { id: 2 } } });
@@ -119,7 +125,7 @@ describe('ExamParticipationLiveEventsService', () => {
 
         // Check load ack status
         expect(retrieveSpy).toHaveBeenCalledTimes(2); // 1x in constructor, 1x in currentlyLoadedStudentExamSubject.next
-        expect(service.lastAcknowledgedEventStatus).toEqual({
+        expect(service['lastAcknowledgedEventStatus']).toEqual({
             lastChange: 1,
             acknowledgedEvents: {
                 1: {
@@ -140,7 +146,7 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(websocketReceiveSpy).toHaveBeenCalledOnce();
 
         // Send event over ws
-        const mockEvent: ExamLiveEvent = {
+        const mockEvent: any = {
             id: 123,
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
             text: 'Test',

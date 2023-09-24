@@ -75,7 +75,7 @@ describe('ExamLiveEventComponent', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
             createdBy: 'John Doe',
-        };
+        } as any as ExamLiveEvent;
         component.event = mockEvent;
         component.showAcknowledge = true;
 
