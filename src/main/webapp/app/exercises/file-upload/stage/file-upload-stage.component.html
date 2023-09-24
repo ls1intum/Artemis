@@ -20,7 +20,6 @@
 <div *ngIf="stagedFiles!.length > 0" class="mb-4">
     <h6>
         {{ 'artemisApp.fileUploadSubmission.stagedFiles' | artemisTranslate }}
-        <!-- nocheckin: make new json file for this component. just for the goofs-->
     </h6>
 
     <ul class="list-group">
@@ -46,7 +45,6 @@
 </div>
 
 <div *ngIf="submission">
-    <!-- nocheckin -->
     <h6>
         {{ 'artemisApp.fileUploadSubmission.submittedFiles' | artemisTranslate }}
         <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
@@ -57,8 +55,7 @@
             <a class="text-primary" (click)="downloadFile(filePath)">
                 {{ 'artemisApp.fileUploadSubmission.download' | artemisTranslate: { fileName: FileDetails.getFileDetailsFromPath(filePath).name } }}
             </a>
-            <span class="ms-2 badge bg-info">
-                <!-- nocheckin, where is this important?: *ngIf="submittedFile.extension"-->
+            <span class="ms-2 badge bg-info" *ngIf="FileDetails.getFileDetailsFromPath(filePath).extension">
                 {{ FileDetails.getFileDetailsFromPath(filePath).extension | uppercase }}
             </span>
         </li>

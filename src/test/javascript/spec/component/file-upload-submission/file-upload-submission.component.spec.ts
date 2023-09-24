@@ -66,7 +66,7 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(HeaderParticipationPageComponent),
-                MockComponent(FileUploadStageComponent),
+                FileUploadStageComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
@@ -110,15 +110,18 @@ describe('FileUploadSubmissionComponent', () => {
         expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
         expect(comp.isAfterAssessmentDueDate).toBeTrue();
 
-        // check if fileUploadInput is available
-        const stage = debugElement.query(By.css('jhi-stage'));
+        const stage = debugElement.query(By.directive(FileUploadStageComponent));
         expect(stage).not.toBeNull();
-        // nocheckin: expect(stage.nativeElement.disabled).toBeFalse();
+
+        // check if fileUploadInput is available
+        const fileUploadInput = stage.query(By.css('#fileUploadInput'));
+        expect(fileUploadInput).not.toBeNull();
+        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
 
         // check if extension elements are set
-        const extension = debugElement.query(By.css('.ms-1.badge.bg-info'));
+        const extension = stage.query(By.css('.ms-1.badge.bg-info'));
         expect(extension).toBeDefined();
-        // nocheckin: expect(extension.nativeElement.textContent.replace(/\s/g, '')).toEqual(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
+        expect(extension.nativeElement.textContent.replace(/\s/g, '')).toEqual(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
     }));
 
     const submitAndUploadFiles = (numberOfFiles: number) => {

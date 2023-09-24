@@ -112,8 +112,6 @@ describe('FileUploadStageComponent', () => {
         expect(fileUploadInput.nativeElement.value).toBe('');
     }));
 
-    // nocheckin: Multiple files test
-
     it('should download file', () => {
         const fileService = TestBed.inject(FileService);
         const fileServiceStub = jest.spyOn(fileService, 'downloadFile').mockImplementation();
@@ -122,4 +120,6 @@ describe('FileUploadStageComponent', () => {
 
         expect(fileServiceStub).toHaveBeenCalledOnce();
     });
+
+    // nocheckin: Multiple files test
 });
