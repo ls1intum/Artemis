@@ -109,23 +109,18 @@ public class ExamResource {
 
     private final ChannelService channelService;
 
-    private final WebsocketMessagingService websocketMessagingService;
-
     private final ExerciseRepository exerciseRepository;
 
     private final ExamSessionService examSessionService;
 
     private final ExamLiveEventsService examLiveEventsService;
 
-    private final ExamLiveEventRepository examLiveEventRepository;
-
     public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
             ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
             SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
             TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
             StudentExamRepository studentExamRepository, ExamImportService examImportService, CustomAuditEventRepository auditEventRepository, ChannelService channelService,
-            ChannelRepository channelRepository, WebsocketMessagingService websocketMessagingService, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
+            ChannelRepository channelRepository, ExerciseRepository exerciseRepository, ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -145,11 +140,9 @@ public class ExamResource {
         this.auditEventRepository = auditEventRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.websocketMessagingService = websocketMessagingService;
         this.exerciseRepository = exerciseRepository;
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
-        this.examLiveEventRepository = examLiveEventRepository;
     }
 
     /**
