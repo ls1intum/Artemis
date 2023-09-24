@@ -249,20 +249,22 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Checks whether the path starts with the provided sub-path or the provided legacy-sub-path
      *
-     * @param path          URI to check if it contains the sub-pat
-     * @param subPath       sub-path URI (used after <a href="https://github.com/ls1intum/Artemis/pull/7038">#7038</a>) to search for
-     * @param legacySubPath legacy-sub-path URI (used before <a href="https://github.com/ls1intum/Artemis/pull/7038">#7038</a>) to search for
+     * @param path    URI to check if it starts with the sub-pat
+     * @param subPath sub-path URI to search for
+     * @throws IllegalArgumentException if the provided path does not start with the provided sub-path or the provided legacy-sub-path
      */
-    public static void sanitizeByCheckingIfPathContainsSubPathElseThrow(@NotNull URI path, @NotNull URI subPath, @Nullable URI legacySubPath) {
-        // Removes redundant elements (e.g. ../ or ./) from the path and subPath
+    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NotNull URI path, @NotNull URI subPath) {
+        // Removes redundant elements (e.g. ../ or ./) from the path and sub-path and extracts their paths as strings
         URI normalisedPath = path.normalize();
+        String stringPath = normalisedPath.getPath();
         URI normalisedSubPath = subPath.normalize();
-        URI normalisedLegacySubPath = legacySubPath != null ? legacySubPath.normalize() : null;
-        boolean normalisedPathStartsWithNormalisedSubPath = normalisedPath.getPath().startsWith(normalisedSubPath.getPath());
-        boolean normalisedPathStartsWithNormalisedLegacySubPath = normalisedLegacySubPath != null && normalisedPath.getPath().startsWith(normalisedLegacySubPath.getPath());
-        // Check whether the normalisedPath starts with the normalisedSubPath
-        if (!normalisedPathStartsWithNormalisedSubPath && !normalisedPathStartsWithNormalisedLegacySubPath) {
+        String stringSubPath = normalisedSubPath.getPath();
+        // Indicates whether the stringPath starts with the stringSubPath
+        boolean normalisedPathStartsWithNormalisedSubPath = stringPath.startsWith(stringSubPath);
+        // Throws a IllegalArgumentException in case the normalisedPath does not start with the normalisedSubPath
+        if (!normalisedPathStartsWithNormalisedSubPath) {
             throw new IllegalArgumentException("Path is not valid!");
         }
     }
