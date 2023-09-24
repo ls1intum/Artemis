@@ -36,7 +36,7 @@ E.g.: ``cp Pyris/application.example.yml application.yml``
 
 Now you need to configure the ``application.yml`` file. Here is an example configuration:
 
-.. code-block:: yml
+.. code-block:: yaml
 
     pyris:
         api_keys:
