@@ -84,7 +84,7 @@ describe('FileUploadStageComponent', () => {
         flush();
     }));
 
-    it('One too big file can not be submitted', fakeAsync(() => {
+    it('Too big single file can not be submitted', fakeAsync(() => {
         // Ignore console errors
         console.error = jest.fn();
 
@@ -111,6 +111,8 @@ describe('FileUploadStageComponent', () => {
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
         expect(fileUploadInput.nativeElement.value).toBe('');
     }));
+
+    // nocheckin: Multiple files test
 
     it('should download file', () => {
         const fileService = TestBed.inject(FileService);

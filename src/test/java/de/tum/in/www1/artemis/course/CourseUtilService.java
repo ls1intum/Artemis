@@ -712,7 +712,7 @@ public class CourseUtilService {
                 course = courseRepo.save(course);
                 exerciseRepo.save(fileUploadExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
-                    FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFiles(true, "path/to/file.pdf");
                     fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);

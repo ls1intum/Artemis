@@ -240,14 +240,13 @@ public class FileResource {
      *
      * @param submissionId id of the submission, the file belongs to
      * @param exerciseId   id of the exercise, the file belongs to
-     * @param filename     the filename of the file
+     * @param fileName     the filename of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
+    @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{fileName:.+}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
+    public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String fileName) {
+        log.debug("REST request to get file {} for file upload submission : {}", fileName, exerciseId);
 
         FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
@@ -268,7 +267,14 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        return buildFileResponse(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), filename);
+        String filePath = submission.getFilePaths().stream().filter(path -> path.endsWith(fileName)).findFirst().orElse(null);
+
+        if (filePath == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        else {
+            return buildFileResponse(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName, false);
+        }
     }
 
     /**

@@ -200,7 +200,7 @@ public class ExerciseUtilService {
                 course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFiles(true, "path/to/file.pdf");
                     fileUploadExerciseUtilService.saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;

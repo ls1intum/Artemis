@@ -75,13 +75,14 @@ public class ParticipationFactory {
         return fileUploadSubmission;
     }
 
-    public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
+    public static FileUploadSubmission generateFileUploadSubmissionWithFiles(boolean submitted, String... filePaths) {
         FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
-        fileUploadSubmission.setFilePath(filePath);
+        fileUploadSubmission.setFilePaths(List.of(filePaths));
         if (submitted) {
             fileUploadSubmission.setSubmissionDate(now().minusDays(1));
         }
         return fileUploadSubmission;
+
     }
 
     public static FileUploadSubmission generateLateFileUploadSubmission() {

@@ -115,16 +115,16 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
                 fileUploadExercise = (FileUploadExercise) exercise;
 
                 fileUploadSubmission1 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), TEST_PREFIX + "student1");
+                        ParticipationFactory.generateFileUploadSubmissionWithFiles(true, "test1.pdf"), TEST_PREFIX + "student1");
                 fileUploadSubmission2 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), TEST_PREFIX + "student2");
+                        ParticipationFactory.generateFileUploadSubmissionWithFiles(true, "test2.pdf"), TEST_PREFIX + "student2");
                 fileUploadSubmission3 = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise,
-                        ParticipationFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), TEST_PREFIX + "student3");
+                        ParticipationFactory.generateFileUploadSubmissionWithFiles(true, "test1.pdf", "test2.pdf", "test3.pdf"), TEST_PREFIX + "student3");
 
                 try {
-                    saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
-                    saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission2);
-                    saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission3);
+                    saveEmptySubmissionFiles(fileUploadExercise, fileUploadSubmission1);
+                    saveEmptySubmissionFiles(fileUploadExercise, fileUploadSubmission2);
+                    saveEmptySubmissionFiles(fileUploadExercise, fileUploadSubmission3);
                 }
                 catch (IOException e) {
                     fail("Could not create submission files", e);
@@ -138,19 +138,20 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
         baseExportOptions.setFilterLateSubmissions(false);
     }
 
-    private void saveEmptySubmissionFile(Exercise exercise, FileUploadSubmission submission) throws IOException {
+    private void saveEmptySubmissionFiles(Exercise exercise, FileUploadSubmission submission) throws IOException {
+        for (String filePath : submission.getFilePaths()) {
+            String[] parts = filePath.split(Pattern.quote(File.separator));
+            String fileName = parts[parts.length - 1];
+            File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
 
-        String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
-        String fileName = parts[parts.length - 1];
-        File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
+            File parent = file.getParentFile();
+            if (!parent.exists() && !parent.mkdirs()) {
+                throw new IOException("Couldn't create dir: " + parent);
+            }
 
-        File parent = file.getParentFile();
-        if (!parent.exists() && !parent.mkdirs()) {
-            throw new IOException("Couldn't create dir: " + parent);
-        }
-
-        if (!file.exists()) {
-            file.createNewFile();
+            if (!file.exists()) {
+                file.createNewFile();
+            }
         }
     }
 
@@ -272,7 +273,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             return modelingExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".json";
         }
         else if (submission instanceof FileUploadSubmission) {
-            return fileUploadExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".pdf";
+            return fileUploadExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".zip";
         }
         else {
             fail("Unknown submission type");

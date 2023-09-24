@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 @Service
 public class FileUploadSubmissionExportService extends SubmissionExportService {
 
-    private ZipFileService zipFileService;
+    private final ZipFileService zipFileService;
 
     public FileUploadSubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
         super(exerciseRepository, zipFileService, fileService);
@@ -51,14 +51,6 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
     @Override
     protected String getFileEndingForSubmission(Submission submission) {
-        if (((FileUploadSubmission) submission).getFilePath() == null) {
-            return ""; // submission will be ignored by saveSubmissionToFile
-        }
-        else {
-            String[] parts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
-            String fileName = parts[parts.length - 1];
-            int endingIndex = fileName.indexOf(".");
-            return fileName.substring(endingIndex);
-        }
+        return ".zip";
     }
 }

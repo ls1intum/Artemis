@@ -165,33 +165,6 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
     });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /* nocheckin: we don't really do anything in updateViewFromSubmission anymore so well...
-    describe('updateViewFromSubmission', () => {
-        beforeEach(() => {
-            resetComponent();
-            fixture.detectChanges();
-        });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-        it('should do nothing if isSynced is false', () => {
-            comp.studentSubmission.isSynced = false;
-            comp.stagedFiles = [new File([], 'file2')];
-            comp.updateViewFromSubmission();
-            expect(comp.submissionFile).toBeDefined();
-        });
-        it('should set submitted filename and file extension', () => {
-            comp.studentSubmission.isSynced = true;
-            comp.submissionFile = new File([], 'file2');
-            comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).toBe('file1.png');
-            expect(comp.submittedFileExtension).toBe('png');
-            expect(comp.submissionFile).toBeUndefined();
-        });
-    });
-*/
-
     describe('saveUploadedFile', () => {
         beforeEach(() => {
             resetComponent();

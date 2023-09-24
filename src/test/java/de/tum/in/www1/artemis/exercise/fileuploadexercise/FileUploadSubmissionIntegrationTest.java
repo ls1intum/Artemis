@@ -605,7 +605,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
 
         final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
         assertThat(submissionInDb).isPresent();
-        assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
+        assertThat(submissionInDb.get().getFilePaths().get(0)).contains("ffile.png");
     }
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission, String... originalFilenames) throws Exception {

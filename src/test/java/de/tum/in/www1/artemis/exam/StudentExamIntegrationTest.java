@@ -1423,7 +1423,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof FileUploadSubmission) {
-            assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
+            assertThat(((FileUploadSubmission) submission).getFilePaths().get(0)).isEqualTo(versionedSubmission.get().getContent());
         }
         else {
             assertThat(submission).isInstanceOf(QuizSubmission.class);

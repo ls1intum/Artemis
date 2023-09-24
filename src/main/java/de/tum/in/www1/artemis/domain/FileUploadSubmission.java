@@ -7,7 +7,6 @@ import javax.persistence.*;
 
 import org.apache.commons.lang3.math.NumberUtils;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
@@ -70,11 +69,6 @@ public class FileUploadSubmission extends Submission {
         if (filePaths == null)
             filePaths = new ArrayList<>();
         return filePaths;
-    }
-
-    @JsonIgnore
-    public String getFilePath() {
-        return isEmpty() ? null : filePaths.get(0);
     }
 
     /**
