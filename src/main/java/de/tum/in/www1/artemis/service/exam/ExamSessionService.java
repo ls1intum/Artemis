@@ -90,39 +90,39 @@ public class ExamSessionService {
     public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, Optional<String> ipSubnet) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
-        examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+        Set<ExamSession> filteredSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
         Set<StudentExam> studentExams = new HashSet<>();
         boolean studentExamsFetched = false;
-        if (analysisOptions.sameIpAddress() && analysisOptions.sameBrowserFingerprint()) {
+        if (analysisOptions.sameIpAddressDifferentStudentExams() && analysisOptions.sameBrowserFingerprintDifferentStudentExams()) {
             // first step find all sessions that have matching browser fingerprint and ip address
-            findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession,
-                    suspiciousExamSessions);
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId,
+                    examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions);
         }
-        if (analysisOptions.sameBrowserFingerprint()) {
+        if (analysisOptions.sameBrowserFingerprintDifferentStudentExams()) {
             // second step find all sessions that have only matching browser fingerprint
-            findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
                     suspiciousExamSessions);
         }
-        if (analysisOptions.sameIpAddress()) {
+        if (analysisOptions.sameIpAddressDifferentStudentExams()) {
             // third step find all sessions that have only matching ip address
-            findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
                     suspiciousExamSessions);
         }
 
-        if (analysisOptions.differentIpAddress() && analysisOptions.differentBrowserFingerprint()) {
+        if (analysisOptions.differentIpAddressesSameStudentExam() && analysisOptions.differentBrowserFingerprintsSameStudentExam()) {
             studentExams = studentExamRepository.findByExamIdWithSessions(examId);
             studentExamsFetched = true;
             // fourth step find all sessions that belong to the same student exam but have different browser fingerprints and ip addresses
             analyzeSessionOfStudentExamsForGivenCriteria(studentExams, true, true, suspiciousExamSessions);
         }
-        if (analysisOptions.differentBrowserFingerprint()) {
+        if (analysisOptions.differentBrowserFingerprintsSameStudentExam()) {
             if (!studentExamsFetched) {
                 studentExams = studentExamRepository.findByExamIdWithSessions(examId);
                 studentExamsFetched = true;
             }
             analyzeSessionOfStudentExamsForGivenCriteria(studentExams, false, true, suspiciousExamSessions);
         }
-        if (analysisOptions.differentIpAddress()) {
+        if (analysisOptions.differentIpAddressesSameStudentExam()) {
             if (!studentExamsFetched) {
                 studentExams = studentExamRepository.findByExamIdWithSessions(examId);
             }
@@ -130,8 +130,8 @@ public class ExamSessionService {
         }
         if (analysisOptions.ipAddressOutsideOfRange()) {
             // seventh step find all sessions that have ip address outside of range
-            examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
-            findSessionsWithIPAddressOutsideOfRange(examSessions, ipSubnet.orElseThrow(), suspiciousExamSessions);
+            filteredSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+            findSessionsWithIPAddressOutsideOfRange(filteredSessions, ipSubnet.orElseThrow(), suspiciousExamSessions);
         }
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
     }
@@ -141,9 +141,9 @@ public class ExamSessionService {
         for (var studentExam : studentExams) {
             var relatedSuspiciousExamSessions = new HashSet<ExamSession>();
             Set<ExamSession> examSessions = studentExam.getExamSessions();
-            examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
-            for (var examSession : examSessions) {
-                for (var examSession2 : examSessions) {
+            Set<ExamSession> filteredSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+            for (var examSession : filteredSessions) {
+                for (var examSession2 : filteredSessions) {
                     if (Objects.equals(examSession.getId(), examSession2.getId())) {
                         continue;
                     }
@@ -172,6 +172,7 @@ public class ExamSessionService {
         var examSessionsWithIPAddressOutsideOfRange = new HashSet<ExamSession>();
         for (var examSession : examSessions) {
             if (!checkIPIsInGivenRange(ipSubnet, examSession.getIpAddress())) {
+                examSession.setSuspiciousReasons(new HashSet<>());
                 examSession.addSuspiciousReason(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
                 examSessionsWithIPAddressOutsideOfRange.add(examSession);
             }
@@ -314,21 +315,30 @@ public class ExamSessionService {
      * @param relatedExamSessions related exam sessions
      */
     private static ExamSession addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
-        session.setSuspiciousReasons(new HashSet<>());
+        ExamSession sessionCopy = new ExamSession();
+        sessionCopy.setId(session.getId());
+        sessionCopy.setSuspiciousReasons(new HashSet<>());
+        sessionCopy.setBrowserFingerprintHash(session.getBrowserFingerprintHash());
+        sessionCopy.setIpAddress(session.getIpAddress());
+        sessionCopy.setUserAgent(session.getUserAgent());
+        sessionCopy.setStudentExam(session.getStudentExam());
+        sessionCopy.setCreatedDate(session.getCreatedDate());
+        sessionCopy.setInstanceId(session.getInstanceId());
+        sessionCopy.setSessionToken(session.getSessionToken());
 
         for (var relatedExamSession : relatedExamSessions) {
             relatedExamSession.setSuspiciousReasons(new HashSet<>());
             if (relatedExamSession.hasSameBrowserFingerprint(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
-                session.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
+                sessionCopy.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
             }
             if (relatedExamSession.hasSameIpAddress(session)) {
                 relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
-                session.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
+                sessionCopy.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
             }
 
         }
-        return session;
+        return sessionCopy;
     }
 
 }

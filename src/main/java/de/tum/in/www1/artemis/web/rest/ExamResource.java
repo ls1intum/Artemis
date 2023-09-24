@@ -1275,7 +1275,7 @@ public class ExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/suspicious-sessions : Get all exam sessions that are suspicious for exam.
-     * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long)}
+     * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long, SuspiciousSessionsAnalysisOptions, Optional)}
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam

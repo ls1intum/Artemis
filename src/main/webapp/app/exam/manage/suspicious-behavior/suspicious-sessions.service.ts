@@ -17,7 +17,7 @@ export class SuspiciousSessionsService {
             .set('sameStudentExamDifferentBrowserFingerprints', options.sameStudentExamDifferentBrowserFingerprints.toString())
             .set('ipOutsideOfRange', options.ipOutsideOfRange.toString());
 
-        // If lowerBoundIP is provided, add it to the params
+        // If subnet is provided, add it to the params
         if (options.ipSubnet) {
             params = params.set('ipSubnet', options.ipSubnet);
         }

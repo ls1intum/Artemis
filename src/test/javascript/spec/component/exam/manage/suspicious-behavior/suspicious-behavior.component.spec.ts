@@ -7,7 +7,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../../test.module';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -16,6 +16,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { FormsModule } from '@angular/forms';
 
 describe('SuspiciousBehaviorComponent', () => {
     let component: SuspiciousBehaviorComponent;
@@ -57,11 +58,11 @@ describe('SuspiciousBehaviorComponent', () => {
                 id: 1,
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
             },
             {
                 id: 2,
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
             },
@@ -70,7 +71,7 @@ describe('SuspiciousBehaviorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockRouterLinkDirective],
+            imports: [ArtemisTestModule, MockRouterLinkDirective, MockModule(FormsModule)],
             declarations: [SuspiciousBehaviorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(PlagiarismCasesOverviewComponent), MockComponent(ButtonComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -94,11 +95,25 @@ describe('SuspiciousBehaviorComponent', () => {
         expect(component.examId).toBe(2);
     });
 
-    it('should retrieve suspicious sessions onInit', () => {
+    it('should not make a request onInit', () => {
         const suspiciousSessionsServiceSpy = jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
         component.ngOnInit();
+        expect(suspiciousSessionsServiceSpy).not.toHaveBeenCalledOnce();
+    });
+
+    it('should make a request on click', () => {
+        const suspiciousSessionsServiceSpy = jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
+        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
+        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
+        component.analyzeSessions();
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledOnce();
-        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2);
+        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2, {
+            differentStudentExamsSameIPAddress: true,
+            differentStudentExamsSameBrowserFingerprint: true,
+            sameStudentExamDifferentIPAddresses: false,
+            sameStudentExamDifferentBrowserFingerprints: false,
+            ipOutsideOfRange: false,
+        });
         expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
     });
 
