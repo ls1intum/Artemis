@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +59,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final FileService fileService;
 
+    private final FilePathService filePathService;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, FileService fileService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository, FilePathService filePathService) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -71,6 +74,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileService = fileService;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -317,9 +321,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     public void validateQuizExerciseFiles(QuizExercise quizExercise, @Nonnull List<MultipartFile> providedFiles, boolean isCreate) {
         long fileCount = providedFiles.size();
         Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
-        Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileName -> {
+        Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileNameOrUri -> {
             try {
-                return !Files.exists(Path.of(fileService.actualPathForPublicPathOrThrow(fileName)));
+                return !Files.exists(filePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
             }
             catch (FilePathParsingException e) {
                 // File is not in the internal API format and hence expected to be a new file
@@ -350,7 +354,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             throw new BadRequestAlertException("The file " + question.getBackgroundFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId));
+        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId).toString());
     }
 
     /**
@@ -367,7 +371,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, questionId));
+        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, questionId).toString());
     }
 
     /**
@@ -375,13 +379,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @return the public path of the saved image
      */
-    private String saveDragAndDropImage(String basePath, MultipartFile file, @Nullable Long questionId) throws IOException {
-        File fileLocation = fileService.generateTargetFile(file.getOriginalFilename(), basePath, false);
-        String filePath = fileLocation.toPath().toString();
-        String savedFileName = fileService.saveFile(FilenameUtils.getPath(filePath), FilenameUtils.getName(filePath), null, FilenameUtils.getExtension(filePath), true, file);
-        String id = questionId == null ? Constants.FILEPATH_ID_PLACEHOLDER : questionId.toString();
-        Path path = Path.of(basePath, id, savedFileName);
-        return fileService.publicPathForActualPathOrThrow(path.toString(), questionId);
+    private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long questionId) throws IOException {
+        Path savePath = fileService.generateFilePath("dnd_image_", FilenameUtils.getExtension(file.getOriginalFilename()), basePath);
+        FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
+        return filePathService.publicPathForActualPathOrThrow(savePath, questionId);
     }
 
     /**

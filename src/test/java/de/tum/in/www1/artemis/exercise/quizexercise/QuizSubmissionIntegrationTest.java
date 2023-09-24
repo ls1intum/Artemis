@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -21,7 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.config.Constants;
@@ -239,22 +243,22 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         QuizSubmission student1Submission = new QuizSubmission();
 
-        // student 1 achieves 1/3 points for the DnD question
-        setupDragAndDropSubmission(dndQuestion, student1Submission, 2);
+        // student 1 achieves 1/4 points for the DnD question
+        setupDragAndDropSubmission(dndQuestion, student1Submission, 1);
         // and 0.5 points for the SA question
         setupShortAnswerSubmission(saQuestion, student1Submission, 1);
 
-        // in total, student 1 achieves 0.83 points -> rounded to 1 point
+        // in total, student 1 achieves 0.75 points -> rounded to 1 point
         student1Submission.submitted(true);
         student1Submission.submissionDate(null);
         submissions.add(student1Submission);
 
         QuizSubmission student2Submission = new QuizSubmission();
 
-        // student 2 achieves 1/3 points for the DnD question
-        setupDragAndDropSubmission(dndQuestion, student2Submission, 2);
+        // student 2 achieves 1/4 points for the DnD question
+        setupDragAndDropSubmission(dndQuestion, student2Submission, 1);
 
-        // in total, student 2 achieves 0.33 points -> rounded to 0 points
+        // in total, student 2 achieves 0.25 points -> rounded to 0 points
         student2Submission.submitted(true);
         student2Submission.submissionDate(null);
         submissions.add(student2Submission);
@@ -294,7 +298,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         for (var pointCounter : quizPointStatistic.getPointCounters()) {
             assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(2);
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
+            }
+            else if (pointCounter.getPoints() == 1.0) {
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 1 rated submission -> 1 point").isEqualTo(1);
             }
             else if (pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 rated submission -> 6 points").isEqualTo(1);
@@ -630,7 +637,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
-    void testQuizScoringTypes() {
+    void testQuizScoringTypes() throws IOException {
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
@@ -644,7 +651,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student4");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        quizExerciseService.reEvaluate(quizExercise, quizExercise);
+        quizExerciseService.reEvaluate(quizExercise, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
         assertThat(quizSubmissionRepository.findByQuizExerciseId(quizExercise.getId())).isPresent();
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
@@ -671,7 +678,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ScoringType.class)
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    void testQuizScoringType(ScoringType scoringType) {
+    void testQuizScoringType(ScoringType scoringType) throws IOException {
         Course course = courseUtilService.createCourse();
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
@@ -686,7 +693,18 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student3");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        quizExerciseService.reEvaluate(quizExercise, quizExercise);
+        List<MultipartFile> files = quizExercise.getQuizQuestions().stream().filter(quizQuestion -> quizQuestion instanceof DragAndDropQuestion)
+                .map(quizQuestion -> (DragAndDropQuestion) quizQuestion).flatMap(quizQuestion -> {
+                    var list = new ArrayList<MultipartFile>();
+                    if (quizQuestion.getBackgroundFilePath() != null) {
+                        list.add(new MockMultipartFile("files", quizQuestion.getBackgroundFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes()));
+                    }
+                    list.addAll(quizQuestion.getDragItems().stream().filter(dragItem -> dragItem.getPictureFilePath() != null)
+                            .map(dragItem -> new MockMultipartFile("files", dragItem.getPictureFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes())).toList());
+                    return list.stream();
+                }).toList();
+
+        quizExerciseService.reEvaluate(quizExercise, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
@@ -698,6 +716,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             case PROPORTIONAL_WITHOUT_PENALTY -> 41.7;
         };
         assertThat(result.getScore()).isEqualTo(expectedScore);
+    }
+
+    private List<MultipartFile> generateMultipartFilesFromQuizExercise(QuizExercise quizExercise) {
+        return quizExercise.getQuizQuestions().stream().filter(quizQuestion -> quizQuestion instanceof DragAndDropQuestion).map(quizQuestion -> (DragAndDropQuestion) quizQuestion)
+                .flatMap(quizQuestion -> {
+                    var list = new ArrayList<MultipartFile>();
+                    if (quizQuestion.getBackgroundFilePath() != null) {
+                        list.add(new MockMultipartFile("files", quizQuestion.getBackgroundFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes()));
+                    }
+                    list.addAll(quizQuestion.getDragItems().stream().filter(dragItem -> dragItem.getPictureFilePath() != null)
+                            .map(dragItem -> new MockMultipartFile("files", dragItem.getPictureFilePath(), MediaType.IMAGE_PNG_VALUE, "test".getBytes())).toList());
+                    return list.stream();
+                }).toList();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
