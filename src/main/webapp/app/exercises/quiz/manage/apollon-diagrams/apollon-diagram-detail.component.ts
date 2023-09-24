@@ -154,6 +154,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     async generateExercise() {
         if (!this.hasInteractive) {
+            this.alertService.error('artemisApp.apollonDiagram.create.validationError');
             return;
         }
 
