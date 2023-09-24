@@ -1,21 +1,66 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.*;
+import org.hibernate.annotations.Cache;
+
+import com.fasterxml.jackson.annotation.*;
+
+import de.tum.in.www1.artemis.domain.*;
+
 /**
- * Stores configuration for plagiarism detection.
- * This class is not a record as in the future (when cpc will be implemented) it will be extended to a DomainObject and represent a database entry.
+ * Stores configuration for manual and continuous plagiarism control.
  */
-public class PlagiarismDetectionConfig {
+@Entity
+@Table(name = "plagiarism_detection_config")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class PlagiarismDetectionConfig extends DomainObject {
 
-    private final float similarityThreshold;
+    @OneToOne(mappedBy = "plagiarismDetectionConfig", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("plagiarismDetectionConfig")
+    private Exercise exercise;
 
-    private final int minimumScore;
+    @Column(name = "continuous_plagiarism_control_enabled")
+    private boolean continuousPlagiarismControlEnabled = false;
 
-    private final int minimumSize;
+    @Column(name = "continuous_plagiarism_control_post_due_date_checks_enabled")
+    private boolean continuousPlagiarismControlPostDueDateChecksEnabled = false;
 
-    public PlagiarismDetectionConfig(float similarityThreshold, int minimumScore, int minimumSize) {
-        this.similarityThreshold = similarityThreshold;
-        this.minimumScore = minimumScore;
-        this.minimumSize = minimumSize;
+    @Column(name = "similarity_threshold")
+    private float similarityThreshold;
+
+    @Column(name = "minimum_score")
+    private int minimumScore;
+
+    @Column(name = "minimum_size")
+    private int minimumSize;
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public boolean isContinuousPlagiarismControlEnabled() {
+        return continuousPlagiarismControlEnabled;
+    }
+
+    public void setContinuousPlagiarismControlEnabled(boolean continuousPlagiarismControlEnabled) {
+        this.continuousPlagiarismControlEnabled = continuousPlagiarismControlEnabled;
+    }
+
+    public boolean isContinuousPlagiarismControlPostDueDateChecksEnabled() {
+        return continuousPlagiarismControlPostDueDateChecksEnabled;
+    }
+
+    public void setContinuousPlagiarismControlPostDueDateChecksEnabled(boolean continuousPlagiarismControlPostDueDateChecksEnabled) {
+        this.continuousPlagiarismControlPostDueDateChecksEnabled = continuousPlagiarismControlPostDueDateChecksEnabled;
     }
 
     public float getSimilarityThreshold() {
@@ -28,5 +73,32 @@ public class PlagiarismDetectionConfig {
 
     public int getMinimumSize() {
         return minimumSize;
+    }
+
+    public void setSimilarityThreshold(float similarityThreshold) {
+        this.similarityThreshold = similarityThreshold;
+    }
+
+    public void setMinimumScore(int minimumScore) {
+        this.minimumScore = minimumScore;
+    }
+
+    public void setMinimumSize(int minimumSize) {
+        this.minimumSize = minimumSize;
+    }
+
+    /**
+     * Creates PlagiarismChecksConfig with default data
+     *
+     * @return PlagiarismChecksConfig with default values
+     */
+    public static PlagiarismDetectionConfig createDefault() {
+        var config = new PlagiarismDetectionConfig();
+        config.setContinuousPlagiarismControlEnabled(false);
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
+        config.setSimilarityThreshold(0.5f);
+        config.setMinimumScore(0);
+        config.setMinimumSize(0);
+        return config;
     }
 }

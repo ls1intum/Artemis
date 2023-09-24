@@ -240,6 +240,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
+            LEFT JOIN FETCH e.plagiarismChecksConfig c
+            LEFT JOIN FETCH e.studentParticipations p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results
+            WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :time
+            	AND c.continuousPlagiarismControlEnabled = TRUE
+            ORDER BY e.dueDate ASC
+            """)
+    Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
+
+    @Query("""
+            SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
@@ -456,6 +469,17 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     default Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate() {
         return findAllExercisesWithCurrentOrUpcomingDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
+    }
+
+    /**
+     * Finds all exercises where the due date is today or in the future and continuos plagiarism control is enabled
+     * (does not return exercises belonging to test courses).
+     *
+     * @return set of exercises
+     */
+    default Set<Exercise> findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue() {
+        var yesterday = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(1);
+        return findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(yesterday);
     }
 
     /**
