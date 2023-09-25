@@ -763,20 +763,21 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
-        var studentExamId = studentExam1.getId();
 
-        var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForStudentExamId(studentExamId);
+        var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExam1.getId(), false);
 
         assertThat(capturedEvent.getNewWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(capturedEvent.getOldWorkingTime()).isEqualTo(oldWorkingTime);
     }
 
-    private ExamLiveEventDTO captureExamLiveEventForStudentExamId(Long studentExamId) {
+    private ExamLiveEventDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
         // Create an ArgumentCaptor for the WebSocket message
         ArgumentCaptor<ExamLiveEventDTO> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEventDTO.class);
 
         // Verify that the sendMessage method was called with the expected WebSocket event
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/studentExams/" + studentExamId + "/events"), websocketEventCaptor.capture());
+        var expectedTopic = examWide ? "/topic/exam-participation/exam/" + studentExamOrExamId + "/events"
+                : "/topic/exam-participation/studentExam/" + studentExamOrExamId + "/events";
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(expectedTopic), websocketEventCaptor.capture());
 
         // Get the captured WebSocket event
         return websocketEventCaptor.getValue();
@@ -797,7 +798,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
         assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
-        var event = captureExamLiveEventForStudentExamId(studentExam1.getId());
+        var event = captureExamLiveEventForId(exam1.getId(), true);
         assertThat(event).isEqualTo(result);
     }
 
