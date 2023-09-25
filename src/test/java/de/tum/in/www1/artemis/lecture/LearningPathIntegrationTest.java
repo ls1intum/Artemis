@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -20,9 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.competency.LearningPathUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -43,7 +40,7 @@ import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 
-class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "learningpathintegration";
 
@@ -276,21 +273,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = courseRepository.save(course);
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        this.setupEnrollmentRequestMocks();
-
         request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         final var user = userRepository.findOneWithLearningPathsByLogin(TEST_PREFIX + "student1337").orElseThrow();
 
         assertThat(user.getLearningPaths()).isNotNull();
         assertThat(user.getLearningPaths().size()).as("should create LearningPath for student").isEqualTo(1);
-    }
-
-    private void setupEnrollmentRequestMocks() throws JsonProcessingException, URISyntaxException {
-        jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.mockUpdateUserDetails(studentNotInCourse.getLogin(), studentNotInCourse.getEmail(), studentNotInCourse.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
     }
 
     @Test

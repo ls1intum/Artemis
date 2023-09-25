@@ -273,7 +273,7 @@ public class CompetencyProgressService {
      * Calculates a user's mastery level for competency given the progress.
      *
      * @param competencyProgress The user's progress
-     * @return the
+     * @return The mastery level
      */
     public static double getMastery(@NotNull CompetencyProgress competencyProgress) {
         // mastery as a weighted function of progress and confidence (consistent with client)
@@ -285,7 +285,7 @@ public class CompetencyProgressService {
      * Calculates a user's mastery progress scaled to the mastery threshold of the corresponding competency.
      *
      * @param competencyProgress The user's progress
-     * @return the mastery leel in percent
+     * @return The mastery level in percent
      */
     public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
         final double mastery = getMastery(competencyProgress);
