@@ -110,6 +110,7 @@
                 "audits": "Audits",
                 "apidocs": "API",
                 "database": "Datenbank",
+                "iris": "Iris Einstellungen",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
@@ -326,6 +327,7 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "competencies": "Kompetenzen",
+        "learningPath": "Lernpfad",
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",

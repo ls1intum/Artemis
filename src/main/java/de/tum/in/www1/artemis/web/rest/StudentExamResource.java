@@ -2,12 +2,14 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -23,10 +25,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
@@ -38,6 +44,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -83,7 +90,13 @@ public class StudentExamResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final WebsocketMessagingService messagingService;
+    private final WebsocketMessagingService websocketMessagingService;
+
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
+    private final ExamLiveEventsService examLiveEventsService;
+
+    private final ExamLiveEventRepository examLiveEventRepository;
 
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
@@ -98,7 +111,8 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService messagingService) {
+            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService,
+            ExamLiveEventRepository examLiveEventRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -114,7 +128,10 @@ public class StudentExamResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.messagingService = messagingService;
+        this.websocketMessagingService = websocketMessagingService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
+        this.examLiveEventsService = examLiveEventsService;
+        this.examLiveEventRepository = examLiveEventRepository;
     }
 
     /**
@@ -193,21 +210,23 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
+        var now = now();
         if (workingTime <= 0) {
             throw new BadRequestException();
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        var originalWorkingTime = studentExam.getWorkingTime();
         studentExam.setWorkingTime(workingTime);
         var savedStudentExam = studentExamRepository.save(studentExam);
 
         if (!savedStudentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
-            if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
-                instanceMessageSendService.sendExamWorkingTimeChangeDuringConduction(studentExamId);
-                studentExamService.notifyStudentAboutWorkingTimeChangeDuringConduction(savedStudentExam);
+            if (now.isAfter(exam.getVisibleDate())) {
+                instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
+                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false, userRepository.getUser());
             }
-            if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
-                    && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
+            if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+                // potentially re-schedule clustering of modeling submissions (in case Compass is active)
                 examService.scheduleModelingExercises(exam);
             }
         }
@@ -251,8 +270,8 @@ public class StudentExamResource {
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
-        if (!existingStudentExam.isTestRun() && (existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate())
-                || existingStudentExam.getIndividualEndDate() != null && !ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
+        if (!existingStudentExam.isTestRun() && (existingStudentExam.getExam().getStartDate() != null && !now().isAfter(existingStudentExam.getExam().getStartDate())
+                || existingStudentExam.getIndividualEndDate() != null && !now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
@@ -260,7 +279,7 @@ public class StudentExamResource {
 
         studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
-        messagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
+        websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
                 formatDurationFrom(start));
@@ -303,12 +322,12 @@ public class StudentExamResource {
         }
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
-        if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
+        if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
             throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
         }
 
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
-            messagingService.sendMessage("/topic/exam/" + examId + "/started", "");
+            websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
         }
 
         prepareStudentExamForConduction(request, currentUser, studentExam);
@@ -466,6 +485,37 @@ public class StudentExamResource {
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
                 studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
         return ResponseEntity.ok(studentExamWithGradeDTO);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/live-events : Get all exam live events for the student exam of the requesting student.
+     * This will include all global events for the exam and all events for the specific student exam.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return the list of exam live events
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/live-events")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ExamLiveEventDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.currentTimeMillis();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
+
+        StudentExam studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + currentUser.getId() + " does not exist"));
+
+        if (studentExam.isTestRun()) {
+            throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");
+        }
+
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
+
+        List<ExamLiveEventDTO> examLiveEvents = examLiveEventRepository.findAllByStudentExamIdOrGlobalByExamId(examId, studentExam.getId()).stream().map(ExamLiveEvent::asDTO)
+                .toList();
+
+        log.info("getExamLiveEvents done in {}ms for user {}", System.currentTimeMillis() - start, currentUser.getLogin());
+        return ResponseEntity.ok(examLiveEvents);
     }
 
     /**
@@ -631,7 +681,7 @@ public class StudentExamResource {
             if (setupTestExamNeeded) {
                 // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
                 // (initializationDate is stored with ms)
-                ZonedDateTime startedDate = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+                ZonedDateTime startedDate = now().truncatedTo(ChronoUnit.SECONDS);
 
                 // Set up new participations for the Exercises and set initialisationDate to the startedDate
                 studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
@@ -640,10 +690,24 @@ public class StudentExamResource {
 
         if (!Boolean.TRUE.equals(studentExam.isStarted()) || studentExam.getStartedDate() == null) {
             // Mark the student exam as started with now as the start date if it was not started before
-            var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : ZonedDateTime.now();
+            var startDate = studentExam.getStartedDate() != null ? studentExam.getStartedDate() : now();
             studentExam.setStartedAndStartDate(startDate);
             // send those changes in a modifying query to the database
             studentExamRepository.startStudentExam(studentExam.getId(), startDate);
+        }
+
+        var programmingExercises = studentExam.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).map(exercise -> (ProgrammingExercise) exercise)
+                .collect(Collectors.toSet());
+        if (!programmingExercises.isEmpty()) {
+            // Load all potential submission policies from the database
+            var submissionPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet()));
+            // Add the policy to their respective programming exercise
+            if (!submissionPolicies.isEmpty()) {
+                for (var programmingExercise : programmingExercises) {
+                    programmingExercise.setSubmissionPolicy(
+                            submissionPolicies.stream().filter(policy -> policy.getProgrammingExercise().getId().equals(programmingExercise.getId())).findFirst().orElse(null));
+                }
+            }
         }
 
         // Load quizzes from database, because they include lazy relationships
@@ -699,11 +763,11 @@ public class StudentExamResource {
         if (studentExam.isSubmitted()) {
             throw new BadRequestException();
         }
-        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
             throw new AccessForbiddenException("Exam", examId);
         }
 
-        ZonedDateTime submissionTime = ZonedDateTime.now();
+        ZonedDateTime submissionTime = now();
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
 
@@ -736,7 +800,7 @@ public class StudentExamResource {
         if (!studentExam.isSubmitted()) {
             throw new BadRequestException();
         }
-        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
             throw new AccessForbiddenException("Exam", examId);
         }
 

@@ -1,0 +1,59 @@
+{
+    "artemisApp": {
+        "exerciseChatbot": {
+            "popUpMessage": "Indem du fortfährst, erklärst du dich damit einverstanden, dass deine Interaktionen mit Iris von Microsoft und OpenAI verarbeitet werden, wobei die Datenübertragung außerhalb unseres Universitätsrechenzentrums erfolgt. Wenn du mit diesen Bedingungen nicht einverstanden bist, wähle bitte 'Ablehnen'. Um dies zu bestätigen und deinen Chat mit IrisBot zu beginnen, klick auf 'Akzeptieren'.",
+            "inputMessage": "Schreib eine Nachricht...",
+            "accept": "Akzeptieren",
+            "decline": "Ablehnen",
+            "title": "Iris: Deine virtuelle Programmierbegleiterin",
+            "subtext": "iris ist ein LLM-basierter Chatbot, der dich durch deine Programmierübungen führt. Sie beantwortet Fragen und gibt Hilfestellungen.",
+            "subheading1": "Datenverarbeitung & Einwilligung",
+            "text1_1": "<b>Datenverarbeitung:</b> Deine Interaktionen mit Iris werden von Microsoft und OpenAI verarbeitet. Das bedeutet, dass die Informationen, die du mit Iris teilst, das Rechenzentrum unserer Universität verlassen.",
+            "text1_2": "<b>Einwilligung:</b> Um Iris benutzen zu können, musst du die Einwilligungserklärung akzeptieren, die beim ersten Öffnen von Iris erscheint. Damit stimmst du zu, dass Microsoft und OpenAI deine Daten wie beschrieben verarbeiten dürfen.",
+            "subheading2": "Die wichtigsten Funktionen von Iris",
+            "text2_1": "<b>Programmierkenntnisse:</b> Iris kann deine Fragen zu Programmiersprachen, Syntax, Algorithmen, Datenstrukturen oder anderen spezifischen Themen beantworten. Sie kann auch Probleme in deinem Code erkennen und dir Tipps zur Verbesserung geben.",
+            "text2_2": "<b>Tutoring-Fähigkeiten:</b> Iris kann dir komplexe Programmierkonzepte erklären und anschauliche Beispiele geben.",
+            "text2_3": "<b>Kontextverständnis:</b> Im Gegensatz zu anderen LLM-basierten Chatbots kennt Iris den Programmcode, die Aufgabenstellung, die Buildresultate und die Logdaten. Das bedeutet, dass sie dir die Aufgabenstellung genauer erklären und dir Feedback zu deinem Code oder möglichen Buildfehlern geben kann.",
+            "text2_4": "<b>Feedback:</b> Dein Feedback ist wichtig, um das Verhalten von Iris zu verbessern. Indem du bestimmte Antworten oder ganze Konversationen beurteilst, trägst du dazu bei, dass sich Leistung mit der Zeit zu verbessert.",
+            "text2_5": "<b>Kommunikationsfähigkeiten:</b> Iris speichert deinen Chatverlauf, so dass du d eine Interaktion fortsetzen und auf frühere Nachrichten zurückgreifen kannst, wenn du Iris erneut öffnest.",
+            "subheading3": "Grenzen & Einschränkungen",
+            "text3_1": "<b>Keine Lösung:</b> Iris begleitet dich beim Lösen der Aufgabe und hilft dir, sie besser zu verstehen. Dabei gibt sie dir keine Lösungen, sondern beantwortet konkrete Fragen und gibt kleine Hinweise.",
+            "text3_2": "<b>Keine Diskussionen außerhalb des Themas:</b> Iris' Aufgabe ist es, dir bei deinen Programmierübungen zu helfen. Daher beantwortet sie keine Fragen, die nichts mit dem Thema 'Programmieren' oder mit deiner aktuellen Aufgabe zu tun haben..",
+            "text3_3": "<b>Keine organisatorischen Fragen:</b> Iris ist nicht in der Lage dazu, deine organisatorischen Fragen zu beantworten. Mehr Informationen findest du oft in den ersten Slides oder auf der (Moodle-)Seite des Kurses.",
+            "subheading4": "Funktionen des Chat-Widgets",
+            "text4_1": "<b>Schließen des Widgets:</b> Du kannst das Widget schließen, indem du auf den 'X'-Button (in der oberen rechten Ecke des Widgets) oder auf den 'Chatbot'-Button (unterhalb des Widgets) klickst.",
+            "text4_2": "<b>Verschieben des Widgets:</b> Du kannst das Widget verschieben. Klicke und halte das Widget und ziehe es an die gewünschte Position.",
+            "text4_3": "<b>Vergrößern und Verkleinern des Widgets:</b> Klicke und ziehe die Ränder des Widgets in verschiedene Richtungen, um die Größe zu ändern.",
+            "text4_4": "<b>Vollbildmodus:</b> Du kannst das Widget im Vollbildmodus öffnen, indem du auf den Vollbildmodus-Button (in der oberen rechten Ecke des Widgets) klickst.",
+            "text4_5": "<b>Chatverlauf löschen:</b> Du kannst deinen Chatverlauf löschen, indem du auf den Mülleimer klickst (oben rechts im Widget). Dadurch werden alle vorherigen Nachrichten gelöscht und du kannst einen neuen Chat starten.",
+            "supportText": "(Wenn du Probleme mit dem Iris-Widget oder bei der Interaktion mit Iris hast, erstelle bitte einen Issue auf GitHub https://github.com/ls1intum/Artemis)",
+            "unreadMessages": "Ungelesene Nachrichten",
+            "buttonTooltip": "Beginne mit Iris zu chatten!",
+            "clearSession": {
+                "title": "Chatverlauf löschen",
+                "text": "Bist du sicher, dass du den Chatverlauf löschen möchtest?",
+                "submit": "Bestätigen"
+            },
+            "errors": {
+                "invalidSessionState": "Der Zustand der Iris Session ist ungültig. Es ist nicht möglich, in diesem Zustand Nachrichten zu senden.",
+                "historyLoadFailed": "Der Chatverlauf konnte nicht abgerufen werden.",
+                "sessionLoadFailed": "Die Sitzungsdetails konnten nicht abrufen werden.",
+                "sessionCreationFailed": "Die Sitzung konnte nicht erstellt werden.",
+                "sendMessageFailed": "Beim Senden der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
+                "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
+                "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
+                "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut.",
+                "emptyMessage": "Du kannst nicht leere Nachrichten abschicken.",
+                "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
+                "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
+                "invalidTemplate": "Die Vorlage ist ungültig. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
+                "noModelAvailable": "Das Modell {{ model }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}",
+                "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein.",
+                "irisNotAvailable": "Iris antwortet nicht. Bitte versuche es später!"
+            },
+            "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren."
+        }
+    }
+}

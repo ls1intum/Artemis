@@ -499,7 +499,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             boolean isAssessmentOver = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(this);
             boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
-            boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isTestRun();
+            boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isPracticeMode();
             boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
             // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
             boolean programmingAfterAssessmentOrAutomatic = isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
@@ -984,6 +984,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public abstract ExerciseType getExerciseType();
+
+    public abstract String getType();
 
     /**
      * Disconnects child entities from the exercise.

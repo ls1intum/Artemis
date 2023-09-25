@@ -22,14 +22,14 @@ import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise
 import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
-    styles: ['span { display: inline-block; line-height: 1.25 }'],
+    styleUrls: ['./result.component.scss'],
 })
 
 /**
@@ -191,7 +191,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
-            !(this.participation as ProgrammingExerciseStudentParticipation).testRun &&
+            !isPracticeMode(this.participation) &&
             isResultPreliminary(this.result!, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {

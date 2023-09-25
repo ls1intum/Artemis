@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,6 +17,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -37,11 +41,13 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
@@ -61,7 +67,7 @@ public class ExamService {
     private static final int EXAM_ACTIVE_DAYS = 7;
 
     @Value("${artemis.course-archives-path}")
-    private String examArchivesDirPath;
+    private Path examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -105,7 +111,11 @@ public class ExamService {
 
     private final BonusService bonusService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final SubmittedAnswerRepository submittedAnswerRepository;
+
+    private final AuditEventRepository auditEventRepository;
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
@@ -119,8 +129,8 @@ public class ExamService {
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
             GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
-            BonusService bonusService, SubmittedAnswerRepository submittedAnswerRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository) {
+            BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -141,7 +151,9 @@ public class ExamService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.bonusService = bonusService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.submittedAnswerRepository = submittedAnswerRepository;
+        this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
         this.defaultObjectMapper = new ObjectMapper();
@@ -451,13 +463,12 @@ public class ExamService {
         // 1st: fetch participations, submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
         var participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
-        // fetch all submitted answers for quizzes
+        // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
-        // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
-        // available
+        // 3rd: connect & filter the exercises and student participations including the latest submission and results where necessary, connect all relevant associations
         for (Exercise exercise : studentExam.getExercises()) {
             // exercises can be null if multiple student exams exist for the same student/exam combination
             if (exercise != null) {
@@ -501,6 +512,26 @@ public class ExamService {
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
+
+            // we might need this information for programming exercises with submission policy
+            participation.setSubmissionCount(participation.getSubmissions().size());
+
+            // set the locked property of the participation properly
+            if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                    && exercise instanceof ProgrammingExercise programmingExercise) {
+                var submissionPolicy = programmingExercise.getSubmissionPolicy();
+                // in the unlikely case the student exam was already submitted, set all participations to locked
+                if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
+                    programmingExerciseStudentParticipation.setLocked(true);
+                }
+                else if (submissionPolicy != null && Boolean.TRUE.equals(submissionPolicy.isActive()) && submissionPolicy instanceof LockRepositoryPolicy) {
+                    programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
+                }
+                else {
+                    programmingExerciseStudentParticipation.setLocked(false);
+                }
+            }
+
             // only include the latest submission
             Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
@@ -1167,21 +1198,22 @@ public class ExamService {
      */
     @Async
     public void archiveExam(Exam exam) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
-        // Archiving a course is only possible after the exam is over
+        // Archiving an exam is only possible after the exam is over
         if (ZonedDateTime.now().isBefore(exam.getEndDate())) {
             return;
         }
 
         // This contains possible errors encountered during the archive process
-        ArrayList<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
 
         try {
             // Create exam archives directory if it doesn't exist
-            Files.createDirectories(Path.of(examArchivesDirPath));
+            Files.createDirectories(examArchivesDirPath);
             log.info("Created the exam archives directory at {} because it didn't exist.", examArchivesDirPath);
 
             // Export the exam to the archives directory.
@@ -1204,6 +1236,7 @@ public class ExamService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
+        log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
@@ -1282,6 +1315,31 @@ public class ExamService {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
         return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
                 ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
+    }
+
+    /**
+     * Cleans up an exam by cleaning up all exercises from that course. This deletes all student
+     * repositories and build plans. Note that an exam has to be archived first before being cleaned up.
+     *
+     * @param examId    The id of the exam to clean up
+     * @param principal the user that wants to cleanup the exam
+     */
+    public void cleanupExam(Long examId, Principal principal) {
+        final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_EXAM, "exam=" + examId);
+        auditEventRepository.add(auditEvent);
+
+        // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
+        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId).getExerciseGroups().stream().filter(Objects::nonNull)
+                .map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+
+        examExercises.forEach(exercise -> {
+            if (exercise instanceof ProgrammingExercise) {
+                exerciseDeletionService.cleanup(exercise.getId(), true);
+            }
+        });
+
+        log.info("The exam {} has been cleaned up!", examId);
     }
 
     /**

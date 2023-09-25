@@ -1,10 +1,15 @@
 package de.tum.in.www1.artemis.lecture;
 
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -15,6 +20,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.post.ConversationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.service.FilePathService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.
@@ -157,7 +163,14 @@ public class LectureUtilService {
         for (int i = 1; i <= numberOfSlides; i++) {
             Slide slide = new Slide();
             slide.setSlideNumber(i);
-            slide.setSlideImagePath("path/to/slide" + i + ".png");
+            String testFileName = "slide" + i + ".png";
+            try {
+                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+            }
+            catch (IOException ex) {
+                fail("Failed while copying test attachment files", ex);
+            }
+            slide.setSlideImagePath("/api/files/temp/" + testFileName);
             slide.setAttachmentUnit(attachmentUnit);
             slideRepository.save(slide);
         }
@@ -166,6 +179,7 @@ public class LectureUtilService {
 
     public TextUnit createTextUnit() {
         TextUnit textUnit = new TextUnit();
+        textUnit.setName("Name Lorem Ipsum");
         textUnit.setContent("Lorem Ipsum");
         return textUnitRepository.save(textUnit);
     }

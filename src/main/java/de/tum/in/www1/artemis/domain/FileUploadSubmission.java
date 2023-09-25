@@ -5,11 +5,8 @@ import java.util.*;
 
 import javax.persistence.*;
 
-import org.apache.commons.lang3.math.NumberUtils;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -21,13 +18,13 @@ import de.tum.in.www1.artemis.service.FileService;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FileUploadSubmission extends Submission {
 
-    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
     public String getSubmissionExerciseType() {
         return "file-upload";
     }
 
     @Transient
-    private transient FileService fileService = new FileService();
+    private final transient FileService fileService = new FileService();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "file_submission_paths", joinColumns = @JoinColumn(name = "submission_id"))
@@ -50,14 +47,9 @@ public class FileUploadSubmission extends Submission {
      * @param filePath the path to the file
      */
     public void onDeleteSingleFile(String filePath) {
-        // delete old file if necessary
-        final var splittedPath = filePath.split("/");
-        final var shouldBeExerciseId = splittedPath.length >= 5 ? splittedPath[4] : null;
-        if (!NumberUtils.isCreatable(shouldBeExerciseId)) {
-            throw new FilePathParsingException("Unexpected String in upload file path. Should contain the exercise ID: " + shouldBeExerciseId);
+        if (filePath != null) {
+            fileService.schedulePathForDeletion(Path.of(filePath), 0);
         }
-        final var exerciseId = Long.parseLong(shouldBeExerciseId);
-        fileService.manageFilesForUpdatedFilePath(filePath, null, FileUploadSubmission.buildFilePath(exerciseId, getId()), getId(), true);
     }
 
     /**
@@ -78,8 +70,8 @@ public class FileUploadSubmission extends Submission {
      * @param submissionId the id of the submission
      * @return path where submission for file upload exercise is stored
      */
-    public static String buildFilePath(Long exerciseId, Long submissionId) {
-        return Path.of(FilePathService.getFileUploadExercisesFilePath(), String.valueOf(exerciseId), String.valueOf(submissionId)).toString();
+    public static Path buildFilePath(Long exerciseId, Long submissionId) {
+        return FilePathService.getFileUploadExercisesFilePath().resolve(exerciseId.toString()).resolve(submissionId.toString());
     }
 
     public void setFilePath(String filePath) {

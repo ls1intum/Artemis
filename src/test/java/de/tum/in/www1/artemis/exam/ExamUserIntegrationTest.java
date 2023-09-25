@@ -7,10 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.io.FileInputStream;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -19,10 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -39,7 +33,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
@@ -122,6 +118,9 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @AfterEach
     void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
+        for (LocalRepository studentRepo : studentRepos) {
+            studentRepo.resetLocalRepo();
+        }
     }
 
     @Test

@@ -7,6 +7,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -54,6 +55,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -71,7 +73,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public class CourseService {
 
     @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
+    private Path courseArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
@@ -149,6 +151,8 @@ public class CourseService {
 
     private final ConversationRepository conversationRepository;
 
+    private final LearningPathService learningPathService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -159,7 +163,7 @@ public class CourseService {
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository) {
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -197,6 +201,7 @@ public class CourseService {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
+        this.learningPathService = learningPathService;
     }
 
     /**
@@ -470,6 +475,9 @@ public class CourseService {
     public void enrollUserForCourseOrThrow(User user, Course course) {
         authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
+        if (course.getLearningPathsEnabled()) {
+            learningPathService.generateLearningPathForUser(course, user);
+        }
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully enrolled in course {}", user.getLogin(), course.getTitle());
@@ -489,6 +497,9 @@ public class CourseService {
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
         var course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getLearningPathsEnabled()) {
+            course = courseRepository.findWithEagerCompetenciesByIdElseThrow(course.getId());
+        }
         String courseGroupName = course.defineCourseGroupName(courseGroup);
         Role courseGroupRole = Role.fromString(courseGroup);
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
@@ -496,6 +507,9 @@ public class CourseService {
             var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), courseGroupName, courseGroupRole);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
+            }
+            else if (courseGroupRole == Role.STUDENT && course.getLearningPathsEnabled()) {
+                learningPathService.generateLearningPathForUser(course, optionalStudent.get());
             }
         }
 
@@ -726,6 +740,7 @@ public class CourseService {
      */
     @Async
     public void archiveCourse(Course course) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
         // Archiving a course is only possible after the course is over
@@ -734,13 +749,13 @@ public class CourseService {
         }
 
         // This contains possible errors encountered during the archive process
-        ArrayList<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
 
         try {
             // Create course archives directory if it doesn't exist
-            Files.createDirectories(Path.of(courseArchivesDirPath));
+            Files.createDirectories(courseArchivesDirPath);
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
             // Export the course to the archives' directory.
@@ -763,25 +778,29 @@ public class CourseService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
+        log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
      * Cleans up a course by cleaning up all exercises from that course. This deletes all student
-     * submissions. Note that a course has to be archived first before being cleaned up.
+     * repositories and build plans. Note that a course has to be archived first before being cleaned up.
      *
-     * @param courseId The id of the course to clean up
+     * @param courseId  The id of the course to clean up
+     * @param principal the user that wants to cleanup the course
      */
-    public void cleanupCourse(Long courseId) {
+    public void cleanupCourse(Long courseId, Principal principal) {
+        final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_COURSE, "course=" + courseId);
+        auditEventRepository.add(auditEvent);
         // Get the course with all exercises
-        var course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
+        var course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;
         }
 
         // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
-        // hibernate sometimes adds nulls to in the list of exercise groups to keep the order
-        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().map(Exam::getExerciseGroups).flatMap(Collection::stream)
+        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().flatMap(e -> e.getExerciseGroups().stream())
                 .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
@@ -789,8 +808,6 @@ public class CourseService {
             if (exercise instanceof ProgrammingExercise) {
                 exerciseDeletionService.cleanup(exercise.getId(), true);
             }
-
-            // TODO: extend exerciseDeletionService.cleanup to clean up all exercise types
         });
 
         log.info("The course {} has been cleaned up!", courseId);

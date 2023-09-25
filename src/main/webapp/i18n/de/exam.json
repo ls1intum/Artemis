@@ -66,7 +66,8 @@
                 }
             },
             "examSummary": {
-                "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
+                "examResults": "Prüfungsergebnisse",
+                "generalInformation": "Allgemeine Informationen",
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
@@ -77,19 +78,19 @@
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {
                     "exercise": "Aufgabe",
-                    "overview": "Übersicht",
+                    "overview": "Ergebnis-Übersicht",
                     "total": "Gesamt",
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Erreichbare Punkte",
+                    "achievedPercentage": "Erreichte Punkte in %",
                     "maxBonus": "Erreichbare Bonuspunkte",
                     "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten (einschließlich Bonuspunkten) erreicht.",
-                    "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten.",
+                    "youAchieved": "Du hast {{achievedPoints}} von {{normalPoints}} möglichen Punkten erreicht.",
                     "youAchievedFromBonus": {
                         "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}.",
                         "GRADES_DISCRETE": "Du hast einen Notenbonus von {{achievedBonus}} Stufe(n) gemäß der Notenskala erhalten, was {{gradePointDifference}} von {{bonusFromTitle}} entspricht.",
                         "POINTS": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}."
                     },
-                    "youAchievedPointsAfterBonus": "Deine endgültigen Punkte sind {{finalPoints}} nach dem Bonus.",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
                 },
                 "grade": "Note",
@@ -108,6 +109,7 @@
             "date": "Datum",
             "time": "Zeit",
             "workingTime": "Bearbeitungszeit",
+            "examinedStudent": "Prüfungsteilnehmer:in",
             "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausurenübersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
@@ -117,8 +119,10 @@
             "startDate": "Beginn",
             "endDate": "Ende",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
+            "examStudentReviewTimespan": "Zeitraum der Klausureinsicht",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "studentReviewEnabled": "Klausureinsicht geöffnet",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl registrierter Studierender",
@@ -133,6 +137,10 @@
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
             "startExamToolTip": "Button wird 5 Minuten vor der Klausur aktiviert.",
+            "cleanup": {
+                "title": "Aufräumen",
+                "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories in der Prüfung gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+            },
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
@@ -152,6 +160,28 @@
             "problemStatementUpdate": {
                 "showDiff": "Zeige Unterschiede",
                 "showNew": "Zeige nur neue Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolut",
+                "relative": "Änderung relativ zur normalen Bearbeitungszeit"
+            },
+            "events": {
+                "button": "Benachrichtigungen",
+                "type": {
+                    "examWideAnnouncement": "Klausurweite Ankündigung",
+                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert"
+                },
+                "from": "von",
+                "acknowledge": "Bestätigen",
+                "acknowledgeAll": "Alle bestätigen",
+                "messages": {
+                    "workingTimeUpdate": {
+                        "titleEveryone": "Die Bearbeitungszeit der Klausur wurde geändert.",
+                        "titlePersonal": "Deine persönliche Bearbeitungszeit dieser Klausur wurde geändert.",
+                        "old": "Vorherige Bearbeitungszeit",
+                        "new": "Neue Bearbeitungszeit"
+                    }
+                }
             }
         },
         "examScores": {
@@ -266,8 +296,6 @@
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
-            "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
-            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}.",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
@@ -287,7 +315,9 @@
             "browserFingerprintHash": "Browser-Fingerabdruck",
             "instanceId": "Browserinstanz-ID",
             "ipAddress": "IP-Adresse",
-            "createdDate": "Erstellungsdatum"
+            "createdDate": "Erstellungsdatum",
+            "studentExamId": "Klausur-ID",
+            "userLogin": "Benutzername"
         },
         "studentExams": {
             "title": "Klausuren",
@@ -566,7 +596,10 @@
                     "examReview": "Planung der Klausureinsicht ",
                     "resolveComplaints": "Auflösung aller Beschwerden",
                     "testRun": "Abhalten eines Testdurchlaufs",
-                    "exportResults": "Exportieren der Klausurergebnisse"
+                    "exportResults": "Exportieren der Klausurergebnisse",
+                    "editWorkingTime": "Bearbeiten der Prüfungsdauer",
+                    "createAnnouncement": "Erstellen einer Ankündigung",
+                    "suspiciousBehavior": "Überprüfung von verdächtigem Verhalten"
                 },
                 "descriptionItem": {
                     "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
@@ -580,7 +613,10 @@
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
-                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden."
+                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
+                    "editWorkingTime": "Bis 5 Minuten vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
+                    "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
@@ -613,6 +649,47 @@
                     "numberParticipants": "Teilnehmende",
                     "variants": "Varianten"
                 }
+            },
+            "editWorkingTime": {
+                "title": "Prüfungszeit bearbeiten",
+                "label": "Änderung der Prüfungszeit",
+                "duration": "Die neue Dauer der Prüfung beträgt <strong>{{ duration }}</strong>.",
+                "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+            },
+            "announcementCreate": {
+                "button": "Ankündigung erstellen",
+                "title": "Klausurweite Ankündigung erstellen",
+                "task": "Gib deine Ankündigung hier ein. Du kannst Markdown verwenden.",
+                "preview": "Vorschau",
+                "sendButton": "Ankündigung senden",
+                "sending": "Sende Ankündigung...",
+                "sent": "Ankündigung gesendet!"
+            },
+            "suspiciousBehavior": {
+                "title": "Verdächtiges Verhalten",
+                "examSessionDescription": "Bei jedem Eintritt in eine Klausur wird für den Studierenden eine Sitzung erstellt. Diese Sitzung ist die Kombination aus IP-Adresse, Sitzungsschlüssel, User Agent, Browser-Fingerabdruck, Browserinstanz-ID und einem dazugehörigen Zeitstempel.",
+                "suspiciousSessionDescription": "Eine Sitzung wird als verdächtig eingestuft, wenn sie eine der folgenden Kriterien erfüllt:",
+                "suspiciousSessionCriterionIpAddress": "Es gibt mehrere Sitzungen mit derselben IP-Adresse, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterionBrowserFingerprint": "Es gibt mehrere Sitzungen mit demselben Browser-Fingerabdruck, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessions": {
+                    "title": "Verdächtige Sitzungen",
+                    "view": "Verdächtige Sitzungen anzeigen",
+                    "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Fälle.",
+                    "reasons": "Verdächtig aufgrund von:",
+                    "case": "Fall",
+                    "sameIpAddress": "Gleiche IP-Adresse",
+                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck"
+                }
+            },
+            "plagiarismCasesOverview": {
+                "title": "Plagiatsfälle Übersicht",
+                "exerciseName": "Aufgabe",
+                "numberOfResults": "Anzahl potentieller Plagiate",
+                "numberOfCases": "Anzahl Plagiatsfälle",
+                "actions": "Aktionen",
+                "viewResultsOrRunDetection": "Ergebnisse anzeigen oder Plagiatsprüfung starten",
+                "viewCases": "Fälle anzeigen"
             }
         },
         "studentExamDetail": {

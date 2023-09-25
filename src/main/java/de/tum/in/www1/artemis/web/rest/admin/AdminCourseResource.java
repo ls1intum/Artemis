@@ -124,7 +124,7 @@ public class AdminCourseResource {
         courseService.createOrValidateGroups(course);
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false);
+            String pathString = fileService.handleSaveFile(file, false, false).toString();
             course.setCourseIcon(pathString);
         }
 
@@ -169,7 +169,6 @@ public class AdminCourseResource {
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
-        channelService.registerUsersToChannelAsynchronously(true, course, createdChannel);
+        channelService.createChannel(course, channelToCreate, Optional.empty());
     }
 }

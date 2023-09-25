@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-check-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
@@ -20,6 +19,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -30,7 +31,6 @@ export class ExamManagementService {
     public adminResourceUrl = 'api/admin/courses';
 
     constructor(
-        private router: Router,
         private http: HttpClient,
         private accountService: AccountService,
         private entityTitleService: EntityTitleService,
@@ -58,6 +58,28 @@ export class ExamManagementService {
         return this.http
             .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    }
+
+    /**
+     * Update the working time of an exam on the server using a PATCH request.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param workingTimeChange The amount of time in seconds by which the working time should be increased or decreased. It can be positive or negative, but must not be 0.
+     */
+    updateWorkingTime(courseId: number, examId: number, workingTimeChange: number): Observable<EntityResponseType> {
+        return this.http
+            .patch(`${this.resourceUrl}/${courseId}/exams/${examId}/working-time`, workingTimeChange, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    }
+
+    createAnnouncement(courseId: number, examId: number, content: string): Observable<ExamWideAnnouncementEvent> {
+        return this.http.post<ExamWideAnnouncementEvent>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`, content, { observe: 'response' }).pipe(
+            map((res: HttpResponse<ExamWideAnnouncementEvent>) => {
+                const event = res.body!;
+                event.createdDate = convertDateFromServer(event.createdDate)!;
+                return event;
+            }),
+        );
     }
 
     /**
@@ -467,11 +489,9 @@ export class ExamManagementService {
      * @param courseId
      * @param examId The id of the exam
      */
-    downloadExamArchive(courseId: number, examId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`, {
-            observe: 'response',
-            responseType: 'blob',
-        });
+    downloadExamArchive(courseId: number, examId: number): void {
+        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`;
+        window.open(url, '_blank');
     }
 
     /**
@@ -483,7 +503,15 @@ export class ExamManagementService {
         return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 
+    cleanupExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/cleanup`, { observe: 'response' });
+    }
+
     private sendTitlesToEntityTitleService(exam: Exam | undefined | null) {
         this.entityTitleService.setTitle(EntityType.EXAM, [exam?.id], exam?.title);
+    }
+
+    getExercisesWithPotentialPlagiarismForExam(courseId: number, examId: number): Observable<Exercise[]> {
+        return this.http.get<Exercise[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercises-with-potential-plagiarism`);
     }
 }

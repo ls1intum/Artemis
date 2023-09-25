@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.exercise.fileuploadexercise;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -17,7 +18,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -25,17 +26,17 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileuploadsubmission";
 
@@ -59,6 +60,9 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private FilePathService filePathService;
 
     private FileUploadExercise releasedFileUploadExercise;
 
@@ -157,27 +161,27 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         for (int i = 0; i < filenames.length; i++) {
             String filename = filenames[i];
             String expectedFilePath = filePaths.get(i);
-            String actualFilePath;
+            Path actualFilePath;
 
             if (differentFilePath) {
-                actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+                actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(filename);
             }
             else {
                 if (filename.length() < 5) {
-                    actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
+                    actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(Path.of("file" + filename));
                 }
                 else if (filename.contains("\\")) {
-                    actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+                    actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve("file.png");
                 }
                 else {
-                    actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+                    actualFilePath = FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()).resolve(filename);
                 }
             }
 
-            String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
+            URI publicFilePath = filePathService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
             assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-            assertThat(expectedFilePath).isEqualTo(publicFilePath);
-            var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
+            assertThat(expectedFilePath).isEqualTo(publicFilePath.toString());
+            var fileBytes = Files.readAllBytes(actualFilePath);
             assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
             checkDetailsHidden(returnedSubmission, true);
         }
@@ -313,7 +317,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                 FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("in-time submission was found").isEqualToIgnoringGivenFields(submission, "results", "submissionDate", "fileService");
+        assertThat(storedSubmission).as("in-time submission was found").isEqualToIgnoringGivenFields(submission, "results", "submissionDate", "fileService", "filePathService",
+                "entityFileService");
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isEqualToIgnoringNanos(submission.getSubmissionDate());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
@@ -334,7 +339,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                 FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService", "filePathService",
+                "entityFileService");
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
@@ -355,7 +361,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
                 HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "results", "submissionDate", "fileService");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "results", "submissionDate", "fileService", "filePathService",
+                "entityFileService");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         checkDetailsHidden(storedSubmission, false);
     }
@@ -706,13 +713,5 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testOnDeleteSubmissionWithException() {
-        submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises");
-        fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }
 }

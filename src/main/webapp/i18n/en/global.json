@@ -110,6 +110,7 @@
                 "privacyStatement": "Privacy Statement",
                 "imprint": "Imprint",
                 "database": "Database",
+                "iris": "Iris Settings",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Language",
@@ -326,6 +327,7 @@
         "course": "Course details",
         "lectures": "Lectures",
         "competencies": "Competencies",
+        "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
         "exercise": "Exercise details",
         "statistics": "Course statistics",

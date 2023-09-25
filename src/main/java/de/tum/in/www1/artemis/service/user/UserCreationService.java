@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -162,11 +161,9 @@ public class UserCreationService {
         else {
             user.setLangKey(userDTO.getLangKey());
         }
-        if (userDTO.getAuthorities() != null) {
-            Set<Authority> authorities = userDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
-                    .collect(Collectors.toSet());
-            user.setAuthorities(authorities);
-        }
+
+        setUserAuthorities(userDTO, user);
+
         String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
         String passwordHash = passwordService.hashPassword(password);
         user.setPassword(passwordHash);
@@ -195,6 +192,24 @@ public class UserCreationService {
 
         log.debug("Created Information for User: {}", user);
         return user;
+    }
+
+    /**
+     * Updates the authorities for the user according to the ones set in the DTO.
+     *
+     * @param userDTO The source for the authorities that should be set.
+     * @param user    The target user where the authorities are set.
+     */
+    private void setUserAuthorities(final ManagedUserVM userDTO, final User user) {
+        // A user needs to have at least some role, otherwise an authentication token can never be constructed
+        if (userDTO.getAuthorities() == null || userDTO.getAuthorities().isEmpty()) {
+            userDTO.setAuthorities(Set.of(STUDENT.getAuthority()));
+        }
+
+        // clear and add instead of new Set for Hibernate change tracking
+        final Set<Authority> authorities = user.getAuthorities();
+        authorities.clear();
+        userDTO.getAuthorities().stream().map(authorityRepository::findById).flatMap(Optional::stream).forEach(authorities::add);
     }
 
     /**
@@ -244,9 +259,8 @@ public class UserCreationService {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());
-        Set<Authority> managedAuthorities = user.getAuthorities();
-        managedAuthorities.clear();
-        updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
+        setUserAuthorities(updatedUserDTO, user);
+
         log.debug("Changed Information for User: {}", user);
 
         return saveUser(user);

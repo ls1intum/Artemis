@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -15,21 +14,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
-class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
@@ -47,9 +43,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     ChannelRepository channelRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -112,7 +105,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private void addAttachmentToLecture() {
         this.attachmentDirectOfLecture = LectureFactory.generateAttachment(null);
-        this.attachmentDirectOfLecture.setLink("files/temp/example2.txt");
+        this.attachmentDirectOfLecture.setLink("/api/files/temp/example2.txt");
         this.attachmentDirectOfLecture.setLecture(this.lecture1);
         this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
         this.lecture1.addAttachments(this.attachmentDirectOfLecture);
@@ -172,13 +165,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(returnedLecture.getEndDate()).isEqualTo(lecture.getEndDate());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("lecture-loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
-
-        // Check that the conversation participants are added correctly to the lecture channel
-        await().until(() -> {
-            SecurityUtils.setAuthorizationObject();
-            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-            return conversationParticipants.size() == 4; // 2 tutors, 1 instructor, 1 student (see @BeforeEach)
-        });
     }
 
     @Test
@@ -482,12 +468,5 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("lecture-" + lecture.getTitle().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
-
-        // Check that the conversation participants are added correctly to the lecture channel
-        await().until(() -> {
-            SecurityUtils.setAuthorizationObject();
-            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-            return conversationParticipants.size() == 4; // 2 tutors, 1 instructor, 1 student (see @BeforeEach)
-        });
     }
 }

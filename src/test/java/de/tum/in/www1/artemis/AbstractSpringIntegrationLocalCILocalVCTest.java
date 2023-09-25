@@ -6,12 +6,14 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,6 +58,8 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
+@Execution(ExecutionMode.CONCURRENT)
+@ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling", "ldap-only" })
@@ -174,7 +178,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy) {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
         // Not implemented for local VC and local CI
     }
 

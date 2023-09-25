@@ -81,6 +81,12 @@
                         "label": "Recreate code hints",
                         "tooltip": "Recreate code hints from the existing Solution Code Snippets. Existing hints will be overwritten.",
                         "success": "Code hints have been recreated successfully. The hints will be visible immediately to participating students."
+                    },
+                    "iris": {
+                        "generateDescription": {
+                            "label": "Generate description & content",
+                            "tooltip": "Generates a short and long description and for the code hint based on the Solution Code Snippets using Iris."
+                        }
                     }
                 }
             }

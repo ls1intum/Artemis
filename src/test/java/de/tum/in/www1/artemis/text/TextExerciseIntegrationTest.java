@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.text;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -20,12 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
@@ -40,10 +38,8 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
@@ -52,7 +48,7 @@ import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
-class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textexerciseintegration";
 
@@ -91,9 +87,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ChannelRepository channelRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -222,13 +215,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
         assertThat(channel).as("channel was created").isNotNull();
         assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("exercise-new-text-exercise");
-
-        // Check that the conversation participants are added correctly to the exercise channel
-        await().until(() -> {
-            SecurityUtils.setAuthorizationObject();
-            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-            return conversationParticipants.size() == 4; // 2 students, 1 tutor, 1 instructor (see @BeforeEach)
-        });
     }
 
     @Test
@@ -584,13 +570,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
-
-        // Check that the conversation participants are added correctly to the exercise channel
-        await().until(() -> {
-            SecurityUtils.setAuthorizationObject();
-            Set<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
-            return conversationParticipants.size() == 4; // 2 students, 1 tutor, 1 instructor (see @BeforeEach)
-        });
     }
 
     @Test

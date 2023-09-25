@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -170,6 +173,23 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
     }
 
+    private void addBitbucketMock(String requestBody) throws URISyntaxException {
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+
+        String username = "prefix_";
+        Matcher matcher = Pattern.compile("lis_person_sourcedid=([^&#]+)").matcher(requestBody);
+        if (matcher.find() && !matcher.group(1).isEmpty()) {
+            username += matcher.group(1);
+        }
+        else {
+            matcher = Pattern.compile("ext_user_username=([^&#]+)").matcher(requestBody);
+            if (matcher.find()) {
+                username += matcher.group(1);
+            }
+        }
+        bitbucketRequestMockProvider.mockUserExists(username);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
@@ -184,12 +204,13 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithoutExistingEmail(String requestBody) throws Exception {
         String email = generateEmail("launchAsAnonymousUser_WithoutExistingEmail");
         requestBody = replaceEmail(requestBody, email);
         addJiraMocks(email, null);
+        addBitbucketMock(requestBody);
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -218,7 +239,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { EDX_REQUEST_BODY }) // To be readded when LtiUserId is removed, MOODLE_REQUEST_BODY })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_RequireExistingUser(String requestBody) throws Exception {
         String email = generateEmail("launchAsAnonymousUser_RequireExistingUser");
