@@ -61,8 +61,4 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     updateEventsToDisplay() {
         this.eventsToDisplay = this.unacknowledgedEvents.length > 0 ? this.unacknowledgedEvents : this.events;
     }
-
-    isLatestEventOfItsType(event: ExamLiveEvent): boolean {
-        return this.events.filter((e) => e.eventType === event.eventType)[0]?.id === event.id;
-    }
 }
