@@ -75,6 +75,7 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
+import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
@@ -215,6 +216,9 @@ public class CourseTestService {
 
     @Autowired
     private ParticipantScoreScheduleService participantScoreScheduleService;
+
+    @Autowired
+    private IrisSettingsService irisSettingsService;
 
     private static final int numberOfStudents = 8;
 
@@ -604,6 +608,23 @@ public class CourseTestService {
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
         assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(competencies);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
+    }
+
+    // Test
+    public void testEditCourseShouldPreserveIrisSettings() throws Exception {
+        Course course = courseUtilService.createCourseWithOrganizations();
+        course = courseRepo.save(course);
+
+        var courseWithSettings = courseRepo.findByIdElseThrow(course.getId());
+        courseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(courseWithSettings);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(null);
+        courseRepo.save(courseWithSettings);
+
+        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+
+        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(course.getId());
+        assertThat(updatedCourse.getIrisSettings()).isEqualTo(courseWithSettings.getIrisSettings());
     }
 
     // Test

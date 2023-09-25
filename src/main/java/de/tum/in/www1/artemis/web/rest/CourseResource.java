@@ -208,6 +208,7 @@ public class CourseResource {
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+        courseUpdate.setIrisSettings(existingCourse.getIrisSettings());
 
         courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
