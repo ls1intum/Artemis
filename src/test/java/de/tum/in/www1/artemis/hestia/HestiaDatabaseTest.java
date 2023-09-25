@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
  * This currently includes ProgrammingExerciseTask, ProgrammingExerciseSolutionEntry and CodeHint.
  * It tests if the addition and deletion of these models works as expected.
  */
-class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class HestiaDatabaseTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "hestiadatabase";
 
