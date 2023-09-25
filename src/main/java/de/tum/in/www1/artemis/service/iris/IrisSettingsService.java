@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -39,12 +40,15 @@ public class IrisSettingsService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final AuthorizationCheckService authCheckService;
+
     public IrisSettingsService(CourseRepository courseRepository, ApplicationContext applicationContext, IrisSettingsRepository irisSettingsRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService) {
         this.courseRepository = courseRepository;
         this.applicationContext = applicationContext;
         this.irisSettingsRepository = irisSettingsRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -379,8 +383,10 @@ public class IrisSettingsService {
         if (target == null || source == null) {
             return source;
         }
-        target.setEnabled(source.isEnabled());
-        target.setPreferredModel(source.getPreferredModel());
+        if (authCheckService.isAdmin()) {
+            target.setEnabled(source.isEnabled());
+            target.setPreferredModel(source.getPreferredModel());
+        }
         if (!Objects.equals(source.getTemplate(), target.getTemplate())) {
             target.setTemplate(source.getTemplate());
         }
