@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,18 +70,14 @@ public class LocalCIContainerService {
         Bind bind = new Bind("artemis-data", new Volume("/artemis-data"));
 
         /*
-        Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
-        binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
-        binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
-        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            binds[2 + i] = new Bind(auxiliaryRepositoriesPaths[i].toString(), new Volume("/" + auxiliaryRepositoryNames[i] + "-repository"));
-        }
-        binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptPath.toString(), new Volume("/script.sh"));
-
-
-
-        return HostConfig.newHostConfig().withAutoRemove(true).withBinds(binds); // Automatically remove the container when it exits.
-
+         * Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
+         * binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
+         * binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
+         * for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
+         * binds[2 + i] = new Bind(auxiliaryRepositoriesPaths[i].toString(), new Volume("/" + auxiliaryRepositoryNames[i] + "-repository"));
+         * }
+         * binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptPath.toString(), new Volume("/script.sh"));
+         * return HostConfig.newHostConfig().withAutoRemove(true).withBinds(binds); // Automatically remove the container when it exits.
          */
 
         return HostConfig.newHostConfig().withAutoRemove(true).withBinds(bind); // Automatically remove the container when it exits.
@@ -96,7 +93,7 @@ public class LocalCIContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, HostConfig volumeConfig, String branch, String commitHash) {
-        return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
+        return dockerClient.createContainerCmd(dockerImage).withName(containerName) // .withHostConfig(volumeConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -157,7 +154,6 @@ public class LocalCIContainerService {
             throw new LocalCIException("Interrupted while waiting for command to complete", e);
         }
     }
-    
 
     /**
      * Retrieve an archive from a running Docker container.
@@ -225,6 +221,15 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
+    public void copyFromToContainers(String containerId1, String sourcePath, String containerId2, String destinationPath) {
+        try (InputStream tarStream = dockerClient.copyArchiveFromContainerCmd(containerId1, sourcePath).exec()) {
+            dockerClient.copyArchiveToContainerCmd(containerId2).withRemotePath(destinationPath).withTarInputStream(tarStream).exec();
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not copy from container " + containerId1 + " to container " + containerId2, e);
+        }
+    }
+
     /**
      * Creates a build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
@@ -237,8 +242,6 @@ public class LocalCIContainerService {
     public Path createBuildScript(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> auxiliaryRepositories) {
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
-
-        log.info("nein {}", localCIBuildScriptBasePath);
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 

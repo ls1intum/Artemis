@@ -69,4 +69,19 @@ public class LocalCIDockerService {
             throw new LocalCIException("Error while inspecting docker image " + imageName, e);
         }
     }
+
+    /**
+     * Retrieves the docker container id of a container with a given name
+     *
+     * @param containerName the name of the container
+     * @return the id of the container
+     */
+    public String retrieveDockerContainerId(String containerName) {
+        try {
+            return dockerClient.inspectContainerCmd(containerName).exec().getId();
+        }
+        catch (NotFoundException e) {
+            throw new LocalCIException("Docker container " + containerName + " not found", e);
+        }
+    }
 }

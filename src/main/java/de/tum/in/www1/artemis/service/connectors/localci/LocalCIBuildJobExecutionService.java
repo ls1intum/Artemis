@@ -59,6 +59,8 @@ public class LocalCIBuildJobExecutionService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final LocalCIDockerService localCIDockerService;
+
     /**
      * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
      */
@@ -71,11 +73,13 @@ public class LocalCIBuildJobExecutionService {
     private String localVCBasePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
-            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory) {
+            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIDockerService localCIDockerService,
+            XMLInputFactory localCIXMLInputFactory) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.localCIDockerService = localCIDockerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
@@ -119,8 +123,6 @@ public class LocalCIBuildJobExecutionService {
         else {
             auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(participation.getProgrammingExercise().getId());
         }
-
-        log.info("Test");
 
         // Prepare script
         Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise(), auxiliaryRepositories);
@@ -179,7 +181,8 @@ public class LocalCIBuildJobExecutionService {
         // This does not start the container yet.
         CreateContainerResponse container = localCIContainerService.configureContainer(containerName, volumeConfig, branch, commitHash);
 
-        return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames, buildScriptPath);
+        return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath,
+                auxiliaryRepositoriesPaths, auxiliaryRepositoryNames, buildScriptPath);
     }
 
     /**
@@ -194,14 +197,19 @@ public class LocalCIBuildJobExecutionService {
      * @return The build result.
      * @throws LocalCIException if something went wrong while running the build job.
      */
-    private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch,
-            String commitHash, Path assignmentRepositoryPath, Path testsRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames, Path buildScriptPath) {
+    private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch, String commitHash,
+            Path assignmentRepositoryPath, Path testsRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames, Path buildScriptPath) {
 
         long timeNanoStart = System.nanoTime();
+
+        String artemisContainerId = localCIDockerService.retrieveDockerContainerId("artemis-app");
 
         localCIContainerService.startContainer(containerId);
 
         log.info("Started container for build job " + containerName);
+
+        localCIContainerService.copyFromToContainers(artemisContainerId, "/opt/artemis/data/local-ci-scripts/" + participation.getProgrammingExercise().getId() + "-build.sh",
+                containerId, "/scripts");
 
         localCIContainerService.runScriptInContainer(containerId);
 
