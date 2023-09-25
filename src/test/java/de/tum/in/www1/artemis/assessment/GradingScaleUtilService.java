@@ -28,10 +28,10 @@ public class GradingScaleUtilService {
     private GradingScaleRepository gradingScaleRepository;
 
     /**
-     * Creates a set of grade steps.
+     * Creates a set of three grade steps. The second grade step is valid or invalid, depending on the {@code valid} parameter.
      *
      * @param gradingScale the grading scale to which the grade steps belong
-     * @param valid        whether the grade steps should be valid (i.e. the upper bound of a grade step is equal to the lower bound of the next grade step)
+     * @param valid        whether the second grade step is valid (i.e. the upper bound of the second grade step is equal to the lower bound of the third grade step)
      * @return a set of grade steps
      */
     @NotNull
@@ -109,9 +109,10 @@ public class GradingScaleUtilService {
     }
 
     /**
-     * Creates a grading scale with the given parameters.
+     * Creates a grading scale with the given parameters. Fails if {@code gradeStepCount + 1} does not equal {@code intervals.length} or if {@code firstPassingIndex} is not in [0;
+     * gradeStepCount).
      *
-     * @param gradeStepCount        The number of grade steps to generate
+     * @param gradeStepCount        The number of grade steps to generate.
      * @param intervals             The intervals to use for the grade steps. The length of this array must be gradeStepCount + 1.
      * @param lowerBoundInclusivity Whether the lower bound of the first grade step should be inclusive.
      * @param firstPassingIndex     The index of the first passing grade step.
@@ -141,7 +142,7 @@ public class GradingScaleUtilService {
     }
 
     /**
-     * Creates a grading scale with a sticky grade step.
+     * Creates a grading scale with a sticky grade step. Fails if {@code firstPassingIndex} is not in [0; gradeStepCount).
      *
      * @param intervalSizes         The sizes of the intervals to use for the grade steps.
      * @param gradeNames            The names of the grade steps.
