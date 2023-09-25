@@ -73,7 +73,7 @@
                     </button>
                     <div>
                         <div *ngFor="let command of defaultCommands | typeCheck: InteractiveSearchCommand" class="btn-group dropdown" ngbDropdown>
-                            <button type="button" class="btn btn-sm py-0" ngbDropdownToggle>
+                            <button type="button" class="btn btn-sm py-0 no-dropdown-indicator" ngbDropdownToggle>
                                 <fa-icon [icon]="command.buttonIcon"></fa-icon>
                             </button>
                             <div class="dropdown-menu" ngbDropdownMenu>
