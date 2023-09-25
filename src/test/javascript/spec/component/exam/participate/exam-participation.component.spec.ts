@@ -24,7 +24,7 @@ import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
+import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
@@ -79,7 +79,7 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(JhiConnectionStatusComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(TestRunRibbonComponent),
-                MockComponent(ExamParticipationSummaryComponent),
+                MockComponent(ExamResultSummaryComponent),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
