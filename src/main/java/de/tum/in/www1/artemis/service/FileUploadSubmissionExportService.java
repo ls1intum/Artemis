@@ -36,7 +36,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         for (String urlFilePath : urlFilePaths) {
             // we need to get the 'real' file path here, the submission only has the api url path
             String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
-            String[] apiFilePathParts = urlFilePath.split(Pattern.quote(File.separator));
+            String[] apiFilePathParts = urlFilePath.replace("/", File.separator).split(Pattern.quote(File.separator));
 
             Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
             filePaths.add(submissionPath);
