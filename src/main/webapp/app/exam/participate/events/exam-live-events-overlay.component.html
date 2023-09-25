@@ -5,4 +5,8 @@
         </ng-container>
     </div>
     <button *ngIf="unacknowledgedEvents.length === 0" class="btn btn-primary w-100 mt-2" (click)="closeOverlay()">Close</button>
+    <button *ngIf="unacknowledgedEvents.length > 1" class="btn btn-primary w-100 mt-2" (click)="acknowledgeAllUnacknowledgedEvents()">
+        <fa-icon [icon]="faCheck"></fa-icon>
+        <span jhiTranslate="artemisApp.exam.events.acknowledgeAll">Acknowledge all</span>
+    </button>
 </div>

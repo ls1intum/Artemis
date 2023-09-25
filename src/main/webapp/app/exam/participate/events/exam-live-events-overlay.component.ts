@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS } from 'app/exam/participate/events/exam-live-events-button.component';
@@ -16,6 +17,9 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     unacknowledgedEvents: ExamLiveEvent[] = [];
     eventsToDisplay?: ExamLiveEvent[];
     events: ExamLiveEvent[] = [];
+
+    // Icons
+    faCheck = faCheck;
 
     protected readonly ExamLiveEventType = ExamLiveEventType;
 
@@ -52,6 +56,13 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
         } else {
             this.updateEventsToDisplay();
         }
+    }
+
+    acknowledgeAllUnacknowledgedEvents() {
+        this.unacknowledgedEvents.forEach((event) => this.liveEventsService.acknowledgeEvent(event, true));
+        this.unacknowledgedEvents = [];
+        this.closeOverlay();
+        setTimeout(() => this.updateEventsToDisplay(), 250);
     }
 
     closeOverlay() {

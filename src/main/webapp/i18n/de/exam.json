@@ -173,6 +173,7 @@
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
+                "acknowledgeAll": "Alle bestätigen",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "Die Bearbeitungszeit der Klausur wurde geändert.",

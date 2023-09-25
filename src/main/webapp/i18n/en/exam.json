@@ -173,6 +173,7 @@
                 },
                 "from": "from",
                 "acknowledge": "Acknowledge",
+                "acknowledgeAll": "Acknowledge all",
                 "messages": {
                     "workingTimeUpdate": {
                         "titleEveryone": "The working time of the exam has been changed.",

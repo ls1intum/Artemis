@@ -53,7 +53,24 @@ describe('ExamLiveEventsOverlayComponent', () => {
         expect(component.unacknowledgedEvents).toHaveLength(0);
     });
 
-    it('should close overlay when there are no unacknowledged events', () => {
+    it('should acknowledge all events', () => {
+        const eventsToAcknowledge: ExamLiveEvent[] = [
+            { id: 1, eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT } as any as ExamLiveEvent,
+            { id: 2, eventType: ExamLiveEventType.WORKING_TIME_UPDATE } as any as ExamLiveEvent,
+        ];
+        component.unacknowledgedEvents = eventsToAcknowledge;
+
+        jest.spyOn(mockLiveEventsService, 'acknowledgeEvent');
+
+        component.acknowledgeAllUnacknowledgedEvents();
+
+        expect(mockLiveEventsService.acknowledgeEvent).toHaveBeenCalledTimes(2);
+        expect(mockLiveEventsService.acknowledgeEvent).toHaveBeenCalledWith(eventsToAcknowledge[0], true);
+        expect(mockLiveEventsService.acknowledgeEvent).toHaveBeenCalledWith(eventsToAcknowledge[1], true);
+        expect(component.unacknowledgedEvents).toHaveLength(0);
+    });
+
+    it('should close overlay', () => {
         jest.spyOn(mockActiveModal, 'close');
 
         component.closeOverlay();
