@@ -678,7 +678,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
         doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise();
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
     }
 
     @Test
@@ -687,7 +687,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise();
         // the temp directory should be deleted
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
     }
 
     @Test
@@ -695,7 +695,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
         doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise();
-        verify(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
     }
 
     @Test

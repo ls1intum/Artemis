@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import de.tum.in.www1.artemis.config.ApiVersionFilter;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ContentVersionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "contentversion";
 
