@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.export;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -71,7 +73,7 @@ public abstract class ExerciseWithSubmissionsExportService {
         String cleanProblemStatementFileName = FileService.sanitizeFilename(problemStatementFileName);
         var problemStatementExportPath = exportDir.resolve(cleanProblemStatementFileName);
         if (exercise.getProblemStatement() != null) {
-            Files.writeString(problemStatementExportPath, exercise.getProblemStatement());
+            FileUtils.writeStringToFile(problemStatementExportPath.toFile(), exercise.getProblemStatement(), StandardCharsets.UTF_8);
             copyEmbeddedFiles(exercise, exportDir, pathsToBeZipped, exportErrors);
             pathsToBeZipped.add(problemStatementExportPath);
         }
@@ -149,12 +151,12 @@ public abstract class ExerciseWithSubmissionsExportService {
      */
     private void constructFilenameAndCopyFile(Exercise exercise, List<String> exportErrors, Path embeddedFilesDir, String filePath) {
         String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
-        Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
+        Path imageFilePath = FilePathService.getMarkdownFilePath().resolve(fileName);
         Path imageExportPath = embeddedFilesDir.resolve(fileName);
         // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
         if (!Files.exists(imageExportPath)) {
             try {
-                Files.copy(imageFilePath, imageExportPath);
+                FileUtils.copyFile(imageFilePath.toFile(), imageExportPath.toFile());
             }
             catch (IOException e) {
                 exportErrors.add("Failed to copy embedded files: " + e.getMessage());

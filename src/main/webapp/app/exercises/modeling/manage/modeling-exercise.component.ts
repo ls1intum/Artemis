@@ -36,7 +36,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     constructor(
         public exerciseService: ExerciseService,
-        private modelingExerciseService: ModelingExerciseService,
+        public modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
         private alertService: AlertService,
         private accountService: AccountService,
@@ -60,6 +60,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 this.modelingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
+                    this.selectedExercises = [];
                 });
                 this.applyFilter();
                 this.emitExerciseCount(this.modelingExercises.length);

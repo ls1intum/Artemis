@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CourseRepository courseRepository;
@@ -36,9 +36,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private NotificationRepository notificationRepository;
-
-    @Autowired
-    private SystemNotificationRepository systemNotificationRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
@@ -60,7 +57,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         course2 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        systemNotificationRepository.deleteAll();
+        notificationRepository.deleteAll();
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setLastNotificationRead(ZonedDateTime.now().minusDays(1));
@@ -69,7 +66,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @AfterEach
     void tearDown() {
-        systemNotificationRepository.deleteAll();
         notificationRepository.deleteAll();
     }
 
