@@ -405,7 +405,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.OK, LearningPathHealthDTO.class);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningPathNgxForLearningPathsDisabled(LearningPathResource.NgxRequestType type) throws Exception {
@@ -417,7 +417,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetLearningPathNgxForOtherStudent(LearningPathResource.NgxRequestType type) throws Exception {
@@ -433,7 +433,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * @throws Exception the request failed
      * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningPathNgxAsStudent(LearningPathResource.NgxRequestType type) throws Exception {
@@ -449,7 +449,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * @throws Exception the request failed
      * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathNgxAsInstructor(LearningPathResource.NgxRequestType type) throws Exception {

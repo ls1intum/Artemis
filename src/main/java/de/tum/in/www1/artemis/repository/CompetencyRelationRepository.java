@@ -18,8 +18,8 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     @Query("""
             SELECT relation
             FROM CompetencyRelation relation
-            WHERE relation.headCompetency.id = :#{#competencyId}
-                OR relation.tailCompetency.id = :#{#competencyId}
+            WHERE relation.headCompetency.id = :competencyId
+                OR relation.tailCompetency.id = :competencyId
             """)
     Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") Long competencyId);
 
@@ -28,8 +28,8 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             FROM CompetencyRelation relation
                 LEFT JOIN FETCH relation.headCompetency
                 LEFT JOIN FETCH relation.tailCompetency
-            WHERE relation.headCompetency.course.id = :#{#courseId}
-                AND relation.tailCompetency.course.id = :#{#courseId}
+            WHERE relation.headCompetency.course.id = :courseId
+                AND relation.tailCompetency.course.id = :courseId
             """)
     Set<CompetencyRelation> findAllByCourseId(@Param("courseId") Long courseId);
 

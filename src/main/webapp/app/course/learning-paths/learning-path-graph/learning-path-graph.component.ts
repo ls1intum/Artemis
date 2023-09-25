@@ -7,8 +7,8 @@ import { LearningPathService } from 'app/course/learning-paths/learning-path.ser
 import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/competency/learning-path.model';
 
 export enum LearningPathViewMode {
-    GRAPH,
-    PATH,
+    GRAPH = 'GRAPH',
+    PATH = 'PATH',
 }
 
 @Component({
