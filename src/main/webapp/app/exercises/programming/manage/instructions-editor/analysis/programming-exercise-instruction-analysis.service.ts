@@ -103,6 +103,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             case ProblemStatementIssue.INVALID_TEST_CASES:
                 return INVALID_TEST_CASE_TRANSLATION;
         }
+        // no default value, please add a new translation when adding new issue types
     };
 
     /**
