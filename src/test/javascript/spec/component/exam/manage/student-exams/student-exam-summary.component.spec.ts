@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
-import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
+import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
 
 describe('StudentExamSummaryComponent', () => {
     let fixture: ComponentFixture<StudentExamSummaryComponent>;
@@ -18,7 +18,7 @@ describe('StudentExamSummaryComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [StudentExamSummaryComponent, MockComponent(ExamParticipationSummaryComponent)],
+            declarations: [StudentExamSummaryComponent, MockComponent(ExamResultSummaryComponent)],
             providers: [
                 {
                     provide: ActivatedRoute,

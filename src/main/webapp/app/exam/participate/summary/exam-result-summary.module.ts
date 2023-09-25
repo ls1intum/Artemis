@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
+import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
@@ -14,8 +14,8 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
-import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
+import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
+import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result-overview/exam-result-overview.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -25,6 +25,7 @@ import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overview/grading-key-overview.module';
 
 @NgModule({
     imports: [
@@ -45,19 +46,20 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         SubmissionResultStatusModule,
         ArtemisExamSharedModule,
         ArtemisSharedComponentModule,
+        GradingKeyOverviewModule,
     ],
     declarations: [
-        ExamParticipationSummaryComponent,
+        ExamResultSummaryComponent,
         ProgrammingExamSummaryComponent,
         ModelingExamSummaryComponent,
         FileUploadExamSummaryComponent,
         TextExamSummaryComponent,
         QuizExamSummaryComponent,
-        ExamInformationComponent,
-        ExamPointsSummaryComponent,
+        ExamGeneralInformationComponent,
+        ExamResultOverviewComponent,
         TestRunRibbonComponent,
         ExampleSolutionComponent,
     ],
-    exports: [ExamParticipationSummaryComponent, ExamInformationComponent, TestRunRibbonComponent],
+    exports: [ExamResultSummaryComponent, ExamGeneralInformationComponent, TestRunRibbonComponent],
 })
 export class ArtemisParticipationSummaryModule {}

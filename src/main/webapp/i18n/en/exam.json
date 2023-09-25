@@ -66,7 +66,8 @@
                 }
             },
             "examSummary": {
-                "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
+                "examResults": "Exam Results",
+                "generalInformation": "General Information",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "lastCommitHash": "Last Commit Hash",
@@ -77,10 +78,11 @@
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
-                    "overview": "Overview",
+                    "overview": "Result Overview",
                     "total": "Total",
                     "yourPoints": "Your Points",
                     "maxPoints": "Achievable Points",
+                    "achievedPercentage": "Achieved Percentage",
                     "maxBonus": "Achievable Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of a maximum {{normalPoints}} possible points (including bonus points).",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points.",
@@ -89,7 +91,6 @@
                         "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}.",
                         "POINTS": "You received {{achievedBonus}} additional bonus points from {{bonusFromTitle}}."
                     },
-                    "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus.",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
                 "grade": "Grade",
@@ -108,6 +109,7 @@
             "date": "Date",
             "time": "Time",
             "workingTime": "Working Time",
+            "examinedStudent": "Examined student",
             "resultInformation": "Your result will be published here as soon as the correction is finished. You can get to this page by clicking on this exam in the exam overview of this course.",
             "course": "Course",
             "exercises": "Exercises",
@@ -117,6 +119,7 @@
             "startDate": "Start Date",
             "endDate": "End Date",
             "publishResultsDate": "Release Date of Results",
+            "examStudentReviewTimespan": "Review Timespan",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "studentReviewEnabled": "Review is open",
