@@ -49,8 +49,9 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     }
 
     @Query("""
-            SELECT p FROM Participation p
-            LEFT JOIN FETCH p.submissions s
+            SELECT p
+            FROM Participation p
+                LEFT JOIN FETCH p.submissions s
             WHERE p.id = :#{#participationId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
@@ -59,6 +60,19 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @NotNull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
+
+    @Query("""
+            SELECT p
+            FROM Participation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id = :#{#participationId}
+            """)
+    Optional<Participation> findWithEagerSubmissionsById(@Param("participationId") Long participationId);
+
+    @NotNull
+    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
+        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     @NotNull
