@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faEye } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -15,6 +15,8 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry, StorageEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
 import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LearningPathProgressModalComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-modal.component';
 
 @Component({
     selector: 'jhi-learning-path-container',
@@ -36,6 +38,7 @@ export class LearningPathContainerComponent implements OnInit {
     // icons
     faChevronUp = faChevronUp;
     faChevronDown = faChevronDown;
+    faEye = faEye;
 
     constructor(
         private router: Router,
@@ -44,6 +47,7 @@ export class LearningPathContainerComponent implements OnInit {
         private learningPathService: LearningPathService,
         private lectureService: LectureService,
         private exerciseService: ExerciseService,
+        private modalService: NgbModal,
         public learningPathStorageService: LearningPathStorageService,
     ) {}
 
@@ -186,6 +190,18 @@ export class LearningPathContainerComponent implements OnInit {
     scrollTo(node: NgxLearningPathNode) {
         document.getElementById(node.id)?.scrollIntoView({
             behavior: 'smooth',
+        });
+    }
+
+    viewProgress() {
+        this.learningPathService.getLearningPath(this.learningPathId).subscribe((learningPathResponse) => {
+            const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
+                size: 'xl',
+                backdrop: 'static',
+                windowClass: 'learning-path-modal',
+            });
+            modalRef.componentInstance.courseId = this.courseId;
+            modalRef.componentInstance.learningPath = learningPathResponse.body!;
         });
     }
 }

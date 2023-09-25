@@ -3,7 +3,15 @@
         <div class="sticky-sidebar">
             <button
                 type="button"
-                class="btn btn-primary prev-button"
+                class="view-progress-button btn btn-secondary"
+                (click)="viewProgress()"
+                ngbTooltip="{{ 'artemisApp.learningPath.participate.viewProgress' | artemisTranslate }}"
+            >
+                <fa-icon [icon]="faEye"></fa-icon>
+            </button>
+            <button
+                type="button"
+                class="btn btn-primary"
                 (click)="onPrevTask()"
                 [disabled]="!learningPathStorageService.hasPrevRecommendation(this.learningPathId, currentStateToEntry())"
                 ngbTooltip="{{ 'artemisApp.learningPath.participate.prevHint' | artemisTranslate }}"
@@ -21,7 +29,7 @@
             </div>
             <button
                 type="button"
-                class="btn btn-primary next-button"
+                class="btn btn-primary"
                 (click)="onNextTask()"
                 [disabled]="!learningPathStorageService.hasNextRecommendation(this.learningPathId, currentStateToEntry())"
                 ngbTooltip="{{ 'artemisApp.learningPath.participate.nextHint' | artemisTranslate }}"
