@@ -15,6 +15,22 @@ import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-fi
 import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
+type ChartSeries = {
+    name: string;
+    series: SeriesDatapoint[];
+};
+
+type ChartNode = SeriesDatapoint & {
+    series: string;
+};
+
+type SeriesDatapoint = {
+    name: string;
+    value: number;
+    exerciseId: number;
+    exerciseType: string;
+};
+
 @Component({
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
@@ -37,8 +53,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     faFilter = faFilter;
 
     // ngx
-    ngxData: any[] = [];
-    backUpData: any[] = [];
+    ngxData: ChartSeries[] = [];
+    backUpData: ChartSeries[] = [];
     xAxisLabel: string;
     yAxisLabel: string;
     ngxColor = {
@@ -117,12 +133,12 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
      */
     private addData(exerciseScoresDTOs: ExerciseScoresDTO[]): void {
         this.ngxData = [];
-        const scoreSeries: any[] = [];
-        const averageSeries: any[] = [];
-        const bestScoreSeries: any[] = [];
+        const scoreSeries: SeriesDatapoint[] = [];
+        const averageSeries: SeriesDatapoint[] = [];
+        const bestScoreSeries: SeriesDatapoint[] = [];
         exerciseScoresDTOs.forEach((exerciseScoreDTO) => {
             const extraInformation = {
-                exerciseId: exerciseScoreDTO.exerciseId,
+                exerciseId: exerciseScoreDTO.exerciseId!,
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
             // adapt the y-axis max
@@ -132,9 +148,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
                 round(exerciseScoreDTO.maxScoreAchieved!),
                 this.maxScale,
             );
-            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.scoreOfStudent!), ...extraInformation });
-            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.averageScoreAchieved!), ...extraInformation });
-            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle, value: round(exerciseScoreDTO.maxScoreAchieved!), ...extraInformation });
+            scoreSeries.push({ name: exerciseScoreDTO.exerciseTitle!, value: round(exerciseScoreDTO.scoreOfStudent!), ...extraInformation });
+            averageSeries.push({ name: exerciseScoreDTO.exerciseTitle!, value: round(exerciseScoreDTO.averageScoreAchieved!), ...extraInformation });
+            bestScoreSeries.push({ name: exerciseScoreDTO.exerciseTitle!, value: round(exerciseScoreDTO.maxScoreAchieved!), ...extraInformation });
         });
 
         const studentScore = { name: this.yourScoreLabel, series: scoreSeries };
@@ -153,11 +169,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
      * If the users click on an entry in the legend, the corresponding line disappears or reappears depending on its previous state
      * @param data the event sent by the framework
      */
-    onSelect(data: any): void {
-        if (data.exerciseId) {
-            // if a chart node is clicked, navigate to the corresponding exercise
-            this.navigateToExercise(data.exerciseId);
-        } else {
+    onSelect(data: ChartNode | string): void {
+        if (typeof data === 'string') {
             // if a legend label is clicked, the visibility of the corresponding line is toggled
             const name: string = data;
             // find the affected line in the dataset
@@ -176,6 +189,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
             }
             // trigger a chart update
             this.ngxData = [...this.ngxData];
+        } else {
+            // if a chart node is clicked, navigate to the corresponding exercise
+            this.navigateToExercise(data.exerciseId);
         }
     }
 
