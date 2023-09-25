@@ -464,10 +464,10 @@ public class ProgrammingExerciseTaskService {
                 // testsMatchResult: one testscolor instance, e.g. testsColor(testAttributes[BubbleSort])
                 String fullMatch = testsMatchResult.group();
                 // group 1: test name, e.g testAttributes[BubbleSort]
-                String testNames = testsMatchResult.group(1);
+                String testName = testsMatchResult.group(1);
                 // id to insert, e.g. <testid>15</testid>
-                String testIds = replacer.apply(testNames, testCases);
-                return fullMatch.replace(testNames, testIds);
+                String testId = replacer.apply(testName, testCases);
+                return fullMatch.replace(testName, testId);
             });
         });
     }
