@@ -726,11 +726,4 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         // Test that a competency of a course can not be a prerequisite to the same course
         request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.CONFLICT);
     }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testQueryLOL() {
-        var res = competencyRelationRepository.getMatchingCompetenciesByCompetencyId(competency.getId());
-        assertThat(res).containsExactly(competency.getId());
-    }
 }

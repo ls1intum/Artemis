@@ -11,8 +11,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-modal.component';
 
 export enum LearningPathViewMode {
-    GRAPH,
-    PATH,
+    GRAPH = 'GRAPH',
+    PATH = 'PATH',
 }
 
 @Component({
