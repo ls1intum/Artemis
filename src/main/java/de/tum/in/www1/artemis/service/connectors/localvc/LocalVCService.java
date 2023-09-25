@@ -239,9 +239,6 @@ public class LocalVCService extends AbstractVersionControlService {
 
     private void createRepository(String projectKey, String repositorySlug) {
 
-
-        log.info("Guten Morgen: {}", localVCBasePath);
-
         LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
 
         Path remoteDirPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath);

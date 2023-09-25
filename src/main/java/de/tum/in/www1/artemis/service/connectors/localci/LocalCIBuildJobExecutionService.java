@@ -209,7 +209,7 @@ public class LocalCIBuildJobExecutionService {
         log.info("Started container for build job " + containerName);
 
         localCIContainerService.copyFromToContainers(artemisContainerId, "/opt/artemis/data/local-ci-scripts/" + participation.getProgrammingExercise().getId() + "-build.sh",
-                containerId, "/scripts");
+                containerId, "/");
 
         localCIContainerService.runScriptInContainer(containerId);
 
