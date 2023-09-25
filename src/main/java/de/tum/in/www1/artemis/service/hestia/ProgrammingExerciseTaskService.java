@@ -220,22 +220,23 @@ public class ProgrammingExerciseTaskService {
             var task = new ProgrammingExerciseTask();
             task.setTaskName(taskName);
             task.setExercise(exercise);
-            var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
 
-            for (String testName : testCaseNames) {
-                Optional<ProgrammingExerciseTestCase> foundTestCase;
-                if (testName.startsWith(TESTID_START)) {
-                    Long id = extractTestId(testName);
-                    foundTestCase = testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
-                }
-                else {
-                    foundTestCase = testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
-                }
-                foundTestCase.ifPresent(task.getTestCases()::add);
-            }
+            var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
+            testCaseNames.stream().map(name -> findTestCaseFromProblemStatement(name, testCases)).flatMap(Optional::stream).forEach(task.getTestCases()::add);
+
             tasks.add(task);
         }
         return tasks;
+    }
+
+    private Optional<ProgrammingExerciseTestCase> findTestCaseFromProblemStatement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
+        if (testName.startsWith(TESTID_START)) {
+            Long id = extractTestId(testName);
+            return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
+        }
+        else {
+            return testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
+        }
     }
 
     /**
