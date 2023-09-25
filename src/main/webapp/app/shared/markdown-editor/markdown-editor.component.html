@@ -71,6 +71,16 @@
                     >
                         <fa-icon [icon]="command.buttonIcon"></fa-icon>
                     </button>
+                    <div>
+                        <div *ngFor="let command of defaultCommands | typeCheck: InteractiveSearchCommand" class="btn-group dropdown" ngbDropdown>
+                            <button type="button" class="btn btn-sm py-0" ngbDropdownToggle>
+                                <fa-icon [icon]="command.buttonIcon"></fa-icon>
+                            </button>
+                            <div class="dropdown-menu" ngbDropdownMenu>
+                                <jhi-select-with-search [command]="command" (valueSelect)="handleSelect($event, command)" />
+                            </div>
+                        </div>
+                    </div>
                     <!--style command -->
                     <div *ngIf="headerCommands.length > 0" class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                         <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
@@ -84,7 +94,7 @@
                             </ng-container>
                         </div>
                     </div>
-                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
+                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand | negatedTypeCheck: InteractiveSearchCommand">
                         <div>
                             <button
                                 mat-button

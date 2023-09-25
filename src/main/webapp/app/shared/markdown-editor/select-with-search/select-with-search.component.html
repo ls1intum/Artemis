@@ -1,0 +1,6 @@
+<form>
+    <input class="form-control" type="text" placeholder="Enter name" (input)="updateSearchTerm($event)" />
+    <li *ngFor="let value of values">
+        <button ngbDropdownItem (click)="valueSelect.emit(value)">{{ value.name }}</button>
+    </li>
+</form>
