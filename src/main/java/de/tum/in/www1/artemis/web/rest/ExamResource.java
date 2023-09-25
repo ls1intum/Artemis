@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -318,7 +319,7 @@ public class ExamResource {
     @PostMapping("/courses/{courseId}/exams/{examId}/announcements")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamWideAnnouncementEventDTO> createExamAnnouncement(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody String message) {
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
         log.debug("REST request to create an announcement for exam with id {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -331,7 +332,7 @@ public class ExamResource {
 
         var event = examLiveEventsService.createExamAnnouncementEvent(exam, message, userRepository.getUser());
 
-        log.debug("createExamAnnouncement took " + (System.currentTimeMillis() - start) + "ms for exam " + examId);
+        log.debug("createExamAnnouncement took {} for exam {}", TimeLogUtil.formatDurationFrom(start), examId);
         return ResponseEntity.ok(event.asDTO());
     }
 

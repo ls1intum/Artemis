@@ -71,8 +71,8 @@ public class ExamLiveEventsService {
      * Send a working time update to the specified student.
      *
      * @param studentExam    The student exam the time was updated for
-     * @param newWorkingTime The new working time
-     * @param oldWorkingTime The old working time
+     * @param newWorkingTime The new working time in seconds
+     * @param oldWorkingTime The old working time in seconds
      * @param courseWide     set to true if this event is caused by a course wide update that affects all students; false otherwise
      * @param sentBy         The user who performed the update
      */
