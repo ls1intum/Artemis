@@ -58,18 +58,32 @@ public class LearningPathService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
-    private final static double DUE_DATE_UTILITY = 10;
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
+     */
+    private static final double DUE_DATE_UTILITY = 10;
 
-    private final static double PRIOR_UTILITY = 150;
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the number of mastered prior competencies.
+     */
+    private static final double PRIOR_UTILITY = 150;
 
-    // Important: EXTENDS_UTILITY should be smaller than ASSUMES_UTILITY to prefer extends-relation to assumes-relations.
-    private final static double EXTENDS_UTILITY_RATIO = 1;
+    /**
+     * Base utility and ratios that are used to calculate a competencies' utility with respect to the number of competencies that this competency extends or assumes.
+     * <p>
+     * Ratios donate the importance of the relation compared to the other.
+     * Important: EXTENDS_UTILITY_RATIO should be smaller than ASSUMES_UTILITY_RATIO to prefer extends-relation to assumes-relations.
+     */
+    private static final double EXTENDS_UTILITY_RATIO = 1;
 
-    private final static double ASSUMES_UTILITY_RATIO = 2;
+    private static final double ASSUMES_UTILITY_RATIO = 2;
 
-    private final static double EXTENDS_OR_ASSUMES_UTILITY = 100;
+    private static final double EXTENDS_OR_ASSUMES_UTILITY = 100;
 
-    private final static double MASTERY_PROGRESS_UTILITY = 1;
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the mastery level.
+     */
+    private static final double MASTERY_PROGRESS_UTILITY = 1;
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository) {
@@ -455,13 +469,13 @@ public class LearningPathService {
      * @see RecommendationState
      */
     private RecommendationState generateInitialRecommendationState(LearningPath learningPath) {
-        HashMap<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
-        HashMap<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
-        HashMap<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
-        HashMap<Long, Long> assumesCompetencies = getAssumesCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        Map<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
+        Map<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
+        Map<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        Map<Long, Long> assumesCompetencies = getAssumesCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
         Set<Long> masteredCompetencies = new HashSet<>();
         // map of non-mastered competencies to their normalized mastery score with respect to the associated threshold
-        HashMap<Long, Double> competencyMastery = new HashMap<>();
+        Map<Long, Double> competencyMastery = new HashMap<>();
         learningPath.getCompetencies().forEach(competency -> {
             // fetched learning path only contains data of the associated user
             final var progress = competency.getUserProgress().stream().findFirst();
@@ -486,8 +500,8 @@ public class LearningPathService {
      * @param competencies the competencies for which the mapping should be generated
      * @return map representing the matching clusters
      */
-    private HashMap<Long, Set<Long>> getMatchingCompetencyClusters(Set<Competency> competencies) {
-        final HashMap<Long, Set<Long>> matchingClusters = new HashMap<>();
+    private Map<Long, Set<Long>> getMatchingCompetencyClusters(Set<Competency> competencies) {
+        final Map<Long, Set<Long>> matchingClusters = new HashMap<>();
         for (var competency : competencies) {
             if (!matchingClusters.containsKey(competency.getId())) {
                 final var matchingCompetencies = competencyRelationRepository.getMatchingCompetenciesByCompetencyId(competency.getId());
@@ -505,8 +519,8 @@ public class LearningPathService {
      * @param matchingClusters the map representing the corresponding matching clusters
      * @return map to retrieve prior competencies
      */
-    private HashMap<Long, Set<Long>> getPriorCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters) {
-        HashMap<Long, Set<Long>> priorsMap = new HashMap<>();
+    private Map<Long, Set<Long>> getPriorCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters) {
+        Map<Long, Set<Long>> priorsMap = new HashMap<>();
         for (var competency : competencies) {
             if (!priorsMap.containsKey(competency.getId())) {
                 final var priors = competencyRelationRepository.getPriorCompetenciesByCompetencyIds(matchingClusters.get(competency.getId()));
@@ -525,7 +539,7 @@ public class LearningPathService {
      * @param priorCompetencies the map to retrieve corresponding prior competencies
      * @return map to retrieve the number of competencies a competency extends
      */
-    private HashMap<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorCompetencies) {
+    private Map<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
         return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.EXTENDS);
     }
 
@@ -537,7 +551,7 @@ public class LearningPathService {
      * @param priorCompetencies the map to retrieve corresponding prior competencies
      * @return map to retrieve the number of competencies a competency assumes
      */
-    private HashMap<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters, HashMap<Long, Set<Long>> priorCompetencies) {
+    private Map<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
         return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.ASSUMES);
     }
 
@@ -550,9 +564,9 @@ public class LearningPathService {
      * @param type              the relation type that should be counted
      * @return map to retrieve the number of competencies a competency extends
      */
-    private HashMap<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, HashMap<Long, Set<Long>> matchingClusters,
-            HashMap<Long, Set<Long>> priorCompetencies, CompetencyRelation.RelationType type) {
-        HashMap<Long, Long> map = new HashMap<>();
+    private Map<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies,
+            CompetencyRelation.RelationType type) {
+        Map<Long, Long> map = new HashMap<>();
         for (var competency : competencies) {
             if (!map.containsKey(competency.getId())) {
                 long numberOfRelations = competencyRelationRepository.countRelationsOfTypeBetweenCompetencyGroups(matchingClusters.get(competency.getId()), type,
@@ -588,7 +602,7 @@ public class LearningPathService {
     private List<Long> simulateProgression(Set<Competency> pendingCompetencies, RecommendationState state) {
         List<Long> recommendedOrder = new ArrayList<>();
         while (!pendingCompetencies.isEmpty()) {
-            HashMap<Long, Double> utilities = computeUtilities(pendingCompetencies, state);
+            Map<Long, Double> utilities = computeUtilities(pendingCompetencies, state);
             var maxEntry = utilities.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue));
             // is present since outstandingCompetencies is not empty
             Long competencyId = maxEntry.get().getKey();
@@ -611,8 +625,8 @@ public class LearningPathService {
      * @param state        the current state of the recommendation system
      * @return map to retrieve the utility of a competency
      */
-    private HashMap<Long, Double> computeUtilities(Set<Competency> competencies, RecommendationState state) {
-        HashMap<Long, Double> utilities = new HashMap<>();
+    private Map<Long, Double> computeUtilities(Set<Competency> competencies, RecommendationState state) {
+        Map<Long, Double> utilities = new HashMap<>();
         for (var competency : competencies) {
             utilities.put(competency.getId(), computeUtilityOfCompetency(competency, state));
         }
@@ -779,7 +793,7 @@ public class LearningPathService {
         return "edge-" + competencyId + "-direct";
     }
 
-    private record RecommendationState(Set<Long> masteredCompetencies, HashMap<Long, Double> competencyMastery, HashMap<Long, Set<Long>> matchingClusters,
-            HashMap<Long, Set<Long>> priorCompetencies, HashMap<Long, Long> extendsCompetencies, HashMap<Long, Long> assumesCompetencies) {
+    private record RecommendationState(Set<Long> masteredCompetencies, Map<Long, Double> competencyMastery, Map<Long, Set<Long>> matchingClusters,
+            Map<Long, Set<Long>> priorCompetencies, Map<Long, Long> extendsCompetencies, Map<Long, Long> assumesCompetencies) {
     }
 }
