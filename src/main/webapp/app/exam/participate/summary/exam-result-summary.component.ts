@@ -18,10 +18,10 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 
 @Component({
     selector: 'jhi-exam-participation-summary',
-    templateUrl: './exam-participation-summary.component.html',
-    styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-participation-summary.component.scss'],
+    templateUrl: './exam-result-summary.component.html',
+    styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
 })
-export class ExamParticipationSummaryComponent implements OnInit {
+export class ExamResultSummaryComponent implements OnInit {
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -57,6 +57,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * Grade info for current student's exam.
      */
     studentExamGradeInfoDTO: StudentExamWithGradeDTO;
+
+    isGradingKeyCollapsed: boolean = true;
+    isBonusGradingKeyCollapsed: boolean = true;
 
     @Input()
     instructorView = false;
@@ -142,10 +145,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
         return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
-    getIcon(exerciseType: ExerciseType) {
-        return getIcon(exerciseType);
-    }
-
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
         return exercise as ProgrammingExercise;
     }
@@ -163,9 +162,14 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * called for exportPDF Button
      */
     printPDF() {
-        // expand all exercises before printing
-        this.collapsedExerciseIds = [];
+        this.expandExercisesAndGradingKeysBeforePrinting();
         setTimeout(() => this.themeService.print());
+    }
+
+    private expandExercisesAndGradingKeysBeforePrinting() {
+        this.collapsedExerciseIds = [];
+        this.isGradingKeyCollapsed = false;
+        this.isBonusGradingKeyCollapsed = false;
     }
 
     public generateLink(exercise: Exercise) {
@@ -248,4 +252,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
         return false;
     }
+
+    protected readonly getIcon = getIcon;
 }

@@ -5,12 +5,18 @@ import { endTime, getAdditionalWorkingTime, isExamOverMultipleDays, normalWorkin
 import dayjs from 'dayjs/esm';
 
 @Component({
-    selector: 'jhi-exam-information',
-    templateUrl: './exam-information.component.html',
+    selector: 'jhi-exam-general-information',
+    styleUrls: ['./exam-general-information.component.scss'],
+    templateUrl: './exam-general-information.component.html',
 })
-export class ExamInformationComponent implements OnInit {
+export class ExamGeneralInformationComponent implements OnInit {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
+    @Input() reviewIsOpen?: boolean = false;
+
+    /** The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
+     * the information is shown in the {@link ExamResultOverviewComponent} */
+    @Input() displayOnExamCover?: boolean = false;
 
     examEndDate?: dayjs.Dayjs;
     normalWorkingTime?: number;
