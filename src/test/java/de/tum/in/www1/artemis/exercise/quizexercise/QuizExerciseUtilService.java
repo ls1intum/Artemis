@@ -12,19 +12,15 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -35,8 +31,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
@@ -78,9 +72,6 @@ public class QuizExerciseUtilService {
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private RequestUtilService requestUtilService;
-
-    @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
 
     @Autowired
@@ -97,29 +88,6 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private QuizScheduleService quizScheduleService;
-
-    /**
-     * Create, join and start a batch for student by tutor
-     */
-    public void prepareBatchForSubmitting(QuizExercise quizExercise, Authentication tutor, Authentication student) throws Exception {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        switch (quizExercise.getQuizMode()) {
-            case SYNCHRONIZED -> {
-            }
-            case BATCHED -> {
-                SecurityContextHolder.getContext().setAuthentication(tutor);
-                var batch = requestUtilService.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
-                requestUtilService.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
-                SecurityContextHolder.getContext().setAuthentication(student);
-                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), HttpStatus.OK, null);
-            }
-            case INDIVIDUAL -> {
-                SecurityContextHolder.getContext().setAuthentication(student);
-                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(null), HttpStatus.OK, null);
-            }
-        }
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
 
     public Course addCourseWithOneQuizExercise() {
         return addCourseWithOneQuizExercise("Title");

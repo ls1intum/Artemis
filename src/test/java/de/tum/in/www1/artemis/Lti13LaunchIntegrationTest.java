@@ -37,7 +37,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
  * see <a href="https://www.imsglobal.org/spec/lti/v1p3/#lti-message-general-details">LTI message general details</a>
  * see <a href="https://www.imsglobal.org/spec/security/v1p0/#openid_connect_launch_flow">OpenId Connect launch flow</a>
  */
-class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final Key SIGNING_KEY = new SecretKeySpec("a".repeat(100).getBytes(), SignatureAlgorithm.HS256.getJcaName());
 
