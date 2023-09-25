@@ -291,7 +291,7 @@ public class ExamResource {
             var savedStudentExam = studentExamRepository.save(studentExam);
             // NOTE: if the exam is already visible, notify the student about the working time change
             if (now.isAfter(exam.getVisibleDate())) {
-                examLiveEventsService.createWorkingTimeUpdateEvent(savedStudentExam, savedStudentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
+                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, savedStudentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
             }
         }
 
@@ -330,7 +330,7 @@ public class ExamResource {
             throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
         }
 
-        var event = examLiveEventsService.createExamAnnouncementEvent(exam, message, userRepository.getUser());
+        var event = examLiveEventsService.createAndDistributeExamAnnouncementEvent(exam, message, userRepository.getUser());
 
         log.debug("createExamAnnouncement took {} for exam {}", TimeLogUtil.formatDurationFrom(start), examId);
         return ResponseEntity.ok(event.asDTO());

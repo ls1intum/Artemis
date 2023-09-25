@@ -54,7 +54,7 @@ public class ExamLiveEventsService {
      * @param sentBy  The user who sent the message.
      * @return The created event.
      */
-    public ExamWideAnnouncementEvent createExamAnnouncementEvent(Exam exam, String message, User sentBy) {
+    public ExamWideAnnouncementEvent createAndDistributeExamAnnouncementEvent(Exam exam, String message, User sentBy) {
         var event = new ExamWideAnnouncementEvent();
 
         // Common fields
@@ -76,7 +76,7 @@ public class ExamLiveEventsService {
      * @param courseWide     set to true if this event is caused by a course wide update that affects all students; false otherwise
      * @param sentBy         The user who performed the update
      */
-    public void createWorkingTimeUpdateEvent(StudentExam studentExam, int newWorkingTime, int oldWorkingTime, boolean courseWide, User sentBy) {
+    public void createAndSendWorkingTimeUpdateEvent(StudentExam studentExam, int newWorkingTime, int oldWorkingTime, boolean courseWide, User sentBy) {
         var event = new WorkingTimeUpdateEvent();
 
         // Common fields
