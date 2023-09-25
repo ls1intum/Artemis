@@ -34,17 +34,31 @@ public class LearningPathRecommendationService {
 
     private final ParticipantScoreService participantScoreService;
 
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
+     */
     private static final double DUE_DATE_UTILITY = 10;
 
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the number of mastered prior competencies.
+     */
     private static final double PRIOR_UTILITY = 150;
 
-    // Important: EXTENDS_UTILITY should be smaller than ASSUMES_UTILITY to prefer extends-relation to assumes-relations.
+    /**
+     * Base utility and ratios that are used to calculate a competencies' utility with respect to the number of competencies that this competency extends or assumes.
+     * <p>
+     * Ratios donate the importance of the relation compared to the other.
+     * Important: EXTENDS_UTILITY_RATIO should be smaller than ASSUMES_UTILITY_RATIO to prefer extends-relation to assumes-relations.
+     */
     private static final double EXTENDS_UTILITY_RATIO = 1;
 
     private static final double ASSUMES_UTILITY_RATIO = 2;
 
     private static final double EXTENDS_OR_ASSUMES_UTILITY = 100;
 
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the mastery level.
+     */
     private static final double MASTERY_PROGRESS_UTILITY = 1;
 
     private static final double SCORE_THRESHOLD = 80;
