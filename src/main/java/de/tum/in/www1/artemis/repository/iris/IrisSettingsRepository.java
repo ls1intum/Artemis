@@ -24,10 +24,10 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
     @Query("""
             SELECT irisSettings
             FROM IrisSettings irisSettings
-            LEFT JOIN FETCH irisSettings.irisChatSettings ics
-            LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
-            LEFT JOIN ProgrammingExercise pe ON pe.irisSettings.id = irisSettings.id
-            WHERE pe.id = :#{#programmingExerciseId}
+                LEFT JOIN FETCH irisSettings.irisChatSettings ics
+                LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
+                LEFT JOIN ProgrammingExercise pe ON pe.irisSettings.id = irisSettings.id
+            WHERE pe.id = :programmingExerciseId
             """)
-    Optional<IrisSettings> findByProgrammingExerciseId(Long programmingExerciseId);
+    Optional<IrisSettings> findByProgrammingExerciseId(@Param("programmingExerciseId") Long programmingExerciseId);
 }
