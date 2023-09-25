@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
 import { endTime, getAdditionalWorkingTime, isExamOverMultipleDays, normalWorkingTime } from 'app/exam/participate/exam.utils';
@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./exam-general-information.component.scss'],
     templateUrl: './exam-general-information.component.html',
 })
-export class ExamGeneralInformationComponent implements OnInit {
+export class ExamGeneralInformationComponent implements OnChanges {
     @Input() exam: Exam;
     @Input() studentExam: StudentExam;
     @Input() reviewIsOpen?: boolean = false;
@@ -25,7 +25,7 @@ export class ExamGeneralInformationComponent implements OnInit {
     isTestExam?: boolean;
     currentDate?: dayjs.Dayjs;
 
-    ngOnInit(): void {
+    ngOnChanges(): void {
         this.examEndDate = endTime(this.exam, this.studentExam);
         this.normalWorkingTime = normalWorkingTime(this.exam);
         this.additionalWorkingTime = getAdditionalWorkingTime(this.exam, this.studentExam);
