@@ -53,7 +53,7 @@ public class MigrationEntry20230810_150000 extends MigrationEntry {
         while (true) {
             Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(pageable);
             var exercisePartitions = Lists.partition(exercisePage.toList(), THREADS);
-            CompletableFuture<?>[] allFutures = new CompletableFuture[THREADS];
+            CompletableFuture<?>[] allFutures = new CompletableFuture[Math.min(THREADS, exercisePartitions.size())];
 
             for (int i = 0; i < exercisePartitions.size(); i++) {
                 var partition = exercisePartitions.get(i);
