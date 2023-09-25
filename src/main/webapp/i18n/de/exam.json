@@ -66,7 +66,8 @@
                 }
             },
             "examSummary": {
-                "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
+                "examResults": "Prüfungsergebnisse",
+                "generalInformation": "Allgemeine Informationen",
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
@@ -77,19 +78,19 @@
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {
                     "exercise": "Aufgabe",
-                    "overview": "Übersicht",
+                    "overview": "Ergebnis-Übersicht",
                     "total": "Gesamt",
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Erreichbare Punkte",
+                    "achievedPercentage": "Erreichte Punkte in %",
                     "maxBonus": "Erreichbare Bonuspunkte",
                     "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten (einschließlich Bonuspunkten) erreicht.",
-                    "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten.",
+                    "youAchieved": "Du hast {{achievedPoints}} von {{normalPoints}} möglichen Punkten erreicht.",
                     "youAchievedFromBonus": {
                         "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}.",
                         "GRADES_DISCRETE": "Du hast einen Notenbonus von {{achievedBonus}} Stufe(n) gemäß der Notenskala erhalten, was {{gradePointDifference}} von {{bonusFromTitle}} entspricht.",
                         "POINTS": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}."
                     },
-                    "youAchievedPointsAfterBonus": "Deine endgültigen Punkte sind {{finalPoints}} nach dem Bonus.",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
                 },
                 "grade": "Note",
@@ -108,6 +109,7 @@
             "date": "Datum",
             "time": "Zeit",
             "workingTime": "Bearbeitungszeit",
+            "examinedStudent": "Prüfungsteilnehmer:in",
             "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausurenübersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
@@ -117,8 +119,10 @@
             "startDate": "Beginn",
             "endDate": "Ende",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
+            "examStudentReviewTimespan": "Zeitraum der Klausureinsicht",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "studentReviewEnabled": "Klausureinsicht geöffnet",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl registrierter Studierender",
