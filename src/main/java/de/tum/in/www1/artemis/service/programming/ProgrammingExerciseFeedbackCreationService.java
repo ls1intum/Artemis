@@ -298,7 +298,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         if (!testCasesToSave.isEmpty()) {
             testCaseRepository.saveAll(testCasesToSave);
             programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
-            // Update the test cases in the problem statement.
+            // Replace the test case names by ids in the problem statement.
             // This handles the case if the problem statement already contains the name of a test case
             // that got later pushed into the test repository. Since this test case now exists,
             // the problem statement should now refer to its id.
@@ -317,11 +317,11 @@ public class ProgrammingExerciseFeedbackCreationService {
             // Either the test case was active and is not part of the feedback anymore
             boolean existingTestCaseRemoved = matchingTestCase.isEmpty() && existing.isActive();
             // OR was not active before and is now part of the feedback again.
-            boolean inactiveTestReactivated = matchingTestCase.isPresent() && matchingTestCase.get().isActive() && !existing.isActive();
+            boolean inactiveTestReactivated = matchingTestCase.isPresent() && !existing.isActive();
             return existingTestCaseRemoved || inactiveTestReactivated;
         }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
         // If an existing test gets reactivated, we reuse its grading settings (weight, visibility, etc.).
-        // The instructor should not need to enter these settings again.
+        // The user should not need to enter these settings again.
     }
 
     /**
@@ -354,7 +354,7 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise exercise) {
-        return buildResult.getBuildJobs().stream().flatMap(j -> Stream.concat(j.getFailedTests().stream(), j.getSuccessfulTests().stream()))
+        return buildResult.getBuildJobs().stream().flatMap(job -> Stream.concat(job.getFailedTests().stream(), job.getSuccessfulTests().stream()))
                 // we use default values for weight, bonus multiplier and bonus points
                 .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.getName()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
                         .visibility(Visibility.ALWAYS))

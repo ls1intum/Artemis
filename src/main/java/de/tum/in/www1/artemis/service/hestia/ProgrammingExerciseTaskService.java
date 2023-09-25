@@ -419,7 +419,8 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Looks for all tasks in the given problem statement, and replaces its mentioned test cases using the given replacer method.
-     * Replacer methods are e.g. extractTestCaseIdReplacementsFromNames or extractTestNamesFromTestIds.
+     * Replacer methods are e.g. {@link ProgrammingExerciseTaskService#extractTestCaseIdReplacementsFromNames(String, Set)}
+     * or {@link ProgrammingExerciseTaskService#extractTestNamesFromTestIds(String, Set)}.
      *
      * @param problemStatement the problem statement to replace the tasks
      * @param testCases        all test cases of the exercise, used to look up the new value to use
@@ -445,7 +446,8 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Looks for all test cases integrated into plantuml diagrams in the given problem statement, and replaces its test case using the given replacer method.
-     * Replacer methods are e.g. extractTestCaseIdReplacementsFromNames or extractTestNamesFromTestIds.
+     * Replacer methods are e.g. {@link ProgrammingExerciseTaskService#extractTestCaseIdReplacementsFromNames(String, Set)}
+     * or {@link ProgrammingExerciseTaskService#extractTestNamesFromTestIds(String, Set)}.
      *
      * @param problemStatement the problem statement to replace the plantuml diagram tests
      * @param testCases        all test cases of the exercise, used to look up the new value to use
