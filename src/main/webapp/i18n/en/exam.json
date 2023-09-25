@@ -66,7 +66,8 @@
                 }
             },
             "examSummary": {
-                "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
+                "examResults": "Exam Results",
+                "generalInformation": "General Information",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "lastCommitHash": "Last Commit Hash",
@@ -77,10 +78,11 @@
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
-                    "overview": "Overview",
+                    "overview": "Result Overview",
                     "total": "Total",
                     "yourPoints": "Your Points",
                     "maxPoints": "Achievable Points",
+                    "achievedPercentage": "Achieved Percentage",
                     "maxBonus": "Achievable Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of a maximum {{normalPoints}} possible points (including bonus points).",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points.",
@@ -89,7 +91,6 @@
                         "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}.",
                         "POINTS": "You received {{achievedBonus}} additional bonus points from {{bonusFromTitle}}."
                     },
-                    "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus.",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
                 "grade": "Grade",
@@ -108,6 +109,7 @@
             "date": "Date",
             "time": "Time",
             "workingTime": "Working Time",
+            "examinedStudent": "Examined student",
             "resultInformation": "Your result will be published here as soon as the correction is finished. You can get to this page by clicking on this exam in the exam overview of this course.",
             "course": "Course",
             "exercises": "Exercises",
@@ -117,6 +119,7 @@
             "startDate": "Start Date",
             "endDate": "End Date",
             "publishResultsDate": "Release Date of Results",
+            "examStudentReviewTimespan": "Review Timespan",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "studentReviewEnabled": "Review is open",
@@ -134,6 +137,10 @@
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
             "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
+            "cleanup": {
+                "title": "Cleanup",
+                "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-danger'>NOT</strong> be undone!"
+            },
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
@@ -153,6 +160,28 @@
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",
                 "showNew": "Only show new Version"
+            },
+            "editWorkingTime": {
+                "absolute": "Absolute",
+                "relative": "Change relative to regular working time"
+            },
+            "events": {
+                "button": "Notifications",
+                "type": {
+                    "examWideAnnouncement": "Exam-Wide Announcement",
+                    "workingTimeUpdate": "Working Time Update"
+                },
+                "from": "from",
+                "acknowledge": "Acknowledge",
+                "acknowledgeAll": "Acknowledge all",
+                "messages": {
+                    "workingTimeUpdate": {
+                        "titleEveryone": "The working time of the exam has been changed.",
+                        "titlePersonal": "Your personal working time of the exam has been changed.",
+                        "old": "Previous working time",
+                        "new": "New working time"
+                    }
+                }
             }
         },
         "examScores": {
@@ -198,6 +227,7 @@
             "overallGradeColumn": "Overall Grade",
             "overallBonusColumn": "Overall Bonus Points",
             "bonusGradeColumn": "Bonus Grade",
+            "bonusPointsColumn": "Bonus Points",
             "finalGradeColumn": "Final Grade",
             "passedColumn": "Passed",
             "mostSeverePlagiarismVerdictColumn": "Plagiarism Verdict",
@@ -268,8 +298,12 @@
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
             "namePlaceholder": "Enter your full name here",
-            "workingTimeIncreased": "The end of working time was extended until {{ date }}.",
-            "workingTimeDecreased": "The end of working time was shortened until {{ date }}."
+            "submissionSuccessful": {
+                "title": "Your exam has been submitted successfully!",
+                "noActionRequired": "Artemis does not require any further action and this window can be closed.",
+                "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
+                "button": "Show exam summary{{countdown}}"
+            }
         },
         "exerciseGroup": {
             "created": "New exercise group created",
@@ -283,7 +317,9 @@
             "browserFingerprintHash": "Browser Fingerprint",
             "instanceId": "Browser Instance ID",
             "ipAddress": "IP Address",
-            "createdDate": "Created Date"
+            "createdDate": "Created Date",
+            "studentExamId": "Exam ID",
+            "userLogin": "Login"
         },
         "studentExams": {
             "title": "Student exams",
@@ -401,7 +437,7 @@
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
-                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
+                "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
             },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
@@ -561,7 +597,10 @@
                     "examReview": "Plan the exam review",
                     "resolveComplaints": "Resolve all complaints",
                     "testRun": "Conduct a test run",
-                    "exportResults": "Export the exam results"
+                    "exportResults": "Export the exam results",
+                    "editWorkingTime": "Edit the exam duration",
+                    "createAnnouncement": "Create an announcement",
+                    "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
@@ -575,7 +614,10 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file."
+                    "exportResults": "Exports the exam results as a .csv file.",
+                    "editWorkingTime": "Until five minutes before the end of the exam, you can extend its duration.",
+                    "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
+                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
                     "leastoneexercisegroup": "At least one exercise group",
@@ -608,6 +650,47 @@
                     "numberParticipants": "Participants",
                     "variants": "Variants"
                 }
+            },
+            "editWorkingTime": {
+                "title": "Edit Exam Duration",
+                "label": "Exam duration change",
+                "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
+                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+            },
+            "announcementCreate": {
+                "button": "Create Announcement",
+                "title": "Make Live Exam Announcement",
+                "task": "Enter your announcement below. You can use Markdown text formatting.",
+                "preview": "Preview",
+                "sendButton": "Send Announcement",
+                "sending": "Sending announcement...",
+                "sent": "Announcement sent!"
+            },
+            "suspiciousBehavior": {
+                "title": "Suspicious Behavior",
+                "examSessionDescription": "Whenever a student enters a exam, a session is created for the student. This session is the combination of IP address, session token, user agent, browser fingerprint, browser instance ID and a timestamp.",
+                "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
+                "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
+                "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessions": {
+                    "title": "Suspicious Sessions",
+                    "view": "View Suspicious Sessions",
+                    "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
+                    "reasons": "Suspicious because of:",
+                    "case": "Case",
+                    "sameIpAddress": "Same IP address",
+                    "sameBrowserFingerprint": "Same browser fingerprint"
+                }
+            },
+            "plagiarismCasesOverview": {
+                "title": "Plagiarism Cases Overview",
+                "exerciseName": "Exercise",
+                "numberOfResults": "Number of potential plagiarism cases",
+                "numberOfCases": "Number of plagiarism cases",
+                "actions": "Actions",
+                "viewResultsOrRunDetection": "View Results or Run Detection",
+                "viewCases": "View Cases"
             }
         },
         "studentExamDetail": {
@@ -637,7 +720,6 @@
             "noSessions": "No Sessions"
         },
         "studentExam": {
-            "submitSuccessful": "Your exam was submitted successfully. Artemis does not require further action, the window can be closed. Be sure to follow your instructor's exam protocol.",
             "alreadySubmitted": "You have already submitted.",
             "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
             "handInFailed": "Submission of your exam failed. Please try again!"

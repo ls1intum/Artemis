@@ -7,6 +7,11 @@
         <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
         <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
     </div>
+    <!--  Temporary solution until #6593 is fixed  -->
+    <div class="filter-disclaimer" *ngIf="comparisons?.length === 100">
+        <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
+        <span>{{ 'artemisApp.plagiarism.casesTrimmed' | artemisTranslate }}</span>
+    </div>
 
     <ul class="plagiarism-list" *ngIf="comparisons && comparisons.length">
         <li
@@ -34,7 +39,7 @@
                     </span>
                 </div>
             </div>
-            <span class="plagiarism-percentage">({{ comparison.similarity || 0 | number : '1.2-2' }} %)</span>
+            <span class="plagiarism-percentage">({{ comparison.similarity || 0 | number: '1.2-2' }} %)</span>
         </li>
     </ul>
 
@@ -46,8 +51,8 @@
         <div class="plagiarism-paging-left" [class.disabled]="currentPage === 0" (click)="handlePageLeft()">
             <fa-icon [icon]="faArrowLeft"></fa-icon>
         </div>
-        <div class="plagiarism-paging-center">{{ currentPage + 1 }}/{{ numberOfPages + 1 }}</div>
-        <div class="plagiarism-paging-right" [class.disabled]="currentPage === numberOfPages" (click)="handlePageRight()">
+        <div class="plagiarism-paging-center">{{ currentPage + 1 }}/{{ numberOfPages }}</div>
+        <div class="plagiarism-paging-right" [class.disabled]="currentPage + 1 >= numberOfPages" (click)="handlePageRight()">
             <fa-icon [icon]="faArrowRight"></fa-icon>
         </div>
     </div>

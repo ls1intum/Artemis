@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunic
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "notificationsettingsservice";
 
@@ -141,6 +141,13 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
 
         assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, PUSH))
                 .as("Pushs with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
+
+        notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(DATA_EXPORT_CREATED));
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
+                .as("Emails with type DATA_EXPORT_CREATED should be allowed for the given user").isTrue();
+        notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(DATA_EXPORT_FAILED));
+        assertThat(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1, EMAIL))
+                .as("Emails with type DATA_EXPORT_FAILED should be allowed for the given user").isTrue();
     }
 
     /**

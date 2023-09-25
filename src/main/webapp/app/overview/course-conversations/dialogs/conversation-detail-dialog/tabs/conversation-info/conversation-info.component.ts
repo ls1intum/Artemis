@@ -49,7 +49,12 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     changesPerformed = new EventEmitter<void>();
 
     readOnlyMode = false;
-    constructor(private channelService: ChannelService, private groupChatService: GroupChatService, private modalService: NgbModal, private alertService: AlertService) {}
+    constructor(
+        private channelService: ChannelService,
+        private groupChatService: GroupChatService,
+        private modalService: NgbModal,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         if (this.activeConversation) {
@@ -84,7 +89,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        this.openEditPropertyDialog(channelOrGroupChat, 'name', 20, true, channelRegex, keys);
+        this.openEditPropertyDialog(channelOrGroupChat, 'name', 30, true, channelRegex, keys);
     }
 
     openEditTopicModal(event: MouseEvent) {

@@ -11,6 +11,7 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { LearningPath } from 'app/entities/competency/learning-path.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -89,11 +90,14 @@ export class Course implements BaseEntity {
     public lectures?: Lecture[];
     public competencies?: Competency[];
     public prerequisites?: Competency[];
+    public learningPathsEnabled?: boolean;
+    public learningPaths?: LearningPath[];
     public exams?: Exam[];
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
     public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+    public courseInformationSharingMessagingCodeOfConduct?: string;
 
     // helper attributes
     public isAtLeastTutor?: boolean;

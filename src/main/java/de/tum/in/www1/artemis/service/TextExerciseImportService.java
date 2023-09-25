@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
@@ -44,7 +43,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     /**
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyTextExerciseBasis(TextExercise)} to set up the basis of the exercise
+     * This method calls {@link #copyTextExerciseBasis(TextExercise, Map)} to set up the basis of the exercise
      * {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported
@@ -56,11 +55,11 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
+        disableFeedbackSuggestionsForExamExercises(newExercise);
 
         TextExercise newTextExercise = textExerciseRepository.save(newExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(newTextExercise, importedExercise.getChannelName());
-        channelService.registerUsersToChannelAsynchronously(true, newTextExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }
@@ -84,6 +83,17 @@ public class TextExerciseImportService extends ExerciseImportService {
     }
 
     /**
+     * Disable feedback suggestions on exam exercises (currently not supported)
+     *
+     * @param exercise the exercise to disable feedback suggestions for
+     */
+    private void disableFeedbackSuggestionsForExamExercises(TextExercise exercise) {
+        if (exercise.isExamExercise()) {
+            exercise.disableFeedbackSuggestions();
+        }
+    }
+
+    /**
      * This helper functions does a hard copy of the text blocks and inserts them into {@code newSubmission}
      *
      * @param originalTextBlocks The original text blocks to be copied
@@ -95,8 +105,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         var newTextBlocks = new HashSet<TextBlock>();
         for (TextBlock originalTextBlock : originalTextBlocks) {
             TextBlock newTextBlock = new TextBlock();
-            Optional.ofNullable(originalTextBlock.getAddedDistance()).ifPresent(newTextBlock::setAddedDistance);
-            Optional.ofNullable(originalTextBlock.getCluster()).ifPresent(newTextBlock::setCluster);
             newTextBlock.setEndIndex(originalTextBlock.getEndIndex());
             newTextBlock.setStartIndex(originalTextBlock.getStartIndex());
             newTextBlock.setSubmission(newSubmission);

@@ -7,21 +7,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.io.FileInputStream;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -38,7 +33,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
@@ -97,16 +94,15 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         course1 = courseUtilService.addEmptyCourse();
 
         // same registration number as in test pdf file
-        student1.setGroups(Set.of(course1.getStudentGroupName()));
         student1.setRegistrationNumber("03756882");
         userRepo.save(student1);
-        student2.setGroups(Set.of(course1.getStudentGroupName()));
+
         student2.setRegistrationNumber("03756883");
         userRepo.save(student2);
-        student3.setGroups(Set.of(course1.getStudentGroupName()));
+
         student3.setRegistrationNumber("03756884");
         userRepo.save(student3);
-        student4.setGroups(Set.of(course1.getStudentGroupName()));
+
         student4.setRegistrationNumber("03756885");
         userRepo.save(student4);
 
@@ -117,6 +113,14 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        programmingExerciseTestService.tearDown();
+        for (LocalRepository studentRepo : studentRepos) {
+            studentRepo.resetLocalRepo();
+        }
     }
 
     @Test

@@ -115,7 +115,7 @@
             <button
                 jhi-posting-button
                 [buttonLoading]="isLoading"
-                [disabled]="!formGroup.valid"
+                [disabled]="isLoading || !formGroup.valid"
                 [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
                 id="save"
                 class="btn btn-sm btn-outline-secondary"

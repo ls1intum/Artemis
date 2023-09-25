@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutoreffort"; // only lower case is supported
 
@@ -69,7 +69,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
-        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).get(0);
+        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
         var instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
         userRepository.save(instructor);

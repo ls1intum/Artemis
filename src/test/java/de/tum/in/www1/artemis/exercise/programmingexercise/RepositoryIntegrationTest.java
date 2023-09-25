@@ -61,6 +61,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -135,6 +136,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
 
+    private LocalRepository templateRepository;
+
     private final List<BuildLogEntry> logs = new ArrayList<>();
 
     private final BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
@@ -183,7 +186,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo
-        LocalRepository templateRepository = new LocalRepository(defaultBranch);
+        templateRepository = new LocalRepository(defaultBranch);
         templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
 
         // add file to the template repo folder
@@ -239,6 +242,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void tearDown() throws IOException {
         reset(gitService);
         studentRepository.resetLocalRepo();
+        templateRepository.resetLocalRepo();
     }
 
     @Test
@@ -630,6 +634,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
 
         request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
+        instructorAssignmentRepository.resetLocalRepo();
     }
 
     @Test
@@ -659,7 +664,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Stage all changes and make a second commit in the remote repository
         gitService.stageAllChanges(remoteRepository);
-        studentRepository.originGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+        GitService.commit(studentRepository.originGit).setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
         // Checks if the current commit is not equal on the local and the remote repository
         assertThat(studentRepository.getAllLocalCommits().get(0)).isNotEqualTo(studentRepository.getAllOriginCommits().get(0));
@@ -698,7 +703,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // write content to the created file
         FileUtils.write(localFile, "local", Charset.defaultCharset());
         gitService.stageAllChanges(localRepo);
-        studentRepository.localGit.commit().setMessage("local").call();
+        GitService.commit(studentRepository.localGit).setMessage("local").call();
 
         // Create file in the remote repository and commit it
         Path remoteFilePath = Path.of(studentRepository.originRepoFile + "/" + fileName);
@@ -706,7 +711,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // write content to the created file
         FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
         gitService.stageAllChanges(remoteRepo);
-        studentRepository.originGit.commit().setMessage("remote").call();
+        GitService.commit(studentRepository.originGit).setMessage("remote").call();
 
         // Merge the two and a conflict will occur
         studentRepository.localGit.fetch().setRemote("origin").call();
@@ -887,7 +892,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise.setAssessmentType(AssessmentType.MANUAL);
         programmingExerciseRepository.save(programmingExercise);
 
-        participation.setTestRun(true);
+        participation.setPracticeMode(true);
         studentParticipationRepository.save(participation);
 
         testCommitChanges();

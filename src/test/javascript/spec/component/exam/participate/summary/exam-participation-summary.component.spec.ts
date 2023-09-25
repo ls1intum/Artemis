@@ -27,14 +27,14 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
-import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
+import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
+import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { QuizExamSummaryComponent } from 'app/exam/participate/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { TextExamSummaryComponent } from 'app/exam/participate/summary/exercises/text-exam-summary/text-exam-summary.component';
-import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
+import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result-overview/exam-result-overview.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
@@ -52,8 +52,8 @@ import { MockExamParticipationService } from '../../../../helpers/mocks/service/
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
 
-let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
-let component: ExamParticipationSummaryComponent;
+let fixture: ComponentFixture<ExamResultSummaryComponent>;
+let component: ExamResultSummaryComponent;
 let artemisServerDateService: ArtemisServerDateService;
 
 const user = { id: 1, name: 'Test User' } as User;
@@ -136,10 +136,10 @@ function sharedSetup(url: string[]) {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), HttpClientModule, NgbCollapseMocksModule],
             declarations: [
-                ExamParticipationSummaryComponent,
+                ExamResultSummaryComponent,
                 MockComponent(TestRunRibbonComponent),
-                MockComponent(ExamPointsSummaryComponent),
-                MockComponent(ExamInformationComponent),
+                MockComponent(ExamResultOverviewComponent),
+                MockComponent(ExamGeneralInformationComponent),
                 MockComponent(ResultComponent),
                 MockComponent(UpdatingResultComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
@@ -179,7 +179,7 @@ function sharedSetup(url: string[]) {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ExamParticipationSummaryComponent);
+                fixture = TestBed.createComponent(ExamResultSummaryComponent);
                 component = fixture.componentInstance;
                 component.studentExam = studentExam;
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
@@ -191,7 +191,7 @@ function sharedSetup(url: string[]) {
     });
 }
 
-describe('ExamParticipationSummaryComponent', () => {
+describe('ExamResultSummaryComponent', () => {
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {

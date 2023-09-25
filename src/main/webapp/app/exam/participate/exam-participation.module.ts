@@ -22,15 +22,18 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
-import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
+import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-result-summary.module';
 import { ExamTimerComponent } from './timer/exam-timer.component';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
-import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
+import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
+import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
+import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -55,6 +58,8 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisParticipationSummaryModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
+        ExamExerciseUpdateHighlighterModule,
+        ArtemisExamSharedModule,
     ],
     declarations: [
         ExamParticipationComponent,
@@ -67,7 +72,8 @@ const ENTITY_STATES = [...examParticipationState];
         ExamNavigationBarComponent,
         ExamTimerComponent,
         ExamExerciseOverviewPageComponent,
-        ExamExerciseUpdateHighlighterComponent,
+        ExamLiveEventsButtonComponent,
+        ExamLiveEventsOverlayComponent,
     ],
 })
 export class ArtemisExamParticipationModule {}

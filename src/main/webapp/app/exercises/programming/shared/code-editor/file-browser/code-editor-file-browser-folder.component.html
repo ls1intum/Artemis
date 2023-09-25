@@ -21,11 +21,11 @@
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FOLDER)" class="btn btn-small">
             <fa-icon [icon]="faFolder" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | artemisTranslate }}"></fa-icon>
         </button>
-        <button [disabled]="disableActions || (isCompressed && item.children && item.children.length)" (click)="setRenamingNode($event)" class="btn btn-small">
+        <button [disabled]="disableActions || (isCompressed && item.value.includes('/'))" (click)="setRenamingNode($event)" class="btn btn-small">
             <fa-icon
                 [icon]="faEdit"
                 title="{{
-                    (!disableActions && isCompressed && item.children && item.children.length
+                    (!disableActions && isCompressed && item.value.includes('/')
                         ? 'artemisApp.editor.fileBrowser.renameFolderDisabledTooltip'
                         : 'artemisApp.editor.fileBrowser.renameFolder'
                     ) | artemisTranslate

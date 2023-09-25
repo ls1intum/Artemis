@@ -118,7 +118,7 @@ public class ParticipationService {
     public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isTestRun() && exercise.isCourseExercise()) {
+        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
             // In case there is already a practice participation, set it to inactive
             optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
             studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
@@ -240,12 +240,8 @@ public class ParticipationService {
         participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
         participation = configureBuildPlan(participation);
-        // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
-        // (when the web hook was already initialized, see below)
-        continuousIntegrationService.orElseThrow().performEmptySetupCommit(participation);
-        // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
-        participation = configureRepositoryWebHook(participation);
+        configureRepositoryWebHook(participation);
         // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
         // Step 4b) Set the InitializationDate to the current time
@@ -285,7 +281,7 @@ public class ParticipationService {
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
-            participation.setTestRun(true);
+            participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
         }
         else {
@@ -343,7 +339,7 @@ public class ParticipationService {
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUrl(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
-            programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+            configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
                     || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
@@ -394,7 +390,7 @@ public class ParticipationService {
 
         // If a graded participation gets reset after the due date set the state back to finished. Otherwise, the participation is initialized
         var dueDate = ExerciseDateService.getDueDate(participation);
-        if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+        if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
             participation.setInitializationState(InitializationState.FINISHED);
         }
         else {
@@ -416,9 +412,10 @@ public class ParticipationService {
             final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(sourceURL);
-            String templateBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
+            VersionControlService vcs = versionControlService.orElseThrow();
+            String templateBranch = vcs.getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
+            var newRepoUrl = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participation.getParticipantIdentifier());
@@ -489,11 +486,10 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
+    private void configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.orElseThrow().addWebHookForParticipation(participation);
         }
-        return participation;
     }
 
     /**
@@ -628,7 +624,7 @@ public class ParticipationService {
             return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), team.getId()))
                     .orElse(List.of());
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -645,7 +641,7 @@ public class ParticipationService {
 
             // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
             var dueDate = ExerciseDateService.getDueDate(participation);
-            if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+            if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
                 participation.setInitializationState(InitializationState.FINISHED);
             }
             else {
@@ -687,10 +683,11 @@ public class ParticipationService {
         final List<StudentParticipation> changedParticipations = new ArrayList<>();
 
         for (final StudentParticipation toBeUpdated : participations) {
-            final Optional<StudentParticipation> originalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
-            if (originalParticipation.isEmpty()) {
+            final Optional<StudentParticipation> optionalOriginalParticipation = studentParticipationRepository.findById(toBeUpdated.getId());
+            if (optionalOriginalParticipation.isEmpty()) {
                 continue;
             }
+            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
 
             // individual due dates can only exist if the exercise has a due date
             // they also have to be after the exercise due date
@@ -702,9 +699,9 @@ public class ParticipationService {
                 newIndividualDueDate = toBeUpdated.getIndividualDueDate();
             }
 
-            if (!Objects.equals(originalParticipation.get().getIndividualDueDate(), newIndividualDueDate)) {
-                originalParticipation.get().setIndividualDueDate(newIndividualDueDate);
-                changedParticipations.add(originalParticipation.get());
+            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
+                originalParticipation.setIndividualDueDate(newIndividualDueDate);
+                changedParticipations.add(originalParticipation);
             }
         }
 
@@ -760,12 +757,8 @@ public class ParticipationService {
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
         if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
-            if (studentParticipation.getStudent().isPresent()) {
-                studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), studentParticipation.getStudent().get());
-            }
-            if (studentParticipation.getTeam().isPresent()) {
-                teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), studentParticipation.getTeam().get());
-            }
+            studentParticipation.getStudent().ifPresent(student -> studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), student));
+            studentParticipation.getTeam().ifPresent(team -> teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), team));
         }
 
         Set<Submission> submissions = participation.getSubmissions();

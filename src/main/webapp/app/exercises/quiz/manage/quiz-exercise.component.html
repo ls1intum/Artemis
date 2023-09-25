@@ -2,6 +2,9 @@
     <table class="table table-striped">
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" />
+                </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -20,6 +23,9 @@
         </thead>
         <tbody>
             <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
+                <td *ngIf="quizExercise.isAtLeastInstructor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
+                </td>
                 <td *ngIf="!quizExercise.quizEnded || !quizExercise.isAtLeastEditor">
                     <a *ngIf="quizExercise.isEditable; else readOnlyId" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                         >{{ quizExercise.id }}
@@ -37,9 +43,9 @@
                     <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
                     <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
                 </td>
-                <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate : 'long' : true) : '-' }}</td>
-                <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long':true) : '-' }}</td>
-                <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate : 'long' : true) : '-' }}</td>
+                <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long' : true) : '-' }}</td>
+                <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long' : true) : '-' }}</td>
+                <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate: 'long' : true) : '-' }}</td>
                 <td>
                     {{ fullMinutesForSeconds(quizExercise.duration!) }}
                     <span jhiTranslate="{{ quizExercise.duration! % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
@@ -239,4 +245,18 @@
             </tr>
         </tbody>
     </table>
+    <div *ngIf="selectedExercises.length > 0">
+        <button
+            *ngIf="course.isAtLeastInstructor"
+            jhiDeleteButton
+            [entityTitle]="'Delete All Quiz Exercises'"
+            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+            (delete)="deleteMultipleExercises(selectedExercises, quizExerciseService)"
+            [dialogError]="dialogError$"
+            id="delete-all-quiz"
+            class="mb-1"
+        >
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+    </div>
 </div>

@@ -2,7 +2,6 @@ import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angula
 import { Exercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-// eslint-disable-next-line max-len
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
@@ -24,7 +23,10 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
 
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private injector: Injector) {}
+    constructor(
+        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
+        private injector: Injector,
+    ) {}
 
     /**
      * Sets latest result according to parameter.

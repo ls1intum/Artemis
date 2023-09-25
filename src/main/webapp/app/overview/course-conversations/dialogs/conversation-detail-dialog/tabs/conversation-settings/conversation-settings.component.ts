@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
-import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -21,7 +21,7 @@ import { catchError } from 'rxjs/operators';
     templateUrl: './conversation-settings.component.html',
     styleUrls: ['./conversation-settings.component.scss'],
 })
-export class ConversationSettingsComponent implements OnDestroy {
+export class ConversationSettingsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     @Input()
@@ -39,17 +39,30 @@ export class ConversationSettingsComponent implements OnDestroy {
     @Output()
     conversationLeave: EventEmitter<void> = new EventEmitter<void>();
 
-    canChangeArchivalState = canChangeChannelArchivalState;
-    canDeleteChannel = canDeleteChannel;
-    canLeaveConversation = canLeaveConversation;
-    getAsChannel = getAsChannelDto;
-
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     faTimes = faTimes;
 
-    constructor(private modalService: NgbModal, private channelService: ChannelService, private groupChatService: GroupChatService, private alertService: AlertService) {}
+    conversationAsChannel: ChannelDTO | undefined;
+    canLeaveConversation: boolean;
+    canChangeChannelArchivalState: boolean;
+    canDeleteChannel: boolean;
+
+    constructor(
+        private modalService: NgbModal,
+        private channelService: ChannelService,
+        private groupChatService: GroupChatService,
+        private alertService: AlertService,
+    ) {}
+
+    ngOnInit(): void {
+        this.canLeaveConversation = canLeaveConversation(this.activeConversation);
+
+        this.conversationAsChannel = getAsChannelDto(this.activeConversation);
+        this.canChangeChannelArchivalState = this.conversationAsChannel ? canChangeChannelArchivalState(this.conversationAsChannel) : false;
+        this.canDeleteChannel = this.conversationAsChannel ? canDeleteChannel(this.course, this.conversationAsChannel) : false;
+    }
 
     leaveConversation($event: MouseEvent) {
         $event.stopPropagation();

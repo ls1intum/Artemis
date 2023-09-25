@@ -29,7 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -60,7 +60,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "singleusernotification";
 
@@ -131,6 +131,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     private GroupChat groupChat;
 
     private Channel channel;
+
+    private DataExport dataExport;
 
     /**
      * Sets up all needed mocks and their wanted behavior
@@ -223,6 +225,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         channel.setCreator(userTwo);
         channel.setCreationDate(ZonedDateTime.now());
         channel.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
+
+        dataExport = new DataExport();
+        dataExport.setUser(user);
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
@@ -541,6 +546,22 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_UNASSIGNED_TITLE);
         verifyEmail();
         verifyPush(1);
+    }
+
+    @Test
+    void testDataExportNotification_dataExportCreated() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED));
+        singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
+        verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_CREATED_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testDataExportNotification_dataExportFailed() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED));
+        singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
+        verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_FAILED_TITLE);
+        verifyEmail();
     }
 
     /**

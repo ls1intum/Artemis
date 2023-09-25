@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -15,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -32,6 +32,22 @@ public class LectureFactory {
         lecture.setEndDate(endDate);
         lecture.setCourse(course);
         return lecture;
+    }
+
+    /**
+     * Create a dummy attachment unit for testing. Includes a dummy attachment with optional placeholder image file on disk
+     *
+     * @param withFile Whether to include a placeholder image file on disk
+     * @return AttachmentUnit that was created
+     */
+    public static AttachmentUnit generateAttachmentUnit(boolean withFile) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started) : LectureFactory.generateAttachment(started);
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnit;
     }
 
     /**
@@ -62,7 +78,7 @@ public class LectureFactory {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
         try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);

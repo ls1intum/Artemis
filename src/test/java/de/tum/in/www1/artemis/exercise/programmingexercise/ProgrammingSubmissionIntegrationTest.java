@@ -16,7 +16,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,23 +33,18 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.TestConstants;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -230,7 +224,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @Timeout(5)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExerciseAsInstructor() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -377,7 +370,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String url = Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
+        final Long submissionId = submission.getId();
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_SUBMISSION_TOPIC),
+                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.id().equals(submissionId)));
 
         // Perform the request again and make sure no new submission was created
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
@@ -401,6 +396,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var participation = createExerciseWithSubmissionAndParticipation();
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        var repoUrl = urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        doReturn(participation.getVcsRepositoryUrl()).when(versionControlService).getCloneRepositoryUrl(exercise.getProjectKey(), repoUrl);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);

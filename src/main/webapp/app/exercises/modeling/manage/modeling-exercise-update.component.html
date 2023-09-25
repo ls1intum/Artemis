@@ -16,14 +16,12 @@
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
         </div>
-        <jhi-title-channel-name
-            [(title)]="modelingExercise.title"
-            [(channelName)]="modelingExercise.channelName"
-            channelNamePrefix="exercise-"
-            [emphasizeLabels]="true"
-            [hideChannelName]="isExamMode || (!isImport && modelingExercise.channelName === undefined)"
-            [initChannelName]="isImport || modelingExercise.id === undefined"
-        ></jhi-title-channel-name>
+        <jhi-exercise-title-channel-name
+            [exercise]="modelingExercise"
+            [course]="modelingExercise.course"
+            [isExamMode]="isExamMode"
+            [isImport]="isImport"
+        ></jhi-exercise-title-channel-name>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
@@ -237,10 +235,7 @@
                 name="competencies"
             ></jhi-competency-selection>
         </div>
-        <div class="form-group" *ngIf="modelingExercise.id && !isImport">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-            <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
-        </div>
+        <jhi-exercise-update-notification [exercise]="modelingExercise" [isImport]="isImport" [(notificationText)]="notificationText"> </jhi-exercise-update-notification>
     </div>
     <div>
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">

@@ -67,7 +67,6 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
     /**
      * Listens to updates of the system notification array on the websocket.
      * The server submits the entire list of relevant system notifications if they are updated
-     * @private
      */
     private subscribeSocket() {
         this.jhiWebsocketService.subscribe(WEBSOCKET_CHANNEL);
@@ -84,7 +83,6 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
 
     /**
      * Schedule a change detection cycle of this component at the next date that changes
-     * @private
      */
     private selectVisibleNotificationsAndScheduleUpdate() {
         const now = dayjs();

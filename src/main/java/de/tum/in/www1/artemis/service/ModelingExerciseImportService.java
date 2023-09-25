@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -12,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -52,8 +48,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
         ModelingExercise newModelingExercise = modelingExerciseRepository.save(newExercise);
 
-        Channel createdChannel = channelService.createExerciseChannel(newModelingExercise, importedExercise.getChannelName());
-        channelService.registerUsersToChannelAsynchronously(true, newModelingExercise.getCourseViaExerciseGroupOrCourseMember(), createdChannel);
+        channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newModelingExercise;
     }

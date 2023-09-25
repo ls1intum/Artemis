@@ -4,27 +4,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -35,8 +31,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
@@ -78,9 +72,6 @@ public class QuizExerciseUtilService {
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private RequestUtilService requestUtilService;
-
-    @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
 
     @Autowired
@@ -97,29 +88,6 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private QuizScheduleService quizScheduleService;
-
-    /**
-     * Create, join and start a batch for student by tutor
-     */
-    public void prepareBatchForSubmitting(QuizExercise quizExercise, Authentication tutor, Authentication student) throws Exception {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        switch (quizExercise.getQuizMode()) {
-            case SYNCHRONIZED -> {
-            }
-            case BATCHED -> {
-                SecurityContextHolder.getContext().setAuthentication(tutor);
-                var batch = requestUtilService.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
-                requestUtilService.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
-                SecurityContextHolder.getContext().setAuthentication(student);
-                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), HttpStatus.OK, null);
-            }
-            case INDIVIDUAL -> {
-                SecurityContextHolder.getContext().setAuthentication(student);
-                requestUtilService.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(null), HttpStatus.OK, null);
-            }
-        }
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
 
     public Course addCourseWithOneQuizExercise() {
         return addCourseWithOneQuizExercise("Title");
@@ -275,8 +243,14 @@ public class QuizExerciseUtilService {
         quizBatchRepository.save(batch);
     }
 
-    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) throws IOException {
-        QuizExercise quizExercise = createAndSaveQuizWithAllQuestionTypes(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+    public QuizSubmission addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean dueDateInTheFuture) throws IOException {
+        QuizExercise quizExercise;
+        if (dueDateInTheFuture) {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, futureTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED);
+        }
+        else {
+            quizExercise = createAndSaveQuizWithAllQuestionTypes(course, pastTimestamp, pastTimestamp, pastTimestamp, QuizMode.SYNCHRONIZED);
+        }
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
@@ -293,6 +267,10 @@ public class QuizExerciseUtilService {
         MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(0));
         submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0), multipleChoiceQuestion.getAnswerOptions().get(1)));
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
+        var submittedAnswerSC = new MultipleChoiceSubmittedAnswer();
+        MultipleChoiceQuestion singleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(3));
+        submittedAnswerSC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0)));
+        submittedAnswerSC.setQuizQuestion(singleChoiceQuestion);
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
         submittedShortAnswer.setQuizQuestion(shortAnswerQuestion);
@@ -312,16 +290,16 @@ public class QuizExerciseUtilService {
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
-        var backgroundPathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "drag_and_drop_background.jpg");
-        var dragItemPathInFileSystem = Path.of(FilePathService.getDragItemFilePath(), "drag_item.jpg");
+        var backgroundPathInFileSystem = FilePathService.getDragAndDropBackgroundFilePath().resolve("drag_and_drop_background.jpg");
+        var dragItemPathInFileSystem = FilePathService.getDragItemFilePath().resolve("drag_item.jpg");
         if (Files.exists(backgroundPathInFileSystem)) {
             Files.delete(backgroundPathInFileSystem);
         }
         if (Files.exists(dragItemPathInFileSystem)) {
             Files.delete(dragItemPathInFileSystem);
         }
-        Files.copy(new ClassPathResource("test-data/data-export/drag_and_drop_background.jpg").getInputStream(), backgroundPathInFileSystem);
-        Files.copy(new ClassPathResource("test-data/data-export/drag_item.jpg").getInputStream(), dragItemPathInFileSystem);
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_and_drop_background.jpg"), backgroundPathInFileSystem.toFile());
+        FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_item.jpg"), dragItemPathInFileSystem.toFile());
         dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);
@@ -339,6 +317,7 @@ public class QuizExerciseUtilService {
         quizSubmissionRepository.save(quizSubmission);
         submittedShortAnswer.setSubmission(quizSubmission);
         submittedAnswerMC.setSubmission(quizSubmission);
+        submittedAnswerSC.setSubmission(quizSubmission);
         submittedDragAndDropAnswer.setSubmission(quizSubmission);
         dragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
         incorrectDragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
@@ -355,10 +334,12 @@ public class QuizExerciseUtilService {
         mappingWithImage.setQuestion(dragAndDropQuestion);
         quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
+        submittedAnswerRepository.save(submittedAnswerSC);
         submittedAnswerRepository.save(submittedShortAnswer);
         quizSubmission.addSubmittedAnswers(submittedAnswerMC);
         quizSubmission.addSubmittedAnswers(submittedShortAnswer);
         quizSubmission.addSubmittedAnswers(submittedDragAndDropAnswer);
+        quizSubmission.addSubmittedAnswers(submittedAnswerSC);
         studentParticipation.addSubmission(quizSubmission);
         quizQuestionRepository.save(dragAndDropQuestion);
         quizExercise = quizExerciseRepository.save(quizExercise);
@@ -367,11 +348,11 @@ public class QuizExerciseUtilService {
         quizExercise.addParticipation(studentParticipation);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        return quizExercise;
+        return quizSubmission;
     }
 
-    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.initializeQuizExerciseWithAllQuestionTypes(quizExercise);
         return quizExerciseRepository.save(quizExercise);
     }

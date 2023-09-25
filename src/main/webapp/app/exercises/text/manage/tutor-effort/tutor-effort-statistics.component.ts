@@ -145,7 +145,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     /**
      * Determines the upper limit for the y-axis
      * @param data the data that should be displayed
-     * @private
      */
     private determineMaxChartHeight(data: number[]): void {
         this.yScaleMax = Math.max(this.yScaleMax, ...data);
@@ -153,7 +152,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
 
     /**
      * Auxiliary method that ensures that the chart is instantly translation sensitive
-     * @private
      */
     private translateLabels() {
         this.xAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.minutes');
@@ -162,7 +160,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
 
     /**
      * Auxiliary method that computes and sets the effort median
-     * @private
      */
     private computeEffortMedian(): number {
         if (this.tutorEfforts.length === 0) {
@@ -175,7 +172,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     /**
      * Auxiliary method that determines the Index a tutor effort should be inserted to for statistic calculation
      * @param timeSpent the time the tutor spent
-     * @private
      */
     private determineIndex(timeSpent: number): number {
         const BUCKET_LAST_INDEX = this.ngxChartLabels.length - 1;
@@ -188,7 +184,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     /**
      * Sets the color of the bar representing the median to a dark blue in order to highlight it
      * @param medianValue the median amount of time spent for correcting this exercise
-     * @private
      */
     private highlightMedian(medianValue: number) {
         const index = this.determineIndex(medianValue);
@@ -204,7 +199,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * Auxiliary method that computes the median assessed submissions for a bucket
      * @param range TutorEffortRange representing the borders for the interval of occupation
      * @returns the median rounded to two decimals
-     * @private
      */
     private computeMedianAmountOfAssessedSubmissions(range: TutorEffortRange): number {
         let filterFunction;
@@ -222,7 +216,6 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * Auxiliary method identifying the range of a tutor effort interval
      * @param index computed index based on the position of the bar in the chart
      * @returns TutorEffortRange representing the minimum and maximum border of the interval
-     * @private
      */
     private identifyMinimumAndMaximumTimesSpent(index: number): TutorEffortRange {
         const minimumTimesSpentArray = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];

@@ -9,14 +9,12 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -63,12 +61,47 @@ public class RequestUtilService {
         return mapper;
     }
 
+    /**
+     * Sends a multipart post request with a mandatory json file and an optional file.
+     *
+     * @param path           the path to send the request to
+     * @param paramValue     the main object to be sent as json
+     * @param paramName      the name of the json file
+     * @param file           the optional file to be sent
+     * @param responseType   the expected response type as class
+     * @param expectedStatus the expected status
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
+     * @return the response as object of the given type or null if the status is not 2xx
+     * @throws Exception if the request fails
+     */
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        return postWithMultipartFiles(path, paramValue, paramName, file != null ? List.of(file) : null, responseType, expectedStatus);
+    }
+
+    /**
+     * Sends a multipart post request with a mandatory json file and futher optional files.
+     *
+     * @param path           the path to send the request to
+     * @param paramValue     the main object to be sent as json
+     * @param paramName      the name of the json file
+     * @param files          the optional files to be sent
+     * @param responseType   the expected response type as class
+     * @param expectedStatus the expected status
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
+     * @return the response as object of the given type or null if the status is not 2xx
+     * @throws Exception if the request fails
+     */
+    public <T, R> R postWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus)
+            throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
         var builder = MockMvcRequestBuilders.multipart(new URI(path));
-        if (file != null) {
-            builder = builder.file(file);
+        if (files != null) {
+            for (MockMultipartFile file : files) {
+                builder = builder.file(file);
+            }
         }
         builder.file(json);
         MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
@@ -232,7 +265,7 @@ public class RequestUtilService {
      * @param params                  parameters for multi value
      * @param <T>                     Request type
      * @return Request content as string
-     * @throws Exception
+     * @throws Exception if the request fails
      */
     public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
@@ -251,7 +284,7 @@ public class RequestUtilService {
      * @param params                  parameters for multi value
      * @param <T>                     Request type
      * @return Request content as string
-     * @throws Exception
+     * @throws Exception if the request fails
      */
     public <T> String postWithResponseBodyString(String path, T body, boolean plainStringBody, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
@@ -323,7 +356,7 @@ public class RequestUtilService {
             return null;
         }
         final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
-        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+        FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
     }
@@ -338,7 +371,42 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+    /**
+     * Sends a multipart put request with a mandatory json file and an optional file.
+     *
+     * @param path           the path to send the request to
+     * @param paramValue     the main object to be sent as json
+     * @param paramName      the name of the json file
+     * @param file           the optional file to be sent
+     * @param responseType   the expected response type as class
+     * @param expectedStatus the expected status
+     * @param params         the optional parameters for the request
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
+     * @return the response as object of the given type or null if the status is not 2xx
+     * @throws Exception if the request fails
+     */
     public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
+            LinkedMultiValueMap<String, String> params) throws Exception {
+        return putWithMultipartFiles(path, paramValue, paramName, file != null ? List.of(file) : null, responseType, expectedStatus, params);
+    }
+
+    /**
+     * Sends a multipart put request with a mandatory json file and optional files.
+     *
+     * @param path           the path to send the request to
+     * @param paramValue     the main object to be sent as json
+     * @param paramName      the name of the json file
+     * @param files          the optional files to be sent
+     * @param responseType   the expected response type as class
+     * @param expectedStatus the expected status
+     * @param params         the optional parameters for the request
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
+     * @return the response as object of the given type or null if the status is not 2xx
+     * @throws Exception if the request fails
+     */
+    public <T, R> R putWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus,
             LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
@@ -347,8 +415,10 @@ public class RequestUtilService {
             request.setMethod(HttpMethod.PUT.toString());
             return request;
         });
-        if (file != null) {
-            builder.file(file);
+        if (files != null) {
+            for (MockMultipartFile file : files) {
+                builder.file(file);
+            }
         }
         if (params != null) {
             builder.params(params);
@@ -489,17 +559,22 @@ public class RequestUtilService {
     }
 
     public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        return getFile(path, expectedStatus, params, null);
+    }
+
+    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
 
         String tmpDirectory = System.getProperty("java.io.tmpdir");
         var filename = res.getResponse().getHeader("filename");
         var tmpFile = Files.createFile(Path.of(tmpDirectory, filename));
-        Files.write(tmpFile, res.getResponse().getContentAsByteArray());
+        FileUtils.writeByteArrayToFile(tmpFile.toFile(), res.getResponse().getContentAsByteArray());
         return tmpFile.toFile();
     }
 
@@ -545,6 +620,10 @@ public class RequestUtilService {
         return getList(path, expectedStatus, listElementType, new LinkedMultiValueMap<>());
     }
 
+    public <T> Set<T> getSet(String path, HttpStatus expectedStatus, Class<T> setElementType) throws Exception {
+        return getSet(path, expectedStatus, setElementType, new LinkedMultiValueMap<>());
+    }
+
     public <T> SearchResultPageDTO<T> getSearchResult(String path, HttpStatus expectedStatus, Class<T> searchElementType, MultiValueMap<String, String> params) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
@@ -571,6 +650,20 @@ public class RequestUtilService {
         }
 
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
+    }
+
+    public <T> Set<T> getSet(String path, HttpStatus expectedStatus, Class<T> setElementType, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+
+        if (!expectedStatus.is2xxSuccessful()) {
+            if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
+                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+            }
+            return null;
+        }
+
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(Set.class, setElementType));
     }
 
     public <K, V> Map<K, V> getMap(String path, HttpStatus expectedStatus, Class<K> keyType, Class<V> valueType) throws Exception {

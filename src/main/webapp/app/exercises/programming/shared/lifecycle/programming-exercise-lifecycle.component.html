@@ -25,7 +25,7 @@
 
             <div class="test-schedule-date px-1">
                 <div class="test-schedule-date-title test-schedule-date-title-small-button">
-                    <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
+                    <span jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
                     <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
@@ -142,20 +142,28 @@
             (change)="toggleManualFeedbackRequests()"
         />
         <label
-            [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
+            [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC && !readOnly ? { color: 'grey' } : {}"
             class="form-control-label"
             for="allowManualFeedbackRequests"
             jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
         ></label>
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'"></jhi-help-icon>
     </div>
+
     <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="showTestNamesToStudents" id="field_showTestNamesToStudents" [(ngModel)]="exercise.showTestNamesToStudents" checked />
-        <label class="form-check-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"> </label>
+        <input
+            class="form-check-input"
+            type="checkbox"
+            name="showTestNamesToStudents"
+            id="field_showTestNamesToStudents"
+            [disabled]="readOnly"
+            [(ngModel)]="exercise.showTestNamesToStudents"
+            checked
+        />
+        <label class="form-control-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"></label>
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
     </div>
 
-    <h6 class="mt-3" jhiTranslate="artemisApp.exercise.exampleSolution"></h6>
     <div class="form-check">
         <input
             type="checkbox"
@@ -167,7 +175,7 @@
             (change)="toggleReleaseTests()"
         />
         <label
-            [ngStyle]="!exercise.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
+            [ngStyle]="!exercise.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
             class="form-control-label"
             for="releaseTestsWithExampleSolution"
             jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"

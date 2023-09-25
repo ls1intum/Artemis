@@ -32,7 +32,6 @@ function urlValidator(control: AbstractControl) {
     }
 
     try {
-        // eslint-disable-next-line
         new URL(control.value);
     } catch {
         validUrl = false;

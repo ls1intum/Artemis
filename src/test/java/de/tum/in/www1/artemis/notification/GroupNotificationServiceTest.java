@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -33,7 +34,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "groupnotificationservice";
 
@@ -225,11 +226,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      * @return the captured notification at the given index
      */
     private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
+        await().untilAsserted(
+                () -> assertThat(notificationRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
+                        .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
+
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
-                .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest);
 
         return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);
     }
@@ -286,7 +289,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @Test
     void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -296,7 +299,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(groupNotificationService, timeout(1500)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -306,7 +309,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
-        groupNotificationScheduleService.checkNotificationsForNewExercise(exercise);
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(exercise);
         verify(instanceMessageSendService, timeout(1500)).sendExerciseReleaseNotificationSchedule(any());
     }
 

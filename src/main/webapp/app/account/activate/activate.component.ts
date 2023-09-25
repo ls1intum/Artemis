@@ -14,7 +14,11 @@ export class ActivateComponent implements OnInit {
     success = false;
     isRegistrationEnabled = false;
 
-    constructor(private activateService: ActivateService, private route: ActivatedRoute, private profileService: ProfileService) {}
+    constructor(
+        private activateService: ActivateService,
+        private route: ActivatedRoute,
+        private profileService: ProfileService,
+    ) {}
 
     /**
      * Checks if the user can be activated with ActivateService

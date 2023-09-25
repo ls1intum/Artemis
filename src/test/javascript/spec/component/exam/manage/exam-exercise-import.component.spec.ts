@@ -293,10 +293,142 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should correctly return the Exercise Icon', () => {
-        expect(component.getExerciseIcon(modelingExercise)).toEqual(faProjectDiagram);
-        expect(component.getExerciseIcon(textExercise)).toEqual(faFont);
-        expect(component.getExerciseIcon(programmingExercise)).toEqual(faKeyboard);
-        expect(component.getExerciseIcon(quizExercise)).toEqual(faCheckDouble);
-        expect(component.getExerciseIcon(fileUploadExercise)).toEqual(faFileUpload);
+        expect(component.getExerciseIcon(modelingExercise.type)).toEqual(faProjectDiagram);
+        expect(component.getExerciseIcon(textExercise.type)).toEqual(faFont);
+        expect(component.getExerciseIcon(programmingExercise.type)).toEqual(faKeyboard);
+        expect(component.getExerciseIcon(quizExercise.type)).toEqual(faCheckDouble);
+        expect(component.getExerciseIcon(fileUploadExercise.type)).toEqual(faFileUpload);
+    });
+
+    describe('Programming exercise import validation', () => {
+        const exerciseGroup6 = { title: 'exerciseGroup6' } as ExerciseGroup;
+        const programmingExercise2 = new ProgrammingExercise(undefined, exerciseGroup6);
+
+        programmingExercise2.id = 6;
+        programmingExercise2.title = 'ProgrammingExercise';
+        programmingExercise2.shortName = 'progEx1';
+
+        const programmingExercise3 = new ProgrammingExercise(undefined, exerciseGroup6);
+        programmingExercise3.id = 7;
+        programmingExercise3.title = 'ProgrammingExercise';
+        programmingExercise3.shortName = 'progEx2';
+        exerciseGroup6.exercises = [programmingExercise2, programmingExercise3];
+
+        const exam2 = {
+            id: 10,
+            exerciseGroups: [exerciseGroup1, exerciseGroup2, exerciseGroup3, exerciseGroup4, exerciseGroup5, exerciseGroup6],
+        } as Exam;
+
+        beforeEach(() => {
+            component.exam = exam2;
+            component.importInSameCourse = false;
+            component.ngOnInit();
+        });
+
+        afterEach(() => {
+            programmingExercise2.title = 'ProgrammingExercise';
+            programmingExercise2.shortName = 'progEx1';
+            programmingExercise3.title = 'ProgrammingExercise';
+            programmingExercise3.shortName = 'progEx2';
+        });
+
+        it('should remove duplicated titles when importing', () => {
+            expect(programmingExercise.title).toBe('ProgrammingExercise');
+            expect(programmingExercise2.title).toBe('');
+            expect(programmingExercise3.title).toBe('');
+        });
+
+        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
+            'should check for programming exercise duplicated titles and short names when entering input',
+            (attrToCheck) => {
+                const duplicatesToCheck = component[attrToCheck];
+                const duplicatedTitles = attrToCheck === 'exercisesWithDuplicatedTitles';
+
+                if (duplicatedTitles) {
+                    programmingExercise2.title = programmingExercise.title;
+                    programmingExercise3.title = programmingExercise.title;
+                } else {
+                    programmingExercise2.shortName = programmingExercise.shortName;
+                    programmingExercise3.shortName = programmingExercise.shortName;
+                }
+
+                component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise, exerciseGroup3, duplicatedTitles);
+
+                expect(duplicatesToCheck.size).toBe(3);
+                expect(duplicatesToCheck.has(programmingExercise.id!)).toBeTrue();
+                expect(duplicatesToCheck.has(programmingExercise2.id!)).toBeTrue();
+                expect(duplicatesToCheck.has(programmingExercise3.id!)).toBeTrue();
+            },
+        );
+
+        it.each([
+            ['exercisesWithDuplicatedShortNames', false],
+            ['exercisesWithDuplicatedShortNames', true],
+            ['exercisesWithDuplicatedTitles', false],
+            ['exercisesWithDuplicatedTitles', true],
+        ])('should remove exercise from duplicates when title / short name is changed', (attrToCheck, additionalDuplicate) => {
+            const duplicatesToCheck = component[attrToCheck];
+            const duplicatedTitles = attrToCheck === 'exercisesWithDuplicatedTitles';
+
+            // setup duplicates
+            duplicatesToCheck.set(programmingExercise.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
+            duplicatesToCheck.set(programmingExercise2.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
+            if (additionalDuplicate) {
+                duplicatesToCheck.set(programmingExercise3.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
+            }
+
+            if (duplicatedTitles) {
+                programmingExercise2.title = 'new title';
+            } else {
+                programmingExercise2.shortName = 'new short name';
+            }
+
+            component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise2, exerciseGroup6, duplicatedTitles);
+            expect(duplicatesToCheck.size).toBe(additionalDuplicate ? 2 : 0);
+        });
+
+        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
+            'should check for programming exercise duplicated titles and short names when unselecting exercises',
+            (attrToCheck) => {
+                const duplicatesToCheck = component[attrToCheck];
+                const duplicatedTitles = attrToCheck === 'exercisesWithDuplicatedTitles';
+
+                duplicatesToCheck.set(programmingExercise.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
+                duplicatesToCheck.set(programmingExercise2.id!, duplicatedTitles ? programmingExercise.title! : programmingExercise.shortName!);
+
+                if (duplicatedTitles) {
+                    programmingExercise2.title = programmingExercise.title;
+                } else {
+                    programmingExercise2.shortName = programmingExercise.shortName;
+                }
+
+                component.onSelectExercise(programmingExercise2, exerciseGroup6);
+                expect(duplicatesToCheck.size).toBe(0);
+
+                component.onSelectExercise(programmingExercise2, exerciseGroup6);
+                expect(duplicatesToCheck.size).toBe(2);
+                expect(duplicatesToCheck.has(programmingExercise.id!)).toBeTrue();
+                expect(duplicatesToCheck.has(programmingExercise2.id!)).toBeTrue();
+            },
+        );
+
+        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])('should ignore unselected exercises', (attrToCheck) => {
+            const duplicatesToCheck = component[attrToCheck];
+            const duplicatedTitles = attrToCheck === 'exercisesWithDuplicatedTitles';
+
+            component.selectedExercises.get(exerciseGroup6)?.delete(programmingExercise3);
+
+            if (duplicatedTitles) {
+                programmingExercise3.title = programmingExercise.title;
+            } else {
+                programmingExercise3.shortName = programmingExercise.shortName;
+            }
+
+            component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise3, exerciseGroup6, duplicatedTitles);
+            expect(duplicatesToCheck.size).toBe(0);
+
+            component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise, exerciseGroup6, duplicatedTitles);
+            expect(duplicatesToCheck.size).toBe(0);
+        });
     });
 });

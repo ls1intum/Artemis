@@ -30,7 +30,12 @@ export class AuditsComponent implements OnInit {
     // Icon
     faSort = faSort;
 
-    constructor(private auditsService: AuditsService, private activatedRoute: ActivatedRoute, private datePipe: DatePipe, private router: Router) {}
+    constructor(
+        private auditsService: AuditsService,
+        private activatedRoute: ActivatedRoute,
+        private datePipe: DatePipe,
+        private router: Router,
+    ) {}
 
     ngOnInit(): void {
         this.toDate = this.today();

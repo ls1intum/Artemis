@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Set;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,5 +21,43 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
                 WHERE es.studentExam.id = :#{#studentExamId}
             """)
     long findExamSessionCountByStudentExamId(@Param("studentExamId") Long studentExamId);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.ipAddress = :#{#examSession.ipAddress}
+                    AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+            """)
+    Set<ExamSession> findAllExamSessionsByExamId(long examId);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.browserFingerprintHash = :#{#examSession.browserFingerprintHash}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
+
+    @Query("""
+                SELECT es
+                FROM ExamSession es
+                WHERE es.studentExam.exam.id = :examId
+                    AND es.id <> :#{#examSession.id}
+                    AND es.studentExam.id <> :#{#examSession.studentExam.id}
+                    AND es.ipAddress = :#{#examSession.ipAddress}
+            """)
+    Set<ExamSession> findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession(long examId, @Param("examSession") ExamSession examSession);
 
 }

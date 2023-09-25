@@ -19,4 +19,10 @@ public class TextUnit extends LectureUnit {
     public void setContent(String content) {
         this.content = content;
     }
+
+    // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
+    @Override
+    public String getType() {
+        return "text";
+    }
 }

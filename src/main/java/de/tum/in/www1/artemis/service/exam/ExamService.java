@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,6 +17,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -37,11 +41,13 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
@@ -61,7 +67,7 @@ public class ExamService {
     private static final int EXAM_ACTIVE_DAYS = 7;
 
     @Value("${artemis.course-archives-path}")
-    private String examArchivesDirPath;
+    private Path examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -105,9 +111,15 @@ public class ExamService {
 
     private final BonusService bonusService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
+    private final AuditEventRepository auditEventRepository;
+
     private final CourseScoreCalculationService courseScoreCalculationService;
+
+    private final CourseRepository courseRepository;
 
     private final ObjectMapper defaultObjectMapper;
 
@@ -117,7 +129,8 @@ public class ExamService {
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
             GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
-            BonusService bonusService, SubmittedAnswerRepository submittedAnswerRepository, CourseScoreCalculationService courseScoreCalculationService) {
+            BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -138,8 +151,11 @@ public class ExamService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.bonusService = bonusService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.submittedAnswerRepository = submittedAnswerRepository;
+        this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
+        this.courseRepository = courseRepository;
         this.defaultObjectMapper = new ObjectMapper();
     }
 
@@ -153,18 +169,18 @@ public class ExamService {
     @NotNull
     public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId) {
         log.debug("Request to get exam with exercise groups : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
                     ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
                             .findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exercise.getId());
-                    ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
-                    ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
+                    programmingExercise.setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
+                    programmingExercise.setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
                 }
-                if (exercise instanceof QuizExercise) {
-                    QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                    ((QuizExercise) exercise).setQuizQuestions(quizExercise.getQuizQuestions());
+                if (exercise instanceof QuizExercise quizExercise) {
+                    QuizExercise quizExerciseWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
+                    quizExercise.setQuizQuestions(quizExerciseWithQuestions.getQuizQuestions());
                 }
             }
         }
@@ -179,7 +195,7 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores, exerciseGroups, bonus and related plagiarism verdicts for the exam
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
         log.info("Try to find quiz submitted answer counts");
@@ -271,7 +287,7 @@ public class ExamService {
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
         var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator);
-        var exercises = studentExam.getExercises();
+        var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
@@ -284,23 +300,36 @@ public class ExamService {
         if (gradingScale.isEmpty() || gradingScale.get().getBonusFrom().isEmpty()) {
             return null;
         }
-        var bonus = gradingScale.get().getBonusFrom().stream().findAny().orElseThrow();
-        Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(bonus.getSourceGradingScale(), studentIds);
+
+        GradingScale bonusToGradingScale = gradingScale.get();
+        var bonus = bonusToGradingScale.getBonusFrom().stream().findAny().orElseThrow();
+        GradingScale sourceGradingScale = bonus.getSourceGradingScale();
+
+        Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
-        return (studentId, achievedPointsOfBonusTo) -> {
+
+        double tempSourceReachablePoints = sourceGradingScale.getMaxPoints();
+        if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
+            // fetch course with exercises to calculate reachable points
+            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
+            tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+        }
+        final double sourceReachablePoints = tempSourceReachablePoints;
+
+        return (studentId, bonusToAchievedPoints) -> {
             BonusSourceResultDTO result = scoresMap != null ? scoresMap.get(studentId) : null;
-            Double achievedPointsOfSource = 0.0;
+            Double sourceAchievedPoints = 0.0;
             PlagiarismVerdict verdict = null;
             Integer presentationScoreThreshold = null;
             Double achievedPresentationScore = null;
             if (result != null) {
-                achievedPointsOfSource = result.achievedPoints();
+                sourceAchievedPoints = result.achievedPoints();
                 verdict = result.mostSeverePlagiarismVerdict();
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
-            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource);
+            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, bonusToAchievedPoints, sourceAchievedPoints, sourceReachablePoints);
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
                 bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();
@@ -384,6 +413,25 @@ public class ExamService {
     }
 
     /**
+     * retrieves/calculates all the necessary grade information for the given student exam used in the data export
+     *
+     * @param studentExam the student exam for which the grade should be calculated
+     * @return the student exam result with points and grade
+     */
+    public StudentExamWithGradeDTO getStudentExamGradeForDataExport(StudentExam studentExam) {
+        loadQuizExercisesForStudentExam(studentExam);
+
+        // fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForExam(studentExam, studentExam.getUser());
+
+        List<StudentParticipation> participations = studentExam.getExercises().stream().filter(Objects::nonNull).flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .toList();
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        return calculateStudentResultWithGradeAndPoints(studentExam, participations);
+    }
+
+    /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
      * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
      *
@@ -415,15 +463,17 @@ public class ExamService {
         // 1st: fetch participations, submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
         var participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
-        // fetch all submitted answers for quizzes
+        // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
-        // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
-        // available
+        // 3rd: connect & filter the exercises and student participations including the latest submission and results where necessary, connect all relevant associations
         for (Exercise exercise : studentExam.getExercises()) {
-            filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+            // exercises can be null if multiple student exams exist for the same student/exam combination
+            if (exercise != null) {
+                filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+            }
         }
     }
 
@@ -462,6 +512,26 @@ public class ExamService {
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
+
+            // we might need this information for programming exercises with submission policy
+            participation.setSubmissionCount(participation.getSubmissions().size());
+
+            // set the locked property of the participation properly
+            if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
+                    && exercise instanceof ProgrammingExercise programmingExercise) {
+                var submissionPolicy = programmingExercise.getSubmissionPolicy();
+                // in the unlikely case the student exam was already submitted, set all participations to locked
+                if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
+                    programmingExerciseStudentParticipation.setLocked(true);
+                }
+                else if (submissionPolicy != null && Boolean.TRUE.equals(submissionPolicy.isActive()) && submissionPolicy instanceof LockRepositoryPolicy) {
+                    programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
+                }
+                else {
+                    programmingExerciseStudentParticipation.setLocked(false);
+                }
+            }
+
             // only include the latest submission
             Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
@@ -562,6 +632,9 @@ public class ExamService {
         for (StudentParticipation studentParticipation : participationsOfStudent) {
             Exercise exercise = studentParticipation.getExercise();
 
+            if (exercise == null) {
+                continue;
+            }
             // Relevant Result is already calculated
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result relevantResult = studentParticipation.getResults().iterator().next();
@@ -1021,14 +1094,14 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are unlocked as fast as possible
-            instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
+            instanceMessageSendService.sendUnlockAllStudentRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
     }
 
     private Set<ProgrammingExercise> getAllProgrammingExercisesForExam(Long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
         // Collect all programming exercises for the given exam
         Set<ProgrammingExercise> programmingExercises = new HashSet<>();
@@ -1053,7 +1126,7 @@ public class ExamService {
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             // Run the runnable immediately so that the repositories are locked as fast as possible
-            instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(programmingExercise.getId());
+            instanceMessageSendService.sendLockAllStudentRepositories(programmingExercise.getId());
         }
 
         return programmingExercises.size();
@@ -1125,21 +1198,22 @@ public class ExamService {
      */
     @Async
     public void archiveExam(Exam exam) {
+        long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
-        // Archiving a course is only possible after the exam is over
+        // Archiving an exam is only possible after the exam is over
         if (ZonedDateTime.now().isBefore(exam.getEndDate())) {
             return;
         }
 
         // This contains possible errors encountered during the archive process
-        ArrayList<String> exportErrors = new ArrayList<>();
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
 
         try {
             // Create exam archives directory if it doesn't exist
-            Files.createDirectories(Path.of(examArchivesDirPath));
+            Files.createDirectories(examArchivesDirPath);
             log.info("Created the exam archives directory at {} because it didn't exist.", examArchivesDirPath);
 
             // Export the exam to the archives directory.
@@ -1162,6 +1236,7 @@ public class ExamService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
+        log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
     /**
@@ -1243,12 +1318,37 @@ public class ExamService {
     }
 
     /**
+     * Cleans up an exam by cleaning up all exercises from that course. This deletes all student
+     * repositories and build plans. Note that an exam has to be archived first before being cleaned up.
+     *
+     * @param examId    The id of the exam to clean up
+     * @param principal the user that wants to cleanup the exam
+     */
+    public void cleanupExam(Long examId, Principal principal) {
+        final var auditEvent = new AuditEvent(principal.getName(), Constants.CLEANUP_EXAM, "exam=" + examId);
+        auditEventRepository.add(auditEvent);
+
+        // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
+        // hibernate sometimes adds nulls into the list of exercise groups to keep the order
+        Set<Exercise> examExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId).getExerciseGroups().stream().filter(Objects::nonNull)
+                .map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+
+        examExercises.forEach(exercise -> {
+            if (exercise instanceof ProgrammingExercise) {
+                exerciseDeletionService.cleanup(exercise.getId(), true);
+            }
+        });
+
+        log.info("The exam {} has been cleaned up!", examId);
+    }
+
+    /**
      * A specialized BiFunction<Long, Double, BonusResultDTO> functional interface to provide a simple interface
      * for passing the data dependencies needed for a Bonus calculation (like source course/exam results).
      */
     @FunctionalInterface
     private interface ExamBonusCalculator {
 
-        BonusResultDTO calculateStudentGradesWithBonus(Long studentId, Double achievedPointsOfBonusTo);
+        BonusResultDTO calculateStudentGradesWithBonus(Long studentId, Double bonusToAchievedPoints);
     }
 }

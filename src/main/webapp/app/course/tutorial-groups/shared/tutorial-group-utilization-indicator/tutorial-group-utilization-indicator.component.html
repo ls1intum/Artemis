@@ -3,7 +3,7 @@
         [fillLevelInPercent]="Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)"
         [widthInPixels]="20"
         [heightInPixels]="50"
-        [tooltip]="'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate : { averageAttendance: tutorialGroup.averageAttendance }"
+        [tooltip]="'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup.averageAttendance }"
     >
         >
     </jhi-vertical-progress-bar>
@@ -12,7 +12,7 @@
     <!-- We can at least show the average attendance even if capacity is not defined-->
     <span>{{
         tutorialGroup.averageAttendance !== undefined
-            ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate : { averageAttendance: tutorialGroup.averageAttendance })
+            ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup.averageAttendance })
             : ''
     }}</span>
 </ng-template>

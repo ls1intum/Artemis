@@ -90,7 +90,7 @@
                             </td>
                             <td>{{ exercise.id }}</td>
                             <td>
-                                <fa-icon size="2x" [icon]="getExerciseIcon(exercise)"></fa-icon>
+                                <fa-icon size="2x" [icon]="getExerciseIcon(exercise.type)"></fa-icon>
                             </td>
                             <td>
                                 <input
@@ -109,6 +109,7 @@
                                     [name]="'exercise-' + exercise.id + '-title'"
                                     [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.title"
+                                    (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true)"
                                 />
                             </td>
                             <td *ngIf="exercise.type! === exerciseType.PROGRAMMING">
@@ -119,6 +120,7 @@
                                     [name]="'programming-exercise-' + exercise.id + '-shortName'"
                                     [placeholder]="getBlocklistShortNameOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.shortName"
+                                    (change)="checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false)"
                                 />
                             </td>
                             <td>

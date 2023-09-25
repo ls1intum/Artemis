@@ -19,7 +19,10 @@ export class TutorialGroupSessionDTO {
 export class TutorialGroupSessionService {
     private resourceURL = 'api';
 
-    constructor(private httpClient: HttpClient, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService) {}
+    constructor(
+        private httpClient: HttpClient,
+        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
+    ) {}
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
         return this.httpClient
             .get<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' })

@@ -17,7 +17,9 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
+    faNetworkWired,
     faPersonChalkboard,
+    faRobot,
     faTable,
     faTimes,
     faUserCheck,
@@ -25,6 +27,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -52,6 +57,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faTable = faTable;
     faUserCheck = faUserCheck;
     faFlag = faFlag;
+    faNetworkWired = faNetworkWired;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faFilePdf = faFilePdf;
@@ -60,9 +66,12 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
     faPersonChalkboard = faPersonChalkboard;
+    faRobot = faRobot;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
+
+    irisEnabled = false;
 
     constructor(
         private eventManager: EventManager,
@@ -70,6 +79,8 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         private courseAdminService: CourseAdminService,
         private route: ActivatedRoute,
         private router: Router,
+        private modalService: NgbModal,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -85,6 +96,12 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
             this.subscribeToCourseUpdates(courseId);
+        });
+
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+            }
         });
     }
 
@@ -128,18 +145,40 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         this.router.navigate(['/course-management']);
     }
 
+    /**
+     * Checks if the current route contains 'tutorial-groups'.
+     * @return true if the current route is part of the tutorial management
+     */
     shouldHighlightTutorialsLink(): boolean {
         const tutorialsRegex = /tutorial-groups/;
         return tutorialsRegex.test(this.router.url);
     }
 
+    /**
+     * Checks if the current route contains 'grading-system' or 'plagiarism-cases' but not 'exams'.
+     * @return true if the current route is part of the assessment management
+     */
     shouldHighlightAssessmentLink(): boolean {
-        const assessmentLinkRegex = /grading-system|plagiarism-cases/;
+        // Exclude exam related links from the assessment link highlighting.
+        // Example that should not highlight the assessment link: /course-management/{courseId}/exams/{examId}/grading-system/interval
+        const assessmentLinkRegex = /^(?!.*exams).*(grading-system|plagiarism-cases|assessment-dashboard)/;
         return assessmentLinkRegex.test(this.router.url);
     }
 
+    /**
+     * Checks if the current route is 'course-management/{courseId}/edit' or 'course-management/{courseId}'.
+     * @return true if the control buttons, e.g., delete & edit, should be shown
+     */
     shouldShowControlButtons(): boolean {
         const courseManagementRegex = /course-management\/[0-9]+(\/edit)?$/;
         return courseManagementRegex.test(this.router.url);
+    }
+
+    /**
+     * Shows the iris settings in a modal.
+     */
+    showIrisSettings(): void {
+        const modalRef = this.modalService.open(IrisCourseSettingsUpdateComponent, { size: 'xl' });
+        modalRef.componentInstance.courseId = this.course!.id;
     }
 }

@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.hestia;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,12 @@ class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
         Course course = courseUtilService.addEmptyCourse();
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+    }
+
+    @AfterEach
+    void cleanup() throws IOException {
+        solutionRepo.resetLocalRepo();
+        testRepo.resetLocalRepo();
     }
 
     private void addTestCaseToExercise(String name) {

@@ -42,7 +42,10 @@ export class ConversationSidebarSectionComponent implements OnInit {
     faChevronRight = faChevronRight;
     faMessage = faMessage;
 
-    constructor(public conversationService: ConversationService, public localStorageService: LocalStorageService) {}
+    constructor(
+        public conversationService: ConversationService,
+        public localStorageService: LocalStorageService,
+    ) {}
 
     ngOnInit(): void {
         this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);

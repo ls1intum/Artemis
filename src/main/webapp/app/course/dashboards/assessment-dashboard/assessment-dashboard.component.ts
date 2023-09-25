@@ -303,10 +303,8 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * divides exercises into finished and unfinished exercises.
-     *
+     * Divides exercises into finished and unfinished exercises.
      * @param exercises - the exercises that should get filtered
-     * @private
      */
     private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
@@ -322,7 +320,6 @@ export class AssessmentDashboardComponent implements OnInit {
 
     /**
      * Initiates the map that contains the current toggling state (false) for each exercise.
-     * @private
      */
     private initIsTogglingSecondCorrection() {
         this.allExercises.forEach((exercise) => {

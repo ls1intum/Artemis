@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -56,6 +53,8 @@ public class NotificationTargetFactory {
     public static final String PLAGIARISM_TEXT = "plagiarism-cases";
 
     public static final String PLAGIARISM_DETECTED_TEXT = "plagiarismDetected";
+
+    public static final String PRIVACY = "privacy";
 
     // EXERCISE related targets
 
@@ -117,6 +116,34 @@ public class NotificationTargetFactory {
      */
     public static NotificationTarget createExerciseTarget(Exercise exercise, String message) {
         return new NotificationTarget(message, exercise.getId(), EXERCISES_TEXT, exercise.getCourseViaExerciseGroupOrCourseMember().getId(), COURSES_TEXT);
+    }
+
+    /**
+     * Create a NotificationTarget for a SingleUserNotification for a successful data export creation
+     *
+     * @param dataExport the data export that was created
+     * @param message    to use for the notification
+     * @return the final NotificationTarget for this case
+     */
+    public static NotificationTarget createDataExportCreatedTarget(DataExport dataExport, String message) {
+        NotificationTarget notificationTarget = new NotificationTarget();
+        notificationTarget.setEntity(message);
+        notificationTarget.setIdentifier(dataExport.getId());
+        notificationTarget.setMainPage(PRIVACY);
+        return notificationTarget;
+    }
+
+    /**
+     * Create a NotificationTarget for a SingleUserNotification for a failed data export creation
+     *
+     * @param message to use for the notification
+     * @return the final NotificationTarget for this case
+     */
+    public static NotificationTarget createDataExportFailedTarget(String message) {
+        NotificationTarget notificationTarget = new NotificationTarget();
+        notificationTarget.setEntity(message);
+        notificationTarget.setMainPage(PRIVACY);
+        return notificationTarget;
     }
 
     /**
@@ -305,12 +332,24 @@ public class NotificationTargetFactory {
      */
     public static String extractNotificationUrl(Notification notification, String baseUrl) {
         NotificationTarget target = notification.getTargetTransient();
-        var mainPage = target.getMainPage() != null ? target.getMainPage() : "";
-        var entity = target.getEntity() != null ? target.getEntity() : "";
-        var identifier = (target.getIdentifier() != null) ? String.valueOf(target.getIdentifier()) : "";
-        var courseId = (target.getCourseId() != null) ? String.valueOf(target.getCourseId()) : "";
+        if (target == null) {
+            return "";
+        }
+        StringBuilder url = new StringBuilder(baseUrl);
+        if (target.getMainPage() != null) {
+            url.append("/").append(target.getMainPage());
+        }
+        if (target.getCourseId() != null) {
+            url.append("/").append(target.getCourseId());
+        }
+        if (target.getEntity() != null) {
+            url.append("/").append(target.getEntity());
+        }
+        if (target.getIdentifier() != null) {
+            url.append("/").append(target.getIdentifier());
+        }
 
-        return baseUrl + "/" + mainPage + "/" + courseId + "/" + entity + "/" + identifier;
+        return url.toString();
     }
 
     /**

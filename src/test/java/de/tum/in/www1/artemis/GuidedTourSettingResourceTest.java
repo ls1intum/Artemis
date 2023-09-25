@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GuidedTourSettingResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "gtsettingtest";
 
@@ -24,7 +24,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
     }
 
     private Set<GuidedTourSetting> createGuidedTourSettings() {
@@ -53,7 +53,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void updateGuidedTourSettings() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
@@ -64,7 +64,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void deleteGuidedTourSetting() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);

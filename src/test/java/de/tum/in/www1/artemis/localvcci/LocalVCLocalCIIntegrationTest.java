@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.localvcci;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
@@ -27,6 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -58,7 +62,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamRepositorySlug;
 
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
+    void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
         templateRepositorySlug = projectKey1.toLowerCase() + "-exercise";
         templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
 
@@ -76,6 +80,27 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         teamShortName = "team1";
         teamRepositorySlug = projectKey1.toLowerCase() + "-" + teamShortName;
+
+        // TODO: mock the authorization properly, potentially in each test differently
+
+        var instructor1 = new LdapUserDto().username(TEST_PREFIX + "instructor1");
+        instructor1.setUid(new LdapName("cn=instructor1,ou=test,o=lab"));
+
+        var tutor1 = new LdapUserDto().username(TEST_PREFIX + "tutor1");
+        tutor1.setUid(new LdapName("cn=tutor1,ou=test,o=lab"));
+
+        var student1 = new LdapUserDto().username(TEST_PREFIX + "student1");
+        student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+
+        var fakeUser = new LdapUserDto().username(localVCBaseUsername);
+        fakeUser.setUid(new LdapName("cn=" + localVCBaseUsername + ",ou=test,o=lab"));
+
+        doReturn(Optional.of(instructor1)).when(ldapUserService).findByUsername(instructor1.getUsername());
+        doReturn(Optional.of(tutor1)).when(ldapUserService).findByUsername(tutor1.getUsername());
+        doReturn(Optional.of(student1)).when(ldapUserService).findByUsername(student1.getUsername());
+        doReturn(Optional.of(fakeUser)).when(ldapUserService).findByUsername(localVCBaseUsername);
+
+        doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
     }
 
     @AfterEach
@@ -87,7 +112,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     // ---- Tests for the base repositories ----
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_testsRepository() throws Exception {
@@ -345,6 +369,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Instructor should be able to read and write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, instructor1Login, projectKey1, teamRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(teamLocalRepository.localGit, instructor1Login, projectKey1, teamRepositorySlug);
+        teamLocalRepository.resetLocalRepo();
     }
 
     private LocalRepository prepareTeamExerciseAndRepository() throws GitAPIException, IOException, URISyntaxException {
@@ -464,7 +489,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByExamId(exam.getId()).stream().findFirst().orElseThrow();
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
         programmingExerciseRepository.save(programmingExercise);
@@ -530,7 +555,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorExamTestRun() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByExamId(exam.getId()).stream().findFirst().orElseThrow();
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().iterator().next();
 
         programmingExercise.setExerciseGroup(exerciseGroup);
         programmingExerciseRepository.save(programmingExercise);
@@ -575,7 +600,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Start test run
-        instructorExam.setStarted(true);
+        instructorExam.setStartedAndStartDate(ZonedDateTime.now());
         studentExamRepository.save(instructorExam);
 
         // Student should not able to fetch or push.
@@ -612,7 +637,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         practiceParticipation.setRepositoryUrl(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
@@ -658,7 +683,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch and push and editors and higher should be able to fetch and push.
@@ -697,7 +722,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 instructor1Login);
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch, and editors and higher should be able to fetch and push.

@@ -1,12 +1,14 @@
 import { Interception } from 'cypress/types/net-stubbing';
+import dayjs, { Dayjs } from 'dayjs/esm';
+
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, ProgrammingExerciseAssessmentType, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
-import dayjs, { Dayjs } from 'dayjs/esm';
+
+import javaPartiallySuccessful from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import {
     courseAssessment,
-    courseManagementRequest,
+    courseManagementAPIRequest,
+    examAPIRequests,
     examAssessment,
     examExerciseGroupCreation,
     examManagement,
@@ -17,14 +19,9 @@ import {
     modelingExerciseAssessment,
     studentAssessment,
 } from '../../support/artemis';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
 import { admin, instructor, studentOne, tutor, users } from '../../support/users';
-import { EXERCISE_TYPE } from '../../support/constants';
-import { Exercise } from '../../support/pageobjects/exam/ExamParticipation';
-
-// This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
-Cypress.on('uncaught:exception', () => {
-    return false;
-});
+import { convertModelAfterMultiPart } from '../../support/utils';
 
 let exam: Exam;
 
@@ -38,11 +35,11 @@ describe('Exam assessment', () => {
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse(true).then((response) => {
+        courseManagementAPIRequest.createCourse({ customizeGroups: true }).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseManagementRequest.addStudentToCourse(course, studentOne);
-            courseManagementRequest.addTutorToCourse(course, tutor);
-            courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementAPIRequest.addStudentToCourse(course, studentOne);
+            courseManagementAPIRequest.addTutorToCourse(course, tutor);
+            courseManagementAPIRequest.addInstructorToCourse(course, instructor);
         });
         users.getUserInfo(studentOne.username, (userInfo) => {
             studentOneName = userInfo.name;
@@ -53,7 +50,7 @@ describe('Exam assessment', () => {
     describe('Programming exercise assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(2, 'minutes');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Programming);
+            prepareExam(course, examEnd, ExerciseType.PROGRAMMING);
         });
 
         it('Assess a programming exercise submission (MANUAL)', () => {
@@ -70,7 +67,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about programming exercises assessment', () => {
             if (programmingAssessmentSuccessful) {
-                handleComplaint(course, exam, false, EXERCISE_TYPE.Programming);
+                handleComplaint(course, exam, false, ExerciseType.PROGRAMMING);
             }
         });
     });
@@ -78,7 +75,7 @@ describe('Exam assessment', () => {
     describe('Modeling exercise assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(30, 'seconds');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Modeling);
+            prepareExam(course, examEnd, ExerciseType.MODELING);
         });
 
         it('Assess a modeling exercise submission', () => {
@@ -102,7 +99,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about modeling exercises assessment', () => {
             if (modelingAssessmentSuccessful) {
-                handleComplaint(course, exam, true, EXERCISE_TYPE.Modeling);
+                handleComplaint(course, exam, true, ExerciseType.MODELING);
             }
         });
     });
@@ -110,7 +107,7 @@ describe('Exam assessment', () => {
     describe('Text exercise assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(40, 'seconds');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Text);
+            prepareExam(course, examEnd, ExerciseType.TEXT);
         });
 
         it('Assess a text exercise submission', () => {
@@ -129,7 +126,7 @@ describe('Exam assessment', () => {
 
         it('Complaints about text exercises assessment', () => {
             if (textAssessmentSuccessful) {
-                handleComplaint(course, exam, false, EXERCISE_TYPE.Text);
+                handleComplaint(course, exam, false, ExerciseType.TEXT);
             }
         });
     });
@@ -140,7 +137,7 @@ describe('Exam assessment', () => {
         before('Prepare exam', () => {
             examEnd = dayjs().add(30, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
-            prepareExam(course, examEnd, EXERCISE_TYPE.Quiz);
+            prepareExam(course, examEnd, ExerciseType.QUIZ);
         });
 
         it('Assesses quiz automatically', () => {
@@ -162,42 +159,42 @@ describe('Exam assessment', () => {
     });
 
     after('Delete course', () => {
-        courseManagementRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(course, admin);
     });
 });
 
-function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: EXERCISE_TYPE) {
+function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType) {
     cy.login(admin);
     const resultDate = end.add(1, 'second');
-    const examContent = new ExamBuilder(course)
-        .visibleDate(dayjs().subtract(1, 'hour'))
-        .startDate(dayjs())
-        .endDate(end)
-        .correctionRounds(1)
-        .examStudentReviewStart(resultDate.add(10, 'seconds'))
-        .examStudentReviewEnd(resultDate.add(1, 'minute'))
-        .publishResultsDate(resultDate)
-        .gracePeriod(10)
-        .build();
-    courseManagementRequest.createExam(examContent).then((examResponse) => {
+    const examConfig: Exam = {
+        course,
+        startDate: dayjs(),
+        endDate: end,
+        numberOfCorrectionRoundsInExam: 1,
+        examStudentReviewStart: resultDate.add(10, 'seconds'),
+        examStudentReviewEnd: resultDate.add(1, 'minute'),
+        publishResultsDate: resultDate,
+        gracePeriod: 10,
+    };
+    examAPIRequests.createExam(examConfig).then((examResponse) => {
         exam = examResponse.body;
-        courseManagementRequest.registerStudentForExam(exam, studentOne);
+        examAPIRequests.registerStudentForExam(exam, studentOne);
         let additionalData = {};
         switch (exerciseType) {
-            case EXERCISE_TYPE.Programming:
-                additionalData = { submission: partiallySuccessful, progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC };
+            case ExerciseType.PROGRAMMING:
+                additionalData = { submission: javaPartiallySuccessful, progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC };
                 break;
-            case EXERCISE_TYPE.Text:
+            case ExerciseType.TEXT:
                 additionalData = { textFixture: 'loremIpsum-short.txt' };
                 break;
-            case EXERCISE_TYPE.Quiz:
+            case ExerciseType.QUIZ:
                 additionalData = { quizExerciseID: 0 };
                 break;
         }
 
         examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData).then((response) => {
-            courseManagementRequest.generateMissingIndividualExams(exam);
-            courseManagementRequest.prepareExerciseStartForExam(exam);
+            examAPIRequests.generateMissingIndividualExams(exam);
+            examAPIRequests.prepareExerciseStartForExam(exam);
             makeExamSubmission(course, exam, response);
         });
     });
@@ -220,7 +217,7 @@ function startAssessing(courseID: number, examID: number, timeout: number) {
     exerciseAssessment.getLockedMessage();
 }
 
-function handleComplaint(course: Course, exam: Exam, reject: boolean, exerciseType: EXERCISE_TYPE) {
+function handleComplaint(course: Course, exam: Exam, reject: boolean, exerciseType: ExerciseType) {
     const complaintText = 'Lorem ipsum dolor sit amet';
     const complaintResponseText = ' consetetur sadipscing elitr';
 
@@ -242,7 +239,7 @@ function handleComplaint(course: Course, exam: Exam, reject: boolean, exerciseTy
     } else {
         examAssessment.acceptComplaint(complaintResponseText, true, exerciseType);
     }
-    if (exerciseType == EXERCISE_TYPE.Modeling) {
+    if (exerciseType == ExerciseType.MODELING) {
         cy.get('.message').should('contain.text', 'Response to complaint has been submitted');
     } else {
         cy.get('.message').should('contain.text', 'The assessment was updated successfully.');

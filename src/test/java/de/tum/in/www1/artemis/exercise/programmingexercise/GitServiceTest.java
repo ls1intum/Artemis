@@ -20,21 +20,19 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
-class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private GitUtilService gitUtilService;
@@ -65,14 +63,11 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    void testCheckoutRepositoryAlreadyOnServer() throws GitAPIException {
+    void testCheckoutRepositoryAlreadyOnServer() {
         gitUtilService.initRepo(defaultBranch);
-        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
         // Note: the test updates the file, but does not commit the update to the remote repository...
-        gitService.getOrCheckoutRepository(repoUrl, true);
-
         assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1)).isEqualTo(newFileContent);
         // ... therefore it is NOT available in the local repository
         assertThat(gitUtilService.getFileContent(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1)).isNotEqualTo(newFileContent);
@@ -83,8 +78,9 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
-        gitService.getOrCheckoutRepository(repoUrl, true);
-        assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
+        try (var repo = gitService.getOrCheckoutRepository(repoUrl, true)) {
+            assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
+        }
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -94,9 +90,11 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1, "Some Change");
         assertThat(gitUtilService.isLocalEqualToRemote()).isFalse();
 
-        gitService.resetToOriginHead(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
+        try (var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL)) {
+            gitService.resetToOriginHead(repo);
 
-        assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
+            assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
+        }
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -106,30 +104,9 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         // Checkout a different branch in local repo
         gitUtilService.checkoutBranch(GitUtilService.REPOS.LOCAL, "other-branch");
 
-        var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
-        assertThat(gitService.getOriginHead(repo)).isEqualTo(defaultBranch);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "master", "main", "someOtherName" })
-    void testPushSourceToTargetRepoWithoutBranch(String defaultBranch) throws GitAPIException, IOException {
-        gitUtilService.initRepo(defaultBranch);
-
-        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
-        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
-
-        Git git = new Git(localRepo);
-        assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
-
-        gitService.pushSourceToTargetRepo(localRepo, repoUrl);
-
-        assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
-
-        if (!this.defaultBranch.equals(defaultBranch)) {
-            assertThat(localRepo.getConfig().toText()).doesNotContain(defaultBranch);
+        try (var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL)) {
+            assertThat(gitService.getOriginHead(repo)).isEqualTo(defaultBranch);
         }
-
-        gitUtilService.deleteRepos();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -155,7 +132,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     void testGetExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
@@ -176,7 +152,6 @@ class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @MethodSource("getBranchCombinationsToTest")
     void testGetExistingCheckedOutRepositoryByLocalPathSetsBranchCorrectly(String defaultBranchVCS, String defaultBranchArtemis) throws IOException {
         gitUtilService.initRepo(defaultBranchVCS);

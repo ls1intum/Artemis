@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -43,19 +41,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
             }
         }
         return updatedFeedbackList;
-    }
-
-    /**
-     * Find all existing Feedback Elements referencing a text block part of a TextCluster.
-     *
-     * @param cluster TextCluster requesting existing Feedbacks for.
-     * @return Map<TextBlockId, Feedback>
-     */
-    default Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
-        final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).toList();
-        final TextExercise exercise = cluster.getExercise();
-        return findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream()
-                .collect(Collectors.toMap(Feedback::getReference, feedback -> feedback));
     }
 
     /**

@@ -100,8 +100,8 @@
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonuspunkte",
             "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
-            "includedInOverallScoreCourseLabel": "Soll diese Aufgabe bei der Berechnung des Kursergebnis miteinbezogen werden?",
-            "includedInOverallScoreExamLabel": "Soll diese Aufgabe bei der Berechnung des Klausurergebnisses miteinbezogen werden?",
+            "includedInOverallScoreCourseLabel": "Diese Aufgabe bei der Berechnung des Kursergebnisses einbeziehen",
+            "includedInOverallScoreExamLabel": "Diese Aufgabe bei der Berechnung des Klausurergebnisses einbeziehen",
             "includedInOverallScore": "Miteinbezogen in Ergebnis",
             "includedCompletely": "Miteinbezogen",
             "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind.",
@@ -190,7 +190,6 @@
             "notificationText": "Optional: Mitteilung über die Änderung",
             "submissionSuccessful": "Die Einreichung war erfolgreich",
             "submissionUnsuccessful": "Die Einreichung war nicht erfolgreich",
-            "lateSubmissionReceived": "Artemis hat eine verspätete Einreichung erhalten. Bitte warte auf das Ergebnis und scrolle dann nach unten zur Ergebnishistorie, um weitere Details zu sehen.",
             "lateSubmissionResultReceived": "Artemis hat ein unbewertetes Ergebnis für eine verspätete Einreichung erhalten. Bitte scrolle nach unten zur Ergebnishistorie, um deine Punktzahl zu sehen.",
             "resultCreationSuccessful": "Das Ergebnis wurde erfolgreich erzeugt",
             "resultCreationUnsuccessful": "Das Ergebnis wurde nicht erzeugt",
@@ -219,7 +218,8 @@
                     "pattern": {
                         "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\"!",
                         "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
-                        "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\"!"
+                        "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\"!",
+                        "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt."
                     }
                 },
                 "points": {
@@ -253,7 +253,8 @@
                 }
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
-            "action": "Aktion"
+            "action": "Aktion",
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
         }
     }
 }

@@ -185,7 +185,7 @@ public class LocalCIConnectorService {
             throw new LocalCIException("Could not create submission for solution participation", e);
         }
 
-        programmingMessagingService.notifyUserAboutSubmission(submission);
+        programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
         try {
             // Set a flag to inform the instructor that the student results are now outdated.
@@ -202,7 +202,7 @@ public class LocalCIConnectorService {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(solutionParticipation, buildResult).orElseThrow();
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(solutionParticipation, buildResult);
             programmingMessagingService.notifyUserAboutNewResult(result, solutionParticipation);
 
             // The solution participation received a new result, also trigger a build of the template repository.
@@ -240,9 +240,10 @@ public class LocalCIConnectorService {
 
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
-        programmingMessagingService.notifyUserAboutSubmission(submission);
+        programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
 
         // Trigger the build for the new submission on the local CI system.
+        // TODO: this is already invoked in the service method processNewProgrammingSubmission above, however without the commit hash, we should probably unify the methods
         localCITriggerService.triggerBuild(participation, commit.getCommitHash());
     }
 

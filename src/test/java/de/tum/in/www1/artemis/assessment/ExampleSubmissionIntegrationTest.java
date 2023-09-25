@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
-class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private final Logger log = LoggerFactory.getLogger(ExampleSubmissionIntegrationTest.class);
 
@@ -333,8 +333,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
 
         TextBlock textBlock = new TextBlock();
-        textBlock.setCluster(null);
-        textBlock.setAddedDistance(0);
         textBlock.setStartIndex(0);
         textBlock.setEndIndex(14);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), submission);

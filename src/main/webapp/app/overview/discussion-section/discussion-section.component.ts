@@ -15,7 +15,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 @Component({
@@ -185,13 +185,19 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         return;
                     }
 
-                    const contextFilter = this.channel?.id
-                        ? { conversationId: this.channel.id }
-                        : {
-                              exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
-                              lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
-                          };
-                    this.metisService.getFilteredPosts(contextFilter);
+                    if (this.channel?.id) {
+                        const contextFilter = { conversationId: this.channel.id };
+                        const channelDTO = new ChannelDTO();
+                        channelDTO.isCourseWide = true;
+                        this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
+                    } else {
+                        const contextFilter = {
+                            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
+                            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
+                        };
+                        this.metisService.getFilteredPosts(contextFilter);
+                    }
+
                     this.createEmptyPost();
                     this.resetFormGroup();
                 },

@@ -93,7 +93,7 @@ describe('CourseExamsComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [CourseExamsComponent, MockComponent(CourseExamDetailComponent), MockComponent(CourseExamAttemptReviewDetailComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
-                { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
+                { provide: ActivatedRoute, useValue: { parent: { parent: { params: of(1) } } } },
                 MockProvider(CourseStorageService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(ExamParticipationService),

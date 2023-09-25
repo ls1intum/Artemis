@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { orderBy as _orderBy } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -13,7 +12,7 @@ import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
-import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
@@ -47,7 +46,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
+    constructor(
+        private participationWebsocketService: ParticipationWebsocketService,
+        private submissionService: ProgrammingSubmissionService,
+    ) {}
 
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
@@ -55,19 +57,12 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      */
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
-            // Sort participation results by completionDate desc.
-            if (this.participation.results) {
-                this.participation.results = _orderBy(this.participation.results, 'completionDate', 'desc');
-            }
-            // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-            const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
-            // Make sure that the participation result is connected to the newest result.
-            this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
+            this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults);
             this.missingResultInfo = MissingResultInformation.NONE;
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
-            if (this.exercise && this.exercise.type === ExerciseType.PROGRAMMING) {
+            if (this.exercise?.type === ExerciseType.PROGRAMMING) {
                 this.subscribeForNewSubmissions();
             }
         }
@@ -139,7 +134,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Checks if a status update should be shown for this submission.
      *
      * @param submission for which a status update should be shown.
-     * @private
      */
     private shouldUpdateSubmissionState(submission?: Submission): boolean {
         // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
@@ -158,7 +152,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Updates the shown status based on the given state of a submission.
      *
      * @param submissionState the submission is currently in.
-     * @private
      */
     private updateSubmissionState(submissionState: ProgrammingSubmissionState) {
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;

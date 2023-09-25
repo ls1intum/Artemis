@@ -14,6 +14,7 @@ export enum FeatureToggle {
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
     TutorialGroups = 'TutorialGroups',
+    LearningPaths = 'LearningPaths',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
@@ -25,7 +26,10 @@ export class FeatureToggleService {
     private subject: BehaviorSubject<ActiveFeatureToggles>;
     private subscriptionInitialized = false;
 
-    constructor(private websocketService: JhiWebsocketService, private http: HttpClient) {
+    constructor(
+        private websocketService: JhiWebsocketService,
+        private http: HttpClient,
+    ) {
         this.subject = new BehaviorSubject<ActiveFeatureToggles>(defaultActiveFeatureState);
     }
 

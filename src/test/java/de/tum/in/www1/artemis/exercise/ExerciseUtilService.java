@@ -17,10 +17,13 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
@@ -28,8 +31,12 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationFactory;
+import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -74,6 +81,18 @@ public class ExerciseUtilService {
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -319,8 +338,34 @@ public class ExerciseUtilService {
         return new ProgrammingExercise();
     }
 
+    public PlagiarismCase createPlagiarismCaseForUserForExercise(Exercise exercise, User user, String userPrefix, PlagiarismVerdict verdict) {
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        var post = conversationUtilService.createBasicPost(plagiarismCase, userPrefix);
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setStudent(user);
+        var answerPost = new AnswerPost();
+        answerPost.setPost(post);
+        answerPost.setAuthor(user);
+        answerPost.setContent("No I don't think so");
+        answerPost = answerPostRepository.save(answerPost);
+        post.setAnswers(Set.of(answerPost));
+        post = postRepository.save(post);
+        plagiarismCase.setPost(post);
+        plagiarismCase.setVerdictDate(ZonedDateTime.now().minusMinutes(1));
+        plagiarismCase.setVerdict(verdict);
+        if (verdict == PlagiarismVerdict.WARNING) {
+            plagiarismCase.setVerdictMessage("Last warning");
+        }
+        else if (verdict == PlagiarismVerdict.POINT_DEDUCTION) {
+            plagiarismCase.setVerdictPointDeduction(1);
+        }
+        return plagiarismCaseRepository.save(plagiarismCase);
+    }
+
     public Channel addChannelToExercise(Exercise exercise) {
-        Channel channel = ConversationFactory.generateChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
+        Channel channel = ConversationFactory.generateCourseWideChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
         channel.setExercise(exercise);
         return channelRepository.save(channel);
     }

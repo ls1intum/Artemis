@@ -56,7 +56,10 @@ export class StatisticsGraphComponent implements OnChanges {
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: StatisticsService, private translateService: TranslateService) {
+    constructor(
+        private service: StatisticsService,
+        private translateService: TranslateService,
+    ) {
         this.translateService.onLangChange.subscribe(() => {
             this.onSystemLanguageChange();
         });
@@ -197,7 +200,6 @@ export class StatisticsGraphComponent implements OnChanges {
      * Converts the data retrieved from the service to dedicated objects that can be interpreted by ngx-charts
      * and pushes them to ngxData.
      * Then, computes the upper limit for the y-axis of the chart.
-     * @private
      */
     private pushToData(): void {
         this.ngxData = this.dataForSpanType.map((score, index) => ({ name: this.barChartLabels[index], value: score }));
@@ -206,7 +208,6 @@ export class StatisticsGraphComponent implements OnChanges {
 
     /**
      * Handles the update of the data labels if the user changes the system language
-     * @private
      */
     private onSystemLanguageChange(): void {
         this.createLabels();
