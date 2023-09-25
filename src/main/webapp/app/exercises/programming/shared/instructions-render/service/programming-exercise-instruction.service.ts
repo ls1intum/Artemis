@@ -22,7 +22,7 @@ export type TaskResult = {
     };
 };
 
-const testIdRegex = /<testid>(\\d+)<\/testid>/;
+const testIdRegex = /<testid>(\d+)<\/testid>/;
 const testSplitRegex = /,(?![^(]*?\))/;
 
 @Injectable({ providedIn: 'root' })
