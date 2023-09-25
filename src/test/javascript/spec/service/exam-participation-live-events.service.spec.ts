@@ -83,6 +83,7 @@ describe('ExamParticipationLiveEventsService', () => {
         // @ts-ignore
         const unsubscribeFromExamLiveEventsSpy = jest.spyOn(service, 'unsubscribeFromExamLiveEvents');
         const websocketSubscribeSpy = jest.spyOn(mockWebsocketService, 'subscribe');
+        const websocketUnsubscribeSpy = jest.spyOn(mockWebsocketService, 'unsubscribe');
 
         // @ts-ignore
         const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents').mockReturnValue(undefined);
@@ -107,16 +108,17 @@ describe('ExamParticipationLiveEventsService', () => {
             }),
         );
 
-        service['currentWebsocketReceiveSubscription'] = { unsubscribe: jest.fn() } as any;
-        service['currentWebsocketChannel'] = '123';
+        service['currentWebsocketReceiveSubscriptions'] = [{ unsubscribe: jest.fn() } as any, { unsubscribe: jest.fn() } as any];
+        service['currentWebsocketChannels'] = ['123', '456'];
 
         currentlyLoadedStudentExamSubject.next({ id: 2, exam: { id: 2, course: { id: 2 } } });
 
         // Check resets
         expect(service['events']).toEqual([]);
         expect(unsubscribeFromExamLiveEventsSpy).toHaveBeenCalledOnce();
-        expect(service['currentWebsocketReceiveSubscription']).toBeUndefined();
-        expect(service['currentWebsocketChannel']).toBeUndefined();
+        expect(websocketUnsubscribeSpy).toHaveBeenCalledTimes(2);
+        expect(service['currentWebsocketReceiveSubscriptions']).toBeUndefined();
+        expect(service['currentWebsocketChannels']).toBeUndefined();
 
         // Check Ids are set
         expect(service['studentExamId']).toBe(2);
@@ -142,8 +144,8 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
 
         // Check subscribe called
-        expect(websocketSubscribeSpy).toHaveBeenCalledOnce();
-        expect(websocketReceiveSpy).toHaveBeenCalledOnce();
+        expect(websocketSubscribeSpy).toHaveBeenCalledTimes(2);
+        expect(websocketReceiveSpy).toHaveBeenCalledTimes(2);
 
         // Send event over ws
         const mockEvent: any = {

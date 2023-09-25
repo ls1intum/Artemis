@@ -110,14 +110,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     List<StudentExam> findAllTestRunsByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT se.id
-            FROM StudentExam se
-            WHERE se.exam.id = :examId
-            	AND se.testRun = FALSE
-            """)
-    List<Long> findAllIdsWithoutTestRunsByExamId(@Param("examId") Long examId);
-
-    @Query("""
             SELECT count(se)
             FROM StudentExam se
             WHERE se.exam.id = :examId

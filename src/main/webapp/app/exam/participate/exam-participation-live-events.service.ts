@@ -43,8 +43,8 @@ export class ExamParticipationLiveEventsService {
     private studentExamId?: number;
     private lastAcknowledgedEventStatus?: StudentExamAcknowledgedEvents;
 
-    private currentWebsocketChannel?: string;
-    private currentWebsocketReceiveSubscription?: Subscription;
+    private currentWebsocketChannels?: string[];
+    private currentWebsocketReceiveSubscriptions?: Subscription[];
 
     private events: ExamLiveEvent[] = [];
 
@@ -134,37 +134,32 @@ export class ExamParticipationLiveEventsService {
     }
 
     private subscribeToExamLiveEvents() {
-        this.currentWebsocketChannel = `/topic/studentExams/${this.studentExamId}/events`;
-        this.websocketService.subscribe(this.currentWebsocketChannel);
-        this.currentWebsocketReceiveSubscription = this.websocketService
-            .receive(this.currentWebsocketChannel)
-            .pipe(
-                map((event: ExamLiveEvent) => {
-                    event.createdDate = convertDateFromServer(event.createdDate)!;
-                    return event;
-                }),
-            )
-            .subscribe((event: ExamLiveEvent) => {
-                if (this.events.some((e) => e.id === event.id)) {
-                    return;
-                }
+        this.currentWebsocketChannels = [`/topic/exam-participation/studentExam/${this.studentExamId}/events`, `/topic/exam-participation/exam/${this.examId}/events`];
+        this.currentWebsocketReceiveSubscriptions = this.currentWebsocketChannels.map((channel) => {
+            this.websocketService.subscribe(channel);
+            return this.websocketService.receive(channel).subscribe((event: ExamLiveEvent) => this.receiveExamLiveEvent(event));
+        });
+    }
 
-                this.events.unshift(event);
-                this.newSystemEventSubject.next(event);
-                this.newUserEventSubject.next(event);
-                this.allEventsSubject.next(this.events);
-            });
+    private receiveExamLiveEvent(event: ExamLiveEvent) {
+        if (this.events.some((e) => e.id === event.id)) {
+            return;
+        }
+
+        event.createdDate = convertDateFromServer(event.createdDate)!;
+
+        this.events.unshift(event);
+        this.newSystemEventSubject.next(event);
+        this.newUserEventSubject.next(event);
+        this.allEventsSubject.next(this.events);
     }
 
     private unsubscribeFromExamLiveEvents() {
-        if (this.currentWebsocketReceiveSubscription) {
-            this.currentWebsocketReceiveSubscription.unsubscribe();
-            this.currentWebsocketReceiveSubscription = undefined;
-        }
-        if (this.currentWebsocketChannel) {
-            this.websocketService.unsubscribe(this.currentWebsocketChannel);
-            this.currentWebsocketChannel = undefined;
-        }
+        this.currentWebsocketReceiveSubscriptions?.forEach((subscription) => subscription.unsubscribe());
+        this.currentWebsocketReceiveSubscriptions = undefined;
+
+        this.currentWebsocketChannels?.forEach((channel) => this.websocketService.unsubscribe(channel));
+        this.currentWebsocketChannels = undefined;
     }
 
     private fetchPreviousExamEvents() {

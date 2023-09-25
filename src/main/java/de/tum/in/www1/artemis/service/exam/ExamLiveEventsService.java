@@ -9,7 +9,6 @@ import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.exam.event.ExamWideAnnouncementEvent;
 import de.tum.in.www1.artemis.domain.exam.event.WorkingTimeUpdateEvent;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 /**
@@ -29,21 +28,22 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 public class ExamLiveEventsService {
 
     /**
-     * The name of the topic for notifying the client about events.
+     * The name of the topic for notifying the client about events specific to a student exam.
      */
-    public static final String STUDENT_EXAM_EVENT = "/topic/studentExams/%s/events";
+    public static final String STUDENT_EXAM_EVENT = "/topic/exam-participation/studentExam/%s/events";
+
+    /**
+     * The name of the topic for notifying the client about events specific to an entire exam.
+     */
+    public static final String EXAM_EVENT = "/topic/exam-participation/exam/%s/events";
 
     private final WebsocketMessagingService websocketMessagingService;
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
-    private final StudentExamRepository studentExamRepository;
-
-    public ExamLiveEventsService(WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository,
-            StudentExamRepository studentExamRepository) {
+    public ExamLiveEventsService(WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository) {
         this.websocketMessagingService = websocketMessagingService;
         this.examLiveEventRepository = examLiveEventRepository;
-        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -109,8 +109,7 @@ public class ExamLiveEventsService {
         }
 
         // Otherwise, send it to all student exams of the exam.
-        studentExamRepository.findAllIdsWithoutTestRunsByExamId(storedEvent.getExamId())
-                .forEach(studentExamId -> websocketMessagingService.sendMessage(STUDENT_EXAM_EVENT.formatted(studentExamId), storedEvent.asDTO()));
+        websocketMessagingService.sendMessage(EXAM_EVENT.formatted(storedEvent.getExamId()), storedEvent.asDTO());
 
         return storedEvent;
     }
