@@ -337,6 +337,23 @@
                     </td>
                 </tr>
             </tbody>
+            <tbody>
+                <tr>
+                    <td>3</td>
+                    <td>
+                        <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.createAnnouncement">Send announcements</span>
+                    </td>
+                    <td>
+                        <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.createAnnouncement">
+                            To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed
+                            to all students immediately.
+                        </span>
+                    </td>
+                    <td>
+                        <jhi-exam-live-announcement-create-button [exam]="exam" />
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </div>
     <hr />
