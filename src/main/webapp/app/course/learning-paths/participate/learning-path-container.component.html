@@ -11,14 +11,13 @@
                 <fa-icon [icon]="faChevronUp"></fa-icon>
             </button>
             <div class="path my-2">
-                <!--<jhi-learning-path-graph
-                        #graphSidebar
-                        *ngIf="learningPathId"
-                        [courseId]="courseId"
-                        [learningPathId]="learningPathId"
-                        (nodeClicked)="onNodeClicked($event)"
-                ></jhi-learning-path-graph>-->
-                <jhi-learning-path *ngIf="learningPathId" [courseId]="courseId" [learningPathId]="learningPathId"></jhi-learning-path>
+                <jhi-learning-path
+                    #learningPathComponent
+                    *ngIf="learningPathId"
+                    [courseId]="courseId"
+                    [learningPathId]="learningPathId"
+                    (nodeClicked)="onNodeClicked($event)"
+                ></jhi-learning-path>
             </div>
             <button
                 type="button"

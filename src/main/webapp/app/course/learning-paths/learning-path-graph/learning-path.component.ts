@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { NgxLearningPathNode, getIcon } from 'app/entities/competency/learning-path.model';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
@@ -13,6 +13,7 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 export class LearningPathComponent implements OnInit {
     @Input() learningPathId: number;
     @Input() courseId: number;
+    @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
 
     isLoading = false;
     path?: NgxLearningPathNode[];
@@ -48,7 +49,7 @@ export class LearningPathComponent implements OnInit {
                     });
                 } else if (entry instanceof ExerciseEntry) {
                     node = body.nodes.find((node) => {
-                        return node.linkedResource === entry.exerciseId;
+                        return node.linkedResource === entry.exerciseId && !node.linkedResourceParent;
                     });
                 }
                 if (node) {
@@ -57,5 +58,21 @@ export class LearningPathComponent implements OnInit {
             });
             this.isLoading = false;
         });
+    }
+
+    highlightNode(learningObject: LectureUnitEntry | ExerciseEntry) {
+        if (learningObject instanceof LectureUnitEntry) {
+            this.highlightedNode = this.path?.find((node) => {
+                return node.linkedResource === learningObject.lectureUnitId && node.linkedResourceParent === learningObject.lectureId;
+            });
+        } else {
+            this.highlightedNode = this.path?.find((node) => {
+                return node.linkedResource === learningObject.exerciseId && !node.linkedResourceParent;
+            });
+        }
+    }
+
+    clearHighlighting() {
+        this.highlightedNode = undefined;
     }
 }

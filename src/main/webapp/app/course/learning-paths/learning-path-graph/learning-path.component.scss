@@ -4,12 +4,18 @@
 .path-node {
     .node-icon-container {
         display: block;
+        width: fit-content;
+        margin: auto;
         text-align: center;
 
         fa-icon {
             font-size: 3em;
         }
     }
+}
+
+.highlighted-node {
+    color: var(--bs-warning);
 }
 
 .path-edge {
