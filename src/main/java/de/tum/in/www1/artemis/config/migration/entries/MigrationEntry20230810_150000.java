@@ -40,6 +40,11 @@ public class MigrationEntry20230810_150000 extends MigrationEntry {
     @Override
     public void execute() {
         long size = programmingExerciseRepository.count();
+        if (size == 0) {
+            // no exercises to change, migration complete
+            return;
+        }
+
         log.info("Migrating all {} programming exercises. This might take a while.", size);
 
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS);
