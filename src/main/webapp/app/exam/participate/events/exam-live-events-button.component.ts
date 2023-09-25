@@ -1,12 +1,11 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { faBell } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription, from } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 
-// eslint-disable-next-line
 export const USER_DISPLAY_RELEVANT_EVENTS = [ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, ExamLiveEventType.WORKING_TIME_UPDATE];
 
 @Component({
@@ -23,7 +22,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     eventCount = 0;
 
     // Icons
-    faBell = faBell;
+    faBullhorn = faBullhorn;
 
     constructor(
         private alertService: AlertService,
