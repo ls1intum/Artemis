@@ -66,7 +66,7 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "ADMIN")
     void isActive() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
         var settings = irisSettingsService.getGlobalSettings();
