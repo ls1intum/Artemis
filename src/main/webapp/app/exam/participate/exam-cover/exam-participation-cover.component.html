@@ -1,6 +1,8 @@
-<div class="w-100 d-flex" *ngIf="!startView">
-    <div class="col-md-3"></div>
-    <h2 class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
+<div class="w-100 d-flex">
+    <div class="col-md-3">
+        <jhi-exam-live-events-button />
+    </div>
+    <h2 *ngIf="!startView" class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
         <span>
             {{
                 'artemisApp.examParticipation.finish'
@@ -12,7 +14,14 @@
         </span>
         <br />
     </h2>
-    <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="!startView" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+    <h2 *ngIf="startView" class="col-md-6" style="text-align: center; font-weight: normal">
+        <span>
+            {{ 'artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title } }}
+        </span>
+        <br />
+    </h2>
+    <jhi-exam-timer *ngIf="!startView" class="col-md-3 justify-content-end" [isEndView]="true" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+    <div *ngIf="startView" class="col-md-3"></div>
 </div>
 <div class="w-100 d-flex" *ngIf="!startView && !studentFailedToSubmit">
     <div class="col-md-3"></div>
@@ -21,12 +30,6 @@
     </p>
 </div>
 <div class="container d-flex flex-column align-items-center justify-content-center">
-    <h2 style="text-align: center; font-weight: normal" *ngIf="startView">
-        <span>
-            {{ 'artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title } }}
-        </span>
-        <br />
-    </h2>
     <jhi-exam-general-information *ngIf="startView" [exam]="exam" [studentExam]="studentExam" [displayOnExamCover]="true" />
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     <div *ngIf="studentFailedToSubmit" class="mb-2 font-weight-bold text-danger">

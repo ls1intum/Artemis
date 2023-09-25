@@ -59,6 +59,8 @@ import { SuspiciousSessionsOverviewComponent } from './suspicious-behavior/suspi
 import { PlagiarismCasesOverviewComponent } from './suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { SuspiciousSessionsComponent } from './suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
+import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
+import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -123,6 +125,8 @@ const ENTITY_STATES = [...examManagementState];
         BonusComponent,
         ExamEditWorkingTimeComponent,
         ExamEditWorkingTimeDialogComponent,
+        ExamLiveAnnouncementCreateModalComponent,
+        ExamLiveAnnouncementCreateButtonComponent,
         SuspiciousBehaviorComponent,
         SuspiciousSessionsOverviewComponent,
         PlagiarismCasesOverviewComponent,
