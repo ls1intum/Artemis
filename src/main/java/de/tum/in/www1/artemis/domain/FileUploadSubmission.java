@@ -37,8 +37,9 @@ public class FileUploadSubmission extends Submission {
     @PostRemove
     public void onDelete() {
         final List<String> filePaths = getFilePaths(); // this.filePaths might still be null. getFilePaths() lazily initializes to an empty list
-        for (String filePath : filePaths)
+        for (String filePath : filePaths) {
             onDeleteSingleFile(filePath);
+        }
     }
 
     /**
@@ -58,8 +59,10 @@ public class FileUploadSubmission extends Submission {
      * @return file paths for file upload submission.
      */
     public List<String> getFilePaths() {
-        if (filePaths == null)
+        if (filePaths == null) {
             filePaths = new ArrayList<>();
+        }
+
         return filePaths;
     }
 
