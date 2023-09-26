@@ -48,6 +48,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      */
     maxPoints = 0;
     overallAchievedPoints = 0;
+    overallAchievedPercentageRoundedByCourseSettings = 0;
     isBonusGradingKeyDisplayed = false;
 
     exerciseInfos: Record<number, ExerciseInfo>;
@@ -82,8 +83,13 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         this.showResultOverview = !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
-        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
         this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
+
+        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
+        this.overallAchievedPercentageRoundedByCourseSettings = roundScorePercentSpecifiedByCourseSettings(
+            (this.studentExamWithGrade.studentResult.overallScoreAchieved ?? 0) / 100,
+            this.studentExamWithGrade.studentExam?.exam?.course,
+        );
 
         this.exerciseInfos = this.getExerciseInfos();
     }
@@ -169,7 +175,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         }
 
         const course = this.studentExamWithGrade.studentExam?.exam?.course;
-
         if (result.achievedScore !== undefined) {
             return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
         }
