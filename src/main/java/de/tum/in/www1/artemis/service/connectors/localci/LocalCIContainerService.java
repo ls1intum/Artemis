@@ -66,21 +66,14 @@ public class LocalCIContainerService {
      */
     public HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames,
             Path buildScriptPath) {
-
-        Bind bind = new Bind("artemis-data", new Volume("/artemis-data"));
-
-        /*
-         * Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
-         * binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
-         * binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
-         * for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-         * binds[2 + i] = new Bind(auxiliaryRepositoriesPaths[i].toString(), new Volume("/" + auxiliaryRepositoryNames[i] + "-repository"));
-         * }
-         * binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptPath.toString(), new Volume("/script.sh"));
-         * return HostConfig.newHostConfig().withAutoRemove(true).withBinds(binds); // Automatically remove the container when it exits.
-         */
-
-        return HostConfig.newHostConfig().withAutoRemove(true).withBinds(bind); // Automatically remove the container when it exits.
+        Bind[] binds = new Bind[3 + auxiliaryRepositoriesPaths.length];
+        binds[0] = new Bind(assignmentRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.ASSIGNMENT + "-repository"));
+        binds[1] = new Bind(testRepositoryPath.toString(), new Volume("/" + LocalCIBuildJobExecutionService.LocalCIBuildJobRepositoryType.TEST + "-repository"));
+        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
+            binds[2 + i] = new Bind(auxiliaryRepositoriesPaths[i].toString(), new Volume("/" + auxiliaryRepositoryNames[i] + "-repository"));
+        }
+        binds[2 + auxiliaryRepositoriesPaths.length] = new Bind(buildScriptPath.toString(), new Volume("/script.sh"));
+        return HostConfig.newHostConfig().withAutoRemove(true).withBinds(binds); // Automatically remove the container when it exits.
     }
 
     /**
@@ -221,7 +214,28 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
-    public void copyFromToContainers(String containerId1, String sourcePath, String containerId2, String destinationPath) {
+    public void populateBuildJobContainer(String artemisContainerId, String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath,
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoriesNames, Path buildScriptPath) {
+        createDirectoryInContainer(buildJobContainerId, "assignment-repository");
+        createDirectoryInContainer(buildJobContainerId, "test-repository");
+        for (String auxiliaryRepositoryName : auxiliaryRepositoriesNames) {
+            createDirectoryInContainer(buildJobContainerId, auxiliaryRepositoryName + "-repository");
+        }
+
+        copyFromToContainers(artemisContainerId, assignmentRepositoryPath.toString(), buildJobContainerId, "/assignment-repository");
+        copyFromToContainers(artemisContainerId, testRepositoryPath.toString(), buildJobContainerId, "/test-repository");
+        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
+            copyFromToContainers(artemisContainerId, auxiliaryRepositoriesPaths[i].toString(), buildJobContainerId, "/" + auxiliaryRepositoriesNames[i] + "-repository");
+        }
+        copyFromToContainers(artemisContainerId, buildScriptPath.toString(), buildJobContainerId, "/script.sh");
+    }
+
+    private void createDirectoryInContainer(String containerId, String directoryName) {
+        ExecCreateCmdResponse createDirectoryCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("mkdir", directoryName).exec();
+        dockerClient.execStartCmd(createDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+    }
+
+    private void copyFromToContainers(String containerId1, String sourcePath, String containerId2, String destinationPath) {
         try (InputStream tarStream = dockerClient.copyArchiveFromContainerCmd(containerId1, sourcePath).exec()) {
             dockerClient.copyArchiveToContainerCmd(containerId2).withRemotePath(destinationPath).withTarInputStream(tarStream).exec();
         }
