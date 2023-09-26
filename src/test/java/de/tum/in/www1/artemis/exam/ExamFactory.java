@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 public class ExamFactory {
 
     /**
-     * Generates a real exam with student review dates set
+     * Generates a real exam with student review dates set [now; now + 60min]
      *
      * @param course the associated course
      * @return the created exam
@@ -160,6 +160,12 @@ public class ExamFactory {
         return exerciseGroup;
     }
 
+    /**
+     * Creates a StudentExam that is linked to the given exam
+     *
+     * @param exam the exam to be linked to the studentExam
+     * @return the newly created StudentExam
+     */
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
@@ -181,6 +187,12 @@ public class ExamFactory {
         return studentExam;
     }
 
+    /**
+     * Creates a StudentExam that is linked to the given exam and is a test run
+     *
+     * @param exam the exam to be linked to the studentExam
+     * @return the newly created StudentExam
+     */
     public static StudentExam generateExamTestRun(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);

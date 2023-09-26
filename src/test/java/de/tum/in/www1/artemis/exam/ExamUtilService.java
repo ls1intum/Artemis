@@ -576,6 +576,14 @@ public class ExamUtilService {
         return exam;
     }
 
+    /**
+     * Creates and saves a text, modeling, optional programming and optional quiz exercise and adds them to the exam.
+     *
+     * @param initialExam             the exam to which the exercises should be added
+     * @param withProgrammingExercise whether a programming exercise should be added
+     * @param withQuizExercise        whether a quiz exercise should be added
+     * @return the exam with the added exercises
+     */
     public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ExamFactory.generateExerciseGroup(true, initialExam); // text
         ExamFactory.generateExerciseGroup(true, initialExam); // modeling
@@ -623,6 +631,12 @@ public class ExamUtilService {
         return exam;
     }
 
+    /**
+     * Creates and saves an active course with an exam and an exercise group.
+     *
+     * @param mandatory true if the exercise group is mandatory
+     * @return the created exercise group
+     */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ExamFactory.generateExam(course);
@@ -649,6 +663,12 @@ public class ExamUtilService {
         return exerciseGroup;
     }
 
+    /**
+     * Creates and saves an active course with an exam and an exercise group. The exam has a review date [now; now + 60min].
+     *
+     * @param mandatory true if the exercise group is mandatory
+     * @return the created exercise group
+     */
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ExamFactory.generateExamWithStudentReviewDates(course);
