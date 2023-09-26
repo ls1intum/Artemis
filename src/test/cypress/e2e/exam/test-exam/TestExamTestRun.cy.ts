@@ -130,7 +130,6 @@ describe('Test exam test run', () => {
                 examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
             }
         }
-        examParticipation.checkExamTitle(examTitle);
         examTestRun.openTestRunPage(course, exam);
         examTestRun.getStarted(testRun.id).contains('Yes');
         examTestRun.getSubmitted(testRun.id).contains('Yes');

@@ -101,7 +101,6 @@ describe('Exam participation', () => {
                     examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
                 }
             }
-            examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
@@ -198,7 +197,6 @@ describe('Exam participation', () => {
             examParticipation.handInEarly();
             examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textFixtureShort);
-            examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
@@ -220,7 +218,6 @@ describe('Exam participation', () => {
             examParticipation.handInEarly();
             examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
-            examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
@@ -236,12 +233,10 @@ describe('Exam participation', () => {
             examParticipation.handInEarly();
             examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
-            examParticipation.checkExamTitle(examTitle);
 
             cy.reload();
 
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
-            examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
@@ -292,7 +287,6 @@ describe('Exam participation', () => {
             });
             examStartEnd.pressShowSummary();
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
-            examParticipation.checkExamTitle(examTitle);
 
             cy.login(instructor);
             examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);

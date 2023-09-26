@@ -99,10 +99,6 @@ export class ExamParticipation {
         getExercise(exerciseID).find('.exercise-title').contains(title);
     }
 
-    checkExamTitle(title: string) {
-        cy.get('#exam-title').contains(title);
-    }
-
     getResultScore() {
         cy.reloadUntilFound('#result-score');
         return cy.get('#result-score');

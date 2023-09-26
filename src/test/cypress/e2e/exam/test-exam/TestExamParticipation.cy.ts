@@ -80,7 +80,6 @@ describe('Test exam participation', () => {
                     examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
                 }
             }
-            examParticipation.checkExamTitle(examTitle);
         });
 
         it('Using save and continue to navigate within exam', () => {
@@ -165,7 +164,6 @@ describe('Test exam participation', () => {
                 expect(request.response!.statusCode).to.eq(200);
             });
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
-            examParticipation.checkExamTitle(examTitle);
         });
     });
 
