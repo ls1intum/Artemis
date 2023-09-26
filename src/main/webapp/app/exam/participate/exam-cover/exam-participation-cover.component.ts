@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -19,7 +19,7 @@ import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
 })
-export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
+export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
     /**
      * if startView is set to true: startText and confirmationStartText will be displayed
      * if startView is set to false: endText and confirmationEndText will be displayed
@@ -69,10 +69,11 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * on init uses the correct information to display in either start or final view
+     * on changes uses the correct information to display in either start or final view
      * changes in the exam and subscription is handled in the exam-participation.component
+     * if the student exam changes, we need to update the displayed times
      */
-    ngOnInit(): void {
+    ngOnChanges(): void {
         this.confirmed = false;
         this.startEnabled = false;
         this.testRun = this.studentExam.testRun;
