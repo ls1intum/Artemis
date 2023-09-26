@@ -514,11 +514,4 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.markdown = value;
         this.markdownChange.emit(value as string);
     }
-
-    handleSelect($event: any, command: InteractiveSearchCommand) {
-        if ($event === undefined) {
-            return;
-        }
-        command.selectionToText($event);
-    }
 }

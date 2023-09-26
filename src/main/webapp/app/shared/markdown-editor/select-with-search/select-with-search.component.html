@@ -1,6 +1,11 @@
-<form>
-    <input class="form-control" type="text" placeholder="Enter name" (input)="updateSearchTerm($event)" />
-    <li *ngFor="let value of values">
-        <button ngbDropdownItem (click)="valueSelect.emit(value)">{{ value.name }}</button>
-    </li>
-</form>
+<button type="button" class="btn btn-sm py-0" [matMenuTriggerFor]="searchSubMenu" (menuOpened)="handleMenuOpen()" (menuClosed)="handleMenuClosed()">
+    <fa-icon [icon]="command.buttonIcon"></fa-icon>
+</button>
+<mat-menu #searchSubMenu>
+    <button *ngFor="let value of values" mat-menu-item (click)="setSelection(value)">
+        {{ value.name }}
+    </button>
+    <form #searchInputForm (click)="$event.stopPropagation()" mat-menu-item class="p-1" (focus)="focusInputField(true)">
+        <input #searchInput matInput class="form-control" (input)="updateSearchTerm(searchInput.value)" (keydown)="handleNavigation($event)" (blur)="focusInputField()" />
+    </form>
+</mat-menu>

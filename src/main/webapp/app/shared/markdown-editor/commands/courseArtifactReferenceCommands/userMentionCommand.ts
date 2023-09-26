@@ -16,11 +16,15 @@ export class UserMentionCommand extends InteractiveSearchCommand {
         super();
     }
 
+    protected getAssociatedInputCharacter(): string {
+        return '@';
+    }
+
     performSearch(searchTerm: string): Observable<HttpResponse<ConversationUserDTO[]>> {
         return this.conversationService.searchMembersOfConversation(this.metisService.getCourse().id!, 487, searchTerm, 0, 10, ConversationMemberSearchFilter.ALL);
     }
 
-    selectionToText(selected: ConversationUserDTO): void {
-        this.insertText(`[user]${selected.name}(${selected.login})[/user]`);
+    protected selectionToText(selected: ConversationUserDTO): string {
+        return `[user]${selected.name}(${selected.login})[/user]`;
     }
 }
