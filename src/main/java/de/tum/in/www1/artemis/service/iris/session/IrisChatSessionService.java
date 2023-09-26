@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;

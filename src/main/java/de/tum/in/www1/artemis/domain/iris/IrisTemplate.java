@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
  * An IrisTemplate represents a handlebars template for Iris.
- * It is send to the Iris Python server to generate a response.
+ * It is sent to the Iris Python server to generate a response.
  */
 @Entity
 @Table(name = "iris_template")
