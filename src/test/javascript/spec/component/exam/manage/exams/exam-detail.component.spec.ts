@@ -32,6 +32,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
+import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 
@@ -85,6 +86,7 @@ describe('ExamDetailComponent', () => {
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockDirective(FeatureToggleLinkDirective),
                 ExamEditWorkingTimeComponent,
+                MockComponent(ExamLiveAnnouncementCreateButtonComponent),
             ],
             providers: [
                 {
