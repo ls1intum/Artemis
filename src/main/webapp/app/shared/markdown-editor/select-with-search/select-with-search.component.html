@@ -1,7 +1,7 @@
 <button type="button" class="btn btn-sm py-0" [matMenuTriggerFor]="searchSubMenu" (menuOpened)="handleMenuOpen()" (menuClosed)="handleMenuClosed()">
     <fa-icon [icon]="command.buttonIcon"></fa-icon>
 </button>
-<mat-menu #searchSubMenu>
+<mat-menu #searchSubMenu yPosition="above">
     <button *ngFor="let value of values" mat-menu-item (click)="setSelection(value)">
         {{ value.name }}
     </button>
