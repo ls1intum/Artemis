@@ -40,6 +40,7 @@ import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.co
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FileDetails } from 'app/entities/file-details.model';
 
 describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
@@ -529,11 +530,11 @@ describe('FileUploadAssessmentComponent', () => {
 
     describe('attachmentExtension', () => {
         it('should get file extension', () => {
-            expect(comp.attachmentExtension('this/is/a/filepath/file.png')).toBe('png');
+            expect(FileDetails.getFileDetailsFromPath('this/is/a/filepath/file.png').extension).toBe('png');
         });
 
         it('should get N/A if filepath is empty', () => {
-            expect(comp.attachmentExtension('')).toBe('N/A');
+            expect(FileDetails.getFileDetailsFromPath('').extension).toBe('N/A');
         });
     });
 

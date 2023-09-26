@@ -6,6 +6,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FileService } from 'app/shared/http/file.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { By } from '@angular/platform-browser';
+import { FileDetails } from 'app/entities/file-details.model';
 
 describe('FileUploadExamSummaryComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
@@ -32,14 +33,15 @@ describe('FileUploadExamSummaryComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.attachmentExtension(component.submission.filePath!)).toBe('N/A');
+        expect(component.submission.filePaths).toBeUndefined();
     });
 
     it('should correctly display the filepath', () => {
-        component.submission.filePath = 'filePath.pdf';
+        component.submission.filePaths = ['filePath.pdf'];
         const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
         fixture.detectChanges();
-        expect(component.attachmentExtension(component.submission.filePath!)).toBe('pdf');
+        expect(component.submission.filePaths).toHaveLength(1);
+        expect(FileDetails.getFileDetailsFromPath(component.submission.filePaths![0]!).extension).toBe('pdf');
         const downloadFile = fixture.debugElement.query(By.css('#downloadFileButton'));
         expect(downloadFile).not.toBeNull();
         downloadFile.nativeElement.click();

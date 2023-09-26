@@ -1,7 +1,7 @@
 <div *ngIf="submission && submission.filePaths && submission.filePaths.length > 0; else noSubmission">
     <ol>
         <li *ngFor="let filePath of submission.filePaths; let i = index" class="card-text">
-            <a class="text-primary" (click)="downloadFile(filePath)">
+            <a id="downloadFileButton" class="text-primary" (click)="downloadFile(filePath)">
                 {{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate: { fileName: FileDetails.getFileDetailsFromPath(filePath).name } }}
             </a>
             <span class="ms-2 badge bg-info">
