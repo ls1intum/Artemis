@@ -1088,7 +1088,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var submissions = submissionRepository.findByParticipation_Exercise_ExerciseGroup_Exam_Id(exam.getId());
 
         var savedSubmission = submissions.stream().filter(submission -> submission instanceof FileUploadSubmission).findFirst().orElseThrow();
-        assertSubmissionFilename(filenames, savedSubmission, ".png");
+        assertSubmissionFilename(filenames, savedSubmission, ".zip");
 
         savedSubmission = submissions.stream().filter(submission -> submission instanceof TextSubmission).findFirst().orElseThrow();
         assertSubmissionFilename(filenames, savedSubmission, ".txt");
