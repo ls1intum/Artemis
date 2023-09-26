@@ -12,6 +12,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { Course } from 'app/entities/course.model';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -48,7 +49,10 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      */
     maxPoints = 0;
     overallAchievedPoints = 0;
+    overallAchievedPercentageRoundedByCourseSettings = 0;
     isBonusGradingKeyDisplayed = false;
+
+    course: Course | undefined = undefined;
 
     exerciseInfos: Record<number, ExerciseInfo>;
 
@@ -82,8 +86,14 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         this.showResultOverview = !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
-        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
         this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
+        this.course = this.studentExamWithGrade.studentExam?.exam?.course;
+
+        this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
+        this.overallAchievedPercentageRoundedByCourseSettings = roundScorePercentSpecifiedByCourseSettings(
+            (this.studentExamWithGrade.studentResult.overallScoreAchieved ?? 0) / 100,
+            this.course,
+        );
 
         this.exerciseInfos = this.getExerciseInfos();
     }
@@ -168,15 +178,13 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
             return undefined;
         }
 
-        const course = this.studentExamWithGrade.studentExam?.exam?.course;
-
         if (result.achievedScore !== undefined) {
-            return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, this.course);
         }
 
         const canCalculatePercentage = result.maxScore && result.achievedPoints !== undefined;
         if (canCalculatePercentage) {
-            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, course);
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, this.course);
         }
 
         return undefined;
