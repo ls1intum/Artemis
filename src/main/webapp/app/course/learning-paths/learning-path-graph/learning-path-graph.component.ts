@@ -10,7 +10,7 @@ import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/competency
     selector: 'jhi-learning-path-graph',
     styleUrls: ['./learning-path-graph.component.scss'],
     templateUrl: './learning-path-graph.component.html',
-    encapsulation: ViewEncapsulation.None,
+    encapsulation: ViewEncapsulation.ShadowDom,
 })
 export class LearningPathGraphComponent implements OnInit {
     isLoading = false;
