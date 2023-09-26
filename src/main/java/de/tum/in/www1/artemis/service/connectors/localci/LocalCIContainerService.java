@@ -216,23 +216,28 @@ public class LocalCIContainerService {
 
     public void populateBuildJobContainer(String artemisContainerId, String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoriesNames, Path buildScriptPath) {
-        createDirectoryInContainer(buildJobContainerId, "assignment-repository");
-        createDirectoryInContainer(buildJobContainerId, "test-repository");
-        for (String auxiliaryRepositoryName : auxiliaryRepositoriesNames) {
-            createDirectoryInContainer(buildJobContainerId, auxiliaryRepositoryName + "-repository");
+        copyFromToContainers(artemisContainerId, assignmentRepositoryPath.toString(), buildJobContainerId, "/");
+        renameDirectoryOrFile(buildJobContainerId, assignmentRepositoryPath.getFileName().toString(), "assignment-repository");
+        copyFromToContainers(artemisContainerId, testRepositoryPath.toString(), buildJobContainerId, "/");
+        renameDirectoryOrFile(buildJobContainerId, testRepositoryPath.getFileName().toString(), "test-repository");
+
+        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
+            copyFromToContainers(artemisContainerId, auxiliaryRepositoriesPaths[i].toString(), buildJobContainerId, "/");
+            renameDirectoryOrFile(buildJobContainerId, auxiliaryRepositoriesPaths[i].getFileName().toString(), auxiliaryRepositoriesNames[i] + "-repository");
         }
 
-        copyFromToContainers(artemisContainerId, assignmentRepositoryPath.toString(), buildJobContainerId, "/");
-        copyFromToContainers(artemisContainerId, testRepositoryPath.toString(), buildJobContainerId, "/");
-        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            copyFromToContainers(artemisContainerId, auxiliaryRepositoriesPaths[i].toString(), buildJobContainerId, "/" + auxiliaryRepositoriesNames[i] + "-repository");
-        }
-        copyFromToContainers(artemisContainerId, buildScriptPath.toString(), buildJobContainerId, "/script.sh");
+        copyFromToContainers(artemisContainerId, buildScriptPath.toString(), buildJobContainerId, "/");
+        renameDirectoryOrFile(buildJobContainerId, buildScriptPath.getFileName().toString(), "script.sh");
     }
 
     private void createDirectoryInContainer(String containerId, String directoryName) {
         ExecCreateCmdResponse createDirectoryCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("mkdir", directoryName).exec();
         dockerClient.execStartCmd(createDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+    }
+
+    private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
+        ExecCreateCmdResponse renameDirectoryCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("mv", oldName, newName).exec();
+        dockerClient.execStartCmd(renameDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
     private void copyFromToContainers(String containerId1, String sourcePath, String containerId2, String destinationPath) {
