@@ -1,13 +1,15 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.BadRequestException;
 
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -16,7 +18,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.in.www1.artemis.domain.iris.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
@@ -79,10 +80,10 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         checkHasAccessToIrisSession(irisSession, null);
         irisSession = irisSessionRepository.save(irisSession);
 
-        var systemMessage = generateSystemMessage();
-        var userMessage = generateUserMessage(codeHint);
-        var irisMessages = List.of(systemMessage, userMessage);
-        irisSession.getMessages().addAll(irisMessages);
+        var systemMessage = generateSystemMessage(irisSession);
+        var userMessage = generateUserMessage(irisSession, codeHint);
+        irisSession.getMessages().add(systemMessage);
+        irisSession.getMessages().add(userMessage);
         irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.ARTEMIS);
         irisMessageService.saveMessage(userMessage, irisSession, IrisMessageSender.USER);
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
@@ -97,8 +98,8 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
                     .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
             irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
 
-            codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
-            codeHint.setDescription(irisMessage2.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getContentAsString).collect(Collectors.joining("\n")));
+            codeHint.setDescription(irisMessage2.message().getContent().stream().map(IrisMessageContent::getContentAsString).collect(Collectors.joining("\n")));
             return codeHint;
         }
         catch (InterruptedException | ExecutionException e) {
@@ -107,18 +108,14 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         }
     }
 
-    private IrisMessage generateSystemMessage() {
-        var irisMessage = new IrisMessage();
+    private IrisMessage generateSystemMessage(IrisSession session) {
+        var irisMessage = new IrisMessage(session);
         irisMessage.setSender(IrisMessageSender.ARTEMIS);
-        irisMessage.setSentAt(ZonedDateTime.now());
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setMessage(irisMessage);
-        irisMessageContent.setTextContent(SYSTEM_PROMPT);
-        irisMessage.setContent(List.of(irisMessageContent));
+        irisMessage.addContent(new IrisTextMessageContent(irisMessage, SYSTEM_PROMPT));
         return irisMessage;
     }
 
-    private IrisMessage generateUserMessage(CodeHint codeHint) {
+    private IrisMessage generateUserMessage(IrisSession session, CodeHint codeHint) {
         var userPrompt = new StringBuilder(String.format("""
                 ##Hint title: "%s"
                 ## Task name: "%s"
@@ -138,13 +135,9 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
                     """, solutionEntry.getFilePath(), solutionEntry.getLine(), solutionEntry.getLine() + solutionEntry.getCode().split("\n").length - 1, solutionEntry.getCode()));
         }
 
-        var irisMessage = new IrisMessage();
+        var irisMessage = new IrisMessage(session);
         irisMessage.setSender(IrisMessageSender.USER);
-        irisMessage.setSentAt(ZonedDateTime.now());
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setMessage(irisMessage);
-        irisMessageContent.setTextContent(userPrompt.toString());
-        irisMessage.setContent(List.of(irisMessageContent));
+        irisMessage.addContent(new IrisTextMessageContent(irisMessage, userPrompt.toString()));
         return irisMessage;
     }
 

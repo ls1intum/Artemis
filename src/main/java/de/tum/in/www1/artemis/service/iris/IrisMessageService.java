@@ -1,20 +1,18 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-
-import javax.ws.rs.BadRequestException;
-
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import javax.ws.rs.BadRequestException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 /**
  * Service for managing Iris messages.

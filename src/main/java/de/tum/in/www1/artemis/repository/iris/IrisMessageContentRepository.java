@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 
 /**
  * Spring Data repository for the IrisMessageContent entity.

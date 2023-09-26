@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -82,8 +82,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisMessage.getHelpful()).isNull();
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
         // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
-                .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
+        assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
+                .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
@@ -104,9 +104,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessageWithoutContent() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var messageToSend = new IrisMessage();
-        messageToSend.setSession(irisSession);
-        messageToSend.setSentAt(ZonedDateTime.now());
+        var messageToSend = new IrisMessage(irisSession);
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -125,8 +123,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage1.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage1.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
-                .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getTextContent).toList());
+        assertThat(irisMessage1.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
+                .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage1));
 
@@ -135,8 +133,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisMessage2.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage2.getHelpful()).isNull();
         // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage2.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
-                .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getTextContent).toList());
+        assertThat(irisMessage2.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
+                .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(2).isEqualTo(List.of(irisMessage1, irisMessage2));
     }
@@ -158,7 +156,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
             return o1.getContent().size() == o2.getContent().size()
-                    && o1.getContent().stream().map(IrisMessageContent::getTextContent).toList().equals(o2.getContent().stream().map(IrisMessageContent::getTextContent).toList())
+                    && o1.getContent().stream().map(IrisMessageContent::getContentAsString).toList().equals(o2.getContent().stream().map(
+                    IrisMessageContent::getContentAsString).toList())
                             ? 0
                             : -1;
         }).isEqualTo(List.of(message2, message3, message4));
@@ -168,10 +167,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageHelpfulTrue() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var message = new IrisMessage();
-        message.setSession(irisSession);
-        message.setSentAt(ZonedDateTime.now());
-        message.setContent(List.of(createMockContent(message)));
+        var message = new IrisMessage(irisSession);
+        message.addContent(createMockContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -182,10 +179,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageHelpfulFalse() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var message = new IrisMessage();
-        message.setSession(irisSession);
-        message.setSentAt(ZonedDateTime.now());
-        message.setContent(List.of(createMockContent(message)));
+        var message = new IrisMessage(irisSession);
+        message.addContent(createMockContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/false", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -196,10 +191,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageHelpfulNull() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var message = new IrisMessage();
-        message.setSession(irisSession);
-        message.setSentAt(ZonedDateTime.now());
-        message.setContent(List.of(createMockContent(message)));
+        var message = new IrisMessage(irisSession);
+        message.addContent(createMockContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/null", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -210,10 +203,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateMessageWrongSender() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var message = new IrisMessage();
-        message.setSession(irisSession);
-        message.setSentAt(ZonedDateTime.now());
-        message.setContent(List.of(createMockContent(message)));
+        var message = new IrisMessage(irisSession);
+        message.addContent(createMockContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class,
                 HttpStatus.BAD_REQUEST);
@@ -224,10 +215,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageWrongSession() throws Exception {
         var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        var message = new IrisMessage();
-        message.setSession(irisSession1);
-        message.setSentAt(ZonedDateTime.now());
-        message.setContent(List.of(createMockContent(message)));
+        var message = new IrisMessage(irisSession1);
+        message.addContent(createMockContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class,
                 HttpStatus.CONFLICT);
@@ -272,25 +261,24 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
-        var messageToSend = new IrisMessage();
-        messageToSend.setSession(irisSession);
-        messageToSend.setSentAt(ZonedDateTime.now());
-        messageToSend.setContent(List.of(createMockContent(messageToSend), createMockContent(messageToSend), createMockContent(messageToSend)));
+        var messageToSend = new IrisMessage(irisSession);
+        messageToSend.addContent(createMockContent(messageToSend));
+        messageToSend.addContent(createMockContent(messageToSend));
+        messageToSend.addContent(createMockContent(messageToSend));
         return messageToSend;
     }
-
+    
     private IrisMessageContent createMockContent(IrisMessage message) {
-        var content = new IrisMessageContent();
-        var rdm = ThreadLocalRandom.current();
-        content.setId(rdm.nextLong());
-        content.setMessage(message);
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
-
+        
+        var rdm = ThreadLocalRandom.current();
         String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
-
-        content.setTextContent("The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.");
+        
+        var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
+        var content = new IrisTextMessageContent(message, text);
+        content.setId(rdm.nextLong());
         return content;
     }
 }
