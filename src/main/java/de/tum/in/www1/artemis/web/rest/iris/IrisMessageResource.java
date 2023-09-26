@@ -12,10 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -40,13 +43,16 @@ public class IrisMessageResource {
 
     private final IrisWebsocketService irisWebsocketService;
 
+    private final IrisMessageContentRepository irisMessageContentRepository;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisWebsocketService irisWebsocketService) {
+            IrisMessageRepository irisMessageRepository, IrisWebsocketService irisWebsocketService, IrisMessageContentRepository irisMessageContentRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
         this.irisWebsocketService = irisWebsocketService;
+        this.irisMessageContentRepository = irisMessageContentRepository;
     }
 
     /**
@@ -140,5 +146,38 @@ public class IrisMessageResource {
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);
         return ResponseEntity.ok(savedMessage);
+    }
+
+    /**
+     * PUT sessions/{sessionId}/messages/{messageId}/{component}: Set the component plan attribute of the message with ExercisePlanMessageContent
+     *
+     * @param sessionId of the session
+     * @param messageId of the message
+     * @param component of the exercisePlanMessageContent
+     * @param plan      to set for the corresponding component, if cancel the plan of the component, the value would be null
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
+     *         be found.
+     */
+    @PutMapping(value = { "sessions/{sessionId}/messages/{messageId}/contents/{contentId}/{component}" })
+    @EnforceAtLeastInstructor
+    public ResponseEntity<IrisMessageContent> updatePlanContent(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
+            @PathVariable Enum component, @RequestBody String plan) {
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        var session = message.getSession();
+        var content = irisMessageContentRepository.findByIdElseThrow(contentId);
+        if (!Objects.equals(session.getId(), sessionId)) {
+            throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
+        }
+        irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessToIrisSession(session, null);
+        if (message.getSender() != IrisMessageSender.LLM) {
+            throw new BadRequestException("You can only edit messages send by Iris");
+        }
+        if (!(content instanceof ExercisePlanMessageContent)) {
+            throw new BadRequestException("You can only edit component plan messages");
+        }
+        content.setPlan(component, plan);
+        var savedContent = irisMessageContentRepository.save(content);
+        return ResponseEntity.ok(savedContent);
     }
 }
