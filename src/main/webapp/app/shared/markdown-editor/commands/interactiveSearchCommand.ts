@@ -32,12 +32,12 @@ export abstract class InteractiveSearchCommand extends MultiOptionCommand {
 
             if (this.insertedAssociatedCharacter) {
                 this.aceEditor.session.getDocument().removeInLine(cursorPosition.row, cursorPosition.column - 1, cursorPosition.column);
-                this.insertedAssociatedCharacter = false;
             }
 
             this.insertText(this.selectionToText(selected));
         }
 
+        this.insertedAssociatedCharacter = false;
         this.aceEditor.focus();
     }
 
