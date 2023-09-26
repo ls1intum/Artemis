@@ -36,7 +36,7 @@ public abstract class IrisSession extends DomainObject {
     private List<IrisMessage> messages = new ArrayList<>();
 
     @Column(name = "creation_date")
-    private ZonedDateTime creationDate;
+    private ZonedDateTime creationDate = ZonedDateTime.now();
 
     public void setCreationDate(ZonedDateTime creationDate) {
         this.creationDate = creationDate;
