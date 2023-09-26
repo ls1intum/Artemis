@@ -119,8 +119,8 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendExamWorkingTimeChangeDuringConduction(Long examId) {
-        instanceMessageReceiveService.processExamWorkingTimeChangeDuringConduction(examId);
+    public void sendRescheduleAllStudentExams(Long examId) {
+        instanceMessageReceiveService.processRescheduleExamDuringConduction(examId);
     }
 
     @Override
