@@ -177,7 +177,7 @@ public class IrisMessageResource {
             return ResponseEntity.ok(savedContent);
         }
         else {
-            throw new BadRequestException("You can only edit component plan messages");
+            throw new BadRequestException("You can only edit component plan content");
         }
     }
 }
