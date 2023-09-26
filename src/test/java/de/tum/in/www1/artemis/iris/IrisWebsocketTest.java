@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -16,8 +15,8 @@ import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
@@ -50,9 +49,7 @@ class IrisWebsocketTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var message = new IrisMessage();
-        message.setSession(irisSession);
-        message.setSentAt(ZonedDateTime.now());
+        var message = new IrisMessage(irisSession);
         message.setContent(List.of(createMockContent(message), createMockContent(message)));
         message.setMessageDifferentiator(101010);
         irisWebsocketService.sendMessage(message);
@@ -60,18 +57,17 @@ class IrisWebsocketTest extends AbstractIrisIntegrationTest {
                 eq(new IrisWebsocketService.IrisWebsocketDTO(message)));
     }
 
-    private IrisMessageContent createMockContent(IrisMessage message) {
-        var content = new IrisMessageContent();
-        var rdm = ThreadLocalRandom.current();
-        content.setId(rdm.nextLong());
-        content.setMessage(message);
+    private IrisTextMessageContent createMockContent(IrisMessage message) {
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
 
+        var rdm = ThreadLocalRandom.current();
         String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
+        var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
 
-        content.setTextContent("The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.");
+        var content = new IrisTextMessageContent(message, text);
+        content.setId(rdm.nextLong());
         return content;
     }
 }

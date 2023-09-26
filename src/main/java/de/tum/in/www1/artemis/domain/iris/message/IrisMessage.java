@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.iris;
+package de.tum.in.www1.artemis.domain.iris.message;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -19,8 +19,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 
 /**
  * An IrisMessage represents a single message in an IrisSession.
- * A message can be created by either the user, an LLM, or Artemis.
- * Artemis messages are used to give commands to the bot and are not displayed to the user.
+ * The message may contain multiple pieces of content with different types.
  */
 @Entity
 @Table(name = "iris_message")
@@ -34,7 +33,7 @@ public class IrisMessage extends DomainObject {
 
     @Nullable
     @Column(name = "sent_at")
-    private ZonedDateTime sentAt;
+    private ZonedDateTime sentAt = ZonedDateTime.now();
 
     @Nullable
     @Column(name = "helpful")
@@ -44,12 +43,20 @@ public class IrisMessage extends DomainObject {
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
 
-    @Transient
-    private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
-
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
+
+    @Transient
+    private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
+
+    // Required by JPA
+    public IrisMessage() {
+    }
+
+    public IrisMessage(IrisSession session) {
+        this.session = session;
+    }
 
     public IrisSession getSession() {
         return session;
@@ -91,6 +98,10 @@ public class IrisMessage extends DomainObject {
 
     public void setContent(List<IrisMessageContent> content) {
         this.content = content;
+    }
+
+    public void addContent(IrisMessageContent content) {
+        this.content.add(content);
     }
 
     @JsonProperty
