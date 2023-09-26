@@ -66,7 +66,7 @@ describe('QuizExercise Generator', () => {
         configureServices();
         const examplePath = '/path/to/file';
         jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: examplePath }));
-        jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of(generatedExercise) as HttpResponse<QuizExercise>);
+        jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
