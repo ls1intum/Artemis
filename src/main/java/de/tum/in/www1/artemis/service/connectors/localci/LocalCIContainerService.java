@@ -222,8 +222,8 @@ public class LocalCIContainerService {
             createDirectoryInContainer(buildJobContainerId, auxiliaryRepositoryName + "-repository");
         }
 
-        copyFromToContainers(artemisContainerId, assignmentRepositoryPath.toString(), buildJobContainerId, "/assignment-repository");
-        copyFromToContainers(artemisContainerId, testRepositoryPath.toString(), buildJobContainerId, "/test-repository");
+        copyFromToContainers(artemisContainerId, assignmentRepositoryPath.toString(), buildJobContainerId, "/assignment-repository/");
+        copyFromToContainers(artemisContainerId, testRepositoryPath.toString(), buildJobContainerId, "/test-repository/");
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
             copyFromToContainers(artemisContainerId, auxiliaryRepositoriesPaths[i].toString(), buildJobContainerId, "/" + auxiliaryRepositoriesNames[i] + "-repository");
         }
