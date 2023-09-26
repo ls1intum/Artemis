@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.service.export;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
@@ -81,7 +81,7 @@ public class QuizExerciseWithSubmissionsExportService {
                     fileService.createDirectory(imagesDir);
                     imagesToExport.forEach(path -> {
                         try {
-                            Files.copy(path, imagesDir.resolve(path.getFileName()));
+                            FileUtils.copyFile(path.toFile(), imagesDir.resolve(path.getFileName()).toFile());
                         }
                         catch (IOException e) {
                             exportErrors.add("Failed to export image file with file path " + path + " for drag and drop question with id " + dragAndDropQuestion.getId());
