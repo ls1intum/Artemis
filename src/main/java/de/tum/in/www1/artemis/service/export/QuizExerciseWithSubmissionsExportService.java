@@ -19,6 +19,9 @@ import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 
+/**
+ * Service responsible for exporting quiz exercises with their submissions.
+ */
 @Service
 public class QuizExerciseWithSubmissionsExportService {
 
@@ -41,9 +44,20 @@ public class QuizExerciseWithSubmissionsExportService {
         this.filePathService = filePathService;
     }
 
+    /**
+     * Exports the given quiz exercise as JSON file with all its submissions and stores it in the given directory.
+     *
+     * @param exercise          the quiz exercise to export
+     * @param exerciseExportDir the directory where the exercise should be exported to
+     * @param exportErrors      a list of errors that occurred during the export
+     * @param reportEntries     a list of report entries that occurred during the export
+     * @return the path to the directory where the exercise was exported to
+     */
     public Path exportExerciseWithSubmissions(QuizExercise exercise, Path exerciseExportDir, List<String> exportErrors, List<ArchivalReportEntry> reportEntries) {
-
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(exercise.getId());
+        // do not store unnecessary information in the JSON file
+        exercise.setCourse(null);
+        exercise.setExerciseGroup(null);
         try {
             fileService.writeObjectToJsonFile(exercise, objectMapper, exerciseExportDir.resolve("Exercise-Details-" + exercise.getSanitizedExerciseTitle() + ".json"));
         }

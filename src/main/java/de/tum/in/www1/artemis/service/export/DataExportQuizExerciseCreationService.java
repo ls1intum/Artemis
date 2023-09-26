@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
  * This includes creating a pdf highlighting the submitted answers for drag and drop questions and
  * txt files containing the submitted answers for multiple choice and short answer questions.
  * Additionally, the results can be included in the export if the due date is over.
+ * This service is also used to export the student submissions for archival.
  */
 @Service
 public class DataExportQuizExerciseCreationService {
@@ -126,6 +127,14 @@ public class DataExportQuizExerciseCreationService {
         return !errorOccurred;
     }
 
+    /**
+     * Exports the student submissions for a quiz exercise.
+     *
+     * @param quizExercise          the quiz exercise for which the submissions should be exported
+     * @param exerciseDir           the directory in which the submissions should be stored
+     * @param exportErrors          a list of errors that occurred during the export
+     * @param archivalReportEntries a list of report entries to report failed/successful exports
+     */
     public void exportStudentSubmissionsForArchival(QuizExercise quizExercise, Path exerciseDir, @NotNull List<String> exportErrors,
             List<ArchivalReportEntry> archivalReportEntries) {
         var participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissions(quizExercise.getId());
