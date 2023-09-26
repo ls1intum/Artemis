@@ -10,6 +10,11 @@ artemis:
     version-control:
         local-vcs-repo-path: /opt/artemis/data/local-vcs-repos
 
+    continuous-integration:
+        local-cis-build-scripts-path: /opt/artemis/data/local-ci-scripts
+        # The Docker connection URI to be used by docker-java to connect to the system's Docker installation (Windows)
+        docker-connection-uri: tcp://host.docker.internal:2375
+
 spring:
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
