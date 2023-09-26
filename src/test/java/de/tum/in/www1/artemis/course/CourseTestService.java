@@ -2209,7 +2209,7 @@ public class CourseTestService {
             for (Participation participation : exerciseWithParticipation.getStudentParticipations()) {
                 for (Submission submission : participation.getSubmissions()) {
                     if (submission instanceof FileUploadSubmission) {
-                        assertThat(filenames).contains(Path.of("FileUpload-" + userPrefix + "student1-" + submission.getId() + ".png"));
+                        assertThat(filenames).contains(Path.of("FileUpload-" + userPrefix + "student1-" + submission.getId() + ".zip"));
                     }
                     if (submission instanceof TextSubmission) {
                         assertThat(filenames).contains(Path.of("Text-" + userPrefix + "student1-" + submission.getId() + ".txt"));
