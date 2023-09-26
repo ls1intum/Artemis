@@ -3,7 +3,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
+import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -11,8 +11,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe } from 'ng-mocks';
 
-let fixture: ComponentFixture<ExamInformationComponent>;
-let component: ExamInformationComponent;
+let fixture: ComponentFixture<ExamGeneralInformationComponent>;
+let component: ExamGeneralInformationComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -29,7 +29,7 @@ let exam = {
 
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
-describe('ExamInformationComponent', () => {
+describe('ExamGeneralInformationComponent', () => {
     beforeEach(() => {
         exam = { id: 1, title: 'ExamForTesting', startDate, endDate, testExam: false } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
@@ -37,7 +37,7 @@ describe('ExamInformationComponent', () => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
             declarations: [
-                ExamInformationComponent,
+                ExamGeneralInformationComponent,
                 MockComponent(StudentExamWorkingTimeComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
@@ -46,7 +46,7 @@ describe('ExamInformationComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ExamInformationComponent);
+                fixture = TestBed.createComponent(ExamGeneralInformationComponent);
                 component = fixture.componentInstance;
             });
     });
@@ -58,12 +58,14 @@ describe('ExamInformationComponent', () => {
     it('should initialize', () => {
         component.exam = exam;
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.examEndDate).toEqual(exam.endDate);
     });
 
     it('should return undefined if the exam is not set', () => {
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.examEndDate).toBeUndefined();
     });
@@ -72,6 +74,7 @@ describe('ExamInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toBeTrue();
     });
@@ -80,6 +83,7 @@ describe('ExamInformationComponent', () => {
         component.exam = exam;
         exam.endDate = dayjs(exam.startDate).add(2, 'days');
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeTrue();
     });
@@ -89,6 +93,7 @@ describe('ExamInformationComponent', () => {
         component.studentExam = studentExam;
         studentExam.workingTime = 24 * 60 * 60;
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeTrue();
     });
@@ -96,11 +101,13 @@ describe('ExamInformationComponent', () => {
     it('should return false for exams that only last one day', () => {
         component.exam = exam;
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeFalse();
 
         component.studentExam = studentExam;
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeFalse();
     });
@@ -111,6 +118,7 @@ describe('ExamInformationComponent', () => {
         component.studentExam = studentExam;
         const minimumNowRange = dayjs();
         fixture.detectChanges();
+        component.ngOnChanges();
         const maximumNowRange = dayjs();
         expect(component.isTestExam).toBeTrue();
         expect(component.currentDate).toBeDefined();
@@ -121,6 +129,7 @@ describe('ExamInformationComponent', () => {
     it('should detect an RealExam and not set the currentDate', () => {
         component.exam = exam;
         fixture.detectChanges();
+        component.ngOnChanges();
         expect(component.isTestExam).toBeFalse();
         expect(component.currentDate).toBeUndefined();
     });
