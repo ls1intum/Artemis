@@ -6,9 +6,9 @@
         <table class="table table-borderless mx-auto d-block">
             <tbody>
                 <tr *ngIf="isTestExam">
-                    <th class="text-end text-right">{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
+                    <th>{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
                     <td>
-                        <span class="mx-2 badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
+                        <span class="badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
                     </td>
                 </tr>
                 <tr *ngIf="exam?.moduleNumber">
