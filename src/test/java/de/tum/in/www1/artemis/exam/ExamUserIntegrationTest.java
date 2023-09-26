@@ -118,6 +118,9 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @AfterEach
     void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
+        for (LocalRepository studentRepo : studentRepos) {
+            studentRepo.resetLocalRepo();
+        }
     }
 
     @Test
