@@ -2,9 +2,14 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, 
 import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs';
+import { Subject, debounce, distinctUntilChanged, switchMap, takeUntil, timer } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+
+interface SearchQuery {
+    searchTerm: string;
+    noDebounce: boolean;
+}
 
 @Component({
     selector: 'jhi-select-with-search',
@@ -19,10 +24,8 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
     @ViewChild('searchInputForm') searchInputForm: MatMenuItem;
     @ViewChild('searchInput') searchInput: ElementRef;
 
-    private searchTerm = '';
-    private isSearching = false;
     private ngUnsubscribe = new Subject<void>();
-    private readonly search$ = new Subject<string>();
+    private readonly search$ = new Subject<SearchQuery>();
     private focusInput = true;
 
     values: any[] = [];
@@ -35,28 +38,23 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
 
         this.search$
             .pipe(
-                debounceTime(300),
+                debounce((searchQuery) => {
+                    return timer(searchQuery.noDebounce ? 0 : 200);
+                }),
                 distinctUntilChanged((prev, curr) => {
                     return prev === curr;
                 }),
-                tap((searchTerm) => {
-                    this.isSearching = true;
-                    this.searchTerm = searchTerm;
-                }),
-                switchMap(() => this.command.performSearch(this.searchTerm)),
+                switchMap((searchQuery) => this.command.performSearch(searchQuery.searchTerm)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (res: HttpResponse<any[]>) => {
                     this.values = res.body!;
-                    this.isSearching = false;
                 },
                 error: (errorResponse: HttpErrorResponse) => {
-                    this.isSearching = false;
                     onError(this.alertService, errorResponse);
                 },
             });
-        this.search$.next(this.searchTerm);
     }
 
     open() {
@@ -68,10 +66,9 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    updateSearchTerm(searchInput: string | undefined) {
+    updateSearchTerm(searchInput: string | undefined, noDebounce = false) {
         const searchTerm = searchInput?.trim().toLowerCase() ?? '';
-        this.searchTerm = searchTerm;
-        this.search$.next(searchTerm);
+        this.search$.next({ searchTerm, noDebounce });
     }
 
     handleNavigation(event: KeyboardEvent) {
@@ -87,13 +84,11 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
         }
     }
 
-    protected readonly console = console;
-
     handleMenuOpen() {
         this.focusInput = true;
         this.searchInputForm.focus();
         this.searchInput.nativeElement.value = '';
-        this.updateSearchTerm('');
+        this.updateSearchTerm('', true);
     }
 
     handleMenuClosed() {
