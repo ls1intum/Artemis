@@ -1,10 +1,7 @@
 <div>
     <h2 id="exam-title">
-        <ng-container *ngIf="!instructorView">
-            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
-        </ng-container>
-        <ng-container *ngIf="instructorView">
-            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
+        <ng-container>
+            {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
             <fa-icon [icon]="faPrint"></fa-icon>
@@ -12,16 +9,18 @@
         </button>
     </h2>
 </div>
-<jhi-exam-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
-<div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun">
-    <div class="row justify-content-center">
-        <div class="alert alert-success col-12 col-lg-6" role="alert">
-            {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
-        </div>
-    </div>
-</div>
-<div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
-    <jhi-exam-points-summary [studentExamWithGrade]="studentExamGradeInfoDTO"></jhi-exam-points-summary>
+<jhi-exam-general-information
+    *ngIf="studentExam?.exam"
+    [exam]="studentExam.exam!"
+    [studentExam]="studentExam"
+    [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun"
+/>
+<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
+    <jhi-exam-result-overview
+        [studentExamWithGrade]="studentExamGradeInfoDTO"
+        [isGradingKeyCollapsed]="isGradingKeyCollapsed"
+        [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed"
+    />
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
@@ -91,7 +90,7 @@
                 </span>
                 <!-- prettier-ignore -->
                 <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
-                [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
+                    [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
                         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                     <jhi-included-in-score-badge
                         *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
