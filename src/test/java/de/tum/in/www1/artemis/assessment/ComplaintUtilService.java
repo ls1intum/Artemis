@@ -40,7 +40,7 @@ public class ComplaintUtilService {
      * @param numberComplaintResponses The max number of complaint responses to generate.
      * @param typeComplaint            Whether the complaint is a complaint (true) or a more feedback request (false).
      * @param result                   The result to generate the complaint for.
-     * @param currentUser              The user that replies to more feedback requests.
+     * @param currentUser              The user that replies to the complaint.
      */
     public void generateComplaintAndResponses(String userPrefix, int currentIndex, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result,
             User currentUser) {
