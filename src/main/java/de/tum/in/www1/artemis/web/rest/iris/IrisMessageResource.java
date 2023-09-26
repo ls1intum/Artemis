@@ -11,9 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -161,7 +159,7 @@ public class IrisMessageResource {
     @PutMapping(value = { "sessions/{sessionId}/messages/{messageId}/contents/{contentId}/{component}" })
     @EnforceAtLeastInstructor
     public ResponseEntity<IrisMessageContent> updatePlanContent(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
-            @PathVariable Enum component, @RequestBody String plan) {
+            @PathVariable IrisExercisePlanMessageContent.ExerciseComponent component, @RequestBody String plan) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
         var content = irisMessageContentRepository.findByIdElseThrow(contentId);
@@ -173,11 +171,13 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only edit messages send by Iris");
         }
-        if (!(content instanceof ExercisePlanMessageContent)) {
+        if (content instanceof IrisExercisePlanMessageContent exercisePlanContent) {
+            exercisePlanContent.setPlan(component, plan);
+            var savedContent = irisMessageContentRepository.save(exercisePlanContent);
+            return ResponseEntity.ok(savedContent);
+        }
+        else {
             throw new BadRequestException("You can only edit component plan messages");
         }
-        content.setPlan(component, plan);
-        var savedContent = irisMessageContentRepository.save(content);
-        return ResponseEntity.ok(savedContent);
     }
 }
