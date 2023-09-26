@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.time.ZonedDateTime;
-
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
@@ -61,7 +59,6 @@ public class IrisSessionService {
         var irisSession = new IrisChatSession();
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
-        irisSession.setCreationDate(ZonedDateTime.now());
 
         return irisChatSessionRepository.save(irisSession);
     }
