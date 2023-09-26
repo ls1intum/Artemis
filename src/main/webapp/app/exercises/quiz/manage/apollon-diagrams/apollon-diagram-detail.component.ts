@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -52,6 +52,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         private languageHelper: JhiLanguageHelper,
         private modalService: NgbModal,
         private route: ActivatedRoute,
+        private router: Router,
     ) {}
 
     /**
@@ -166,6 +167,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             const result = await modalRef.result;
             if (result) {
                 this.alertService.success('artemisApp.apollonDiagram.create.success', { title: result.title });
+                this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'edit']);
             }
         } catch (error) {
             this.alertService.error('artemisApp.apollonDiagram.create.error');
