@@ -779,12 +779,13 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         // set start and submitted date as results are created below
-        studentExams.forEach(studentExam -> {
+        var savedStudentExams = studentExamRepository.findByExamId(exam.getId());
+        savedStudentExams.forEach(studentExam -> {
             studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(2));
             studentExam.setSubmitted(true);
             studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
         });
-        studentExamRepository.saveAll(studentExams);
+        studentExamRepository.saveAll(savedStudentExams);
 
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
