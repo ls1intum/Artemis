@@ -26,10 +26,10 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
 
     private ngUnsubscribe = new Subject<void>();
     private readonly search$ = new Subject<SearchQuery>();
-    private focusInput = true;
 
     values: any[] = [];
     selectedValue: any;
+    focusInput = true;
 
     constructor(private readonly alertService: AlertService) {}
 
@@ -71,12 +71,6 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
         this.search$.next({ searchTerm, noDebounce });
     }
 
-    handleNavigation(event: KeyboardEvent) {
-        if (event.code === 'ArrowUp' || event.code === 'ArrowDown') {
-            this.focusInput = false;
-        }
-    }
-
     focusInputField(force = false) {
         if (this.focusInput || force) {
             this.focusInput = true;
@@ -99,5 +93,12 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
 
     setSelection(value: any) {
         this.selectedValue = value;
+    }
+
+    fillSelection() {
+        if (this.values?.length > 0) {
+            this.setSelection(this.values.last());
+            this.menuTrigger.closeMenu();
+        }
     }
 }

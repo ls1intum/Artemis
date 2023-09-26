@@ -5,7 +5,15 @@
     <button *ngFor="let value of values" mat-menu-item (click)="setSelection(value)">
         {{ value.name }}
     </button>
-    <form #searchInputForm (click)="$event.stopPropagation()" mat-menu-item class="p-1" (focus)="focusInputField(true)">
-        <input #searchInput matInput class="form-control" (input)="updateSearchTerm(searchInput.value)" (keydown)="handleNavigation($event)" (blur)="focusInputField()" />
+    <form #searchInputForm (click)="$event.stopPropagation()" mat-menu-item class="p-1" (focus)="focusInputField(true)" (submit)="fillSelection()">
+        <input
+            #searchInput
+            matInput
+            class="form-control"
+            (input)="updateSearchTerm(searchInput.value)"
+            (keydown.arrowUp)="focusInput = false"
+            (keydown.arrowDown)="focusInput = false"
+            (blur)="focusInputField()"
+        />
     </form>
 </mat-menu>
