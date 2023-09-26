@@ -23,6 +23,10 @@
                     <th>{{ 'artemisApp.examManagement.examiner' | artemisTranslate }}:</th>
                     <td>{{ exam.examiner }}</td>
                 </tr>
+                <tr *ngIf="exam?.title" id="exam-title">
+                    <th>{{ 'artemisApp.examManagement.examTitle' | artemisTranslate }}:</th>
+                    <td>{{ exam.title }}</td>
+                </tr>
                 <ng-container *ngIf="exam && !isTestExam && exam.startDate">
                     <tr *ngIf="isExamOverMultipleDays; else examSingleDay">
                         <th>{{ 'artemisApp.exam.time' | artemisTranslate }}:</th>
