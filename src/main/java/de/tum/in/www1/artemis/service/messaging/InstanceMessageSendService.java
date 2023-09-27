@@ -156,11 +156,12 @@ public interface InstanceMessageSendService {
     void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId);
 
     /**
-     * Send a message to the main server that the working time of an exam was changed during the conduction and rescheduling might be necessary
+     * Send a message to the main server that all student exams of an exam should get rescheduled
+     * e.g. because the working time of an exam was changed during the conduction.
      *
      * @param examId the id of the exam that should be scheduled
      */
-    void sendExamWorkingTimeChangeDuringConduction(Long examId);
+    void sendRescheduleAllStudentExams(Long examId);
 
     /**
      * Send a message to the main server that the working time of a student exam was changed during the conduction and rescheduling might be necessary

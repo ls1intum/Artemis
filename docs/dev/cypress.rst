@@ -30,7 +30,7 @@ Follow these steps to create your local cypress instance:
 
 2. Customize Cypress settings
 
-  To connect cypress to our local Artemis instance, we need to adjust some configurations. 
+  To connect cypress to our local Artemis instance, we need to adjust some configurations.
   First we need to set the URL or IP of the Artemis instance in the ``cypress.config.ts`` file.
   Adjust the ``baseUrl`` setting to fit your setup (e.g. ``baseUrl: 'http://localhost:9000',``)
 
@@ -39,7 +39,7 @@ Follow these steps to create your local cypress instance:
   We also need to adjust the user setting, which will determine the usernames and passwords, that cypress
   will use. These settings are located within the ``cypress.env.json`` file. If you use the Atlassian setup,
   the file should typically look like this:
-   
+
   .. code-block:: json
 
     {
@@ -54,8 +54,9 @@ Follow these steps to create your local cypress instance:
       "instructorGroupName": "instructors"
     }
 
-  The ``USERID`` part will be automatically replaced by different user ids. These are set within the ``support/users.ts`` file. 
+  The ``USERID`` part will be automatically replaced by different user ids. These are set within the ``support/users.ts`` file.
   For a typical local installation the IDs are:
+
     - studentOne: 1
     - studentTwo: 2
     - studentThree: 3
@@ -87,7 +88,7 @@ Follow these steps to create your local cypress instance:
     :align: center
     :alt: Cypress cypress-open-screenshot
 
-  You can now click on any test suite and it should run. 
+  You can now click on any test suite and it should run.
 
 .. warning::
   **IMPORTANT**: If you run the E2E tests for the first time, always run the ``ImportUsers.ts`` tests first,
@@ -97,18 +98,18 @@ Follow these steps to create your local cypress instance:
 Debug using Sorry Cypress
 -------------------------
 
-Since the E2E tests are sometimes hard to debug, we provide a dashboard, that allows to inspect the 
-CI run and even watch a video of the UI interaction with Artemis in that run. 
+Since the E2E tests are sometimes hard to debug, we provide a dashboard, that allows to inspect the
+CI run and even watch a video of the UI interaction with Artemis in that run.
 
 It's based on Sorry Cypress a open source and selfhostable alternative to the paid cypress cloud.
 
 The dashboard itself can be access here: https://sorry-cypress.ase.cit.tum.de/
 
-To access it, you need these basic auth credentials (sorry cypress itself does not provide an auth 
+To access it, you need these basic auth credentials (sorry cypress itself does not provide an auth
 system, so we are forced to use nginx basic auth here). You can find these credentials on our confluence page:
 https://confluence.ase.in.tum.de/display/ArTEMiS/Sorry+Cypress+Dashboard
 
-After that you will see the initial dashboard. 
+After that you will see the initial dashboard.
 
 You first have to select a project in the left sidebar (mysql or postgresql):
 
@@ -122,31 +123,31 @@ Now you get a list of the last runs. In the top right you can enter your branch 
     :align: center
     :alt: Sorry Cypress last runs
 
-The name of the run consists of the branch name followed by the run number. The last part is MySQL or 
-PostgreSQL depending on the run environment. If you are in the MySQL project, you will of course only see the MySQL runs. 
+The name of the run consists of the branch name followed by the run number. The last part is MySQL or
+PostgreSQL depending on the run environment. If you are in the MySQL project, you will of course only see the MySQL runs.
 
-If you now click on the run, you can see detailed information about the test suites (corresponding 
+If you now click on the run, you can see detailed information about the test suites (corresponding
 to components within Artemis). For each suite there is information about the run time, the successful/failed/flaky/skipped/ignored tests:
 
   .. figure:: cypress/sorry-cypress-run.png
     :align: center
     :alt: Sorry Cypress single run
 
-If you want to further debug one test suite, just click on it.  
+If you want to further debug one test suite, just click on it.
 
   .. figure:: cypress/sorry-cypress-test.png
     :align: center
     :alt: Sorry Cypress single test
 
-Here you can see the single tests on the left and a video on the right. This is a screen capture of 
-the actual run and can tremendously help debug failing E2E tests. 
+Here you can see the single tests on the left and a video on the right. This is a screen capture of
+the actual run and can tremendously help debug failing E2E tests.
 
-Sometimes the video can be a little bit to fast to debug easily. Just download the video on your 
-computer and play it with a video player, that allows you to slow the video down. 
+Sometimes the video can be a little bit to fast to debug easily. Just download the video on your
+computer and play it with a video player, that allows you to slow the video down.
 
 .. note::
-  For maintenance reasons videos are deleted after 14 days. So if you have a failing test, debug 
-  it before this period to get access to the video. 
+  For maintenance reasons videos are deleted after 14 days. So if you have a failing test, debug
+  it before this period to get access to the video.
 
 
 Best practice when writing new E2E tests
@@ -154,12 +155,12 @@ Best practice when writing new E2E tests
 
 **Understanding the System and Requirements**
 
-Before writing tests, a deep understanding of the system and its requirements is crucial. 
-This understanding guides determining what needs testing and what defines a successful test. 
+Before writing tests, a deep understanding of the system and its requirements is crucial.
+This understanding guides determining what needs testing and what defines a successful test.
 The best way to understand is to consolidate the original system`s developer or a person actively working on this
 component.
 
-**Identify Main Test Scenarios** 
+**Identify Main Test Scenarios**
 
 Identify what are the main ways the component is supposed to be used. Try
 the action with all involved user roles and test as many different inputs as
@@ -209,12 +210,12 @@ and fx the issue, or update the test if the requirements have changed.
 
 **Regularly Review and Refactor Your Tests**
 
-Tests, like code, can accumulate technical debt. Regular reviews for duplication, 
+Tests, like code, can accumulate technical debt. Regular reviews for duplication,
 unnecessary complexity, and other issues help maintain tests and enhance reliability.
 
 **Use HTML IDs instead of classes or other attributes**
 
-When searching for a single element within the DOM of an HTML page, try to use ID selectors as much as possible. 
+When searching for a single element within the DOM of an HTML page, try to use ID selectors as much as possible.
 They are more reliable since there can only be one element with this ID on one single page according to the HTML
 
 
