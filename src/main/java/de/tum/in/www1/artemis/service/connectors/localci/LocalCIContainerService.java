@@ -214,6 +214,17 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
+    /**
+     * Copy the repositories and build script from the Artemis container to the build job container.
+     *
+     * @param artemisContainerId
+     * @param buildJobContainerId
+     * @param assignmentRepositoryPath
+     * @param testRepositoryPath
+     * @param auxiliaryRepositoriesPaths
+     * @param auxiliaryRepositoriesNames
+     * @param buildScriptPath
+     */
     public void populateBuildJobContainer(String artemisContainerId, String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoriesNames, Path buildScriptPath) {
         copyFromToContainers(artemisContainerId, assignmentRepositoryPath.toString(), buildJobContainerId, "/");
@@ -228,11 +239,6 @@ public class LocalCIContainerService {
 
         copyFromToContainers(artemisContainerId, buildScriptPath.toString(), buildJobContainerId, "/");
         renameDirectoryOrFile(buildJobContainerId, buildScriptPath.getFileName().toString(), "script.sh");
-    }
-
-    private void createDirectoryInContainer(String containerId, String directoryName) {
-        ExecCreateCmdResponse createDirectoryCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("mkdir", directoryName).exec();
-        dockerClient.execStartCmd(createDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
