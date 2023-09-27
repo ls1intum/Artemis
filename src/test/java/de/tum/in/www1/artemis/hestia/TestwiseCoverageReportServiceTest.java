@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +80,11 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         solutionSubmission = programmingExerciseUtilService.createProgrammingSubmission(solutionParticipation, false);
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+    }
+
+    @AfterEach
+    void cleanup() throws IOException {
+        solutionRepo.resetLocalRepo();
     }
 
     @Test

@@ -7,9 +7,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class AndroidAppSiteAssociationResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AndroidAppSiteAssociationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     AndroidAppSiteAssociationResource androidAppSiteAssociationResource;

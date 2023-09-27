@@ -86,8 +86,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localVCLocalCITestService.testPushReturnsError(someRepository.localGit, student1Login, projectKey, repositorySlug, NOT_FOUND);
 
         // Cleanup
-        someRepository.localGit.close();
-        FileUtils.deleteDirectory(someRepository.localRepoFile);
+        someRepository.resetLocalRepo();
     }
 
     @Test

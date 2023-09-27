@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,10 +22,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -221,7 +219,7 @@ public class CourseResource {
         courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false);
+            String pathString = fileService.handleSaveFile(file, false, false).toString();
             courseUpdate.setCourseIcon(pathString);
         }
 
@@ -543,6 +541,7 @@ public class CourseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-assessment-dashboard");
+        // TODO: use ...ElseThrow below in case the course cannot be found
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
@@ -761,18 +760,23 @@ public class CourseResource {
 
         File zipFile = archive.toFile();
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(zipFile.getName()).build();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(contentDisposition);
+        return ResponseEntity.ok().headers(headers).contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName())
+                .body(resource);
     }
 
     /**
      * DELETE /courses/:course/cleanup : Cleans up a course by deleting all student submissions.
      *
-     * @param courseId id of the course to clean up
+     * @param courseId  id of the course to clean up
+     * @param principal the user that wants to cleanup the course
      * @return ResponseEntity with status
      */
     @DeleteMapping("courses/{courseId}/cleanup")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
+    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, Principal principal) {
         log.info("REST request to cleanup the Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -780,7 +784,7 @@ public class CourseResource {
         if (!course.hasCourseArchive()) {
             throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", Course.ENTITY_NAME, "archivenonexistant");
         }
-        courseService.cleanupCourse(courseId);
+        courseService.cleanupCourse(courseId, principal);
         return ResponseEntity.ok().build();
     }
 

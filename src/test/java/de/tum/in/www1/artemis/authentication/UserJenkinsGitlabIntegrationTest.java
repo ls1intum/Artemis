@@ -179,6 +179,15 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void createInternalUserWithoutRoles_isSuccessful() throws Exception {
+        gitlabRequestMockProvider.mockCreationOfUser("batman");
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
+        userTestService.createInternalUserWithoutRoles_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", false);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_asAdmin_hasId() throws Exception {
         userTestService.createUser_asAdmin_hasId();
     }
@@ -390,6 +399,12 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserLogin() throws Exception {
         userTestService.updateUserLogin();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateUserEmptyRoles() throws Exception {
+        userTestService.updateUserWithEmptyRoles();
     }
 
     @Test

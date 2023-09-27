@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionDTO;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
@@ -23,12 +24,15 @@ public class ProgrammingMessagingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final ResultWebsocketService resultWebsocketService;
+
     private final LtiNewResultService ltiNewResultService;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            LtiNewResultService ltiNewResultService) {
+            ResultWebsocketService resultWebsocketService, LtiNewResultService ltiNewResultService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
+        this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
     }
 
@@ -132,7 +136,7 @@ public class ProgrammingMessagingService {
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
         log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
         // notify user via websocket
-        websocketMessagingService.broadcastNewResult((Participation) participation, result);
+        resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations

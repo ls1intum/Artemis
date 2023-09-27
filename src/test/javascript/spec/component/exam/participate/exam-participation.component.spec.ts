@@ -24,7 +24,7 @@ import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
+import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
@@ -47,6 +47,8 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
+import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -58,8 +60,7 @@ describe('ExamParticipationComponent', () => {
     let modelingSubmissionService: ModelingSubmissionService;
     let alertService: AlertService;
     let artemisServerDateService: ArtemisServerDateService;
-    let websocketService: JhiWebsocketService;
-    let artemisDatePipe: ArtemisDatePipe;
+    let examParticipationLiveEventsService: ExamParticipationLiveEventsService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -78,7 +79,7 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(JhiConnectionStatusComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(TestRunRibbonComponent),
-                MockComponent(ExamParticipationSummaryComponent),
+                MockComponent(ExamResultSummaryComponent),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
@@ -90,6 +91,7 @@ describe('ExamParticipationComponent', () => {
                         params: of({ courseId: '1', examId: '2', testRunId: '3' }),
                     },
                 },
+                { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
                 MockProvider(ExamParticipationService),
                 MockProvider(ModelingSubmissionService),
                 MockProvider(ProgrammingSubmissionService),
@@ -113,8 +115,7 @@ describe('ExamParticipationComponent', () => {
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
                 alertService = TestBed.inject(AlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
-                websocketService = TestBed.inject(JhiWebsocketService);
-                artemisDatePipe = TestBed.inject(ArtemisDatePipe);
+                examParticipationLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
                 fixture.detectChanges();
                 comp.exam = new Exam();
             });
@@ -445,44 +446,48 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('websocket working time subscription', () => {
-        let alertSuccessSpy: jest.SpyInstance;
-        let alertErrorSpy: jest.SpyInstance;
-        let artemisDatePipeSpy: jest.SpyInstance;
         const startDate = dayjs('2022-02-21T23:00:00+01:00');
 
         beforeEach(() => {
-            alertSuccessSpy = jest.spyOn(alertService, 'success');
-            alertErrorSpy = jest.spyOn(alertService, 'error');
-            artemisDatePipeSpy = jest.spyOn(artemisDatePipe, 'transform');
             comp.studentExam = { id: 3, workingTime: 420, numberOfExamSessions: 0 };
             comp.studentExamId = comp.studentExam.id!;
+            examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
         });
 
         it('should correctly increase working time', () => {
-            jest.spyOn(websocketService, 'receive').mockReturnValue(of(1337));
+            const event = {
+                newWorkingTime: 1337,
+            } as any as ExamLiveEvent;
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            const ackSpy = jest.spyOn(examParticipationLiveEventsService, 'acknowledgeEvent');
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(1337);
-            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(1337, 'seconds'), 'time');
-            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeIncreased', { date: undefined });
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
 
         it('should correctly increase working time to next day', () => {
-            jest.spyOn(websocketService, 'receive').mockReturnValue(of(9001));
+            const event = {
+                newWorkingTime: 9001,
+            } as any as ExamLiveEvent;
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            const ackSpy = jest.spyOn(examParticipationLiveEventsService, 'acknowledgeEvent');
             // the following line uses the current time zone and therefore avoids a time zone flaky test
             // (if left out, the test would pass in the German time zone and fail in most other time zones)
             const startDate = dayjs().set('h', 23); //today at 23:00
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(9001);
-            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(9001, 'seconds'), 'short');
-            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeIncreased', { date: undefined });
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
 
         it('should correctly decrease working time', () => {
-            jest.spyOn(websocketService, 'receive').mockReturnValue(of(42));
+            const event = {
+                newWorkingTime: 42,
+            } as any as ExamLiveEvent;
+            jest.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            const ackSpy = jest.spyOn(examParticipationLiveEventsService, 'acknowledgeEvent');
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(42);
-            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(42, 'seconds'), 'time');
-            expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeDecreased', { date: undefined });
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
     });
 
