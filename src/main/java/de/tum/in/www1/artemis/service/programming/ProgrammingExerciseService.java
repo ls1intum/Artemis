@@ -218,6 +218,8 @@ public class ProgrammingExerciseService {
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
+        log.info("Laurenz Programming Exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
+
         setupBuildPlansForNewExercise(savedProgrammingExercise);
         // save to get the id required for the webhook
         savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
@@ -350,6 +352,7 @@ public class ProgrammingExerciseService {
 
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         continuousIntegration.createProjectForExercise(programmingExercise);
+        log.info("Laurenz project {} on CI server", projectKey);
         // template build plan
         continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         // solution build plan

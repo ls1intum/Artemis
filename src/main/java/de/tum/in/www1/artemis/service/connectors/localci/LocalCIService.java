@@ -68,6 +68,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
         // Trigger build for the given participation.
 
+        log.info("Triggering build for participation {} in exercise {}: LocalCIService", programmingExercise.getTemplateParticipation().getId(), programmingExercise.getId());
+
         if (TEMPLATE.getName().equals(planKey)) {
             localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
         }

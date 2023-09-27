@@ -59,7 +59,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) {
-        log.info("Trigger build for participation {} with commit hash {}", participation.getId(), commitHash);
+        log.info("Trigger build for participation {} with commit hash {}: LocalCITriggerService", participation.getId(), commitHash);
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
         futureResult.thenAccept(buildResult -> {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
