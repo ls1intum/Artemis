@@ -172,7 +172,13 @@ public class FileUploadSubmissionService extends SubmissionService {
             }
         }
 
-        // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
+        deletePreviousSubmissionFilesAndEvictThemFromCache(participation, newFilePaths, savePaths);
+
+        return newFilePaths;
+    }
+
+    private void deletePreviousSubmissionFilesAndEvictThemFromCache(StudentParticipation participation, List<URI> newFilePaths, List<Path> savePaths) {
+        // Note: we can only delete a file, if a file name was changed (i.e. the new file name is different), otherwise this will cause issues
         Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
 
         previousFileUploadSubmission.filter(previousSubmission -> !previousSubmission.getFilePaths().isEmpty()).ifPresent(previousSubmission -> {
@@ -194,8 +200,6 @@ public class FileUploadSubmissionService extends SubmissionService {
                 }
             }
         });
-
-        return newFilePaths;
     }
 
     private Path saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
