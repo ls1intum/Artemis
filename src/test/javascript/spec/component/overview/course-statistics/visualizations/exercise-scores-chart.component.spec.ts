@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import { ChartNode, ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -150,7 +150,7 @@ describe('ExerciseScoresChartComponent', () => {
         setUpServiceAndStartComponent([firstExercise, secondExercise]);
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = jest.spyOn(routingService, 'routeInNewTab');
-        const pointClickEvent = { exerciseId: 2 };
+        const pointClickEvent: ChartNode = { exerciseType: '', name: '', series: '', value: 0, exerciseId: 2 };
 
         component.onSelect(pointClickEvent);
 

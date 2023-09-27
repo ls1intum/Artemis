@@ -20,7 +20,7 @@ type ChartSeries = {
     series: SeriesDatapoint[];
 };
 
-type ChartNode = SeriesDatapoint & {
+export type ChartNode = SeriesDatapoint & {
     series: string;
 };
 
