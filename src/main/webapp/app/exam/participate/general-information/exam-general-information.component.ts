@@ -14,8 +14,10 @@ export class ExamGeneralInformationComponent implements OnChanges {
     @Input() studentExam: StudentExam;
     @Input() reviewIsOpen?: boolean = false;
 
-    /** The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
-     * the information is shown in the {@link ExamResultOverviewComponent} */
+    /**
+     * The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
+     * the information is shown in the {@link ExamResultOverviewComponent}
+     */
     @Input() displayOnExamCover?: boolean = false;
 
     examEndDate?: dayjs.Dayjs;
