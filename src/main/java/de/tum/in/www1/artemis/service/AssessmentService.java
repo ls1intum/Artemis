@@ -42,12 +42,12 @@ public class AssessmentService {
 
     private final SubmissionService submissionService;
 
-    private final LtiNewResultService ltiNewResultService;
+    private final Optional<LtiNewResultService> ltiNewResultService;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository, UserRepository userRepository,
-            LtiNewResultService ltiNewResultService) {
+            Optional<LtiNewResultService> ltiNewResultService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -217,7 +217,9 @@ public class AssessmentService {
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
-        ltiNewResultService.onNewResult((StudentParticipation) result.getParticipation());
+        if (ltiNewResultService.isPresent()) {
+            ltiNewResultService.get().onNewResult((StudentParticipation) result.getParticipation());
+        }
         return result;
     }
 

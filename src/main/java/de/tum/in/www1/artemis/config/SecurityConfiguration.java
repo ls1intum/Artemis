@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -12,6 +9,7 @@ import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -62,8 +60,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
+    private final Environment env;
+
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-            CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+            CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider,
+            Environment env) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
@@ -71,6 +72,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.problemSupport = problemSupport;
         this.passwordService = passwordService;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
+        this.env = env;
     }
 
     /**
@@ -178,7 +180,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .apply(securityConfigurerAdapter());
 
-        http.apply(new CustomLti13Configurer());
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (activeProfiles.contains("lti")) {
+            // TODO: can we disable this based on the lti profile?
+            http.apply(new CustomLti13Configurer());
+        }
 
         // @formatter:on
     }

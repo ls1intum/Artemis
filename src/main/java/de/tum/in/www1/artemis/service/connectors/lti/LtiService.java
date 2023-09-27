@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -38,6 +39,7 @@ import de.tum.in.www1.artemis.service.user.UserCreationService;
 import tech.jhipster.security.RandomUtil;
 
 @Service
+@Profile("lti")
 public class LtiService {
 
     public static final String LTI_GROUP_NAME = "lti";
@@ -95,14 +97,7 @@ public class LtiService {
             }
         }
 
-        // 2. Case: Lookup user with the LTI email address and sign in as this user
-        final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
-        if (usernameLookupByEmail.isPresent()) {
-            SecurityContextHolder.getContext().setAuthentication(loginUserByEmail(usernameLookupByEmail.get(), email));
-            return;
-        }
-
-        // 3. Case: Create new user if an existing user is not required
+        // 2. Case: Create new user if an existing user is not required
         if (!requireExistingUser) {
             SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
             return;
