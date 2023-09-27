@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,11 +40,10 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
         for (String urlFilePath : urlFilePaths) {
             // we need to get the 'real' file path here, the submission only has the api url path
-            Path filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
-            String[] apiFilePathParts = urlFilePath.replace("/", File.separator).split(Pattern.quote(File.separator));
-            String fileName = apiFilePathParts[apiFilePathParts.length - 1];
+            Path submissionDirectory = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
+            Path fileName = Path.of(urlFilePath).getFileName();
 
-            Path submissionPath = filePath.resolve(fileName);
+            Path submissionPath = submissionDirectory.resolve(fileName);
             filePaths.add(submissionPath);
 
             if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
