@@ -768,6 +768,10 @@ public class FileService implements DisposableBean {
                     log.info("Delete file {}", path);
                     Files.delete(path);
                 }
+                else {
+                    log.error("Deleting the file {} did not work because it does not exist", path);
+                }
+
                 futures.remove(path);
             }
             catch (IOException e) {
