@@ -15,7 +15,7 @@ export class LearningPath implements BaseEntity {
     constructor() {}
 }
 
-export class LearningPathPageableSearchDTO {
+export class LearningPathInformationDTO {
     public id?: number;
     public user?: UserNameAndLoginDTO;
     public progress?: number;
