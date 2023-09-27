@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { FileService } from 'app/shared/http/file.service';
 
 @Component({
-    selector: 'jhi-stage',
+    selector: 'jhi-file-upload-stage',
     templateUrl: './file-upload-stage.component.html',
     styleUrls: ['./file-upload-stage.component.scss'],
 })

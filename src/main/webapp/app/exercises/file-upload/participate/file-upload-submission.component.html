@@ -19,14 +19,14 @@
 <jhi-resizeable-container *ngIf="fileUploadExercise" [isExerciseParticipation]="true">
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
-        <jhi-stage
+        <jhi-file-upload-stage
             #stage
             [allowsUploads]="(isActive || isLate) && !result && fileUploadExercise && submission && isOwnerOfParticipation"
             [submission]="submission"
             [allowedFileExtensions]="fileUploadExercise.filePattern!.split(',')"
             [showUploadButton]="false"
             (stagedFilesChanged)="stagedFilesChanged($event)"
-        ></jhi-stage>
+        ></jhi-file-upload-stage>
 
         <div *ngIf="result && result.feedbacks && result.feedbacks.length && result.feedbacks.length > 0">
             <br />

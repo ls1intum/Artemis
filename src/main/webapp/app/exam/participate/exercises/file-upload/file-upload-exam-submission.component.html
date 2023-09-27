@@ -10,7 +10,7 @@
         [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
-        <jhi-stage
+        <jhi-file-upload-stage
             #stage
             [allowsUploads]="isActive && !result"
             [submission]="studentSubmission"
@@ -19,7 +19,7 @@
             (stagedFilesChanged)="stagedFilesChanged($event)"
             (uploadButtonClicked)="uploadButtonClicked()"
         >
-        </jhi-stage>
+        </jhi-file-upload-stage>
     </div>
     <!--endregion-->
     <!--region Right Panel-->
