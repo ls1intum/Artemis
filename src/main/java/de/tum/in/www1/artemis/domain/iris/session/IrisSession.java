@@ -26,7 +26,11 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"), @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia") })
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
+        @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
+        @JsonSubTypes.Type(value = IrisCodeEditorSession.class, name = "codeEditor")
+})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSession extends DomainObject {
 

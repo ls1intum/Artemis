@@ -135,7 +135,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         if (message.getSender() != IrisMessageSender.LLM) {
-            throw new BadRequestException("You can only rate messages send by Iris");
+            throw new BadRequestException("You can only rate messages sent by Iris");
         }
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);
