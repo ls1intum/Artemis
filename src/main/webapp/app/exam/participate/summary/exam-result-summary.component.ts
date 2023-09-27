@@ -8,7 +8,7 @@ import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -89,7 +89,6 @@ export class ExamResultSummaryComponent implements OnInit {
     faInfoCircle = faInfoCircle;
     faPrint = faPrint;
     faAngleRight = faAngleRight;
-    faAngleDown = faAngleDown;
 
     exerciseInfos: Record<number, ExerciseInfo>;
 
