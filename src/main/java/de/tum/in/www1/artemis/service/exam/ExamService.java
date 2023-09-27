@@ -814,8 +814,11 @@ public class ExamService {
             return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
         }
         else if (exercise instanceof FileUploadExercise) {
-            FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
-            return !textSubmission.getFilePaths().isEmpty() && textSubmission.getFilePaths().stream().noneMatch(String::isEmpty);
+            FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissions.iterator().next();
+            // consider all submissions with at least one non-empty path non-empty.
+            // example: ["", "path/to/somewhere.png", ""] would be non-empty and [""] would be empty.
+            // not to say that "" should occur. but if it did...
+            return fileUploadSubmission.getFilePaths().stream().anyMatch(path -> !path.isEmpty());
         }
         else if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
