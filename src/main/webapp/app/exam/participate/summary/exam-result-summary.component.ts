@@ -19,6 +19,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 type ExerciseInfo = {
     icon: IconProp;
+    isCollapsed: boolean;
     achievedPercentage?: number;
     colorClass?: string;
 };
@@ -70,8 +71,6 @@ export class ExamResultSummaryComponent implements OnInit {
 
     @Input()
     instructorView = false;
-
-    collapsedExerciseIds: number[] = [];
 
     courseId: number;
 
@@ -178,9 +177,16 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private expandExercisesAndGradingKeysBeforePrinting() {
-        this.collapsedExerciseIds = [];
+        this.expandExercises();
+
         this.isGradingKeyCollapsed = false;
         this.isBonusGradingKeyCollapsed = false;
+    }
+
+    private expandExercises() {
+        Object.entries(this.exerciseInfos).forEach((exerciseInfo: [string, ExerciseInfo]) => {
+            exerciseInfo[1].isCollapsed = false;
+        });
     }
 
     public generateLink(exercise: Exercise) {
@@ -207,25 +213,11 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     /**
-     * @param exerciseId
-     * checks collapse control of exercise cards depending on exerciseId
-     */
-    isCollapsed(exerciseId: number): boolean {
-        return this.collapsedExerciseIds.includes(exerciseId);
-    }
-
-    /**
-     * @param exerciseId
      * adds collapse control of exercise cards depending on exerciseId
      * @param exerciseId the exercise for which the submission should be collapsed
      */
     toggleCollapseExercise(exerciseId: number): void {
-        const collapsed = this.isCollapsed(exerciseId);
-        if (collapsed) {
-            this.collapsedExerciseIds = this.collapsedExerciseIds.filter((id) => id !== exerciseId);
-        } else {
-            this.collapsedExerciseIds.push(exerciseId);
-        }
+        this.exerciseInfos[exerciseId].isCollapsed = !this.exerciseInfos[exerciseId].isCollapsed;
     }
 
     /**
@@ -273,6 +265,7 @@ export class ExamResultSummaryComponent implements OnInit {
             }
             exerciseInfos[exercise.id] = {
                 icon: getIcon(exercise.type),
+                isCollapsed: false,
                 // achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
                 // colorClass: this.getTextColorClassByExercise(exercise),
             };

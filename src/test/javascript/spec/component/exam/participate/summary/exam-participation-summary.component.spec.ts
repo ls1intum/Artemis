@@ -212,10 +212,19 @@ describe('ExamResultSummaryComponent', () => {
         toggleCollapseExerciseButtonTwo.nativeElement.click();
         toggleCollapseExerciseButtonThree.nativeElement.click();
         toggleCollapseExerciseButtonFour.nativeElement.click();
-        expect(component.collapsedExerciseIds).toHaveLength(4);
+
+        expect(component.exerciseInfos[1].isCollapsed).toBeTrue();
+        expect(component.exerciseInfos[2].isCollapsed).toBeTrue();
+        expect(component.exerciseInfos[3].isCollapsed).toBeTrue();
+        expect(component.exerciseInfos[4].isCollapsed).toBeTrue();
 
         exportToPDFButton.nativeElement.click();
-        expect(component.collapsedExerciseIds).toBeEmpty();
+
+        expect(component.exerciseInfos[1].isCollapsed).toBeFalse();
+        expect(component.exerciseInfos[2].isCollapsed).toBeFalse();
+        expect(component.exerciseInfos[3].isCollapsed).toBeFalse();
+        expect(component.exerciseInfos[4].isCollapsed).toBeFalse();
+
         tick();
         expect(printStub).toHaveBeenCalledOnce();
         printStub.mockRestore();
