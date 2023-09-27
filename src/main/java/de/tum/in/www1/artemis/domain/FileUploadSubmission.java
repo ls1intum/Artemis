@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.net.URI;
 import java.nio.file.Path;
 
 import javax.persistence.*;
 
-import org.apache.commons.lang3.math.NumberUtils;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 
@@ -37,25 +35,9 @@ public class FileUploadSubmission extends Submission {
     @PostRemove
     public void onDelete() {
         if (filePath != null) {
-            Path actualPath = getActualPathForPublicPath(filePath);
+            Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath));
             fileService.schedulePathForDeletion(actualPath, 0);
         }
-    }
-
-    private Path getActualPathForPublicPath(String filePath) {
-        // Note: This method duplicates functionality from actualPathForPublicPath on FilePathService
-        // but to avoid this entity depending on the FilePathService service this is separate.
-
-        final var splittedPath = filePath.split("/");
-        final var shouldBeExerciseId = splittedPath.length >= 5 ? splittedPath[4] : null;
-        if (!NumberUtils.isCreatable(shouldBeExerciseId)) {
-            throw new FilePathParsingException("Unexpected String in upload file path. Should contain the exercise ID: " + shouldBeExerciseId);
-        }
-        final var exerciseId = Long.parseLong(shouldBeExerciseId);
-
-        Path submissionDirectory = FileUploadSubmission.buildFilePath(exerciseId, getId());
-        Path fileName = Path.of(filePath).getFileName();
-        return submissionDirectory.resolve(fileName);
     }
 
     public String getFilePath() {
