@@ -27,6 +27,7 @@ import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/progra
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overview/grading-key-overview.module';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
+import { ArtemisModelingParticipationModule } from 'app/exercises/modeling/participate/modeling-participation.module';
 
 @NgModule({
     imports: [
@@ -48,6 +49,7 @@ import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participa
         ArtemisExamSharedModule,
         ArtemisSharedComponentModule,
         GradingKeyOverviewModule,
+        ArtemisModelingParticipationModule,
     ],
     declarations: [
         ExamResultSummaryComponent,

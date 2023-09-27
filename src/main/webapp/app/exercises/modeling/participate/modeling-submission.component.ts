@@ -419,7 +419,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * Check whether or not a assessmentResult exists and if, returns the unreferenced feedback of it
+     * Check whether a assessmentResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
         if (this.assessmentResult?.feedbacks) {
