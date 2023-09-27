@@ -30,7 +30,7 @@
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
-                &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="getIcon(exercise.type!)"></fa-icon>&nbsp;
+                &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="exerciseInfos[exercise.id!].icon"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
@@ -69,8 +69,9 @@
                                 'artemisApp.plagiarism.plagiarismCases.' +
                                 (plagiarismCaseInfos[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'resolvedPlagiarismCase' : 'plagiarismCase')
                             "
-                            >Plagiarism Case</span
                         >
+                            Plagiarism Case
+                        </span>
                     </a>
                     <ng-container *ngIf="exampleSolutionPublished">
                         <a

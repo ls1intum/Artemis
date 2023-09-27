@@ -15,6 +15,13 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+
+type ExerciseInfo = {
+    icon: IconProp;
+    achievedPercentage?: number;
+    colorClass?: string;
+};
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -83,6 +90,8 @@ export class ExamResultSummaryComponent implements OnInit {
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
+    exerciseInfos: Record<number, ExerciseInfo>;
+
     constructor(
         private route: ActivatedRoute,
         private serverDateService: ArtemisServerDateService,
@@ -118,6 +127,8 @@ export class ExamResultSummaryComponent implements OnInit {
         }
 
         this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
+
+        this.exerciseInfos = this.getExerciseInfos();
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
@@ -251,6 +262,22 @@ export class ExamResultSummaryComponent implements OnInit {
             return this.serverDateService.now().isBefore(this.studentExam.exam.examStudentReviewEnd);
         }
         return false;
+    }
+
+    private getExerciseInfos() {
+        const exerciseInfos: Record<number, ExerciseInfo> = {};
+        for (const exercise of this.studentExam?.exercises ?? []) {
+            if (exercise.id === undefined) {
+                console.error('Exercise id is undefined', exercise);
+                continue;
+            }
+            exerciseInfos[exercise.id] = {
+                icon: getIcon(exercise.type),
+                // achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
+                // colorClass: this.getTextColorClassByExercise(exercise),
+            };
+        }
+        return exerciseInfos;
     }
 
     protected readonly getIcon = getIcon;
