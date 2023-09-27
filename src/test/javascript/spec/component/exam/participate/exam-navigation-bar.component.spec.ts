@@ -20,6 +20,7 @@ import { CommitState } from 'app/exercises/programming/shared/code-editor/model/
 import { TranslateService } from '@ngx-translate/core';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -34,7 +35,7 @@ describe('Exam Navigation Bar Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule)],
-            declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent)],
+            declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockComponent(ExamLiveEventsButtonComponent)],
             providers: [
                 ExamParticipationService,
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },

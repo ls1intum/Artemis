@@ -528,7 +528,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     void testDataExportCreationError_handlesErrorAndInformsUserAndAdmin() {
         var dataExport = initDataExport();
         Exception exception = new RuntimeException("error");
-        doThrow(exception).when(fileService).scheduleForDirectoryDeletion(any(Path.class), anyLong());
+        doThrow(exception).when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         doNothing().when(mailService).sendDataExportFailedEmailToAdmin(any(), any(), any());
         doNothing().when(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
         dataExportCreationService.createDataExport(dataExport);

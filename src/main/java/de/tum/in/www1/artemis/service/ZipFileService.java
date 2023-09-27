@@ -12,6 +12,7 @@ import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
 import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -62,7 +63,7 @@ public class ZipFileService {
      */
     public void createTemporaryZipFile(Path zipFilePath, List<Path> paths, long deleteDelayInMinutes) throws IOException {
         createZipFile(zipFilePath, paths);
-        fileService.scheduleForDeletion(zipFilePath, deleteDelayInMinutes);
+        fileService.schedulePathForDeletion(zipFilePath, deleteDelayInMinutes);
     }
 
     /**
@@ -119,7 +120,7 @@ public class ZipFileService {
         try {
             if (Files.exists(path)) {
                 zipOutputStream.putNextEntry(zipEntry);
-                Files.copy(path, zipOutputStream);
+                FileUtils.copyFile(path.toFile(), zipOutputStream);
                 zipOutputStream.closeEntry();
             }
         }

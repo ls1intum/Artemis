@@ -66,7 +66,8 @@
                 }
             },
             "examSummary": {
-                "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
+                "examResults": "Exam Results",
+                "generalInformation": "General Information",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "lastCommitHash": "Last Commit Hash",
@@ -77,10 +78,11 @@
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
-                    "overview": "Overview",
+                    "overview": "Result Overview",
                     "total": "Total",
                     "yourPoints": "Your Points",
                     "maxPoints": "Achievable Points",
+                    "achievedPercentage": "Achieved Percentage",
                     "maxBonus": "Achievable Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of a maximum {{normalPoints}} possible points (including bonus points).",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points.",
@@ -89,7 +91,6 @@
                         "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}.",
                         "POINTS": "You received {{achievedBonus}} additional bonus points from {{bonusFromTitle}}."
                     },
-                    "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus.",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
                 "grade": "Grade",
@@ -108,6 +109,7 @@
             "date": "Date",
             "time": "Time",
             "workingTime": "Working Time",
+            "examinedStudent": "Examined student",
             "resultInformation": "Your result will be published here as soon as the correction is finished. You can get to this page by clicking on this exam in the exam overview of this course.",
             "course": "Course",
             "exercises": "Exercises",
@@ -117,6 +119,7 @@
             "startDate": "Start Date",
             "endDate": "End Date",
             "publishResultsDate": "Release Date of Results",
+            "examStudentReviewTimespan": "Review Timespan",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "studentReviewEnabled": "Review is open",
@@ -161,6 +164,24 @@
             "editWorkingTime": {
                 "absolute": "Absolute",
                 "relative": "Change relative to regular working time"
+            },
+            "events": {
+                "button": "Notifications",
+                "type": {
+                    "examWideAnnouncement": "Exam-Wide Announcement",
+                    "workingTimeUpdate": "Working Time Update"
+                },
+                "from": "from",
+                "acknowledge": "Acknowledge",
+                "acknowledgeAll": "Acknowledge all",
+                "messages": {
+                    "workingTimeUpdate": {
+                        "titleEveryone": "The working time of the exam has been changed.",
+                        "titlePersonal": "Your personal working time of the exam has been changed.",
+                        "old": "Previous working time",
+                        "new": "New working time"
+                    }
+                }
             }
         },
         "examScores": {
@@ -277,8 +298,6 @@
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
             "namePlaceholder": "Enter your full name here",
-            "workingTimeIncreased": "The end of working time was extended until {{ date }}.",
-            "workingTimeDecreased": "The end of working time was shortened until {{ date }}.",
             "submissionSuccessful": {
                 "title": "Your exam has been submitted successfully!",
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
@@ -581,6 +600,7 @@
                     "testRun": "Conduct a test run",
                     "exportResults": "Export the exam results",
                     "editWorkingTime": "Edit the exam duration",
+                    "createAnnouncement": "Create an announcement",
                     "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
@@ -597,6 +617,7 @@
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
                     "exportResults": "Exports the exam results as a .csv file.",
                     "editWorkingTime": "Until five minutes before the end of the exam, you can extend its duration.",
+                    "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
                     "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
@@ -637,6 +658,15 @@
                 "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
                 "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
+            },
+            "announcementCreate": {
+                "button": "Create Announcement",
+                "title": "Make Live Exam Announcement",
+                "task": "Enter your announcement below. You can use Markdown text formatting.",
+                "preview": "Preview",
+                "sendButton": "Send Announcement",
+                "sending": "Sending announcement...",
+                "sent": "Announcement sent!"
             },
             "suspiciousBehavior": {
                 "title": "Suspicious Behavior",
