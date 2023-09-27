@@ -20,6 +20,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 type ExerciseInfo = {
     icon: IconProp;
     isCollapsed: boolean;
+    achievedPoints?: number;
     achievedPercentage?: number;
     colorClass?: string;
 };
@@ -45,6 +46,8 @@ export class ExamResultSummaryComponent implements OnInit {
      * Current student's exam.
      */
     private _studentExam: StudentExam;
+    private _studentExamGradeInfoDTO?: StudentExamWithGradeDTO;
+
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
     exampleSolutionPublished = false;
 
@@ -57,6 +60,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this._studentExam = studentExam;
         if (this.studentExamGradeInfoDTO) {
             this.studentExamGradeInfoDTO.studentExam = studentExam;
+            this.exerciseInfos = this.getExerciseInfos();
         }
         this.tryLoadPlagiarismCaseInfosForStudent();
     }
@@ -64,7 +68,18 @@ export class ExamResultSummaryComponent implements OnInit {
     /**
      * Grade info for current student's exam.
      */
-    studentExamGradeInfoDTO: StudentExamWithGradeDTO;
+    get studentExamGradeInfoDTO(): StudentExamWithGradeDTO | undefined {
+        console.log('studentExamGradeInfoDTO getter', this._studentExamGradeInfoDTO);
+
+        return this._studentExamGradeInfoDTO;
+    }
+
+    set studentExamGradeInfoDTO(studentExamGradeInfoDTO: StudentExamWithGradeDTO | undefined) {
+        console.log('studentExamGradeInfoDTO setter', studentExamGradeInfoDTO);
+
+        this._studentExamGradeInfoDTO = studentExamGradeInfoDTO;
+        this.exerciseInfos = this.getExerciseInfos();
+    }
 
     isGradingKeyCollapsed: boolean = true;
     isBonusGradingKeyCollapsed: boolean = true;
@@ -266,11 +281,31 @@ export class ExamResultSummaryComponent implements OnInit {
             exerciseInfos[exercise.id] = {
                 icon: getIcon(exercise.type),
                 isCollapsed: false,
+                achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id),
                 // achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
                 // colorClass: this.getTextColorClassByExercise(exercise),
             };
         }
         return exerciseInfos;
+    }
+
+    private getPointsByExerciseIdFromExam(exerciseId: number) {
+        // return this.studentExamGradeInfoDTO.achievedPointsPerExercise['' + exerciseId];
+
+        // console.log(JSON.stringify(this.studentExamGradeInfoDTO.achievedPointsPerExercise));
+        // console.log(this.studentExamGradeInfoDTO.achievedPointsPerExercise);
+
+        console.log('studentExamGrade within getPoints', this.studentExamGradeInfoDTO?.achievedPointsPerExercise);
+
+        for (const achievedPointsPerExerciseKey in this.studentExamGradeInfoDTO?.achievedPointsPerExercise) {
+            console.log({ achievedPointsPerExerciseKey });
+
+            if (Number(achievedPointsPerExerciseKey) === exerciseId) {
+                return this.studentExamGradeInfoDTO.achievedPointsPerExercise[achievedPointsPerExerciseKey];
+            }
+        }
+
+        return undefined;
     }
 
     protected readonly getIcon = getIcon;

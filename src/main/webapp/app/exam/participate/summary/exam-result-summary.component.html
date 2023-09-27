@@ -17,7 +17,7 @@
 />
 <div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
     <jhi-exam-result-overview
-        [studentExamWithGrade]="studentExamGradeInfoDTO"
+        [studentExamWithGrade]="studentExamGradeInfoDTO!"
         [isGradingKeyCollapsed]="isGradingKeyCollapsed"
         [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed"
     />
@@ -26,12 +26,20 @@
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
     {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
 </div>
+
+<h3>
+    {{ 'artemisApp.exam.exercises' | artemisTranslate }}
+</h3>
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
+                <span>#{{ i + 1 }}</span>
                 &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="exerciseInfos[exercise.id!].icon"></fa-icon>&nbsp;
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
+                {{ exercise.exerciseGroup?.title }}
+                <span *ngIf="exerciseInfos[exercise.id!]">
+                    [ {{ exerciseInfos[exercise.id!].achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }} ]
+                </span>
             </h5>
             <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
                 <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
