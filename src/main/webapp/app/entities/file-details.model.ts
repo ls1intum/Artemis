@@ -3,7 +3,7 @@ export class FileDetails {
         public name: string = '',
         public extension: string = '',
     ) {}
-    static getFileDetailsFromPath(filePath: string): FileDetails {
+    static getFileDetailsFromPath(filePath: string | undefined): FileDetails {
         if (!filePath) {
             return new FileDetails('N/A', 'N/A');
         } else {
