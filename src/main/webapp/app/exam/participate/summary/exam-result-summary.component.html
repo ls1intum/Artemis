@@ -20,6 +20,7 @@
         [studentExamWithGrade]="studentExamGradeInfoDTO!"
         [isGradingKeyCollapsed]="isGradingKeyCollapsed"
         [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed"
+        [exerciseInfos]="exerciseInfos"
     />
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">
@@ -33,20 +34,23 @@
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
     <div class="question card">
         <div class="question-options card-header question-card-header">
-            <h5>
-                <span>#{{ i + 1 }}</span>
-                &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="exerciseInfos[exercise.id!].icon"></fa-icon>&nbsp;
-                {{ exercise.exerciseGroup?.title }}
-                <span *ngIf="exerciseInfos[exercise.id!]?.achievedPoints !== undefined; else withoutAchievedPoints">
-                    [{{ exerciseInfos[exercise.id!].achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
-                </span>
-                <ng-template #withoutAchievedPoints> [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}] </ng-template>
-            </h5>
+            <div class="d-flex">
+                <h5>
+                    <span>#{{ i + 1 }}</span>
+                    &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="exerciseInfos[exercise.id!].icon"></fa-icon>&nbsp;
+                    {{ exercise.exerciseGroup?.title }}
+                    <span *ngIf="resultsPublished && exerciseInfos[exercise.id!]?.achievedPoints !== undefined; else withoutAchievedPoints">
+                        [{{ exerciseInfos[exercise.id!].achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+                        <span *ngIf="exerciseInfos[exercise.id!]?.achievedPercentage !== undefined" [class]="exerciseInfos[exercise.id!].colorClass">
+                            {{ exerciseInfos[exercise.id!].achievedPercentage }}%
+                        </span>
+                    </span>
+                    <ng-template #withoutAchievedPoints> [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</ng-template>
+                </h5>
+            </div>
+
             <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
                 <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
-            </div>
-            <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
-                <jhi-updating-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise" />
             </div>
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + exercise.id! }}"

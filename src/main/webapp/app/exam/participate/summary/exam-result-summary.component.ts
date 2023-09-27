@@ -10,12 +10,15 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -269,8 +272,8 @@ export class ExamResultSummaryComponent implements OnInit {
                 icon: getIcon(exercise.type),
                 isCollapsed: false,
                 achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id, studentExamWithGrade),
-                // achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
-                // colorClass: this.getTextColorClassByExercise(exercise),
+                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
+                colorClass: this.getTextColorClassByExercise(exercise),
             };
         }
         return exerciseInfos;
@@ -288,6 +291,54 @@ export class ExamResultSummaryComponent implements OnInit {
         }
 
         return undefined;
+    }
+
+    private getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {
+        if (exerciseId === undefined) {
+            return undefined;
+        }
+
+        const exerciseGroupResultMapping = this.studentExamGradeInfoDTO?.studentResult?.exerciseGroupIdToExerciseResult;
+        let exerciseResult = undefined;
+
+        for (const key in exerciseGroupResultMapping) {
+            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[key].exerciseId === exerciseId) {
+                exerciseResult = exerciseGroupResultMapping[key];
+                break;
+            }
+        }
+
+        return exerciseResult;
+    }
+
+    getAchievedPercentageByExerciseId(exerciseId?: number): number | undefined {
+        const result = this.getExerciseResultByExerciseId(exerciseId);
+        if (result === undefined) {
+            return undefined;
+        }
+
+        const course = this.studentExamGradeInfoDTO.studentExam?.exam?.course;
+        if (result.achievedScore !== undefined) {
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
+        }
+
+        const canCalculatePercentage = result.maxScore && result.achievedPoints !== undefined;
+        if (canCalculatePercentage) {
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, course);
+        }
+
+        return undefined;
+    }
+
+    getTextColorClassByExercise(exercise: Exercise) {
+        const participation = exercise.studentParticipations![0];
+        const showUngradedResults = false;
+        const result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
+
+        const isBuilding = false;
+        const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);
+
+        return getTextColorClass(result, templateStatus);
     }
 
     protected readonly getIcon = getIcon;
