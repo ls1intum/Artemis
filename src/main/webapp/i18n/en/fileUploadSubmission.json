@@ -25,7 +25,7 @@
             "fileUploadError": "Your submission of file {{ fileName }} failed!",
             "submitted": "Submitted",
             "stagedFiles": "Files to be submitted once you're ready",
-            "submittedFiles": "Submitted files as a solution for the exercise.",
+            "submittedFiles": "Submitted files as a solution for the exercise",
             "open": "Open {{ fileName }} file",
             "download": "Download {{ fileName }} file",
             "selectFile": "Please first select a file and then submit it.",
