@@ -54,7 +54,7 @@ public class IrisWebsocketService {
      * Sends an exception over the websocket to a specific user
      *
      * @param irisSession to which the exception belongs
-     * @param throwable   that should be send over the websocket
+     * @param throwable   that should be sent over the websocket
      */
     public void sendException(IrisSession irisSession, Throwable throwable) {
         if (!(irisSession instanceof IrisChatSession)) {
