@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -59,8 +58,6 @@ public class LocalCIBuildJobExecutionService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final LocalCIDockerService localCIDockerService;
-
     /**
      * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
      */
@@ -73,13 +70,11 @@ public class LocalCIBuildJobExecutionService {
     private String localVCBasePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
-            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIDockerService localCIDockerService,
-            XMLInputFactory localCIXMLInputFactory) {
+            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.localCIDockerService = localCIDockerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
@@ -171,15 +166,10 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
-        // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
-        // the build job.
-        HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
-                buildScriptPath);
-
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
         // container information about the branch and commit hash to be used.
         // This does not start the container yet.
-        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, volumeConfig, branch, commitHash);
+        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, branch, commitHash);
 
         return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath,
                 auxiliaryRepositoriesPaths, auxiliaryRepositoryNames, buildScriptPath);
@@ -202,15 +192,12 @@ public class LocalCIBuildJobExecutionService {
 
         long timeNanoStart = System.nanoTime();
 
-        String artemisContainerId = localCIDockerService.retrieveDockerContainerId("artemis-app");
-
         localCIContainerService.startContainer(containerId);
 
         log.info("Started container for build job " + containerName);
 
-        // Only for docker setup
-        localCIContainerService.populateBuildJobContainer(artemisContainerId, containerId, assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths,
-                auxiliaryRepositoryNames, buildScriptPath);
+        localCIContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
+                buildScriptPath);
 
         localCIContainerService.runScriptInContainer(containerId);
 
