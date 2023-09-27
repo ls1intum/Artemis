@@ -6,7 +6,7 @@ import { LearningPathProgressModalComponent } from 'app/course/learning-paths/pr
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 import { By } from '@angular/platform-browser';
 import { LearningPathProgressNavComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-nav.component';
-import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 
 describe('LearningPathProgressModalComponent', () => {
     let fixture: ComponentFixture<LearningPathProgressModalComponent>;
@@ -35,7 +35,7 @@ describe('LearningPathProgressModalComponent', () => {
 
     it('should display learning path graph if learning path is present', () => {
         comp.courseId = 2;
-        comp.learningPath = { id: 1 } as LearningPathPageableSearchDTO;
+        comp.learningPath = { id: 1 } as LearningPathInformationDTO;
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('.graph')).nativeElement).toBeTruthy();
     });

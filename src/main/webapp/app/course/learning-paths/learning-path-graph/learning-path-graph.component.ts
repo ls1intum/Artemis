@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Layout } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
@@ -10,7 +10,6 @@ import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/competency
     selector: 'jhi-learning-path-graph',
     styleUrls: ['./learning-path-graph.component.scss'],
     templateUrl: './learning-path-graph.component.html',
-    encapsulation: ViewEncapsulation.ShadowDom,
 })
 export class LearningPathGraphComponent implements OnInit {
     isLoading = false;

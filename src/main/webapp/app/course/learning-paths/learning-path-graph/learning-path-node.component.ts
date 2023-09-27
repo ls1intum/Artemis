@@ -15,6 +15,7 @@ class NodeDetailsData {
 
 @Component({
     selector: 'jhi-learning-path-graph-node',
+    styleUrls: ['./learning-path-graph.component.scss'],
     templateUrl: './learning-path-node.component.html',
 })
 export class LearningPathNodeComponent {

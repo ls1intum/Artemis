@@ -18,15 +18,6 @@
         stroke: var(--body-color) !important;
         marker-end: url(#arrow);
     }
-
-    .floating-icon-button {
-        position: absolute;
-        left: 65px;
-        padding: 0.25em;
-    }
-    .floating-icon-button:hover {
-        cursor: pointer;
-    }
 }
 
 jhi-learning-path-graph-node:hover {
@@ -40,13 +31,13 @@ jhi-learning-path-graph-node:hover {
     fa-icon {
         width: 100%;
         display: flex;
-
-        svg {
-            margin: 10%;
-            width: 80%;
-            height: 80%;
-        }
     }
+}
+
+::ng-deep .graph-container .node-icon-container fa-icon svg {
+    margin: 10%;
+    width: 80%;
+    height: 80%;
 }
 
 .node-xs {
