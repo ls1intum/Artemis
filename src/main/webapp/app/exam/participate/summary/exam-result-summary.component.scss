@@ -11,3 +11,11 @@
         margin-left: 1.5rem !important;
     }
 }
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotate-icon.rotated {
+    transform: rotate(90deg);
+}
