@@ -120,6 +120,7 @@ const studentExamForTestExam = {
     user,
     exercises,
 } as StudentExam;
+
 const gradeInfo: StudentExamWithGradeDTO = {
     maxPoints: 100,
     maxBonusPoints: 10,
@@ -287,17 +288,19 @@ describe('ExamResultSummaryComponent', () => {
     });
 
     it.each([
-        [{}, false],
-        [{ studentParticipations: null }, false],
-        [{ studentParticipations: undefined }, false],
-        [{ studentParticipations: [] }, false],
-        [{ studentParticipations: [{}] }, false],
-        [{ studentParticipations: [{ submissions: null }] }, false],
-        [{ studentParticipations: [{ submissions: undefined }] }, false],
-        [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
-        [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
+        [{ id: 1 }, false],
+        [{ id: 1, studentParticipations: null }, false],
+        [{ id: 1, studentParticipations: undefined }, false],
+        [{ id: 1, studentParticipations: [] }, false],
+        [{ id: 1, studentParticipations: [{}] }, false],
+        [{ id: 1, studentParticipations: [{ submissions: null }] }, false],
+        [{ id: 1, studentParticipations: [{ submissions: undefined }] }, false],
+        [{ id: 1, studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
+        [{ id: 1, studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
     ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
         component.studentExam = { id: 1, exam, user, exercises: [exercise as Exercise], numberOfExamSessions: 0 };
+        // component.exerciseInfos = { 1: { icon: 'monero', isCollapsed: false } };
+
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
         if (shouldBeNonNull) {
