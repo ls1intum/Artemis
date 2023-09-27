@@ -284,7 +284,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseLearningPathsDisabled() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathPageableSearchDTO.class,
+        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
@@ -293,7 +293,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testGetLearningPathsOnPageForCourseEmpty() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
@@ -303,7 +303,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testGetLearningPathsOnPageForCourseExactlyStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE);
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }

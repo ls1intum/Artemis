@@ -47,6 +47,8 @@ export class LearningPathGraphComponent implements OnInit {
 
     faEye = faEye;
 
+    protected readonly PATH = LearningPathViewMode.PATH;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private learningPathService: LearningPathService,
@@ -201,6 +203,4 @@ export class LearningPathGraphComponent implements OnInit {
             modalRef.componentInstance.learningPath = learningPathResponse.body!;
         });
     }
-
-    protected readonly PATH = LearningPathViewMode.PATH;
 }
