@@ -90,21 +90,6 @@ under ``localhost:7990``.
 
 #. Make sure that Jira, Bitbucket and Bamboo have finished starting up.
 
-    (Only Linux & Windows) Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__
-    is installed before running the following script.
-
-    .. raw:: html
-
-       <details>
-       <summary>xdg-utils for Windows users</summary>
-       An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem,
-       which should be activated anyways when running Docker on Windows.
-       For the installation on the subsystem the above linked explanation can be used.
-       <br>
-       Make sure to execute the script from the subsystem.
-       </details>
-
-
    Execute the shell script ``atlassian-setup.sh`` in the
    ``docker/atlassian`` directory (e.g. with
    ``./docker/atlassian/atlassian-setup.sh``). This script creates
