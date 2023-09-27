@@ -75,14 +75,6 @@
                         ></jhi-programming-exercise-example-solution-repo-download>
                     </ng-container>
                 </span>
-                <!-- prettier-ignore -->
-                <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
-            [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
-              *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
-            <jhi-included-in-score-badge
-              *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-              [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
-          </h5>
             </div>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING && exercise.type !== MODELING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
