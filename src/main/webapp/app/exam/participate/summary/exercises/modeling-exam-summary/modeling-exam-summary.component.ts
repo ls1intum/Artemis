@@ -17,8 +17,6 @@ export class ModelingExamSummaryComponent implements OnInit {
     umlModel: UMLModel;
     explanation: string;
 
-    constructor() {}
-
     ngOnInit() {
         if (this.submission) {
             if (this.submission.model) {

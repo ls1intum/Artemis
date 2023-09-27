@@ -1,11 +1,5 @@
 <div *ngIf="umlModel || explanation; else noSubmission" class="editor-outline-background">
-    <jhi-modeling-editor
-        [readOnly]="true"
-        [diagramType]="exercise.diagramType"
-        [umlModel]="umlModel"
-        [withExplanation]="!!explanation"
-        [explanation]="explanation"
-    ></jhi-modeling-editor>
+    <jhi-modeling-editor [readOnly]="true" [diagramType]="exercise.diagramType" [umlModel]="umlModel" [withExplanation]="!!explanation" [explanation]="explanation" />
 </div>
 <ng-template #noSubmission>
     <div>No submission</div>
