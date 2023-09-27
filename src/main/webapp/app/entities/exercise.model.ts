@@ -153,6 +153,10 @@ export abstract class Exercise implements BaseEntity {
     }
 }
 
+/**
+ * Get an icon for the type of the given exercise.
+ * @param exerciseType {ExerciseType}
+ */
 export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
         return faQuestion as IconProp;

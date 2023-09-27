@@ -182,16 +182,14 @@
                             <span>{{ 'artemisApp.examManagement.checklist.tableItem.prepareExerciseStart' | artemisTranslate }}</span>
                         </td>
                         <td>
-                            <span
-                                >{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | artemisTranslate }}
-                                <hr />
-                                <ul class="list-unstyled">
-                                    <li *ngIf="examChecklist" class="list-group-item border-1">
-                                        <jhi-checklist-check [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared && this.allExamsGenerated"></jhi-checklist-check>
-                                        <span>{{ 'artemisApp.examManagement.checklist.textitems.allExercisesPrepared' | artemisTranslate }}</span>
-                                    </li>
-                                </ul>
-                            </span>
+                            <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.prepareExerciseStart' | artemisTranslate }} </span>
+                            <hr />
+                            <ul class="list-unstyled">
+                                <li *ngIf="examChecklist" class="list-group-item border-1">
+                                    <jhi-checklist-check [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared && this.allExamsGenerated"></jhi-checklist-check>
+                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.allExercisesPrepared' | artemisTranslate }}</span>
+                                </li>
+                            </ul>
                         </td>
                         <td>
                             <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
@@ -208,29 +206,31 @@
                     </td>
                     <td>
                         <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | artemisTranslate }}</span>
-                        <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
-                        <ul class="list-unstyled" *ngIf="isTestExam">
+                        <ng-container *ngIf="isTestExam">
                             <hr />
-                            <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }}:</span>
-                            <li class="list-group-item border-1">
-                                <span>
-                                    <jhi-checklist-check [checkAttribute]="true"></jhi-checklist-check>
-                                    <span>{{ 'artemisApp.examManagement.checklist.testExam.studentRegistration' | artemisTranslate }}</span>
-                                </span>
-                            </li>
-                            <li class="list-group-item border-1">
-                                <span>
-                                    <jhi-checklist-check [checkAttribute]="true"></jhi-checklist-check>
-                                    <span>{{ 'artemisApp.studentExams.studentExamStatusTestExam' | artemisTranslate }}</span>
-                                </span>
-                            </li>
-                            <li class="list-group-item border-1">
-                                <span>
-                                    <jhi-checklist-check [checkAttribute]="true"></jhi-checklist-check>
-                                    <span>{{ 'artemisApp.examManagement.checklist.testExam.instantResults' | artemisTranslate }}</span>
-                                </span>
-                            </li>
-                        </ul>
+                            <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }} :</span>
+                            <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
+                            <ul class="list-unstyled">
+                                <li class="list-group-item border-1">
+                                    <span>
+                                        <jhi-checklist-check [checkAttribute]="true"></jhi-checklist-check>
+                                        <span>{{ 'artemisApp.examManagement.checklist.testExam.studentRegistration' | artemisTranslate }}</span>
+                                    </span>
+                                </li>
+                                <li class="list-group-item border-1">
+                                    <span>
+                                        <jhi-checklist-check [checkAttribute]="true"></jhi-checklist-check>
+                                        <span>{{ 'artemisApp.studentExams.studentExamStatusTestExam' | artemisTranslate }}</span>
+                                    </span>
+                                </li>
+                                <li class="list-group-item border-1">
+                                    <span>
+                                        <jhi-checklist-check [checkAttribute]="true"></jhi-checklist-check>
+                                        <span>{{ 'artemisApp.examManagement.checklist.testExam.instantResults' | artemisTranslate }}</span>
+                                    </span>
+                                </li>
+                            </ul>
+                        </ng-container>
                     </td>
                     <td>
                         <a id="editButton_table" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
@@ -290,8 +290,7 @@
                                 examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfGeneratedStudentExams !== 0 && numberOfStarted > 0
                             "
                         >
-                            <!-- -->
-                            <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }}:</span>
+                            <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }} :</span>
                             <div class="pt-2">
                                 <jhi-progress-bar
                                     [denominator]="examChecklist.numberOfGeneratedStudentExams!"
@@ -308,7 +307,7 @@
                                 examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfGeneratedStudentExams !== 0 && numberOfSubmitted > 0
                             "
                         >
-                            <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }}:</span>
+                            <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }} :</span>
                             <div class="pt-2">
                                 <jhi-progress-bar [denominator]="numberOfStarted" [numerator]="numberOfSubmitted!" [percentage]="(100 * numberOfSubmitted!) / numberOfStarted">
                                 </jhi-progress-bar>
@@ -324,6 +323,35 @@
                             <fa-icon [icon]="faEye"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                         </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.tableItem.editWorkingTime' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.editWorkingTime' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <jhi-exam-edit-working-time [(exam)]="exam" />
+                    </td>
+                </tr>
+            </tbody>
+            <tbody>
+                <tr>
+                    <td>3</td>
+                    <td>
+                        <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.createAnnouncement">Send announcements</span>
+                    </td>
+                    <td>
+                        <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.createAnnouncement">
+                            To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed
+                            to all students immediately.
+                        </span>
+                    </td>
+                    <td>
+                        <jhi-exam-live-announcement-create-button [exam]="exam" />
                     </td>
                 </tr>
             </tbody>

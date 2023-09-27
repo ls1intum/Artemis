@@ -533,3 +533,12 @@ $competency-rings-green: $green;
 $competency-rings-green-bg: transparentize($competency-rings-green, 0.8);
 $competency-rings-blue: $blue;
 $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
+
+// Iris Chatbot
+// TODO: Use standard colors
+$iris-chat-widget-background: #fff;
+$iris-client-chat-background: var(--gray-200);
+$iris-client-chat-input: var(--gray-200);
+$iris-my-chat-background: #a9dcb5;
+$iris-btn-circle: var(--success);
+$iris-btn-circle-hover: #3eb058;

@@ -178,6 +178,10 @@ public final class Constants {
 
     public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
+    public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
+
+    public static final String CLEANUP_EXAM = "CLEANUP_EXAM";
+
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
     public static final String EDIT_EXERCISE = "EDIT_EXERCISE";
@@ -261,6 +265,8 @@ public final class Constants {
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
+    public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
+
     public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
 
     public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
@@ -302,6 +308,11 @@ public final class Constants {
      * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
      */
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
+
+    /**
+     * The name of the topic for notifying the client about changes in the exam working time.
+     */
+    public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
 
     private Constants() {
     }

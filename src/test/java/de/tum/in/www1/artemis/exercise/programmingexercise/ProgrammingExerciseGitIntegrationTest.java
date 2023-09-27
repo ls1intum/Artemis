@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexgitintegration";
 

@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
@@ -70,11 +71,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
-            TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
+            TextSubmissionService textSubmissionService, ResultWebsocketService resultWebsocketService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository, SingleUserNotificationService singleUserNotificationService,
             ResultService resultService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
-        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
+        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, resultWebsocketService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
 
         this.textAssessmentService = textAssessmentService;

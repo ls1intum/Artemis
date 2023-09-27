@@ -8,14 +8,14 @@ import java.net.URISyntaxException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
-class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class UrlServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private final VcsRepositoryUrl repositoryUrl1 = new VcsRepositoryUrl("https://ab12cde@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde");
 
@@ -123,5 +123,15 @@ class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var studentParticipation3 = new ProgrammingExerciseStudentParticipation();
         studentParticipation3.setRepositoryUrl("http://localhost:8080/Assignment/rest/words/{name}/protection");
         assertThat(studentParticipation3.getUserIndependentRepositoryUrl()).isNull();
+    }
+
+    @Test
+    void testGetPlainUrl() {
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl1)).isEqualTo("https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl2)).isEqualTo("https://repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl3)).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl4)).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl5)).isEqualTo("ssh://bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab12cde.git");
+        assertThat(urlService.getPlainUrlFromRepositoryUrl(repositoryUrl6)).isEqualTo("https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12git");
     }
 }
