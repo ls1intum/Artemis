@@ -50,7 +50,7 @@ The creation is done asynchronously. You will receive a notification once the ar
 
 Export programming exercise material
 ------------------------------------
-Export the exercise material (template,solution,test, auxiliary repositories and problem statement and other relevant information such as points) of a programming exercise.
+Export the exercise material (template, solution, test, and auxiliary repositories as well as the problem statement and other general exercise information) of a programming exercise.
 To export the material click the |download_exercise| button on the exercise details page.
 
 Export quiz exercise
