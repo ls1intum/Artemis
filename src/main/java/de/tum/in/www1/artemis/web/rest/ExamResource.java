@@ -218,8 +218,9 @@ public class ExamResource {
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
-        if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
-                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
+        boolean startDateChanged = comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
+        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
+        if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0 || startDateChanged) {
             // get all exercises
             Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
@@ -227,10 +228,14 @@ public class ExamResource {
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
-        if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
+        if (endDateChanged) {
             // get all exercises
             Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             examService.scheduleModelingExercises(examWithExercises);
+        }
+        // NOTE: if the exam is already visible, notify students about the changes
+        if (startDateChanged || endDateChanged) {
+            updateAndNotifyStudentExamsOnWorkingTimeChanges(savedExam, originalExam.getDuration(), savedExam.getDuration());
         }
 
         if (updatedChannel != null) {
@@ -259,8 +264,6 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
-        var now = now();
-
         // We have to get exercise groups as `scheduleModelingExercises` needs them
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         var originalExamDuration = exam.getDuration();
@@ -270,22 +273,28 @@ public class ExamResource {
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
+        updateAndNotifyStudentExamsOnWorkingTimeChanges(exam, originalExamDuration, exam.getDuration());
+
+        return ResponseEntity.ok(exam);
+    }
+
+    private void updateAndNotifyStudentExamsOnWorkingTimeChanges(Exam exam, int originalExamDuration, int updatedExamDuration) {
+        var now = now();
         User instructor = userRepository.getUser();
 
         // 2. Re-calculate the working times of all student exams
-        var studentExams = studentExamRepository.findByExamId(examId);
+        var studentExams = studentExamRepository.findByExamId(exam.getId());
         for (var studentExam : studentExams) {
             Integer originalStudentWorkingTime = studentExam.getWorkingTime();
-            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
+            int originalTimeChange = originalStudentWorkingTime - originalExamDuration;
             // NOTE: take the original working time extensions into account
-            if (originalTimeExtension == 0) {
-                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
+            if (originalTimeChange == 0) {
+                studentExam.setWorkingTime(updatedExamDuration);
             }
             else {
-                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
-                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
-                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
+                double relativeTimeExtension = (double) originalTimeChange / (double) originalExamDuration;
+                int timeAdjustment = Math.toIntExact(Math.round(updatedExamDuration * relativeTimeExtension));
+                int adjustedWorkingTime = Math.max(updatedExamDuration + timeAdjustment, 0);
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
             var savedStudentExam = studentExamRepository.save(studentExam);
@@ -302,10 +311,10 @@ public class ExamResource {
 
         if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
             // potentially re-schedule clustering of modeling submissions (in case Compass is active)
+            // We have to get exercise groups as `scheduleModelingExercises` needs them
+            exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(exam.getId());
             examService.scheduleModelingExercises(exam);
         }
-
-        return ResponseEntity.ok(exam);
     }
 
     /**

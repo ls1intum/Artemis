@@ -16,12 +16,17 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
 })
 export class ExamUpdateComponent implements OnInit {
+    originalStartDate?: dayjs.Dayjs;
+    originalEndDate?: dayjs.Dayjs;
     exam: Exam;
     course: Course;
     isSaving: boolean;
@@ -55,12 +60,16 @@ export class ExamUpdateComponent implements OnInit {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private modalService: NgbModal,
         private router: Router,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
+            this.originalStartDate = this.exam.startDate?.clone();
+            this.originalEndDate = this.exam.endDate?.clone();
 
             // Tap the URL to determine, if the Exam should be imported
             this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
@@ -103,7 +112,24 @@ export class ExamUpdateComponent implements OnInit {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
     }
 
-    save() {
+    /**
+     * Change the date of the exam. Ask for confirmation.
+     */
+    handleSave() {
+        const datesChanged = this.exam.startDate?.diff(this.originalStartDate) !== 0 || this.exam.endDate?.diff(this.originalEndDate) !== 0;
+        if (datesChanged && this.exam.id !== undefined) {
+            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+            modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
+            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.warning');
+            modalRef.result.then(() => {
+                this.save();
+            });
+        } else {
+            this.save();
+        }
+    }
+
+    private save() {
         this.isSaving = true;
 
         if (this.isImport) {
@@ -207,6 +233,13 @@ export class ExamUpdateComponent implements OnInit {
         } else {
             return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
         }
+    }
+
+    get isOngoingExam(): boolean {
+        if (this.exam.id === undefined || this.exam.startDate === undefined || this.exam.endDate === undefined) {
+            return false;
+        }
+        return this.exam.startDate.isBefore(dayjs()) && this.exam.endDate.isAfter(dayjs());
     }
 
     /**
