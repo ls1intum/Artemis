@@ -198,10 +198,10 @@ describe('ExamResultSummaryComponent', () => {
         const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockReturnValue();
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
-        const toggleCollapseExerciseButtonOne = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-0'));
-        const toggleCollapseExerciseButtonTwo = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-1'));
-        const toggleCollapseExerciseButtonThree = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-2'));
-        const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-3'));
+        const toggleCollapseExerciseButtonOne = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-1'));
+        const toggleCollapseExerciseButtonTwo = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-2'));
+        const toggleCollapseExerciseButtonThree = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-3'));
+        const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-4'));
         expect(exportToPDFButton).not.toBeNull();
         expect(toggleCollapseExerciseButtonOne).not.toBeNull();
         expect(toggleCollapseExerciseButtonTwo).not.toBeNull();
