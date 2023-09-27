@@ -5,7 +5,7 @@
     placement="right"
     triggers="manual"
 >
-    <fa-icon [icon]="getIcon(node)" [class.completed]="node.completed"></fa-icon>
+    <fa-icon id="learning-object" [icon]="getIcon(node)" [class.completed]="node.completed"></fa-icon>
 </div>
 <ng-template #noTask>
     <div
@@ -15,13 +15,13 @@
         placement="right"
         triggers="manual"
     >
-        <fa-icon [icon]="getIcon(node)"></fa-icon>
+        <fa-icon id="competency" [icon]="getIcon(node)"></fa-icon>
     </div>
 </ng-template>
 
 <ng-template #noCompetency>
     <div class="node-xs node-icon-container">
-        <fa-icon [icon]="getIcon(node)"></fa-icon>
+        <fa-icon id="match" [icon]="getIcon(node)"></fa-icon>
     </div>
 </ng-template>
 

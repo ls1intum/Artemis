@@ -26,21 +26,24 @@ describe('LearningPathGraphNodeComponent', () => {
     it.each([NodeType.EXERCISE, NodeType.LECTURE_UNIT])('should display correct icon for completed learning object', (type: NodeType) => {
         comp.node = { id: '1', type: type, completed: true } as NgxLearningPathNode;
         fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('#completed')).nativeElement).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('.completed'))).toBeTruthy();
     });
 
     it.each([NodeType.EXERCISE, NodeType.LECTURE_UNIT])('should display correct icon for not completed learning object', (type: NodeType) => {
         comp.node = { id: '1', type: type, completed: false } as NgxLearningPathNode;
         fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('#not-completed')).nativeElement).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('#learning-object'))).toBeTruthy();
     });
 
-    it.each([NodeType.COMPETENCY_START, NodeType.COMPETENCY_END, NodeType.COMPETENCY_START, NodeType.COMPETENCY_END])(
-        'should display correct icon for generic node',
-        (type: NodeType) => {
-            comp.node = { id: '1', type: type } as NgxLearningPathNode;
-            fixture.detectChanges();
-            expect(fixture.debugElement.query(By.css('#generic')).nativeElement).toBeTruthy();
-        },
-    );
+    it.each([NodeType.COMPETENCY_START, NodeType.COMPETENCY_END])('should display correct icon for competency node', (type: NodeType) => {
+        comp.node = { id: '1', type: type } as NgxLearningPathNode;
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('#competency')).nativeElement).toBeTruthy();
+    });
+
+    it.each([NodeType.MATCH_START, NodeType.MATCH_END])('should display correct icon for match node', (type: NodeType) => {
+        comp.node = { id: '1', type: type } as NgxLearningPathNode;
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('#match')).nativeElement).toBeTruthy();
+    });
 });
