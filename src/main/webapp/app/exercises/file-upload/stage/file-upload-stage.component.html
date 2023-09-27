@@ -44,7 +44,7 @@
     </div>
 </div>
 
-<div *ngIf="submission">
+<div *ngIf="submission?.filePaths?.length">
     <h6>
         {{ 'artemisApp.fileUploadSubmission.submittedFiles' | artemisTranslate }}
         <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
