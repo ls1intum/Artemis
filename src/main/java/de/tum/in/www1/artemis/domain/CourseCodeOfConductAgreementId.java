@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * The primary key for CourseCodeOfConductAgreement
  */
-class CourseCodeOfConductAgreementId implements Serializable {
+public class CourseCodeOfConductAgreementId implements Serializable {
 
     private Long course;
 

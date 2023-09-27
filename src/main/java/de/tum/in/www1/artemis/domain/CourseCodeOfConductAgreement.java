@@ -55,7 +55,7 @@ public class CourseCodeOfConductAgreement {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), course, user);
+        return Objects.hash(course, user);
     }
 
     @Override
