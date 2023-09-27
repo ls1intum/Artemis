@@ -26,6 +26,7 @@ import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overview/grading-key-overview.module';
+import { ResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/result-summary-exercise-card-header.component';
 
 @NgModule({
     imports: [
@@ -57,6 +58,7 @@ import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overvie
         QuizExamSummaryComponent,
         ExamGeneralInformationComponent,
         ExamResultOverviewComponent,
+        ResultSummaryExerciseCardHeaderComponent,
         TestRunRibbonComponent,
         ExampleSolutionComponent,
     ],

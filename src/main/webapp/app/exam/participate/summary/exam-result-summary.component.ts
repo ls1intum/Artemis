@@ -6,9 +6,8 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -20,7 +19,7 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 
-type ExerciseInfo = {
+export type ResultSummaryExerciseInfo = {
     icon: IconProp;
     isCollapsed: boolean;
     achievedPoints?: number;
@@ -43,7 +42,6 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly AssessmentType = AssessmentType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
     readonly PlagiarismVerdict = PlagiarismVerdict;
 
     /**
@@ -92,9 +90,8 @@ export class ExamResultSummaryComponent implements OnInit {
     faFolderOpen = faFolderOpen;
     faInfoCircle = faInfoCircle;
     faPrint = faPrint;
-    faAngleRight = faAngleRight;
 
-    exerciseInfos: Record<number, ExerciseInfo>;
+    exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
 
     constructor(
         private route: ActivatedRoute,
@@ -190,7 +187,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private expandExercises() {
-        Object.entries(this.exerciseInfos).forEach((exerciseInfo: [string, ExerciseInfo]) => {
+        Object.entries(this.exerciseInfos).forEach((exerciseInfo: [string, ResultSummaryExerciseInfo]) => {
             exerciseInfo[1].isCollapsed = false;
         });
     }
@@ -216,14 +213,6 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     getParticipationForExercise(exercise: Exercise) {
         return exercise.studentParticipations?.[0] || undefined;
-    }
-
-    /**
-     * adds collapse control of exercise cards depending on exerciseId
-     * @param exerciseId the exercise for which the submission should be collapsed
-     */
-    toggleCollapseExercise(exerciseId: number): void {
-        this.exerciseInfos[exerciseId].isCollapsed = !this.exerciseInfos[exerciseId].isCollapsed;
     }
 
     /**
@@ -262,8 +251,8 @@ export class ExamResultSummaryComponent implements OnInit {
         return false;
     }
 
-    private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ExerciseInfo> {
-        const exerciseInfos: Record<number, ExerciseInfo> = {};
+    private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ResultSummaryExerciseInfo> {
+        const exerciseInfos: Record<number, ResultSummaryExerciseInfo> = {};
         for (const exercise of this.studentExam?.exercises ?? []) {
             if (exercise.id === undefined) {
                 console.error('Exercise id is undefined', exercise);

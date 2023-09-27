@@ -1,0 +1,33 @@
+<div class="question-options card-header question-card-header d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center">
+        <h5 class="mb-0">
+            <span>#{{ index + 1 }}</span>
+            &nbsp;<fa-icon *ngIf="exercise?.type && exerciseInfo?.icon" [icon]="exerciseInfo!.icon"></fa-icon>&nbsp;
+            {{ exercise.exerciseGroup?.title }}
+        </h5>
+
+        <div *ngIf="resultsPublished && exerciseInfo?.achievedPoints !== undefined; else withoutAchievedPoints" style="margin-left: 1em" class="d-flex">
+            [{{ exerciseInfo?.achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+
+            <div style="margin-left: 1em">
+                <fa-icon *ngIf="exerciseInfo?.resultIconClass" [ngClass]="exerciseInfo?.colorClass" [icon]="exerciseInfo?.resultIconClass!" size="lg"></fa-icon>
+                <span *ngIf="exerciseInfo?.achievedPercentage !== undefined" [class]="exerciseInfo!.colorClass"> {{ exerciseInfo!.achievedPercentage }}% </span>
+            </div>
+        </div>
+        <ng-template #withoutAchievedPoints> [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</ng-template>
+    </div>
+
+    <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
+        <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
+    </div>
+    <button
+        id="{{ 'toggleCollapseExerciseButton-' + exercise.id! }}"
+        class="btn rotate-icon"
+        [class.rotated]="!exerciseInfo?.isCollapsed"
+        (click)="toggleCollapseExercise()"
+        [attr.aria-expanded]="exerciseInfo?.isCollapsed"
+        [attr.aria-controls]="exerciseInfo?.isCollapsed"
+    >
+        <fa-icon size="2x" [icon]="faAngleRight"></fa-icon>
+    </button>
+</div>

@@ -33,46 +33,8 @@
 </h3>
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
     <div class="question card">
-        <div class="question-options card-header question-card-header">
-            <div class="d-flex">
-                <h5>
-                    <span>#{{ i + 1 }}</span>
-                    &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="exerciseInfos[exercise.id!].icon"></fa-icon>&nbsp;
-                    {{ exercise.exerciseGroup?.title }}
-                </h5>
+        <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsPublished" />
 
-                <div *ngIf="resultsPublished && exerciseInfos[exercise.id!]?.achievedPoints !== undefined; else withoutAchievedPoints" style="margin-left: 1em" class="d-flex">
-                    [{{ exerciseInfos[exercise.id!].achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
-
-                    <div style="margin-left: 1em">
-                        <fa-icon
-                            *ngIf="exerciseInfos[exercise.id!].resultIconClass"
-                            [ngClass]="exerciseInfos[exercise.id!].colorClass"
-                            [icon]="exerciseInfos[exercise.id!].resultIconClass!"
-                            size="lg"
-                        ></fa-icon>
-                        <span *ngIf="exerciseInfos[exercise.id!]?.achievedPercentage !== undefined" [class]="exerciseInfos[exercise.id!].colorClass">
-                            {{ exerciseInfos[exercise.id!].achievedPercentage }}%
-                        </span>
-                    </div>
-                </div>
-                <ng-template #withoutAchievedPoints> [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</ng-template>
-            </div>
-
-            <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
-                <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
-            </div>
-            <button
-                id="{{ 'toggleCollapseExerciseButton-' + exercise.id! }}"
-                class="btn rotate-icon"
-                [class.rotated]="!exerciseInfos[exercise.id!].isCollapsed"
-                (click)="toggleCollapseExercise(exercise.id!)"
-                [attr.aria-expanded]="exerciseInfos[exercise.id!].isCollapsed"
-                [attr.aria-controls]="exerciseInfos[exercise.id!].isCollapsed"
-            >
-                <fa-icon size="2x" [icon]="faAngleRight"></fa-icon>
-            </button>
-        </div>
         <div class="card-body question-card-body" [ngbCollapse]="exerciseInfos[exercise.id!].isCollapsed">
             <div class="clearfix">
                 <span class="exercise-buttons">
@@ -115,12 +77,12 @@
                 </span>
                 <!-- prettier-ignore -->
                 <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
-                    [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
-                        *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
-                    <jhi-included-in-score-badge
-                        *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
-                </h5>
+            [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
+              *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
+            <jhi-included-in-score-badge
+              *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+              [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+          </h5>
             </div>
             <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
                 <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
