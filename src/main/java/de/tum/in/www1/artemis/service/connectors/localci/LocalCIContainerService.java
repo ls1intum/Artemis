@@ -1,16 +1,17 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -247,11 +248,51 @@ public class LocalCIContainerService {
     }
 
     private void copyFromToContainers(String containerId1, String sourcePath, String containerId2, String destinationPath) {
-        try (InputStream tarStream = dockerClient.copyArchiveFromContainerCmd(containerId1, sourcePath).exec()) {
-            dockerClient.copyArchiveToContainerCmd(containerId2).withRemotePath(destinationPath).withTarInputStream(tarStream).exec();
+        try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {// dockerClient.copyArchiveFromContainerCmd(containerId1,
+                                                                                                               // sourcePath).exec()) {
+            dockerClient.copyArchiveToContainerCmd(containerId2).withRemotePath(destinationPath).withTarInputStream(uploadStream).exec();
         }
         catch (IOException e) {
             throw new LocalCIException("Could not copy from container " + containerId1 + " to container " + containerId2, e);
+        }
+    }
+
+    private ByteArrayOutputStream createTarArchive(String sourcePath) {
+        Path path = Paths.get(sourcePath);
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream)) {
+            addFileToTar(tarArchiveOutputStream, path.toFile(), "");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return byteArrayOutputStream;
+    }
+
+    private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, File file, String parent) throws IOException {
+        TarArchiveEntry tarEntry = new TarArchiveEntry(file, parent + file.getName());
+        tarArchiveOutputStream.putArchiveEntry(tarEntry);
+
+        if (file.isFile()) {
+            try (FileInputStream fis = new FileInputStream(file)) {
+                byte[] buffer = new byte[1024];
+                int count;
+                while ((count = fis.read(buffer)) != -1) {
+                    tarArchiveOutputStream.write(buffer, 0, count);
+                }
+            }
+            tarArchiveOutputStream.closeArchiveEntry();
+        }
+        else {
+            tarArchiveOutputStream.closeArchiveEntry();
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    addFileToTar(tarArchiveOutputStream, child, parent + file.getName() + "/");
+                }
+            }
         }
     }
 
