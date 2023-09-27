@@ -39,14 +39,24 @@
                     <span>#{{ i + 1 }}</span>
                     &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="exerciseInfos[exercise.id!].icon"></fa-icon>&nbsp;
                     {{ exercise.exerciseGroup?.title }}
-                    <span *ngIf="resultsPublished && exerciseInfos[exercise.id!]?.achievedPoints !== undefined; else withoutAchievedPoints">
-                        [{{ exerciseInfos[exercise.id!].achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+                </h5>
+
+                <div *ngIf="resultsPublished && exerciseInfos[exercise.id!]?.achievedPoints !== undefined; else withoutAchievedPoints" style="margin-left: 1em" class="d-flex">
+                    [{{ exerciseInfos[exercise.id!].achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+
+                    <div style="margin-left: 1em">
+                        <fa-icon
+                            *ngIf="exerciseInfos[exercise.id!].resultIconClass"
+                            [ngClass]="exerciseInfos[exercise.id!].colorClass"
+                            [icon]="exerciseInfos[exercise.id!].resultIconClass!"
+                            size="lg"
+                        ></fa-icon>
                         <span *ngIf="exerciseInfos[exercise.id!]?.achievedPercentage !== undefined" [class]="exerciseInfos[exercise.id!].colorClass">
                             {{ exerciseInfos[exercise.id!].achievedPercentage }}%
                         </span>
-                    </span>
-                    <ng-template #withoutAchievedPoints> [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</ng-template>
-                </h5>
+                    </div>
+                </div>
+                <ng-template #withoutAchievedPoints> [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</ng-template>
             </div>
 
             <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">

@@ -18,7 +18,7 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -26,6 +26,7 @@ type ExerciseInfo = {
     achievedPoints?: number;
     achievedPercentage?: number;
     colorClass?: string;
+    resultIconClass?: IconProp;
 };
 
 @Component({
@@ -268,12 +269,16 @@ export class ExamResultSummaryComponent implements OnInit {
                 console.error('Exercise id is undefined', exercise);
                 continue;
             }
+
+            const { textColorClass, resultIconClass } = this.getTextColorAndIconClassByExercise(exercise);
+
             exerciseInfos[exercise.id] = {
                 icon: getIcon(exercise.type),
                 isCollapsed: false,
                 achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id, studentExamWithGrade),
                 achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
-                colorClass: this.getTextColorClassByExercise(exercise),
+                colorClass: textColorClass,
+                resultIconClass: resultIconClass,
             };
         }
         return exerciseInfos;
@@ -330,7 +335,7 @@ export class ExamResultSummaryComponent implements OnInit {
         return undefined;
     }
 
-    getTextColorClassByExercise(exercise: Exercise) {
+    getTextColorAndIconClassByExercise(exercise: Exercise) {
         const participation = exercise.studentParticipations![0];
         const showUngradedResults = false;
         const result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
@@ -338,7 +343,10 @@ export class ExamResultSummaryComponent implements OnInit {
         const isBuilding = false;
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);
 
-        return getTextColorClass(result, templateStatus);
+        return {
+            textColorClass: getTextColorClass(result, templateStatus),
+            resultIconClass: getResultIconClass(result, templateStatus),
+        };
     }
 
     protected readonly getIcon = getIcon;
