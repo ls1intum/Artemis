@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -20,9 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.competency.LearningPathUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -43,7 +40,7 @@ import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 
-class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "learningpathintegration";
 
@@ -276,8 +273,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = courseRepository.save(course);
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        this.setupEnrollmentRequestMocks();
-
         request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         final var user = userRepository.findOneWithLearningPathsByLogin(TEST_PREFIX + "student1337").orElseThrow();
 
@@ -285,19 +280,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(user.getLearningPaths().size()).as("should create LearningPath for student").isEqualTo(1);
     }
 
-    private void setupEnrollmentRequestMocks() throws JsonProcessingException, URISyntaxException {
-        jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.mockUpdateUserDetails(studentNotInCourse.getLogin(), studentNotInCourse.getEmail(), studentNotInCourse.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-    }
-
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseLearningPathsDisabled() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathPageableSearchDTO.class,
+        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
@@ -306,7 +293,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetLearningPathsOnPageForCourseEmpty() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
@@ -316,7 +303,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetLearningPathsOnPageForCourseExactlyStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE);
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }

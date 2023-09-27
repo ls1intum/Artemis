@@ -70,19 +70,13 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                         (SELECT competency.id FROM learning_goal as competency WHERE competency.id = :competencyId)
                         UNION
                         (
-                            (
-                                SELECT relation.head_learning_goal_id
-                                FROM learning_goal_relation as relation
-                                JOIN transitive_closure AS tc ON relation.tail_learning_goal_id = tc.id
-                                WHERE relation.type = 'M'
-                            )
-                            UNION
-                            (
-                                SELECT relation.tail_learning_goal_id
-                                FROM learning_goal_relation as relation
-                                JOIN transitive_closure AS tc ON relation.head_learning_goal_id = tc.id
-                                WHERE relation.type = 'M'
-                            )
+                            SELECT CASE
+                                WHEN relation.tail_learning_goal_id = tc.id THEN relation.head_learning_goal_id
+                                WHEN relation.head_learning_goal_id = tc.id THEN relation.tail_learning_goal_id
+                                END
+                            FROM learning_goal_relation as relation
+                            JOIN transitive_closure AS tc ON relation.tail_learning_goal_id = tc.id OR relation.head_learning_goal_id = tc.id
+                            WHERE relation.type = 'M'
                         )
                     )
                     SELECT * FROM transitive_closure
