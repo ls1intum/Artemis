@@ -172,6 +172,7 @@ describe('ParticipationSubmissionComponent', () => {
         expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation).toEqual(participation);
         expect(comp.submissions).toEqual(submissions);
+        expect(comp.participation?.submissions).toEqual(submissions);
 
         // check if delete button is available
         const deleteButton = debugElement.query(By.css('#deleteButton'));
