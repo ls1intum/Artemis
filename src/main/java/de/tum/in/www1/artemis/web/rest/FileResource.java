@@ -319,8 +319,7 @@ public class FileResource {
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
         log.debug("REST request to get template : {}", templatePath);
         var resource = resourceLoaderService.getResource(templatePath);
-        var path = resource.getFile().getPath();
-        return responseEntityForFilePath(path);
+        return responseEntityForFilePath(Path.of(resource.getURI().getPath()));
     }
 
     /**

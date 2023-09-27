@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseCodeOfConductAgreementService;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.dto.ResponsibleUserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -45,22 +44,19 @@ public class ConversationResource extends ConversationManagementResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CourseCodeOfConductAgreementService courseCodeOfConductAgreementService;
-
     private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseCodeOfConductAgreementService courseCodeOfConductAgreementService;
 
     public ConversationResource(ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            CourseCodeOfConductAgreementService courseCodeOfConductAgreementService, CourseService courseService) {
+            CourseCodeOfConductAgreementService courseCodeOfConductAgreementService) {
         super(courseRepository);
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.courseCodeOfConductAgreementService = courseCodeOfConductAgreementService;
         this.userRepository = userRepository;
-        this.courseService = courseService;
+        this.courseCodeOfConductAgreementService = courseCodeOfConductAgreementService;
     }
 
     /**
@@ -144,7 +140,7 @@ public class ConversationResource extends ConversationManagementResource {
         checkMessagingEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         return ResponseEntity.ok(courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
     }
 
@@ -160,7 +156,7 @@ public class ConversationResource extends ConversationManagementResource {
         checkMessagingEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         courseCodeOfConductAgreementService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
         return ResponseEntity.ok().build();
     }
