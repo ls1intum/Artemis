@@ -78,7 +78,7 @@ public class FileUploadSubmission extends Submission {
     }
 
     public void setFilePath(String filePath) {
-        this.filePaths = new ArrayList<>();
+        getFilePaths().clear();
         filePaths.add(filePath);
     }
 
