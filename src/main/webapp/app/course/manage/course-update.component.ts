@@ -89,9 +89,6 @@ export class CourseUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-        });
         this.timeZones = (Intl as any).supportedValuesOf('timeZone');
         this.isSaving = false;
         // create a new course, and only overwrite it if we fetch a course to edit
@@ -136,6 +133,7 @@ export class CourseUpdateComponent implements OnInit {
                         this.course.instructorGroupName = 'artemis-dev';
                     }
                 }
+                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             }
         });
 

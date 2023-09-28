@@ -154,7 +154,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseOrganizations).toEqual([organization]);
             expect(getOrganizationsStub).toHaveBeenCalledOnce();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
-            expect(getProfileStub).toHaveBeenCalledTimes(2);
+            expect(getProfileStub).toHaveBeenCalledOnce();
             expect(comp.customizeGroupNames).toBeTrue();
             expect(comp.course.studentGroupName).toBe('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
