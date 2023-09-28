@@ -1066,6 +1066,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
             LocalRepository localRepository = new LocalRepository("main");
             var studentLogin = TEST_PREFIX + "student1";
             try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
                 return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
@@ -1081,8 +1082,10 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     void testGetParticipationFilesWithContentAtCommitEditorForbidden() throws Exception {
         programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
+
             var studentLogin = TEST_PREFIX + "student1";
             try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
                 return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
             }
             catch (Exception e) {
