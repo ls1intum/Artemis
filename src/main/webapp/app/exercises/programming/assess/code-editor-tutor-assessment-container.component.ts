@@ -278,14 +278,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getFeedbackSuggestionsForProgramming(this.exerciseId, this.submission!.id!))) ?? [];
         const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
         // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) => {
-            for (const feedback of allFeedback) {
-                if (feedback.detailText === suggestion.detailText && feedback.reference === suggestion.reference) {
-                    return false; // exclude this suggestion
-                }
-            }
-            return true; // include this suggestion
-        });
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
+            allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+        );
     }
 
     /**
