@@ -16,6 +16,4 @@ export class ProgrammingExamSummaryComponent {
 
     @Input()
     submission: ProgrammingSubmission;
-
-    constructor() {}
 }

@@ -83,11 +83,6 @@
                     </ng-container>
                 </span>
             </div>
-            <jhi-programming-exercise-instructions
-                *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
-                [exercise]="exercise"
-                [participation]="asProgrammingExercise(exercise).templateParticipation!"
-            ></jhi-programming-exercise-instructions>
             <ng-container *ngIf="exercise.type !== PROGRAMMING" class="pt-2">
                 <div *ngIf="exerciseInfos[exercise.id!].displayExampleSolution; else studentSolution">
                     <jhi-example-solution *ngIf="exercise.id !== undefined" [exerciseId]="exercise.id" [displayHeader]="false" />
@@ -133,13 +128,19 @@
             <ng-container *ngIf="exercise.type === PROGRAMMING">
                 <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
                 <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission!; else noSubmission">
-                    <!-- Programming Exercise -->
                     <jhi-programming-exam-summary
                         [exercise]="exercise"
                         [participation]="exerciseInfos[exercise.id!]!.participation!"
                         [submission]="exerciseInfos[exercise.id!]!.submission!"
-                    ></jhi-programming-exam-summary>
+                    />
                 </ng-container>
+
+                <jhi-programming-exercise-instructions
+                    *ngIf="exercise.problemStatement"
+                    [exercise]="exercise"
+                    [participation]="asProgrammingExercise(exercise).templateParticipation!"
+                />
+
                 <jhi-complaint-student-view
                     *ngIf="
                         (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) &&
