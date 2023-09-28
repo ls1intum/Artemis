@@ -206,7 +206,6 @@ public class HestiaUtilTestService {
             // add file to the repository folder
             Path filePath = Path.of(participationRepo.localRepoFile + "/" + fileName);
             Files.createDirectories(filePath.getParent());
-            File solutionFile = null;
             // write content to the created file
             FileUtils.write(filePath.toFile(), content, Charset.defaultCharset());
         }
@@ -226,11 +225,6 @@ public class HestiaUtilTestService {
                 .getOrCheckoutRepository(eq(participationRepoUrl), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(participationRepoUrl), eq(false), any());
-        // doNothing().when(gitService).switchBackToDefaultBranchHead(any());
-        // doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(),
-        // any());
-        // doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(), any(),
-        // anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
                 anyBoolean());
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
