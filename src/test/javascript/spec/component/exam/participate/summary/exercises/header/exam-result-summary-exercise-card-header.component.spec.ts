@@ -109,7 +109,7 @@ function sharedSetup(url: string[]) {
                 component = fixture.componentInstance;
                 component.index = 3;
                 component.exercise = programmingExercise;
-                component.exerciseInfo = { isCollapsed: false };
+                component.exerciseInfo = { icon: 'hooli', isCollapsed: false };
             });
     });
 
@@ -129,11 +129,11 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
 
         toggleCollapseExerciseButtonFour.nativeElement.click();
 
-        expect(component.exerciseInfo.isCollapsed).toBeTrue();
+        expect(component.exerciseInfo?.isCollapsed).toBeTrue();
 
         toggleCollapseExerciseButtonFour.nativeElement.click();
 
-        expect(component.exerciseInfo.isCollapsed).toBeFalse();
+        expect(component.exerciseInfo?.isCollapsed).toBeFalse();
     }));
 
     it.each([
