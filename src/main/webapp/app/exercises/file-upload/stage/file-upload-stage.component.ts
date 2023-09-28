@@ -65,7 +65,7 @@ export class FileUploadStageComponent {
      * @param stagedFile File to be removed
      */
     removeFileSubmissionFromStage(stagedFile: File): void {
-        this.stagedFiles = this.stagedFiles!.filter((entry) => entry !== stagedFile);
+        this.stagedFiles = this.stagedFiles!.filter((file) => file !== stagedFile);
         this.stagedFilesChanged.emit(this.stagedFiles);
     }
 

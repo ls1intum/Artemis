@@ -37,7 +37,7 @@
         </li>
     </ul>
 
-    <div *ngIf="showUploadButton" class="mt-2 w-100">
+    <div id="uploadButton" *ngIf="showUploadButton" class="mt-2 w-100">
         <button class="btn btn-outline-primary w-50" id="file-upload-submit" (click)="uploadStagedFiles()">
             {{ 'artemisApp.examParticipation.uploadFile' | artemisTranslate }}
         </button>
