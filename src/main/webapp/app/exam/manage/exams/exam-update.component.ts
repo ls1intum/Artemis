@@ -68,6 +68,8 @@ export class ExamUpdateComponent implements OnInit {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
+            this.originalStartDate = this.exam.startDate?.clone();
+            this.originalEndDate = this.exam.endDate?.clone();
 
             // Tap the URL to determine, if the Exam should be imported
             this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
