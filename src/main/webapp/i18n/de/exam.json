@@ -652,7 +652,7 @@
             },
             "editWorkingTime": {
                 "title": "Prüfungszeit bearbeiten",
-                "label": "Änderung der Prüfungszeit",
+                "label": "Änderung der Prüfungszeit (+)",
                 "duration": "Die neue Dauer der Prüfung beträgt <strong>{{ duration }}</strong>.",
                 "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."

@@ -653,7 +653,7 @@
             },
             "editWorkingTime": {
                 "title": "Edit Exam Duration",
-                "label": "Exam duration change",
+                "label": "Exam duration change (+)",
                 "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
                 "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."

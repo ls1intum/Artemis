@@ -12,7 +12,12 @@ import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
@@ -25,24 +30,51 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.*;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.service.AssessmentDashboardService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProfileService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
+import de.tum.in.www1.artemis.service.exam.ExamImportService;
+import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
+import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.ExamSessionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -50,7 +82,11 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
-import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
@@ -191,6 +227,7 @@ public class ExamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
+
         if (updatedExam.getId() == null) {
             return createExam(courseId, updatedExam);
         }
@@ -216,21 +253,23 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(updatedExam);
 
+        // NOTE: We have to get exercise groups as we need them for re-scheduling
+        Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
+
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
-            // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
-        if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
-            // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
-            examService.scheduleModelingExercises(examWithExercises);
+        // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
+        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
+            // TODO: check if there are any problems with that - i.e. TZ issues, only changing working time in UI, ...
+            int workingTimeChange = savedExam.getDuration() - originalExam.getDuration();
+            updateStudentExamsAndRescheduleExercises(examWithExercises, workingTimeChange);
         }
 
         if (updatedChannel != null) {
@@ -259,21 +298,28 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
-        var now = now();
-
-        // We have to get exercise groups as `scheduleModelingExercises` needs them
+        // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
-        var originalExamDuration = exam.getDuration();
 
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
+        // 2. Re-calculate the working times of all student exams
+        updateStudentExamsAndRescheduleExercises(exam, workingTimeChange);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    private void updateStudentExamsAndRescheduleExercises(Exam exam, Integer workingTimeChange) {
+        var originalExamDuration = exam.getDuration();
+
+        var now = now();
+
         User instructor = userRepository.getUser();
 
-        // 2. Re-calculate the working times of all student exams
-        var studentExams = studentExamRepository.findByExamId(examId);
+        var studentExams = studentExamRepository.findByExamId(exam.getId());
         for (var studentExam : studentExams) {
             Integer originalStudentWorkingTime = studentExam.getWorkingTime();
             int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
@@ -300,12 +346,10 @@ public class ExamResource {
             instanceMessageSendService.sendRescheduleAllStudentExams(exam.getId());
         }
 
+        // NOTE: potentially re-schedule clustering of modeling submissions (in case Compass is active)
         if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-            // potentially re-schedule clustering of modeling submissions (in case Compass is active)
             examService.scheduleModelingExercises(exam);
         }
-
-        return ResponseEntity.ok(exam);
     }
 
     /**
