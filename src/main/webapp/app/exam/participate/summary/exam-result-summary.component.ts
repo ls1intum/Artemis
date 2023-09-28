@@ -18,6 +18,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import { Submission } from 'app/entities/submission.model';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -26,6 +27,7 @@ export type ResultSummaryExerciseInfo = {
     achievedPercentage?: number;
     colorClass?: string;
     resultIconClass?: IconProp;
+    submission?: Submission;
 };
 
 @Component({
@@ -204,6 +206,8 @@ export class ExamResultSummaryComponent implements OnInit {
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise) {
+        console.log('get submission for exercise');
+
         return exercise?.studentParticipations?.[0]?.submissions?.[0];
     }
 
@@ -268,6 +272,7 @@ export class ExamResultSummaryComponent implements OnInit {
                 achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
                 colorClass: textColorClass,
                 resultIconClass: resultIconClass,
+                submission: this.getSubmissionForExercise(exercise),
             };
         }
         return exerciseInfos;
