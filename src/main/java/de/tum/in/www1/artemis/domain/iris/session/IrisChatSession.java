@@ -10,13 +10,19 @@ import de.tum.in.www1.artemis.domain.User;
 
 /**
  * An IrisChatSession represents a conversation between a user and an LLM.
- * This is used both for students receiving tutor assistance on an exercise,
- * and for instructors editing an exercise in the Code Editor.
+ * This is used for students receiving tutor assistance from Iris while working on an exercise.
  */
 @Entity
 @DiscriminatorValue("CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisChatSession extends IrisSession {
+    
+    public IrisChatSession() {}
+    
+    public IrisChatSession(ProgrammingExercise exercise, User user) {
+        this.exercise = exercise;
+        this.user = user;
+    }
 
     @ManyToOne
     @JsonIgnore

@@ -45,7 +45,7 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
     default List<IrisChatSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
-            throw new EntityNotFoundException("Iris Session");
+            throw new EntityNotFoundException("Iris Chat Session");
         }
         return result;
     }
@@ -59,7 +59,7 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
      */
     @NotNull
     default IrisChatSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
-        return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
+        return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Chat Session", sessionId));
     }
 
     /**
@@ -73,7 +73,7 @@ public interface IrisChatSessionRepository extends JpaRepository<IrisChatSession
     default IrisChatSession findNewestByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
-            throw new EntityNotFoundException("Iris Session");
+            throw new EntityNotFoundException("Iris Chat Session");
         }
         return result.get(0);
     }
