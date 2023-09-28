@@ -45,13 +45,13 @@ public class QuizExerciseWithSubmissionsExportService {
     }
 
     /**
-     * Exports the given quiz quizExercise as JSON file with all its submissions and stores it in the given directory.
+     * Exports the given quiz exercise as JSON file with all its submissions and stores it in the given directory.
      *
-     * @param quizExercise      the quiz quizExercise to export
-     * @param exerciseExportDir the directory where the quizExercise should be exported to
+     * @param quizExercise      the quiz exercise to export
+     * @param exerciseExportDir the directory where the quiz exercise should be exported to
      * @param exportErrors      a list of errors that occurred during the export
      * @param reportEntries     a list of report entries that occurred during the export
-     * @return the path to the directory where the quizExercise was exported to
+     * @return the path to the directory where the quiz exercise was exported to
      */
     public Path exportExerciseWithSubmissions(QuizExercise quizExercise, Path exerciseExportDir, List<String> exportErrors, List<ArchivalReportEntry> reportEntries) {
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(quizExercise.getId());
@@ -62,7 +62,7 @@ public class QuizExerciseWithSubmissionsExportService {
             fileService.writeObjectToJsonFile(quizExercise, objectMapper, exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json"));
         }
         catch (IOException e) {
-            exportErrors.add("Failed to export quiz quizExercise details " + quizExercise.getTitle() + " with id " + quizExercise.getId() + " due to a JSON processing error.");
+            exportErrors.add("Failed to export quiz exercise details " + quizExercise.getTitle() + " with id " + quizExercise.getId() + " due to a JSON processing error.");
         }
         List<Path> imagesToExport = new ArrayList<>();
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
