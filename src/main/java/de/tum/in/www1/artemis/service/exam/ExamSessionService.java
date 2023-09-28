@@ -94,7 +94,7 @@ public class ExamSessionService {
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
         Set<ExamSession> filteredSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
         Set<StudentExam> studentExams = new HashSet<>();
-        boolean studentExamsFetched = false;
+        boolean studentExamsFetched = false;    // flag to avoid fetching student exams twice
         if (analysisOptions.sameIpAddressDifferentStudentExams() && analysisOptions.sameBrowserFingerprintDifferentStudentExams()) {
             // first step find all sessions that have matching browser fingerprint and ip address
             findSuspiciousSessionsForGivenCriteria(filteredSessions, examId,
@@ -189,7 +189,7 @@ public class ExamSessionService {
         // if they are not both IPv4 or IPv6, we cannot check if the address is in the subnet and return true
         if (!checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV4)
                 && !checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV6)) {
-            log.info("IP address {} and subnet {} have different versions", ipAddress, ipSubnet);
+            log.debug("IP address {} and subnet {} have different versions", ipAddress, ipSubnet);
             return true;
         }
         return ipAddressMatcher.matches(ipAddress);
