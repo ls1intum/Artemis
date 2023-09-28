@@ -34,7 +34,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faClock = faClock;
     faQuestionCircle = faQuestionCircle;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private onChange?: (val?: dayjs.Dayjs) => void;
 
     /**

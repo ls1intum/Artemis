@@ -73,16 +73,19 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should register callback function', () => {
-        const testCallBackFunction = (date: dayjs.Dayjs) => 'I am a test callbackFunction: ' + date.toDate();
+        const onChangeSpy = jest.fn();
+        component.registerOnChange(onChangeSpy);
 
-        component.registerOnChange(testCallBackFunction);
+        (component as any).onChange?.(normalDate);
 
-        expect(component._onChange(normalDate)).toBe(testCallBackFunction(normalDate));
+        expect(onChangeSpy).toHaveBeenCalledOnce();
+        expect(onChangeSpy).toHaveBeenCalledWith(normalDate);
     });
 
     it('should update field', () => {
+        const onChangeSpy = jest.fn();
+        component.registerOnChange(onChangeSpy);
         const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
-        const onChangeSpy = jest.spyOn(component, '_onChange');
         const newDate = normalDate.add(2, 'days');
         component.value = normalDate;
 
