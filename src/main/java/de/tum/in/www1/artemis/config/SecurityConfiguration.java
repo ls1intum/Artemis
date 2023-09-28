@@ -172,7 +172,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result").permitAll()
             .antMatchers(HttpMethod.POST, "/api/programming-submissions/*").permitAll()
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/lti/launch/*").permitAll()
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/.well-known/jwks.json").permitAll()
             .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
@@ -182,7 +181,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains("lti")) {
-            // TODO: can we disable this based on the lti profile?
             http.apply(new CustomLti13Configurer());
         }
 
