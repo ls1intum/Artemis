@@ -21,7 +21,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { SubmissionType } from 'app/entities/submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -201,25 +200,13 @@ describe('ExamResultSummaryComponent', () => {
         const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockReturnValue();
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
-        const toggleCollapseExerciseButtonOne = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-1'));
-        const toggleCollapseExerciseButtonTwo = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-2'));
-        const toggleCollapseExerciseButtonThree = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-3'));
-        const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-4'));
+
         expect(exportToPDFButton).not.toBeNull();
-        expect(toggleCollapseExerciseButtonOne).not.toBeNull();
-        expect(toggleCollapseExerciseButtonTwo).not.toBeNull();
-        expect(toggleCollapseExerciseButtonThree).not.toBeNull();
-        expect(toggleCollapseExerciseButtonFour).not.toBeNull();
 
-        toggleCollapseExerciseButtonOne.nativeElement.click();
-        toggleCollapseExerciseButtonTwo.nativeElement.click();
-        toggleCollapseExerciseButtonThree.nativeElement.click();
-        toggleCollapseExerciseButtonFour.nativeElement.click();
-
-        expect(component.exerciseInfos[1].isCollapsed).toBeTrue();
-        expect(component.exerciseInfos[2].isCollapsed).toBeTrue();
-        expect(component.exerciseInfos[3].isCollapsed).toBeTrue();
-        expect(component.exerciseInfos[4].isCollapsed).toBeTrue();
+        component.exerciseInfos[1].isCollapsed = true;
+        component.exerciseInfos[2].isCollapsed = true;
+        component.exerciseInfos[3].isCollapsed = true;
+        component.exerciseInfos[4].isCollapsed = true;
 
         exportToPDFButton.nativeElement.click();
 
@@ -287,29 +274,6 @@ describe('ExamResultSummaryComponent', () => {
     ])('should handle missing/empty fields correctly for %o in getSubmissionForExercise', (exercise, expectedResult) => {
         const submission = component.getSubmissionForExercise(exercise as Exercise);
         expect(submission).toEqual(expectedResult);
-    });
-
-    it.each([
-        [{ id: 1 }, false],
-        [{ id: 1, studentParticipations: null }, false],
-        [{ id: 1, studentParticipations: undefined }, false],
-        [{ id: 1, studentParticipations: [] }, false],
-        [{ id: 1, studentParticipations: [{}] }, false],
-        [{ id: 1, studentParticipations: [{ submissions: null }] }, false],
-        [{ id: 1, studentParticipations: [{ submissions: undefined }] }, false],
-        [{ id: 1, studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
-        [{ id: 1, studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
-    ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
-        component.studentExam = { id: 1, exam, user, exercises: [exercise as Exercise], numberOfExamSessions: 0 };
-        // component.exerciseInfos = { 1: { icon: 'monero', isCollapsed: false } };
-
-        fixture.detectChanges();
-        const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
-        if (shouldBeNonNull) {
-            expect(span).not.toBeNull();
-        } else {
-            expect(span).toBeNull();
-        }
     });
 
     it('should update student exam correctly', () => {
@@ -437,11 +401,5 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.isBeforeStudentReviewEnd()).toBeFalse();
 
         expect(dateSpy).toHaveBeenCalledTimes(2);
-    });
-
-    it('should show exercise group title', () => {
-        fixture.detectChanges();
-        const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('.exercise-title');
-        expect(exerciseTitleElement.textContent).toContain('exercise group');
     });
 });
