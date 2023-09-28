@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -15,13 +14,21 @@ import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
+import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.BadRequestException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Service to handle the chat subsystem of Iris.
@@ -36,7 +43,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisMessageService irisMessageService;
 
-    private final IrisSettingsService irisSettingsService;
+    private final IrisSettingsService irisSettingsService; // Will need this when we have settings to consider
 
     private final IrisWebsocketService irisWebsocketService;
 
@@ -48,16 +55,10 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final RepositoryService repositoryService;
 
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
-                                        IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, GitService gitService,
-                                        RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-                                        ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService,
+                                        IrisSettingsService irisSettingsService, IrisWebsocketService irisWebsocketService,
+                                        AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
+                                        GitService gitService, RepositoryService repositoryService) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -66,9 +67,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.irisSessionRepository = irisSessionRepository;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -96,26 +94,66 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         checkIsIrisActivated(castToSessionType(session, IrisCodeEditorSession.class));
     }
     
-    private void checkIsIrisActivated(IrisCodeEditorSession session) {
-        // Code editor sessions should probably be available for every exercise
+    private void checkIsIrisActivated(IrisCodeEditorSession ignored) {
+        // Code editor sessions should probably be available for every programming exercise, especially just-created ones
         // However, we still may want to check something here
         // Await Timor's settings system update PR
     }
     
     @Override
     public void requestAndHandleResponse(IrisSession irisSession) {
-        requestAndHandleResponse(castToSessionType(irisSession, IrisCodeEditorSession.class));
+        // Don't bother casting now as we have to fetch the session by ID from the database anyway
+        requestAndHandleResponse(irisSession.getId());
     }
     
     /**
-     * Sends all messages of the session to an LLM and handles the response by saving the message
-     * and sending it to the student via the Websocket.
+     * Sends a request containing the current state of the exercise open in the code editor
+     * and the entire conversation history to the LLM, and handles the response.
      *
-     * @param session The chat session to send to the LLM
+     * @param sessionId The id of the session to send to the LLM
      */
-    private void requestAndHandleResponse(IrisCodeEditorSession session) {
-        var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+    private void requestAndHandleResponse(Long sessionId) {
+        var fromDB = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
+        if (!(fromDB instanceof IrisCodeEditorSession session)) {
+            throw new BadRequestException("Iris session is not a code editor session");
+        }
         var exercise = session.getExercise();
+        var params = new HashMap<String, Object>();
+        params.put("chat_history", session.getMessages());
+        params.put("ps", exercise.getProblemStatement());
+        params.put("solution_repo", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
+        params.put("template_repo", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
+        params.put("test_repo", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
+        
+        irisConnectorService.sendRequest(new IrisTemplate("TODO"), "gpt-4-32k", params)
+                .handleAsync((responseMessage, err) -> {
+                    if (err != null) {
+                        log.error("Error while getting response from Iris model", err);
+                        irisWebsocketService.sendException(session, err.getCause());
+                    }
+                    else if (responseMessage == null) {
+                        log.error("No response from Iris model");
+                        irisWebsocketService.sendException(session, new IrisNoResponseException());
+                    }
+                    else {
+                        var irisMessageSaved = irisMessageService.saveMessage(responseMessage.message(), session, IrisMessageSender.LLM);
+                        irisWebsocketService.sendMessage(irisMessageSaved);
+                    }
+                    return null;
+                });
+    }
+    
+    private Map<String, String> getRepositoryContents(@Nullable VcsRepositoryUrl vcsRepositoryUrl) {
+        return Optional.ofNullable(vcsRepositoryUrl)
+                .map(url -> {
+                    try {
+                        return gitService.getOrCheckoutRepository(url, true);
+                    } catch (GitAPIException e) {
+                        throw new InternalServerErrorException("Could not get or checkout exercise repository");
+                    }
+                })
+                .map(repositoryService::getFilesWithContent)
+                .orElse(Map.of());
     }
 
 }
