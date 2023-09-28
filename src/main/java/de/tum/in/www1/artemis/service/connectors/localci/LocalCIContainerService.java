@@ -209,12 +209,12 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(renameDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
     }
 
-    private void copyToContainer(String sourcePath, String containerId2) {
+    private void copyToContainer(String sourcePath, String containerId) {
         try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {
-            dockerClient.copyArchiveToContainerCmd(containerId2).withRemotePath("/").withTarInputStream(uploadStream).exec();
+            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath("/").withTarInputStream(uploadStream).exec();
         }
         catch (IOException e) {
-            throw new LocalCIException("Could not copy to container " + containerId2, e);
+            throw new LocalCIException("Could not copy to container " + containerId, e);
         }
     }
 
@@ -223,7 +223,12 @@ public class LocalCIContainerService {
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream)) {
+        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream);
+
+        // This needs to be done in case the files have a long name
+        tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+
+        try {
             addFileToTar(tarArchiveOutputStream, path.toFile(), "");
         }
         catch (IOException e) {

@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.localvcci;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
@@ -15,15 +13,7 @@ import org.springframework.context.annotation.Import;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.ExecCreateCmd;
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.command.ExecStartCmd;
-import com.github.dockerjava.api.command.InspectImageCmd;
-import com.github.dockerjava.api.command.InspectImageResponse;
-import com.github.dockerjava.api.command.ListContainersCmd;
-import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
@@ -68,10 +58,18 @@ public class LocalCITestConfiguration {
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
 
+        // Mock dockerClient.copyArchiveToContainer(String containerId).withRemotePath(String path).withTarInputStream(InputStream uploadStream).exec()
+        CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
+        doReturn(copyArchiveToContainerCmd).when(dockerClient).copyArchiveToContainerCmd(anyString());
+        doReturn(copyArchiveToContainerCmd).when(copyArchiveToContainerCmd).withRemotePath(anyString());
+        doReturn(copyArchiveToContainerCmd).when(copyArchiveToContainerCmd).withTarInputStream(any());
+        doNothing().when(copyArchiveToContainerCmd).exec();
+
         // Mock dockerClient.execCreateCmd(String containerId).withAttachStdout(Boolean attachStdout).withAttachStderr(Boolean attachStderr).withCmd(String... cmd).exec()
         ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
         ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
         doReturn(execCreateCmd).when(dockerClient).execCreateCmd(anyString());
+        doReturn(execCreateCmd).when(execCreateCmd).withCmd(any(String[].class));
         doReturn(execCreateCmd).when(execCreateCmd).withAttachStdout(anyBoolean());
         doReturn(execCreateCmd).when(execCreateCmd).withAttachStderr(anyBoolean());
         doReturn(execCreateCmd).when(execCreateCmd).withCmd(anyString(), anyString());
