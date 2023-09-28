@@ -1,12 +1,7 @@
-import { HttpClientModule, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { User } from 'app/core/user/user.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -14,45 +9,20 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
-import { ExamResultOverviewComponent } from 'app/exam/participate/summary/result-overview/exam-result-overview.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
-import { MockLocalStorageService } from '../../../../../../helpers/mocks/service/mock-local-storage.service';
-import { MockExamParticipationService } from '../../../../../../helpers/mocks/service/mock-exam-participation.service';
+import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 
 let fixture: ComponentFixture<ExamResultSummaryExerciseCardHeaderComponent>;
 let component: ExamResultSummaryExerciseCardHeaderComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
-const visibleDate = dayjs().subtract(6, 'hours');
-const startDate = dayjs().subtract(5, 'hours');
-const endDate = dayjs().subtract(4, 'hours');
-const publishResultsDate = dayjs().subtract(3, 'hours');
-const examStudentReviewStart = dayjs().subtract(2, 'hours');
-const examStudentReviewEnd = dayjs().add(1, 'hours');
-
 const exam = {
     id: 1,
     title: 'ExamForTesting',
-    visibleDate,
-    startDate,
-    endDate,
-    publishResultsDate,
-    examStudentReviewStart,
-    examStudentReviewEnd,
-    testExam: false,
 } as Exam;
 
 const exerciseGroup = {
@@ -65,43 +35,11 @@ const programmingSubmission = { id: 1 } as ProgrammingSubmission;
 const programmingParticipation = { id: 4, student: user, submissions: [programmingSubmission] } as StudentParticipation;
 
 const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup } as ProgrammingExercise;
-function sharedSetup(url: string[]) {
+
+describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [
-                ExamResultSummaryExerciseCardHeaderComponent,
-                MockComponent(TestRunRibbonComponent),
-                MockComponent(ExamResultOverviewComponent),
-                MockComponent(ExamGeneralInformationComponent),
-                MockComponent(ResultComponent),
-                MockComponent(ComplaintsStudentViewComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
-                MockComponent(IncludedInScoreBadgeComponent),
-            ],
-            imports: [RouterTestingModule.withRoutes([]), HttpClientModule],
-            providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        snapshot: {
-                            url,
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
-                        },
-                    },
-                },
-                MockProvider(CourseManagementService, {
-                    find: () => {
-                        return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
-                    },
-                }),
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: ExamParticipationService, useClass: MockExamParticipationService },
-            ],
+            declarations: [ExamResultSummaryExerciseCardHeaderComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
@@ -109,17 +47,13 @@ function sharedSetup(url: string[]) {
                 component = fixture.componentInstance;
                 component.index = 3;
                 component.exercise = programmingExercise;
-                component.exerciseInfo = { icon: 'hooli', isCollapsed: false };
+                component.exerciseInfo = { isCollapsed: false } as ResultSummaryExerciseInfo;
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
-}
-
-describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
-    sharedSetup(['', '']);
 
     it('should collapse and expand exercise when collapse button is clicked', fakeAsync(() => {
         fixture.detectChanges();
