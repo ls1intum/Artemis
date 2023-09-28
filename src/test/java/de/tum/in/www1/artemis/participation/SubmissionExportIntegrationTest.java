@@ -5,8 +5,8 @@ import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
-class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "submissionexportintegration";
 
@@ -139,7 +139,9 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     private void saveEmptySubmissionFile(Exercise exercise, FileUploadSubmission submission) throws IOException {
 
-        File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), submission.getFilePath()).toFile();
+        String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
+        String fileName = parts[parts.length - 1];
+        File file = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()).resolve(fileName).toFile();
 
         File parent = file.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {
