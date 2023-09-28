@@ -236,7 +236,7 @@ public class CourseResource {
             }
         }
 
-        if (!courseUpdate.getCourseInformationSharingMessagingCodeOfConduct().equals(existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
+        if (!Objects.equals(courseUpdate.getCourseInformationSharingMessagingCodeOfConduct(), existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
             courseCodeOfConductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
