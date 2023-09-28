@@ -126,7 +126,6 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     handleExamDateChange() {
-        console.log('ALARM');
         this.calculateWorkingTime();
         this.calculateMaxWorkingTime();
     }
