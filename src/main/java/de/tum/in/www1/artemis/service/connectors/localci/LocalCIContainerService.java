@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -233,7 +238,7 @@ public class LocalCIContainerService {
             addFileToTar(tarArchiveOutputStream, path.toFile(), "");
         }
         catch (IOException e) {
-            e.printStackTrace();
+            throw new LocalCIException("Could not create tar archive", e);
         }
         return byteArrayOutputStream;
     }
