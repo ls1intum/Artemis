@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.iris.IrisConstants;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
@@ -83,7 +84,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
     
     private void checkHasAccessToIrisSession(IrisCodeEditorSession session, User user) {
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, session.getExercise(), user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, session.getExercise(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Code Editor Session", session.getId());
         }
@@ -97,23 +98,18 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private void checkIsIrisActivated(IrisCodeEditorSession ignored) {
         // Code editor sessions should probably be available for every programming exercise, especially just-created ones
         // However, we still may want to check something here
-        // Await Timor's settings system update PR
-    }
-    
-    @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
-        // Don't bother casting now as we have to fetch the session by ID from the database anyway
-        requestAndHandleResponse(irisSession.getId());
+        // FIXME: Await update to Iris settings system
     }
     
     /**
-     * Sends a request containing the current state of the exercise open in the code editor
+     * Sends a request containing the current state of the exercise repositories in the code editor
      * and the entire conversation history to the LLM, and handles the response.
      *
-     * @param sessionId The id of the session to send to the LLM
+     * @param irisSession The session to send the request for
      */
-    private void requestAndHandleResponse(Long sessionId) {
-        var fromDB = irisSessionRepository.findByIdWithMessagesAndContents(sessionId);
+    @Override
+    public void requestAndHandleResponse(IrisSession irisSession) {
+        var fromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(fromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");
         }
@@ -125,7 +121,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("template_repo", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
         params.put("test_repo", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
         
-        irisConnectorService.sendRequest(new IrisTemplate("TODO"), "gpt-4-32k", params)
+        // FIXME: Template and model should be be configurable; await settings update
+        irisConnectorService.sendRequest(new IrisTemplate(IrisConstants.CODE_EDITOR_INITIAL_REQUEST), "gpt-4-32k", params)
                 .handleAsync((responseMessage, err) -> {
                     if (err != null) {
                         log.error("Error while getting response from Iris model", err);
@@ -143,6 +140,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 });
     }
     
+    /**
+     * Extract the contents of a repository as a Map<String, String> of file paths to file contents.
+     * @param vcsRepositoryUrl The URL of the repository to extract
+     * @return The contents of the repository
+     */
     private Map<String, String> getRepositoryContents(@Nullable VcsRepositoryUrl vcsRepositoryUrl) {
         return Optional.ofNullable(vcsRepositoryUrl)
                 .map(url -> {
