@@ -6,6 +6,9 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
+import { orderBy as _orderBy } from 'lodash-es';
 
 export const setBuildPlanUrlForProgrammingParticipations = (profileInfo: ProfileInfo, participations: ProgrammingExerciseStudentParticipation[], projectKey?: string) => {
     if (!projectKey) {
@@ -105,3 +108,20 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
     // If the submission has no submissionDate set, the submission cannot be in time.
     return false;
 };
+
+/**
+ * Returns the latest result of a given student participation.
+ *
+ * @param participation
+ * @param showUngradedResults
+ */
+export function getLatestResultOfStudentParticipation(participation: StudentParticipation, showUngradedResults: boolean): Result | undefined {
+    // Sort participation results by completionDate desc.
+    if (participation.results) {
+        participation.results = _orderBy(participation.results, 'completionDate', 'desc');
+    }
+    // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
+    const latestResult = participation.results?.find(({ rated }) => showUngradedResults || rated === true);
+    // Make sure that the participation result is connected to the newest result.
+    return latestResult ? { ...latestResult, participation: participation } : undefined;
+}
