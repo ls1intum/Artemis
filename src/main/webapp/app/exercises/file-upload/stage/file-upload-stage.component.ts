@@ -4,6 +4,7 @@ import { FileDetails } from 'app/entities/file-details.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { FileService } from 'app/shared/http/file.service';
+import { sha1HexFromFile } from 'app/shared/util/crypto.utils';
 
 @Component({
     selector: 'jhi-file-upload-stage',
@@ -28,6 +29,17 @@ export class FileUploadStageComponent {
     ) {}
 
     /**
+     * Includes a file's hash into its name to ensure two files
+     * with the same name but different content don't override each other on the server.
+     * @param file the file
+     * @param hash the file's hash
+     * @return file with unique name
+     */
+    private convertToUniqueFile(file: File, hash: string): File {
+        return new File([file], `${hash}_${file.name}`, { type: file.type });
+    }
+
+    /**
      * Stages a file submission for exercise
      * @param event {object} Event object which contains the uploaded file
      */
@@ -40,7 +52,14 @@ export class FileUploadStageComponent {
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
-                this.stagedFiles!.push(submissionFile);
+                sha1HexFromFile(submissionFile)
+                    .then((hash) => {
+                        const uniqueFile = this.convertToUniqueFile(submissionFile, hash);
+                        this.stagedFiles!.push(uniqueFile);
+                    })
+                    .catch(() => {
+                        this.alertService.error('artemisApp.fileUploadSubmission.fileProcessError', { fileName: submissionFile.name });
+                    });
             }
 
             this.fileInput.nativeElement.value = '';
@@ -53,7 +72,7 @@ export class FileUploadStageComponent {
      * @param stagedFile File to be removed
      */
     removeFileSubmissionFromStage(stagedFile: File): void {
-        this.stagedFiles = this.stagedFiles!.filter((file) => file != stagedFile);
+        this.stagedFiles = this.stagedFiles!.filter((entry) => entry !== stagedFile);
         this.stagedFilesChanged.emit(this.stagedFiles);
     }
 

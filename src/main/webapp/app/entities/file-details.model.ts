@@ -3,16 +3,23 @@ export class FileDetails {
         public name: string = '',
         public extension: string = '',
     ) {}
+
+    /**
+     * Extracts the FileDetails from a path.
+     * @param filePath a unique path, e.g. following the pattern {hash}_{nameAndExtension}.
+     */
     static getFileDetailsFromPath(filePath: string | undefined): FileDetails {
         if (!filePath) {
             return new FileDetails('N/A', 'N/A');
         } else {
             const filePathSplit: string[] = filePath.split('/');
-            const fileName = filePathSplit.last()!;
-            const fileNameSplit: string[] = fileName.split('.');
+            const uniqueFileName = filePathSplit.last()!;
+            const actualFileName = uniqueFileName.substring(uniqueFileName.indexOf('_') + 1);
+
+            const fileNameSplit: string[] = actualFileName.split('.');
             const fileExtension = fileNameSplit.last()!;
 
-            return new FileDetails(fileName, fileExtension);
+            return new FileDetails(actualFileName, fileExtension);
         }
     }
 }

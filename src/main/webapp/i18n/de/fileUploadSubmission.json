@@ -22,6 +22,7 @@
             "file": "Datei",
             "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 8 MB.",
             "fileExtensionError": "Falsche Dateierweiterung. Bitte lade eine Datei mit einer der unten aufgeführten zulässigen Dateierweiterungen hoch.",
+            "fileProcessError": "Die Datei {{ fileName }} konnte nicht verarbeitet werden.",
             "fileUploadError": "Deine Einreichung der Datei {{ fileName }} ist fehlgeschlagen!",
             "submitted": "Abgegeben",
             "stagedFiles": "Die Dateien die abgegeben werden sobald du bereit bist",

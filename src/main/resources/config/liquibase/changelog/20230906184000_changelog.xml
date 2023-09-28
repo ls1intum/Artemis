@@ -21,7 +21,16 @@
         <addForeignKeyConstraint baseColumnNames="submission_id" baseTableName="file_submission_paths" constraintName="fk_file_submission_paths_submission_id"
                                  deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT"
                                  referencedColumnNames="id" referencedTableName="submission" validate="true"/>
-        <sql>INSERT INTO file_submission_paths (submission_id, path) SELECT id, file_path FROM submission WHERE discriminator = 'F'</sql>
+        <comment>
+            All file names in the new file_submission_paths table start with a hash that uniquely identifies their content.
+            So {directory}/{nameAndExtension} becomes {directory}/{hash}_{nameAndExtension} and hash is 0000 in this case.
+            nocheckin: old submissions will never be deleted
+        </comment>
+        <sql>
+            INSERT INTO file_submission_paths (submission_id, path)
+            SELECT id, CONCAT('0000_', file_path)
+            FROM submission WHERE discriminator = 'F'
+        </sql>
         <comment>
             Drop the old column only after the data has been migrated.
         </comment>
