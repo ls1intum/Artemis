@@ -1,12 +1,10 @@
-<div *ngIf="umlModel || explanation; else noSubmission" class="editor-outline-background" style="width: 100%; display: contents">
-    <!--    <jhi-modeling-submission *ngIf="exercise?.studentParticipations?.length ?? 0 > 0 && exercise?.studentParticipations?.[0]?.id; else noSubmission" [participationId]="exercise.studentParticipations![0].id" ] />-->
+<div>
     <jhi-modeling-submission
-        *ngIf="(exercise.studentParticipations?.length ?? 0) > 0; else noSubmission"
+        *ngIf="(exercise.studentParticipations?.length ?? 0) > 0 && exercise.studentParticipations![0].id !== undefined; else noSubmission"
         [participationId]="exercise.studentParticipations![0].id"
         [displayHeader]="false"
-        style="display: contents"
     />
+    <ng-template #noSubmission>
+        <div>No submission</div>
+    </ng-template>
 </div>
-<ng-template #noSubmission>
-    <div>No submission</div>
-</ng-template>
