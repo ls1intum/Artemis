@@ -255,39 +255,42 @@ describe('Exam Update Component', () => {
         }));
 
         it('should calculate the working time for real exams correctly', () => {
+            fixture.detectChanges();
+
             examWithoutExercises.testExam = false;
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            fixture.detectChanges();
+            component.handleExamDateChange();
             // Without a valid startDate, the workingTime should be 0
             // examWithoutExercises.workingTime is stored in seconds
             expect(examWithoutExercises.workingTime).toBe(0);
             // the component returns the workingTime in Minutes
-            expect(component.calculateWorkingTime).toBe(0);
+            expect(component.workingTimeInMinutes).toBe(0);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            fixture.detectChanges();
+            component.handleExamDateChange();
             expect(examWithoutExercises.workingTime).toBe(7200);
-            expect(component.calculateWorkingTime).toBe(120);
+            expect(component.workingTimeInMinutes).toBe(120);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = undefined;
-            fixture.detectChanges();
+            component.handleExamDateChange();
             // Without an endDate, the working time should be 0;
             expect(examWithoutExercises.workingTime).toBe(0);
-            expect(component.calculateWorkingTime).toBe(0);
+            expect(component.workingTimeInMinutes).toBe(0);
         });
 
         it('should not calculate the working time for test exams', () => {
+            fixture.detectChanges();
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
-            fixture.detectChanges();
+            component.handleExamDateChange();
             expect(examWithoutExercises.workingTime).toBe(3600);
-            expect(component.calculateWorkingTime).toBe(60);
+            expect(component.workingTimeInMinutes).toBe(60);
         });
 
         it('validates the working time for test exams correctly', () => {

@@ -80,8 +80,8 @@
                         labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
+                        (valueChange)="handleExamDateChange()"
                         [error]="!isValidStartDate"
-                        (valueChange)="calculateMaxWorkingTime()"
                         [startAt]="exam.visibleDate"
                         name="startDate"
                         id="startDate"
@@ -92,8 +92,8 @@
                         labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
+                        (valueChange)="handleExamDateChange()"
                         [error]="!isValidEndDate"
-                        (valueChange)="calculateMaxWorkingTime()"
                         [startAt]="exam.startDate"
                         name="endDate"
                         id="endDate"
@@ -104,7 +104,7 @@
                 <div class="col-sm-6">
                     <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime">Working Time</label>
                     <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'"></jhi-help-icon>
-                    <input *ngIf="!exam.testExam" readonly type="text" class="form-control" [value]="calculateWorkingTime" />
+                    <input *ngIf="!exam.testExam" readonly type="text" class="form-control" [value]="workingTimeInMinutes" />
                     <input
                         *ngIf="exam.testExam"
                         id="workingTimeInMinutes"
@@ -114,7 +114,6 @@
                         [customMin]="1"
                         [customMax]="maxWorkingTimeInMinutes"
                         [(ngModel)]="workingTimeInMinutes"
-                        (change)="convertWorkingTimeFromMinutesToSeconds($event)"
                     />
                 </div>
                 <div class="col-sm-6">

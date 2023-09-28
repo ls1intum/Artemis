@@ -30,7 +30,7 @@ export class ExamUpdateComponent implements OnInit {
     course: Course;
     isSaving: boolean;
     // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
-    workingTimeInMinutes: number;
+    // workingTimeInMinutes: number;
     // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
     maxWorkingTimeInMinutes: number;
     isImport = false;
@@ -82,7 +82,7 @@ export class ExamUpdateComponent implements OnInit {
                 next: (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
-                    this.hideChannelNameInput = (exam.id !== undefined && exam.channelName === undefined) || !isMessagingEnabled(this.course);
+                    this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingEnabled(this.course);
                 },
                 error: (err: HttpErrorResponse) => onError(this.alertService, err),
             });
@@ -98,8 +98,22 @@ export class ExamUpdateComponent implements OnInit {
             }
         });
         // Initialize helper attributes
-        this.workingTimeInMinutes = this.exam.workingTime! / 60;
         this.calculateMaxWorkingTime();
+    }
+
+    /**
+     * Sets the exam working time in minutes.
+     * @param minutes
+     */
+    set workingTimeInMinutes(minutes: number) {
+        this.exam.workingTime = minutes * 60;
+    }
+
+    /**
+     * Returns the exam working time in minutes.
+     */
+    get workingTimeInMinutes(): number {
+        return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
     }
 
     /**
@@ -109,6 +123,40 @@ export class ExamUpdateComponent implements OnInit {
      */
     previousState() {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
+    }
+
+    handleExamDateChange() {
+        console.log('ALARM');
+        this.calculateWorkingTime();
+        this.calculateMaxWorkingTime();
+    }
+
+    /**
+     * Calculates the WorkingTime for real exams based on the start- and end-time.
+     */
+    private calculateWorkingTime() {
+        if (!this.exam.testExam) {
+            if (this.exam.startDate && this.exam.endDate) {
+                this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+            } else {
+                this.exam.workingTime = 0;
+            }
+        }
+    }
+
+    /**
+     * Used to determine the maximum working time every time, the user changes the start- or endDate.
+     * Used to show a graphical warning at the working time input field
+     */
+    private calculateMaxWorkingTime() {
+        if (this.exam.testExam) {
+            if (this.exam.startDate && this.exam.endDate) {
+                this.maxWorkingTimeInMinutes = dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
+            } else {
+                // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
+                this.maxWorkingTimeInMinutes = this.isImport ? this.workingTimeInMinutes : 0;
+            }
+        }
     }
 
     /**
@@ -155,7 +203,7 @@ export class ExamUpdateComponent implements OnInit {
                 return;
             }
             return this.examManagementService.import(this.course.id!, this.exam);
-        } else if (this.exam.id !== undefined) {
+        } else if (this.exam.id) {
             return this.examManagementService.update(this.course.id!, this.exam);
         } else {
             return this.examManagementService.create(this.course.id!, this.exam);
@@ -200,6 +248,13 @@ export class ExamUpdateComponent implements OnInit {
         this.isSaving = false;
     }
 
+    /**
+     * Returns true if the exam is currently ongoing, false otherwise.
+     */
+    get isOngoingExam(): boolean {
+        return !!this.exam.id && !!this.exam.startDate && !!this.exam.endDate && dayjs().isBetween(this.exam.startDate, this.exam.endDate);
+    }
+
     get isValidConfiguration(): boolean {
         const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
@@ -218,7 +273,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidVisibleDate(): boolean {
-        return this.exam.visibleDate !== undefined;
+        return !!this.exam.visibleDate;
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
@@ -231,7 +286,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidMaxPoints(): boolean {
-        return this.exam?.examMaxPoints !== undefined && this.exam?.examMaxPoints > 0;
+        return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0;
     }
 
     /**
@@ -240,7 +295,7 @@ export class ExamUpdateComponent implements OnInit {
      * For test exams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
-        if (this.exam.startDate === undefined) {
+        if (!this.exam.startDate) {
             return false;
         }
         if (this.exam.testExam) {
@@ -254,22 +309,7 @@ export class ExamUpdateComponent implements OnInit {
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
-    }
-
-    /**
-     * Calculates the WorkingTime for real exams based on the start- and end-time.
-     */
-    get calculateWorkingTime(): number {
-        if (!this.exam.testExam) {
-            if (this.exam.startDate && this.exam.endDate) {
-                this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-            } else {
-                this.exam.workingTime = 0;
-            }
-            this.workingTimeInMinutes = this.exam.workingTime / 60;
-        }
-        return this.workingTimeInMinutes;
+        return !!this.exam.endDate && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     /**
@@ -279,7 +319,7 @@ export class ExamUpdateComponent implements OnInit {
      */
     get validateWorkingTime(): boolean {
         if (this.exam.testExam) {
-            if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
+            if (!this.exam.workingTime || this.exam.workingTime < 1) {
                 return false;
             }
             if (this.exam.startDate && this.exam.endDate) {
@@ -293,45 +333,13 @@ export class ExamUpdateComponent implements OnInit {
         return false;
     }
 
-    /**
-     * Used to convert workingTimeInMinutes into exam.workingTime (in seconds) every time, the user inputs a new
-     * working time for a test exam
-     * @param event when the user inputs a new working time
-     */
-    convertWorkingTimeFromMinutesToSeconds(event: any) {
-        this.workingTimeInMinutes = event.target.value;
-        this.exam.workingTime = this.workingTimeInMinutes * 60;
-    }
-
-    /**
-     * Used to determine the maximum working time every time, the user changes the start- or endDate.
-     * Used to show a graphical warning at the working time input field
-     */
-    calculateMaxWorkingTime() {
-        if (this.exam.testExam) {
-            if (this.exam.startDate && this.exam.endDate) {
-                this.maxWorkingTimeInMinutes = dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
-            } else {
-                // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
-                this.maxWorkingTimeInMinutes = this.isImport ? this.workingTimeInMinutes : 0;
-            }
-        }
-    }
-
-    get isOngoingExam(): boolean {
-        if (this.exam.id === undefined || this.exam.startDate === undefined || this.exam.endDate === undefined) {
-            return false;
-        }
-        return this.exam.startDate.isBefore(dayjs()) && this.exam.endDate.isAfter(dayjs());
-    }
-
     get isValidPublishResultsDate(): boolean {
         // allow instructors to set publishResultsDate later
         if (!this.exam.publishResultsDate) {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.endDate !== undefined && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+        return !!this.exam.endDate && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
     }
 
     get isValidExamStudentReviewStart(): boolean {
@@ -340,7 +348,7 @@ export class ExamUpdateComponent implements OnInit {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.publishResultsDate !== undefined && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+        return !!this.exam.publishResultsDate && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
     }
 
     get isValidExamStudentReviewEnd(): boolean {
@@ -349,7 +357,7 @@ export class ExamUpdateComponent implements OnInit {
             return !this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid();
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+        return !!this.exam.examStudentReviewStart && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
     }
 
     get isValidExampleSolutionPublicationDate(): boolean {
