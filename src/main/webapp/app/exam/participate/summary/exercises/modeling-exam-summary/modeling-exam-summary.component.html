@@ -1,4 +1,4 @@
-<div>
+<div class="pt-2">
     <jhi-modeling-submission
         *ngIf="(exercise.studentParticipations?.length ?? 0) > 0 && exercise.studentParticipations![0].id !== undefined; else noSubmission"
         [participationId]="exercise.studentParticipations![0].id"
