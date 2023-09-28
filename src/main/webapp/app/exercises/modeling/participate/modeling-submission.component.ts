@@ -140,7 +140,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 });
             }
         });
-        window.scroll(0, 0);
+
+        const isDisplayedOnExamSummaryPage = !this.displayHeader && this.participationId !== undefined;
+        if (!isDisplayedOnExamSummaryPage) {
+            window.scroll(0, 0);
+        }
     }
 
     /**
