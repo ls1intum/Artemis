@@ -22,20 +22,22 @@
         {{ 'artemisApp.fileUploadSubmission.stagedFiles' | artemisTranslate }}
     </h6>
 
-    <ul class="list-group">
-        <li *ngFor="let stagedFile of stagedFiles" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center w-50">
-            <a class="d-flex justify-content-between align-items-center" (click)="openFile(stagedFile)">
-                <div>
-                    {{ 'artemisApp.fileUploadSubmission.open' | artemisTranslate: { fileName: FileDetails.getFileDetailsFromPath(stagedFile.name).name } }}
-                </div>
-                <span class="ms-2 badge bg-info" *ngIf="FileDetails.getFileDetailsFromPath(stagedFile.name).extension">
-                    {{ FileDetails.getFileDetailsFromPath(stagedFile.name).extension | uppercase }}
-                </span>
-            </a>
+    <ol class="list-group list-group-numbered w-50">
+        <li *ngFor="let stagedFile of stagedFiles" class="list-group-item list-group-item-action hstack gap-2">
+            <div class="d-flex justify-content-between align-items-center flex-grow-1">
+                <a class="d-flex justify-content-between align-items-center" (click)="openFile(stagedFile)">
+                    <div>
+                        {{ 'artemisApp.fileUploadSubmission.open' | artemisTranslate: { fileName: FileDetails.getFileDetailsFromPath(stagedFile.name).name } }}
+                    </div>
+                    <span class="ms-2 badge bg-info" *ngIf="FileDetails.getFileDetailsFromPath(stagedFile.name).extension">
+                        {{ FileDetails.getFileDetailsFromPath(stagedFile.name).extension | uppercase }}
+                    </span>
+                </a>
 
-            <button type="button" class="btn btn-danger btn-sm" (click)="removeFileSubmissionFromStage(stagedFile)">Delete</button>
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeFileSubmissionFromStage(stagedFile)">Delete</button>
+            </div>
         </li>
-    </ul>
+    </ol>
 
     <div id="uploadButton" *ngIf="showUploadButton" class="mt-2 w-100">
         <button class="btn btn-outline-primary w-50" id="file-upload-submit" (click)="uploadStagedFiles()">
