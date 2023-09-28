@@ -8,8 +8,5 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 })
 export class ModelingExamSummaryComponent {
     @Input() exercise: ModelingExercise;
-
     @Input() submission: ModelingSubmission;
-
-    @Input() displayExampleSolution: boolean;
 }
