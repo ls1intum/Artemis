@@ -6,7 +6,7 @@ export class FileDetails {
 
     /**
      * Extracts the FileDetails from a path.
-     * @param filePath a unique path, e.g. following the pattern {hash}_{nameAndExtension}.
+     * @param filePath a unique path, e.g. following the pattern {index}_{nameAndExtension}.
      */
     static getFileDetailsFromPath(filePath: string | undefined): FileDetails {
         if (!filePath) {

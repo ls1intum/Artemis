@@ -178,11 +178,13 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     private void deletePreviousSubmissionFilesAndEvictThemFromCache(StudentParticipation participation, List<URI> newFilePaths, List<Path> savePaths) {
-        // Note: we can only delete a file, if a file name was changed (i.e. the new file name is different), otherwise this will cause issues
         Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
 
         previousFileUploadSubmission.filter(previousSubmission -> !previousSubmission.getFilePaths().isEmpty()).ifPresent(previousSubmission -> {
             final List<URI> oldFilePaths = previousSubmission.getFilePaths().stream().map(URI::create).toList();
+
+            // Note: the old files have already been overwritten by the new files at this point.
+            // So we can't delete an old file that is named the same as a new file since that would delete the current submission.
 
             for (URI oldFilePath : oldFilePaths) {
                 // check if we already had a file associated with this submission

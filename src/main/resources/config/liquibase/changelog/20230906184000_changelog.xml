@@ -22,13 +22,13 @@
                                  deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT"
                                  referencedColumnNames="id" referencedTableName="submission" validate="true"/>
         <comment>
-            All file names in the new file_submission_paths table start with a hash that uniquely identifies their content.
-            So {directory}/{nameAndExtension} becomes {directory}/{hash}_{nameAndExtension} and hash is 0000 in this case.
-            nocheckin: old submissions will never be deleted
+            All file names in the new file_submission_paths table
+            have to be prefixed with an index that uniquely identifies them.
+            So {directory}/{nameAndExtension} becomes {directory}/0_{nameAndExtension}.
         </comment>
         <sql>
             INSERT INTO file_submission_paths (submission_id, path)
-            SELECT id, CONCAT('0000_', file_path)
+            SELECT id, CONCAT('0_', file_path)
             FROM submission WHERE discriminator = 'F'
         </sql>
         <comment>

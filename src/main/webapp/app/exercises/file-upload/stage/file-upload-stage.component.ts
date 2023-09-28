@@ -4,7 +4,6 @@ import { FileDetails } from 'app/entities/file-details.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { FileService } from 'app/shared/http/file.service';
-import { sha1HexFromFile } from 'app/shared/util/crypto.utils';
 
 @Component({
     selector: 'jhi-file-upload-stage',
@@ -29,14 +28,14 @@ export class FileUploadStageComponent {
     ) {}
 
     /**
-     * Includes a file's hash into its name to ensure two files
+     * Includes the file's index into its name to ensure two files
      * with the same name but different content don't override each other on the server.
      * @param file the file
-     * @param hash the file's hash
+     * @param index the file's index
      * @return file with unique name
      */
-    private convertToUniqueFile(file: File, hash: string): File {
-        return new File([file], `${hash}_${file.name}`, { type: file.type });
+    private convertToUniqueFile(file: File, index: string): File {
+        return new File([file], `${index}_${file.name}`, { type: file.type });
     }
 
     /**
@@ -52,14 +51,8 @@ export class FileUploadStageComponent {
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
-                sha1HexFromFile(submissionFile)
-                    .then((hash) => {
-                        const uniqueFile = this.convertToUniqueFile(submissionFile, hash);
-                        this.stagedFiles!.push(uniqueFile);
-                    })
-                    .catch(() => {
-                        this.alertService.error('artemisApp.fileUploadSubmission.fileProcessError', { fileName: submissionFile.name });
-                    });
+                const uniqueFile = this.convertToUniqueFile(submissionFile, this.stagedFiles.length.toString());
+                this.stagedFiles!.push(uniqueFile);
             }
 
             this.fileInput.nativeElement.value = '';
