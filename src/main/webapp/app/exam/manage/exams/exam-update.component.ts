@@ -2,7 +2,6 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Observable } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
@@ -11,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -113,56 +112,72 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     /**
-     * Change the date of the exam. Ask for confirmation.
+     * Saves the exam. If the dates have changed and the exam is ongoing, a confirmation modal is shown to the user.
+     * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
      */
-    handleSave() {
+    handleSubmit() {
         const datesChanged = this.exam.startDate?.diff(this.originalStartDate) !== 0 || this.exam.endDate?.diff(this.originalEndDate) !== 0;
         if (datesChanged && this.isOngoingExam) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.warning');
-            modalRef.result.then(() => {
-                this.save();
-            });
+            modalRef.result.then(this.save.bind(this));
         } else {
             this.save();
         }
     }
 
-    private save() {
+    /**
+     * Saves the exam and navigates to the detail page of the exam if the save was successful.
+     * If the save was not successful, an error is shown to the user.
+     */
+    save() {
         this.isSaving = true;
 
-        if (this.isImport) {
+        this.upsertOrImportExam()
+            ?.pipe(map((response: HttpResponse<Exam>) => response.body!))
+            .subscribe({
+                next: this.onSaveSuccess.bind(this),
+                error: this.onSaveError.bind(this),
+            });
+    }
+
+    /**
+     * Creates, updates or imports the exam depending on the current state of the component.
+     * @private
+     */
+    private upsertOrImportExam() {
+        if (this.isImport && this.exam?.exerciseGroups) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
-            if (this.exam?.exerciseGroups) {
-                if (!this.examExerciseImportComponent.validateUserInput()) {
-                    this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                    this.isSaving = false;
-                    return;
-                }
-                this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
+            if (!this.examExerciseImportComponent.validateUserInput()) {
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+                this.isSaving = false;
+                return;
             }
-            this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
+            return this.examManagementService.import(this.course.id!, this.exam);
         } else if (this.exam.id !== undefined) {
-            this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
+            return this.examManagementService.update(this.course.id!, this.exam);
         } else {
-            this.subscribeToSaveResponse(this.examManagementService.create(this.course.id!, this.exam));
+            return this.examManagementService.create(this.course.id!, this.exam);
         }
     }
 
-    subscribeToSaveResponse(result: Observable<HttpResponse<Exam>>) {
-        result.subscribe({
-            next: (response: HttpResponse<Exam>) => this.onSaveSuccess(response.body!),
-            error: (err: HttpErrorResponse) => this.onSaveError(err),
-        });
-    }
-
+    /**
+     * Navigates to the detail page of the exam if the save was successful.
+     * @param exam
+     * @private
+     */
     private onSaveSuccess(exam: Exam) {
         this.isSaving = false;
         this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }
 
+    /**
+     * Shows an error to the user if the save was not successful.
+     * @param httpErrorResponse
+     * @private
+     */
     private onSaveError(httpErrorResponse: HttpErrorResponse) {
         const errorKey = httpErrorResponse.error?.errorKey;
         if (errorKey === 'invalidKey') {

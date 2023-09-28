@@ -22,7 +22,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
-    @Input() startAt: dayjs.Dayjs = dayjs().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
+    @Input() startAt?: dayjs.Dayjs = dayjs().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
     @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
@@ -35,7 +35,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faQuestionCircle = faQuestionCircle;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _onChange = (val: dayjs.Dayjs) => {};
+    private onChange?: (val?: dayjs.Dayjs) => void;
 
     /**
      * Emits the value change from component.
@@ -78,7 +78,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param fn
      */
     registerOnChange(fn: any) {
-        this._onChange = fn;
+        this.onChange = fn;
     }
 
     /**
@@ -87,7 +87,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     updateField(newValue: dayjs.Dayjs) {
         this.value = newValue;
-        this._onChange(dayjs(this.value));
+        this.onChange?.(dayjs(this.value));
         this.valueChanged();
     }
 

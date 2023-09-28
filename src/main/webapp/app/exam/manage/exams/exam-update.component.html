@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div class="col">
-        <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="handleSave()">
+        <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="handleSubmit()">
             <div *ngIf="!exam.id; else edit" class="d-flex align-items-center">
                 <h4 *ngIf="!isImport">{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
                 <h4 *ngIf="isImport">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
@@ -82,6 +82,7 @@
                         [(ngModel)]="exam.startDate"
                         [error]="!isValidStartDate"
                         (valueChange)="calculateMaxWorkingTime()"
+                        [startAt]="exam.visibleDate"
                         name="startDate"
                         id="startDate"
                     ></jhi-date-time-picker>
@@ -93,6 +94,7 @@
                         [(ngModel)]="exam.endDate"
                         [error]="!isValidEndDate"
                         (valueChange)="calculateMaxWorkingTime()"
+                        [startAt]="exam.startDate"
                         name="endDate"
                         id="endDate"
                     ></jhi-date-time-picker>
@@ -247,7 +249,7 @@
                 <ng-template #renderedWarning>
                     <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>
                 </ng-template>
-                <span *ngIf="!isValidExamStudentReviewEnd" class="badge bg-warning" [ngbTooltip]="renderedWarning" tooltip-placement="right auto">
+                <span *ngIf="!isValidExamStudentReviewEnd" class="badge bg-warning" [ngbTooltip]="renderedWarning" placement="right auto">
                     <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
                 </span>
             </div>
