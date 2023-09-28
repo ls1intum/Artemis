@@ -74,7 +74,7 @@
                             *ngIf="studentExamWithGrade.studentResult.overallScoreAchieved !== undefined; else totalScoreNotDefinedPlaceholder"
                             [class]="hasPassed ? 'text-success' : 'text-danger'"
                         >
-                            {{ studentExamWithGrade.studentResult.overallScoreAchieved }}%
+                            {{ overallAchievedPercentageRoundedByCourseSettings }}%
                         </span>
                         <ng-template #totalScoreNotDefinedPlaceholder>
                             <span>-</span>
