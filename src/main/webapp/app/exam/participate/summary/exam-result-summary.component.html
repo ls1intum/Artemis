@@ -89,10 +89,6 @@
                     </ng-container>
                 </span>
             </div>
-            <!--            TODO wont be needed in the future -->
-            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING && exercise.type !== MODELING && exercise.type !== TEXT">
-                <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
-            </h6>
             <jhi-programming-exercise-instructions
                 *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
                 [exercise]="exercise"
