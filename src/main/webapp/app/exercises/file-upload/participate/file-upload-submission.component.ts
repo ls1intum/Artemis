@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -30,11 +30,16 @@ import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
+    selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+
+    @Input() participationId?: number;
+    @Input() displayHeader: boolean = true;
+
     submission?: FileUploadSubmission;
     submittedFileName: string;
     submittedFileExtension: string;
@@ -81,7 +86,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Initializes data for file upload editor
      */
     ngOnInit() {
-        const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
+        const participationId = this.participationId ?? Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
             return this.alertService.error('artemisApp.fileUploadExercise.error');
         }

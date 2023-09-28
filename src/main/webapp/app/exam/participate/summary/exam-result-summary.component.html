@@ -120,7 +120,7 @@
                         </ng-container>
 
                         <ng-container *ngIf="exercise.type === FILE_UPLOAD">
-                            <jhi-file-upload-exam-summary [submission]="exerciseInfos[exercise.id!]!.submission!" />
+                            <jhi-file-upload-exam-summary [submission]="exerciseInfos[exercise.id!]!.submission!" [exercise]="exercise" />
                         </ng-container>
 
                         <jhi-complaint-student-view

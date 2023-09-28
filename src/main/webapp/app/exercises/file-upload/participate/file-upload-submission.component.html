@@ -1,4 +1,4 @@
-<jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
+<jhi-header-participation-page *ngIf="displayHeader" class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
     <span pagetitle>
         {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
         <span class="font-weight-normal">{{ examMode ? fileUploadExercise?.exerciseGroup?.title : fileUploadExercise?.title }}</span>

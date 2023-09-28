@@ -29,6 +29,7 @@ import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overvie
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ArtemisModelingParticipationModule } from 'app/exercises/modeling/participate/modeling-participation.module';
 import { ArtemisTextParticipationModule } from 'app/exercises/text/participate/text-participation.module';
+import { ArtemisFileUploadParticipationModule } from 'app/exercises/file-upload/participate/file-upload-participation.module';
 
 @NgModule({
     imports: [
@@ -52,6 +53,7 @@ import { ArtemisTextParticipationModule } from 'app/exercises/text/participate/t
         GradingKeyOverviewModule,
         ArtemisModelingParticipationModule,
         ArtemisTextParticipationModule,
+        ArtemisFileUploadParticipationModule,
     ],
     declarations: [
         ExamResultSummaryComponent,

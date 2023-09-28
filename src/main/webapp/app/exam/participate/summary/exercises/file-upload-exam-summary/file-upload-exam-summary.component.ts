@@ -1,14 +1,16 @@
 import { Component, Input } from '@angular/core';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileService } from 'app/shared/http/file.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-file-upload-exam-summary',
     templateUrl: './file-upload-exam-summary.component.html',
 })
 export class FileUploadExamSummaryComponent {
-    @Input()
-    submission: FileUploadSubmission;
+    @Input() submission: FileUploadSubmission;
+
+    @Input() exercise: Exercise;
 
     constructor(private fileService: FileService) {}
 
