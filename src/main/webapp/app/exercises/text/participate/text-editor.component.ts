@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -29,6 +29,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
+    selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
@@ -36,6 +37,9 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
+
+    @Input() participationId?: number;
+
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
@@ -77,7 +81,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     ngOnInit() {
-        const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
+        const participationId = this.participationId !== undefined ? this.participationId : Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
             return this.alertService.error('artemisApp.textExercise.error');
         }

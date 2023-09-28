@@ -62,7 +62,7 @@
                     <ng-container *ngIf="exampleSolutionPublished">
                         <!--                        TODO remove translation ocne the button is not needed anymore -->
                         <a
-                            *ngIf="exercise.type !== PROGRAMMING && exercise.type !== MODELING"
+                            *ngIf="exercise.type !== PROGRAMMING && exercise.type !== MODELING && exercise.type !== QUIZ"
                             class="btn btn-primary ms-2 float-end"
                             [routerLink]="['/courses', courseId, 'exams', studentExam.exam?.id, 'exercises', exercise.id, 'example-solution']"
                         >
@@ -77,6 +77,7 @@
                             You are viewing the example solution.
                         </span>
                         <button
+                            *ngIf="exercise.type !== QUIZ"
                             class="btn float-end"
                             [class]="exerciseInfos[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"
                             (click)="toggleShowSampleSolution(exercise.id)"
@@ -105,11 +106,15 @@
                 [exercise]="exercise"
                 [participation]="asProgrammingExercise(exercise).templateParticipation!"
             ></jhi-programming-exercise-instructions>
-            <ng-container *ngIf="exercise.type !== PROGRAMMING">
+            <ng-container *ngIf="exercise.type !== PROGRAMMING" class="pt-2">
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
                 <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted; else noSubmission">
                     <ng-container *ngIf="exercise.type === TEXT">
-                        <jhi-text-exam-summary [submission]="exerciseInfos[exercise.id!]!.submission!"></jhi-text-exam-summary>
+                        <jhi-text-exam-summary
+                            [exercise]="exercise"
+                            [submission]="exerciseInfos[exercise.id!]!.submission!"
+                            [displayExampleSolution]="exerciseInfos[exercise.id!].displayExampleSolution"
+                        />
                     </ng-container>
 
                     <ng-container *ngIf="exercise.type === MODELING">

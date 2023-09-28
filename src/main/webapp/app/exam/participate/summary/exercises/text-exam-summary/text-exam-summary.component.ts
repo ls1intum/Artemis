@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-text-exam-summary',
@@ -15,5 +16,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
     ],
 })
 export class TextExamSummaryComponent {
+    @Input() exercise: Exercise;
     @Input() submission: TextSubmission;
+    @Input() displayExampleSolution: boolean;
 }

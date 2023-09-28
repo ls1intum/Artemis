@@ -1,4 +1,12 @@
-<div *ngIf="submission && submission.text && submission.text.length > 0; else noSubmission">{{ submission.text }}</div>
-<ng-template #noSubmission>
-    <div>No submission</div>
-</ng-template>
+<div>
+    <div *ngIf="displayExampleSolution; else studentSolution">TODO Example solution</div>
+    <ng-template #studentSolution>
+        <jhi-text-editor
+            *ngIf="(exercise.studentParticipations?.length ?? 0) > 0 && exercise.studentParticipations![0].id !== undefined; else noSubmission"
+            [participationId]="exercise.studentParticipations![0].id"
+        />
+    </ng-template>
+    <ng-template #noSubmission>
+        <div>No submission</div>
+    </ng-template>
+</div>
