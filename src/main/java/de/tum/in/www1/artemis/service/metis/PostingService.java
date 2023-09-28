@@ -13,7 +13,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -275,8 +278,8 @@ public abstract class PostingService {
 
         mentionedUsers.forEach(user -> {
             if (!user.getName().equals(matches.get(user.getLogin()))) {
-                throw new BadRequestAlertException("The name " + matches.get(user.getLogin()) + " does not match the user's full name", METIS_POST_ENTITY_NAME,
-                        "invalidUserMention");
+                throw new BadRequestAlertException("The name provided for user " + matches.get(user.getLogin()) + " does not match the user's full name " + user.getName(),
+                        METIS_POST_ENTITY_NAME, "invalidUserMention");
             }
 
             if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
