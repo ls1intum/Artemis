@@ -4,6 +4,7 @@
         <jhi-text-editor
             *ngIf="(exercise.studentParticipations?.length ?? 0) > 0 && exercise.studentParticipations![0].id !== undefined; else noSubmission"
             [participationId]="exercise.studentParticipations![0].id"
+            [displayHeader]="false"
         />
     </ng-template>
     <ng-template #noSubmission>

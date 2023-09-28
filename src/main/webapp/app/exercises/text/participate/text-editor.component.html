@@ -1,5 +1,5 @@
 <div [id]="'exercise-' + textExercise?.id">
-    <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
+    <jhi-header-participation-page *ngIf="displayHeader" class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
         <span pagetitle>
             {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
             <span class="font-weight-normal">{{ examMode ? textExercise.exerciseGroup?.title : textExercise?.title }}</span>

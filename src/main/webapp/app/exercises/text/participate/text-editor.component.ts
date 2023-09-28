@@ -39,6 +39,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
     @Input() participationId?: number;
+    @Input() displayHeader: boolean = true;
 
     textExercise: TextExercise;
     participation: StudentParticipation;
