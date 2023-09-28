@@ -1,8 +1,7 @@
 <div class="card-header d-flex align-items-center justify-content-between">
     <div class="d-flex align-items-center">
-        <h5 class="mb-0">
-            <span>#{{ index + 1 }}</span>
-            &nbsp;<fa-icon *ngIf="exercise?.type && exerciseInfo?.icon" [icon]="exerciseInfo!.icon"></fa-icon>&nbsp;
+        <h5 class="mb-0" [id]="'exercise-group-title-' + (index + 1)">
+            #{{ index + 1 }} &nbsp;<fa-icon *ngIf="exercise?.type && exerciseInfo?.icon" [icon]="exerciseInfo!.icon"></fa-icon>&nbsp;
             {{ exercise.exerciseGroup?.title }}
         </h5>
 
