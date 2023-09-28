@@ -237,7 +237,7 @@ public class ProgrammingExerciseGitDiffReportService {
         var repositoryUrl = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUrl();
         var repo1 = gitService.getOrCheckoutRepository(repositoryUrl, true);
         var repo1Path = repo1.getLocalPath();
-        var repo2Path = fileService.getTemporaryUniquePath(repo1Path.getParent(), 5);
+        var repo2Path = fileService.getTemporaryUniqueSubfolderPath(repo1Path.getParent(), 5);
         FileSystemUtils.copyRecursively(repo1Path, repo2Path);
         repo1 = gitService.checkoutRepositoryAtCommit(repo1, submission1.getCommitHash());
         var repo2 = gitService.getExistingCheckedOutRepositoryByLocalPath(repo2Path, repositoryUrl);

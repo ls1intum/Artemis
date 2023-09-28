@@ -27,9 +27,8 @@ import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-naviga
 import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.module';
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.module';
-import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
-import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
+import { ArtemisExamLiveEventsModule } from 'app/exam/participate/events/exam-live-events.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -59,14 +58,8 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisExamSubmissionComponentsModule,
         ExamExerciseUpdateHighlighterModule,
         ArtemisExamSharedModule,
+        ArtemisExamLiveEventsModule,
     ],
-    declarations: [
-        ExamParticipationComponent,
-        ExamParticipationCoverComponent,
-        ExamExerciseOverviewPageComponent,
-        ExamExerciseOverviewPageComponent,
-        ExamLiveEventsButtonComponent,
-        ExamLiveEventsOverlayComponent,
-    ],
+    declarations: [ExamParticipationComponent, ExamParticipationCoverComponent, ExamExerciseOverviewPageComponent],
 })
 export class ArtemisExamParticipationModule {}
