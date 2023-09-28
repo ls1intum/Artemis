@@ -69,6 +69,13 @@
                             <span jhiTranslate="artemisApp.exam.examSummary.viewExampleSolution">View Example Solution</span>
                         </a>
 
+                        <span
+                            *ngIf="exerciseInfos[exercise.id!].displayExampleSolution"
+                            class="badge bg-info"
+                            jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution"
+                        >
+                            You are viewing the example solution.
+                        </span>
                         <button
                             class="btn float-end"
                             [class]="exerciseInfos[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"

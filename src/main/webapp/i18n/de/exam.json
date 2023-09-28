@@ -76,6 +76,7 @@
                 "viewResult": " Ergebnis ansehen",
                 "viewExampleSolution": "Beispiellösung anzeigen",
                 "showExampleSolution": "Musterlösung anzeigen",
+                "youAreViewingTheExampleSolution": "Du betrachtest die Musterlösung",
                 "hideExampleSolution": "Musterlösung ausblenden",
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {

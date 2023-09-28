@@ -77,6 +77,7 @@
                 "viewExampleSolution": "View Example Solution",
                 "showExampleSolution": "Show Example Solution",
                 "hideExampleSolution": "Hide Example Solution",
+                "youAreViewingTheExampleSolution": "You are viewing the example solution.",
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
