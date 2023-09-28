@@ -11,14 +11,16 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
-import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -38,7 +40,10 @@ import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooResultService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -49,7 +54,6 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BambooBuildPlanUpdate
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
@@ -642,34 +646,5 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
         bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
-    }
-
-    /**
-     * Provides a list of various user mentions flagged with in indicator whether the user mention is valid
-     *
-     * @param courseMemberLogin1 login of one course member
-     * @param courseMemberLogin2 login of another course member
-     *
-     * @return list of user mentions and validity flags
-     */
-    protected static List<Arguments> userMentionProvider(String courseMemberLogin1, String courseMemberLogin2) {
-        User courseMember1 = UserFactory.generateActivatedUser(courseMemberLogin1);
-        User courseMember2 = UserFactory.generateActivatedUser(courseMemberLogin2);
-        User noCourseMember = UserFactory.generateActivatedUser("noCourseMember");
-
-        // First argument is a string containing a user mention
-        // Second argument indicates whether the user mention is valid
-        return List.of(Arguments.of("no mention", true), // no user mention
-                Arguments.of("[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user]", true), // valid mention
-                Arguments.of("[user](" + courseMember1.getLogin() + ")[/user]", false), // missing full name
-                Arguments.of("[user]" + courseMember1.getName() + "()[/user]", false), // missing login
-                Arguments.of("[user]" + courseMember1.getName() + "[/user]", false), // missing login and parentheses
-                Arguments.of("[user]" + courseMember2.getName() + "(" + courseMember2.getLogin() + ")[/user][user]" + courseMember1.getName() + "(" + courseMember1.getLogin()
-                        + ")[/user]", true), // multiple valid user mentions
-                Arguments.of("[user]invalidName(" + courseMember1.getLogin() + ")[/user]", false), // invalid full name
-                Arguments.of("[user]" + noCourseMember.getName() + "(" + noCourseMember.getLogin() + ")[/user]", false), // not a course member
-                Arguments.of("[user]invalidName[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user](invalid)[/user]", true) // matching only inner
-
-        );
     }
 }
