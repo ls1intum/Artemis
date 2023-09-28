@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,7 +18,6 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
 
     constructor(
         private alertService: AlertService,
-        private courseManagementService: CourseManagementService,
         private conversationService: ConversationService,
     ) {}
 
