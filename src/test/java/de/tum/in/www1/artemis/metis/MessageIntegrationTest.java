@@ -35,7 +35,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -57,7 +57,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
-class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "messageintegration";
 
