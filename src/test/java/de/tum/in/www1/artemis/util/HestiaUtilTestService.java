@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,17 +200,22 @@ public class HestiaUtilTestService {
     }
 
     public ProgrammingSubmission setupSubmission(Map<String, String> files, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {
-        participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();
             String content = entry.getValue();
             // add file to the repository folder
             Path filePath = Path.of(participationRepo.localRepoFile + "/" + fileName);
             Files.createDirectories(filePath.getParent());
-            File solutionFile = Files.createFile(filePath).toFile();
+            File solutionFile = null;
             // write content to the created file
-            FileUtils.write(solutionFile, content, Charset.defaultCharset());
+            FileUtils.write(filePath.toFile(), content, Charset.defaultCharset());
         }
+        participationRepo.localGit.add().addFilepattern(".").call();
+        participationRepo.localGit.commit().setMessage("commit").call();
+        var commits = participationRepo.localGit.log().call();
+        var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
+
+        System.out.println("Git commit hash " + commitsList.get(0).getId().getName());
 
         var participationRepoUrl = new GitUtilService.MockFileRepositoryUrl(participationRepo.localRepoFile);
 
@@ -222,17 +228,17 @@ public class HestiaUtilTestService {
                 .getOrCheckoutRepository(eq(participationRepoUrl), eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(participationRepoUrl), eq(false), any());
-        doNothing().when(gitService).switchBackToDefaultBranchHead(any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(), any());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(), any(),
-                anyBoolean());
+        // doNothing().when(gitService).switchBackToDefaultBranchHead(any());
+        // doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(),
+        // any());
+        // doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).checkoutRepositoryAtCommit(any(), any(),
+        // anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
                 anyBoolean());
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(participationRepoUrl));
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
-        var submission = ParticipationFactory.generateProgrammingSubmission(true, "123", SubmissionType.MANUAL);
-        submission.setCommitHash(String.valueOf(files.hashCode()));
+        var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
         participation = programmingExerciseStudentParticipationRepository
                 .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).get(0);
         return (ProgrammingSubmission) participationUtilService.addSubmission(participation, submission);
