@@ -115,7 +115,7 @@ export class ExamUpdateComponent implements OnInit {
      */
     handleSave() {
         const datesChanged = this.exam.startDate?.diff(this.originalStartDate) !== 0 || this.exam.endDate?.diff(this.originalEndDate) !== 0;
-        if (datesChanged && this.exam.id !== undefined) {
+        if (datesChanged && this.isOngoingExam) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.warning');
