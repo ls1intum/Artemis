@@ -60,15 +60,6 @@
                         </span>
                     </a>
                     <ng-container *ngIf="exampleSolutionPublished">
-                        <!--                        TODO remove translation ocne the button is not needed anymore -->
-                        <a
-                            *ngIf="exercise.type !== PROGRAMMING && exercise.type !== MODELING && exercise.type !== QUIZ && exercise.type !== TEXT"
-                            class="btn btn-primary ms-2 float-end"
-                            [routerLink]="['/courses', courseId, 'exams', studentExam.exam?.id, 'exercises', exercise.id, 'example-solution']"
-                        >
-                            <span jhiTranslate="artemisApp.exam.examSummary.viewExampleSolution">View Example Solution</span>
-                        </a>
-
                         <span
                             *ngIf="exerciseInfos[exercise.id!].displayExampleSolution"
                             class="badge bg-info"
