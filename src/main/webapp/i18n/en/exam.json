@@ -685,10 +685,10 @@
                     "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
                     "reasons": "Suspicious because of:",
                     "case": "Case",
-                    "sameIpAddress": "Same IP address",
-                    "sameBrowserFingerprint": "Same browser fingerprint",
-                    "differentIpAddress": "Different IP address",
-                    "differentBrowserFingerprint": "Different browser fingerprint",
+                    "sameBrowserFingerprintDifferentStudentExams": "Different student exams with the same browser fingerprint",
+                    "sameIpAddressDifferentStudentExams": "Different student exams with same IP address",
+                    "differentIpAddressesSameStudentExam": "Different IP addresses for the same student exam",
+                    "differentBrowserFingerprintsSameStudentExam": "Different browser fingerprints for the same student exam",
                     "ipOutsideOfRange": "IP address outside of range <span class='text-info'>{{ range }}</span>"
                 }
             },

@@ -1623,18 +1623,35 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private static Stream<Arguments> provideIpAddressesAndSubnets() {
-        return Stream.of(Arguments.of("192.168.1.10", "192.168.1.20", "192.168.1.0/28", "192.168.1.128/25", "192.168.1.0/24")
-        // TODO fix IPv6 tests
-        // Arguments.of("2001:0db8:85a3:0000:0000:8a2e:0370:7334", "2001:0db8:85a3:0000:0000:8a2e:0370:7344", "2001:0db8:85a3:0000:0000:8a2e:0370:7330/127",
-        // "2001:0db8:85a3:0000:0000:8a2e:0370:7400/120", " 2001:0db8:85a3:0000:0000:8a2e:0370:7300/120")
-        );
+        return Stream.of(Arguments.of("192.168.1.10", "192.168.1.20", "192.168.1.0/28", "192.168.1.128/25", "192.168.1.0/24"),
+                Arguments.of("2001:0db8:85a3:0000:0000:8a2e:0370:7330", "2001:0db8:85a3:0000:0000:8a2e:0370:7331", "2001:0db8:85a3:0000:0000:8a2e:0370:7330/128",
+                        "2001:0db8:85a3:0000:0000:8a2e:0370:7000/128", "2001:0db8:85a3:0000:0000:8a2e:0370:7330/64"));
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testIpOutsideOfRangeMixedIPv4AndIPv6() throws Exception {
-        // TODO write test
+    @MethodSource("provideMixedIpAddressesAndSubnets")
+    void testIpOutsideOfRangeMixedIPv4AndIPv6(String ipAddress1, String ipAddress2, String subnet) throws Exception {
+        var studentExam1 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var studentExam2 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        examUtilService.addExamSessionToStudentExam(studentExam1, "abc", ipAddress1, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
+        examUtilService.addExamSessionToStudentExam(studentExam2, "abc", ipAddress2, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", "false");
+        params.add("differentStudentExamsSameBrowserFingerprint", "false");
+        params.add("sameStudentExamDifferentIPAddresses", "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", "false");
+        params.add("ipOutsideOfRange", "true");
+        params.add("ipSubnet", subnet);
+        // the IP address matching IP address type (IPv4 or IPv6) is included in the subnet and the IP address in the other format is ignored --> 0
+        assertThat(request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.OK, SuspiciousExamSessionsDTO.class, params))
+                .hasSize(0);
 
+    }
+
+    private static Stream<Arguments> provideMixedIpAddressesAndSubnets() {
+        return Stream.of(Arguments.of("192.168.1.10", "2001:0db8:85a3:0000:0000:8a2e:0370:7331", "192.168.1.0/28"),
+                Arguments.of("192.168.1.10", "2001:0db8:85a3:0000:0000:8a2e:0370:7330", "2001:0db8:85a3:0000:0000:8a2e:0370:7330/128"));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

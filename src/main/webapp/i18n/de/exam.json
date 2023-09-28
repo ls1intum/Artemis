@@ -684,10 +684,10 @@
                     "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Fälle.",
                     "reasons": "Verdächtig aufgrund von:",
                     "case": "Fall",
-                    "sameIpAddress": "Gleiche IP-Adresse",
-                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck",
-                    "differentIpAddress": "Verschiedene IP-Adressen",
-                    "differentBrowserFingerprint": "Verschiedene Browser-Fingerabdrücke",
+                    "sameBrowserFingerprintDifferentStudentExams": "Verschiedene Studierendenklausuren mit demselben Browser-Fingerabdruck",
+                    "sameIpAddressDifferentStudentExams": "Verschiedene Studierendenklausuren mit derselben IP-Adresse",
+                    "differentIpAddressesSameStudentExam": "Verschiedene IP-Adressen für dieselbe Studierendenklausur",
+                    "differentBrowserFingerprintsSameStudentExam": "Verschiedene Browser-Fingerabdrücke für dieselbe Studierendenklausur",
                     "ipOutsideOfRange": "IP-Adresse außerhalb des spezifizierten Bereichs {{ range }}"
                 }
             },

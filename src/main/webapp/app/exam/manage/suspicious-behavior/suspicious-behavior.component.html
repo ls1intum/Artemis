@@ -3,15 +3,21 @@
 <p>
     {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription' | artemisTranslate }}
 </p>
-
 <div>
     <input class="form-check-input" type="checkbox" id="different-student-exams-same-ip" [(ngModel)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked" />
     <label for="different-student-exams-same-ip">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress' | artemisTranslate }}</label>
 </div>
 
 <div>
-    <input class="form-check-input" type="checkbox" id="different-student-exams-same-browser" [(ngModel)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked" />
-    <label for="different-student-exams-same-browser">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate }}</label>
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="different-student-exams-same-fingerprints"
+        [(ngModel)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked"
+    />
+    <label for="different-student-exams-same-fingerprints">{{
+        'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate
+    }}</label>
 </div>
 
 <div>
@@ -35,18 +41,20 @@
     <input class="form-check-input" type="checkbox" id="ip-outside-of-range" [(ngModel)]="checkboxCriterionIPOutsideOfASpecificRangeChecked" />
     <label for="ip-outside-of-range">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange' | artemisTranslate }}</label>
 </div>
-<div *ngIf="checkboxCriterionIPOutsideOfASpecificRangeChecked" class="form-group">
-    <label for="ip-subnet">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
-    <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" validPattern />
-    <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
+<div *ngIf="checkboxCriterionIPOutsideOfASpecificRangeChecked" class="form-group col-6">
+    <label class="col-4" for="ip-subnet">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
+    <input type="text" class="form-control col-4" id="ip-subnet" [(ngModel)]="ipSubnet" [pattern]="ipSubnetRegexPattern" required />
+    <jhi-help-icon placement="right" text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
 </div>
-
 <div class="mt-3 mb-3">
     <jhi-button [title]="'artemisApp.examManagement.suspiciousBehavior.analyzeSessions'" [disabled]="!analyzeButtonEnabled" [isLoading]="analyzing" (onClick)="analyzeSessions()">
     </jhi-button>
 </div>
+
 <div class="column">
-    <p *ngIf="analyzed">This exam has {{ suspiciousSessions?.length }} cases</p>
+    <p *ngIf="analyzed">
+        {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.number' | artemisTranslate: { numberOfSuspiciousSessions: suspiciousSessions?.length } }}
+    </p>
     <button *ngIf="suspiciousSessions.length !== 0" type="submit" (click)="goToSuspiciousSessions()" class="btn btn-primary mb-5">
         <span class="d-none d-md-inline" id="view-sessions-btn" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.view">View</span>
     </button>
