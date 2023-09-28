@@ -301,7 +301,6 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         GradingScale sourceGradingScale;
         if (isContinuous) {
             sourceGradingScale = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(sourceCourse);
-
         }
         else {
             sourceGradingScale = createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(sourceCourse);

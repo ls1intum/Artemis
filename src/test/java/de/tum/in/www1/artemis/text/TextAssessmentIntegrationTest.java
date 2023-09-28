@@ -308,19 +308,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
 
-        Result result;
-        if (submit) {
-            result = request.postWithResponseBody(
-                    "/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                            + Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId() + "/submit-text-assessment",
-                    textAssessmentDTO, Result.class, HttpStatus.OK);
-
-        }
-        else {
-            result = request.putWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                    + Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId() + "/text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
-        }
-
+        Result result = saveOrSubmitTextAssessment(submissionWithoutAssessment.getParticipation().getId(),
+                Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId(), textAssessmentDTO, submit, HttpStatus.OK);
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
@@ -333,19 +322,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
 
-        long randomId = 1343;
-        Result result;
-        if (submit) {
-            result = request.postWithResponseBody(
-                    "/api/participations/" + randomId + "/results/" + Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId() + "/submit-text-assessment",
-                    textAssessmentDTO, Result.class, HttpStatus.BAD_REQUEST);
-
-        }
-        else {
-            result = request.putWithResponseBody(
-                    "/api/participations/" + randomId + "/results/" + Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId() + "/text-assessment",
-                    textAssessmentDTO, Result.class, HttpStatus.BAD_REQUEST);
-        }
+        Result result = saveOrSubmitTextAssessment(1343L, Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId(), textAssessmentDTO, submit,
+                HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
     }
 
@@ -1319,5 +1297,32 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
         assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission.get(block.getId())));
+    }
+
+    /**
+     * Saves or submits a text assessment.
+     *
+     * @param participationId   The participation id of a submission.
+     * @param latestResultId    The id of the latest result.
+     * @param textAssessmentDTO The DTO of the text assessment.
+     * @param submit            True, if the text assessment should be submitted. False, if it should only be saved.
+     * @param expectedStatus    Expected response status of the request.
+     * @return The response of the request in form of a result.
+     * @throws Exception If the request fails.
+     */
+    private Result saveOrSubmitTextAssessment(Long participationId, Long latestResultId, TextAssessmentDTO textAssessmentDTO, boolean submit, HttpStatus expectedStatus)
+            throws Exception {
+        Result result;
+        if (submit) {
+            result = request.postWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/submit-text-assessment", textAssessmentDTO,
+                    Result.class, expectedStatus);
+
+        }
+        else {
+            result = request.putWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/text-assessment", textAssessmentDTO, Result.class,
+                    expectedStatus);
+        }
+
+        return result;
     }
 }
