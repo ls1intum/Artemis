@@ -97,19 +97,20 @@ public class LtiService {
             }
         }
 
-        // 2. Case: Create new user if an existing user is not required
+        // 2. Case: Lookup user with the LTI email address and make sure it's not in use
+        final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
+        if (usernameLookupByEmail.isPresent()) {
+            throw new InternalAuthenticationServiceException(
+                    "Email address is already in use by Artemis. Please use a different address with your service or contact your instructor to gain direct access.");
+        }
+
+        // 3. Case: Create new user if an existing user is not required
         if (!requireExistingUser) {
             SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
             return;
         }
 
         throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
-    }
-
-    private Authentication loginUserByEmail(String username, String email) {
-        log.info("Signing in as {}", username);
-        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), null, null, email, true);
-        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
     }
 
     @NotNull
