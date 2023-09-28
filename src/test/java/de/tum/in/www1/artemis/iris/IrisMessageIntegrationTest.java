@@ -6,7 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +16,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -155,8 +152,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
             return o1.getContent().size() == o2.getContent().size()
-                    && o1.getContent().stream().map(IrisMessageContent::getContentAsString).toList().equals(o2.getContent().stream().map(
-                    IrisMessageContent::getContentAsString).toList())
+                    && o1.getContent().stream().map(IrisMessageContent::getContentAsString).toList().equals(
+                            o2.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
                             ? 0
                             : -1;
         }).isEqualTo(List.of(message2, message3, message4));
@@ -167,7 +164,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulTrue() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = new IrisMessage(irisSession);
-        message.addContent(createMockContent(message));
+        message.addContent(createMockTextContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -179,7 +176,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulFalse() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = new IrisMessage(irisSession);
-        message.addContent(createMockContent(message));
+        message.addContent(createMockTextContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/false", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -191,7 +188,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageHelpfulNull() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = new IrisMessage(irisSession);
-        message.addContent(createMockContent(message));
+        message.addContent(createMockTextContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/null", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
@@ -203,7 +200,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void rateMessageWrongSender() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var message = new IrisMessage(irisSession);
-        message.addContent(createMockContent(message));
+        message.addContent(createMockTextContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class,
                 HttpStatus.BAD_REQUEST);
@@ -215,7 +212,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         var message = new IrisMessage(irisSession1);
-        message.addContent(createMockContent(message));
+        message.addContent(createMockTextContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class,
                 HttpStatus.CONFLICT);
@@ -307,13 +304,13 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
         var messageToSend = new IrisMessage(irisSession);
-        messageToSend.addContent(createMockContent(messageToSend));
-        messageToSend.addContent(createMockContent(messageToSend));
-        messageToSend.addContent(createMockContent(messageToSend));
+        messageToSend.addContent(createMockTextContent(messageToSend));
+        messageToSend.addContent(createMockExercisePlanContent(messageToSend));
+        messageToSend.addContent(createMockTextContent(messageToSend));
         return messageToSend;
     }
     
-    private IrisMessageContent createMockContent(IrisMessage message) {
+    private IrisMessageContent createMockTextContent(IrisMessage message) {
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
         
@@ -324,6 +321,16 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
         var content = new IrisTextMessageContent(message, text);
         content.setId(rdm.nextLong());
+        return content;
+    }
+    
+    private IrisMessageContent createMockExercisePlanContent(IrisMessage message) {
+        var content = new IrisExercisePlanMessageContent();
+        content.setProblemStatementPlan("I will add more tasks to the problem statement");
+        content.setSolutionRepositoryPlan("I will adapt the solution repository");
+        content.setTemplateRepositoryPlan("I will document the template repository");
+        content.setTestRepositoryPlan("I will add more tests to the test repository");
+        content.setId(ThreadLocalRandom.current().nextLong());
         return content;
     }
 }
