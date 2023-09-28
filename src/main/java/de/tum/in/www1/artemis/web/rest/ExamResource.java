@@ -1277,8 +1277,17 @@ public class ExamResource {
      * GET /courses/{courseId}/exams/{examId}/suspicious-sessions : Get all exam sessions that are suspicious for exam.
      * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long, SuspiciousSessionsAnalysisOptions, Optional)}
      *
-     * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param courseId                                                             the id of the course
+     * @param examId                                                               the id of the exam
+     * @param analyzeSessionsWithTheSameIp                                         whether to analyze for sessions with the same IP address that belong to different student exams
+     * @param analyzeSessionsWithTheSameBrowserFingerprint                         whether to analyze sessions with the same browser fingerprint that belong to different student
+     *                                                                                 exams
+     * @param analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses         whether to analyze sessions with different IP addresses that belong to the same student exam
+     * @param analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints whether to analyze sessions with different browser fingerprints that belong to the same student
+     *                                                                                 exam
+     * @param analyzeSessionsIpOutsideOfRange                                      whether to analyze sessions with IP addresses outside a given subnet
+     *                                                                                 If this is true, the subnet needs to be provided as a request parameter
+     * @param ipSubnet                                                             the subnet to use for analyzing sessions with IP addresses outside the subnet (optional)
      * @return a set containing all tuples of exam sessions that are suspicious.
      */
     @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")

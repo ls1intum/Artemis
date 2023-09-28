@@ -84,7 +84,9 @@ public class ExamSessionService {
      * Retrieves all suspicious exam sessions for given exam id
      * An exam session is suspicious if it has the same browser fingerprint or ip address and belongs to a different student exam
      *
-     * @param examId id of the exam for which suspicious exam sessions shall be retrieved
+     * @param examId          id of the exam for which suspicious exam sessions shall be retrieved
+     * @param analysisOptions options for the analysis of suspicious sessions
+     * @param ipSubnet        subnet for the analysis of suspicious sessions
      * @return set of suspicious exam sessions
      */
     public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, Optional<String> ipSubnet) {
