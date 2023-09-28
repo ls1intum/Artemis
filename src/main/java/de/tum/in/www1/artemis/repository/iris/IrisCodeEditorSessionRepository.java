@@ -24,12 +24,29 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      */
     @Query("""
                SELECT s
-               FROM IrisChatSession s
+               FROM IrisCodeEditorSession s
                WHERE s.exercise.id = :exerciseId
                AND s.user.id = :userId
                ORDER BY s.creationDate DESC
            """)
     List<IrisCodeEditorSession> findByExerciseIdAndUserId(Long exerciseId, Long userId);
+    
+    /**
+     * Finds a list of chat sessions or throws an exception if none are found.
+     *
+     * @param exerciseId The ID of the exercise.
+     * @param userId     The ID of the user.
+     * @return A list of chat sessions.
+     * @throws EntityNotFoundException if no sessions are found.
+     */
+    @NotNull
+    default List<IrisCodeEditorSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+        var result = findByExerciseIdAndUserId(exerciseId, userId);
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("Iris Code Editor Session");
+        }
+        return result;
+    }
     
     /**
      * Finds a session by ID or throws an exception if not found.
