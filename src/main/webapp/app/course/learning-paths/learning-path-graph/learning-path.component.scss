@@ -1,4 +1,10 @@
-.path-wrapper {
+.path-edge {
+    display: block;
+    text-align: center;
+
+    fa-icon {
+        font-size: 1em;
+    }
 }
 
 .path-node {
@@ -20,12 +26,4 @@
 
 .highlighted-node {
     color: var(--bs-warning);
-}
-
-.path-edge {
-    display: block;
-    text-align: center;
-    fa-icon {
-        font-size: 1em;
-    }
 }

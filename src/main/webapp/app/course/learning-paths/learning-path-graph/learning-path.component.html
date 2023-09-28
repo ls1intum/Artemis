@@ -3,7 +3,7 @@
         <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
     </div>
 </div>
-<div *ngIf="!isLoading" class="path-wrapper">
+<div *ngIf="!isLoading">
     <div *ngFor="let node of path; let last = last">
         <div class="path-node">
             <jhi-learning-path-graph-node
