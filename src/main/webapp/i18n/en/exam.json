@@ -646,8 +646,8 @@
                 "suspiciousSessionCriterionDifferentIpAddress": "Sessions for the same student exam, that do not have the same IP address",
                 "suspiciousSessionCriterionDifferentBrowserFingerprint": "Sessions for the same student exam, that do not have the same browser fingerprint",
                 "suspiciousSessionCriterionIpOutsideOfRange": "The IP address of a session is outside of the specified IP range",
-                "lowerBoundIp": "Lower bound for the allowed range of IP addresses",
-                "upperBoundIp": "Upper bound for the allowed range of IP addresses",
+                "subnet": "Subnet in CIDR notation, if you enter a IPv4 subnet only IPv4 addresses will be checked. If you enter a IPv6 subnet only IPv6 addresses will be checked.",
+                "subnetHelp": "The subnet in CIDR notation, e.g. 127.0.0.1/24. If you enter a IPv4 subnet only IPv4 addresses will be compared. If you enter a IPv6 subnet only IPv6 addresses will be compared.",
                 "analyzeSessions": "Analyze Sessions",
                 "suspiciousSessions": {
                     "title": "Suspicious Sessions",

@@ -20,8 +20,13 @@
 </div>
 
 <div>
-    <input class="form-check-input" type="checkbox" id="same-student-exam-different-browser" [(ngModel)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked" />
-    <label for="same-student-exam-different-browser">{{
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="same-student-exam-different-fingerprints"
+        [(ngModel)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked"
+    />
+    <label for="same-student-exam-different-fingerprints">{{
         'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint' | artemisTranslate
     }}</label>
 </div>
@@ -31,8 +36,9 @@
     <label for="ip-outside-of-range">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange' | artemisTranslate }}</label>
 </div>
 <div *ngIf="checkboxCriterionIPOutsideOfASpecificRangeChecked" class="form-group">
-    <label for="ip-subnet">{{ 'artemisApp.examManagement.suspiciousBehavior.upperBoundIp' | artemisTranslate }}</label>
-    <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" />
+    <label for="ip-subnet">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
+    <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" validPattern />
+    <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
 </div>
 
 <div class="mt-3 mb-3">
