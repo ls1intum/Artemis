@@ -19,8 +19,8 @@ import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helper
 import { LectureService } from 'app/lecture/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
@@ -35,13 +35,13 @@ describe('PostingsMarkdownEditor', () => {
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
-    let conversationService: ConversationService;
+    let courseManagementService: CourseManagementService;
     let lectureService: LectureService;
     let findLectureWithDetailsSpy: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService), MockProvider(ConversationService)],
+            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService), MockProvider(CourseManagementService)],
             declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
             schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
         })
@@ -51,7 +51,7 @@ describe('PostingsMarkdownEditor', () => {
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
-                conversationService = TestBed.inject(ConversationService);
+                courseManagementService = TestBed.inject(CourseManagementService);
                 lectureService = TestBed.inject(LectureService);
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
                 const returnValue = of(new HttpResponse({ body: [], status: 200 }));
@@ -75,7 +75,7 @@ describe('PostingsMarkdownEditor', () => {
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
-            new UserMentionCommand(conversationService, metisService),
+            new UserMentionCommand(courseManagementService, metisService),
             new ExerciseReferenceCommand(metisService),
             new LectureAttachmentReferenceCommand(metisService, lectureService),
         ]);

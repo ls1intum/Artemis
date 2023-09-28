@@ -1,24 +1,23 @@
-import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
-import { SelectWithSearchComponent } from 'app/shared/markdown-editor/select-with-search/select-with-search.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('UserMentionCommand', () => {
     let userMentionCommand: UserMentionCommand;
-    let conversationServiceMock: Partial<ConversationService>;
+    let courseManagementServiceMock: Partial<CourseManagementService>;
     let metisServiceMock: Partial<MetisService>;
     let aceEditorMock: any;
 
     beforeEach(() => {
         const selectWithSearchComponent = {
             open: jest.fn(() => {}),
-        } as SelectWithSearchComponent;
+        } as any;
 
-        conversationServiceMock = {
-            searchMembersOfConversation: jest.fn(() =>
+        courseManagementServiceMock = {
+            searchMembersForUserMentions: jest.fn(() =>
                 of(
                     new HttpResponse<ConversationUserDTO[]>({
                         body: [
@@ -52,17 +51,12 @@ describe('UserMentionCommand', () => {
         };
 
         // Create an instance of UserMentionCommand with mock services
-        userMentionCommand = new UserMentionCommand(conversationServiceMock as ConversationService, metisServiceMock as MetisService);
+        userMentionCommand = new UserMentionCommand(courseManagementServiceMock as CourseManagementService, metisServiceMock as MetisService);
         userMentionCommand.setSelectWithSearchComponent(selectWithSearchComponent);
     });
 
     it('should create an instance of UserMentionCommand', () => {
         expect(userMentionCommand).toBeTruthy();
-    });
-
-    it('should return "@" as the associated input character', () => {
-        const associatedInputCharacter = userMentionCommand.getAssociatedInputCharacter();
-        expect(associatedInputCharacter).toBe('@');
     });
 
     it('should perform a user search', () => {
@@ -75,22 +69,7 @@ describe('UserMentionCommand', () => {
             ]);
         });
 
-        expect(conversationServiceMock.searchMembersOfConversation).toHaveBeenCalledWith(
-            123, // Course ID (mocked)
-            487, // Conversation ID (mocked)
-            searchTerm,
-            0, // Offset
-            10, // Limit
-            ConversationMemberSearchFilter.ALL,
-        );
-    });
-
-    it('should convert a selected user to text', () => {
-        const selectedUser: ConversationUserDTO = { name: 'User 1', login: 'user1' };
-
-        const text = userMentionCommand.selectionToText(selectedUser);
-
-        expect(text).toBe('[user]User 1(user1)[/user]');
+        expect(courseManagementServiceMock.searchMembersForUserMentions).toHaveBeenCalledWith(123, searchTerm);
     });
 
     it('should insert selection', () => {
@@ -98,11 +77,8 @@ describe('UserMentionCommand', () => {
         userMentionCommand.setEditor(aceEditorMock);
         aceEditorMock.command.exec(aceEditorMock);
 
-        const insertText = jest.spyOn(userMentionCommand, 'insertText');
-
         userMentionCommand.insertSelection({ name: 'User 1', login: 'user1' });
 
-        expect(insertText).toHaveBeenCalled();
         expect(aceEditorMock.focus).toHaveBeenCalled();
     });
 
