@@ -1969,38 +1969,19 @@ public class CourseTestService {
 
     }
 
-    public void testArchiveCourseWithQuizExerciseCannotExportMCAnswersSubmission() throws IOException {
+    public void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String fileName, String dynamicErrorMsg) throws IOException {
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
         var course = courseUtilService.createCourse();
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
         try (MockedStatic<org.apache.commons.io.FileUtils> mockedFiles = mockStatic(org.apache.commons.io.FileUtils.class)) {
-            mockedFiles
-                    .when(() -> org.apache.commons.io.FileUtils.writeLines(argThat(file -> file.toString().contains("multiple_choice_questions_answers")), anyString(), anyList()))
+            mockedFiles.when(() -> org.apache.commons.io.FileUtils.writeLines(argThat(file -> file.toString().contains(fileName)), anyString(), anyList()))
                     .thenThrow(new IOException());
             var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
             assertThat(archivePath).isNotEmpty();
-            Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains("multiple_choice_questions_answers")
-                    && path.getFileName().toString().endsWith(".txt");
+            Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains(fileName) && path.getFileName().toString().endsWith(".txt");
             extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
             assertThat(exportErrors).hasSize(1);
-            assertThat(exportErrors.get(0)).contains("Failed to export multiple choice answers");
-        }
-    }
-
-    public void testArchiveCourseWithQuizExerciseCannotExportSAAnswersSubmission() throws IOException {
-        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
-        var course = courseUtilService.createCourse();
-        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
-        try (MockedStatic<org.apache.commons.io.FileUtils> mockedFiles = mockStatic(org.apache.commons.io.FileUtils.class)) {
-            mockedFiles.when(() -> org.apache.commons.io.FileUtils.writeLines(argThat(file -> file.toString().contains("short_answer_questions_answers")), anyString(), anyList()))
-                    .thenThrow(new IOException());
-            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
-            assertThat(archivePath).isNotEmpty();
-            Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains("short_answer_questions_answers")
-                    && path.getFileName().toString().endsWith(".txt");
-            extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
-            assertThat(exportErrors).hasSize(1);
-            assertThat(exportErrors.get(0)).contains("Failed to export short answer answers");
+            assertThat(exportErrors.get(0)).contains("Failed to export " + dynamicErrorMsg + " answers");
         }
     }
 

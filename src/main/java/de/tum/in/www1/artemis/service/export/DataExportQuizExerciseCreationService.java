@@ -87,7 +87,7 @@ public class DataExportQuizExerciseCreationService {
                         try {
                             dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
                         }
-                        catch (Exception e) {
+                        catch (IOException e) {
                             errorOccurred = true;
                             exportErrors.ifPresent(errors -> errors.add("Failed to export drag and drop answers for quiz submission " + submission.getId() + " of quiz exercise "
                                     + quizExercise.getTitle() + " with id " + quizExercise.getId()));
