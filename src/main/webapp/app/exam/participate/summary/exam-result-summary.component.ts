@@ -20,6 +20,7 @@ import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/part
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -49,6 +50,9 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly AssessmentType = AssessmentType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly PlagiarismVerdict = PlagiarismVerdict;
+
+    faEye = faEye;
+    faEyeSlash = faEyeSlash;
 
     /**
      * Current student's exam.

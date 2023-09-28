@@ -73,8 +73,10 @@
                 "lastCommitHash": "Last Commit Hash",
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
-                "viewResult": " View Result",
-                "viewExampleSolution": " View Example Solution",
+                "viewResult": "View Result",
+                "viewExampleSolution": "View Example Solution",
+                "showExampleSolution": "Show Example Solution",
+                "hideExampleSolution": "Hide Example Solution",
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",

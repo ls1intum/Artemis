@@ -60,6 +60,7 @@
                         </span>
                     </a>
                     <ng-container *ngIf="exampleSolutionPublished">
+                        <!--                        TODO remove translation ocne the button is not needed anymore -->
                         <a
                             *ngIf="exercise.type !== PROGRAMMING && exercise.type !== MODELING"
                             class="btn btn-primary ms-2 float-end"
@@ -68,8 +69,16 @@
                             <span jhiTranslate="artemisApp.exam.examSummary.viewExampleSolution">View Example Solution</span>
                         </a>
 
-                        <button class="btn btn-outline-primary float-end" (click)="toggleShowSampleSolution(exercise.id)">
-                            <span>&nbsp;{{ 'artemisApp.exam.examSummary.viewExampleSolution' | artemisTranslate }}&nbsp;</span>
+                        <button
+                            class="btn float-end"
+                            [class]="exerciseInfos[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"
+                            (click)="toggleShowSampleSolution(exercise.id)"
+                        >
+                            <fa-icon [icon]="!exerciseInfos[exercise.id!].displayExampleSolution ? faEye : faEyeSlash" class="info-icon"></fa-icon>
+                            <span *ngIf="!exerciseInfos[exercise.id!].displayExampleSolution; else hideExampleSolution"
+                                >&nbsp;{{ 'artemisApp.exam.examSummary.showExampleSolution' | artemisTranslate }}&nbsp;</span
+                            >
+                            <ng-template #hideExampleSolution> {{ 'artemisApp.exam.examSummary.hideExampleSolution' | artemisTranslate }} </ng-template>
                         </button>
 
                         <jhi-programming-exercise-example-solution-repo-download
