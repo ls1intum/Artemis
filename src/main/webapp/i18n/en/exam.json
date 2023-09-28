@@ -691,6 +691,10 @@
                 "actions": "Actions",
                 "viewResultsOrRunDetection": "View Results or Run Detection",
                 "viewCases": "View Cases"
+            },
+            "dateChange": {
+                "title": "Changing the times of an active exam will disrupt the workflow of the students!",
+                "warning": "Updating this field will send out a notification to all students and disrupt their workflow during the exam."
             }
         },
         "studentExamDetail": {
