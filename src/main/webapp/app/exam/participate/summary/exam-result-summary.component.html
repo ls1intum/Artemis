@@ -86,7 +86,7 @@
             ></jhi-programming-exercise-instructions>
             <ng-container *ngIf="exercise.type !== PROGRAMMING">
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
-                <ng-container *ngIf="getParticipationForExercise(exercise) && exerciseInfos[exercise.id!]?.submission?.submitted; else noSubmission">
+                <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted; else noSubmission">
                     <ng-container *ngIf="exercise.type === TEXT">
                         <jhi-text-exam-summary [submission]="exerciseInfos[exercise.id!]!.submission!"></jhi-text-exam-summary>
                     </ng-container>
@@ -112,8 +112,8 @@
                         *ngIf="exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart()"
                         class="mb-2 mt-2 ms-3"
                         [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)!"
-                        [result]="getParticipationForExercise(exercise)!.results?.[0]"
+                        [participation]="exerciseInfos[exercise.id!]!.participation!"
+                        [result]="exerciseInfos[exercise.id!]!.participation!.results?.[0]"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
                         [testRun]="isTestRun"
                     >
@@ -122,11 +122,11 @@
             </ng-container>
             <ng-container *ngIf="exercise.type === PROGRAMMING">
                 <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-                <ng-container *ngIf="getParticipationForExercise(exercise) && exerciseInfos[exercise.id!]!.submission!; else noSubmission">
+                <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission!; else noSubmission">
                     <!-- Programming Exercise -->
                     <jhi-programming-exam-summary
                         [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)!"
+                        [participation]="exerciseInfos[exercise.id!]!.participation!"
                         [submission]="exerciseInfos[exercise.id!]!.submission!"
                     ></jhi-programming-exam-summary>
                 </ng-container>
@@ -138,8 +138,8 @@
                     "
                     class="mb-2 mt-2 ms-3"
                     [exercise]="exercise"
-                    [participation]="getParticipationForExercise(exercise)!"
-                    [result]="getParticipationForExercise(exercise)!.results?.[0]"
+                    [participation]="exerciseInfos[exercise.id!]!.participation!"
+                    [result]="exerciseInfos[exercise.id!]!.participation!.results?.[0]"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
                     [testRun]="isTestRun"
                 >
