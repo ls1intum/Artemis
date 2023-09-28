@@ -1,6 +1,6 @@
 <div *ngIf="umlModel || explanation; else noSubmission" class="editor-outline-background">
     <!--    <jhi-modeling-submission *ngIf="exercise?.studentParticipations?.length ?? 0 > 0 && exercise?.studentParticipations?.[0]?.id; else noSubmission" [participationId]="exercise.studentParticipations![0].id" ] />-->
-    <jhi-modeling-submission [participationId]="29" />
+    <jhi-modeling-submission [participationId]="29" [displayHeader]="false" />
 </div>
 <ng-template #noSubmission>
     <div>No submission</div>

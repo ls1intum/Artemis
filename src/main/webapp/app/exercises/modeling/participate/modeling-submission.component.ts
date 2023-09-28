@@ -48,6 +48,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     ButtonType = ButtonType;
 
     @Input() participationId?: number;
+    @Input() displayHeader: boolean = true;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
