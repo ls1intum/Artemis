@@ -38,12 +38,12 @@
         <div class="card-body question-card-body" [ngbCollapse]="exerciseInfos[exercise.id!].isCollapsed">
             <div class="clearfix">
                 <span class="exercise-buttons">
-                    <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && exercise.type !== MODELING && resultsPublished">
+                    <span *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && exercise.type !== MODELING && resultsPublished">
                         <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary ms-2 float-end" [routerLink]="generateLink(exercise)">
                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                         </a>
-                    </div>
+                    </span>
                     <a
                         *ngIf="plagiarismCaseInfos[exercise.id!]"
                         class="btn ms-2 float-end"
