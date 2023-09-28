@@ -67,8 +67,8 @@ public class LocalCIContainerService {
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                // .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
-                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
+                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
     }
@@ -186,6 +186,7 @@ public class LocalCIContainerService {
      * @param buildJobContainerId        the id of the build job container
      * @param assignmentRepositoryPath   the path to the assignment repository
      * @param testRepositoryPath         the path to the test repository
+     * @param auxiliaryRepositoriesPaths the paths to the auxiliary repositories
      * @param auxiliaryRepositoriesNames the names of the auxiliary repositories
      * @param buildScriptPath            the path to the build script
      */
