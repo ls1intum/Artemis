@@ -23,14 +23,12 @@ import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { MockLocalStorageService } from '../../../../../../helpers/mocks/service/mock-local-storage.service';
-import { MockArtemisServerDateService } from '../../../../../../helpers/mocks/service/mock-server-date.service';
 import { MockExamParticipationService } from '../../../../../../helpers/mocks/service/mock-exam-participation.service';
 
 let fixture: ComponentFixture<ExamResultSummaryExerciseCardHeaderComponent>;
@@ -102,7 +100,6 @@ function sharedSetup(url: string[]) {
                     },
                 }),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
             ],
         })
@@ -113,7 +110,6 @@ function sharedSetup(url: string[]) {
                 component.index = 3;
                 component.exercise = programmingExercise;
                 component.exerciseInfo = { isCollapsed: false };
-                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
             });
     });
 
@@ -165,8 +161,8 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
     it('should show exercise group title', () => {
         fixture.detectChanges();
 
-        const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('#exercise-group-title-4');
-        expect(exerciseTitleElement.textContent).toContain('#4');
+        const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('#exercise-group-title-' + programmingExercise.id);
+        expect(exerciseTitleElement.textContent).toContain('#' + (component.index + 1));
         expect(exerciseTitleElement.textContent).toContain(programmingExercise.exerciseGroup?.title);
     });
 });
