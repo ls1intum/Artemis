@@ -38,7 +38,7 @@
         <div class="card-body question-card-body" [ngbCollapse]="exerciseInfos[exercise.id!].isCollapsed">
             <div class="clearfix">
                 <span class="exercise-buttons">
-                    <span *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && exercise.type !== MODELING && resultsPublished">
+                    <span *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && exercise.type !== MODELING && exercise.type !== TEXT && resultsPublished">
                         <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary ms-2 float-end" [routerLink]="generateLink(exercise)">
                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
@@ -62,7 +62,7 @@
                     <ng-container *ngIf="exampleSolutionPublished">
                         <!--                        TODO remove translation ocne the button is not needed anymore -->
                         <a
-                            *ngIf="exercise.type !== PROGRAMMING && exercise.type !== MODELING && exercise.type !== QUIZ"
+                            *ngIf="exercise.type !== PROGRAMMING && exercise.type !== MODELING && exercise.type !== QUIZ && exercise.type !== TEXT"
                             class="btn btn-primary ms-2 float-end"
                             [routerLink]="['/courses', courseId, 'exams', studentExam.exam?.id, 'exercises', exercise.id, 'example-solution']"
                         >
