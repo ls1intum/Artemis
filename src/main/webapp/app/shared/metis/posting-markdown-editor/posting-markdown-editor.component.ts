@@ -14,7 +14,7 @@ import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/co
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { LectureService } from 'app/lecture/lecture.service';
 import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -40,7 +40,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     constructor(
         private cdref: ChangeDetectorRef,
         private metisService: MetisService,
-        private conversationService: ConversationService,
+        private courseManagementService: CourseManagementService,
         private lectureService: LectureService,
     ) {}
 
@@ -56,7 +56,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
-            new UserMentionCommand(this.conversationService, this.metisService),
+            new UserMentionCommand(this.courseManagementService, this.metisService),
             new ExerciseReferenceCommand(this.metisService),
             new LectureAttachmentReferenceCommand(this.metisService, this.lectureService),
         ];

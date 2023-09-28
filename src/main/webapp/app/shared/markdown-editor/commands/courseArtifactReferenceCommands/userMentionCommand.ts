@@ -1,16 +1,16 @@
 import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { faAt } from '@fortawesome/free-solid-svg-icons';
-import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 export class UserMentionCommand extends InteractiveSearchCommand {
     buttonIcon = faAt;
 
     constructor(
-        private readonly conversationService: ConversationService,
+        private readonly courseManagementService: CourseManagementService,
         private readonly metisService: MetisService,
     ) {
         super();
@@ -21,7 +21,7 @@ export class UserMentionCommand extends InteractiveSearchCommand {
     }
 
     performSearch(searchTerm: string): Observable<HttpResponse<ConversationUserDTO[]>> {
-        return this.conversationService.searchMembersOfConversation(this.metisService.getCourse().id!, 487, searchTerm, 0, 10, ConversationMemberSearchFilter.ALL);
+        return this.courseManagementService.searchMembersForUserMentions(this.metisService.getCourse().id!, searchTerm);
     }
 
     protected selectionToText(selected: ConversationUserDTO): string {
