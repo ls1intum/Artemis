@@ -51,6 +51,7 @@ import { NgbCollapseMocksModule } from '../../../../helpers/mocks/directive/ngbC
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
+import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -151,6 +152,7 @@ function sharedSetup(url: string[]) {
                 MockComponent(FileUploadExamSummaryComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(FaIconComponent),
+                MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
