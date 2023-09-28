@@ -61,12 +61,17 @@
                     </a>
                     <ng-container *ngIf="exampleSolutionPublished">
                         <a
-                            *ngIf="exercise.type !== PROGRAMMING"
+                            *ngIf="exercise.type !== PROGRAMMING && exercise.type !== MODELING"
                             class="btn btn-primary ms-2 float-end"
                             [routerLink]="['/courses', courseId, 'exams', studentExam.exam?.id, 'exercises', exercise.id, 'example-solution']"
                         >
                             <span jhiTranslate="artemisApp.exam.examSummary.viewExampleSolution">View Example Solution</span>
                         </a>
+
+                        <button class="btn btn-outline-primary float-end" (click)="toggleShowSampleSolution(exercise.id)">
+                            <span>&nbsp;{{ 'artemisApp.exam.examSummary.viewExampleSolution' | artemisTranslate }}&nbsp;</span>
+                        </button>
+
                         <jhi-programming-exercise-example-solution-repo-download
                             *ngIf="exercise.type === PROGRAMMING"
                             class="ms-2 float-end"
@@ -92,7 +97,11 @@
                     </ng-container>
 
                     <ng-container *ngIf="exercise.type === MODELING">
-                        <jhi-modeling-exam-summary [exercise]="exercise" [submission]="exerciseInfos[exercise.id!]!.submission!" />
+                        <jhi-modeling-exam-summary
+                            [exercise]="exercise"
+                            [submission]="exerciseInfos[exercise.id!]!.submission!"
+                            [displayExampleSolution]="exerciseInfos[exercise.id!].displayExampleSolution"
+                        />
                     </ng-container>
 
                     <ng-container *ngIf="exercise.type === QUIZ">

@@ -28,8 +28,10 @@ export type ResultSummaryExerciseInfo = {
     achievedPercentage?: number;
     colorClass?: string;
     resultIconClass?: IconProp;
+
     submission?: Submission;
     participation?: Participation;
+    displayExampleSolution: boolean;
 };
 
 @Component({
@@ -272,8 +274,10 @@ export class ExamResultSummaryComponent implements OnInit {
                 achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
                 colorClass: textColorClass,
                 resultIconClass: resultIconClass,
+
                 submission: this.getSubmissionForExercise(exercise),
                 participation: this.getParticipationForExercise(exercise),
+                displayExampleSolution: false,
             };
         }
         return exerciseInfos;
@@ -309,6 +313,15 @@ export class ExamResultSummaryComponent implements OnInit {
         }
 
         return exerciseResult;
+    }
+
+    toggleShowSampleSolution(exerciseId?: number) {
+        if (exerciseId === undefined) {
+            console.error('Cannot show sample solution because exercise id is undefined', exerciseId);
+            return;
+        }
+
+        this.exerciseInfos[exerciseId].displayExampleSolution = !this.exerciseInfos[exerciseId].displayExampleSolution;
     }
 
     getAchievedPercentageByExerciseId(exerciseId?: number): number | undefined {

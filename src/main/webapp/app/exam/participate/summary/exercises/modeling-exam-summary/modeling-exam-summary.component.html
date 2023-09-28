@@ -1,9 +1,15 @@
 <div class="pt-2">
-    <jhi-modeling-submission
-        *ngIf="(exercise.studentParticipations?.length ?? 0) > 0 && exercise.studentParticipations![0].id !== undefined; else noSubmission"
-        [participationId]="exercise.studentParticipations![0].id"
-        [displayHeader]="false"
-    />
+    <div *ngIf="displayExampleSolution; else studentSolution">
+        <jhi-example-solution *ngIf="exercise.id !== undefined" [exerciseId]="exercise.id" [displayHeader]="false" />
+    </div>
+    <ng-template #studentSolution>
+        <jhi-modeling-submission
+            *ngIf="(exercise.studentParticipations?.length ?? 0) > 0 && exercise.studentParticipations![0].id !== undefined; else noSubmission"
+            [participationId]="exercise.studentParticipations![0].id"
+            [displayHeader]="false"
+        />
+    </ng-template>
+
     <ng-template #noSubmission>
         <div>No submission</div>
     </ng-template>
