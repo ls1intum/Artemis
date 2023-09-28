@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
@@ -46,6 +46,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     ButtonType = ButtonType;
+
+    @Input() participationId?: number;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
@@ -117,8 +119,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
-            if (params['participationId']) {
-                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe({
+            const participationId = params['participationId'] ?? this.participationId;
+
+            if (participationId) {
+                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(participationId).subscribe({
                     next: (modelingSubmission) => {
                         this.updateModelingSubmission(modelingSubmission);
                         if (this.modelingExercise.teamMode) {
@@ -138,7 +142,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         window.scroll(0, 0);
     }
 
-    // Updates component with the given modeling submission
+    /**
+     * Updates the modeling submission with the given modeling submission.
+     */
     private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
         if (!modelingSubmission) {
             this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
