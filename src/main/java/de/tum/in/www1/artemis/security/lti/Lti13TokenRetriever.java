@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.security.OAuth2JWKSService;
  * This class is responsible to retrieve access tokens from an LTI 1.3 platform of a specific ClientRegistration.
  */
 @Component
+@Profile("lti")
 public class Lti13TokenRetriever {
 
     private final OAuth2JWKSService oAuth2JWKSService;

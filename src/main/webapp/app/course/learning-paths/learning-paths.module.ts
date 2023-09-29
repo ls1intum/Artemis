@@ -13,6 +13,7 @@ import { LearningPathGraphNodeComponent } from 'app/course/learning-paths/learni
 import { CompetencyNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/competency-node-details.component';
 import { LectureUnitNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/lecture-unit-node-details.component';
 import { ExerciseNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/exercise-node-details.component';
+import { LearningPathHealthStatusWarningComponent } from 'app/course/learning-paths/learning-path-management/learning-path-health-status-warning.component';
 import { LearningPathContainerComponent } from 'app/course/learning-paths/participate/learning-path-container.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -71,6 +72,7 @@ const routes: Routes = [
     ],
     declarations: [
         LearningPathManagementComponent,
+        LearningPathHealthStatusWarningComponent,
         LearningPathProgressModalComponent,
         LearningPathProgressNavComponent,
         LearningPathGraphComponent,
