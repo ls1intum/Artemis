@@ -49,7 +49,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling", "lti" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends AbstractArtemisIntegrationTest {
 
