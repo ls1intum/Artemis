@@ -292,7 +292,7 @@ export class ExamUpdateComponent implements OnInit {
      */
     get validateWorkingTime(): boolean {
         if (this.exam.testExam) {
-            if (!this.exam.workingTime || this.exam.workingTime < 1) {
+            if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }
             if (this.exam.startDate && this.exam.endDate) {
