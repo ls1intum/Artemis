@@ -16,13 +16,6 @@ import de.tum.in.www1.artemis.domain.User;
 @DiscriminatorValue("CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisChatSession extends IrisSession {
-    
-    public IrisChatSession() {}
-    
-    public IrisChatSession(ProgrammingExercise exercise, User user) {
-        this.exercise = exercise;
-        this.user = user;
-    }
 
     @ManyToOne
     @JsonIgnore
@@ -31,6 +24,13 @@ public class IrisChatSession extends IrisSession {
     @ManyToOne
     @JsonIgnore
     private User user;
+    
+    public IrisChatSession() {}
+    
+    public IrisChatSession(ProgrammingExercise exercise, User user) {
+        this.exercise = exercise;
+        this.user = user;
+    }
 
     public ProgrammingExercise getExercise() {
         return exercise;

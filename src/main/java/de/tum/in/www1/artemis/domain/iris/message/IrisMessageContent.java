@@ -12,6 +12,7 @@ import javax.persistence.*;
 @Entity
 @Table(name = "iris_message_content")
 @Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "discriminator")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisMessageContent extends DomainObject {

@@ -70,7 +70,7 @@ public class IrisCodeEditorSessionResource {
     @EnforceAtLeastEditor
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
+//        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
@@ -91,7 +91,7 @@ public class IrisCodeEditorSessionResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisCodeEditorSession>> getAllSessions(@PathVariable Long exerciseId) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
+//        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
@@ -113,11 +113,11 @@ public class IrisCodeEditorSessionResource {
     @EnforceAtLeastEditor
     public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
+//        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
-        var session = irisSessionService.createChatSessionForProgrammingExercise(exercise, user);
+        var session = irisSessionService.createCodeEditorSession(exercise, user);
 
         var uriString = "/api/iris/code-editor-sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

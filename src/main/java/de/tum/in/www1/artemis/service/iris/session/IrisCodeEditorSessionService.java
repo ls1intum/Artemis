@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Service to handle the chat subsystem of Iris.
+ * Service to handle the code editor subsystem of Iris.
  */
 @Service
 @Profile("iris")
@@ -116,13 +116,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         var exercise = session.getExercise();
         var params = new HashMap<String, Object>();
         params.put("chat_history", session.getMessages());
-        params.put("ps", exercise.getProblemStatement());
-        params.put("solution_repo", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
-        params.put("template_repo", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
-        params.put("test_repo", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
+        params.put("problem_statement", exercise.getProblemStatement());
+        params.put("solution_repository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
+        params.put("template_repository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
+        params.put("test_repository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
         
         // FIXME: Template and model should be be configurable; await settings update
-        irisConnectorService.sendRequest(new IrisTemplate(IrisConstants.CODE_EDITOR_INITIAL_REQUEST), "gpt-4-32k", params)
+        // The response handling is duplicated, also exists in IrisChatSessionService
+        // However, there is no good reason why every session type should have the same response handling
+        // TODO: Consider refactoring this
+        irisConnectorService
+                .sendRequest(new IrisTemplate(IrisConstants.CODE_EDITOR_INITIAL_REQUEST), "gpt-4-32k", params)
                 .handleAsync((responseMessage, err) -> {
                     if (err != null) {
                         log.error("Error while getting response from Iris model", err);
