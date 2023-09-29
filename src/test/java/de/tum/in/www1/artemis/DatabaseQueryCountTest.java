@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -9,12 +11,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -35,6 +38,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     void setup() {
         participantScoreScheduleService.shutdown();
         userUtilService.addUsers(TEST_PREFIX, 1, NUMBER_OF_TUTORS, 0, 0);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student.setGroups(Set.of(TEST_PREFIX + "tumuser"));
     }
 
     @Test

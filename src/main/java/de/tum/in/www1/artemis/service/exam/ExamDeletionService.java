@@ -57,9 +57,12 @@ public class ExamDeletionService {
 
     private final ChannelService channelService;
 
+    private final ExamLiveEventRepository examLiveEventRepository;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
-            StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService) {
+            StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService,
+            ExamLiveEventRepository examLiveEventRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -71,6 +74,7 @@ public class ExamDeletionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
+        this.examLiveEventRepository = examLiveEventRepository;
     }
 
     /**
@@ -151,6 +155,7 @@ public class ExamDeletionService {
             }
         }
         studentExamRepository.deleteAll(exam.getStudentExams());
+        examLiveEventRepository.deleteAllByExamId(examId);
 
         var studentExamExercisePreparationCache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
         if (studentExamExercisePreparationCache != null) {

@@ -55,6 +55,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    private static final long TIMEOUT_MS = 200;
+
     @BeforeEach
     void setup() {
         irisRequestMockProvider.enableMockingOfRequests();
@@ -100,15 +102,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Wait for the iris message to be processed by Iris, the LLM mock and the websocket service.
-     *
-     * @throws InterruptedException if the thread is interrupted
-     */
-    protected void waitForIrisMessageToBeProcessed() throws InterruptedException {
-        Thread.sleep(100);
-    }
-
-    /**
      * Verify that the message was sent through the websocket.
      *
      * @param user      the user
@@ -116,7 +109,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param message   the content of the message
      */
     protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, String message) {
-        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
+        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
                 ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
                         && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE
                         && Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")), message)));
@@ -130,7 +123,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param message   the message
      */
     protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, IrisMessage message) {
-        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
+        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
                 ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
                         && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE
                         && Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getTextContent).toList(),
@@ -144,7 +137,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param sessionId the session id
      */
     protected void verifyErrorWasSentOverWebsocket(String user, Long sessionId) {
-        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
+        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
                 ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
                         && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR));
     }
