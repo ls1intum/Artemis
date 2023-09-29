@@ -77,7 +77,11 @@
         </div>
         <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
-                <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" (endLoadingProcess)="changeLoading($event)"></jhi-secured-image>
+                <jhi-secured-image
+                    *ngIf="question.backgroundFilePath"
+                    [src]="filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!"
+                    (endLoadingProcess)="changeLoading($event)"
+                ></jhi-secured-image>
                 <div class="click-layer">
                     <div *ngIf="!showResult">
                         <div
@@ -104,6 +108,7 @@
                                 [dragItem]="dragItemForDropLocation(dropLocation)!"
                                 [clickDisabled]="clickDisabled"
                                 [minWidth]="100 + '%'"
+                                [filePreviewPaths]="filePreviewPaths"
                             ></jhi-drag-item>
                         </div>
                     </div>
@@ -161,6 +166,7 @@
                                     [dragItem]="dragItemForDropLocation(dropLocation)!"
                                     [clickDisabled]="true"
                                     [minWidth]="100 + '%'"
+                                    [filePreviewPaths]="filePreviewPaths"
                                 >
                                 </jhi-drag-item>
                                 <div class="drag-item no-click" *ngIf="!dragItemForDropLocation(dropLocation)">
@@ -220,6 +226,7 @@
                                     [dragItem]="correctDragItemForDropLocation(dropLocation)!"
                                     [clickDisabled]="true"
                                     [minWidth]="100 + '%'"
+                                    [filePreviewPaths]="filePreviewPaths"
                                 ></jhi-drag-item>
                                 <div class="drag-item no-click" *ngIf="!dropLocation || !correctDragItemForDropLocation(dropLocation)">
                                     <div></div>
@@ -253,6 +260,7 @@
                         [dragItem]="dragItem"
                         [clickDisabled]="clickDisabled"
                         [minWidth]="'160'"
+                        [filePreviewPaths]="filePreviewPaths"
                     ></jhi-drag-item>
                 </div>
             </div>

@@ -12,9 +12,7 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -136,10 +134,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     readonly maxPoints = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private modalService: NgbModal,
-        private fileUploaderService: FileUploaderService,
         private changeDetector: ChangeDetectorRef,
         private fileService: FileService,
     ) {}
