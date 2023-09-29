@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -29,6 +30,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
  */
+@Profile("lti")
 public class Lti13LaunchFilter extends OncePerRequestFilter {
 
     private final OAuth2LoginAuthenticationFilter defaultFilter;
