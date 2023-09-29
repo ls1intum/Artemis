@@ -60,7 +60,7 @@ public class GroupNotificationService {
             return;
         }
 
-        if (notificationText != null && exercise.isCourseExercise()) {
+        if ((notificationText != null && exercise.isCourseExercise()) || exercise.isExamExercise()) {
             // sends an exercise-update notification
             notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
         }
@@ -96,7 +96,7 @@ public class GroupNotificationService {
                 case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED -> createNotification((Exam) notificationSubject, author, group, notificationType,
                         (List<String>) typeSpecificInformation);
                 // Critical Types
-                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, notificationType,
+                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, PROGRAMMING_REPOSITORY_LOCKS -> createNotification((Exercise) notificationSubject, author, group, notificationType,
                         (String) typeSpecificInformation);
                 // Additional Types
                 case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST -> createNotification((Exercise) notificationSubject, author, group, notificationType,
@@ -183,6 +183,16 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
+    }
+
+    /**
+     * Notify editor and instructor groups about a finished repository permission change and the amount of failed updated.
+     *
+     * @param exercise         the exercise where the repository permissions got updated
+     * @param notificationText the notification text containing the amount of failed operations.
+     */
+    public void notifyEditorAndInstructorGroupsAboutRepositoryLocks(ProgrammingExercise exercise, String notificationText) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_REPOSITORY_LOCKS, exercise, notificationText, null);
     }
 
     /**

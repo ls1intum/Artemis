@@ -52,6 +52,7 @@
                 "programmingTestCasesChanged": "Test cases for programming exercise changed",
                 "newManualFeedbackRequest": "A new manual feedback request has been submitted",
                 "duplicateTestCase": "Duplicate test case was found.",
+                "repositoryLocks": "Repository Permission Update",
                 "illegalSubmission": "Illegal submission of a student.",
                 "newExercisePost": "New exercise post",
                 "newLecturePost": "New lecture post",
