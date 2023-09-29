@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.lecture;
 
-
 import static org.assertj.core.api.Assertions.fail;
+
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
