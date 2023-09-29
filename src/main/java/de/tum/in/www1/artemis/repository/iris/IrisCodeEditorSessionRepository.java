@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -23,13 +24,13 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""
-               SELECT s
-               FROM IrisCodeEditorSession s
-               WHERE s.exercise.id = :exerciseId
+           SELECT s
+           FROM IrisCodeEditorSession s
+           WHERE s.exercise.id = :exerciseId
                AND s.user.id = :userId
-               ORDER BY s.creationDate DESC
+           ORDER BY s.creationDate DESC
            """)
-    List<IrisCodeEditorSession> findByExerciseIdAndUserId(Long exerciseId, Long userId);
+    List<IrisCodeEditorSession> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
     
     /**
      * Finds a list of chat sessions or throws an exception if none are found.
@@ -40,7 +41,8 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      * @throws EntityNotFoundException if no sessions are found.
      */
     @NotNull
-    default List<IrisCodeEditorSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
+    default List<IrisCodeEditorSession> findByExerciseIdAndUserIdElseThrow(long exerciseId, long userId)
+            throws EntityNotFoundException {
         var result = findByExerciseIdAndUserId(exerciseId, userId);
         if (result.isEmpty()) {
             throw new EntityNotFoundException("Iris Code Editor Session");
@@ -57,7 +59,8 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      */
     @NotNull
     default IrisCodeEditorSession findByIdElseThrow(long sessionId) throws EntityNotFoundException {
-        return findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Code Editor Session", sessionId));
+        return findById(sessionId).orElseThrow(
+                () -> new EntityNotFoundException("Iris Code Editor Session", sessionId));
     }
     
     /**
@@ -72,17 +75,18 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
             SELECT s
             FROM IrisCodeEditorSession s
             WHERE s.exercise.id = :exerciseId
-            AND s.user.id = :userId
+                AND s.user.id = :userId
             ORDER BY s.creationDate DESC
             LIMIT 1
             """
     )
-    Optional<IrisCodeEditorSession> findNewestByExerciseIdAndUserId(long exerciseId, long userId);
+    Optional<IrisCodeEditorSession> findNewestByExerciseIdAndUserId(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
     
     /**
      * Finds the newest code editor session for a given exercise and user ID or throws an exception if none is found.
+     *
      * @param exerciseId The ID of the exercise.
-     * @param userId The ID of the user.
+     * @param userId     The ID of the user.
      * @return The newest code editor session for the given exercise and user ID.
      * @throws EntityNotFoundException if no session is found.
      */

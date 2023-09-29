@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.iris;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
@@ -19,7 +18,7 @@ class IrisCodeEditorSessionIntegrationTest extends AbstractIrisIntegrationTest {
     private static final String TEST_PREFIX = "iriscodeeditorsessionintegration";
 
     @Autowired
-    private IrisCodeEditorSessionRepository irisChatSessionRepository;
+    private IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
     private ProgrammingExercise exercise;
 
@@ -38,7 +37,7 @@ class IrisCodeEditorSessionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void createSession() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/code-editor-sessions", null, IrisCodeEditorSession.class, HttpStatus.CREATED);
-        var actualIrisSession = irisChatSessionRepository.findByIdElseThrow(irisSession.getId());
+        var actualIrisSession = irisCodeEditorSessionRepository.findByIdElseThrow(irisSession.getId());
         assertThat(actualIrisSession.getUser()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         assertThat(exercise).isEqualTo(actualIrisSession.getExercise());
     }

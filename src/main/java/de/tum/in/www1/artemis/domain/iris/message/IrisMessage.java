@@ -50,13 +50,6 @@ public class IrisMessage extends DomainObject {
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
     
-    // Required by JPA
-    public IrisMessage() {}
-    
-    public IrisMessage(IrisSession session) {
-        this.session = session;
-    }
-    
     public IrisSession getSession() {
         return session;
     }
