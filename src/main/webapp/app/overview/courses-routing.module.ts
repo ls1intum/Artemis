@@ -65,6 +65,10 @@ const routes: Routes = [
                 loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
             },
             {
+                path: 'learning-path',
+                loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
+            },
+            {
                 path: 'discussion',
                 loadChildren: () => import('./course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },
