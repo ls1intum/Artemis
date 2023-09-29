@@ -354,7 +354,9 @@ In case you have to update the exercise during an exam for programming, modeling
 .. figure:: instructor/exercise-notification.png
     :alt: Exercise Notification
 
-    .. _exam_assessment:
+    Field to enter a notification text
+
+.. _exam_assessment:
 
 3. **Assessment**
 -----------------
