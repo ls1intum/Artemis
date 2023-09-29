@@ -202,6 +202,7 @@ public class ExamResource {
 
         // Make sure that the original references are preserved.
         Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
+        var originalExamDuration = originalExam.getDuration();
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
         if (updatedExam.isTestExam() != originalExam.isTestExam()) {
@@ -233,7 +234,9 @@ public class ExamResource {
         if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             // TODO: check if there are any problems with that - i.e. TZ issues, only changing working time in UI, ...
             int workingTimeChange = savedExam.getDuration() - originalExam.getDuration();
-            updateStudentExamsAndRescheduleExercises(examWithExercises, workingTimeChange);
+            System.out.println("Working Time Change:");
+            System.out.println(workingTimeChange);
+            updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
 
         if (updatedChannel != null) {
@@ -264,6 +267,7 @@ public class ExamResource {
 
         // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        var originalExamDuration = exam.getDuration();
 
         // 1. Update the end date & working time of the exam
         exam.setEndDate(exam.getEndDate().plusSeconds(workingTimeChange));
@@ -271,13 +275,15 @@ public class ExamResource {
         examRepository.save(exam);
 
         // 2. Re-calculate the working times of all student exams
-        updateStudentExamsAndRescheduleExercises(exam, workingTimeChange);
+        updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
 
         return ResponseEntity.ok(exam);
     }
 
-    private void updateStudentExamsAndRescheduleExercises(Exam exam, Integer workingTimeChange) {
-        var originalExamDuration = exam.getDuration();
+    private void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
+
+        System.out.println("Original Exam Duration:");
+        System.out.println(originalExamDuration);
 
         var now = now();
 
