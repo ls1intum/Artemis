@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import java.nio.file.Path;
 import java.util.Collections;
 
 import javax.annotation.PreDestroy;
@@ -26,6 +27,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.context.SpringManagedContext;
 
+import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
@@ -110,6 +112,9 @@ public class CacheConfiguration {
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
+
+        config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+
         if (registration == null) {
             log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
@@ -173,6 +178,13 @@ public class CacheConfiguration {
         config.setProperty("hazelcast.socket.bind.any", "false");
         config.setProperty("hazelcast.socket.server.bind.any", "false");
         config.setProperty("hazelcast.socket.client.bind.any", "false");
+    }
+
+    private SerializerConfig createPathSerializerConfig() {
+        SerializerConfig serializerConfig = new SerializerConfig();
+        serializerConfig.setTypeClass(Path.class);
+        serializerConfig.setImplementation(new HazelcastPathSerializer());
+        return serializerConfig;
     }
 
     @Autowired(required = false) // ok

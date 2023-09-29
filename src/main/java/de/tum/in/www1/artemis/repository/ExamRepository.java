@@ -32,6 +32,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCourseId(long courseId);
 
     @Query("""
+            SELECT DISTINCT exam
+            FROM Exam exam
+            WHERE exam.course.id IN :courses
+            """)
+    List<Exam> findExamsInCourses(@Param("courses") Iterable<Long> courseId);
+
+    @Query("""
             SELECT DISTINCT ex
             FROM Exam ex
                 LEFT JOIN FETCH ex.exerciseGroups eg

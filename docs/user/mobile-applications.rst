@@ -91,7 +91,7 @@ In this screen, users can enable/disable push notifications for this device and 
 Problems
 ^^^^^^^^
 
-Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-android/issues>`_.
+Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-android/issues>`__.
 
 iOS Application
 ---------------
@@ -107,7 +107,7 @@ The iOS application supports the following features:
     <iframe src="https://live.rbg.tum.de/w/artemisintro/35200?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video tutorial of the Login on TUM-Live.
     </iframe>
-    
+
 #. View your courses:
     #. Register in new courses
     #. View courses you have already registered for
@@ -198,7 +198,7 @@ In this screen, users can choose which notification types they want to receive.
 Problems
 ^^^^^^^^
 
-Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-ios/issues>`_.
+Please report any issues on the `GitHub repository <https://github.com/ls1intum/artemis-ios/issues>`__.
 
 .. |server-selection-overview-android| image:: native-applications/android/server_selection_overview.png
     :width: 300

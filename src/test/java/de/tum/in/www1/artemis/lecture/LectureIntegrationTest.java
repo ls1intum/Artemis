@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 
-class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
@@ -105,7 +105,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private void addAttachmentToLecture() {
         this.attachmentDirectOfLecture = LectureFactory.generateAttachment(null);
-        this.attachmentDirectOfLecture.setLink("files/temp/example2.txt");
+        this.attachmentDirectOfLecture.setLink("/api/files/temp/example2.txt");
         this.attachmentDirectOfLecture.setLecture(this.lecture1);
         this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
         this.lecture1.addAttachments(this.attachmentDirectOfLecture);

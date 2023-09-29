@@ -3,7 +3,6 @@ import { CoursesComponent } from 'app/overview/courses.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
-import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
@@ -69,6 +68,10 @@ const routes: Routes = [
                 loadChildren: () => import('./course-competencies/course-competencies.module').then((m) => m.CourseCompetenciesModule),
             },
             {
+                path: 'learning-path',
+                loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
+            },
+            {
                 path: 'discussion',
                 loadChildren: () => import('./course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },
@@ -82,12 +85,7 @@ const routes: Routes = [
             },
             {
                 path: 'exams',
-                component: CourseExamsComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.exams',
-                },
-                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('./course-exams/course-exams.module').then((m) => m.CourseExamsModule),
             },
             {
                 path: 'plagiarism-cases',

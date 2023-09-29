@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
 
@@ -76,7 +76,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("files/temp/example.txt");
+        this.attachment.setLink("/api/files/temp/example.txt");
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");

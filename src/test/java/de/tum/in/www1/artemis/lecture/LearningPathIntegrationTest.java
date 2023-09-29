@@ -198,18 +198,21 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
+        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.CONFLICT, Long.class);
     }
 
     @Test
     @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
+        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
     @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
     void testAll_asEditor() throws Exception {
         this.testAllPreAuthorize();
+        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
@@ -401,5 +404,77 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetHealthStatusForCourse() throws Exception {
         request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.OK, LearningPathHealthDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNgxGraphForLearningPathsDisabled() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        course.setLearningPathsEnabled(false);
+        courseRepository.save(course);
+        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetLearningPathNgxGraphForOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNgxGraphAsStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.OK, NgxLearningPathDTO.class);
+    }
+
+    /**
+     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
+     *
+     * @throws Exception the request failed
+     * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
+     */
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetLearningPathNgxGraphAsInstructor() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.OK, NgxLearningPathDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void getLearningPathId() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
+        assertThat(result).isEqualTo(learningPath.getId());
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void getLearningPathIdNotExisting() throws Exception {
+        course.setLearningPathsEnabled(true);
+        course = courseRepository.save(course);
+        var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        student = userRepository.findWithLearningPathsByIdElseThrow(student.getId());
+        learningPathRepository.deleteAll(student.getLearningPaths());
+        final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
+        assertThat(result).isNotNull();
     }
 }

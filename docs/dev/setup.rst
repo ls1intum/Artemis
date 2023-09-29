@@ -709,7 +709,7 @@ HTTP. We need to extend the configuration in the file
 ------------------------------------------------------------------------------------------------------------------------
 
 Iris/Pyris Service
---------------
+------------------
 
 Iris is an intelligent virtual tutor integrated into the Artemis platform.
 It is designed to provide one-on-one programming assistance without human tutors.
@@ -726,7 +726,7 @@ Prerequisites
 - Set up a running instance of Pyris_. Refer to the :doc:`../admin/pyris-setup` for more information.
 
 Enable the ``iris`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 

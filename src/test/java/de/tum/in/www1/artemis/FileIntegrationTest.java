@@ -27,11 +27,13 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
@@ -40,8 +42,9 @@ import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 
-class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileintegration";
 
@@ -84,9 +87,27 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUploadExamUserSignature() throws Exception {
+        var course = courseUtilService.addEmptyCourse();
+        var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null);
+        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+
+        ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+                ExamUser.class, HttpStatus.OK);
+        byte[] getUserSignatureResponse = request.get(updateExamUserResponse.getSigningImagePath(), HttpStatus.OK, byte[].class);
+
+        assertThat(getUserSignatureResponse).isEqualTo(file.getBytes());
     }
 
     @Test
