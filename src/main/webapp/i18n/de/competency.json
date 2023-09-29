@@ -215,11 +215,11 @@
                     },
                     "matchStart": {
                         "title": "Verzweigung",
-                        "tooltip": "Hier hast du die Wahl an welcher der folgenden Kompetenzen du arbeiten möchtest. Die Kompetenzen wurden von deinem Instruktor als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
+                        "tooltip": "Hier hast du die Wahl an welcher der folgenden Kompetenzen du arbeiten möchtest. Die Kompetenzen wurden von deiner Lehrkraft als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
                     },
                     "matchEnd": {
                         "title": "Verzweigungsende",
-                        "tooltip": "Hier treffen die verschiedenen Kompetenzen wieder zusammen. Die Kompetenzen wurden von deinem Instruktor als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
+                        "tooltip": "Hier treffen die verschiedenen Kompetenzen wieder zusammen. Die Kompetenzen wurden von deiner Lehrkraft als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
                     },
                     "learningObject": {
                         "title": "Ausstehende Lerneinheit / Aufgabe",
