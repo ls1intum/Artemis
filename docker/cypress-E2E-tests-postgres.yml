@@ -47,6 +47,8 @@ services:
             CYPRESS_DB_TYPE: "Postgres"
             SORRY_CYPRESS_PROJECT_ID: "artemis-postgres"
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:setup && (npm run cypress:record:postgres & sleep 60 && npm run cypress:record:postgres & wait)"
+# Old run method using plain cypress kept here as backup
+#        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
 
 networks:
     artemis:
