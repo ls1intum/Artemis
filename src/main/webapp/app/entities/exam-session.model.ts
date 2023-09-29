@@ -23,11 +23,11 @@ export class ExamSession implements BaseEntity {
     public lastModifiedBy?: string;
     public createdDate?: dayjs.Dayjs;
     public lastModifiedDate?: Date;
-    public suspiciousReasons: SuspiciousSessionReason[] = [];
+    public suspiciousReasons: SuspiciousSessionReason[];
 }
 
 export class SuspiciousExamSessions {
-    examSessions: ExamSession[] = [];
+    examSessions: ExamSession[];
 }
 export class SuspiciousSessionsAnalysisOptions {
     constructor(

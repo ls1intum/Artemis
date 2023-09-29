@@ -50,4 +50,15 @@ describe('SuspiciousSessionsService', () => {
         req.flush(suspiciousSessions);
         tick();
     }));
+
+    it('should make GET request to retrieve suspicious sessions with subnet', fakeAsync(() => {
+        const options = new SuspiciousSessionsAnalysisOptions(true, true, true, true, true, '127.0.0.1/28');
+        service.getSuspiciousSessions(1, 2, options).subscribe((resp) => expect(resp).toEqual(suspiciousSessions));
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: 'api/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=true&ipSubnet=127.0.0.1/28',
+        });
+        req.flush(suspiciousSessions);
+        tick();
+    }));
 });

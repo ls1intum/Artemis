@@ -5,7 +5,7 @@ import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -115,6 +115,15 @@ describe('SuspiciousBehaviorComponent', () => {
             ipOutsideOfRange: false,
         });
         expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
+    });
+
+    it('should set analyzed to true and analyzing to false if the request fails', () => {
+        jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(throwError({ status: 500 }));
+        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
+        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
+        component.analyzeSessions();
+        expect(component.analyzed).toBeTrue();
+        expect(component.analyzing).toBeFalse();
     });
 
     it('should navigate to suspicious sessions on click', () => {

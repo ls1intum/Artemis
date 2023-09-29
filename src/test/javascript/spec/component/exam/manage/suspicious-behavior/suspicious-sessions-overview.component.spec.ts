@@ -21,6 +21,34 @@ describe('SuspiciousSessionsComponent', () => {
             },
         ],
     } as SuspiciousExamSessions;
+
+    const suspiciousSessions2 = {
+        examSessions: [
+            {
+                id: 1,
+                ipAddress: '127.0.0.1',
+                browserFingerprintHash: 'abc',
+                suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
+            },
+            {
+                id: 2,
+                ipAddress: '127.0.0.2',
+                browserFingerprintHash: 'def',
+                suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
+            },
+        ],
+    } as SuspiciousExamSessions;
+
+    const suspiciousSessions3 = {
+        examSessions: [
+            {
+                id: 1,
+                ipAddress: '127.0.0.1',
+                browserFingerprintHash: 'abc',
+                suspiciousReasons: [SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE],
+            },
+        ],
+    } as SuspiciousExamSessions;
     let component: SuspiciousSessionsOverviewComponent;
     let fixture: ComponentFixture<SuspiciousSessionsOverviewComponent>;
 
@@ -29,7 +57,7 @@ describe('SuspiciousSessionsComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [SuspiciousSessionsOverviewComponent, MockPipe(ArtemisTranslatePipe), MockComponent(SuspiciousSessionsComponent)],
         });
-        history.pushState({ suspiciousSessions: [suspiciousSessions] }, '');
+        history.pushState({ suspiciousSessions: [suspiciousSessions, suspiciousSessions2, suspiciousSessions3] }, '');
 
         fixture = TestBed.createComponent(SuspiciousSessionsOverviewComponent);
         component = fixture.componentInstance;
@@ -38,6 +66,6 @@ describe('SuspiciousSessionsComponent', () => {
 
     it('should retrieve suspicious sessions onInit', fakeAsync(() => {
         component.ngOnInit();
-        expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
+        expect(component.suspiciousSessions).toEqual([suspiciousSessions, suspiciousSessions2, suspiciousSessions3]);
     }));
 });
