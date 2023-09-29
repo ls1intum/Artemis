@@ -63,7 +63,14 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     long countRelationsOfTypeBetweenCompetencyGroups(@Param("competencyTailIds") Set<Long> competencyTailIds, @Param("type") CompetencyRelation.RelationType type,
             @Param("competencyHeadIds") Set<Long> competencyHeadIds);
 
-    // Important: this query is native since JPARepositories don't support recursive queries of this form
+    /**
+     * Gets set of all competency ids that are (transitively) connected via a matching relation to the given competency id.
+     * <p>
+     * Important: this query is native since JPARepositories don't support recursive queries of this form
+     *
+     * @param competencyId the id of the competency
+     * @return set of all competency ids that are (transitively) connected via a matching relation
+     */
     @Query(value = """
                     WITH RECURSIVE transitive_closure(id) AS
                     (
@@ -82,12 +89,4 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                     SELECT * FROM transitive_closure
             """, nativeQuery = true)
     Set<Long> getMatchingCompetenciesByCompetencyId(@Param("competencyId") long competencyId);
-
-    @Query("""
-            SELECT count(cr)
-            FROM CompetencyRelation cr
-            WHERE cr.headCompetency.course.id = :courseId
-                OR cr.tailCompetency.course.id = :courseId
-            """)
-    long countByCourseId(@Param("courseId") long courseId);
 }
