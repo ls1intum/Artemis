@@ -375,7 +375,7 @@
                                 <fa-icon [icon]="faBars" size="lg"></fa-icon>
                             </div>
                             <div *ngIf="dragItem.pictureFilePath">
-                                <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
+                                <jhi-secured-image [src]="filePreviewPaths.get(dragItem.pictureFilePath) || ''"></jhi-secured-image>
                             </div>
                             <div *ngIf="!dragItem.pictureFilePath">
                                 <textarea disabled [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
