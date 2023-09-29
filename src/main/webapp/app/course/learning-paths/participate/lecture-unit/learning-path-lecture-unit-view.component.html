@@ -1,0 +1,17 @@
+<div class="row">
+    <div class="col pe-0 flex-grow-1">
+        <div [ngSwitch]="lectureUnit.type">
+            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-attachment-unit>
+            <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
+            <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
+            <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
+        </div>
+    </div>
+    <div class="communication-wrapper col d-flex flex-grow-1 justify-end">
+        <router-outlet
+            *ngIf="lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))"
+            class="ms-3"
+            (activate)="onChildActivate($event)"
+        ></router-outlet>
+    </div>
+</div>
