@@ -1,29 +1,32 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/exam-update.component';
+import dayjs from 'dayjs/esm';
+import { of, throwError } from 'rxjs';
+import { Component } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
+import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/exam-update.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
-import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import dayjs from 'dayjs/esm';
-import { Component } from '@angular/core';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
@@ -34,7 +37,6 @@ import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
@@ -224,7 +226,16 @@ describe('Exam Update Component', () => {
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();
 
-            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
+            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
 
             // trigger save
             component.save();
@@ -339,7 +350,16 @@ describe('Exam Update Component', () => {
             examWithoutExercises.id = undefined;
             fixture.detectChanges();
 
-            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
+            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
 
             // trigger save
             component.save();
@@ -459,7 +479,15 @@ describe('Exam Update Component', () => {
         examForImport.course = course2;
         examForImport.numberOfExamUsers = 1;
         examForImport.exerciseGroups = [exerciseGroup1];
-        examForImport.examUsers = [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...new User(5) }];
+        examForImport.examUsers = [
+            {
+                didCheckImage: false,
+                didCheckLogin: false,
+                didCheckName: false,
+                didCheckRegistrationNumber: false,
+                ...new User(5),
+            },
+        ];
         examForImport.studentExams = [new StudentExam()];
 
         beforeEach(() => {
@@ -621,7 +649,11 @@ describe('Exam Update Component', () => {
                 expectedExam.course = course;
 
                 const preCheckError = new HttpErrorResponse({
-                    error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
+                    error: {
+                        errorKey: errorKey,
+                        numberOfInvalidProgrammingExercises: 2,
+                        params: { exerciseGroups: [exerciseGroup1] },
+                    },
                     status: 400,
                 });
                 const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
