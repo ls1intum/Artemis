@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -32,7 +32,10 @@ export class SelectWithSearchComponent implements OnInit, OnChanges, OnDestroy {
     offsetX: string;
     offsetY: string;
 
-    constructor(private readonly alertService: AlertService) {}
+    constructor(
+        private readonly alertService: AlertService,
+        private readonly cdr: ChangeDetectorRef,
+    ) {}
 
     ngOnInit(): void {
         this.command.setSelectWithSearchComponent(this);
@@ -51,6 +54,7 @@ export class SelectWithSearchComponent implements OnInit, OnChanges, OnDestroy {
             .subscribe({
                 next: (res: HttpResponse<any[]>) => {
                     this.values = res.body!;
+                    this.cdr.detectChanges();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     onError(this.alertService, errorResponse);
@@ -88,6 +92,7 @@ export class SelectWithSearchComponent implements OnInit, OnChanges, OnDestroy {
         this.offsetX = cursorPosition.pageX - dropdownPosition.left + 'px';
         this.offsetY = cursorPosition.pageY - dropdownPosition.top + 'px';
         this.updateSearchTerm('', true);
+        this.cdr.detectChanges();
     }
 
     handleMenuClosed() {
@@ -103,8 +108,8 @@ export class SelectWithSearchComponent implements OnInit, OnChanges, OnDestroy {
     handleToggle() {
         if (this.dropdown.isOpen()) {
             this.close();
-            return;
+        } else {
+            this.command.execute();
         }
-        this.command.execute();
     }
 }
