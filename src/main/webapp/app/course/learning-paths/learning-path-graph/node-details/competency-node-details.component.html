@@ -12,7 +12,7 @@
             <span *ngIf="this.mastery >= 100" class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered">Mastered</span>
             <span *ngIf="competency.optional" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional">Optional</span>
         </h3>
-        <div *ngIf="competency.description">{{ competency.description }}</div>
+        <div *ngIf="competency.description" [innerHTML]="competency.description"></div>
     </div>
     <div class="col-3"><jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings></div>
 </div>
