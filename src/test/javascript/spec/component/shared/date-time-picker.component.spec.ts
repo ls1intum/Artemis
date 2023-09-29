@@ -36,13 +36,13 @@ describe('FormDateTimePickerComponent', () => {
     describe('test date conversion', () => {
         let convertedDate: Date | null;
         it('should convert the dayjs if it is not undefined', () => {
-            convertedDate = component.convert(normalDate);
+            convertedDate = component.convertToDate(normalDate);
 
             expect(convertedDate).toEqual(normalDateAsDateObject);
         });
 
         it('should return null if dayjs is undefined', () => {
-            convertedDate = component.convert();
+            convertedDate = component.convertToDate();
 
             expect(convertedDate).toBeNull();
         });
@@ -52,7 +52,7 @@ describe('FormDateTimePickerComponent', () => {
 
             expect(unconvertedDate.isValid()).toBeFalse();
 
-            convertedDate = component.convert(unconvertedDate);
+            convertedDate = component.convertToDate(unconvertedDate);
 
             expect(convertedDate).toBeNull();
         });
