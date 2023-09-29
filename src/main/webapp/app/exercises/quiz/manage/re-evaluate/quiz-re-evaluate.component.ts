@@ -46,14 +46,14 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     constructor(
         private quizExerciseService: QuizExerciseService,
         private route: ActivatedRoute,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalServiceC: NgbModal,
         private quizExercisePopupService: QuizExercisePopupService,
         public changeDetector: ChangeDetectorRef,
         private navigationUtilService: ArtemisNavigationUtilService,
+        dragAndDropQuestionUtil: DragAndDropQuestionUtil,
     ) {
-        super();
+        super(dragAndDropQuestionUtil);
     }
 
     ngOnInit(): void {
