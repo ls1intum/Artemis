@@ -1,19 +1,9 @@
-<button type="button" class="btn btn-sm py-0" [matMenuTriggerFor]="searchSubMenu" (menuOpened)="handleMenuOpen()" (menuClosed)="handleMenuClosed()">
-    <fa-icon [icon]="command.buttonIcon"></fa-icon>
-</button>
-<mat-menu #searchSubMenu yPosition="above">
-    <button *ngFor="let value of values" mat-menu-item (click)="setSelection(value)">
-        {{ value.name }}
+<div #dropdown ngbDropdown class="d-inline-block" (openChange)="$event ? handleMenuOpen() : handleMenuClosed()" autoClose="inside" [placement]="['top-start']">
+    <button type="button" class="btn btn-sm py-0" (click)="handleToggle()">
+        <fa-icon [icon]="command.buttonIcon"></fa-icon>
     </button>
-    <form #searchInputForm id="searchInputForm" (click)="$event.stopPropagation()" mat-menu-item class="p-1" (focus)="focusInputField(true)" (submit)="fillSelection()">
-        <input
-            #searchInput
-            matInput
-            class="form-control"
-            (input)="updateSearchTerm(searchInput.value)"
-            (keydown.arrowUp)="focusInput = false"
-            (keydown.arrowDown)="focusInput = false"
-            (blur)="focusInputField()"
-        />
-    </form>
-</mat-menu>
+    <div ngbDropdownAnchor id="anchor" style="position: absolute; width: 0; height: 0" [style.top]="offsetY" [style.left]="offsetX"></div>
+    <div ngbDropdownMenu>
+        <button ngbDropdownItem type="button" *ngFor="let value of values" (click)="setSelection(value)">{{ value.name }}</button>
+    </div>
+</div>

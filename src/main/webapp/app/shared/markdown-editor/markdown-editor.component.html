@@ -12,6 +12,7 @@
                         [text]="markdown || ''"
                         (textChange)="markdownTextChange($event)"
                         class="form-control markdown-editor__content"
+                        (textChanged)="editorContentString = $event"
                         [class.file-input]="enableFileUpload"
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"
                         (drop)="enableFileUpload ? onFileDrop($event) : ''"
@@ -84,7 +85,12 @@
                             </ng-container>
                         </div>
                     </div>
-                    <jhi-select-with-search *ngFor="let command of defaultCommands | typeCheck: InteractiveSearchCommand" [command]="command" />
+                    <jhi-select-with-search
+                        *ngFor="let command of defaultCommands | typeCheck: InteractiveSearchCommand"
+                        [command]="command"
+                        [editorContentString]="editorContentString"
+                    ></jhi-select-with-search>
+
                     <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand | negatedTypeCheck: InteractiveSearchCommand">
                         <div>
                             <button

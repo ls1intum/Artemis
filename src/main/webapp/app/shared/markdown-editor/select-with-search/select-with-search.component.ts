@@ -1,10 +1,10 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, debounce, distinctUntilChanged, switchMap, takeUntil, timer } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { NgbDropdown, NgbDropdownConfig } from '@ng-bootstrap/ng-bootstrap';
 
 interface SearchQuery {
     searchTerm: string;
@@ -15,21 +15,22 @@ interface SearchQuery {
     selector: 'jhi-select-with-search',
     templateUrl: './select-with-search.component.html',
     styleUrls: ['./select-with-search.component.scss'],
+    providers: [NgbDropdownConfig],
 })
-export class SelectWithSearchComponent implements OnInit, OnDestroy {
+export class SelectWithSearchComponent implements OnInit, OnChanges, OnDestroy {
     @Input() command: InteractiveSearchCommand;
-    @Output() valueSelect = new EventEmitter<any | undefined>();
+    @Input() editorContentString: string;
 
-    @ViewChild(MatMenuTrigger) menuTrigger: MatMenuTrigger;
-    @ViewChild('searchInputForm') searchInputForm: MatMenuItem;
-    @ViewChild('searchInput') searchInput: ElementRef;
+    @ViewChild(NgbDropdown) dropdown: NgbDropdown;
+    @ViewChild('dropdown') dropdownRef: ElementRef;
 
     private ngUnsubscribe = new Subject<void>();
     private readonly search$ = new Subject<SearchQuery>();
 
     values: any[] = [];
     selectedValue: any;
-    focusInput = true;
+    offsetX: string;
+    offsetY: string;
 
     constructor(private readonly alertService: AlertService) {}
 
@@ -57,8 +58,10 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
             });
     }
 
-    open() {
-        this.menuTrigger.openMenu();
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.editorContentString) {
+            this.command.updateSearchTerm();
+        }
     }
 
     ngOnDestroy(): void {
@@ -66,39 +69,42 @@ export class SelectWithSearchComponent implements OnInit, OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
+    open() {
+        this.dropdown.open();
+    }
+
+    close() {
+        this.dropdown.close();
+    }
+
     updateSearchTerm(searchInput: string | undefined, noDebounce = false) {
         const searchTerm = searchInput?.trim().toLowerCase() ?? '';
         this.search$.next({ searchTerm, noDebounce });
     }
 
-    focusInputField(force = false) {
-        if (this.focusInput || force) {
-            this.focusInput = true;
-            this.searchInput.nativeElement.focus();
-        }
-    }
-
     handleMenuOpen() {
-        this.focusInput = true;
-        this.searchInputForm.focus();
-        this.searchInput.nativeElement.value = '';
+        const cursorPosition = this.command.getCursorScreenPosition();
+        const dropdownPosition = this.dropdownRef.nativeElement.getBoundingClientRect();
+        this.offsetX = cursorPosition.pageX - dropdownPosition.left + 'px';
+        this.offsetY = cursorPosition.pageY - dropdownPosition.top + 'px';
         this.updateSearchTerm('', true);
     }
 
     handleMenuClosed() {
-        this.focusInput = false;
         this.command.insertSelection(this.selectedValue);
         this.selectedValue = undefined;
     }
 
     setSelection(value: any) {
         this.selectedValue = value;
+        this.dropdown.close();
     }
 
-    fillSelection() {
-        if (this.values?.length > 0) {
-            this.setSelection(this.values.last());
-            this.menuTrigger.closeMenu();
+    handleToggle() {
+        if (this.dropdown.isOpen()) {
+            this.close();
+            return;
         }
+        this.command.execute();
     }
 }

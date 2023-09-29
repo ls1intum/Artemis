@@ -4,9 +4,12 @@ import { Observable } from 'rxjs';
 import { SelectWithSearchComponent } from 'app/shared/markdown-editor/select-with-search/select-with-search.component';
 
 export abstract class InteractiveSearchCommand extends MultiOptionCommand {
-    private insertedAssociatedCharacter = false;
     private selectWithSearchComponent: SelectWithSearchComponent;
-    execute(): void {}
+    execute(): void {
+        this.aceEditor.execCommand(this.getAssociatedInputCharacter());
+    }
+
+    private searchPositionStart: { row: number; column: number } | undefined;
 
     setEditor(aceEditor: any) {
         super.setEditor(aceEditor);
@@ -15,9 +18,19 @@ export abstract class InteractiveSearchCommand extends MultiOptionCommand {
             name: this.getAssociatedInputCharacter(),
             bindKey: { win: this.getAssociatedInputCharacter(), mac: this.getAssociatedInputCharacter() },
             exec: (editor: any) => {
-                this.insertedAssociatedCharacter = true;
+                if (this.searchPositionStart) {
+                    return;
+                }
+
+                const cursorPosition = this.getCursorPosition();
+                const lineContent = editor.session.getLine(cursorPosition.row).substring(0, cursorPosition.column);
+
                 editor.insert(this.getAssociatedInputCharacter());
-                this.selectWithSearchComponent?.open();
+                if (cursorPosition.column === 0 || lineContent.slice(-1).match(/\s/)) {
+                    this.searchPositionStart = cursorPosition;
+                    this.selectWithSearchComponent?.open();
+                    this.aceEditor.focus();
+                }
             },
         } as any);
     }
@@ -28,16 +41,18 @@ export abstract class InteractiveSearchCommand extends MultiOptionCommand {
 
     insertSelection(selected: any) {
         if (selected !== undefined) {
-            const cursorPosition = this.aceEditor.getCursorPosition();
+            const cursorPosition = this.aceEditor.getCursorPosition() as { row: number; column: number };
 
-            if (this.insertedAssociatedCharacter) {
-                this.aceEditor.session.getDocument().removeInLine(cursorPosition.row, cursorPosition.column - 1, cursorPosition.column);
-            }
+            this.aceEditor.session
+                .getDocument()
+                .removeInLine(cursorPosition.row, this.searchPositionStart?.row === cursorPosition.row ? this.searchPositionStart.column : 0, cursorPosition.column);
+
+            this.searchPositionStart = undefined;
 
             this.insertText(this.selectionToText(selected));
         }
 
-        this.insertedAssociatedCharacter = false;
+        this.searchPositionStart = undefined;
         this.aceEditor.focus();
     }
 
@@ -46,4 +61,33 @@ export abstract class InteractiveSearchCommand extends MultiOptionCommand {
     protected abstract selectionToText(selected: any): string;
 
     protected abstract getAssociatedInputCharacter(): string;
+
+    getCursorScreenPosition(): any {
+        const cursorPosition = super.getCursorPosition();
+        return this.aceEditor.renderer.textToScreenCoordinates(cursorPosition.row, cursorPosition.column);
+    }
+
+    updateSearchTerm() {
+        if (!this.searchPositionStart) {
+            return;
+        }
+
+        const cursorPosition = this.aceEditor.getCursorPosition();
+        const lineContent = this.aceEditor.session.getLine(cursorPosition.row);
+
+        const lastAtIndex = lineContent
+            .substring(cursorPosition.row === this.searchPositionStart.row ? this.searchPositionStart.column : 0, cursorPosition.column + 1)
+            .lastIndexOf(this.getAssociatedInputCharacter());
+
+        if (lastAtIndex >= 0) {
+            const searchTerm = lineContent
+                .substring(0, cursorPosition.column + 1)
+                .split(this.getAssociatedInputCharacter())
+                .pop();
+
+            this.selectWithSearchComponent.updateSearchTerm(searchTerm);
+        } else {
+            this.selectWithSearchComponent.close();
+        }
+    }
 }
