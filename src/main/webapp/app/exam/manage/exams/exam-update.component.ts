@@ -1,22 +1,22 @@
+import dayjs from 'dayjs/esm';
+import { omit } from 'lodash-es';
+import { combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
-import { map, tap } from 'rxjs/operators';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
@@ -24,21 +24,16 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     templateUrl: './exam-update.component.html',
 })
 export class ExamUpdateComponent implements OnInit {
-    originalStartDate?: dayjs.Dayjs;
-    originalEndDate?: dayjs.Dayjs;
     exam: Exam;
     course: Course;
     isSaving: boolean;
-    // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
-    // workingTimeInMinutes: number;
-    // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
-    maxWorkingTimeInMinutes: number;
     isImport = false;
     isImportInSameCourse = false;
     hideChannelNameInput = false;
 
-    // Expose enums to the template
-    exerciseType = ExerciseType;
+    private originalStartDate?: dayjs.Dayjs;
+    private originalEndDate?: dayjs.Dayjs;
+
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
 
@@ -48,16 +43,11 @@ export class ExamUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
     faExclamationTriangle = faExclamationTriangle;
-    faCheckDouble = faCheckDouble;
-    faFont = faFont;
-
-    readonly FeatureToggle = FeatureToggle;
 
     constructor(
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
         private alertService: AlertService,
-        private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private modalService: NgbModal,
         private router: Router,
@@ -65,40 +55,31 @@ export class ExamUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.route.data.subscribe(({ exam }) => {
-            this.exam = exam;
-            this.originalStartDate = this.exam.startDate?.clone();
-            this.originalEndDate = this.exam.endDate?.clone();
+        combineLatest([this.route.url, this.route.data]).subscribe(([segments, data]) => {
+            const isImport = segments.some(({ path }) => path === 'import');
+            const exam: Exam = isImport ? prepareExamForImport(data.exam) : data.exam;
 
-            // Tap the URL to determine, if the Exam should be imported
-            this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
-
-            if (this.isImport) {
-                this.resetIdAndDatesForImport();
-                this.isImportInSameCourse = this.exam.course?.id === Number(this.route.snapshot.paramMap.get('courseId'));
+            if (!exam.gracePeriod) {
+                exam.gracePeriod = 180;
             }
 
-            this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
-                next: (response: HttpResponse<Course>) => {
-                    this.exam.course = response.body!;
-                    this.course = response.body!;
-                    this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingEnabled(this.course);
-                },
-                error: (err: HttpErrorResponse) => onError(this.alertService, err),
-            });
-
-            if (!this.exam.gracePeriod) {
-                this.exam.gracePeriod = 180;
-            }
             // test exam only feature automatic assessment
-            if (this.exam.testExam) {
-                this.exam.numberOfCorrectionRoundsInExam = 0;
-            } else if (!this.exam.numberOfCorrectionRoundsInExam) {
-                this.exam.numberOfCorrectionRoundsInExam = 1;
+            if (exam.testExam) {
+                exam.numberOfCorrectionRoundsInExam = 0;
+            } else if (!exam.numberOfCorrectionRoundsInExam) {
+                exam.numberOfCorrectionRoundsInExam = 1;
             }
+
+            this.exam = exam;
+            this.isImport = isImport;
+            this.isImportInSameCourse = isImport && exam.course?.id === data.course.id;
+            this.originalStartDate = exam.startDate?.clone();
+            this.originalEndDate = exam.endDate?.clone();
+
+            this.course = data.course;
+            this.exam.course = data.course;
+            this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingEnabled(this.course);
         });
-        // Initialize helper attributes
-        this.calculateMaxWorkingTime();
     }
 
     /**
@@ -121,40 +102,34 @@ export class ExamUpdateComponent implements OnInit {
      * Returns to the detail page if there is no previous state and we edited an existing exam
      * Returns to the overview page if there is no previous state and we created a new exam
      */
-    previousState() {
+    resetToPreviousState() {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
-    }
-
-    handleExamDateChange() {
-        this.calculateWorkingTime();
-        this.calculateMaxWorkingTime();
     }
 
     /**
      * Calculates the WorkingTime for real exams based on the start- and end-time.
      */
-    private calculateWorkingTime() {
-        if (!this.exam.testExam) {
-            if (this.exam.startDate && this.exam.endDate) {
-                this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-            } else {
-                this.exam.workingTime = 0;
-            }
+    calculateWorkingTime() {
+        if (this.exam.testExam) return;
+
+        if (this.exam.startDate && this.exam.endDate) {
+            this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+        } else {
+            this.exam.workingTime = 0;
         }
     }
 
     /**
-     * Used to determine the maximum working time every time, the user changes the start- or endDate.
-     * Used to show a graphical warning at the working time input field
+     * Returns the maximum working time in minutes for test exams.
      */
-    private calculateMaxWorkingTime() {
-        if (this.exam.testExam) {
-            if (this.exam.startDate && this.exam.endDate) {
-                this.maxWorkingTimeInMinutes = dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
-            } else {
-                // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
-                this.maxWorkingTimeInMinutes = this.isImport ? this.workingTimeInMinutes : 0;
-            }
+    get maxWorkingTimeInMinutes(): number {
+        if (!this.exam.testExam) return 0;
+
+        if (this.exam.startDate && this.exam.endDate) {
+            return dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
+        } else {
+            // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
+            return this.isImport ? this.workingTimeInMinutes : 0;
         }
     }
 
@@ -214,9 +189,9 @@ export class ExamUpdateComponent implements OnInit {
      * @param exam
      * @private
      */
-    private onSaveSuccess(exam: Exam) {
+    private async onSaveSuccess(exam: Exam) {
         this.isSaving = false;
-        this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
+        await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }
 
@@ -294,9 +269,8 @@ export class ExamUpdateComponent implements OnInit {
      * For test exams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
-        if (!this.exam.startDate) {
-            return false;
-        }
+        if (!this.exam.startDate) return false;
+
         if (this.exam.testExam) {
             return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
         } else {
@@ -370,19 +344,12 @@ export class ExamUpdateComponent implements OnInit {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
     }
-
-    /**
-     * Helper-Method to reset the Exam Id and Exam dates when importing the Exam
-     */
-    private resetIdAndDatesForImport() {
-        this.exam.id = undefined;
-        this.exam.visibleDate = undefined;
-        this.exam.startDate = undefined;
-        this.exam.endDate = undefined;
-        this.exam.publishResultsDate = undefined;
-        this.exam.examStudentReviewStart = undefined;
-        this.exam.examStudentReviewEnd = undefined;
-        this.exam.examUsers = undefined;
-        this.exam.studentExams = undefined;
-    }
 }
+
+/**
+ * Prepares the exam for import by omitting all properties that should not be imported.
+ */
+export const prepareExamForImport = (exam: Exam): Exam => ({
+    ...omit(exam, ['id', 'visibleDate', 'startDate', 'endDate', 'publishResultsDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'examUsers', 'studentExams']),
+    workingTime: 0,
+});

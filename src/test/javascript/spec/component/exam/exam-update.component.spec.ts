@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
+import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -16,7 +16,6 @@ import { Course, CourseInformationSharingConfiguration } from 'app/entities/cour
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
 import { Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -24,7 +23,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Params, Router, UrlSegment, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
@@ -101,31 +100,12 @@ describe('Exam Update Component', () => {
                     {
                         provide: ActivatedRoute,
                         useValue: {
-                            data: {
-                                subscribe: (fn: (value: Params) => void) =>
-                                    fn({
-                                        exam: examWithoutExercises,
-                                    }),
-                            },
-                            snapshot: {
-                                paramMap: convertToParamMap({
-                                    courseId: '1',
-                                }),
-                            },
-                            url: of([{ path: '' } as UrlSegment]),
+                            data: of({ exam: examWithoutExercises, course }),
+                            params: of({ courseId: '1' }),
+                            url: of([{ path: '' }] as UrlSegment[]),
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(CourseManagementService, {
-                        find: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: course,
-                                    status: 200,
-                                }),
-                            );
-                        },
-                    }),
                     MockProvider(GradingSystemService, {
                         findGradingScaleForExam: () => {
                             return of(
@@ -261,7 +241,7 @@ describe('Exam Update Component', () => {
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            component.handleExamDateChange();
+            component.calculateWorkingTime();
             // Without a valid startDate, the workingTime should be 0
             // examWithoutExercises.workingTime is stored in seconds
             expect(examWithoutExercises.workingTime).toBe(0);
@@ -270,13 +250,13 @@ describe('Exam Update Component', () => {
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            component.handleExamDateChange();
+            component.calculateWorkingTime();
             expect(examWithoutExercises.workingTime).toBe(7200);
             expect(component.workingTimeInMinutes).toBe(120);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = undefined;
-            component.handleExamDateChange();
+            component.calculateWorkingTime();
             // Without an endDate, the working time should be 0;
             expect(examWithoutExercises.workingTime).toBe(0);
             expect(component.workingTimeInMinutes).toBe(0);
@@ -288,7 +268,7 @@ describe('Exam Update Component', () => {
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
-            component.handleExamDateChange();
+            component.calculateWorkingTime();
             expect(examWithoutExercises.workingTime).toBe(3600);
             expect(component.workingTimeInMinutes).toBe(60);
         });
@@ -392,7 +372,7 @@ describe('Exam Update Component', () => {
             component.course = course;
             component.exam = examWithoutExercises;
             examWithoutExercises.id = 1;
-            component.previousState();
+            component.resetToPreviousState();
             expect(spy).toHaveBeenCalledOnce();
             expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], examWithoutExercises.id!.toString());
         });
@@ -518,32 +498,12 @@ describe('Exam Update Component', () => {
                     {
                         provide: ActivatedRoute,
                         useValue: {
-                            data: {
-                                subscribe: (fn: (value: Params) => void) =>
-                                    fn({
-                                        exam: examForImport,
-                                    }),
-                            },
-                            snapshot: {
-                                paramMap: convertToParamMap({
-                                    courseId: '1',
-                                    examId: '3',
-                                }),
-                            },
-                            url: of([{ path: 'import' } as UrlSegment]),
+                            data: of({ exam: examForImport, course }),
+                            params: of({ examId: '3', courseId: '1' }),
+                            url: of([{ path: 'import' }] as UrlSegment[]),
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(CourseManagementService, {
-                        find: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: course,
-                                    status: 200,
-                                }),
-                            );
-                        },
-                    }),
                     MockProvider(GradingSystemService, {
                         findGradingScaleForExam: () => {
                             return of(
@@ -557,6 +517,7 @@ describe('Exam Update Component', () => {
                 ],
             }).compileComponents();
 
+            router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
             component = fixture.componentInstance;
             examManagementService = fixture.debugElement.injector.get(ExamManagementService);
@@ -597,7 +558,11 @@ describe('Exam Update Component', () => {
             expect(component.exam.studentExams).toBeUndefined();
         });
 
-        it('should perform input of an examWithoutExercises with exercises successfully', () => {
+        it('should perform import of an examWithoutExercises with exercises successfully', () => {
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+            const alertSpy = jest.spyOn(alertService, 'error');
+            const navigateSpy = jest.spyOn(router, 'navigate');
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -606,11 +571,14 @@ describe('Exam Update Component', () => {
                     }),
                 ),
             );
-            const alertSpy = jest.spyOn(alertService, 'error');
+
             fixture.detectChanges();
             component.save();
+
             expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, examForImport);
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
             expect(alertSpy).not.toHaveBeenCalled();
         });
 
@@ -649,6 +617,9 @@ describe('Exam Update Component', () => {
         it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
             'should perform import of examWithoutExercises AND correctly process conflict exception from server',
             (errorKey) => {
+                const expectedExam = prepareExamForImport(examForImport);
+                expectedExam.course = course;
+
                 const preCheckError = new HttpErrorResponse({
                     error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
                     status: 400,
@@ -659,7 +630,7 @@ describe('Exam Update Component', () => {
                 fixture.detectChanges();
                 component.save();
 
-                expect(importSpy).toHaveBeenCalledWith(1, examForImport);
+                expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
                 if (errorKey == 'invalidKey') {
                     expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
                 } else {
@@ -669,6 +640,9 @@ describe('Exam Update Component', () => {
         );
 
         it('should perform input of exercise groups AND correctly process arbitrary exception from server', () => {
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+
             const error = new HttpErrorResponse({
                 status: 400,
             });
@@ -678,7 +652,7 @@ describe('Exam Update Component', () => {
             fixture.detectChanges();
             component.save();
             expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, examForImport);
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
             expect(alertSpy).toHaveBeenCalledOnce();
         });
     });
