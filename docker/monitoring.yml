@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
 #
-# Out of the box this setup just works with a non-containerized Artemis instancezs
+# Out of the box this setup just works with a non-containerized Artemis instances
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:

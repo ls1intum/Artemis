@@ -13,7 +13,7 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
-        pull_policy: if_not_present
+        pull_policy: always
         restart: always
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod.env}
