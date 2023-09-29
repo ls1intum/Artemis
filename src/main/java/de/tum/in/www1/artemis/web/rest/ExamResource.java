@@ -266,7 +266,7 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
+        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
             // TODO: check if there are any problems with that - i.e. TZ issues, only changing working time in UI, ...
             int workingTimeChange = savedExam.getDuration() - originalExam.getDuration();
             updateStudentExamsAndRescheduleExercises(examWithExercises, workingTimeChange);

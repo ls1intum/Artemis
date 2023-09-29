@@ -126,7 +126,7 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.testExam) return 0;
 
         if (this.exam.startDate && this.exam.endDate) {
-            return dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
+            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
         } else {
             // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
             return this.isImport ? this.workingTimeInMinutes : 0;
