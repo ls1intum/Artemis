@@ -197,7 +197,8 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
         </div>
-        <jhi-exercise-update-notification [exercise]="fileUploadExercise" [isImport]="isImport" [(notificationText)]="notificationText"> </jhi-exercise-update-notification>
+        <jhi-exercise-update-notification *ngIf="!isExamMode" [exercise]="fileUploadExercise" [isImport]="isImport" [(notificationText)]="notificationText">
+        </jhi-exercise-update-notification>
     </div>
     <div>
         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">

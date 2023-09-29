@@ -60,7 +60,7 @@ public class GroupNotificationService {
             return;
         }
 
-        if ((notificationText != null && exercise.isCourseExercise()) || exercise.isExamExercise()) {
+        if (notificationText != null && exercise.isCourseExercise()) {
             // sends an exercise-update notification
             notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, notificationText);
         }

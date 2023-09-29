@@ -119,15 +119,13 @@ public class GroupNotificationFactory {
                 if (exercise.isExamExercise()) {
                     title = NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
                     text = NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT;
-                    textIsPlaceholder = true;
-                    placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 }
                 else {
                     title = NotificationConstants.EXERCISE_UPDATED_TITLE;
                     text = NotificationConstants.EXERCISE_UPDATED_TEXT;
-                    textIsPlaceholder = true;
-                    placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 }
+                textIsPlaceholder = true;
+                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case PROGRAMMING_TEST_CASES_CHANGED -> {
                 title = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;

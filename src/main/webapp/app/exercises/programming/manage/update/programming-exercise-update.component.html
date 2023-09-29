@@ -72,6 +72,7 @@
             ></jhi-programming-exercise-grading>
 
             <jhi-exercise-update-notification
+                *ngIf="!isExamMode"
                 [exercise]="programmingExercise"
                 [isImport]="isImportFromExistingExercise || isImportFromFile"
                 [(notificationText)]="notificationText"
