@@ -216,8 +216,10 @@ public class AssessmentService {
         result.setRatedIfNotAfterDueDate();
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
-        // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
+
         if (ltiNewResultService.isPresent()) {
+            // Note: we always need to report the result (independent of the assessment due date) over LTI, if LTI is configured.
+            // Otherwise, it might never become visible in the external system
             ltiNewResultService.get().onNewResult((StudentParticipation) result.getParticipation());
         }
         return result;
