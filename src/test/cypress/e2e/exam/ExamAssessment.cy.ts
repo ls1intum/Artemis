@@ -74,7 +74,7 @@ describe('Exam assessment', () => {
 
     describe('Modeling exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(45, 'seconds');
             prepareExam(course, examEnd, ExerciseType.MODELING);
         });
 

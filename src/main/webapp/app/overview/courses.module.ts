@@ -12,16 +12,12 @@ import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
-import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
-import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
-import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
-import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 
 @NgModule({
@@ -38,7 +34,6 @@ import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollme
         FeatureToggleModule,
         RatingModule,
         NgxChartsModule,
-        ArtemisExamSharedModule,
         PieChartModule,
     ],
     declarations: [
@@ -49,9 +44,6 @@ import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollme
         CourseExercisesComponent,
         CourseLecturesComponent,
         CourseLectureRowComponent,
-        CourseExamsComponent,
-        CourseExamDetailComponent,
-        CourseExamAttemptReviewDetailComponent,
         CourseUnenrollmentModalComponent,
     ],
     exports: [HeaderCourseComponent],

@@ -23,8 +23,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private studentExamTestExamUpdateSubscription?: Subscription;
     private studentExams: StudentExam[];
     public expandAttemptsMap = new Map<number, boolean>();
-    public realExamsOfCourse: Exam[];
-    public testExamsOfCourse: Exam[];
+    public realExamsOfCourse: Exam[] = [];
+    public testExamsOfCourse: Exam[] = [];
 
     // Icons
     faAngleUp = faAngleUp;
@@ -41,7 +41,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * subscribe to changes in the course and fetch course by the path parameter
      */
     ngOnInit(): void {
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        this.paramSubscription = this.route.parent!.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
