@@ -9,7 +9,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-jira:9.4.3
-        pull_policy: always
+        pull_policy: if_not_present
         volumes:
             - artemis-jira-data:/var/atlassian/application-data/jira
         ports:
@@ -25,7 +25,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-bitbucket:8.13.1
-        pull_policy: always
+        pull_policy: if_not_present
         volumes:
             - artemis-bitbucket-data:/var/atlassian/application-data/bitbucket
         environment:
@@ -45,7 +45,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-bamboo:9.3.3
-        pull_policy: always
+        pull_policy: if_not_present
         volumes:
             - artemis-bamboo-data:/var/atlassian/application-data/bamboo
         ports:
@@ -70,7 +70,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-bamboo-build-agent:9.2.1
-        pull_policy: always
+        pull_policy: if_not_present
         volumes:
             # The following path needs to be the same absolute path on the host because of the docker socket:
             # https://confluence.atlassian.com/bamkb/bamboo-in-docker-build-fails-due-to-a-missing-working-directory-when-using-docker-runner-1027119339.html
