@@ -150,6 +150,10 @@
         },
         "learningPath": {
             "learningPathButton": "Learning Paths",
+            "breadcrumbs": {
+                "lectureUnit": "Lecture Unit",
+                "exercise": "Exercise"
+            },
             "manageLearningPaths": {
                 "title": "Learning Path Management",
                 "health": {
@@ -174,6 +178,18 @@
                     "refresh": "Refresh",
                     "center": "Center view"
                 }
+            },
+            "sideBar": {
+                "hide": "Hide Learning Path",
+                "show": "Show Learning Path",
+                "header": "Learning Path"
+            },
+            "participate": {
+                "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
+                "prev": "Back",
+                "prevHint": "Return to your previous lecture unit or exercise",
+                "next": "Continue",
+                "nextHint": "Go to next recommendation"
             }
         }
     }
