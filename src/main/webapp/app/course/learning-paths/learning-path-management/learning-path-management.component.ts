@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { debounceTime, finalize, switchMap, tap } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { LearningPathPagingService } from 'app/course/learning-paths/learning-pa
 import { SortService } from 'app/shared/service/sort.service';
 import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
 import { faSort, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
+import { HealthStatus, LearningPathHealthDTO, getWarningAction, getWarningBody, getWarningHint, getWarningTitle } from 'app/entities/competency/learning-path-health.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
 
@@ -53,6 +53,7 @@ export class LearningPathManagementComponent implements OnInit {
 
     constructor(
         private activatedRoute: ActivatedRoute,
+        private router: Router,
         private learningPathService: LearningPathService,
         private alertService: AlertService,
         private pagingService: LearningPathPagingService,
@@ -134,7 +135,7 @@ export class LearningPathManagementComponent implements OnInit {
             .subscribe({
                 next: (res) => {
                     this.health = res.body!;
-                    if (this.health.status !== HealthStatus.DISABLED) {
+                    if (!this.health.status?.includes(HealthStatus.DISABLED)) {
                         this.performSearch(this.sort, 0);
                         this.performSearch(this.search, 300);
                     }
@@ -161,6 +162,10 @@ export class LearningPathManagementComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+    }
+
+    routeToCompetencyManagement() {
+        this.router.navigate(['../competency-management'], { relativeTo: this.activatedRoute });
     }
 
     /**
@@ -214,4 +219,8 @@ export class LearningPathManagementComponent implements OnInit {
     }
 
     protected readonly HealthStatus = HealthStatus;
+    protected readonly getWarningTitle = getWarningTitle;
+    protected readonly getWarningBody = getWarningBody;
+    protected readonly getWarningAction = getWarningAction;
+    protected readonly getWarningHint = getWarningHint;
 }
