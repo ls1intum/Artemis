@@ -234,8 +234,6 @@ public class ExamResource {
         if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             // TODO: check if there are any problems with that - i.e. TZ issues, only changing working time in UI, ...
             int workingTimeChange = savedExam.getDuration() - originalExam.getDuration();
-            System.out.println("Working Time Change:");
-            System.out.println(workingTimeChange);
             updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
 
@@ -281,10 +279,6 @@ public class ExamResource {
     }
 
     private void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
-
-        System.out.println("Original Exam Duration:");
-        System.out.println(originalExamDuration);
-
         var now = now();
 
         User instructor = userRepository.getUser();
