@@ -277,6 +277,23 @@ Participating in Programming Exercises
     You can use the |resolve_conflict| button, which is then displayed instead of the submit button, to resolve the conflict within the online code editor.
     This will reset your changes to the latest commit. Manual merging is not possible with the online code editor.
 
+.. _updated_problem_statement:
+
+Updated Problem Statement during the Exam
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If your instructor updates the problem statement for an exercise during the exam, you will receive a notification as seen in the screenshot below and can toggle between a diff view and the new problem statement as shown in the second and third screenshot.
+
+.. figure:: student/student-notification.png
+   :alt: Problem Statement Update Notification
+
+.. figure:: student/problem-statement-normal-view.png
+   :alt: Updated Problem Statement in the Normal View
+
+.. figure:: student/problem-statement-diff-view.png
+    :alt: Updated Problem Statement in the Diff View
+
+
+
 End Screen
 ^^^^^^^^^^
 - When you are finished with the exercises, or the time runs out you navigate to the *End Screen*.
