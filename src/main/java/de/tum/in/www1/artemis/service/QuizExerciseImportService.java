@@ -162,7 +162,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             else {
                 // A new file got uploaded, everything got already verified at this point
-                quizExerciseService.saveDndDragItemPicture(dragItem, fileMap, null);
+                quizExerciseService.saveDndDragItemPicture(dragItem, fileMap);
             }
         }
         for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
