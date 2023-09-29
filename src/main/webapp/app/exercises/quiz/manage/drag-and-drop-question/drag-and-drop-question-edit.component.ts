@@ -675,6 +675,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Delete this question from the quiz
      */
     deleteQuestion(): void {
+        this.filePreviewPaths.forEach((_, fileName) => this.removeFile.emit(fileName));
         this.questionDeleted.emit();
     }
 
