@@ -1,10 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.config.SecurityConfiguration;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.annotations.ManualConfig;
-import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.artemis.web.rest.open.PublicLtiResource;
 import de.tum.in.www1.artemis.web.rest.open.PublicProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
 
@@ -26,35 +19,13 @@ import de.tum.in.www1.artemis.web.rest.open.PublicResultResource;
 @Deprecated(forRemoval = true)
 public class LegacyResource {
 
-    private final PublicLtiResource publicLtiResource;
-
     private final PublicProgrammingSubmissionResource publicProgrammingSubmissionResource;
 
     private final PublicResultResource publicResultResource;
 
-    public LegacyResource(PublicLtiResource publicLtiResource, PublicProgrammingSubmissionResource publicProgrammingSubmissionResource, PublicResultResource publicResultResource) {
-        this.publicLtiResource = publicLtiResource;
+    public LegacyResource(PublicProgrammingSubmissionResource publicProgrammingSubmissionResource, PublicResultResource publicResultResource) {
         this.publicProgrammingSubmissionResource = publicProgrammingSubmissionResource;
         this.publicResultResource = publicResultResource;
-    }
-
-    /**
-     * POST lti/launch/:exerciseId : Launch the exercise app using request by an LTI consumer. Redirects the user to
-     * the exercise on success.
-     *
-     * @param launchRequest the LTI launch request (ExerciseLtiConfigurationDTO)
-     * @param exerciseId    the id of the exercise the user wants to open
-     * @param request       the request
-     * @param response      the response
-     * @deprecated use {@link PublicLtiResource#launch(LtiLaunchRequestDTO, Long, HttpServletRequest, HttpServletResponse)} instead
-     */
-    @PostMapping("lti/launch/{exerciseId}")
-    @EnforceNothing
-    @ManualConfig
-    @Deprecated(forRemoval = true)
-    public void legacyLtiLaunch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request,
-            HttpServletResponse response) throws IOException {
-        publicLtiResource.launch(launchRequest, exerciseId, request, response);
     }
 
     /**
