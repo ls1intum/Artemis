@@ -26,9 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
@@ -516,6 +514,13 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(updatedParticipations);
     }
 
+    private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
+        if (exercise.getExerciseType() == ExerciseType.QUIZ) {
+            return studentParticipationRepository.findByExerciseIdWithLatestAndManualRatedResults(exercise.getId());
+        }
+        return studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exercise.getId());
+    }
+
     /**
      * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
@@ -532,7 +537,7 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResults) {
-            participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exerciseId);
+            participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
                 if (participation.getResults() != null && !participation.getResults().isEmpty()) {
