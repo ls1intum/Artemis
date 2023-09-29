@@ -99,8 +99,8 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exam
-     * Returns to the overview page if there is no previous state and we created a new exam
+     * Returns to the detail page if there is no previous state, and we edited an existing exam
+     * Returns to the overview page if there is no previous state, and we created a new exam
      */
     resetToPreviousState() {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());

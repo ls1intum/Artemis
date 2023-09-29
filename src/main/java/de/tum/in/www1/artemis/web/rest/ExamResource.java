@@ -217,7 +217,7 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(updatedExam);
 
-        // NOTE: We have to get exercise groups as we need them for re-scheduling
+        // NOTE: We have to get exercises and groups as we need them for re-scheduling
         Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
@@ -230,7 +230,7 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
+        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             // TODO: check if there are any problems with that - i.e. TZ issues, only changing working time in UI, ...
             int workingTimeChange = savedExam.getDuration() - originalExam.getDuration();
             updateStudentExamsAndRescheduleExercises(examWithExercises, workingTimeChange);

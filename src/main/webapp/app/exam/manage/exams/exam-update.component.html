@@ -71,9 +71,10 @@
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
                         [error]="!isValidVisibleDate"
+                        [startAt]="exam.visibleDate"
                         name="visibleDate"
                         id="visibleDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -82,10 +83,10 @@
                         [(ngModel)]="exam.startDate"
                         (valueChange)="calculateWorkingTime()"
                         [error]="!isValidStartDate"
-                        [startAt]="exam.visibleDate"
+                        [startAt]="exam.startDate || exam.visibleDate"
                         name="startDate"
                         id="startDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -94,10 +95,10 @@
                         [(ngModel)]="exam.endDate"
                         (valueChange)="calculateWorkingTime()"
                         [error]="!isValidEndDate"
-                        [startAt]="exam.startDate"
+                        [startAt]="exam.endDate || exam.startDate"
                         name="endDate"
                         id="endDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
             </div>
             <div class="row mb-3">
