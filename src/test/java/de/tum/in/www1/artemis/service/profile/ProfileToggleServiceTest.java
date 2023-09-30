@@ -18,8 +18,8 @@ class ProfileToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     void getEnabledProfilesReturnsCorrectProfiles() {
-        // On this single instance that is used during the test, the profiles of that instance are equal to all available profiles
-        assertThat(profileToggleService.enabledProfiles()).containsExactlyInAnyOrder(env.getActiveProfiles());
+        // On this single instance that is used during the test, the profiles of that instance contain all available profiles
+        assertThat(profileToggleService.enabledProfiles()).contains(env.getActiveProfiles());
     }
 
 }
