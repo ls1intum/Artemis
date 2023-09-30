@@ -149,6 +149,7 @@ describe('QuizExercise Management Detail Component', () => {
                 MockProvider(NgbModal),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(DragAndDropQuestionUtil),
+                MockProvider(ShortAnswerQuestionUtil),
                 { provide: ActivatedRoute, useValue: testRoute || route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

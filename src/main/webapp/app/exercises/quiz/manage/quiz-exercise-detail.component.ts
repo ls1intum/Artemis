@@ -102,8 +102,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         private exerciseGroupService: ExerciseGroupService,
         private navigationUtilService: ArtemisNavigationUtilService,
         dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
     ) {
-        super(dragAndDropQuestionUtil);
+        super(dragAndDropQuestionUtil, shortAnswerQuestionUtil);
     }
 
     /**
