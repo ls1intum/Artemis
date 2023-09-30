@@ -21,6 +21,7 @@ import org.imsglobal.lti.launch.LtiVerifier;
 import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import oauth.signpost.exception.OAuthException;
 
 @Service
+@Profile("lti")
 public class Lti10Service {
 
     private final Logger log = LoggerFactory.getLogger(Lti10Service.class);
