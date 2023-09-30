@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
-import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
+import { InteractiveSearchCommand, SelectableItem } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, debounce, distinctUntilChanged, switchMap, takeUntil, timer } from 'rxjs';
@@ -27,8 +27,8 @@ export class SelectWithSearchComponent implements OnInit, OnChanges, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
     private readonly search$ = new Subject<SearchQuery>();
 
-    values: any[] = [];
-    selectedValue: any;
+    values: SelectableItem[] = [];
+    selectedValue: SelectableItem | undefined;
     offsetX: string;
     offsetY: string;
 
@@ -52,7 +52,7 @@ export class SelectWithSearchComponent implements OnInit, OnChanges, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (res: HttpResponse<any[]>) => {
+                next: (res: HttpResponse<SelectableItem[]>) => {
                     this.values = res.body!;
                     this.cdr.detectChanges();
                 },

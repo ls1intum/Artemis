@@ -3,6 +3,10 @@ import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOpt
 import { Observable } from 'rxjs';
 import { SelectWithSearchComponent } from 'app/shared/markdown-editor/select-with-search/select-with-search.component';
 
+export interface SelectableItem {
+    name?: string;
+}
+
 export abstract class InteractiveSearchCommand extends MultiOptionCommand {
     private selectWithSearchComponent: SelectWithSearchComponent;
     execute(): void {
@@ -39,7 +43,7 @@ export abstract class InteractiveSearchCommand extends MultiOptionCommand {
         this.selectWithSearchComponent = component;
     }
 
-    insertSelection(selected: any) {
+    insertSelection(selected: SelectableItem | undefined) {
         if (selected !== undefined) {
             const cursorPosition = this.aceEditor.getCursorPosition() as { row: number; column: number };
 
@@ -56,7 +60,7 @@ export abstract class InteractiveSearchCommand extends MultiOptionCommand {
         this.aceEditor.focus();
     }
 
-    abstract performSearch(searchTerm: string): Observable<HttpResponse<any[]>>;
+    abstract performSearch(searchTerm: string): Observable<HttpResponse<SelectableItem[]>>;
 
     protected abstract selectionToText(selected: any): string;
 
