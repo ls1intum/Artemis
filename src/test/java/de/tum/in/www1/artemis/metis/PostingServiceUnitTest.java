@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.metis;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -73,7 +74,7 @@ public class PostingServiceUnitTest {
         String content = "[user]Test User 1(test_user_1)[/user] [user]Test User 2(test_user_2)[/user]";
         List<User> users = List.of(this.createUser("Test User 1", "test_user_1"), this.createUser("Test User 2", "test_user_2"));
 
-        when(userRepository.findAllByLogins(anySet())).thenReturn(users);
+        setupUserRepository(Set.of("test_user_1", "test_user_2"), users);
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
 
         parseUserMentions.invoke(postingService, course, content);
@@ -88,9 +89,9 @@ public class PostingServiceUnitTest {
         String content = "[user]Test User 1(test_user_1)[/user] [user]Test User 2(test_user_2)[/user]";
         List<User> users = List.of(this.createUser("Test User 1", "test_user_1")); // Return only one user from database
 
-        when(userRepository.findAllByLogins(anySet())).thenReturn(users);
+        setupUserRepository(Set.of("test_user_1", "test_user_2"), users);
 
-        assertInvalidUserMention(course, content);
+        actAndAssertInvalidUserMention(course, content);
     }
 
     @Test
@@ -99,10 +100,10 @@ public class PostingServiceUnitTest {
         String content = "[user]Test User 2(test_user_1)[/user]";
         User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
 
-        when(userRepository.findAllByLogins(anySet())).thenReturn(List.of(user));
+        setupUserRepository(Set.of("test_user_1"), List.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
 
-        assertInvalidUserMention(course, content);
+        actAndAssertInvalidUserMention(course, content);
     }
 
     @Test
@@ -111,10 +112,10 @@ public class PostingServiceUnitTest {
         String content = "[user]Test User 1(test_user_1)[/user]";
         User user = this.createUser("Test User 1", "test_user_1");
 
-        when(userRepository.findAllByLogins(anySet())).thenReturn(List.of(user));
+        setupUserRepository(Set.of("test_user_1"), List.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(false);
 
-        assertInvalidUserMention(course, content);
+        actAndAssertInvalidUserMention(course, content);
     }
 
     @Test
@@ -122,7 +123,7 @@ public class PostingServiceUnitTest {
         Course course = new Course();
         String content = "[user]Test User 1[/user]";
 
-        assertInvalidUserMention(course, content);
+        actAndAssertInvalidUserMention(course, content);
     }
 
     @Test
@@ -130,14 +131,7 @@ public class PostingServiceUnitTest {
         Course course = new Course();
         String content = "[user] Test User 2 (test_user_1) [/user]";
 
-        User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
-
-        when(userRepository.findAllByLogins(anySet())).thenAnswer(invocation -> {
-            Set<String> logins = invocation.getArgument(0);
-            return logins.isEmpty() ? List.of() : List.of(user);
-        });
-
-        when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
+        setupUserRepository(Set.of(), List.of());
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
@@ -148,12 +142,7 @@ public class PostingServiceUnitTest {
         Course course = new Course();
         String content = "Test User 2(test_user_1)[/user]";
 
-        User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
-
-        when(userRepository.findAllByLogins(anySet())).thenAnswer(invocation -> {
-            Set<String> logins = invocation.getArgument(0);
-            return logins.isEmpty() ? List.of() : List.of(user);
-        });
+        setupUserRepository(Set.of(), List.of());
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
@@ -164,17 +153,19 @@ public class PostingServiceUnitTest {
         Course course = new Course();
         String content = "[user]Test User 2(test_user_1)";
 
-        User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
-
-        when(userRepository.findAllByLogins(anySet())).thenAnswer(invocation -> {
-            Set<String> logins = invocation.getArgument(0);
-            return logins.isEmpty() ? List.of() : List.of(user);
-        });
+        setupUserRepository(Set.of(), List.of());
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
     }
 
+    /**
+     * Creates a user with the provided name and login
+     *
+     * @param name  name of the user
+     * @param login login of the user
+     * @return a user
+     */
     private User createUser(String name, String login) {
         User user = new User();
         user.setFirstName(name);
@@ -182,7 +173,29 @@ public class PostingServiceUnitTest {
         return user;
     }
 
-    private void assertInvalidUserMention(Course course, String content) {
+    /**
+     * This helper method sets up the mock for the UserRepository.findAllByLogins method in a way,
+     * so that it asserts the correct input
+     *
+     * @param expectedUserLogins expected set of user logins found in the message content
+     * @param usersInDatabase    the mocked return value of UserRepository.findAllByLogins
+     */
+    private void setupUserRepository(Set<String> expectedUserLogins, List<User> usersInDatabase) {
+        when(userRepository.findAllByLogins(anySet())).thenAnswer(invocation -> {
+            Set<String> logins = invocation.getArgument(0);
+            assertEquals(logins, expectedUserLogins);
+            return usersInDatabase;
+        });
+    }
+
+    /**
+     * Invokes the parseUserMentions method with the given course and content.
+     * Asserts that an BadRequestAlertException exception is thrown.
+     *
+     * @param course  the course
+     * @param content the content
+     */
+    private void actAndAssertInvalidUserMention(Course course, String content) {
         assertThrows(BadRequestAlertException.class, () -> {
             try {
                 parseUserMentions.invoke(postingService, course, content);
