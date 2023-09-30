@@ -967,9 +967,9 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
-        List<User> searchResults = userRepository.searchAllByLoginOrNameInCourse(Pageable.ofSize(10), searchTerm, course.getId()).toList();
+        Stream<User> searchResults = userRepository.searchAllByLoginOrNameInCourse(Pageable.ofSize(10), searchTerm, course.getId()).stream();
 
-        return ResponseEntity.ok().body(searchResults.stream().map(user -> new UserNameAndLoginDTO(user.getName(), user.getLogin())).toList());
+        return ResponseEntity.ok().body(searchResults.map(user -> new UserNameAndLoginDTO(user.getName(), user.getLogin())).toList());
     }
 
     /**
