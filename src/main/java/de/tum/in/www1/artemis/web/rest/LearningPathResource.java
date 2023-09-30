@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
 @RequestMapping("api/")
@@ -220,10 +221,10 @@ public class LearningPathResource {
         log.debug("REST request to get learning path id for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isStudentInCourse(course, null)) {
-            throw new BadRequestException("You are not a student in this course.");
+            throw new AccessForbiddenException("You are not a student in this course.");
         }
         if (!course.getLearningPathsEnabled()) {
-            throw new BadRequestException("Learning paths are not enabled for this course.");
+            throw new ConflictException("Learning paths are not enabled for this course.", "LearningPath", "learningPathsNotEnabled");
         }
 
         // generate learning path if missing
