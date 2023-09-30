@@ -10,10 +10,13 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -689,6 +692,42 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercises();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExercise() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExercise(TEST_PREFIX);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportExerciseDetails();
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("provideFileNameAndErrorMsg")
+    void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String dynamicFilenamePart, String dynamicErrorMsgPart) throws Exception {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(dynamicFilenamePart, dynamicErrorMsgPart);
+    }
+
+    private static Stream<Arguments> provideFileNameAndErrorMsg() {
+        return Stream.of(Arguments.of("multiple_choice_questions_answers", "multiple choice"), Arguments.of("short_answer_questions_answers", "short answer"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportDragAndDropAnswersSubmission() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportDragAndDropSubmission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory() throws IOException {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory();
     }
 
     @Test

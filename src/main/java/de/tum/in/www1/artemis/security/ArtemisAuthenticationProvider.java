@@ -2,28 +2,12 @@ package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.core.Authentication;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
-
-    /**
-     * Gets the user object for the specified authentication or creates one in Artemis based on the passed information (possibly asking an external authentication source).
-     * Note: This method does not create a new user in the external authentication source.
-     *
-     * @param authentication    the Spring authentication object which includes the username and password
-     * @param firstName         The first name of the user that should get created if not present
-     * @param lastName          The last name of the user that should get created if not present
-     * @param email             The email of the user that should get created if not present
-     * @param skipPasswordCheck whether the password against the by the user management system provided user should be skipped
-     * @return The Artemis user identified by the provided credentials
-     */
-    User getOrCreateUser(Authentication authentication, @Nullable String firstName, @Nullable String lastName, @Nullable String email, boolean skipPasswordCheck);
 
     /**
      * Adds a user to the specified group
