@@ -278,7 +278,7 @@ public abstract class PostingService {
 
         mentionedUsers.forEach(user -> {
             if (!user.getName().equals(matches.get(user.getLogin()))) {
-                throw new BadRequestAlertException("The name provided for login " + user.getLogin() + " does not match the user's full name " + user.getName(),
+                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(),
                         METIS_POST_ENTITY_NAME, "invalidUserMention");
             }
 
