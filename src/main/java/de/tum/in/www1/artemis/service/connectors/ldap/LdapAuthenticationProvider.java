@@ -53,20 +53,14 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        User user = getOrCreateUser(authentication, false);
+        User user = getOrCreateUser(authentication);
         if (user != null) {
             return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
         }
         return null;
     }
 
-    @Override
-    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
-        // NOTE: firstName, lastName, email is not needed in this case since we always get these values from LDAP
-        return getOrCreateUser(authentication, skipPasswordCheck);
-    }
-
-    private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
+    private User getOrCreateUser(Authentication authentication) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
 
@@ -88,16 +82,13 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
         log.info("Finished ldapUserService.findByUsername in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
-        // If we want to skip the password check, we can just use the ADMIN auth, which is already injected in the default restTemplate
-        // Otherwise, we create our own authorization and use the credentials of the user.
-        if (!skipPasswordCheck) {
-            byte[] passwordBytes = Utf8.encode(password);
-            boolean passwordCorrect = ldapTemplate.compare(ldapUserDto.getUid().toString(), "userPassword", passwordBytes);
-            log.debug("Compare password with LDAP entry for user " + username + " to validate login");
-            // this is the normal case, where the password is validated
-            if (!passwordCorrect) {
-                throw new BadCredentialsException("Wrong credentials");
-            }
+        // We create our own authorization and use the credentials of the user.
+        byte[] passwordBytes = Utf8.encode(password);
+        boolean passwordCorrect = ldapTemplate.compare(ldapUserDto.getUid().toString(), "userPassword", passwordBytes);
+        log.debug("Compare password with LDAP entry for user " + username + " to validate login");
+        // this is the normal case, where the password is validated
+        if (!passwordCorrect) {
+            throw new BadCredentialsException("Wrong credentials");
         }
 
         log.info("Finished ldapTemplate.compare password in {}", TimeLogUtil.formatDurationFrom(start));
