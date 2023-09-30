@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="jakubriegel" id="1696082971720-207">
+        <createTable tableName="plagiarism_detection_config">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="plagiarism_detection_configPK"/>
+            </column>
+            <column name="continuous_plagiarism_control_enabled" type="BIT"/>
+            <column name="continuous_plagiarism_control_post_due_date_checks_enabled" type="BIT"/>
+            <column name="minimum_score" type="INT"/>
+            <column name="minimum_size" type="INT"/>
+            <column name="similarity_threshold" type="FLOAT"/>
+        </createTable>
+        <addColumn tableName="exercise">
+            <column name="plagiarism_detection_config_id" type="bigint"/>
+        </addColumn>
+        <addColumn tableName="submission">
+            <column name="plagiarism_suspected" type="bit" defaultValue="null">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
