@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class ProfileToggleServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
+class ProfileToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ProfileToggleService profileToggleService;

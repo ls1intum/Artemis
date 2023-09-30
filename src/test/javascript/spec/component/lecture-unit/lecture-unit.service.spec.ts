@@ -95,6 +95,6 @@ describe('LectureUnitService', () => {
 
     it('should send a request to the server to get ngx representation of learning path', fakeAsync(() => {
         service.getLectureUnitForLearningPathNodeDetails(1).subscribe();
-        httpMock.expectOne({ method: 'GET', url: 'api/lecture-units/1/for-learning-path-node-details' });
+        httpMock.expectOne({ method: 'GET', url: 'api-lecture/lecture-units/1/for-learning-path-node-details' });
     }));
 });
