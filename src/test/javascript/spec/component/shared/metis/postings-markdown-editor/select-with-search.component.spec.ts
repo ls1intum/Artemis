@@ -1,9 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { FormsModule } from '@angular/forms';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatInputModule } from '@angular/material/input';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faAt } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +9,8 @@ import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/in
 import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { SimpleChange } from '@angular/core';
 
 describe('SelectWithSearchComponent', () => {
     let component: SelectWithSearchComponent;
@@ -22,7 +20,7 @@ describe('SelectWithSearchComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [SelectWithSearchComponent],
-            imports: [HttpClientTestingModule, FormsModule, MatMenuModule, MatInputModule, NoopAnimationsModule, FontAwesomeModule],
+            imports: [HttpClientTestingModule, NgbDropdownModule, FontAwesomeModule],
             providers: [MockProvider(AlertService)],
         }).compileComponents();
     });
@@ -39,7 +37,14 @@ describe('SelectWithSearchComponent', () => {
                 return of(new HttpResponse<any[]>({ body: filteredItems }));
             },
             buttonIcon: faAt,
+            execute: () => {
+                component.open();
+            },
             insertSelection: () => {},
+            getCursorScreenPosition: () => {
+                return { pageX: 0, pageY: 0 };
+            },
+            updateSearchTerm: () => {},
         } as any;
         component.command = command;
         fixture.detectChanges();
@@ -52,7 +57,6 @@ describe('SelectWithSearchComponent', () => {
     it('should initialize and subscribe to search$', fakeAsync(() => {
         expect(component.values).toEqual([]);
         expect(component.selectedValue).toBeUndefined();
-        expect(component.focusInput).toBeTrue();
 
         // Simulate search input
         component.updateSearchTerm('test 1', true);
@@ -79,44 +83,66 @@ describe('SelectWithSearchComponent', () => {
         expect(alertSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should open and close the menu', () => {
+    it('should toggle menu when clicking button', () => {
         // Find the menu button in the fixture
         const menuButton = fixture.debugElement.nativeElement.querySelector('button.btn.btn-sm.py-0');
 
-        const handleMenuOpen = jest.spyOn(component, 'handleMenuOpen');
-        const handleMenuClosed = jest.spyOn(component, 'handleMenuClosed');
+        const commandExecuteSpy = jest.spyOn(component.command, 'execute');
+        const menuCloseSpy = jest.spyOn(component, 'close');
 
         // Click button to open menu
         menuButton.click();
         fixture.detectChanges();
 
-        // Assert that the handleMenuOpen method was called
-        expect(handleMenuOpen).toHaveBeenCalled();
-        expect(component.menuTrigger.menuOpen).toBeTrue();
+        expect(commandExecuteSpy).toHaveBeenCalled();
 
         // Click button to close menu
         menuButton.click();
         fixture.detectChanges();
 
-        // Assert that the handleMenuClosed method was called
-        expect(handleMenuClosed).toHaveBeenCalled();
-        expect(component.menuTrigger.menuOpen).toBeFalse();
+        expect(menuCloseSpy).toHaveBeenCalled();
     });
 
-    it('should set the selectedValue and close the menu when calling fillSelection', () => {
+    it('should open and close the menu', () => {
+        const handleMenuOpenSpy = jest.spyOn(component, 'handleMenuOpen');
+        const handleMenuClosedSpy = jest.spyOn(component, 'handleMenuClosed');
+
+        // Click button to open menu
+        component.open();
+        fixture.detectChanges();
+
+        // Assert that the handleMenuOpen method was called
+        expect(handleMenuOpenSpy).toHaveBeenCalledOnce();
+        expect(component.dropdown.isOpen()).toBeTrue();
+
+        // Click button to close menu
+        component.close();
+        fixture.detectChanges();
+
+        // Assert that the handleMenuClosed method was called
+        expect(handleMenuClosedSpy).toHaveBeenCalledOnce();
+        expect(component.dropdown.isOpen()).toBeFalse();
+    });
+
+    it('should set the selectedValue and close the menu when calling setSelection', () => {
         // Simulate some values in the component
         component.values = [{ name: 'Item 1' }, { name: 'Item 2' }];
         fixture.detectChanges();
 
-        const setSelection = jest.spyOn(component, 'setSelection');
+        component.setSelection({ name: 'Item 1' });
 
-        component.fillSelection();
+        expect(component.selectedValue).toEqual({ name: 'Item 1' });
+        expect(component.dropdown.isOpen()).toBeFalse();
+    });
 
-        // Assert that the setSelection method was called with the last item in the values array
-        expect(setSelection).toHaveBeenCalledWith({ name: 'Item 2' });
-        expect(component.selectedValue).toEqual({ name: 'Item 2' });
+    it('searchTerm updates on changes', () => {
+        component.editorContentString = 'test';
+        fixture.detectChanges();
 
-        // Assert that the menuTrigger is closed after calling fillSelection
-        expect(component.menuTrigger.menuOpen).toBeFalse();
+        const updateSearchTermSpy = jest.spyOn(component.command, 'updateSearchTerm');
+
+        component.ngOnChanges({ editorContentString: {} as SimpleChange });
+
+        expect(updateSearchTermSpy).toHaveBeenCalledOnce();
     });
 });
