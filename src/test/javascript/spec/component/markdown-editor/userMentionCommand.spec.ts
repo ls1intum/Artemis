@@ -4,6 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { SelectableItem } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 
 describe('UserMentionCommand', () => {
     let userMentionCommand: UserMentionCommand;
@@ -89,7 +90,7 @@ describe('UserMentionCommand', () => {
         // Simulate open selection menu via triggering command
         aceEditorMock.command.exec(aceEditorMock);
 
-        userMentionCommand.insertSelection({ name: 'User 1', login: 'user1' });
+        userMentionCommand.insertSelection({ name: 'User 1', login: 'user1' } as SelectableItem);
 
         // the editor is focues twice: Once for the execution of the command, once after the text insertion
         expect(focusSpy).toHaveBeenCalledTimes(2);
