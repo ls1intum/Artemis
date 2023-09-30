@@ -10,14 +10,17 @@ describe('UserMentionCommand', () => {
     let courseManagementServiceMock: Partial<CourseManagementService>;
     let metisServiceMock: Partial<MetisService>;
     let aceEditorMock: any;
+    let selectWithSearchComponent: any;
 
     beforeEach(() => {
-        const selectWithSearchComponent = {
-            open: jest.fn(() => {}),
-        } as any;
+        selectWithSearchComponent = {
+            open: () => {},
+            updateSearchTerm: () => {},
+            close: () => {},
+        };
 
         courseManagementServiceMock = {
-            searchMembersForUserMentions: jest.fn(() =>
+            searchMembersForUserMentions: () =>
                 of(
                     new HttpResponse<ConversationUserDTO[]>({
                         body: [
@@ -26,7 +29,6 @@ describe('UserMentionCommand', () => {
                         ],
                     }),
                 ),
-            ),
         };
 
         metisServiceMock = {
@@ -36,18 +38,23 @@ describe('UserMentionCommand', () => {
         aceEditorMock = {
             command: undefined,
             commands: {
-                addCommand: jest.fn(function (obj: any) {
+                addCommand: (obj: any) => {
                     aceEditorMock.command = obj;
-                }),
+                },
             },
+            execCommand: () => {},
             getCursorPosition: () => ({ row: 0, column: 0 }),
-            focus: jest.fn(() => {}),
+            focus: () => {},
             session: {
                 getDocument: () => ({
-                    removeInLine: jest.fn(() => {}),
+                    removeInLine: () => {},
                 }),
+                getLine: () => '',
             },
-            insert: jest.fn(() => {}),
+            insert: () => {},
+            renderer: {
+                textToScreenCoordinates: () => {},
+            },
         };
 
         // Create an instance of UserMentionCommand with mock services
@@ -62,6 +69,8 @@ describe('UserMentionCommand', () => {
     it('should perform a user search', () => {
         const searchTerm = 'user';
 
+        const searchMembersForUserMentionsSpy = jest.spyOn(courseManagementServiceMock, 'searchMembersForUserMentions');
+
         userMentionCommand.performSearch(searchTerm).subscribe((response) => {
             expect(response.body).toEqual([
                 { name: 'User 1', login: 'user1' },
@@ -69,22 +78,96 @@ describe('UserMentionCommand', () => {
             ]);
         });
 
-        expect(courseManagementServiceMock.searchMembersForUserMentions).toHaveBeenCalledWith(123, searchTerm);
+        expect(searchMembersForUserMentionsSpy).toHaveBeenCalledExactlyOnceWith(123, searchTerm);
     });
 
     it('should insert selection', () => {
-        // Simulate open selection menu via triggering command
         userMentionCommand.setEditor(aceEditorMock);
+
+        const focusSpy = jest.spyOn(aceEditorMock, 'focus');
+
+        // Simulate open selection menu via triggering command
         aceEditorMock.command.exec(aceEditorMock);
 
         userMentionCommand.insertSelection({ name: 'User 1', login: 'user1' });
 
-        expect(aceEditorMock.focus).toHaveBeenCalled();
+        // the editor is focues twice: Once for the execution of the command, once after the text insertion
+        expect(focusSpy).toHaveBeenCalledTimes(2);
     });
 
-    it('should setEditor', () => {
+    it('should not be able to call command twice while active', () => {
         userMentionCommand.setEditor(aceEditorMock);
 
-        expect(aceEditorMock.commands.addCommand).toHaveBeenCalled();
+        const openSpy = jest.spyOn(selectWithSearchComponent, 'open');
+
+        // Simulate open selection menu via triggering command
+        aceEditorMock.command.exec(aceEditorMock);
+        aceEditorMock.command.exec(aceEditorMock);
+
+        expect(openSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should add command when setting editor', () => {
+        const addCommandSpy = jest.spyOn(aceEditorMock.commands, 'addCommand');
+
+        userMentionCommand.setEditor(aceEditorMock);
+
+        expect(addCommandSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should execute the command', () => {
+        userMentionCommand.setEditor(aceEditorMock);
+
+        const execCommandSpy = jest.spyOn(aceEditorMock, 'execCommand');
+
+        userMentionCommand.execute();
+
+        expect(execCommandSpy).toHaveBeenCalledExactlyOnceWith('@');
+    });
+
+    it('should calculate screen coordinates', () => {
+        userMentionCommand.setEditor(aceEditorMock);
+
+        const textToScreenCoordinatesSpy = jest.spyOn(aceEditorMock.renderer, 'textToScreenCoordinates');
+
+        userMentionCommand.getCursorScreenPosition();
+
+        expect(textToScreenCoordinatesSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should update search term correctly based on cursor position', () => {
+        userMentionCommand.setEditor(aceEditorMock);
+        aceEditorMock.command.exec(aceEditorMock);
+        aceEditorMock.getCursorPosition = jest.fn(() => ({ row: 0, column: 10 }));
+        aceEditorMock.session.getLine = jest.fn(() => 'Hello @user');
+
+        const updateSearchTermSpy = jest.spyOn(selectWithSearchComponent, 'updateSearchTerm');
+
+        userMentionCommand.updateSearchTerm();
+
+        expect(updateSearchTermSpy).toHaveBeenCalledExactlyOnceWith('user');
+    });
+
+    it('should not update search term if menu not open', () => {
+        userMentionCommand.setEditor(aceEditorMock);
+
+        const updateSearchTermSpy = jest.spyOn(selectWithSearchComponent, 'updateSearchTerm');
+
+        userMentionCommand.updateSearchTerm();
+
+        expect(updateSearchTermSpy).not.toHaveBeenCalled();
+    });
+
+    it('should close selectWithSearchComponent if there is no "@" sign', () => {
+        userMentionCommand.setEditor(aceEditorMock);
+        aceEditorMock.command.exec(aceEditorMock);
+        aceEditorMock.getCursorPosition = jest.fn(() => ({ row: 0, column: 6 }));
+        aceEditorMock.session.getLine = jest.fn(() => 'Hello ');
+
+        const closeSpy = jest.spyOn(selectWithSearchComponent, 'close');
+
+        userMentionCommand.updateSearchTerm();
+
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });
