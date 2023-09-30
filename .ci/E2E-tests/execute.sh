@@ -23,3 +23,12 @@ cd docker
 docker compose -f $COMPOSE_FILE pull artemis-cypress $DB nginx
 docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
 docker compose -f $COMPOSE_FILE up --exit-code-from artemis-cypress
+exitCode=$?
+cd ..
+echo "Cypress container exit code: $exitCode"
+if [ $exitCode -eq 0 ]
+then
+    touch .successful
+else
+    echo "Not creating success file because the tests failed"
+fi
