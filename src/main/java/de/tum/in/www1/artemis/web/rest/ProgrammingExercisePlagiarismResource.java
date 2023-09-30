@@ -24,8 +24,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
-import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
+import de.tum.in.www1.artemis.service.plagiarism.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -94,6 +93,7 @@ public class ProgrammingExercisePlagiarismResource {
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
         try {
             var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
             return ResponseEntity.ok(plagiarismResult);
@@ -123,6 +123,7 @@ public class ProgrammingExercisePlagiarismResource {
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks with Jplag report for programming exercise: exerciseId={}.", exerciseId);
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
         try {
             var zipFile = plagiarismDetectionService.checkProgrammingExerciseWithJplagReport(programmingExercise);
             if (zipFile == null) {
