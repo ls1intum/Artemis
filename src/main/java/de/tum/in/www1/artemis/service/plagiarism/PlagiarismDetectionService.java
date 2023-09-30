@@ -75,7 +75,8 @@ public class PlagiarismDetectionService {
             throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         checkProgrammingLanguageSupport(exercise);
 
-        var plagiarismResult = programmingPlagiarismDetectionService.checkPlagiarism(exercise.getId(), config.getSimilarityThreshold(), config.getMinimumScore());
+        var plagiarismResult = programmingPlagiarismDetectionService.checkPlagiarism(exercise.getId(), config.getSimilarityThreshold(), config.getMinimumScore(),
+                config.getMinimumSize());
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons", plagiarismResult.getComparisons().size());
 
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
@@ -95,7 +96,8 @@ public class PlagiarismDetectionService {
     public File checkProgrammingExerciseWithJplagReport(ProgrammingExercise exercise, PlagiarismDetectionConfig config)
             throws ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         checkProgrammingLanguageSupport(exercise);
-        return programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exercise.getId(), config.getSimilarityThreshold(), config.getMinimumScore());
+        return programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exercise.getId(), config.getSimilarityThreshold(), config.getMinimumScore(),
+                config.getMinimumSize());
     }
 
     /**
