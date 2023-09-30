@@ -61,7 +61,12 @@
                             <fa-icon [icon]="faFileUpload"></fa-icon>
                         </a>
                     </div>
-                    <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" [jhiProfileToggleHide]="ProfileToggle.QUIZ" style="justify-content: end">
+                    <div
+                        class="btn-group-vertical me-1 mb-1"
+                        *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']"
+                        [jhiProfileToggleHide]="ProfileToggle.QUIZ"
+                        style="justify-content: end"
+                    >
                         <a
                             *ngIf="course?.isAtLeastEditor"
                             [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']"
