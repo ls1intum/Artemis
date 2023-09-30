@@ -29,7 +29,6 @@ const courseData = {
     maxComplaintTimeDays: 6,
     enableMoreFeedback: true,
     maxRequestMoreFeedbackTimeDays: 4,
-    onlineCourse: true,
     presentationScoreEnabled: true,
     presentationScore: 10,
 };
@@ -109,7 +108,6 @@ describe('Course management', () => {
             courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
             courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
-            courseCreation.setOnlineCourse(courseData.onlineCourse);
             courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
@@ -128,7 +126,6 @@ describe('Course management', () => {
                 expect(courseBody.maxTeamComplaints).to.eq(courseData.maxTeamComplaints);
                 expect(courseBody.maxComplaintTimeDays).to.eq(courseData.maxComplaintTimeDays);
                 expect(courseBody.requestMoreFeedbackEnabled).to.eq(courseData.enableMoreFeedback);
-                expect(courseBody.onlineCourse).to.eq(courseData.onlineCourse);
                 expect(courseBody.studentGroupName).to.eq(`artemis-${courseData.shortName}-students`);
                 expect(courseBody.editorGroupName).to.eq(`artemis-${courseData.shortName}-editors`);
                 expect(courseBody.instructorGroupName).to.eq(`artemis-${courseData.shortName}-instructors`);
@@ -147,7 +144,6 @@ describe('Course management', () => {
             courseManagement.getCourseSemester().contains(courseData.semester);
             courseManagement.getCourseProgrammingLanguage().contains(courseData.programmingLanguage);
             courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
-            courseManagement.getCourseOnlineCourse().contains(convertBooleanToYesNo(courseData.onlineCourse));
             courseManagement.getCourseMaxComplaints().contains(courseData.maxComplaints);
             courseManagement.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
             courseManagement.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
