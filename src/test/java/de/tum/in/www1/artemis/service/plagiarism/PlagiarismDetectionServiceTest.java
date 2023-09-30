@@ -48,7 +48,7 @@ class PlagiarismDetectionServiceTest {
         var textExercise = new TextExercise();
         var textPlagiarismResult = new TextPlagiarismResult();
         textPlagiarismResult.setComparisons(emptySet());
-        when(textPlagiarismDetectionService.checkPlagiarism(textExercise, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
+        when(textPlagiarismDetectionService.checkPlagiarism(textExercise, config.similarityThreshold(), config.minimumScore(), config.minimumSize()))
                 .thenReturn(textPlagiarismResult);
 
         // when
@@ -64,7 +64,7 @@ class PlagiarismDetectionServiceTest {
         var modelingExercise = new ModelingExercise();
         var modelingPlagiarismResult = new ModelingPlagiarismResult();
         modelingPlagiarismResult.setComparisons(emptySet());
-        when(modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, config.getSimilarityThreshold(), config.getMinimumSize(), config.getMinimumScore()))
+        when(modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, config.similarityThreshold(), config.minimumSize(), config.minimumScore()))
                 .thenReturn(modelingPlagiarismResult);
 
         // when
@@ -81,7 +81,7 @@ class PlagiarismDetectionServiceTest {
         programmingExercise.setId(1L);
         var programmingPlagiarismResult = new TextPlagiarismResult();
         programmingPlagiarismResult.setComparisons(emptySet());
-        when(programmingPlagiarismDetectionService.checkPlagiarism(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
+        when(programmingPlagiarismDetectionService.checkPlagiarism(1L, config.similarityThreshold(), config.minimumScore(), config.minimumSize()))
                 .thenReturn(programmingPlagiarismResult);
 
         // and
@@ -112,7 +112,7 @@ class PlagiarismDetectionServiceTest {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
         var zipFile = new File("");
-        when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
+        when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(1L, config.similarityThreshold(), config.minimumScore(), config.minimumSize()))
                 .thenReturn(zipFile);
 
         // and

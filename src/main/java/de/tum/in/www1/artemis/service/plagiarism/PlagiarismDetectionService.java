@@ -57,7 +57,7 @@ public class PlagiarismDetectionService {
      * @return result of plagiarism checks
      */
     public TextPlagiarismResult checkTextExercise(TextExercise exercise, PlagiarismDetectionConfig config) throws ExitException {
-        var plagiarismResult = textPlagiarismDetectionService.checkPlagiarism(exercise, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize());
+        var plagiarismResult = textPlagiarismDetectionService.checkPlagiarism(exercise, config.similarityThreshold(), config.minimumScore(), config.minimumSize());
         log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons,", exercise.getId(), plagiarismResult.getComparisons().size());
 
         trimAndSavePlagiarismResult(plagiarismResult);
@@ -75,8 +75,7 @@ public class PlagiarismDetectionService {
             throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         checkProgrammingLanguageSupport(exercise);
 
-        var plagiarismResult = programmingPlagiarismDetectionService.checkPlagiarism(exercise.getId(), config.getSimilarityThreshold(), config.getMinimumScore(),
-                config.getMinimumSize());
+        var plagiarismResult = programmingPlagiarismDetectionService.checkPlagiarism(exercise.getId(), config.similarityThreshold(), config.minimumScore(), config.minimumSize());
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons", plagiarismResult.getComparisons().size());
 
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
@@ -96,8 +95,7 @@ public class PlagiarismDetectionService {
     public File checkProgrammingExerciseWithJplagReport(ProgrammingExercise exercise, PlagiarismDetectionConfig config)
             throws ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         checkProgrammingLanguageSupport(exercise);
-        return programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exercise.getId(), config.getSimilarityThreshold(), config.getMinimumScore(),
-                config.getMinimumSize());
+        return programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exercise.getId(), config.similarityThreshold(), config.minimumScore(), config.minimumSize());
     }
 
     /**
@@ -108,7 +106,7 @@ public class PlagiarismDetectionService {
      * @return result of plagiarism checks
      */
     public ModelingPlagiarismResult checkModelingExercise(ModelingExercise exercise, PlagiarismDetectionConfig config) {
-        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(exercise, config.getSimilarityThreshold(), config.getMinimumSize(), config.getMinimumScore());
+        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(exercise, config.similarityThreshold(), config.minimumSize(), config.minimumScore());
         log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons", plagiarismResult.getComparisons().size());
 
         trimAndSavePlagiarismResult(plagiarismResult);
