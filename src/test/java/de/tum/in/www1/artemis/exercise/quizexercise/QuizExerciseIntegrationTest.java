@@ -829,8 +829,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testAddAndStartQuizBatch() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
 
-        QuizBatch batch = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
-        request.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
+        QuizBatch batch = request.putWithResponseBody("/api-quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.OK);
+        request.put("/api-quiz/quiz-exercises/" + batch.getId() + "/start-batch", null, HttpStatus.OK);
     }
 
     @Test
@@ -838,8 +838,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testAddAndStartQuizBatch_AsStudentNotAllowed() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.FORBIDDEN);
-        request.put("/api/quiz-exercises/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api-quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, HttpStatus.FORBIDDEN);
+        request.put("/api-quiz/quiz-exercises/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -596,7 +596,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // check that submission fails
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api-quiz/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
 
         // reschedule
@@ -624,7 +624,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
 
         // ...delete the quiz
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
+        request.delete("/api-quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
 
         QuizExercise finalQuizExercise = quizExercise;
         await().until(() -> exerciseRepository.findById(finalQuizExercise.getId()).isEmpty());
@@ -799,8 +799,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             }
 
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class,
-                    HttpStatus.OK);
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api-quiz/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission,
+                    QuizSubmission.class, HttpStatus.OK);
             // check whether submission flag was updated
             assertThat(updatedSubmission.isSubmitted()).isTrue();
             // check whether all answers were submitted properly
@@ -826,7 +826,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
             quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student3", quizSubmission);
             // submit quiz for the second time, expected status = BAD_REQUEST
-            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api-quiz/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
         }
     }
 }
