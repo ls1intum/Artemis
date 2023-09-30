@@ -1,6 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { PROFILE_LOCALVC } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
@@ -34,6 +36,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     activeStudents?: number[];
     course: Course;
 
+    ltiEnabled = false;
+
     private eventSubscriber: Subscription;
     paramSub: Subscription;
 
@@ -52,12 +56,16 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private courseManagementService: CourseManagementService,
         private route: ActivatedRoute,
         private alertService: AlertService,
+        private profileService: ProfileService,
     ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+        });
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;

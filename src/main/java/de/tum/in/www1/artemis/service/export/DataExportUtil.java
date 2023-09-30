@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.Course;
 /**
  * A utility class for data export containing helper methods that are frequently used in the different services responsible for creating data exports.
  */
-final class DataExportUtil {
+public final class DataExportUtil {
 
     private static final String COURSE_DIRECTORY_PREFIX = "course_";
 
@@ -23,7 +23,7 @@ final class DataExportUtil {
      * @param directory the directory to create
      * @throws IOException if an error occurs while accessing the file system
      */
-    static void createDirectoryIfNotExistent(Path directory) throws IOException {
+    public static void createDirectoryIfNotExistent(Path directory) throws IOException {
         if (!Files.exists(directory)) {
             Files.createDirectories(directory);
         }
