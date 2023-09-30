@@ -204,7 +204,7 @@ describe('PostComponent', () => {
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 
-    it('should navigate to oneToOneChat', () => {
+    it('should create or navigate to oneToOneChat when not on messaging page', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         const oneToOneChatService = TestBed.inject(OneToOneChatService);
         const createChatSpy = jest.spyOn(oneToOneChatService, 'create').mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
@@ -217,5 +217,16 @@ describe('PostComponent', () => {
             },
         });
         expect(createChatSpy).toHaveBeenCalledWith(metisCourse.id, metisUser1.login!);
+    });
+
+    it('should create or navigate to oneToOneChat when on messaging page', () => {
+        const metisConversationService = TestBed.inject(MetisConversationService);
+        const createOneToOneChatSpy = jest.fn().mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
+        Object.defineProperty(metisConversationService, 'createOneToOneChat', { value: createOneToOneChatSpy });
+        component.isCourseMessagesPage = true;
+
+        component.onUserReferenceClicked(metisUser1.login!);
+
+        expect(createOneToOneChatSpy).toHaveBeenCalledWith(metisUser1.login!);
     });
 });
