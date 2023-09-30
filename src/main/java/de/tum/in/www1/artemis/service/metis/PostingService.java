@@ -243,9 +243,8 @@ public abstract class PostingService {
      *
      * @param course         course of the posting
      * @param postingContent content of the posting
-     * @return the list of logins of mentioned users
      */
-    protected List<String> parseUserMentions(@NotNull Course course, String postingContent) {
+    protected void parseUserMentions(@NotNull Course course, String postingContent) {
         // Define a regular expression to match text enclosed in [user]...[/user] tags, along with login inside parentheses () within those tags.
         // It makes use of the possessive quantifier "*+" to avoid backtracking and increase performance.
         // Explanation:
@@ -287,6 +286,5 @@ public abstract class PostingService {
             }
         });
 
-        return new ArrayList<>(matches.values());
     }
 }
