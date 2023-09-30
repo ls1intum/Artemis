@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.metis;
 
-import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.metis.PostingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-public class PostingServiceUnitTest {
+class PostingServiceUnitTest {
 
     @InjectMocks
     private ConversationMessagingService postingService;
@@ -46,7 +46,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsEmptyContent() throws InvocationTargetException, IllegalAccessException {
+    void testParseUserMentionsEmptyContent() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
         String content = "";
 
@@ -54,14 +54,14 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsContentNull() throws InvocationTargetException, IllegalAccessException {
+    void testParseUserMentionsContentNull() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
 
         parseUserMentions.invoke(postingService, course, null);
     }
 
     @Test
-    public void testParseUserMentionsNoUserMentioned() throws InvocationTargetException, IllegalAccessException {
+    void testParseUserMentionsNoUserMentioned() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
         String content = "This is a regular content without any user mention.";
 
@@ -69,7 +69,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsWithValidUsers() throws InvocationTargetException, IllegalAccessException {
+    void testParseUserMentionsWithValidUsers() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user] [user]Test User 2(test_user_2)[/user]";
         List<User> users = List.of(this.createUser("Test User 1", "test_user_1"), this.createUser("Test User 2", "test_user_2"));
@@ -84,7 +84,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsWithNonExistentUser() {
+    void testParseUserMentionsWithNonExistentUser() {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user] [user]Test User 2(test_user_2)[/user]";
         List<User> users = List.of(this.createUser("Test User 1", "test_user_1")); // Return only one user from database
@@ -95,7 +95,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsWithInvalidName() {
+    void testParseUserMentionsWithInvalidName() {
         Course course = new Course();
         String content = "[user]Test User 2(test_user_1)[/user]";
         User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
@@ -107,7 +107,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsWithUserNotInCourse() {
+    void testParseUserMentionsWithUserNotInCourse() {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user]";
         User user = this.createUser("Test User 1", "test_user_1");
@@ -119,7 +119,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsWithMissingLogin() {
+    void testParseUserMentionsWithMissingLogin() {
         Course course = new Course();
         String content = "[user]Test User 1[/user]";
 
@@ -127,7 +127,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsWithExtraSpaces() throws InvocationTargetException, IllegalAccessException {
+    void testParseUserMentionsWithExtraSpaces() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
         String content = "[user] Test User 2 (test_user_1) [/user]";
 
@@ -138,7 +138,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsMissingOpeningTag() throws InvocationTargetException, IllegalAccessException {
+    void testParseUserMentionsMissingOpeningTag() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
         String content = "Test User 2(test_user_1)[/user]";
 
@@ -149,7 +149,7 @@ public class PostingServiceUnitTest {
     }
 
     @Test
-    public void testParseUserMentionsMissingClosingTag() throws InvocationTargetException, IllegalAccessException {
+    void testParseUserMentionsMissingClosingTag() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
         String content = "[user]Test User 2(test_user_1)";
 
@@ -183,7 +183,7 @@ public class PostingServiceUnitTest {
     private void setupUserRepository(Set<String> expectedUserLogins, List<User> usersInDatabase) {
         when(userRepository.findAllByLogins(anySet())).thenAnswer(invocation -> {
             Set<String> logins = invocation.getArgument(0);
-            assertEquals(logins, expectedUserLogins);
+            assertThat(logins).isEqualTo(expectedUserLogins);
             return usersInDatabase;
         });
     }
@@ -196,13 +196,6 @@ public class PostingServiceUnitTest {
      * @param content the content
      */
     private void actAndAssertInvalidUserMention(Course course, String content) {
-        assertThrows(BadRequestAlertException.class, () -> {
-            try {
-                parseUserMentions.invoke(postingService, course, content);
-            }
-            catch (InvocationTargetException e) {
-                throw e.getCause();
-            }
-        });
+        assertThatThrownBy(() -> parseUserMentions.invoke(postingService, course, content)).hasCauseInstanceOf(BadRequestAlertException.class);
     }
 }
