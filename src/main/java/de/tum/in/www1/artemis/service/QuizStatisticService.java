@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -32,11 +33,11 @@ public class QuizStatisticService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final LtiNewResultService ltiNewResultService;
+    private final Optional<LtiNewResultService> ltiNewResultService;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, LtiNewResultService ltiNewResultService) {
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiNewResultService> ltiNewResultService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
@@ -98,7 +99,10 @@ public class QuizStatisticService {
                 var latestUnratedSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(latestUnratedResult.getSubmission().getId());
                 quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
             }
-            ltiNewResultService.onNewResult((StudentParticipation) participation);
+
+            if (ltiNewResultService.isPresent()) {
+                ltiNewResultService.get().onNewResult((StudentParticipation) participation);
+            }
         }
 
         // save changed Statistics
