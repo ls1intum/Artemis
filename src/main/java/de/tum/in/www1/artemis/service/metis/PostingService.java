@@ -285,6 +285,5 @@ public abstract class PostingService {
                 throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", METIS_POST_ENTITY_NAME, "invalidUserMention");
             }
         });
-
     }
 }
