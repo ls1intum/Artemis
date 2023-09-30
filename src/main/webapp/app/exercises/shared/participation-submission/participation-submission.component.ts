@@ -134,29 +134,29 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     fetchParticipationAndSubmissionsForStudent() {
-        this.participationService
-            .find(this.participationId)
+        combineLatest([this.participationService.find(this.participationId), this.submissionService.findAllSubmissionsOfParticipation(this.participationId)])
             .pipe(
-                map(({ body }) => body),
+                map((res) => [res[0].body, res[1].body]),
                 catchError(() => of(null)),
             )
-            .subscribe((participation) => {
+            .subscribe((response) => {
+                this.isLoading = false;
+                if (!response) {
+                    return;
+                }
+
+                const participation = response[0] as StudentParticipation;
+                const submissions = response[1] as Submission[];
                 if (participation) {
                     this.participation = participation;
                     this.updateStatusBadgeColor();
-                    this.isLoading = false;
                 }
-            });
-        this.submissionService
-            .findAllSubmissionsOfParticipation(this.participationId)
-            .pipe(
-                map(({ body }) => body),
-                catchError(() => of([])),
-            )
-            .subscribe((submissions) => {
+
                 if (submissions) {
                     this.submissions = submissions;
-                    this.isLoading = false;
+                    if (this.participation) {
+                        this.participation.submissions = submissions;
+                    }
                     // set the submission to every result so it can be accessed via the result
                     submissions.forEach((submission: Submission) => {
                         if (submission.results) {

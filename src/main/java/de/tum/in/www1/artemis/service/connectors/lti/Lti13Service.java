@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import net.minidev.json.JSONObject;
 
 @Service
+@Profile("lti")
 public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
