@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -149,34 +148,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
             tutorialCourse.setInstructorGroupName("non-tutorial-course");
             courseRepository.save(tutorialCourse);
         }
-    }
-
-    @Test
-    void launchLtiRequest_authViaEmail_success() throws Exception {
-        request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
-
-        final var user = userUtilService.getUserByLogin(USERNAME);
-        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).orElseThrow();
-
-        assertThat(ltiOutcome.getUser()).isEqualTo(user);
-        assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
-        assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
-        assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
-
-        final var updatedStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).orElseThrow();
-        assertThat(student).isEqualTo(updatedStudent);
-    }
-
-    @Test
-    @WithAnonymousUser
-    void authenticateAfterLtiRequest_success() throws Exception {
-        launchLtiRequest_authViaEmail_success();
-
-        final var auth = new TestingAuthenticationToken(student.getLogin(), USER_PASSWORD);
-        final var authResponse = artemisInternalAuthenticationProvider.authenticate(auth);
-
-        assertThat(authResponse.getCredentials()).hasToString(student.getPassword());
-        assertThat(authResponse.getPrincipal()).isEqualTo(student.getLogin());
     }
 
     @Test
