@@ -452,6 +452,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.isSaving = false;
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
+        this.quizQuestionListEditComponent.fileMap.clear();
         this.quizExercise = quizExercise;
         this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
