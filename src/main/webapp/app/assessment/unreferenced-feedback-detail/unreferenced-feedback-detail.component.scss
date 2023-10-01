@@ -3,6 +3,15 @@
     padding-bottom: 5px;
 }
 
+.assessment-label > label {
+    float: left;
+}
+
+fa-icon.exclamation-icon {
+    width: 16px;
+    margin-top: -6px;
+}
+
 .is-suggestion .card-header,
 .is-suggestion .card-body {
     background-color: var(--feedback-suggestions-background);

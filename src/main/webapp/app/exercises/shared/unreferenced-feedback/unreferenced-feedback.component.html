@@ -1,6 +1,6 @@
 <div (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
     <div class="col-md-6">
-        <button id="add-unreferenced-feedback" class="btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
+        <button class="add-unreferenced-feedback btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
             {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
         </button>
         <div class="row mt-4">
