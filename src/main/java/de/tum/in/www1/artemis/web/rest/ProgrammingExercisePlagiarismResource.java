@@ -99,7 +99,6 @@ public class ProgrammingExercisePlagiarismResource {
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
             var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
@@ -134,7 +133,6 @@ public class ProgrammingExercisePlagiarismResource {
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks with Jplag report for programming exercise: exerciseId={}.", exerciseId);
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
             var zipFile = plagiarismDetectionService.checkProgrammingExerciseWithJplagReport(programmingExercise);

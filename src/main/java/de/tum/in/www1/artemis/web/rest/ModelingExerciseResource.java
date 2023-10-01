@@ -393,7 +393,6 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for modeling exercise: exerciseId={}.", exerciseId);
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(modelingExercise, modelingExerciseRepository);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(modelingExercise, similarityThreshold, minimumScore, minimumSize);
         var plagiarismResult = plagiarismDetectionService.checkModelingExercise(modelingExercise);
         log.info("Finished manual plagiarism checks for modeling exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));

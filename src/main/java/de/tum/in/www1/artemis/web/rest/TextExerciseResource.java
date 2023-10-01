@@ -501,7 +501,6 @@ public class TextExerciseResource {
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for text exercise: exerciseId={}.", exerciseId);
-        // PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(textExercise, textExerciseRepository);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(textExercise, similarityThreshold, minimumScore, minimumSize);
         var plagiarismResult = plagiarismDetectionService.checkTextExercise(textExercise);
         log.info("Finished manual plagiarism checks for text exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
