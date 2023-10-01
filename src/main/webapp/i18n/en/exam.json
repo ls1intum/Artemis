@@ -693,8 +693,8 @@
                 "viewCases": "View Cases"
             },
             "dateChange": {
-                "title": "Changing the times of an active exam will disrupt the workflow of the students!",
-                "warning": "Updating this field will send out a notification to all students and disrupt their workflow during the exam."
+                "title": "Changing the working time of an active exam will disrupt the workflow of the students!",
+                "warning": "Updating this field will notify all students and disrupt their workflow during the exam."
             }
         },
         "studentExamDetail": {
