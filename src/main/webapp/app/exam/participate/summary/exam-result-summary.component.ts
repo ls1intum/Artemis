@@ -21,6 +21,7 @@ import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'a
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { cloneDeep } from 'lodash-es';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -33,6 +34,12 @@ export type ResultSummaryExerciseInfo = {
     submission?: Submission;
     participation?: Participation;
     displayExampleSolution: boolean;
+};
+
+type StateBeforeResetting = {
+    exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+    isGradingKeyCollapsed: boolean;
+    isBonusGradingKeyCollapsed: boolean;
 };
 
 @Component({
@@ -104,6 +111,10 @@ export class ExamResultSummaryComponent implements OnInit {
 
     exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
 
+    /**
+     * Passed to components with overlapping elements to ensure that the overlapping
+     * elements are displayed in a different order for printing.
+     */
     isPrinting = false;
 
     constructor(
@@ -188,13 +199,15 @@ export class ExamResultSummaryComponent implements OnInit {
      * called for exportPDF Button
      */
     async printPDF() {
-        this.expandExercisesAndGradingKeysBeforePrinting();
+        const stateBeforeResetting = this.expandExercisesAndGradingKeysBeforePrinting();
 
         this.isPrinting = true;
 
         await this.themeService.print();
 
         this.isPrinting = false;
+
+        this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
     }
 
     private scrollToTop() {
@@ -217,10 +230,24 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private expandExercisesAndGradingKeysBeforePrinting() {
+        const stateBeforeResetting = {
+            exerciseInfos: cloneDeep(this.exerciseInfos),
+            isGradingKeyCollapsed: cloneDeep(this.isGradingKeyCollapsed),
+            isBonusGradingKeyCollapsed: cloneDeep(this.isBonusGradingKeyCollapsed),
+        };
+
         this.expandExercises();
 
         this.isGradingKeyCollapsed = false;
         this.isBonusGradingKeyCollapsed = false;
+
+        return stateBeforeResetting;
+    }
+
+    private resetExpandingExercisesAndGradingKeys(stateBeforeResetting: StateBeforeResetting) {
+        this.exerciseInfos = stateBeforeResetting.exerciseInfos;
+        this.isGradingKeyCollapsed = stateBeforeResetting.isGradingKeyCollapsed;
+        this.isBonusGradingKeyCollapsed = stateBeforeResetting.isBonusGradingKeyCollapsed;
     }
 
     private expandExercises() {
