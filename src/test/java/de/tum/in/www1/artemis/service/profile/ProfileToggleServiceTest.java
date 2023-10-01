@@ -18,7 +18,8 @@ class ProfileToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     void getEnabledProfilesReturnsCorrectProfiles() {
-        // On this single instance that is used during the test, the profiles of that instance contain all available profiles
+        profileToggleService.publishAvailableProfiles();
+
         assertThat(profileToggleService.enabledProfiles()).contains(env.getActiveProfiles());
     }
 
