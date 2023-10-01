@@ -644,14 +644,6 @@ public class StudentExamService {
                                 || ExamDateService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                             // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingParticipation);
-
-                            // This is a special case if "prepare exercise start" was pressed shortly before the exam start
-                            // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
-                            // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
-                            // Since this gets never executed here, we need to manually schedule the locking.
-                            // TODO: reconsider this edge case and instead send a message to over the instanceMessageSendService
-                            // var tupel = new Tuple<>(studentExam.getIndividualEndDate(), programmingParticipation);
-                            // programmingExerciseScheduleService.scheduleIndividualRepositoryAndParticipationLockTasks(programmingExercise, Set.of(tupel));
                         }
                         else {
                             programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
