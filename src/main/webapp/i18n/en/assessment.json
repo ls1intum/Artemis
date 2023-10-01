@@ -10,11 +10,13 @@
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
+                "default": "Suggestion",
                 "suggested": "Suggestion (not accepted)",
                 "accepted": "Accepted Suggestion",
                 "adapted": "Adapted Suggestion"
             },
             "suggestionTitle": {
+                "default": "This is an automatically generated feedback suggestion.",
                 "suggested": "This automatically generated feedback suggestion is not included in the final assessment unless you explicitly accept it.",
                 "accepted": "Automatically generated feedback",
                 "adapted": "Automatically generated feedback, manually adapted"

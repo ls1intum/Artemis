@@ -1,6 +1,10 @@
 <div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()" class="unreferenced-feedback-detail card mb-3" [class.is-suggestion]="isSuggestion">
     <div class="card-header">
-        <jhi-feedback-suggestion-badge *ngIf="isSuggestion || Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback"></jhi-feedback-suggestion-badge>
+        <jhi-feedback-suggestion-badge
+            *ngIf="isSuggestion || Feedback.isFeedbackSuggestion(feedback)"
+            [feedback]="feedback"
+            [useDefaultText]="useDefaultFeedbackSuggestionBadgeText"
+        ></jhi-feedback-suggestion-badge>
         <jhi-grading-instruction-link-icon *ngIf="feedback.gradingInstruction" [feedback]="feedback"></jhi-grading-instruction-link-icon>
         <button
             *ngIf="!readOnly"

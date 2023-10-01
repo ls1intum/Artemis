@@ -1,5 +1,5 @@
 <div>
-    <jhi-feedback-suggestion-badge *ngIf="Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback"></jhi-feedback-suggestion-badge>
+    <jhi-feedback-suggestion-badge *ngIf="Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback" [useDefaultText]="true"></jhi-feedback-suggestion-badge>
 
     <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>

@@ -15,6 +15,7 @@ export class UnreferencedFeedbackDetailComponent {
     @Input() isSuggestion: boolean;
     @Input() public readOnly: boolean;
     @Input() highlightDifferences: boolean;
+    @Input() useDefaultFeedbackSuggestionBadgeText: boolean;
 
     @Output() public onFeedbackChange = new EventEmitter<Feedback>();
     @Output() public onFeedbackDelete = new EventEmitter<Feedback>();

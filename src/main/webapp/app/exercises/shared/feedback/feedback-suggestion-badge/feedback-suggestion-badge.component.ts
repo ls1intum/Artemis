@@ -12,12 +12,18 @@ export class FeedbackSuggestionBadgeComponent {
     @Input()
     feedback: Feedback;
 
+    @Input()
+    useDefaultText = false;
+
     // Icons
     faLightbulb = faLightbulb;
 
     constructor(private translateService: TranslateService) {}
 
     get text(): string {
+        if (this.useDefaultText) {
+            return 'artemisApp.assessment.suggestion.default';
+        }
         const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback);
         switch (feedbackSuggestionType) {
             case FeedbackSuggestionType.SUGGESTED:
@@ -32,6 +38,9 @@ export class FeedbackSuggestionBadgeComponent {
     }
 
     get tooltip(): string {
+        if (this.useDefaultText) {
+            return this.translateService.instant('artemisApp.assessment.suggestionTitle.default');
+        }
         const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback);
         switch (feedbackSuggestionType) {
             case FeedbackSuggestionType.SUGGESTED:

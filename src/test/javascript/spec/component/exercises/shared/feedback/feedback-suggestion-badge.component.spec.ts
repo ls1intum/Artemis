@@ -67,4 +67,11 @@ describe('FeedbackSuggestionBadgeComponent', () => {
         expect(component.text).toBe('');
         expect(component.tooltip).toBe('');
     });
+
+    it('should respect the useDefaultText setting', () => {
+        component.useDefaultText = true;
+
+        expect(component.text).toBe('artemisApp.assessment.suggestion.default');
+        expect(component.tooltip).toBe('artemisApp.assessment.suggestionTitle.default');
+    });
 });

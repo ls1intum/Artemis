@@ -68,7 +68,7 @@ describe('AthenaService', () => {
 
         expect(requestWrapperText.request.method).toBe('GET');
         expect(textResponse![0].feedback!.type).toEqual(FeedbackType.AUTOMATIC);
-        expect(textResponse![0].feedback!.text).toBe('FeedbackSuggestion:Test Text');
+        expect(textResponse![0].feedback!.text).toBe('FeedbackSuggestion:accepted:Test Text');
         expect(textResponse![0].feedback!.detailText).toBe('Test Text Description');
         expect(textResponse![0].block!.startIndex).toBe(5);
         expect(textResponse![0].block!.id).toEqual(textResponse![0].feedback!.reference);
