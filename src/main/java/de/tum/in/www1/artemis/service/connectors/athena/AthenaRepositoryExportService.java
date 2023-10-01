@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -91,7 +91,7 @@ public class AthenaRepositoryExportService {
             Files.createDirectories(repoDownloadClonePath);
         }
 
-        Path exportDir = fileService.getTemporaryUniquePath(repoDownloadClonePath, 15);
+        Path exportDir = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 15);
         Path zipFile = null;
 
         if (repositoryType == null) { // Export student repository
@@ -101,7 +101,8 @@ public class AthenaRepositoryExportService {
         }
         else {
             List<String> exportErrors = List.of();
-            var exportFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, exportDir, exportErrors);
+            var exportFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, exportDir, exportDir,
+                    exportErrors);
             if (exportFile.isPresent()) {
                 zipFile = exportFile.get().toPath();
             }
