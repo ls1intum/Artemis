@@ -101,20 +101,14 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        User user = getOrCreateUser(authentication, false);
+        User user = getOrCreateUser(authentication);
         if (user != null) {
             return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
         }
         return null;
     }
 
-    @Override
-    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
-        // NOTE: firstName, lastName, email is not needed in this case since we always get these values from Jira
-        return getOrCreateUser(authentication, skipPasswordCheck);
-    }
-
-    private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
+    private User getOrCreateUser(Authentication authentication) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
 
@@ -129,18 +123,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         ResponseEntity<JiraUserDTO> authenticationResponse = null;
         try {
             final var path = jiraUrl + "/rest/api/2/user?username=" + username + "&expand=groups";
-            // If we want to skip the password check, we can just use the ADMIN auth, which is already injected in the default restTemplate
-            // Otherwise, we create our own authorization and use the credentials of the user.
-            if (skipPasswordCheck) {
-                // this is only the case if the systems wants to log in a user automatically (e.g. based on Oauth in LTI)
-                // when we provide null, the default restTemplate header will be used automatically
-                authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
-            }
-            else {
-                // this is the normal case, where we use the username and password provided by the user so that JIRA checks for us if this is valid
-                final var entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
-                authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, entity, JiraUserDTO.class);
-            }
+            // We create our own authorization and use the credentials of the user.
+            // We use the username and password provided by the user so that JIRA checks for us if this is valid
+            final var entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
+            authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, entity, JiraUserDTO.class);
         }
         catch (HttpStatusCodeException e) {
             if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
@@ -162,7 +148,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
         if (authenticationResponse != null && authenticationResponse.getBody() != null) {
             final var jiraUserDTO = authenticationResponse.getBody();
-            // If the user has already existed, the check has already been completed and we can continue
+            // If the user has already existed, the check has already been completed, and we can continue
             // Otherwise, we have to create it in the Artemis database
             User user = optionalUser.orElseGet(() -> userCreationService.createUser(jiraUserDTO.getName(), null, null, jiraUserDTO.getDisplayName(), "",
                     jiraUserDTO.getEmailAddress(), null, null, "en", false));
