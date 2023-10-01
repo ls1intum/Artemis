@@ -10,4 +10,5 @@ export class ModelingExamSummaryComponent {
     @Input() exercise: ModelingExercise;
     @Input() submission: ModelingSubmission;
     @Input() isPrinting?: boolean = false;
+    @Input() expandProblemStatement?: boolean = false;
 }

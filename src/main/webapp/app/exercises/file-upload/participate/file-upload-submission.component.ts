@@ -39,6 +39,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
+    @Input() expandProblemStatement?: boolean = true;
 
     submission?: FileUploadSubmission;
     submittedFileName: string;

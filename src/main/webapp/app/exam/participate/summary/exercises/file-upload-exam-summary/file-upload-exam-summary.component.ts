@@ -12,6 +12,8 @@ export class FileUploadExamSummaryComponent {
 
     @Input() exercise: Exercise;
 
+    @Input() expandProblemStatement?: boolean = false;
+
     constructor(private fileService: FileService) {}
 
     /**

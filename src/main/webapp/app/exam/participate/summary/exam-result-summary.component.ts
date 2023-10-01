@@ -117,6 +117,12 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     isPrinting = false;
 
+    /**
+     * Passed to components where the problem statement might be expanded or collapsed to ensure that
+     * the problem statement is expanded while printing
+     */
+    expandProblemStatement = false;
+
     constructor(
         private route: ActivatedRoute,
         private serverDateService: ArtemisServerDateService,
@@ -202,10 +208,12 @@ export class ExamResultSummaryComponent implements OnInit {
         const stateBeforeResetting = this.expandExercisesAndGradingKeysBeforePrinting();
 
         this.isPrinting = true;
+        this.expandProblemStatement = true;
 
         await this.themeService.print();
 
         this.isPrinting = false;
+        this.expandProblemStatement = false;
 
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
     }

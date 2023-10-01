@@ -92,11 +92,20 @@
                 <ng-template #studentSolution>
                     <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted; else noSubmission">
                         <ng-container *ngIf="exercise.type === TEXT">
-                            <jhi-text-exam-summary [exercise]="exercise" [submission]="exerciseInfos[exercise.id!]!.submission!" />
+                            <jhi-text-exam-summary
+                                [exercise]="exercise"
+                                [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                [expandProblemStatement]="expandProblemStatement"
+                            />
                         </ng-container>
 
                         <ng-container *ngIf="exercise.type === MODELING">
-                            <jhi-modeling-exam-summary [exercise]="exercise" [submission]="exerciseInfos[exercise.id!]!.submission!" [isPrinting]="isPrinting" />
+                            <jhi-modeling-exam-summary
+                                [exercise]="exercise"
+                                [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                [isPrinting]="isPrinting"
+                                [expandProblemStatement]="expandProblemStatement"
+                            />
                         </ng-container>
 
                         <ng-container *ngIf="exercise.type === QUIZ">
@@ -105,11 +114,15 @@
                                 [exam]="studentExam.exam!"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [resultsPublished]="!!resultsPublished"
-                            ></jhi-quiz-exam-summary>
+                            />
                         </ng-container>
 
                         <ng-container *ngIf="exercise.type === FILE_UPLOAD">
-                            <jhi-file-upload-exam-summary [submission]="exerciseInfos[exercise.id!]!.submission!" [exercise]="exercise" />
+                            <jhi-file-upload-exam-summary
+                                [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                [exercise]="exercise"
+                                [expandProblemStatement]="expandProblemStatement"
+                            />
                         </ng-container>
 
                         <jhi-complaint-student-view

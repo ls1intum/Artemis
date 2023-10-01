@@ -9,4 +9,5 @@ import { Exercise } from 'app/entities/exercise.model';
 export class TextExamSummaryComponent {
     @Input() exercise: Exercise;
     @Input() submission: TextSubmission;
+    @Input() expandProblemStatement?: boolean = false;
 }

@@ -40,6 +40,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
+    @Input() expandProblemStatement?: boolean = true;
 
     textExercise: TextExercise;
     participation: StudentParticipation;
