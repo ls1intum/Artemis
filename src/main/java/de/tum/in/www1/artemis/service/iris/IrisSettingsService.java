@@ -381,7 +381,6 @@ public class IrisSettingsService {
         }
         target.setEnabled(source.isEnabled());
         target.setPreferredModel(source.getPreferredModel());
-        target.setRateLimit(source.getRateLimit());
         if (!Objects.equals(source.getTemplate(), target.getTemplate())) {
             target.setTemplate(source.getTemplate());
         }

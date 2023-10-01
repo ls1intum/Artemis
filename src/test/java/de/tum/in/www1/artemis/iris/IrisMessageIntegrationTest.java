@@ -286,7 +286,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         setupExercise();
 
         var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisChatSettings().setRateLimit(1);
         irisSettingsService.saveGlobalIrisSettings(globalSettings);
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
@@ -300,7 +299,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId());
 
         // Reset to not interfere with other tests
-        globalSettings.getIrisChatSettings().setRateLimit(null);
         irisSettingsService.saveGlobalIrisSettings(globalSettings);
     }
 

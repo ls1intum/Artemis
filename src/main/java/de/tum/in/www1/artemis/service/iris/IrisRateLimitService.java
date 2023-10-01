@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.iris;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +19,14 @@ public class IrisRateLimitService {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    private final IrisSettingsService irisSettingsService;
+    @Value("${artemis.iris.rate-limit:3}")
+    private int rateLimit;
 
-    public IrisRateLimitService(IrisMessageRepository irisMessageRepository, IrisSettingsService irisSettingsService) {
+    @Value("${artemis.iris.rate-limit-timeframe-hours:24}")
+    private int rateLimitTimeframeHours;
+
+    public IrisRateLimitService(IrisMessageRepository irisMessageRepository) {
         this.irisMessageRepository = irisMessageRepository;
-        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -34,12 +37,9 @@ public class IrisRateLimitService {
      * @return the rate limit information
      */
     public IrisRateLimitInformation getRateLimitInformation(User user) {
-        var globalSettings = irisSettingsService.getGlobalSettings();
-        var irisChatSettings = globalSettings.getIrisChatSettings();
-        var start = ZonedDateTime.now().minusHours(3);
+        var start = ZonedDateTime.now().minusHours(rateLimitTimeframeHours);
         var end = ZonedDateTime.now();
         var currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
-        var rateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
 
         return new IrisRateLimitInformation(currentMessageCount, rateLimit);
     }
