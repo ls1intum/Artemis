@@ -66,6 +66,7 @@
                 }
             },
             "examSummary": {
+                "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
                 "exportPDF": "Als PDF exportieren",

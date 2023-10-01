@@ -66,6 +66,7 @@
                 }
             },
             "examSummary": {
+                "backToOverview": "Back to overview",
                 "examResults": "Exam Results",
                 "generalInformation": "General Information",
                 "exportPDF": "Export PDF",

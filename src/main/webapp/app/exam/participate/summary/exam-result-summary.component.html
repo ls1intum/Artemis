@@ -15,7 +15,7 @@
     [studentExam]="studentExam"
     [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun"
 />
-<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
+<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO" id="exam-summary-result-overview">
     <jhi-exam-result-overview
         [studentExamWithGrade]="studentExamGradeInfoDTO!"
         [isGradingKeyCollapsed]="isGradingKeyCollapsed"
@@ -162,3 +162,8 @@
         </div>
     </div>
 </div>
+
+<button class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()">
+    <fa-icon [icon]="faArrowUp"></fa-icon>
+    <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
+</button>

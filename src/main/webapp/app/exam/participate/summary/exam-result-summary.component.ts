@@ -20,7 +20,7 @@ import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/part
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -53,6 +53,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
     faEye = faEye;
     faEyeSlash = faEyeSlash;
+    faArrowUp = faArrowUp;
 
     /**
      * Current student's exam.
@@ -187,6 +188,25 @@ export class ExamResultSummaryComponent implements OnInit {
     printPDF() {
         this.expandExercisesAndGradingKeysBeforePrinting();
         setTimeout(() => this.themeService.print());
+    }
+
+    private scrollToTop() {
+        window.scrollTo(0, 0);
+    }
+
+    scrollToOverviewOrTop() {
+        const searchedId = 'exam-summary-result-overview';
+        const targetElement = document.getElementById(searchedId);
+
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest',
+            });
+        } else {
+            this.scrollToTop();
+        }
     }
 
     private expandExercisesAndGradingKeysBeforePrinting() {
