@@ -96,7 +96,7 @@
                         </ng-container>
 
                         <ng-container *ngIf="exercise.type === MODELING">
-                            <jhi-modeling-exam-summary [exercise]="exercise" [submission]="exerciseInfos[exercise.id!]!.submission!" />
+                            <jhi-modeling-exam-summary [exercise]="exercise" [submission]="exerciseInfos[exercise.id!]!.submission!" [isPrinting]="isPrinting" />
                         </ng-container>
 
                         <ng-container *ngIf="exercise.type === QUIZ">

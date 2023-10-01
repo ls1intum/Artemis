@@ -49,6 +49,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
+    @Input() isPrinting?: boolean = false;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;

@@ -151,23 +151,26 @@ export class ThemeService {
      * Disables any theme override before doing that to ensure that we print in default theme.
      * Resets the theme afterward if needed
      */
-    public print() {
-        const overrideTag: any = document.getElementById(THEME_OVERRIDE_ID);
-        if (overrideTag) {
-            overrideTag.rel = 'none-tmp';
-        }
-        setTimeout(() => {
-            const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
-
-            window.print();
-
-            this.showNotificationSidebar(notificationSidebarDisplayAttribute);
-        }, 250);
-        setTimeout(() => {
+    public async print(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            const overrideTag: any = document.getElementById(THEME_OVERRIDE_ID);
             if (overrideTag) {
-                overrideTag.rel = 'stylesheet';
+                overrideTag.rel = 'none-tmp';
             }
-        }, 500);
+            setTimeout(() => {
+                const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
+
+                window.print();
+
+                this.showNotificationSidebar(notificationSidebarDisplayAttribute);
+            }, 250);
+            setTimeout(() => {
+                if (overrideTag) {
+                    overrideTag.rel = 'stylesheet';
+                }
+                resolve();
+            }, 500);
+        });
     }
 
     /**

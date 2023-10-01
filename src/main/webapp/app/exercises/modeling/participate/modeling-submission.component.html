@@ -18,7 +18,7 @@
         ></jhi-button>
     </jhi-header-participation-page>
 
-    <jhi-resizeable-container *ngIf="modelingExercise" [isExerciseParticipation]="true">
+    <jhi-resizeable-container *ngIf="modelingExercise" [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting">
         <!--region Left Panel-->
         <div left-body class="submission-container d-flex flex-column w-100">
             <div class="d-flex flex-column flex-md-row">

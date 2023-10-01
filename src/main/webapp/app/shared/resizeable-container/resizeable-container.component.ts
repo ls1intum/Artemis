@@ -28,7 +28,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
      *
      * <i>e.g. the case for printing the exam summary</i>
      */
-    @Input() isBeingPrinted: boolean = false;
+    @Input() isBeingPrinted?: boolean = false;
 
     // Icons
     faChevronRight = faChevronRight;

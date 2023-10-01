@@ -104,6 +104,8 @@ export class ExamResultSummaryComponent implements OnInit {
 
     exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
 
+    isPrinting = false;
+
     constructor(
         private route: ActivatedRoute,
         private serverDateService: ArtemisServerDateService,
@@ -185,9 +187,14 @@ export class ExamResultSummaryComponent implements OnInit {
     /**
      * called for exportPDF Button
      */
-    printPDF() {
+    async printPDF() {
         this.expandExercisesAndGradingKeysBeforePrinting();
-        setTimeout(() => this.themeService.print());
+
+        this.isPrinting = true;
+
+        await this.themeService.print();
+
+        this.isPrinting = false;
     }
 
     private scrollToTop() {

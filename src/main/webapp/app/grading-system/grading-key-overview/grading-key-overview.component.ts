@@ -63,7 +63,7 @@ export class GradingKeyOverviewComponent implements OnInit {
     /**
      * Exports page as PDF
      */
-    printPDF() {
-        setTimeout(() => this.themeService.print());
+    async printPDF() {
+        await this.themeService.print();
     }
 }
