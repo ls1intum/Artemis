@@ -8,9 +8,9 @@ import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
+import javax.validation.constraints.NotNull;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQDestination;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jms.listener.SimpleMessageListenerContainer;
