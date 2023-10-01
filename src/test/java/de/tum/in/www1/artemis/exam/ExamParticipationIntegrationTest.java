@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
@@ -65,9 +64,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     private QuizSubmissionRepository quizSubmissionRepository;
-
-    @Autowired
-    private QuizSubmissionService quizSubmissionService;
 
     @Autowired
     private CourseRepository courseRepo;

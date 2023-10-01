@@ -14,7 +14,6 @@ import javax.jms.JMSException;
 import org.apache.activemq.junit.EmbeddedActiveMQBroker;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jms.listener.SimpleMessageListenerContainer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -28,7 +27,6 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
 
 class QuizJMSListenerServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -43,10 +41,6 @@ class QuizJMSListenerServiceTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     QuizJMSListenerService quizJMSListenerService;
-
-    @SpyBean
-    @Autowired
-    QuizSubmissionService quizSubmissionService;
 
     static EmbeddedActiveMQBroker broker = new EmbeddedActiveMQBroker();
 
