@@ -8,6 +8,7 @@ import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
+import org.apache.activemq.artemis.jms.client.ActiveMQDestination;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
@@ -104,7 +105,13 @@ public class QuizJMSListenerService {
 
                 try {
                     var quizSubmission = objectMapper.readValue(bytes, QuizSubmission.class);
-                    var address = message.getJMSDestination().toString();
+                    var destination = message.getJMSDestination();
+                    var address = destination.toString();
+
+                    if (destination instanceof ActiveMQDestination activeMQDestination) {
+                        address = activeMQDestination.getAddress();
+                    }
+
                     var username = JMSListenerUtils.extractUsernameFromMessage(message);
                     var exerciseId = extractExerciseIdFromAddress(address);
                     quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, username, false);
