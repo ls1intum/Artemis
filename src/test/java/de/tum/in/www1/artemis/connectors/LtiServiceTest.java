@@ -202,7 +202,6 @@ class LtiServiceTest {
         SecurityContextHolder.getContext().setAuthentication(null);
 
         when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.of("username"));
-        when(artemisAuthenticationProvider.getOrCreateUser(any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
         assertThatExceptionOfType(InternalAuthenticationServiceException.class)
                 .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()))
