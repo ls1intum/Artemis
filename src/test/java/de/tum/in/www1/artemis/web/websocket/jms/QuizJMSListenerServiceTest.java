@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.websocket.jms;
 
 import javax.jms.JMSException;
 
-import org.apache.activemq.junit.EmbeddedActiveMQBroker;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -34,16 +33,16 @@ class QuizJMSListenerServiceTest extends AbstractSpringIntegrationIndependentTes
     // Not autowired to reduce number of server starts during tests, created in @BeforeEach
     // QuizJMSListenerService quizJMSListenerService;
 
-    static EmbeddedActiveMQBroker broker = new EmbeddedActiveMQBroker();
+    // static EmbeddedActiveMQBroker broker = new EmbeddedActiveMQBroker();
 
     @BeforeAll
     static void startBroker() {
-        broker.start();
+        // broker.start();
     }
 
     @AfterAll
     static void stopBroker() {
-        broker.stop();
+        // broker.stop();
     }
 
     @BeforeEach
