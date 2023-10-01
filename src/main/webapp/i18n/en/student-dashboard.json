@@ -191,6 +191,7 @@
                 "points": "Points:",
                 "bonus": "Bonus:",
                 "of": " of ",
+                "plagiarismDetected": "Suspicion of plagiarism!",
                 "problemStatement": "Problem statement:",
                 "noResults": "You have no results yet",
                 "instructorActions": {

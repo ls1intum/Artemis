@@ -62,6 +62,7 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -118,6 +119,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(ModePickerComponent),
                 MockComponent(ExerciseUpdateNotificationComponent),
+                MockComponent(ExerciseUpdatePlagiarismComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

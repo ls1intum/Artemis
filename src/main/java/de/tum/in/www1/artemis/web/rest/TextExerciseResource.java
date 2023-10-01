@@ -255,8 +255,10 @@ public class TextExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
+        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(textExercise, textExerciseRepository);
 
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
