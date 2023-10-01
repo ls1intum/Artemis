@@ -42,10 +42,11 @@ class QuizJMSListenerServiceTest extends AbstractSpringIntegrationBambooBitbucke
     QuizExerciseRepository quizExerciseRepository;
 
     @SpyBean
-    QuizJMSListenerService quizJMSListenerService;
-
-    @SpyBean
+    @Autowired
     QuizSubmissionService quizSubmissionService;
+
+    // Not autowired to reduce number of server starts during tests, created in @BeforeEach
+    QuizJMSListenerService quizJMSListenerService;
 
     static EmbeddedActiveMQBroker broker = new EmbeddedActiveMQBroker();
 
@@ -57,6 +58,13 @@ class QuizJMSListenerServiceTest extends AbstractSpringIntegrationBambooBitbucke
     @AfterAll
     static void stopBroker() {
         broker.stop();
+    }
+
+    @BeforeEach
+    void setup() {
+        // Autowiring the QuizJMSListenerService would require an additional server start during the test
+        // (because of different profiles that are used), therefor we create it manually
+        quizJMSListenerService = new QuizJMSListenerService(objectMapper, quizSubmissionService);
     }
 
     @Test
