@@ -41,54 +41,7 @@ export class AthenaService {
                 }
                 return this.http
                     .get<T[]>(`${this.resourceUrl}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
-                    .pipe(switchMap((res: HttpResponse<T[]>) => of(res.body!)))
-                    .pipe(
-                        switchMap((suggestions) => {
-                            return of(suggestions);
-                            // TODO: Remove mock data here:
-                            if (exercise.type === 'programming') {
-                                // For debugging: Return basic feedback suggestions for BubbleSort.java
-                                const referencedFeedbackSuggestion1 = new Feedback();
-                                referencedFeedbackSuggestion1.credits = 1;
-                                referencedFeedbackSuggestion1.text = 'FeedbackSuggestion:';
-                                referencedFeedbackSuggestion1.detailText = 'This is a referenced feedback suggestion - test test';
-                                referencedFeedbackSuggestion1.gradingInstruction = undefined;
-                                referencedFeedbackSuggestion1.reference = 'file:src/de/athena/BubbleSort.java_line:9';
-                                referencedFeedbackSuggestion1.type = FeedbackType.AUTOMATIC;
-                                const referencedFeedbackSuggestion2 = new Feedback();
-                                referencedFeedbackSuggestion2.credits = -1;
-                                referencedFeedbackSuggestion2.text = 'FeedbackSuggestion:';
-                                referencedFeedbackSuggestion2.detailText = 'Look at that TODO....';
-                                referencedFeedbackSuggestion2.gradingInstruction = undefined;
-                                referencedFeedbackSuggestion2.reference = 'file:src/de/athena/BubbleSort.java_line:13';
-                                referencedFeedbackSuggestion2.type = FeedbackType.AUTOMATIC;
-                                const referencedFeedbackSuggestion3 = new Feedback();
-                                referencedFeedbackSuggestion3.credits = -4;
-                                referencedFeedbackSuggestion3.text = 'FeedbackSuggestion:';
-                                referencedFeedbackSuggestion3.detailText = 'You did not implement it correctly';
-                                referencedFeedbackSuggestion3.gradingInstruction = undefined;
-                                referencedFeedbackSuggestion3.reference = 'file:src/de/athena/MergeSort.java_line:13';
-                                referencedFeedbackSuggestion3.type = FeedbackType.AUTOMATIC;
-                                const unreferencedFeedbackSuggestion = new Feedback();
-                                unreferencedFeedbackSuggestion.credits = -2;
-                                unreferencedFeedbackSuggestion.text = 'FeedbackSuggestion:';
-                                unreferencedFeedbackSuggestion.detailText = 'You did not implement it correctly';
-                                unreferencedFeedbackSuggestion.gradingInstruction = undefined;
-                                unreferencedFeedbackSuggestion.reference = undefined;
-                                unreferencedFeedbackSuggestion.type = FeedbackType.AUTOMATIC;
-                                return of([
-                                    ...suggestions,
-                                    referencedFeedbackSuggestion1,
-                                    referencedFeedbackSuggestion2,
-                                    referencedFeedbackSuggestion3,
-                                    unreferencedFeedbackSuggestion,
-                                ] as T[]);
-                            } else {
-                                // Simply take the suggestions from Athena
-                                return of(suggestions);
-                            }
-                        }),
-                    );
+                    .pipe(switchMap((res: HttpResponse<T[]>) => of(res.body!)));
             }),
         );
     }
