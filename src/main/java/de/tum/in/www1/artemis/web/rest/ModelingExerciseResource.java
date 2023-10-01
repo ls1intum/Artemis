@@ -378,18 +378,23 @@ public class ModelingExerciseResource {
      * <p>
      * Start the automated plagiarism detection for the given exercise and return its result.
      *
-     * @param exerciseId for which all submission should be checked
+     * @param exerciseId          for which all submission should be checked
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
     @EnforceAtLeastInstructor
-    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) {
+    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) {
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for modeling exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(modelingExercise, modelingExerciseRepository);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(modelingExercise, similarityThreshold, minimumScore, minimumSize);
         var plagiarismResult = plagiarismDetectionService.checkModelingExercise(modelingExercise);
         log.info("Finished manual plagiarism checks for modeling exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
 

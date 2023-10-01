@@ -485,19 +485,24 @@ public class TextExerciseResource {
      * <p>
      * Start the automated plagiarism detection for the given exercise and return its result.
      *
-     * @param exerciseId ID of the exercise for which to detect plagiarism
+     * @param exerciseId          ID of the exercise for which to detect plagiarism
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("text-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
     @EnforceAtLeastEditor
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) throws ExitException {
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) throws ExitException {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for text exercise: exerciseId={}.", exerciseId);
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(textExercise, textExerciseRepository);
+        // PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(textExercise, textExerciseRepository);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(textExercise, similarityThreshold, minimumScore, minimumSize);
         var plagiarismResult = plagiarismDetectionService.checkTextExercise(textExercise);
         log.info("Finished manual plagiarism checks for text exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(plagiarismResult);

@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
  * A config class containing logic for filling missing PlagiarismDetectionConfig for exercises created before deployment of the cpc.
  *
  * @see ContinuousPlagiarismControlService
+ * @see PlagiarismDetectionConfig
  */
 public final class PlagiarismDetectionConfigHelper {
 
@@ -33,5 +34,21 @@ public final class PlagiarismDetectionConfigHelper {
             exercise.setPlagiarismDetectionConfig(config);
             repository.save(exercise);
         }
+    }
+
+    /**
+     * Sets given parameters as corresponding values of plagiarism checks config in the given exercise.
+     *
+     * @param exercise            exercise with existing plagiarism checks config
+     * @param similarityThreshold similarityThreshold to set for the given exercise
+     * @param minimumScore        similarityThreshold to set for the given exercise
+     * @param minimumSize         similarityThreshold to set for the given exercise
+     */
+    public static void updateWithTemporaryParameters(Exercise exercise, float similarityThreshold, int minimumScore, int minimumSize) {
+        var config = new PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(similarityThreshold);
+        config.setMinimumScore(minimumScore);
+        config.setMinimumSize(minimumSize);
+        exercise.setPlagiarismDetectionConfig(config);
     }
 }

@@ -81,7 +81,10 @@ public class ProgrammingExercisePlagiarismResource {
     /**
      * GET /programming-exercises/{exerciseId}/check-plagiarism : Start the automated plagiarism detection for the given exercise and return its result.
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be executed
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be executed
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose number of diff to template lines is greate or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
@@ -89,13 +92,15 @@ public class ProgrammingExercisePlagiarismResource {
     @GetMapping(CHECK_PLAGIARISM)
     @EnforceAtLeastEditor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId) throws ExitException, IOException {
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) throws ExitException, IOException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
             var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
             return ResponseEntity.ok(plagiarismResult);
@@ -111,14 +116,18 @@ public class ProgrammingExercisePlagiarismResource {
     /**
      * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as zip file
      *
-     * @param exerciseId The ID of the programming exercise for which the plagiarism check should be executed
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be executed
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose number of diff to template lines is greate or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      * @throws IOException is thrown for file handling errors
      */
     @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId) throws IOException {
+    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+            @RequestParam int minimumSize) throws IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
@@ -126,6 +135,7 @@ public class ProgrammingExercisePlagiarismResource {
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks with Jplag report for programming exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
             var zipFile = plagiarismDetectionService.checkProgrammingExerciseWithJplagReport(programmingExercise);
             if (zipFile == null) {
