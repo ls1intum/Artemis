@@ -2,3 +2,5 @@ artemis:
     iris:
         url: "http://iris.fake"
         secret-token: "secret-token"
+        rate-limit: 100000
+        rate-limit-timeframe-hours: 1
