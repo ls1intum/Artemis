@@ -517,6 +517,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
                 this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
+                    // Keep the working time from the server
+                    localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
+
                     this.studentExam = localExam;
                     this.loadingExam = false;
                     this.examStarted(this.studentExam);
