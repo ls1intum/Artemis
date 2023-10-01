@@ -19,7 +19,7 @@ public class IrisRateLimitService {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    @Value("${artemis.iris.rate-limit:3}")
+    @Value("${artemis.iris.rate-limit:5}")
     private int rateLimit;
 
     @Value("${artemis.iris.rate-limit-timeframe-hours:24}")
