@@ -12,7 +12,9 @@ import java.time.ZonedDateTime;
 import javax.jms.JMSException;
 
 import org.apache.activemq.junit.EmbeddedActiveMQBroker;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.listener.SimpleMessageListenerContainer;
 
@@ -56,9 +58,7 @@ class QuizJMSListenerServiceTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     void testCallsQuizSubmission() throws JsonProcessingException, QuizSubmissionException, JMSException {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
-        quizExercise.duration(240);
-        quizExerciseRepository.save(quizExercise);
+        var quizExercise = createQuizExercise();
 
         var connectionFactory = broker.createConnectionFactory();
         SimpleMessageListenerContainer simpleMessageListenerContainer = quizJMSListenerService.quizSubmissionMessageListener(connectionFactory,
@@ -74,6 +74,14 @@ class QuizJMSListenerServiceTest extends AbstractSpringIntegrationIndependentTes
         broker.pushMessage("/queue/quizExercise/" + quizExercise.getId() + "/submission", message);
 
         verify(quizSubmissionService, timeout(1000)).saveSubmissionForLiveMode(eq(quizExercise.getId()), any(QuizSubmission.class), eq("user-name1"), eq(false));
+    }
+
+    private QuizExercise createQuizExercise() {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
+        quizExercise.duration(240);
+        quizExerciseRepository.save(quizExercise);
+
+        return quizExercise;
     }
 
     @Test

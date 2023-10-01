@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import javax.jms.BytesMessage;
 import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQDestination;
@@ -94,7 +95,7 @@ public class QuizJMSListenerService {
         return new MessageListenerAdapter(new AbstractAdaptableMessageListener() {
 
             @Override
-            public void onMessage(javax.jms.@NotNull Message message, Session session) throws JMSException {
+            public void onMessage(@NotNull Message message, Session session) throws JMSException {
                 // Message is of type ActiveMQMessage because we use Apache ActiveMQ as broker
                 BytesMessage bytesMessage = (BytesMessage) message;
 
@@ -105,12 +106,7 @@ public class QuizJMSListenerService {
 
                 try {
                     var quizSubmission = objectMapper.readValue(bytes, QuizSubmission.class);
-                    var destination = message.getJMSDestination();
-                    var address = destination.toString();
-
-                    if (destination instanceof ActiveMQDestination activeMQDestination) {
-                        address = activeMQDestination.getAddress();
-                    }
+                    var address = extractDestinationAddressFromMessage(message);
 
                     var username = JMSListenerUtils.extractUsernameFromMessage(message);
                     var exerciseId = extractExerciseIdFromAddress(address);
@@ -125,11 +121,17 @@ public class QuizJMSListenerService {
                 catch (IOException e) {
                     logger.warn(String.format("Could not read JMS message: %s", e));
                 }
-                catch (Exception e) {
-                    logger.warn(String.format("Unknown error while processing quiz message: %s", e));
-                }
             }
         });
+    }
+
+    private static String extractDestinationAddressFromMessage(Message message) throws JMSException {
+        var destination = message.getJMSDestination();
+        if (destination instanceof ActiveMQDestination activeMQDestination) {
+            return activeMQDestination.getAddress();
+        }
+
+        return destination.toString();
     }
 
     /**
