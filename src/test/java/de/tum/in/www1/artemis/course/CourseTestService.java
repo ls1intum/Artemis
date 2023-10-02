@@ -2182,7 +2182,7 @@ public class CourseTestService {
     public void testSearchMembersForUserMentionsNoSearchTerm() throws Exception {
         var course = createCourseForUserSearchTest();
 
-        var result = request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.BAD_REQUEST, UserNameAndLoginDTO.class);
+        request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.BAD_REQUEST, UserNameAndLoginDTO.class);
     }
 
     private Course createCourseForUserSearchTest() {
