@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add a discriminator column to the existing iris_message_content table, set all rows to 'TEXT' -->
+    <changeSet id="20231002131313" author="michael_dyer">
+        <addColumn tableName="iris_message_content">
+            <column name="discriminator" type="VARCHAR(255)" defaultValue="TEXT">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+
+        <!-- create the iris_text_message_content and iris_exercise_plan_message_content tables -->
+        <createTable tableName="iris_text_message_content">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="text_content" type="VARCHAR(255)">
+                <constraints nullable="true" />
+            </column>
+        </createTable>
+
+        <createTable tableName="iris_exercise_plan_message_content">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="problem_statement_plan" type="VARCHAR(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="solution_repository_plan" type="VARCHAR(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="template_repository_plan" type="VARCHAR(255)">
+                <constraints nullable="true" />
+            </column>
+            <column name="test_repository_plan" type="VARCHAR(255)">
+                <constraints nullable="true" />
+            </column>
+        </createTable>
+
+        <!-- Insert IDs and text_content from iris_message_content into iris_text_message_content -->
+        <sql>
+            <!-- Insert data into iris_text_message_content -->
+            INSERT INTO iris_text_message_content (id, text_content)
+            SELECT mc.id, mc.text_content
+            FROM iris_message_content mc;
+        </sql>
+
+        <!-- Drop column text_content from iris_message_content -->
+        <dropColumn tableName="iris_message_content" columnName="text_content" />
+    </changeSet>
+</databaseChangeLog>
