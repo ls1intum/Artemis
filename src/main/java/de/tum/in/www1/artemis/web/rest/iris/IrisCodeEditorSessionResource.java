@@ -62,13 +62,13 @@ public class IrisCodeEditorSessionResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/code-editor-session/current: Retrieve the current iris code editor session for the programming exercise.
+     * GET programming-exercises/{exerciseId}/code-editor-sessions/current: Retrieve the current iris code editor session for the programming exercise.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris code editor session for the exercise or {@code 404 (Not Found)} if no session
      *         exists
      */
-    @GetMapping("programming-exercises/{exerciseId}/code-editor-session/current")
+    @GetMapping("programming-exercises/{exerciseId}/code-editor-sessions/current")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -82,13 +82,13 @@ public class IrisCodeEditorSessionResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/code-editor-session: Retrieve all Iris Code Editor Sessions for the programming exercise
+     * GET programming-exercises/{exerciseId}/code-editor-sessions: Retrieve all Iris Code Editor Sessions for the programming exercise
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris code editor sessions for the exercise or {@code 404 (Not Found)} if no
      *         session exists
      */
-    @GetMapping("programming-exercises/{exerciseId}/code-editor-session")
+    @GetMapping("programming-exercises/{exerciseId}/code-editor-sessions")
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisSession>> getAllSessions(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -102,14 +102,14 @@ public class IrisCodeEditorSessionResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/code-editor-session: Create a new iris code editor session for an exercise and user.
+     * POST programming-exercises/{exerciseId}/code-editor-sessions: Create a new iris code editor session for an exercise and user.
      * If there already exists an iris session for the exercise and user, a new one is created.
      * Note: The old session including messages is not deleted and can still be retrieved
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris code editor session for the exercise
      */
-    @PostMapping("programming-exercises/{exerciseId}/code-editor-session")
+    @PostMapping("programming-exercises/{exerciseId}/code-editor-sessions")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -119,18 +119,18 @@ public class IrisCodeEditorSessionResource {
 
         var session = irisSessionService.createCodeEditorSession(exercise, user);
 
-        var uriString = "/api/iris/code-editor-session/" + session.getId();
+        var uriString = "/api/iris/code-editor-sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);
     }
 
     /**
-     * GET iris/sessions/{sessionId}/active: Retrieve if Iris is active for a session
+     * GET iris/code-editor-sessions/{sessionId}/active: Retrieve if Iris is active for a session
      * This checks if the used model is healthy.
      *
      * @param sessionId id of the session
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
-    @GetMapping("/sessions/{sessionId}/active")
+    @GetMapping("/code-editor-sessions/{sessionId}/active")
     @EnforceAtLeastEditor
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisCodeEditorSessionRepository.findByIdElseThrow(sessionId);

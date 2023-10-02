@@ -61,12 +61,12 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * GET code-editor-session/{sessionId}/messages: Retrieve the messages for the iris code editor session.
+     * GET code-editor-sessions/{sessionId}/messages: Retrieve the messages for the iris code editor session.
      *
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    @GetMapping("code-editor-session/{sessionId}/messages")
+    @GetMapping("code-editor-sessions/{sessionId}/messages")
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
         IrisSession session = irisSessionRepository.findByIdElseThrow(sessionId);
@@ -77,13 +77,13 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * POST code-editor-session/{sessionId}/messages: Send a new message from the user to the LLM
+     * POST code-editor-sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId of the session
      * @param message   to send
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    @PostMapping("code-editor-session/{sessionId}/messages/")
+    @PostMapping("code-editor-sessions/{sessionId}/messages/")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
@@ -94,19 +94,19 @@ public class IrisCodeEditorMessageResource {
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisWebsocketService.sendMessage(savedMessage);
 
-        var uriString = "/api/iris/code-editor-session/" + session.getId() + "/messages/" + savedMessage.getId();
+        var uriString = "/api/iris/code-editor-sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
     /**
-     * POST code-editor-session/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
+     * POST code-editor-sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
      *
      * @param sessionId of the session
      * @param messageId of the message
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
      *         not be found.
      */
-    @PostMapping("code-editor-session/{sessionId}/messages/{messageId}/resend")
+    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
@@ -126,14 +126,14 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * Put code-editor-session/{sessionId}/messages/{messageId}: Send the (updated) plan message to the LLM
+     * Put code-editor-sessions/{sessionId}/messages/{messageId}: Send the (updated) plan message to the LLM
      *
      * @param sessionId of the session
      * @param messageId of the message
      * @param message   to send
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    @PutMapping("code-editor-session/{sessionId}/messages/{messageId}/plan")
+    @PutMapping("code-editor-sessions/{sessionId}/messages/{messageId}/plan")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisMessage> updatePlanMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisMessage message) {
         var session = message.getSession();
@@ -158,7 +158,7 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * PUT code-editor-session/{sessionId}/messages/{messageId}/{component}: Set the component plan attribute of the message with ExercisePlanMessageContent
+     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/{component}: Set the component plan attribute of the message with ExercisePlanMessageContent
      *
      * @param sessionId of the session
      * @param messageId of the message
@@ -167,7 +167,7 @@ public class IrisCodeEditorMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
      *         be found.
      */
-    @PutMapping(value = { "code-editor-session/{sessionId}/messages/{messageId}/contents/{contentId}/{component}" })
+    @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/{component}" })
     @EnforceAtLeastEditor
     public ResponseEntity<IrisMessageContent> updatePlanContent(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
             @PathVariable IrisExercisePlanMessageContent.ExerciseComponent component, @RequestBody String plan) {
