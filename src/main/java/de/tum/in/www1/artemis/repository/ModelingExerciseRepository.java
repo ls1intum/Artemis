@@ -35,8 +35,8 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
             "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(@Param("exerciseId") Long exerciseId);
 
-    @Query("select modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results results left join fetch results.feedbacks left join fetch results.assessor left join fetch modelingExercise.teamAssignmentConfig where modelingExercise.id = :#{#exerciseId}")
-    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
+    @Query("select modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results results left join fetch results.feedbacks left join fetch results.assessor left join fetch modelingExercise.teamAssignmentConfig left join fetch modelingExercise.plagiarismDetectionConfig where modelingExercise.id = :#{#exerciseId}")
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -75,6 +75,11 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(long exerciseId) {
         return findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+    }
+
+    @NotNull
+    default ModelingExercise findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(long exerciseId) {
+        return findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
 
     @NotNull

@@ -317,7 +317,7 @@ public class ModelingExerciseResource {
         }
         importedExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var originalModelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(sourceExerciseId);
+        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
