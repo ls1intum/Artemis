@@ -68,7 +68,7 @@ export class ExamParticipationLiveEventsService {
         // Listen to updates of the connection state; if we reconnect, we should fetch the list of events
         // to replay any missed events
         this.websocketService.connectionState.subscribe((connectionState: ConnectionState) => {
-            if (connectionState.connected && this.studentExamId) {
+            if (connectionState.connected && connectionState.wasEverConnectedBefore && this.studentExamId) {
                 setTimeout(() => this.fetchPreviousExamEvents(), 5000);
             }
         });

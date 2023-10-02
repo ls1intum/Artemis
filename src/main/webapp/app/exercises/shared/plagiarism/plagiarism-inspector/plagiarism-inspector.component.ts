@@ -384,17 +384,15 @@ export class PlagiarismInspectorComponent implements OnInit {
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
     getMinimumSizeTooltip() {
-        const tooltip = 'artemisApp.plagiarism.minimumSizeTooltip';
-
         switch (this.exercise.type) {
+            case ExerciseType.PROGRAMMING: {
+                return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
+            }
             case ExerciseType.TEXT: {
-                return tooltip + 'Text';
+                return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
             }
             case ExerciseType.MODELING: {
-                return tooltip + 'Modeling';
-            }
-            default: {
-                return tooltip;
+                return 'artemisApp.plagiarism.minimumSizeTooltipModelingExercise';
             }
         }
     }
