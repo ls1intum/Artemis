@@ -29,6 +29,14 @@
                     class="me-2"
                 ></jhi-included-in-score-badge>
             </span>
+            <ng-container *ngIf="studentParticipation?.submissions?.[0]?.plagiarismSuspected ?? false">
+                <span> {{ 'artemisApp.courseOverview.exerciseDetails.plagiarismSuspected' | artemisTranslate }}</span>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    placement="bottom auto"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.plagiarismSuspectedTooltip' | artemisTranslate"
+                ></fa-icon>
+            </ng-container>
             <span *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
                 <div>
                     {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}

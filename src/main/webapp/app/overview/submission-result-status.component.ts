@@ -5,6 +5,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import dayjs from 'dayjs/esm';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-submission-result-status',
@@ -38,11 +39,15 @@ export class SubmissionResultStatusComponent implements OnChanges {
     uninitialized: boolean;
     notSubmitted: boolean;
     shouldShowResult: boolean;
+    plagiarismSuspected: boolean;
+
+    faQuestionCircle = faQuestionCircle;
 
     ngOnChanges() {
         // It's enough to look at the normal due date as students with time extension cannot start after the regular due date
         const afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
         this.exerciseMissedDueDate = afterDueDate && !this.studentParticipation;
+        this.plagiarismSuspected = this.studentParticipation?.submissions?.[0]?.plagiarismSuspected ?? false;
 
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;

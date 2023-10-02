@@ -191,7 +191,8 @@
                 "points": "Points:",
                 "bonus": "Bonus:",
                 "of": " of ",
-                "plagiarismDetected": "Suspicion of plagiarism!",
+                "plagiarismSuspected": "Plagiarism suspicion possible.",
+                "plagiarismSuspectedTooltip": "Your submission was scanned by the continuous plagiarism control mechanism, which determined considerable similarities with at least one submission of other student. This warring has informative purpose only.",
                 "problemStatement": "Problem statement:",
                 "noResults": "You have no results yet",
                 "instructorActions": {
