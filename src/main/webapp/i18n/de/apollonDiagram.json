@@ -14,7 +14,7 @@
             "create": {
                 "success": "Apollon Diagram mit Titel {{ title }} wurde erfolgreich generiert",
                 "error": "Fehler beim Erstellen des Apollon Diagramms",
-                "validationError": "Fehler beim Erstellen: Interaktive Elemente werden zum Generieren benötigt."
+                "validationError": "Validierungsfehler: Interaktive Elemente werden zum Generieren benötigt."
             },
             "update": {
                 "error": "Fehler beim Aktualisieren des Apollon Diagramms"
