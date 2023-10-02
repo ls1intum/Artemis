@@ -4,7 +4,6 @@ import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ActivatedRoute } from '@angular/router';
-import { Input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercises/shared/result/result.utils';
@@ -15,10 +14,6 @@ import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercises/shar
     styleUrls: ['./../feedback.scss', 'standalone-feedback.scss'],
 })
 export class StandaloneFeedbackComponent implements OnInit {
-    @Input() exerciseId?: number;
-    @Input() participationId?: number;
-    @Input() resultId?: number;
-
     exercise?: Exercise;
     result?: Result;
 
@@ -36,9 +31,9 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
-            const exerciseId = this.exerciseId !== undefined ? this.exerciseId : parseInt(params['exerciseId'], 10);
-            const participationId = this.participationId !== undefined ? this.participationId : parseInt(params['participationId'], 10);
-            const resultId = this.resultId !== undefined ? this.resultId : parseInt(params['resultId'], 10);
+            const exerciseId = parseInt(params['exerciseId'], 10);
+            const participationId = parseInt(params['participationId'], 10);
+            const resultId = parseInt(params['resultId'], 10);
 
             this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
