@@ -23,6 +23,7 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
+    faNetworkWired,
     faPersonChalkboard,
     faSync,
     faTable,
@@ -92,6 +93,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faPersonChalkboard = faPersonChalkboard;
     faSync = faSync;
     faCircleNotch = faCircleNotch;
+    faNetworkWired = faNetworkWired;
 
     FeatureToggle = FeatureToggle;
 

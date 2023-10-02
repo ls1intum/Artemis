@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
@@ -8,8 +8,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { ARTEMIS_DEFAULT_COLOR, PROFILE_LOCALVC } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
@@ -65,6 +64,7 @@ export class CourseUpdateComponent implements OnInit {
 
     communicationEnabled = true;
     messagingEnabled = true;
+    ltiEnabled = false;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -78,7 +78,6 @@ export class CourseUpdateComponent implements OnInit {
         private courseManagementService: CourseManagementService,
         private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
-        private fileUploaderService: FileUploaderService,
         private alertService: AlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
@@ -87,7 +86,6 @@ export class CourseUpdateComponent implements OnInit {
         private router: Router,
         private featureToggleService: FeatureToggleService,
         private accountService: AccountService,
-        private fb: FormBuilder,
     ) {}
 
     ngOnInit() {
@@ -135,6 +133,7 @@ export class CourseUpdateComponent implements OnInit {
                         this.course.instructorGroupName = 'artemis-dev';
                     }
                 }
+                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             }
         });
 
@@ -527,13 +526,6 @@ export class CourseUpdateComponent implements OnInit {
      */
     updateCourseInformationSharingMessagingCodeOfConduct(message: string) {
         this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(message);
-    }
-
-    /**
-     * Auxiliary method checking if online course is currently true
-     */
-    isOnlineCourse(): boolean {
-        return this.courseForm.controls['onlineCourse'].value === true;
     }
 
     /**
