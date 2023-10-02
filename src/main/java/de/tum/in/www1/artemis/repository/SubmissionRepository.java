@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -440,4 +438,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     default Submission findByIdWithResultsElseThrow(long submissionId) {
         return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
     }
+
+    @Modifying
+    @Query("UPDATE Submission submission set submission.plagiarismSuspected = :#{#plagiarismSuspected} where submission.id in :#{#submissionIds}")
+    void updatePlagiarismSuspected(@Param("submissionIds") Set<Long> submissionId, @Param("plagiarismSuspected") boolean plagiarismSuspected);
 }
