@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanMessageContent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -139,6 +140,42 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     else {
                         var irisMessageSaved = irisMessageService.saveMessage(responseMessage.message(), session, IrisMessageSender.LLM);
                         irisWebsocketService.sendMessage(irisMessageSaved);
+                    }
+                    return null;
+                });
+    }
+    
+    public void requestExerciseChanges(IrisCodeEditorSession session, IrisExercisePlanMessageContent exercisePlan) {
+        if (!exercisePlan.hasNext())
+            throw new BadRequestException("Exercise plan does not have any more instructions");
+        var nextInstruction = exercisePlan.next();
+        exercisePlan.setExecuting(true);
+        var prompt = switch (nextInstruction.getComponent()) {
+            case PROBLEM_STATEMENT -> "TODO";
+            case SOLUTION_REPOSITORY -> "TODO";
+            case TEMPLATE_REPOSITORY -> "TODO";
+            case TEST_REPOSITORY -> "TODO";
+        };
+        var exercise = session.getExercise();
+        var params = new HashMap<String, Object>();
+        params.put("chatHistory", session.getMessages());
+        params.put("problemStatement", exercise.getProblemStatement());
+        params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
+        params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
+        params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
+        irisConnectorService
+                .sendRequest(new IrisTemplate(prompt), "gpt-4-32k", params)
+                .handleAsync((responseMessage, err) -> {
+                    if (err != null) {
+                        log.error("Error while getting response from Iris model", err);
+                        irisWebsocketService.sendException(session, err.getCause());
+                    }
+                    else if (responseMessage == null) {
+                        log.error("No response from Iris model");
+                        irisWebsocketService.sendException(session, new IrisNoResponseException());
+                    }
+                    else {
+                        // TODO: Apply changes to exercise
                     }
                     return null;
                 });

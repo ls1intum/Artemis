@@ -2,13 +2,9 @@ package de.tum.in.www1.artemis.domain.iris.message;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import javax.annotation.Nullable;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import javax.persistence.*;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * An IrisExercisePlanMessageContent represents an Iris-generated plan to make changes to an exercise.
@@ -18,125 +14,69 @@ import java.util.stream.Collectors;
 @Table(name = "iris_exercise_plan_message_content")
 @DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisExercisePlanMessageContent extends IrisMessageContent {
+public class IrisExercisePlanMessageContent extends IrisMessageContent implements Iterator<ExercisePlanComponent> {
     
-    /**
-     * The different components of an exercise that can be changed by Iris.
-     */
-    public enum ExerciseComponent {
-        PROBLEM_STATEMENT,
-        SOLUTION_REPOSITORY,
-        TEMPLATE_REPOSITORY,
-        TEST_REPOSITORY
+    @OneToMany(mappedBy = "exercisePlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExercisePlanComponent> components;
+    
+    @Column(name = "current_component_index")
+    private short currentComponentIndex = 0;
+    
+    @Transient
+    private boolean executing = false;
+    
+    public List<ExercisePlanComponent> getComponents() {
+        return components;
     }
     
-    // Would like to be able to store these in a Map<ExerciseComponent, String>
-    // but Hibernate would require creating a join table in the DB, and that's not worth it.
-    @Nullable
-    private String problemStatementPlan;
-    @Nullable
-    private String solutionRepositoryPlan;
-    @Nullable
-    private String templateRepositoryPlan;
-    @Nullable
-    private String testRepositoryPlan;
-    
-    // Required by JPA
-    public IrisExercisePlanMessageContent() {}
-    
-    public IrisExercisePlanMessageContent(IrisMessage irisMessage, Map<ExerciseComponent, String> exercisePlan) {
-        super(irisMessage);
-        this.problemStatementPlan = exercisePlan.getOrDefault(ExerciseComponent.PROBLEM_STATEMENT, null);
-        this.solutionRepositoryPlan = exercisePlan.getOrDefault(ExerciseComponent.SOLUTION_REPOSITORY, null);
-        this.templateRepositoryPlan = exercisePlan.getOrDefault(ExerciseComponent.TEMPLATE_REPOSITORY, null);
-        this.testRepositoryPlan = exercisePlan.getOrDefault(ExerciseComponent.TEST_REPOSITORY, null);
+    public void setComponents(List<ExercisePlanComponent> components) {
+        this.components = components;
     }
     
-    @Nullable
-    public String getProblemStatementPlan() {
-        return problemStatementPlan;
+    public short getCurrentComponentIndex() {
+        return currentComponentIndex;
     }
     
-    public void setProblemStatementPlan(String problemStatementPlan) {
-        this.problemStatementPlan = problemStatementPlan;
+    public void setCurrentComponentIndex(short currentInstructionIndex) {
+        this.currentComponentIndex = currentInstructionIndex;
     }
     
-    @Nullable
-    public String getSolutionRepositoryPlan() {
-        return solutionRepositoryPlan;
+    public boolean isExecuting() {
+        return executing;
     }
     
-    public void setSolutionRepositoryPlan(String solutionRepositoryPlan) {
-        this.solutionRepositoryPlan = solutionRepositoryPlan;
+    public void setExecuting(boolean executing) {
+        this.executing = executing;
     }
     
-    @Nullable
-    public String getTemplateRepositoryPlan() {
-        return templateRepositoryPlan;
+    @Override
+    public boolean hasNext() {
+        return currentComponentIndex < components.size();
     }
     
-    public void setTemplateRepositoryPlan(@Nullable String templateRepositoryPlan) {
-        this.templateRepositoryPlan = templateRepositoryPlan;
-    }
-    
-    @Nullable
-    public String getTestRepositoryPlan() {
-        return testRepositoryPlan;
-    }
-    
-    public void setTestRepositoryPlan(@Nullable String testRepositoryPlan) {
-        this.testRepositoryPlan = testRepositoryPlan;
-    }
-    
-    public void setPlan(ExerciseComponent component, @Nullable String plan) {
-        switch (component) {
-            case PROBLEM_STATEMENT:
-                this.problemStatementPlan = plan;
-                break;
-            case SOLUTION_REPOSITORY:
-                this.solutionRepositoryPlan = plan;
-                break;
-            case TEMPLATE_REPOSITORY:
-                this.templateRepositoryPlan = plan;
-                break;
-            case TEST_REPOSITORY:
-                this.testRepositoryPlan = plan;
-                break;
+    @Override
+    public ExercisePlanComponent next() {
+        if (!hasNext()) {
+            throw new IllegalStateException("No more instructions available");
         }
+        return components.get(currentComponentIndex++);
     }
     
     @Override
     public String getContentAsString() {
-        return asMap().entrySet().stream()
-                .map(entry -> entry.getKey().name() + ": " + entry.getValue())
-                .collect(Collectors.joining(",\n", "Exercise Generation Plan:\n", ""));
-    }
-    
-    public Map<ExerciseComponent, String> asMap() {
-        Map<ExerciseComponent, String> map = new EnumMap<>(ExerciseComponent.class);
-        if (problemStatementPlan != null) {
-            map.put(ExerciseComponent.PROBLEM_STATEMENT, problemStatementPlan);
+        var sb = new StringBuilder("Exercise plan:\n");
+        for (var entry : components) {
+            sb.append(entry.getComponent().toString()).append(": \"").append(entry.getInstructions()).append("\"\n");
         }
-        if (solutionRepositoryPlan != null) {
-            map.put(ExerciseComponent.SOLUTION_REPOSITORY, solutionRepositoryPlan);
-        }
-        if (templateRepositoryPlan != null) {
-            map.put(ExerciseComponent.TEMPLATE_REPOSITORY, templateRepositoryPlan);
-        }
-        if (testRepositoryPlan != null) {
-            map.put(ExerciseComponent.TEST_REPOSITORY, testRepositoryPlan);
-        }
-        return map;
+        return sb.toString();
     }
     
     @Override
     public String toString() {
         return "IrisExercisePlanMessageContent{"
                 + "message=" + (message == null ? "null" : message.getId())
-                + ", problemStatementPlan='" + problemStatementPlan + '\''
-                + ", solutionRepositoryPlan='" + solutionRepositoryPlan + '\''
-                + ", templateRepositoryPlan='" + templateRepositoryPlan + '\''
-                + ", testRepositoryPlan='" + testRepositoryPlan + '\''
+                + ", components=" + components
+                + ", currentInstructionIndex=" + currentComponentIndex
                 + '}';
     }
 }
