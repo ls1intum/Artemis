@@ -111,7 +111,7 @@ public class IrisCodeEditorSessionResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/code-editor-session")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisSession> createSession(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 //        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
