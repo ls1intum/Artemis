@@ -28,7 +28,9 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 class LtiServiceTest {
@@ -44,6 +46,12 @@ class LtiServiceTest {
 
     @Mock
     private JWTCookieService jwtCookieService;
+
+    @Mock
+    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    @Mock
+    private Optional<CIUserManagementService> optionalCIUserManagementService;
 
     private Exercise exercise;
 
@@ -61,7 +69,8 @@ class LtiServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService);
+        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService, optionalVcsUserManagementService,
+                optionalCIUserManagementService);
         Course course = new Course();
         course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);
@@ -193,13 +202,10 @@ class LtiServiceTest {
         SecurityContextHolder.getContext().setAuthentication(null);
 
         when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.of("username"));
-        when(artemisAuthenticationProvider.getOrCreateUser(any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
-        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
-        assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
+                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()))
+                .withMessageContaining("already in use");
     }
 
     @Test

@@ -6,6 +6,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,12 +41,13 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
-public class ProgrammingPlagiarismDetectionService {
+class ProgrammingPlagiarismDetectionService {
 
     @Value("${artemis.repo-download-clone-path}")
     private Path repoDownloadClonePath;
@@ -72,10 +74,12 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final UrlService urlService;
 
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
     public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
             ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
-            UrlService urlService) {
+            UrlService urlService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -85,6 +89,7 @@ public class ProgrammingPlagiarismDetectionService {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.urlService = urlService;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
     /**
@@ -97,7 +102,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
-    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
+    public TextPlagiarismResult checkPlagiarism(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException, IOException {
         long start = System.nanoTime();
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
 
@@ -112,7 +117,7 @@ public class ProgrammingPlagiarismDetectionService {
             }
             plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
-            JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+            JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
             if (jPlagResult == null) {
                 log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
                 TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
@@ -148,11 +153,11 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
-        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
 
         log.info("JPlag programming comparison finished with {} comparisons in {}", result.getAllComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         return generateJPlagReportZip(result, programmingExercise);
@@ -167,9 +172,9 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the JPlag result or null if there are not enough participations
      */
     @NotNull
-    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
+    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         long programmingExerciseId = programmingExercise.getId();
-        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 60);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
@@ -177,7 +182,7 @@ public class ProgrammingPlagiarismDetectionService {
             throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
         }
 
-        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString());
+        List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath.toString(), minimumSize);
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
@@ -245,9 +250,9 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the zip file
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
-        final var targetPath = fileService.getTemporaryUniquePath(repoDownloadClonePath, 5);
-        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report").toString();
-        final var reportFolderFile = new File(reportFolder);
+        final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 5);
+        final var reportFolder = targetPath.resolve(programmingExercise.getProjectKey() + " JPlag Report");
+        final var reportFolderFile = reportFolder.toFile();
 
         // Create directories.
         if (!reportFolderFile.mkdirs()) {
@@ -259,11 +264,11 @@ public class ProgrammingPlagiarismDetectionService {
         // Write JPlag report result to the file.
         log.info("Write JPlag report to file system and zip it");
         ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
-        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder);
+        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder.toString());
         // JPlag automatically zips the report
 
         var zipFile = new File(reportFolder + ".zip");
-        fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
+        fileService.schedulePathForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
         return zipFile;
     }
 
@@ -343,12 +348,41 @@ public class ProgrammingPlagiarismDetectionService {
                 }).toList();
     }
 
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath) {
+    private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, String targetPath) {
+        try {
+            var templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
+            gitService.resetToOriginHead(templateRepo); // start with clean state
+            return Optional.of(templateRepo);
+        }
+        catch (GitException | GitAPIException ex) {
+            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
+                    programmingExercise.getTitle(), ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private boolean shouldAddRepo(int minimumSize, Repository repo, Optional<Repository> templateRepo) {
+        if (templateRepo.isEmpty()) {
+            return true;
+        }
+
+        var diffToTemplate = programmingExerciseGitDiffReportService.calculateNumberOfDiffLinesBetweenRepos(repo.getRemoteRepositoryUrl(), repo.getLocalPath(),
+                templateRepo.get().getRemoteRepositoryUrl(), templateRepo.get().getLocalPath());
+        return diffToTemplate >= minimumSize;
+    }
+
+    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath,
+            int minimumSize) {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
         int maxRepositories = participations.size() + 1;
         List<Repository> downloadedRepositories = new ArrayList<>();
+
+        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Downloading repositories: 0/" + maxRepositories));
+        var templateRepo = cloneTemplateRepository(programmingExercise, targetPath);
+        templateRepo.ifPresent(downloadedRepositories::add);
+
         participations.parallelStream().forEach(participation -> {
             try {
                 var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + maxRepositories;
@@ -356,27 +390,19 @@ public class ProgrammingPlagiarismDetectionService {
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
                 gitService.resetToOriginHead(repo); // start with clean state
-                downloadedRepositories.add(repo);
+
+                if (shouldAddRepo(minimumSize, repo, templateRepo)) {
+                    downloadedRepositories.add(repo);
+                }
+                else {
+                    deleteTempLocalRepository(repo);
+                }
             }
             catch (GitException | GitAPIException | InvalidPathException ex) {
                 log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUrl(), programmingExercise.getTitle(),
                         ex.getMessage());
             }
         });
-
-        // clone the template repo
-        try {
-            var progressMessage = "Downloading repositories: " + maxRepositories + "/" + maxRepositories;
-            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
-
-            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
-            gitService.resetToOriginHead(templateRepo); // start with clean state
-            downloadedRepositories.add(templateRepo);
-        }
-        catch (GitException | GitAPIException ex) {
-            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
-                    programmingExercise.getTitle(), ex.getMessage());
-        }
 
         return downloadedRepositories;
     }

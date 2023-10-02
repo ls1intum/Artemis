@@ -305,7 +305,7 @@ public class ParticipationUtilService {
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).successful(true).score(100D);
+        Result result = new Result().participation(participation).successful(true).score(100D).rated(true);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);

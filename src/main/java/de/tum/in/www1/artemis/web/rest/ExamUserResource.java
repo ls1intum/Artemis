@@ -71,7 +71,7 @@ public class ExamUserResource {
                 .orElseThrow(() -> new EntityNotFoundException("Exam user with login: \"" + examUserDTO.login() + "\" does not exist"));
 
         if (signatureFile != null) {
-            String responsePath = fileService.handleSaveFile(signatureFile, true, false);
+            String responsePath = fileService.handleSaveFile(signatureFile, true, false).toString();
             examUser.setSigningImagePath(responsePath);
         }
         examUser.setDidCheckImage(examUserDTO.didCheckImage());
