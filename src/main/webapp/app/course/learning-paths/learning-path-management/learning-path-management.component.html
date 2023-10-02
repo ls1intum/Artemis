@@ -6,7 +6,7 @@
 
 <div *ngIf="!isLoading && health">
     <h2 jhiTranslate="artemisApp.learningPath.manageLearningPaths.title">Learning Path Management</h2>
-    <div *ngIf="health.status === HealthStatus.DISABLED">
+    <div *ngIf="health.status?.includes(HealthStatus.DISABLED)">
         <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.isDisabled">Disabled</span>
         <div>
             <button
@@ -22,18 +22,24 @@
             </button>
         </div>
     </div>
-    <div *ngIf="health.status === HealthStatus.MISSING" class="card text-bg-warning mb-3">
-        <div class="card-body">
-            <h5 class="card-title">{{ 'artemisApp.learningPath.manageLearningPaths.health.missing.title' | artemisTranslate }}</h5>
-            <p class="card-text">{{ 'artemisApp.learningPath.manageLearningPaths.health.missing.body' | artemisTranslate }}</p>
-            <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" type="button" class="btn btn-primary" (click)="generateMissing()">
-                <span ngbTooltip="{{ 'artemisApp.learningPath.manageLearningPaths.health.missing.hint' | artemisTranslate }}">{{
-                    'artemisApp.learningPath.manageLearningPaths.health.missing.action' | artemisTranslate
-                }}</span>
-            </button>
-        </div>
-    </div>
-    <div *ngIf="health.status !== HealthStatus.DISABLED">
+
+    <jhi-learning-path-health-status-warning
+        *ngIf="health.status?.includes(HealthStatus.MISSING)"
+        [status]="HealthStatus.MISSING"
+        (onButtonClicked)="generateMissing()"
+    ></jhi-learning-path-health-status-warning>
+    <jhi-learning-path-health-status-warning
+        *ngIf="health.status?.includes(HealthStatus.NO_COMPETENCIES)"
+        [status]="HealthStatus.NO_COMPETENCIES"
+        (onButtonClicked)="routeToCompetencyManagement()"
+    ></jhi-learning-path-health-status-warning>
+    <jhi-learning-path-health-status-warning
+        *ngIf="health.status?.includes(HealthStatus.NO_RELATIONS)"
+        [status]="HealthStatus.NO_RELATIONS"
+        (onButtonClicked)="routeToCompetencyManagement()"
+    ></jhi-learning-path-health-status-warning>
+
+    <div *ngIf="!health.status?.includes(HealthStatus.DISABLED)">
         <div class="form-group form-inline">
             <span jhiTranslate="artemisApp.learningPath.manageLearningPaths.search">Search for Learning Path:</span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningPath" type="text" />

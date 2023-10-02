@@ -361,7 +361,7 @@
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}"></fa-icon>
                     </div>
                 </div>
-                <div class="form-check" *ngIf="!this.course.enrollmentEnabled">
+                <div class="form-check" *ngIf="ltiEnabled && !this.course.enrollmentEnabled">
                     <input
                         type="checkbox"
                         class="form-check-input"
