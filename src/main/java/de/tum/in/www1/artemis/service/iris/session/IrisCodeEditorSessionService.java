@@ -116,11 +116,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         }
         var exercise = session.getExercise();
         var params = new HashMap<String, Object>();
-        params.put("chat_history", session.getMessages());
-        params.put("problem_statement", exercise.getProblemStatement());
-        params.put("solution_repository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
-        params.put("template_repository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
-        params.put("test_repository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
+        params.put("chatHistory", session.getMessages());
+        params.put("problemStatement", exercise.getProblemStatement());
+        params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
+        params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
+        params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
 
         // FIXME: Template and model should be be configurable; await settings update
         // The response handling is duplicated, also exists in IrisChatSessionService
