@@ -28,6 +28,7 @@ import com.github.dockerjava.api.model.Volume;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
@@ -214,6 +215,7 @@ public class LocalCIContainerService {
     public Path createBuildScript(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> auxiliaryRepositories) {
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
+        boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
         Path scriptsPath = Path.of("local-ci-scripts");
 
@@ -267,10 +269,11 @@ public class LocalCIContainerService {
         buildScript.append("cd /repositories/test-repository\n");
 
         // programming language specific tasks
-        buildScript.append("""
-                chmod +x gradlew
-                sed -i -e 's/\\r$//' gradlew
-                ./gradlew clean test""");
+
+        switch (programmingExercise.getProgrammingLanguage()) {
+            case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+            default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+        }
 
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
@@ -280,6 +283,41 @@ public class LocalCIContainerService {
         }
 
         return buildScriptPath;
+    }
+
+    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
+        boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
+
+        if (!hasSequentialTestRuns) {
+            if (isMaven) {
+                buildScript.append("""
+                        mvn clean test""");
+            }
+            else {
+                buildScript.append("""
+                        chmod +x gradlew
+                        ./gradlew clean test""");
+            }
+        }
+        else {
+            if (isMaven) {
+                buildScript.append("""
+                        cd structural
+                        mvn clean test
+                        cd ..
+                        cd behavior
+                        mvn clean test
+                        cd ..
+                        """);
+            }
+            else {
+                buildScript.append("""
+                        chmod +x gradlew
+                        ./gradlew clean structualTests
+                        ./gradlew behaviorTests
+                        """);
+            }
+        }
     }
 
     /**
