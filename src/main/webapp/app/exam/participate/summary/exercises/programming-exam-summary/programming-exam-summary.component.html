@@ -8,4 +8,16 @@
         {{ 'artemisApp.exam.examSummary.gradedSubmission' | artemisTranslate }}:
         {{ (submission?.commitHash | slice: 0 : 7) || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}
     </span>
+
+    <jhi-programming-exercise-instructions *ngIf="exercise.problemStatement" [exercise]="exercise" [participation]="exercise.templateParticipation!" />
+
+    <jhi-complaint-student-view
+        *ngIf="(exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) && submission && isAfterStudentReviewStart"
+        class="mb-2 mt-2 ms-3"
+        [exercise]="exercise"
+        [participation]="participation"
+        [result]="participation.results?.[0]"
+        [exam]="exam"
+        [testRun]="isTestRun!"
+    />
 </ng-container>

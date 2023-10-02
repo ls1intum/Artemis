@@ -145,29 +145,11 @@
                         [exercise]="exercise"
                         [participation]="exerciseInfos[exercise.id!]!.participation!"
                         [submission]="exerciseInfos[exercise.id!]!.submission!"
+                        [isTestRun]="isTestRun"
+                        [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                        [isAfterStudentReviewStart]="isAfterStudentReviewStart()"
                     />
                 </ng-container>
-
-                <jhi-programming-exercise-instructions
-                    *ngIf="exercise.problemStatement"
-                    [exercise]="exercise"
-                    [participation]="asProgrammingExercise(exercise).templateParticipation!"
-                />
-
-                <jhi-complaint-student-view
-                    *ngIf="
-                        (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) &&
-                        exerciseInfos[exercise.id!]!.submission! &&
-                        isAfterStudentReviewStart()
-                    "
-                    class="mb-2 mt-2 ms-3"
-                    [exercise]="exercise"
-                    [participation]="exerciseInfos[exercise.id!]!.participation!"
-                    [result]="exerciseInfos[exercise.id!]!.participation!.results?.[0]"
-                    [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                    [testRun]="isTestRun"
-                >
-                </jhi-complaint-student-view>
             </ng-container>
             <ng-template #noSubmission>
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
