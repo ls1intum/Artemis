@@ -803,7 +803,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise                             the programming exercise for which the lock is executed
      * @param individualParticipationsWithDueDates the set of student participations with their individual due dates
      */
-    public void scheduleIndividualRepositoryAndParticipationLockTasks(ProgrammingExercise exercise,
+    private void scheduleIndividualRepositoryAndParticipationLockTasks(ProgrammingExercise exercise,
             Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualParticipationsWithDueDates) {
         // 1. Group all participations by due date
         // TODO: use student exams for safety if some participations are not pre-generated
@@ -840,9 +840,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void rescheduleProgrammingExerciseDuringExamConduction(ProgrammingExercise programmingExercise) {
+        // Note: the programming exercise might not include student participations, so we load it with student participations here
+        var programmingExerciseWithStudentParticipations = programmingExerciseRepository.findWithEagerStudentParticipationsByIdElseThrow(programmingExercise.getId());
         // Collect the individual due date of each student participation
-        var participationsWithDueDate = programmingExercise.getStudentParticipations().stream().filter(ProgrammingExerciseStudentParticipation.class::isInstance)
-                .map(studentParticipation -> {
+        var participationsWithDueDate = programmingExerciseWithStudentParticipations.getStudentParticipations().stream()
+                .filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(studentParticipation -> {
                     var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, studentParticipation);
                     return new Tuple<>(dueDate, (ProgrammingExerciseStudentParticipation) studentParticipation);
                 }).collect(Collectors.toSet());

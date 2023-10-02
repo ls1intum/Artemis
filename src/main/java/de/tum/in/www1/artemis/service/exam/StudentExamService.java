@@ -39,9 +39,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
-import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
-import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -89,8 +87,6 @@ public class StudentExamService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
-
     private final TaskScheduler scheduler;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
@@ -99,7 +95,7 @@ public class StudentExamService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -117,7 +113,6 @@ public class StudentExamService {
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.scheduler = scheduler;
     }
 
@@ -649,13 +644,6 @@ public class StudentExamService {
                                 || ExamDateService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                             // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
                             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingParticipation);
-
-                            // This is a special case if "prepare exercise start" was pressed shortly before the exam start
-                            // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
-                            // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
-                            // Since this gets never executed here, we need to manually schedule the locking.
-                            var tupel = new Tuple<>(studentExam.getIndividualEndDate(), programmingParticipation);
-                            programmingExerciseScheduleService.scheduleIndividualRepositoryAndParticipationLockTasks(programmingExercise, Set.of(tupel));
                         }
                         else {
                             programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);

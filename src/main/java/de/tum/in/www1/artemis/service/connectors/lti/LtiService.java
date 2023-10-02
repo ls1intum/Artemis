@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.lti;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
@@ -10,6 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -31,9 +33,13 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
+import tech.jhipster.security.RandomUtil;
 
 @Service
+@Profile("lti")
 public class LtiService {
 
     public static final String LTI_GROUP_NAME = "lti";
@@ -50,12 +56,19 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
+    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    private final Optional<CIUserManagementService> optionalCIUserManagementService;
+
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService) {
+            JWTCookieService jwtCookieService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            Optional<CIUserManagementService> optionalCIUserManagementService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
+        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.optionalCIUserManagementService = optionalCIUserManagementService;
     }
 
     /**
@@ -84,11 +97,11 @@ public class LtiService {
             }
         }
 
-        // 2. Case: Lookup user with the LTI email address and sign in as this user
+        // 2. Case: Lookup user with the LTI email address and make sure it's not in use
         final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
         if (usernameLookupByEmail.isPresent()) {
-            SecurityContextHolder.getContext().setAuthentication(loginUserByEmail(usernameLookupByEmail.get(), email));
-            return;
+            throw new InternalAuthenticationServiceException(
+                    "Email address is already in use by Artemis. Please use a different address with your service or contact your instructor to gain direct access.");
         }
 
         // 3. Case: Create new user if an existing user is not required
@@ -100,23 +113,24 @@ public class LtiService {
         throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
     }
 
-    private Authentication loginUserByEmail(String username, String email) {
-        log.info("Signing in as {}", username);
-        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), null, null, email, true);
-        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
-    }
-
     @NotNull
     private Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
             groups.add(LTI_GROUP_NAME);
-            newUser = userCreationService.createUser(username, null, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+
+            var password = RandomUtil.generatePassword();
+            newUser = userCreationService.createUser(username, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
+
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser, password));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser, password));
+
             log.info("Created new user {}", newUser);
             return newUser;
+
         });
 
         log.info("createNewUserFromLaunchRequest: {}", user);

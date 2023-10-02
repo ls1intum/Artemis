@@ -176,6 +176,10 @@ public final class Constants {
 
     public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
+    public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
+
+    public static final String CLEANUP_EXAM = "CLEANUP_EXAM";
+
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
     public static final String EDIT_EXERCISE = "EDIT_EXERCISE";
@@ -258,6 +262,8 @@ public final class Constants {
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
+
+    public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 
     public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
 

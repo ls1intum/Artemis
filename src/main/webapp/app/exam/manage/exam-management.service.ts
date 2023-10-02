@@ -20,6 +20,7 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
+import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -69,6 +70,16 @@ export class ExamManagementService {
         return this.http
             .patch(`${this.resourceUrl}/${courseId}/exams/${examId}/working-time`, workingTimeChange, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    }
+
+    createAnnouncement(courseId: number, examId: number, content: string): Observable<ExamWideAnnouncementEvent> {
+        return this.http.post<ExamWideAnnouncementEvent>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`, content, { observe: 'response' }).pipe(
+            map((res: HttpResponse<ExamWideAnnouncementEvent>) => {
+                const event = res.body!;
+                event.createdDate = convertDateFromServer(event.createdDate)!;
+                return event;
+            }),
+        );
     }
 
     /**
@@ -490,6 +501,10 @@ export class ExamManagementService {
      */
     archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
         return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
+    }
+
+    cleanupExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/cleanup`, { observe: 'response' });
     }
 
     private sendTitlesToEntityTitleService(exam: Exam | undefined | null) {

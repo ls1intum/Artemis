@@ -38,7 +38,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     constructor(
         public exerciseService: ExerciseService,
-        private fileUploadExerciseService: FileUploadExerciseService,
+        public fileUploadExerciseService: FileUploadExerciseService,
         private courseExerciseService: CourseExerciseService,
         private alertService: AlertService,
         private accountService: AccountService,
@@ -64,6 +64,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     this.fileUploadExercises.forEach((exercise) => {
                         exercise.course = this.course;
                         this.accountService.setAccessRightsForExercise(exercise);
+                        this.selectedExercises = [];
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);
                     this.applyFilter();

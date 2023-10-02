@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
+import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -49,7 +51,12 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private IrisRateLimitService irisRateLimitService;
+
     private ProgrammingExercise exercise;
+
+    private LocalRepository repository;
 
     @BeforeEach
     void initTestCase() {
@@ -59,6 +66,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisFor(course);
         activateIrisFor(exercise);
+        repository = new LocalRepository("main");
     }
 
     @Test
@@ -69,10 +77,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setMessageDifferentiator(1453);
 
         irisRequestMockProvider.mockMessageResponse("Hello World");
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
-        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
-        activateIrisFor(savedExercise);
+        setupExercise();
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
@@ -81,9 +86,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // Compare contents of messages by only comparing the textContent field
         assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getTextContent)
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getTextContent).toList());
-        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
-        assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage));
-        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
+        await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
@@ -115,10 +118,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend1 = createDefaultMockMessage(irisSession);
 
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
-        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
-        activateIrisFor(savedExercise);
+        setupExercise();
 
         var irisMessage1 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
@@ -239,14 +239,10 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageError();
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
-        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
-        activateIrisFor(savedExercise);
+        setupExercise();
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        waitForIrisMessageToBeProcessed();
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
         verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
@@ -259,17 +255,65 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageResponse(null);
-        var savedExercise = irisUtilTestService.setupTemplate(exercise, new LocalRepository("main"));
-        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
-        irisUtilTestService.setupStudentParticipation(exerciseParticipation, new LocalRepository("main"));
-        activateIrisFor(savedExercise);
+        setupExercise();
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        waitForIrisMessageToBeProcessed();
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
         verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage() throws Exception {
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var messageToSend = createDefaultMockMessage(irisSession);
+
+        irisRequestMockProvider.mockMessageResponse("Hello World");
+        setupExercise();
+
+        var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class, HttpStatus.OK);
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
+        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
+        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void sendMessageRateLimitReached() throws Exception {
+        var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        var messageToSend1 = createDefaultMockMessage(irisSession);
+        var messageToSend2 = createDefaultMockMessage(irisSession);
+
+        irisRequestMockProvider.mockMessageResponse("Hello World");
+        setupExercise();
+
+        var previousRateLimit = ReflectionTestUtils.getField(irisRateLimitService, "rateLimit");
+        ReflectionTestUtils.setField(irisRateLimitService, "rateLimit", 1);
+
+        try {
+            request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
+            await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
+            request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, IrisMessage.class, HttpStatus.TOO_MANY_REQUESTS);
+            var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
+            request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class,
+                    HttpStatus.TOO_MANY_REQUESTS);
+            verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), messageToSend1);
+            verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), "Hello World");
+            verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId());
+        }
+        finally {
+            ReflectionTestUtils.setField(irisRateLimitService, "rateLimit", previousRateLimit);
+        }
+    }
+
+    private void setupExercise() throws Exception {
+        var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
+        var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
+        irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
+        activateIrisFor(savedExercise);
     }
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
