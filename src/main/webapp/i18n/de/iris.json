@@ -27,6 +27,8 @@
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "preferredModel": "Präferiertes Modell",
                     "inheritModel": "Vererbe Modell",
+                    "rateLimit": "Rate Limit",
+                    "rateLimitTooltip": "Die maximale Anzahl an Antworten, die ein Benutzer vom LLM in einem bestimmten Zeitraum erhalten kann. Der Zeitraum beträgt derzeit 3h.",
                     "template": {
                         "title": "Template",
                         "inherit": "Inherit Template"
