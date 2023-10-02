@@ -135,7 +135,7 @@ public class IrisCodeEditorMessageResource {
      */
     @PutMapping("code-editor-sessions/{sessionId}/messages/{messageId}/plan")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> updatePlanMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisMessage message) {
+    public ResponseEntity<IrisMessage> confirmPlanMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisMessage message) {
         var session = message.getSession();
         var content = message.getContent();
         if (!Objects.equals(session.getId(), sessionId)) {
@@ -149,7 +149,7 @@ public class IrisCodeEditorMessageResource {
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only edit the plan messages sent by Iris");
         }
-        if (!(content instanceof IrisExercisePlanMessageContent)) {
+        if (!(content.get(0) instanceof IrisExercisePlanMessageContent)) {
             throw new BadRequestException("You can only edit component plan content");
         }
         var savedMessage = irisMessageRepository.save(message);
