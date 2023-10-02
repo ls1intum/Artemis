@@ -4,6 +4,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exam } from 'app/entities/exam.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
@@ -22,6 +23,11 @@ export class ProgrammingExamSummaryComponent {
 
     @Input() isAfterStudentReviewStart?: boolean = false;
 
+    @Input() resultsPublished?: boolean = false;
+
+    readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
+
     protected readonly AssessmentType = AssessmentType;
     protected readonly ProgrammingExercise = ProgrammingExercise;
+    protected readonly ExerciseType = ExerciseType;
 }
