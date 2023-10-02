@@ -75,7 +75,6 @@
                 "commitHashExplanation": "Checke den Commit der mit {{commitHash}} endet aus um deine finale Abgabe zu sehen.",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
-                "viewResult": " Ergebnis ansehen",
                 "viewExampleSolution": "Beispiellösung anzeigen",
                 "showExampleSolution": "Musterlösung anzeigen",
                 "youAreViewingTheExampleSolution": "Du betrachtest die Musterlösung",
