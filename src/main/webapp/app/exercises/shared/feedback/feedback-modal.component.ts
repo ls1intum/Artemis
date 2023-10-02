@@ -33,10 +33,10 @@ import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedba
 // Modal -> Result details view
 @Component({
     selector: 'jhi-result-detail',
-    templateUrl: './feedback.component.html',
+    templateUrl: './feedback-modal.component.html',
     styleUrls: ['./feedback.scss'],
 })
-export class FeedbackComponent implements OnInit {
+export class FeedbackModalComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;

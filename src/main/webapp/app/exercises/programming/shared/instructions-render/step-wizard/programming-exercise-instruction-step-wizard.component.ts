@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { FeedbackModalComponent } from 'app/exercises/shared/feedback/feedback-modal.component';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -57,8 +57,8 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         const {
             detailed: { notExecutedTests },
         } = this.instructionService.testStatusForTask(tests, this.latestResult);
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
-        const componentInstance = modalRef.componentInstance as FeedbackComponent;
+        const modalRef = this.modalService.open(FeedbackModalComponent, { keyboard: true, size: 'lg' });
+        const componentInstance = modalRef.componentInstance as FeedbackModalComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = tests;

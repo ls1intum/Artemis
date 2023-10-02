@@ -12,7 +12,7 @@ import { Participation, ParticipationType, getExercise } from 'app/entities/part
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { FeedbackModalComponent } from 'app/exercises/shared/feedback/feedback-modal.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -221,8 +221,8 @@ export class ResultComponent implements OnInit, OnChanges {
             return;
         }
 
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
-        const componentInstance: FeedbackComponent = modalRef.componentInstance;
+        const modalRef = this.modalService.open(FeedbackModalComponent, { keyboard: true, size: 'xl' });
+        const componentInstance: FeedbackModalComponent = modalRef.componentInstance;
         componentInstance.exercise = this.exercise;
         componentInstance.result = result;
         if (this.exercise) {
@@ -275,7 +275,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * Determines if some information about testcases could still be hidden because of later individual due dates
      * @param componentInstance the detailed result view
      */
-    private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
+    private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackModalComponent) {
         if (this.latestDueDate) {
             this.setShowMissingAutomaticFeedbackInformation(componentInstance, this.latestDueDate);
         } else {
@@ -288,7 +288,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
-    private setShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent, latestDueDate: dayjs.Dayjs) {
+    private setShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackModalComponent, latestDueDate: dayjs.Dayjs) {
         this.latestDueDate = latestDueDate;
         componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(latestDueDate);
         componentInstance.latestDueDate = this.latestDueDate;

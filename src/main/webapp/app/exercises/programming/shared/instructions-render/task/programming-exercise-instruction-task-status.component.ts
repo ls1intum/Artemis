@@ -5,7 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { FeedbackModalComponent } from 'app/exercises/shared/feedback/feedback-modal.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -76,8 +76,8 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         if (!this.latestResult) {
             return;
         }
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
-        const componentInstance = modalRef.componentInstance as FeedbackComponent;
+        const modalRef = this.modalService.open(FeedbackModalComponent, { keyboard: true, size: 'lg' });
+        const componentInstance = modalRef.componentInstance as FeedbackModalComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = this.tests;

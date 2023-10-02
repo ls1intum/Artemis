@@ -5,7 +5,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { StandaloneFeedbackComponent } from 'app/exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { FeedbackModalComponent } from 'app/exercises/shared/feedback/feedback-modal.component';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -32,7 +32,7 @@ describe('StandaloneFeedbackComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            declarations: [StandaloneFeedbackComponent, MockComponent(FeedbackComponent)],
+            declarations: [StandaloneFeedbackComponent, MockComponent(FeedbackModalComponent)],
             providers: [{ provide: ActivatedRoute, useValue: activatedRouteStub }, MockProvider(ExerciseService), MockProvider(ExerciseCacheService)],
         })
             .compileComponents()
