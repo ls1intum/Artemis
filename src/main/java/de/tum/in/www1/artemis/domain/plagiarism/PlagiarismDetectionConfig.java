@@ -100,9 +100,9 @@ public class PlagiarismDetectionConfig extends DomainObject {
         var config = new PlagiarismDetectionConfig();
         config.setContinuousPlagiarismControlEnabled(false);
         config.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
-        config.setSimilarityThreshold(0.5f);
+        config.setSimilarityThreshold(0.9f);
         config.setMinimumScore(0);
-        config.setMinimumSize(0);
+        config.setMinimumSize(50);
         return config;
     }
 }
