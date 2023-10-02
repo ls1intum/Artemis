@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.*;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -104,5 +106,33 @@ public class PlagiarismDetectionConfig extends DomainObject {
         config.setMinimumScore(0);
         config.setMinimumSize(50);
         return config;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        PlagiarismDetectionConfig that = (PlagiarismDetectionConfig) o;
+        return continuousPlagiarismControlEnabled == that.continuousPlagiarismControlEnabled
+                && continuousPlagiarismControlPostDueDateChecksEnabled == that.continuousPlagiarismControlPostDueDateChecksEnabled
+                && Float.compare(similarityThreshold, that.similarityThreshold) == 0 && minimumScore == that.minimumScore && minimumSize == that.minimumSize
+                && Objects.equals(exercise, that.exercise);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), exercise, continuousPlagiarismControlEnabled, continuousPlagiarismControlPostDueDateChecksEnabled, similarityThreshold, minimumScore,
+                minimumSize);
+    }
+
+    @Override
+    public String toString() {
+        return "PlagiarismDetectionConfig{" + "exercise=" + exercise + ", continuousPlagiarismControlEnabled=" + continuousPlagiarismControlEnabled
+                + ", continuousPlagiarismControlPostDueDateChecksEnabled=" + continuousPlagiarismControlPostDueDateChecksEnabled + ", similarityThreshold=" + similarityThreshold
+                + ", minimumScore=" + minimumScore + ", minimumSize=" + minimumSize + '}';
     }
 }
