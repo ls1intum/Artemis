@@ -12,8 +12,8 @@ artemis:
 
     continuous-integration:
         local-cis-build-scripts-path: /opt/artemis/data/local-ci-scripts
-        # The Docker connection URI to be used by docker-java to connect to the system's Docker installation (Windows)
-        docker-connection-uri: tcp://host.docker.internal:2375
+        # The Docker connection URI to be used by docker-java to connect to the system's Docker installation. Use unix:///var/run/docker.sock for Linux and tcp://host.docker.internal:2375 for Windows.
+        docker-connection-uri: unix:///var/run/docker.sock
 
 spring:
     datasource:

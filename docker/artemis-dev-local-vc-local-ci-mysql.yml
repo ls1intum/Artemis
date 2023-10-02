@@ -14,7 +14,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         #TODO: check if it works without root not sure so because of the docker socket ...
-        #user: 0:0
+        user: 0:0
         ports:
             - "8080:8080"
             - "5005:5005" # Java Remote Debugging port declared in the java cmd options
