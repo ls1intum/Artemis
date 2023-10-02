@@ -30,3 +30,5 @@ This Code of Conduct applies within all messages channels.
 
 Each course is represented by instructors. If you see inappropriate behavior or content, please report it.
 You may find a list of contacts responsible for this course below.
+
+<!-- The responsible users are automatically compiled from the course's instructors -->
