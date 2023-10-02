@@ -51,7 +51,7 @@
             "replyToAccusation": "Reply to Accusation",
             "replyToAccusationDueDateNotification": "You can provide a statement to this accusation until <b>{{ dueDate }}</b> the latest.",
             "continuousPlagiarismControl": "Continuous Plagiarism Control",
-            "continuousPlagiarismControlTooltip": "Continuous Plagiarism Control automatically triggers a plagiarism check each night.",
+            "continuousPlagiarismControlTooltip": "Continuous Plagiarism Control automatically triggers a plagiarism check each night. Detected are marked as plagiarism and students are gently notified about this fact.",
             "continuousPlagiarismControlEnabled": "Enable Continuous Plagiarism Control",
             "continuousPlagiarismControlPostDueDateChecksEnabled": "Check the submissions for plagiarism one more time after the due date.",
             "cleanUp": {
