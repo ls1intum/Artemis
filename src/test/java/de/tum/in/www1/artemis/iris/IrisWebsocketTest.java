@@ -49,7 +49,8 @@ class IrisWebsocketTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var message = new IrisMessage(irisSession);
+        var message = new IrisMessage();
+        message.setSession(irisSession);
         message.setContent(List.of(createMockContent(message), createMockContent(message)));
         message.setMessageDifferentiator(101010);
         irisWebsocketService.sendMessage(message);

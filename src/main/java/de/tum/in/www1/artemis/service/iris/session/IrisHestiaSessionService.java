@@ -80,8 +80,8 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         checkHasAccessToIrisSession(irisSession, null);
         irisSession = irisSessionRepository.save(irisSession);
 
-        var systemMessage = generateSystemMessage(irisSession);
-        var userMessage = generateUserMessage(irisSession, codeHint);
+        var systemMessage = generateSystemMessage();
+        var userMessage = generateUserMessage(codeHint);
         irisSession.getMessages().add(systemMessage);
         irisSession.getMessages().add(userMessage);
         irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.ARTEMIS);
@@ -108,14 +108,14 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         }
     }
 
-    private IrisMessage generateSystemMessage(IrisSession session) {
-        var irisMessage = new IrisMessage(session);
+    private IrisMessage generateSystemMessage() {
+        var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.ARTEMIS);
         irisMessage.addContent(new IrisTextMessageContent(irisMessage, SYSTEM_PROMPT));
         return irisMessage;
     }
 
-    private IrisMessage generateUserMessage(IrisSession session, CodeHint codeHint) {
+    private IrisMessage generateUserMessage(CodeHint codeHint) {
         var userPrompt = new StringBuilder(String.format("""
                 ##Hint title: "%s"
                 ## Task name: "%s"
@@ -135,7 +135,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
                     """, solutionEntry.getFilePath(), solutionEntry.getLine(), solutionEntry.getLine() + solutionEntry.getCode().split("\n").length - 1, solutionEntry.getCode()));
         }
 
-        var irisMessage = new IrisMessage(session);
+        var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.USER);
         irisMessage.addContent(new IrisTextMessageContent(irisMessage, userPrompt.toString()));
         return irisMessage;

@@ -76,7 +76,7 @@ public class IrisRequestMockProvider {
             mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
             return;
         }
-        var irisMessage = new IrisMessage(null); // session is not needed for this test
+        var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.LLM);
         irisMessage.addContent(new IrisTextMessageContent(irisMessage, responseMessage));
 

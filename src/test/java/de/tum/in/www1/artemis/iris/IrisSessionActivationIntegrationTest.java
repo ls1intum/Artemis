@@ -55,7 +55,8 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void createMessageUnauthorized() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
-        var messageToSend = new IrisMessage(irisSession);
+        var messageToSend = new IrisMessage();
+        messageToSend.setSession(irisSession);
         messageToSend.addContent(createMockContent(messageToSend));
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
@@ -64,11 +65,14 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void getMessagesUnauthorized() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
-        var message1 = new IrisMessage(irisSession);
+        var message1 = new IrisMessage();
+        message1.setSession(irisSession);
         message1.setContent(List.of(createMockContent(message1), createMockContent(message1), createMockContent(message1)));
-        var message2 = new IrisMessage(irisSession);
+        var message2 = new IrisMessage();
+        message2.setSession(irisSession);
         message2.setContent(List.of(createMockContent(message2), createMockContent(message2), createMockContent(message2)));
-        var message3 = new IrisMessage(irisSession);
+        var message3 = new IrisMessage();
+        message3.setSession(irisSession);
         message3.setContent(List.of(createMockContent(message3), createMockContent(message3), createMockContent(message3)));
 
         irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.ARTEMIS);
