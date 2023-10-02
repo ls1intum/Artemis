@@ -1312,17 +1312,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
      */
     private Result saveOrSubmitTextAssessment(Long participationId, Long latestResultId, TextAssessmentDTO textAssessmentDTO, boolean submit, HttpStatus expectedStatus)
             throws Exception {
-        Result result;
         if (submit) {
-            result = request.postWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/submit-text-assessment", textAssessmentDTO,
+            return request.postWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/submit-text-assessment", textAssessmentDTO,
                     Result.class, expectedStatus);
 
         }
         else {
-            result = request.putWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/text-assessment", textAssessmentDTO, Result.class,
+            return request.putWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/text-assessment", textAssessmentDTO, Result.class,
                     expectedStatus);
         }
-
-        return result;
     }
 }
