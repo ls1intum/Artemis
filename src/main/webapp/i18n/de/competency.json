@@ -163,6 +163,18 @@
                         "body": "Für einige Studierende wurde noch kein Lernpfad erstellt. Dies ist nicht kritisch. Ihre Lernpfade werden generiert, wenn sie ihren Lernpfad das erste mal anfragen.",
                         "action": "Erstellen",
                         "hint": "Erstellen der fehlenden Lernpfade"
+                    },
+                    "noCompetencies": {
+                        "title": "Keine Kompetenzen",
+                        "body": "Es wurden noch keine Kompetenzen erstellt. Lernpfade setzen sich aus den Kompetenzen zusammen, die Studierende erreichen müssen. Gehe zum Kompetenzmanagement um neue Kompetenzen zu erstellen oder bestehende zu importieren.",
+                        "action": "Kompetenzmanagement",
+                        "hint": "Gehe zum Kompetenzmanagement"
+                    },
+                    "noRelations": {
+                        "title": "Keine Beziehungen",
+                        "body": "Es wurden noch keine Beziehungen zwischen Kompetenzen konfiguriert. Lernpfade nutzen die Informationen über die Struktur der Lerninhalte um zuverlässig qualitiv hochwertige Empfehlungen für Studierende zu generieren. Gehe zum Kompetenzmanagement um die Beziehungen zwischen Kompetenzen zu konfigurieren.",
+                        "action": "Kompetenzmanagement",
+                        "hint": "Gehe zum Kompetenzmanagement"
                     }
                 },
                 "isDisabled": "Lernpfade sind für diesen Kurs nicht aktiviert.",
