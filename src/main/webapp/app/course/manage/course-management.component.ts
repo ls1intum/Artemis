@@ -7,8 +7,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -44,13 +42,35 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     faAngleUp = faAngleUp;
 
     constructor(
-        private examService: ExamManagementService,
-        private lectureService: LectureService,
         private courseManagementService: CourseManagementService,
         private alertService: AlertService,
         private eventManager: EventManager,
         private guidedTourService: GuidedTourService,
     ) {}
+
+    /**
+     * loads all courses and subscribes to courseListModification
+     */
+    ngOnInit() {
+        this.loadAll();
+        this.registerChangeInCourses();
+    }
+
+    /**
+     * notifies the guided-tour service that the current component has
+     * been fully loaded
+     */
+    ngAfterViewInit(): void {
+        this.guidedTourService.componentPageLoaded();
+    }
+
+    /**
+     * unsubscribe on component destruction
+     */
+    ngOnDestroy() {
+        this.eventManager.destroy(this.eventSubscriber);
+        this.dialogErrorSource.unsubscribe();
+    }
 
     /**
      * loads all courses from courseService
@@ -186,30 +206,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
-    }
-
-    /**
-     * loads all courses and subscribes to courseListModification
-     */
-    ngOnInit() {
-        this.loadAll();
-        this.registerChangeInCourses();
-    }
-
-    /**
-     * notifies the guided-tour service that the current component has
-     * been fully loaded
-     */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
-    }
-
-    /**
-     * unsubscribe on component destruction
-     */
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-        this.dialogErrorSource.unsubscribe();
     }
 
     /**
