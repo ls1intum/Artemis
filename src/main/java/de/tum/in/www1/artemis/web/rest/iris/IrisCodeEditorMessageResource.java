@@ -70,7 +70,7 @@ public class IrisCodeEditorMessageResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
         IrisSession session = irisSessionRepository.findByIdElseThrow(sessionId);
-        irisSessionService.checkIsIrisActivated(session);
+        // irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var messages = irisMessageRepository.findAllExceptSystemMessagesWithContentBySessionId(sessionId);
         return ResponseEntity.ok(messages);
@@ -81,13 +81,14 @@ public class IrisCodeEditorMessageResource {
      *
      * @param sessionId of the session
      * @param message   to send
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
+     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be
+     *         found.
      */
     @PostMapping("code-editor-sessions/{sessionId}/messages/")
     @EnforceAtLeastEditor
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
-        irisSessionService.checkIsIrisActivated(session);
+        // irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
@@ -110,7 +111,7 @@ public class IrisCodeEditorMessageResource {
     @EnforceAtLeastEditor
     public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
-        irisSessionService.checkIsIrisActivated(session);
+        // irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
@@ -133,28 +134,29 @@ public class IrisCodeEditorMessageResource {
      * @param message   to send
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    @PutMapping("code-editor-sessions/{sessionId}/messages/{messageId}/plan")
+    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/execute")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> confirmPlanMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisMessage message) {
-        var session = message.getSession();
-        var content = message.getContent();
-        if (!Objects.equals(session.getId(), sessionId)) {
-            throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
+    public ResponseEntity<Void> executePlan(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId) {
+        var fromDB = irisMessageContentRepository.findByIdElseThrow(contentId);
+        if (!(fromDB instanceof IrisExercisePlanMessageContent exercisePlan)) {
+            throw new BadRequestException("Content is not an exercise plan");
         }
-        irisSessionService.checkIsIrisActivated(session);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
+        var message = exercisePlan.getMessage();
+        var session = message.getSession();
         if (!Objects.equals(message.getId(), messageId)) {
-            throw new BadRequestException("The message does not correspond to the message id");
+            throw new ConflictException("The specified messageId is incorrect", "IrisMessageContent", "irisMessageContentConflict");
+        }
+        if (!Objects.equals(session.getId(), sessionId)) {
+            throw new ConflictException("The specified sessionId is incorrect", "IrisMessage", "irisMessageSessionConflict");
         }
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only edit the plan messages sent by Iris");
         }
-        if (!(content.get(0) instanceof IrisExercisePlanMessageContent)) {
-            throw new BadRequestException("You can only edit component plan content");
-        }
-        var savedMessage = irisMessageRepository.save(message);
+
+        // irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessToIrisSession(session, null);
         irisCodeEditorSessionService.requestAndHandleResponse(session);// TODO: second request for plan realization
-        return ResponseEntity.ok(savedMessage);
+        return ResponseEntity.ok(null);
     }
 
     /**
@@ -177,7 +179,7 @@ public class IrisCodeEditorMessageResource {
         if (!Objects.equals(session.getId(), sessionId)) {
             throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
         }
-        irisSessionService.checkIsIrisActivated(session);
+        // irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only edit the plan messages sent by Iris");
