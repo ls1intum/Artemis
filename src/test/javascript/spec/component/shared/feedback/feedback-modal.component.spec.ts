@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
-import { FeedbackModalComponent } from 'app/exercises/shared/feedback/feedback-modal.component';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
@@ -27,9 +27,9 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 
-describe('FeedbackModalComponent', () => {
-    let comp: FeedbackModalComponent;
-    let fixture: ComponentFixture<FeedbackModalComponent>;
+describe('FeedbackComponent', () => {
+    let comp: FeedbackComponent;
+    let fixture: ComponentFixture<FeedbackComponent>;
     let debugElement: DebugElement;
 
     let exercise: ProgrammingExercise;
@@ -175,12 +175,12 @@ describe('FeedbackModalComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [FeedbackModalComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockComponent(FeedbackCollapseComponent)],
+            declarations: [FeedbackComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockComponent(FeedbackCollapseComponent)],
             providers: [MockProvider(NgbActiveModal), MockProvider(ResultService), MockProvider(BuildLogService), MockProvider(ProfileService)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(FeedbackModalComponent);
+                fixture = TestBed.createComponent(FeedbackComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 

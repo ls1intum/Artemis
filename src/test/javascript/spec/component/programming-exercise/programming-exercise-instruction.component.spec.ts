@@ -34,7 +34,7 @@ import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { FeedbackModalComponent } from 'app/exercises/shared/feedback/feedback-modal.component';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -377,7 +377,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
-            } as FeedbackModalComponent,
+            } as FeedbackComponent,
         } as any);
 
         mergeSortStep.nativeElement.click();
@@ -389,7 +389,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
-            } as FeedbackModalComponent,
+            } as FeedbackComponent,
         } as any);
     }));
 
@@ -453,7 +453,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 0,
-            } as FeedbackModalComponent,
+            } as FeedbackComponent,
         } as any);
 
         mergeSortStep.nativeElement.click();
@@ -465,7 +465,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
-            } as FeedbackModalComponent,
+            } as FeedbackComponent,
         } as any);
     }));
 
@@ -530,7 +530,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 result,
                 taskName: 'Bubble Sort',
                 numberOfNotExecutedTests: 0,
-            } as FeedbackModalComponent,
+            } as FeedbackComponent,
         } as any);
 
         mergeSortStep.nativeElement.click();
@@ -589,7 +589,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     const verifyTask = (expectedInvocations: number, expected: NgbModalRef) => {
         expect(openModalStub).toHaveBeenCalledTimes(expectedInvocations);
-        expect(openModalStub).toHaveBeenCalledWith(FeedbackModalComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual(expected);
     };
 });
