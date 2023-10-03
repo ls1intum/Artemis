@@ -197,7 +197,7 @@ describe('ExamResultSummaryComponent', () => {
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
-        const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockReturnValue();
+        const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
 
