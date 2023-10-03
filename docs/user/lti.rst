@@ -14,12 +14,12 @@ LTI (Learning Tools Interoperability) is a standard developed by `IMS Global <ht
 It enables tools to integrate smoothly with a learning management system (like Moodle or edX). Artemis supports `LTI 1.1 (deprecated) <https://www.imsglobal.org/specs/ltiv1p1/implementation-guide>`_ and `LTI 1.3. <https://www.imsglobal.org/spec/lti/v1p3>`_
 The table below showcases the types of exercises supported by Artemis and their respective functionalities.
 
-.. list-table:: Supported Exercise Types
+.. list-table:: Supported Exercise Interactions
    :widths: 25 15 15 15
    :header-rows: 1
 
    * - Exercise Type
-     - Launch Exercise
+     - Start Exercise
      - View Assessment Result
      - View Assessment Feedback
    * - Programming exercise
@@ -45,7 +45,7 @@ The table below showcases the types of exercises supported by Artemis and their 
 
 LTI 1.3 Instructor Guide
 ---------------------------
-Instructors can configure Artemis online courses through LTI to Learning Management Systems (e.g. Moodle, edX).
+Instructors can connect Artemis online courses via LTI to other Learning Management Systems (e.g. Moodle, edX).
 Below given steps for how to configure Artemis over LTI with Moodle.
 
 Enable Online Course for LTI Configuration
