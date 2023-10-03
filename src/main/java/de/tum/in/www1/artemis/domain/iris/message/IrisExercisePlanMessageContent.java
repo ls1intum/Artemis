@@ -14,10 +14,10 @@ import java.util.List;
 @Table(name = "iris_exercise_plan_message_content")
 @DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisExercisePlanMessageContent extends IrisMessageContent implements Iterator<ExercisePlanComponent> {
+public class IrisExercisePlanMessageContent extends IrisMessageContent implements Iterator<IrisExercisePlanComponent> {
     
     @OneToMany(mappedBy = "exercisePlan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ExercisePlanComponent> components;
+    private List<IrisExercisePlanComponent> components;
     
     @Column(name = "current_component_index")
     private short currentComponentIndex = 0;
@@ -25,11 +25,11 @@ public class IrisExercisePlanMessageContent extends IrisMessageContent implement
     @Transient
     private boolean executing = false;
     
-    public List<ExercisePlanComponent> getComponents() {
+    public List<IrisExercisePlanComponent> getComponents() {
         return components;
     }
     
-    public void setComponents(List<ExercisePlanComponent> components) {
+    public void setComponents(List<IrisExercisePlanComponent> components) {
         this.components = components;
     }
     
@@ -55,7 +55,7 @@ public class IrisExercisePlanMessageContent extends IrisMessageContent implement
     }
     
     @Override
-    public ExercisePlanComponent next() {
+    public IrisExercisePlanComponent next() {
         if (!hasNext()) {
             throw new IllegalStateException("No more instructions available");
         }

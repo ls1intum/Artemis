@@ -289,10 +289,10 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisMessageContent createMockExercisePlanContent(IrisMessage message) {
         var content = new IrisExercisePlanMessageContent();
         content.setComponents(List.of(
-                new ExercisePlanComponent(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
-                new ExercisePlanComponent(content, ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
-                new ExercisePlanComponent(content, ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),
-                new ExercisePlanComponent(content, ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")
+                new IrisExercisePlanComponent(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
+                new IrisExercisePlanComponent(content, ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
+                new IrisExercisePlanComponent(content, ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),
+                new IrisExercisePlanComponent(content, ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")
         ));
         content.setId(ThreadLocalRandom.current().nextLong());
         content.setMessage(message);
