@@ -11,7 +11,7 @@
             </column>
         </addColumn>
 
-        <!-- create the iris_text_message_content and iris_exercise_plan_message_content tables -->
+        <!-- create the iris_text_message_content table -->
         <createTable tableName="iris_text_message_content">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false" />
@@ -21,21 +21,29 @@
             </column>
         </createTable>
 
+        <!-- create the iris_exercise_plan_message_content table -->
         <createTable tableName="iris_exercise_plan_message_content">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false" />
             </column>
-            <column name="problem_statement_plan" type="VARCHAR(255)">
-                <constraints nullable="true" />
+            <column name="current_component_index" type="TINYINT">
+                <constraints nullable="false" />
             </column>
-            <column name="solution_repository_plan" type="VARCHAR(255)">
-                <constraints nullable="true" />
+        </createTable>
+
+        <!-- create the iris_exercise_plan_component table -->
+        <createTable tableName="iris_exercise_plan_component">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false" />
             </column>
-            <column name="template_repository_plan" type="VARCHAR(255)">
-                <constraints nullable="true" />
+            <column name="exercise_plan_id" type="BIGINT">
+                <constraints nullable="false" referencedTableName="iris_exercise_plan_message_content" referencedColumnNames="id" />
             </column>
-            <column name="test_repository_plan" type="VARCHAR(255)">
-                <constraints nullable="true" />
+            <column name="exercise_component" type="VARCHAR(20)">
+                <constraints nullable="false" />
+            </column>
+            <column name="instructions" type="VARCHAR(500)">
+                <constraints nullable="false" />
             </column>
         </createTable>
 

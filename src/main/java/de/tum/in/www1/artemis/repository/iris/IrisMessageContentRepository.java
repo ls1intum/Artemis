@@ -16,4 +16,5 @@ public interface IrisMessageContentRepository extends JpaRepository<IrisMessageC
     default IrisMessageContent findByIdElseThrow(long contentId) throws EntityNotFoundException {
         return findById(contentId).orElseThrow(() -> new EntityNotFoundException("Iris Message Content", contentId));
     }
+
 }
