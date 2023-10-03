@@ -206,8 +206,8 @@ How to Start an Exercise
     :width: 700
     :alt: Moodle - Artemis Programming Exercise
 
-2. First.Time Users
-^^^^^^^^^^^^^^^^
+2. First Time Users
+^^^^^^^^^^^^^^^^^^^
 If a student is participating in an Artemis exercise for the first time, a pop-up will appear. The pop-up will display a uniquely generated password for the student. This password will be required for future sign-ins to Artemis. It's crucial to copy this password and store it in a safe and accessible location.
 
 .. figure:: lti/moodle_password_popup.png
