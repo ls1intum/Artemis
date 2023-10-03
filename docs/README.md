@@ -16,7 +16,7 @@ Screenshots included in Artemis documentation **must** present realistic data. T
 - realistic user, course and exercise names
 - realic text passages, like submissions contents and problem statements  
 
-Screenshots included in Artemis documentation **must not** present any test data or server infomation. That includes but is not limited to:
+Screenshots included in Artemis documentation **must not** present any test data or server information. That includes but is not limited to:
 - `Test Server` and `Development` labels
 - test user, course and exercise names
 - _Lorem ipsum_ and mock text passages, like submissions contents and problem statements 
