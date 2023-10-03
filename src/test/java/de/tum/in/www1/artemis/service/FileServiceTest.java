@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -41,6 +43,18 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     // the resource loader allows to load resources from the file system for this prefix
     private final Path overridableBasePath = Path.of("templates", "jenkins");
+
+    private static final URI VALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
+
+    private static final URI VALID_INTENDED_BACKGROUND_PATH = URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/");
+
+    private static final URI INVALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
+
+    private static final URI VALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
+
+    private static final URI VALID_INTENDED_DRAGITEM_PATH = URI.create("/api/" + FilePathService.getDragItemFilePath() + "/");
+
+    private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
 
     @AfterEach
     void cleanup() throws IOException {
@@ -376,5 +390,40 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("package.xcworkspace");
         assertThat(expectedTargetFile).doesNotExist();
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that VALID_BACKGROUND_PATH starts with VALID_INTENDED_BACKGROUND_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Valid() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(VALID_BACKGROUND_PATH, VALID_INTENDED_BACKGROUND_PATH)).doesNotThrowAnyException();
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that INVALID_BACKGROUND_PATH does not start with
+     * VALID_INTENDED_BACKGROUND_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(INVALID_BACKGROUND_PATH, VALID_INTENDED_BACKGROUND_PATH));
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that VALID_DRAGITEM_PATH starts with VALID_INTENDED_DRAGITEM_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Valid() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(VALID_DRAGITEM_PATH, VALID_INTENDED_DRAGITEM_PATH)).doesNotThrowAnyException();
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that INVALID_DRAGITEM_PATH does not start with VALID_INTENDED_DRAGITEM_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(INVALID_DRAGITEM_PATH, VALID_INTENDED_DRAGITEM_PATH));
     }
 }
