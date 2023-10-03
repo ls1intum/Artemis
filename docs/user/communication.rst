@@ -273,3 +273,7 @@ Additionally, announcements visually differ from normal posts and are always dis
     :width: 600
 .. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
     :width: 600
+.. |link-preview| image:: communication/link-preview.png
+    :width: 600
+.. |link-preview-multiple| image:: communication/link-preview-multiple.png
+    :width: 600
