@@ -3,6 +3,9 @@
 We use [Sphinx] for creating the Artemis documentation using [reStructuredText] (RST).
 To get started with RST, check out the [Quickstart] or this [cheatsheet].
 
+> [!IMPORTANT]  
+> Artemis documentation must use real examples and personas and must avoid the use of test data. Sample personas accounts to be use in production for creating screenshots are listed [here](https://confluence.ase.in.tum.de/display/ArTEMiS/Random+Personas).
+
 ## Documentation Hosting
 
 [Read the Docs] (RtD) hosts the [Artemis documentation] for the `develop` (latest) branch, as well as for
