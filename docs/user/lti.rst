@@ -12,7 +12,8 @@ Overview
 
 LTI (Learning Tools Interoperability) is a standard developed by `IMS Global <https://www.1edtech.org/>`_ that allows different learning platforms and tools to work together seamlessly.
 It enables tools to integrate smoothly with a learning management system (like Moodle or edX). Artemis supports `LTI 1.1 (deprecated) <https://www.imsglobal.org/specs/ltiv1p1/implementation-guide>`_ and `LTI 1.3. <https://www.imsglobal.org/spec/lti/v1p3>`_
-The table below showcases the types of exercises supported by Artemis and their respective functionalities. Assessment results provide a quantitative measure of a student's performance on exercise, which is represented as a grade or score. Assessment Feedback, offers qualitative insights, through comments and suggestions.
+The table below showcases the types of exercises supported by Artemis and their respective functionalities.
+For each exercıse, students can start exercise, check their results and get feedback on their work. Assessment results provide a quantitative measure of a student's performance on exercise, which is represented as a grade or score. Assessment Feedback, offers qualitative insights, through comments and suggestions.
 
 .. list-table:: Supported Exercise Interactions
    :widths: 25 15 15 15
@@ -45,15 +46,23 @@ The table below showcases the types of exercises supported by Artemis and their 
 
 LTI 1.3 Instructor Guide
 ---------------------------
-Instructors can connect Artemis online courses via LTI to other Learning Management Systems (e.g. Moodle, edX).
+Instructors have the capability to seamlessly integrate the Artemis platform with other Learning Management Systems (LMS) like Moodle using the LTI 1.3 standard. The process is straightforward and involves a few key steps:
+
+#. Connecting Artemis to Other Platforms: Begin by enabling the Online Course setting in Artemis, which activates the LTI features.
+#. Retrieve Dynamic Registration URL: Once the Online Course setting is enabled, you can obtain the Dynamic Registration URL from Artemis, which is essential for the integration process.
+#. Establish Configuration in Moodle: With the Dynamic Registration URL in hand, proceed to your Moodle platform and input this URL to establish a connection between Artemis and Moodle.
+#. Link Specific Exercises: Instructors can also link individual exercises from Artemis directly to their Moodle courses, ensuring students have direct access to specific assignments.
+
+By following these steps, instructors can effortlessly bridge the gap between Artemis and Moodle, providing students with a unified learning experience.
+
+1. Connecting Artemis to Other Platforms (e.g., Moodle)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Instructors can connect Artemis online courses via LTI to other Learning Management Systems (e.g., Moodle, edX).
 Below given steps for how to configure Artemis over LTI with Moodle.
 
-Enable Online Course for LTI Configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1.1 Enable the Online Course Setting in Artemis:
+"""""""""""""""""""""""""""""""""""""""""
 Before diving into the LTI configuration, it's crucial to ensure that the Online Course setting is enabled in Artemis. This setting activates the LTI configurability, allowing instructors to link Artemis with Moodle or other LMS platforms.
-
-Artemis Steps
-"""""""""""""
 To enable the Online Course setting in Artemis, follow the steps below:\
 
 #. Access Course Management: Start by logging into your Artemis account. Locate and click on the |course-management| option.
@@ -69,14 +78,10 @@ To enable the Online Course setting in Artemis, follow the steps below:\
 
 With the Online Course setting enabled, you can now proceed to integrate Artemis with Moodle using the LTI 1.3 standard. The subsequent sections of this guide will provide detailed steps on achieving this integration.
 
-Configure an Online Course
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-To ensure a seamless integration of Artemis with Moodle using the LTI 1.3 standard, specific configurations are required. This section provides a step-by-step guide to achieve this integration.
-
-Artemis Steps
-"""""""""""""
-
-To set up the LTI 1.3 integration in Artemis, follow the steps outlined below:
+1.2. Copy Dynamic Registration URL from Artemis
+"""""""""""""""""""""""""""""""""""""""""""""""
+Once the above setting is enabled, you can now set up a bridge between Artemis and Moodle. This section provides a step-by-step guide to achieve this integration.
+To retrieve Dynamic Registration URL from Artemis, follow the steps outlined below:
 
 #. Access Course Management: Begin by logging into your Artemis account. Click on the  |course-management| option.
 #. Choose the Relevant Course: From the list of courses, select the one you wish to configure for LTI integration. This will lead you to the course's settings and details.
@@ -96,8 +101,8 @@ To set up the LTI 1.3 integration in Artemis, follow the steps outlined below:
     :width: 700
     :alt: LTI 1.3 Configuration
 
-Moodle Steps
-"""""""""""""
+1.3. Establish Artemis configuration from Moodle
+""""""""""""""""""""""""""""""""""""""""""""""""
 
 With the Dynamic Registration URL copied, you can now configure the LTI 1.3 integration in Moodle:
 
@@ -124,13 +129,13 @@ With the Dynamic Registration URL copied, you can now configure the LTI 1.3 inte
     :align: center
     :alt: Moodle - Site Administration
 
-Link Artemis Exercises to Moodle Course
+2. Linking Specific Exercises from Artemis to Moodle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructors can link specific Artemis exercises directly to their Moodle courses. This integration ensures that students can access Artemis exercises directly from their Moodle dashboard.
 
-Artemis Steps
-"""""""""""""
+2.1. Retrieve LTI 1.3 Launch URL from Artemis
+"""""""""""""""""""""""""""""""""""""""""""""
 
 #. Access Course Management: Select the |course-management| to view all your courses.
 #. Choose the Desired Course: From the list of available courses, select the one online course that containing the exercise you would like to link to Moodle.
@@ -144,8 +149,8 @@ Artemis Steps
     :width: 700
     :alt: LTI Exercise List
 
-Moodle Steps
-"""""""""""""
+2.2. Link exercise to Moodle
+""""""""""""""""""""""""""""
 
 With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
 
@@ -175,25 +180,25 @@ With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
 
 LTI 1.3 Student Guide
 ---------------------------
+For students, the integration of Artemis with Moodle via LTI 1.3 offers a streamlined experience to access and participate in Artemis exercises directly from the Moodle platform. The key steps involved are:
 
-Start Artemis Exercise through Moodle
+#. Starting an Artemis Exercise: Students can easily access their Moodle courses and find the linked Artemis exercises. Clicking on these links will open the Artemis exercise page right within Moodle, providing a smooth transition.
+#. First-Time Users: If you're accessing an Artemis exercise for the first time, you'll receive a unique password. It's essential to note this password down as it will be required for future Artemis sessions.
+#. Viewing Grades and Feedback: Beyond just participating, students can also view their grades and feedback for any evaluated Artemis exercises, all within the Moodle environment. This ensures that students have a one-stop platform to engage with exercises and track their performance.
+
+By following this guide, students can make the most of the integrated learning experience offered by Artemis and Moodle.
+
+1. Start Artemis Exercise through Moodle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Here's a step-by-step guide on how students can start an Artemis exercise through Moodle:
 
-Moodle Steps
-"""""""""""""
+How to Start an Exercise
+""""""""""""""""""""""""
 
 #. Access the Moodle Course: Log into your Moodle account and navigate to the specific course containing the linked Artemis exercise.
 #. Select the Artemis Exercise: Within the course content, locate and click on the external Artemis exercise you wish to participate in.
 #. Launch Artemis from Moodle: Upon selecting the exercise, the Artemis exercise page will open in a frame within Moodle, ensuring a seamless transition between the two platforms.
-#. Initial Pop-up: If a student is participating in an Artemis exercise for the first time, a pop-up will appear. The pop-up will display a uniquely generated password for the student. This password will be required for future sign-ins to Artemis. It's crucial to copy this password and store it in a safe and accessible location.
-
-    .. figure:: lti/moodle_password_popup.png
-        :align: center
-        :width: 700
-        :alt: Moodle - Password Pop-up
-
 #. Participate Artemis Exercise: Students can now participate in the Artemis exercise, submit their responses, and receive real-time feedback.
 
 .. figure:: lti/moodle_artemis_progex.png
@@ -201,6 +206,17 @@ Moodle Steps
     :width: 700
     :alt: Moodle - Artemis Programming Exercise
 
+2. First.Time Users
+^^^^^^^^^^^^^^^^
+If a student is participating in an Artemis exercise for the first time, a pop-up will appear. The pop-up will display a uniquely generated password for the student. This password will be required for future sign-ins to Artemis. It's crucial to copy this password and store it in a safe and accessible location.
+
+.. figure:: lti/moodle_password_popup.png
+    :align: center
+    :width: 700
+    :alt: Moodle - Password Pop-up
+
+3. Viewing Grades and Feedback
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In addition to participating in exercises, students can also view their grades and feedback for evaluated Artemis exercises directly within Moodle.
 This integration ensures that students have a centralized location to track their performance and receive constructive feedback.
 
