@@ -7,6 +7,7 @@ import {
     HistoryMessageLoadedAction,
     MessageStoreAction,
     MessageStoreState,
+    RateLimitUpdatedAction,
     RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
@@ -14,6 +15,7 @@ import {
     isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
     isNumNewMessagesResetAction,
+    isRateLimitUpdatedAction,
     isRateMessageSuccessAction,
     isSessionReceivedAction,
     isStudentMessageSentAction,
@@ -35,6 +37,8 @@ export class IrisStateStore implements OnDestroy {
         numNewMessages: 0,
         error: null,
         serverResponseTimeout: null,
+        currentMessageCount: -1,
+        rateLimit: -1,
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -151,6 +155,8 @@ export class IrisStateStore implements OnDestroy {
                 numNewMessages: state.numNewMessages + 1,
                 error: defaultError,
                 serverResponseTimeout: null,
+                currentMessageCount: state.currentMessageCount,
+                rateLimit: state.rateLimit,
             };
         }
         if (isConversationErrorOccurredAction(action)) {
@@ -218,6 +224,15 @@ export class IrisStateStore implements OnDestroy {
             }
 
             return state;
+        }
+        if (isRateLimitUpdatedAction(action)) {
+            const castedAction = action as RateLimitUpdatedAction;
+            return {
+                ...state,
+                error: castedAction.rateLimit >= 0 && castedAction.currentMessageCount >= castedAction.rateLimit ? errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED] : null,
+                currentMessageCount: castedAction.currentMessageCount,
+                rateLimit: castedAction.rateLimit,
+            };
         }
 
         IrisStateStore.exhaustiveCheck(action);
