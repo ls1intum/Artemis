@@ -8,7 +8,7 @@ Artemis documentation must use realistic examples and personas and must avoid th
 
 Using familiar information in the documentation is crucial because it simplifies the learning process for new users. Real-world scenarios demonstrate to users how to apply specific features within their own context, whereas test data can mislead and fails to reflect real use cases. Realistic examples and personas provide clarity and relevance, ensuring users can effectively understand and utilize Artemis.
 
-Well defined personas are vital for the development process. They not only help readaers to understad the documentation, but also allow developers to better understand Artemis and its users. Many organisations use personas, the two blog posts below contain additional introduction and motivation for the topic:
+Well-defined personas are vital for the development process. They not only help readers to understand the documentation, but also allow developers to better understand Artemis and its users. Many organizations use personas, the two blog posts below contain additional introduction and motivation for the topic:
 - [Using Personas During Design and Documentation](https://www.uxmatters.com/mt/archives/2010/10/using-personas-during-design-and-documentation.php)
 - [Customer Personas: How to Write Them and Why You Need Them in Agile Software Development](https://community.atlassian.com/t5/App-Central/Customer-Personas-How-to-Write-Them-and-Why-You-Need-Them-in/ba-p/759228)
 
