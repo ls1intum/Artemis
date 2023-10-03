@@ -1,8 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { IrisHttpSessionService } from 'app/iris/http-session.service';
+import { HeartbeatDTO, IrisHttpSessionService } from 'app/iris/http-session.service';
 import { HttpResponse } from '@angular/common/http';
-import { ConversationErrorOccurredAction, MessageStoreAction, isSessionReceivedAction } from 'app/iris/state-store.model';
+import { ConversationErrorOccurredAction, MessageStoreAction, RateLimitUpdatedAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { Subscription } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -53,8 +53,13 @@ export class IrisHeartbeatService implements OnDestroy {
         this.httpSessionService
             .getHeartbeat(sessionId)
             .toPromise()
-            .then((response: HttpResponse<boolean>) => {
-                if (!response.body!) {
+            .then((response: HttpResponse<HeartbeatDTO>) => {
+                if (response.body) {
+                    if (!response.body.active) {
+                        this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_NOT_AVAILABLE));
+                    }
+                    this.stateStore.dispatch(new RateLimitUpdatedAction(response.body!.currentMessageCount, response.body!.rateLimit));
+                } else {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_NOT_AVAILABLE));
                 }
             });

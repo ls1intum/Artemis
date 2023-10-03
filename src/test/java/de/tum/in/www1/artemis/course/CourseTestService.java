@@ -5,10 +5,12 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -17,8 +19,10 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
@@ -53,12 +57,14 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
@@ -75,6 +81,7 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
+import de.tum.in.www1.artemis.service.export.DataExportUtil;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
@@ -219,6 +226,9 @@ public class CourseTestService {
 
     @Autowired
     private IrisSettingsService irisSettingsService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
 
     private static final int numberOfStudents = 8;
 
@@ -1933,6 +1943,109 @@ public class CourseTestService {
         var updatedCourse = courseRepo.findById(course.getId()).orElseThrow();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
         return updatedCourse;
+    }
+
+    public void testArchiveCourseWithQuizExercise(String userPrefix) throws Exception {
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.INDIVIDUAL);
+        quizExercise = exerciseRepo.save(quizExercise);
+        participationUtilService.createAndSaveParticipationForExercise(quizExercise, userPrefix + "student2");
+        var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()));
+        assertThat(archivePath).isNotEmpty();
+        extractAndAssertContent(archivePath.orElseThrow(), quizSubmission);
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws IOException {
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()));
+        assertThat(archivePath).isNotEmpty();
+        Predicate<Path> missingPathPredicate = path -> "Exercise-Details-quiz.json".equals(path.getFileName().toString());
+        extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotExportDragAndDropSubmission() throws IOException {
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        try (MockedStatic<ImageIO> mockedImageIO = mockStatic(ImageIO.class)) {
+            mockedImageIO.when(() -> ImageIO.read(any(File.class))).thenThrow(new IOException());
+            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            assertThat(archivePath).isNotEmpty();
+            Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(".pdf");
+            extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
+        }
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory() throws IOException {
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
+        var course = courseUtilService.createCourse();
+        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        try (MockedStatic<DataExportUtil> mockedFiles = mockStatic(DataExportUtil.class)) {
+            mockedFiles.when(() -> DataExportUtil.createDirectoryIfNotExistent(any())).thenThrow(new IOException());
+            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            assertThat(archivePath).isNotEmpty();
+        }
+
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String fileName, String dynamicErrorMsg) throws IOException {
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        try (MockedStatic<org.apache.commons.io.FileUtils> mockedFiles = mockStatic(org.apache.commons.io.FileUtils.class)) {
+            mockedFiles.when(() -> org.apache.commons.io.FileUtils.writeLines(argThat(file -> file.toString().contains(fileName)), anyString(), anyList()))
+                    .thenThrow(new IOException());
+            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            assertThat(archivePath).isNotEmpty();
+            Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains(fileName) && path.getFileName().toString().endsWith(".txt");
+            extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
+            assertThat(exportErrors).hasSize(1);
+            assertThat(exportErrors.get(0)).contains("Failed to export " + dynamicErrorMsg + " answers");
+        }
+    }
+
+    private void extractAndAssertMissingContent(Path courseArchivePath, QuizSubmission quizSubmission, Predicate<Path> missingPathPredicate) throws IOException {
+        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        var exercise = quizSubmission.getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
+        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
+        assertThat(courseArchiveDir).exists();
+
+        try (var files = Files.walk(courseArchiveDir)) {
+            assertThat(files.filter(file -> Files.isDirectory(file) || Files.isRegularFile(file)))
+                    // exercise directory
+                    .anyMatch(file -> (exercise.getSanitizedExerciseTitle() + "_" + exercise.getId()).equals(file.getFileName().toString()))
+                    // participation directory
+                    .anyMatch(
+                            file -> ("participation-" + studentParticipation.getId() + "-" + studentParticipation.getParticipantIdentifier()).equals(file.getFileName().toString()))
+                    .noneMatch(missingPathPredicate);
+        }
+    }
+
+    private void extractAndAssertContent(Path courseArchivePath, QuizSubmission quizSubmission) throws IOException {
+        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        var exercise = quizSubmission.getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
+        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
+        assertThat(courseArchiveDir).exists();
+        try (var files = Files.walk(courseArchiveDir)) {
+            assertThat(files.filter(file -> Files.isDirectory(file) || Files.isRegularFile(file)))
+                    // exercise directory
+                    .anyMatch(file -> (exercise.getSanitizedExerciseTitle() + "_" + exercise.getId()).equals(file.getFileName().toString()))
+                    // participation directory
+                    .anyMatch(
+                            file -> ("participation-" + studentParticipation.getId() + "-" + studentParticipation.getParticipantIdentifier()).equals(file.getFileName().toString()))
+                    // exercise details file
+                    .anyMatch(file -> ("Exercise-Details-quiz.json").equals(file.getFileName().toString()))
+                    // drag and drop question submission pdf
+                    .anyMatch(file -> file.getFileName().toString().contains("dragAndDropQuestion") && file.getFileName().toString().endsWith(".pdf"))
+                    // MC submission txt file
+                    .anyMatch(file -> file.getFileName().toString().contains("multiple_choice_questions_answers") && file.getFileName().toString().endsWith(".txt"))
+                    // short answer submission txt file
+                    .anyMatch(file -> file.getFileName().toString().contains("short_answer_questions_answers") && file.getFileName().toString().endsWith(".txt"));
+        }
     }
 
     /**

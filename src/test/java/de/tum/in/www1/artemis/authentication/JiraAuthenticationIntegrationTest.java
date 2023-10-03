@@ -22,7 +22,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -135,27 +134,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
         jiraRequestMockProvider.mockGetOrCreateUserLti(username, "", username, email, firstName, groups);
 
-        request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
-        final var user = userRepository.findOneByLogin(username).orElseThrow();
-        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).orElseThrow();
-
-        assertThat(ltiOutcome.getUser()).isEqualTo(user);
-        assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
-        assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
-        assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
-
-        final var mrrobotUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
-        assertThat(mrrobotUser.getEmail()).isEqualTo(email);
-        assertThat(mrrobotUser.getFirstName()).isEqualTo(firstName);
-        assertThat(mrrobotUser.getGroups()).containsAll(groups);
-        assertThat(mrrobotUser.getGroups()).contains(course.getStudentGroupName());
-        assertThat(mrrobotUser.getAuthorities()).containsAll(authorityRepository.findAll());
-
-        final var auth = new TestingAuthenticationToken(username, "");
-        final var responseAuth = jiraAuthenticationProvider.authenticate(auth);
-
-        assertThat(responseAuth.getPrincipal()).isEqualTo(username);
-        assertThat(responseAuth.getCredentials()).isEqualTo(mrrobotUser.getPassword());
+        request.postFormWithoutLocation("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.BAD_REQUEST);
     }
 
     @Test
