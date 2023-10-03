@@ -1,26 +1,26 @@
 <ng-container>
-    <ng-container>
-        <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
-
-        <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="participation?.userIndependentRepositoryUrl || ''" />
-        <br />
-
-        <span>
-            {{ 'artemisApp.exam.examSummary.submissionLinkedToCommit' | artemisTranslate }}
-            <a *ngIf="commitUrl; else commitWithoutLink" [href]="commitUrl" target="_blank" rel="noopener noreferrer">
-                {{ commitHash || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}
-            </a>
-            <ng-template #commitWithoutLink>
-                {{ commitHash || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}
-            </ng-template>
-        </span>
-    </ng-container>
-
-    <div class="mt-4">
-        <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
-
+    <div>
         <div class="row gx-5">
             <div class="col-md-4">
+                <div class="mb-4">
+                    <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
+
+                    <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="participation?.userIndependentRepositoryUrl || ''" />
+                    <br />
+
+                    <span>
+                        {{ 'artemisApp.exam.examSummary.submissionLinkedToCommit' | artemisTranslate }}
+                        <a *ngIf="commitUrl; else commitWithoutLink" [href]="commitUrl" target="_blank" rel="noopener noreferrer">
+                            {{ commitHash || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}
+                        </a>
+                        <ng-template #commitWithoutLink>
+                            {{ commitHash || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}
+                        </ng-template>
+                    </span>
+                </div>
+
+                <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
+
                 <jhi-result-detail
                     *ngIf="feedbackComponentParameters.result"
                     [exercise]="feedbackComponentParameters.exercise"
@@ -35,6 +35,7 @@
             </div>
 
             <div class="col-md-8">
+                <h5>{{ 'artemisApp.exam.examSummary.problemStatement' | artemisTranslate }}</h5>
                 <jhi-programming-exercise-instructions *ngIf="exercise.problemStatement" [exercise]="exercise" [participation]="exercise.templateParticipation!" />
             </div>
         </div>
