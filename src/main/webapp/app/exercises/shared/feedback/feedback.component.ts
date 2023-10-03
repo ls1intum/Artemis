@@ -67,6 +67,8 @@ export class FeedbackComponent implements OnInit {
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
 
+    @Input() isExamReviewPage?: boolean = false;
+
     // Icons
     faXmark = faXmark;
     faCircleNotch = faCircleNotch;
