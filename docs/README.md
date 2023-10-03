@@ -14,7 +14,7 @@ Well defined personas are vital for the development process. They not only help 
 
 Screenshots included in Artemis documentation **must** present realistic data. That includes but is not limited to:
 - realistic user, course and exercise names
-- realic text passages, like submissions contents and problem statements  
+- realistic text passages, like submissions contents and problem statements  
 
 Screenshots included in Artemis documentation **must not** present any test data or server information. That includes but is not limited to:
 - `Test Server` and `Development` labels
