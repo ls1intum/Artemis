@@ -18,13 +18,13 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular-ivy';
-import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
+import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
 
 @Component({
     selector: 'jhi-result',
@@ -211,34 +211,35 @@ export class ResultComponent implements OnInit, OnChanges {
      * @param result Result object whose details will be displayed.
      */
     showDetails(result: Result) {
-        if (!result.participation) {
-            result.participation = this.participation;
-        }
+        const exerciseService = this.exerciseCacheService ?? this.exerciseService;
+        const feedbackComponentParameters = prepareFeedbackComponentParameters(this.exercise, result, this.participation, this.templateStatus, this.latestDueDate, exerciseService);
 
         if (this.exercise?.type === ExerciseType.QUIZ) {
             // There is no feedback for quiz exercises.
             // Instead, the scoring is showed next to the different questions
-            return;
+            return undefined;
         }
 
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
         const componentInstance: FeedbackComponent = modalRef.componentInstance;
+
         componentInstance.exercise = this.exercise;
         componentInstance.result = result;
-        if (this.exercise) {
-            componentInstance.exerciseType = this.exercise.type!;
-            componentInstance.showScoreChart = true;
+        if (feedbackComponentParameters.exerciseType) {
+            componentInstance.exerciseType = feedbackComponentParameters.exerciseType;
         }
-        if (this.templateStatus === ResultTemplateStatus.MISSING) {
-            componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
+        if (feedbackComponentParameters.showScoreChart) {
+            componentInstance.showScoreChart = feedbackComponentParameters.showScoreChart;
         }
-
-        if (
-            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
-            this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation)
-        ) {
-            this.determineShowMissingAutomaticFeedbackInformation(componentInstance);
+        if (feedbackComponentParameters.messageKey) {
+            componentInstance.messageKey = feedbackComponentParameters.messageKey;
+        }
+        if (feedbackComponentParameters.latestDueDate) {
+            this.latestDueDate = feedbackComponentParameters.latestDueDate;
+            componentInstance.latestDueDate = feedbackComponentParameters.latestDueDate;
+        }
+        if (feedbackComponentParameters.showMissingAutomaticFeedbackInformation) {
+            componentInstance.showMissingAutomaticFeedbackInformation = feedbackComponentParameters.showMissingAutomaticFeedbackInformation;
         }
     }
 
@@ -269,28 +270,5 @@ export class ResultComponent implements OnInit, OnChanges {
                 link.click();
             });
         }
-    }
-
-    /**
-     * Determines if some information about testcases could still be hidden because of later individual due dates
-     * @param componentInstance the detailed result view
-     */
-    private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
-        if (this.latestDueDate) {
-            this.setShowMissingAutomaticFeedbackInformation(componentInstance, this.latestDueDate);
-        } else {
-            const service = this.exerciseCacheService ?? this.exerciseService;
-            service.getLatestDueDate(this.exercise!.id!).subscribe((latestDueDate) => {
-                if (latestDueDate) {
-                    this.setShowMissingAutomaticFeedbackInformation(componentInstance, latestDueDate);
-                }
-            });
-        }
-    }
-
-    private setShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent, latestDueDate: dayjs.Dayjs) {
-        this.latestDueDate = latestDueDate;
-        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(latestDueDate);
-        componentInstance.latestDueDate = this.latestDueDate;
     }
 }

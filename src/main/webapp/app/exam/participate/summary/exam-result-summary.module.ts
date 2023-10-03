@@ -30,6 +30,7 @@ import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participa
 import { ArtemisModelingParticipationModule } from 'app/exercises/modeling/participate/modeling-participation.module';
 import { ArtemisTextParticipationModule } from 'app/exercises/text/participate/text-participation.module';
 import { ArtemisFileUploadParticipationModule } from 'app/exercises/file-upload/participate/file-upload-participation.module';
+import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 
 @NgModule({
     imports: [
@@ -54,6 +55,7 @@ import { ArtemisFileUploadParticipationModule } from 'app/exercises/file-upload/
         ArtemisModelingParticipationModule,
         ArtemisTextParticipationModule,
         ArtemisFileUploadParticipationModule,
+        ArtemisFeedbackModule,
     ],
     declarations: [
         ExamResultSummaryComponent,
