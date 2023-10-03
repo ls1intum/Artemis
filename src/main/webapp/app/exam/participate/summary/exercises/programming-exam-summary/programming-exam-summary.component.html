@@ -13,6 +13,17 @@
         <jhi-updating-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise" />
     </div>
 
+    <jhi-result-detail
+        *ngIf="feedbackComponentParameters.result"
+        [exercise]="feedbackComponentParameters.exercise"
+        [result]="feedbackComponentParameters.result"
+        [showScoreChart]="false"
+        [exerciseType]="feedbackComponentParameters.exerciseType ?? ExerciseType.PROGRAMMING"
+        [latestDueDate]="feedbackComponentParameters.latestDueDate"
+        [messageKey]="feedbackComponentParameters.messageKey"
+        [showMissingAutomaticFeedbackInformation]="feedbackComponentParameters.showMissingAutomaticFeedbackInformation ?? false"
+    />
+
     <jhi-programming-exercise-instructions *ngIf="exercise.problemStatement" [exercise]="exercise" [participation]="exercise.templateParticipation!" />
 
     <jhi-complaint-student-view
