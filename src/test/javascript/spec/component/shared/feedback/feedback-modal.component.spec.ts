@@ -273,7 +273,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(comp.getCommitHash()).toBe('123456789ab');
-        expect(comp.getCommitUrl()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
+        expect(comp.commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
