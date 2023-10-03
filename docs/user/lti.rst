@@ -56,12 +56,12 @@ Instructors have the capability to seamlessly integrate the Artemis platform wit
 By following these steps, instructors can effortlessly bridge the gap between Artemis and Moodle, providing students with a unified learning experience.
 
 1. Connecting Artemis to Other Platforms (e.g., Moodle)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Instructors can connect Artemis online courses via LTI to other Learning Management Systems (e.g., Moodle, edX).
 Below given steps for how to configure Artemis over LTI with Moodle.
 
 1.1 Enable the Online Course Setting in Artemis:
-"""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""""""""""
 Before diving into the LTI configuration, it's crucial to ensure that the Online Course setting is enabled in Artemis. This setting activates the LTI configurability, allowing instructors to link Artemis with Moodle or other LMS platforms.
 To enable the Online Course setting in Artemis, follow the steps below:\
 
@@ -130,7 +130,7 @@ With the Dynamic Registration URL copied, you can now configure the LTI 1.3 inte
     :alt: Moodle - Site Administration
 
 2. Linking Specific Exercises from Artemis to Moodle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instructors can link specific Artemis exercises directly to their Moodle courses. This integration ensures that students can access Artemis exercises directly from their Moodle dashboard.
 
@@ -189,7 +189,7 @@ For students, the integration of Artemis with Moodle via LTI 1.3 offers a stream
 By following this guide, students can make the most of the integrated learning experience offered by Artemis and Moodle.
 
 1. Start Artemis Exercise through Moodle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Here's a step-by-step guide on how students can start an Artemis exercise through Moodle:
 
@@ -216,7 +216,7 @@ If a student is participating in an Artemis exercise for the first time, a pop-u
     :alt: Moodle - Password Pop-up
 
 3. Viewing Grades and Feedback
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In addition to participating in exercises, students can also view their grades and feedback for evaluated Artemis exercises directly within Moodle.
 This integration ensures that students have a centralized location to track their performance and receive constructive feedback.
 
