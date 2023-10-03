@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
@@ -44,6 +42,8 @@ public class IrisCodeEditorMessageResource {
     private final IrisWebsocketService irisWebsocketService;
 
     private final IrisMessageContentRepository irisMessageContentRepository;
+
+    private final IrisExercisePlanComponentRepository irisExercisePlanComponentRepository;
 
     public IrisCodeEditorMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService,
             IrisCodeEditorSessionService irisCodeEditorSessionService, IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository,
@@ -124,11 +124,11 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * Put code-editor-sessions/{sessionId}/messages/{messageId}: Send the (updated) plan message to the LLM
+     * Put code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/execute: Send the (updated) plan message to the LLM
      *
      * @param sessionId of the session
      * @param messageId of the message
-     * @param message   to send
+     * @param contentId of the content
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/execute")
@@ -157,40 +157,40 @@ public class IrisCodeEditorMessageResource {
     }
 
     /**
-     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/{component}: Set the component plan attribute of the message with ExercisePlanMessageContent
+     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}: Set the component instruction of the ExercisePlanComponent
      *
-     * @param sessionId of the session
-     * @param messageId of the message
-     * @param component of the exercisePlanMessageContent
-     * @param plan      to set for the corresponding component, if cancel the plan of the component, the value would be null
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
+     * @param sessionId   of the session
+     * @param messageId   of the message
+     * @param contentId   of the content
+     * @param componentId of the exercisePlanComponent
+     * @param plan        to set for the corresponding component, if cancel the plan of the component, the value would be null
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with status {@code 404 (Not Found)} if the component could not
      *         be found.
      */
     @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessageContent> updatePlanContent(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
-            @PathVariable ExercisePlanComponent component, @RequestBody String plan) {
+    public ResponseEntity<ExercisePlanComponent> updateComponentPlan(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
+            @PathVariable Long componentId, @RequestBody String plan) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
         var content = irisMessageContentRepository.findByIdElseThrow(contentId);
-        // var component =
+        var component = irisExercisePlanComponentRepository.findByIdElseThrow(componentId);
         if (!Objects.equals(session.getId(), sessionId)) {
             throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
         }
-        // irisSessionService.checkIsIrisActivated(session);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only edit the plan messages sent by Iris");
         }
-        if (content instanceof IrisExercisePlanMessageContent exercisePlanContent) {
+        // irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessToIrisSession(session, null);
+        if (content instanceof IrisExercisePlanMessageContent) {
             var exercisePlanId = component.getExercisePlan().getId();
-            var planId = exercisePlanContent.getId();
-            if (!Objects.equals(exercisePlanId, planId)) {
-                throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
+            if (!Objects.equals(exercisePlanId, contentId)) {
+                throw new ConflictException("The component plan does not belong to the exercise plan", "ExercisePlanComponent", "irisComponentPlanExercisePlanConflict");
             }
             component.setInstructions(plan);
-            var savedPlanComponent = irisMessageContentRepository.save(component);
-            return ResponseEntity.ok(savedContent);
+            var savedExercisePlanComponent = irisExercisePlanComponentRepository.save(component);
+            return ResponseEntity.ok(savedExercisePlanComponent);
         }
         else {
             throw new BadRequestException("You can only edit component plan content");
