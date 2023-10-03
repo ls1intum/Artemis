@@ -202,10 +202,13 @@ class LtiServiceTest {
         SecurityContextHolder.getContext().setAuthentication(null);
 
         when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.of("username"));
+        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.ofNullable(user));
 
-        assertThatExceptionOfType(InternalAuthenticationServiceException.class)
-                .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()))
-                .withMessageContaining("already in use");
+        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
+        assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
     }
 
     @Test
