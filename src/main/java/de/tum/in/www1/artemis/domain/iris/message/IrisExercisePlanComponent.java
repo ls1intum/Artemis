@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "iris_exercise_plan_component")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExercisePlanComponent extends DomainObject {
+public class IrisExercisePlanComponent extends DomainObject {
 
     @ManyToOne
     @Column(name = "exercise_plan_id")
@@ -24,10 +24,10 @@ public class ExercisePlanComponent extends DomainObject {
     @Column(name = "instructions")
     private String instructions;
     
-    public ExercisePlanComponent() {
+    public IrisExercisePlanComponent() {
     }
     
-    public ExercisePlanComponent(IrisExercisePlanMessageContent exercisePlan, ExerciseComponent component, String instructions) {
+    public IrisExercisePlanComponent(IrisExercisePlanMessageContent exercisePlan, ExerciseComponent component, String instructions) {
         this.exercisePlan = exercisePlan;
         this.component = component;
         this.instructions = instructions;
