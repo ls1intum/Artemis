@@ -6,9 +6,11 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus } from 'app/exercises/shared/result/result.utils';
-import { FeedbackComponentPreparedParams, prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
+import { FeedbackComponentPreparedParams, getCommitUrl, prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
@@ -35,14 +37,23 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     protected readonly ProgrammingExercise = ProgrammingExercise;
     protected readonly ExerciseType = ExerciseType;
 
+    result: Result | undefined;
+
     feedbackComponentParameters: FeedbackComponentPreparedParams;
+
+    commitUrl: string | undefined;
+    commitHash: string | undefined;
 
     constructor(
         private exerciseService: ExerciseService,
         @Optional() private exerciseCacheService: ExerciseCacheService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
+        this.result = this.participation.results?.[0];
+        this.commitHash = this.submission?.commitHash?.slice(0, 11);
+
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
 
@@ -51,11 +62,17 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         // TODO result may not be defined
         this.feedbackComponentParameters = prepareFeedbackComponentParameters(
             this.exercise,
-            this.participation.results![0]!,
+            this.result!,
             this.participation,
             templateStatus,
             this.exam.latestIndividualEndDate,
-            this.exerciseService,
+            this.exerciseCacheService ?? this.exerciseService,
         );
+
+        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
+            this.commitUrl = getCommitUrl(this.result!, this.exercise as ProgrammingExercise, commitHashURLTemplate);
+        });
     }
 }
