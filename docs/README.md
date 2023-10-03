@@ -3,8 +3,24 @@
 We use [Sphinx] for creating the Artemis documentation using [reStructuredText] (RST).
 To get started with RST, check out the [Quickstart] or this [cheatsheet].
 
-> [!IMPORTANT]  
-> Artemis documentation must use real examples and personas and must avoid the use of test data. Sample personas accounts to be use in production for creating screenshots are listed [here](https://confluence.ase.in.tum.de/display/ArTEMiS/Random+Personas).
+## Sample Data & Personas
+Artemis documentation must use realistic examples and personas and must avoid the use of test data. 
+
+Using familiar information in the documentation is crucial because it simplifies the learning process for new users and shortents . Real-world scenarios demonstrate to users how to apply specific features within their own context, whereas test data can be misleading and fails to mirror real use cases. Realistic examples and personas provide clarity and relevance, ensuring users can effectively understand and utilize Artemis.
+
+Well defined personas are vital for the development process. They not only help readaers to understad the documentation, but also allow developers to better understand Artemis and its users. Personas are used by many organisations, two blog posts with introduction and motivation for the topic are presented below:
+- [Using Personas During Design and Documentation](https://www.uxmatters.com/mt/archives/2010/10/using-personas-during-design-and-documentation.php)
+- [Customer Personas: How to Write Them and Why You Need Them in Agile Software Development](https://community.atlassian.com/t5/App-Central/Customer-Personas-How-to-Write-Them-and-Why-You-Need-Them-in/ba-p/759228)
+
+Screenshots included in Artemis documentation **must** present realistic data. That includes but is not limited to:
+- realistic user, course and exercise names
+- realic text passages, like submissions contents and problem statements  
+
+Screenshots included in Artemis documentation **must not** present any test data or server infomation. That includes but is not limited to:
+- `Test Server` and `Development` labels
+- test user, course and exercise names
+- _Lorem ipsum_ and mock text passages, like submissions contents and problem statements 
+- test server and `localhost` domains
 
 ## Documentation Hosting
 
