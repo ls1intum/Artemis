@@ -141,7 +141,7 @@ public class LtiService {
 
     @NotNull
     private Authentication getUserFromLaunchRequest(String email) {
-        final var user = userRepository.findOneByEmailIgnoreCase(email).orElseThrow();
+        final var user = userRepository.findOneByEmailIgnoreCase(email).orElseThrow(() -> new InternalAuthenticationServiceException("User not found with email: " + email));
         log.info("Signing in as {}", user.getLogin());
         return UsernamePasswordAuthenticationToken.unauthenticated(user.getLogin(), user.getPassword());
     }
