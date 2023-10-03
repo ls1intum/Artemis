@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
 public class IrisExercisePlanComponent extends DomainObject {
 
     @ManyToOne
-    @Column(name = "exercise_plan_id")
+    @JoinColumn(name = "exercise_plan_id")
     private IrisExercisePlanMessageContent exercisePlan;
     
     @NotNull
