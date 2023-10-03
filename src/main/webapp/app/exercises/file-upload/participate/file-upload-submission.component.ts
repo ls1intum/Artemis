@@ -28,6 +28,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-file-upload-submission',
@@ -40,6 +41,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
     @Input() expandProblemStatement?: boolean = true;
+    @Input() displayedInExamSummary?: boolean = false;
 
     submission?: FileUploadSubmission;
     submittedFileName: string;
@@ -60,6 +62,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     isLate: boolean; // indicates if the submission is late
 
+    faDownload = faDownload;
     readonly ButtonType = ButtonType;
 
     private submissionConfirmationText: string;

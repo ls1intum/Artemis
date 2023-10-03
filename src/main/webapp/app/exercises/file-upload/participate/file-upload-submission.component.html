@@ -40,14 +40,28 @@
         </div>
 
         <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
-            <h6>
+            <h6 *ngIf="!displayedInExamSummary; else examSummarySubmissionDescription">
                 {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
                 <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
             </h6>
-            <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
-            <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
-                {{ submittedFileExtension | uppercase }}
-            </span>
+            <ng-template #examSummarySubmissionDescription>
+                <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
+                <span>{{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}</span>
+            </ng-template>
+
+            <br />
+
+            <div class="mt-2">
+                <button
+                    jhi-exercise-action-button
+                    [buttonIcon]="faDownload"
+                    [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
+                    (click)="downloadFile(submission!.filePath!)"
+                ></button>
+                <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
+                    {{ submittedFileExtension | uppercase }}
+                </span>
+            </div>
         </div>
         <div *ngIf="result && result.feedbacks && result.feedbacks.length && result.feedbacks.length > 0">
             <br />
