@@ -128,6 +128,18 @@ describe('Notification Sidebar Component', () => {
             expect(notificationService.subscribeToLoadingStateUpdates).toHaveBeenCalledOnce();
             expect(notificationSidebarComponent.sortedNotifications).toHaveLength(notifications.length);
         });
+
+        /**
+         * The notification-sidebar overlaps the exam summary when being printed,
+         * so it needs to be hidden for printing for which the display property of
+         * the notification sidebar is used
+         *
+         * @See {@link ThemeService#print}
+         */
+        test('should exist with the id "notification-sidebar"', () => {
+            const notificationSidebar = document.getElementById('notification-sidebar');
+            expect(notificationSidebar).toBeTruthy();
+        });
     });
 
     describe('Notification Translations', () => {
