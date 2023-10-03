@@ -21,7 +21,7 @@ import interact from 'interactjs';
 export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
-    @Input() isExerciseParticipation = true;
+    @Input() isExerciseParticipation? = true;
 
     /**
      * Expected to be set to true while the component is printed as PDF.
