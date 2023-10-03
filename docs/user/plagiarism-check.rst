@@ -182,6 +182,8 @@ The process is visualized in the following diagram.
     :width: 1000
 .. |selected-confirmed-case| image:: plagiarism-check/instructor/selected-confirmed-case.png
     :width: 1000
+.. |verdict-select| image:: plagiarism-check/instructor/verdict-select.png
+    :width: 1000
 .. |verdict-dialog| image:: plagiarism-check/instructor/point-deduction-verdict.png
     :width: 500
 .. |student-notification| image:: plagiarism-check/instructor/student-notification.png
