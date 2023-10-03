@@ -63,7 +63,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
         }
         // Defining one pattern group, (1) the exception text
-        Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
+        Pattern findGeneralTimeoutPattern = Pattern.compile("^[a-zA-Z0-9.]{1,5000}:(.{1,5000}timed out after.{1,5000})", Pattern.CASE_INSENSITIVE);
         matcher = findGeneralTimeoutPattern.matcher(message);
         if (matcher.find()) {
             // overwrite Ares: TimeoutException
