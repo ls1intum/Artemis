@@ -11,10 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanMessageContent;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -169,13 +166,14 @@ public class IrisCodeEditorMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
      *         be found.
      */
-    @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/{component}" })
+    @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}" })
     @EnforceAtLeastEditor
     public ResponseEntity<IrisMessageContent> updatePlanContent(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
-            @PathVariable IrisExercisePlanMessageContent.ExerciseComponent component, @RequestBody String plan) {
+            @PathVariable ExercisePlanComponent component, @RequestBody String plan) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
         var content = irisMessageContentRepository.findByIdElseThrow(contentId);
+        // var component =
         if (!Objects.equals(session.getId(), sessionId)) {
             throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
         }
@@ -185,8 +183,13 @@ public class IrisCodeEditorMessageResource {
             throw new BadRequestException("You can only edit the plan messages sent by Iris");
         }
         if (content instanceof IrisExercisePlanMessageContent exercisePlanContent) {
-            exercisePlanContent.setPlan(component, plan);
-            var savedContent = irisMessageContentRepository.save(exercisePlanContent);
+            var exercisePlanId = component.getExercisePlan().getId();
+            var planId = exercisePlanContent.getId();
+            if (!Objects.equals(exercisePlanId, planId)) {
+                throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
+            }
+            component.setInstructions(plan);
+            var savedPlanComponent = irisMessageContentRepository.save(component);
             return ResponseEntity.ok(savedContent);
         }
         else {

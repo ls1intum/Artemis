@@ -1,13 +1,14 @@
 package de.tum.in.www1.artemis.domain.iris.session;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * An IrisCodeEditorSession represents a conversation between a user and Iris in the Code Editor.
@@ -25,9 +26,10 @@ public class IrisCodeEditorSession extends IrisSession {
     @ManyToOne
     @JsonIgnore
     private User user;
-    
-    public IrisCodeEditorSession() {}
-    
+
+    public IrisCodeEditorSession() {
+    }
+
     public IrisCodeEditorSession(ProgrammingExercise exercise, User user) {
         this.exercise = exercise;
         this.user = user;
@@ -51,10 +53,7 @@ public class IrisCodeEditorSession extends IrisSession {
 
     @Override
     public String toString() {
-        return "IrisCodeEditorSession{"
-                + "id=" + getId()
-                + ", exercise=" + (exercise == null ? "null" : exercise.getId())
-                + ", user=" + (user == null ? "null" : user.getName())
+        return "IrisCodeEditorSession{" + "id=" + getId() + ", exercise=" + (exercise == null ? "null" : exercise.getId()) + ", user=" + (user == null ? "null" : user.getName())
                 + '}';
     }
 }
