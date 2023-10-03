@@ -818,6 +818,8 @@ describe('ProgrammingExercise Management Update Component', () => {
         }));
 
         it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
             expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
