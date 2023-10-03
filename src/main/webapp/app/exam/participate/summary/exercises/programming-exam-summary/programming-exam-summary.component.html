@@ -1,6 +1,6 @@
 <ng-container>
     <ng-container>
-        <h5>Your Submission</h5>
+        <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
 
         <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="participation?.userIndependentRepositoryUrl || ''" />
         <br />
@@ -17,7 +17,7 @@
     </ng-container>
 
     <div class="mt-4">
-        <h5>Assessment</h5>
+        <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
 
         <div class="d-flex justify-content-between">
             <jhi-result-detail

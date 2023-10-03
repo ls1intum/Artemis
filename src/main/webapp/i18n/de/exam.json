@@ -74,10 +74,11 @@
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
-                "viewExampleSolution": "Beispiellösung anzeigen",
                 "showExampleSolution": "Musterlösung anzeigen",
-                "youAreViewingTheExampleSolution": "Du betrachtest die Musterlösung",
                 "hideExampleSolution": "Musterlösung ausblenden",
+                "yourSubmission": "Deine Abgabe",
+                "assessment": "Bewertung",
+                "youAreViewingTheExampleSolution": "Du betrachtest die Musterlösung",
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {
                     "exercise": "Aufgabe",
