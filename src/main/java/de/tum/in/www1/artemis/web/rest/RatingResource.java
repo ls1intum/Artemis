@@ -11,10 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Rating;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -59,37 +56,37 @@ public class RatingResource {
     }
 
     /**
-     * Return Rating referencing resultId or null
+     * GET /results/:resultId/rating : Return Rating referencing resultId or null
      *
      * @param resultId - Id of result that is referenced with the rating
-     * @return Rating or null
+     * @return saved star rating value or empty optional
      */
     @GetMapping("/results/{resultId}/rating")
     @EnforceAtLeastStudent
-    public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
+    public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
         // TODO allow for Instructors
         if (!authCheckService.isAdmin()) {
             checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
-        return ResponseEntity.ok(rating);
+        return ResponseEntity.ok(rating.map(Rating::getRating));
     }
 
     /**
-     * Persist a new Rating
+     * POST /results/:resultId/rating/:ratingValue : Persist a new Rating
      *
      * @param resultId    - Id of result that is referenced with the rating that should be persisted
      * @param ratingValue - Value of the updated rating
-     * @return inserted Rating
+     * @return inserted star rating value
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Rating> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
+    public ResponseEntity<Integer> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.saveRating(resultId, ratingValue);
-        return ResponseEntity.created(new URI("/api/results/" + savedRating.getId() + "/rating")).body(savedRating);
+        return ResponseEntity.created(new URI("/api/results/" + savedRating.getId() + "/rating")).body(savedRating.getRating());
     }
 
     private void checkRating(int ratingValue) {
@@ -99,23 +96,23 @@ public class RatingResource {
     }
 
     /**
-     * Update a Rating
+     * PUT /results/:resultId/rating/:ratingValue : Update a Rating
      *
      * @param resultId    - Id of result that is referenced with the rating that should be updated
      * @param ratingValue - Value of the updated rating
-     * @return updated Rating
+     * @return updated star rating value
      */
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Rating> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
+    public ResponseEntity<Integer> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
         checkRating(ratingValue);
         checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.updateRating(resultId, ratingValue);
-        return ResponseEntity.ok(savedRating);
+        return ResponseEntity.ok(savedRating.getRating());
     }
 
     /**
-     * Get all ratings for the "courseId" Course
+     * GET /course/:courseId/rating : Get all ratings for the "courseId" Course
      *
      * @param courseId - Id of the course that the ratings are fetched for
      * @return List of Ratings for the course
@@ -126,6 +123,11 @@ public class RatingResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
+        responseRatings.forEach(rating -> {
+            rating.getResult().setSubmission(null);
+            rating.getResult().getParticipation().getExercise().setCourse(null);
+            rating.getResult().getParticipation().getExercise().setExerciseGroup(null);
+        });
         return ResponseEntity.ok(responseRatings);
     }
 
