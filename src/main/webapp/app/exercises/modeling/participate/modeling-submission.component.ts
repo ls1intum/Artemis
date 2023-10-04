@@ -135,7 +135,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                     },
                     error: (error) => {
-                        if (error.status === 403) {
+                        if (error.status === 403 && !isDisplayedOnExamSummaryPage) {
                             this.router.navigate(['accessdenied']);
                         }
                     },
