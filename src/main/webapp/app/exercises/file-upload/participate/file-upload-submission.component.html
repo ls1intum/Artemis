@@ -54,6 +54,7 @@
             <div class="mt-2">
                 <button
                     jhi-exercise-action-button
+                    [smallButton]="true"
                     [buttonIcon]="faDownload"
                     [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
                     (click)="downloadFile(submission!.filePath!)"
