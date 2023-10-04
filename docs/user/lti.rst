@@ -84,7 +84,7 @@ With the Online Course setting enabled, you can now proceed to integrate Artemis
 
 1.2. Copy Dynamic Registration URL from Artemis
 """""""""""""""""""""""""""""""""""""""""""""""
-Once the above setting is enabled, you can now set up a bridge between Artemis and Moodle. This section provides a step-by-step guide to achieve this integration.
+Once the above setting is enabled, you can now set up a bridge between Artemis and Moodle.
 To retrieve Dynamic Registration URL from Artemis, follow the steps outlined below:
 
 #. Access Course Management: Begin by logging into your Artemis account. Click on the  |course-management| option.
@@ -104,6 +104,8 @@ To retrieve Dynamic Registration URL from Artemis, follow the steps outlined bel
     :align: center
     :width: 700
     :alt: LTI 1.3 Configuration
+
+
 
 1.3. Establish Artemis configuration from Moodle
 """"""""""""""""""""""""""""""""""""""""""""""""
@@ -135,8 +137,10 @@ With the Dynamic Registration URL copied, you can now configure the LTI 1.3 inte
 
 2. Linking Specific Exercises from Artemis to Moodle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Instructors can link specific Artemis exercises directly to their Moodle courses. This integration ensures that students can access Artemis exercises directly from their Moodle dashboard.
+Once the LTI configuration between Artemis and Moodle is successfully completed, instructors have the capability to link specific Artemis exercises directly to their Moodle courses. This integration provides students with direct access to Artemis exercises from their Moodle courses. The process involves two primary steps:
+#. Retrieving the LTI 1.3 Launch URL for the desired Artemis exercise.
+#. Linking this URL to the Moodle course.
+By following the detailed steps below, instructors can integrate individual Artemis exercises into their Moodle courses, enhancing the learning experience for students.
 
 2.1. Retrieve LTI 1.3 Launch URL from Artemis
 """""""""""""""""""""""""""""""""""""""""""""
