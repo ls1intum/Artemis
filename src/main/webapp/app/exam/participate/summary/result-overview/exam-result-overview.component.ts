@@ -10,6 +10,7 @@ import { BonusStrategy } from 'app/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { captureException } from '@sentry/angular-ivy';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -144,7 +145,15 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
                 inline: 'nearest',
             });
         } else {
-            console.error(`Could not find corresponding exercise with id "${searchedId}"`);
+            const errorMessage = 'Cannot scroll to exercise, could not find exercise with corresponding id';
+            console.error(`${errorMessage} "${searchedId}"`);
+            captureException(new Error(errorMessage), {
+                extra: {
+                    exerciseId,
+                    searchedId,
+                    targetElement,
+                },
+            });
         }
     }
 

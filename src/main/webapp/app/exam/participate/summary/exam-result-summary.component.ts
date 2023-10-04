@@ -22,6 +22,7 @@ import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
+import { captureException } from '@sentry/angular-ivy';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -337,7 +338,13 @@ export class ExamResultSummaryComponent implements OnInit {
         const exerciseInfos: Record<number, ResultSummaryExerciseInfo> = {};
         for (const exercise of this.studentExam?.exercises ?? []) {
             if (exercise.id === undefined) {
-                console.error('Exercise id is undefined', exercise);
+                const errorMessage = 'Cannot getExerciseInfos as exerciseId is undefined';
+                console.error(errorMessage, exercise);
+                captureException(new Error(errorMessage), {
+                    extra: {
+                        exercise,
+                    },
+                });
                 continue;
             }
 
@@ -393,7 +400,14 @@ export class ExamResultSummaryComponent implements OnInit {
 
     toggleShowSampleSolution(exerciseId?: number) {
         if (exerciseId === undefined) {
-            console.error('Cannot show sample solution because exercise id is undefined', exerciseId);
+            const errorMessage = 'Cannot show sample solution because exercise id is undefined';
+            console.error(errorMessage, exerciseId);
+            captureException(new Error(errorMessage), {
+                extra: {
+                    exerciseId,
+                },
+            });
+
             return;
         }
 
