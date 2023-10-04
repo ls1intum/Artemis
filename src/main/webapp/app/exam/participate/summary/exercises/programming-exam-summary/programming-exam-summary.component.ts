@@ -63,20 +63,21 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
         const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.participation.results?.[0], isBuilding, missingResultInfo);
 
-        // TODO result may not be defined
-        this.feedbackComponentParameters = prepareFeedbackComponentParameters(
-            this.exercise,
-            this.result!,
-            this.participation,
-            templateStatus,
-            this.exam.latestIndividualEndDate,
-            this.exerciseCacheService ?? this.exerciseService,
-        );
+        if (this.result) {
+            this.feedbackComponentParameters = prepareFeedbackComponentParameters(
+                this.exercise,
+                this.result!,
+                this.participation,
+                templateStatus,
+                this.exam.latestIndividualEndDate,
+                this.exerciseCacheService ?? this.exerciseService,
+            );
 
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
-            this.commitUrl = getCommitUrl(this.result!, this.exercise as ProgrammingExercise, commitHashURLTemplate);
-        });
+            // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
+                this.commitUrl = getCommitUrl(this.result!, this.exercise as ProgrammingExercise, commitHashURLTemplate);
+            });
+        }
     }
 }
