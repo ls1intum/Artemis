@@ -17,6 +17,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -75,9 +76,9 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
-    private final OAuth2JWKSService oAuth2JWKSService;
+    private final Optional<OAuth2JWKSService> oAuth2JWKSService;
 
     private final CourseRepository courseRepository;
 
@@ -111,7 +112,7 @@ public class CourseResource {
     private final LearningPathService learningPathService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            Optional<OAuth2JWKSService> oAuth2JWKSService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
@@ -225,8 +226,8 @@ public class CourseResource {
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
-            if (courseUpdate.isOnlineCourse()) {
-                onlineCourseConfigurationService.createOnlineCourseConfiguration(courseUpdate);
+            if (courseUpdate.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
+                onlineCourseConfigurationService.get().createOnlineCourseConfiguration(courseUpdate);
             }
             else {
                 courseUpdate.setOnlineCourseConfiguration(null);
@@ -268,6 +269,7 @@ public class CourseResource {
      */
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @EnforceAtLeastInstructor
+    @Profile("lti")
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
             @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
@@ -284,12 +286,14 @@ public class CourseResource {
                     OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
 
-        onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        if (onlineCourseConfigurationService.isPresent()) {
+            onlineCourseConfigurationService.get().validateOnlineCourseConfiguration(onlineCourseConfiguration);
+            course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        }
 
         courseRepository.save(course);
 
-        oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+        oAuth2JWKSService.ifPresent(auth2JWKSService -> auth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId()));
 
         return ResponseEntity.ok(onlineCourseConfiguration);
     }
