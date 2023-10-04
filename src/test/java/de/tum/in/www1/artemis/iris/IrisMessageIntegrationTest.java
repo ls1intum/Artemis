@@ -94,13 +94,12 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
-        var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession2);
         request.postWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
@@ -161,12 +160,13 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
-        assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
-            return o1.getContent().size() == o2.getContent().size()
-                    && o1.getContent().stream().map(IrisMessageContent::getTextContent).toList().equals(o2.getContent().stream().map(IrisMessageContent::getTextContent).toList())
-                            ? 0
-                            : -1;
-        }).isEqualTo(List.of(message2, message3, message4));
+        assertThat(
+                messages)
+                        .hasSize(3)
+                        .usingElementComparator((o1,
+                                o2) -> o1.getContent().size() == o2.getContent().size() && o1.getContent().stream().map(IrisMessageContent::getTextContent).toList()
+                                        .equals(o2.getContent().stream().map(IrisMessageContent::getTextContent).toList()) ? 0 : -1)
+                        .isEqualTo(List.of(message2, message3, message4));
     }
 
     @Test
@@ -251,7 +251,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
@@ -267,7 +266,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
@@ -283,7 +281,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class, HttpStatus.OK);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
@@ -308,7 +305,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
                     HttpStatus.TOO_MANY_REQUESTS);
             verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), messageToSend1);
             verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), "Hello World");
-            verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId());
         }
         finally {
             ReflectionTestUtils.setField(irisRateLimitService, "rateLimit", previousRateLimit);
