@@ -12,7 +12,7 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -29,7 +29,6 @@ import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } 
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
-import { getCommitUrl } from 'app/exercises/shared/feedback/feedback.utils';
 import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
 
@@ -147,7 +146,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
-            this.commitUrl = getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
+            this.commitUrl = this.getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
         });
     }
 
@@ -288,5 +287,11 @@ export class FeedbackComponent implements OnInit, OnChanges {
                 feedbackNode.open = true;
             }
         });
+    }
+
+    private getCommitUrl(result: Result, programmingExercise: ProgrammingExercise | undefined, commitHashURLTemplate: string | undefined) {
+        const projectKey = programmingExercise?.projectKey;
+        const programmingSubmission = result.submission as ProgrammingSubmission;
+        return createCommitUrl(commitHashURLTemplate, projectKey, result.participation, programmingSubmission);
     }
 }

@@ -7,9 +7,6 @@ import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
 export type FeedbackComponentPreparedParams = {
     exercise: Exercise | undefined;
@@ -20,17 +17,6 @@ export type FeedbackComponentPreparedParams = {
     latestDueDate?: dayjs.Dayjs;
     showMissingAutomaticFeedbackInformation?: boolean;
 };
-
-/**
- * @param result that is linked to {@link programmingExercise}
- * @param programmingExercise
- * @param commitHashURLTemplate
- */
-export function getCommitUrl(result: Result, programmingExercise: ProgrammingExercise | undefined, commitHashURLTemplate: string | undefined) {
-    const projectKey = programmingExercise?.projectKey;
-    const programmingSubmission = result.submission as ProgrammingSubmission;
-    return createCommitUrl(commitHashURLTemplate, projectKey, result.participation, programmingSubmission);
-}
 
 /**
  * Prepares the parameters for the feedback component {@link FeedbackComponent}
