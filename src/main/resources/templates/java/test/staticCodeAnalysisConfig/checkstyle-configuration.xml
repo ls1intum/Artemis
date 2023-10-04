@@ -23,7 +23,7 @@
     <property name="fileExtensions" value="java, properties, xml"/>
 
     <!-- Excludes all 'module-info.java' files              -->
-    <!-- See https://checkstyle.sourceforge.io/filefilters/beforeexecutionexclusionfilefilter.html#BeforeExecutionExclusionFileFilter -->
+    <!-- See https://checkstyle.sourceforge.io/filefilters/beforeexecutionexclusionfilefilter.html -->
     <module name="BeforeExecutionExclusionFileFilter">
         <property name="fileNamePattern" value="module\-info\.java$"/>
     </module>
