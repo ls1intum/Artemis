@@ -42,6 +42,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     @Input() displayHeader: boolean = true;
     @Input() expandProblemStatement?: boolean = true;
 
+    @Input() inputExercise?: TextExercise;
+    @Input() inputSubmission?: TextSubmission;
+    @Input() inputParticipation?: StudentParticipation;
+
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
@@ -83,15 +87,46 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     ngOnInit() {
-        const participationId = this.participationId !== undefined ? this.participationId : Number(this.route.snapshot.paramMap.get('participationId'));
-        if (Number.isNaN(participationId)) {
-            return this.alertService.error('artemisApp.textExercise.error');
+        if (this.inputValuesArePresent()) {
+            this.setupComponentWithInputValues();
+        } else {
+            const participationId = this.participationId !== undefined ? this.participationId : Number(this.route.snapshot.paramMap.get('participationId'));
+            if (Number.isNaN(participationId)) {
+                return this.alertService.error('artemisApp.textExercise.error');
+            }
+
+            this.textService.get(participationId).subscribe({
+                next: (data: StudentParticipation) => this.updateParticipation(data),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        }
+    }
+
+    private inputValuesArePresent(): boolean {
+        return this.inputExercise !== undefined || this.inputSubmission !== undefined || this.inputParticipation !== undefined;
+    }
+
+    /**
+     * Uses values directly passed to this component instead of subscribing to a participation to save resources
+     *
+     * <i>e.g. used within {@link ExamResultSummaryComponent} and the respective {@link ModelingExamSummaryComponent}
+     * as directly after the exam no grading is present and only the student solution shall be displayed </i>
+     * @private
+     */
+    private setupComponentWithInputValues() {
+        if (this.inputExercise) {
+            this.textExercise = this.inputExercise;
+        }
+        if (this.inputSubmission) {
+            this.submission = this.inputSubmission;
+        }
+        if (this.inputParticipation) {
+            this.participation = this.inputParticipation;
         }
 
-        this.textService.get(participationId).subscribe({
-            next: (data: StudentParticipation) => this.updateParticipation(data),
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        if (this.submission?.text) {
+            this.answer = this.submission.text;
+        }
     }
 
     private updateParticipation(participation: StudentParticipation) {

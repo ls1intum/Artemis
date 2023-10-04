@@ -4,6 +4,9 @@
         [participationId]="exercise.studentParticipations![0].id"
         [displayHeader]="false"
         [expandProblemStatement]="expandProblemStatement"
+        [inputExercise]="exercise"
+        [inputParticipation]="exercise.studentParticipations![0]"
+        [inputSubmission]="submission"
     />
     <ng-template #noSubmission>
         <div>No submission</div>
