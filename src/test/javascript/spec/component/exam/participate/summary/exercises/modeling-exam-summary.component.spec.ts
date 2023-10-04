@@ -37,7 +37,7 @@ describe('ModelingExamSummaryComponent', () => {
         expect(modelingEditor).toBeNull();
     });
 
-    it('should show modeling editor with correct props when there is submission and exercise', () => {
+    it('should show modeling submission when there is submission and exercise', () => {
         const mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ model: true }) } as ModelingSubmission;
         const course = new Course();
         const exercise = { course: course, exerciseGroup: undefined, diagramType: UMLDiagramType.ClassDiagram, studentParticipations: [{ id: 1 }] } as ModelingExercise;
@@ -48,7 +48,13 @@ describe('ModelingExamSummaryComponent', () => {
         fixture.detectChanges();
 
         const modelingSubmissionComponent = fixture.debugElement.query(By.directive(ModelingSubmissionComponent))?.componentInstance;
-        expect(modelingSubmissionComponent).not.toBeNull();
-        expect(modelingSubmissionComponent.submission.model).toEqual(mockSubmission.model);
+        expect(modelingSubmissionComponent).toBeTruthy();
+    });
+
+    it('should not show modeling submission when there is no submission or exercise', () => {
+        fixture.detectChanges();
+
+        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(ModelingSubmissionComponent))?.componentInstance;
+        expect(modelingSubmissionComponent).not.toBeTruthy();
     });
 });

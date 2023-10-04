@@ -10,7 +10,6 @@ import { By } from '@angular/platform-browser';
 describe('FileUploadExamSummaryComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
     let component: FileUploadExamSummaryComponent;
-    let fileService: FileService;
 
     const fileUploadSubmission = { id: 1 } as FileUploadSubmission;
 
@@ -25,7 +24,6 @@ describe('FileUploadExamSummaryComponent', () => {
                 fixture = TestBed.createComponent(FileUploadExamSummaryComponent);
                 component = fixture.componentInstance;
                 component.submission = fileUploadSubmission;
-                fileService = TestBed.inject(FileService);
             });
     });
 
@@ -35,14 +33,22 @@ describe('FileUploadExamSummaryComponent', () => {
         expect(component.attachmentExtension(component.submission.filePath!)).toBe('N/A');
     });
 
-    it('should correctly display the filepath', () => {
-        component.submission.filePath = 'filePath.pdf';
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+    it('should render submission when exercise and submisssion is set', () => {
+        const exercise = { id: 1234, studentParticipations: [{ id: 1 }] } as FileUploadExercise;
+        const submission = { submitted: true, filePath: 'filePath.pdf' } as FileUploadSubmission;
+        component.submission = submission;
+        component.exercise = exercise;
+
         fixture.detectChanges();
-        expect(component.attachmentExtension(component.submission.filePath!)).toBe('pdf');
-        const downloadFile = fixture.debugElement.query(By.css('#downloadFileButton'));
-        expect(downloadFile).not.toBeNull();
-        downloadFile.nativeElement.click();
-        expect(downloadFileSpy).toHaveBeenCalledOnce();
+
+        const fileUploadSubmissionComponent = fixture.debugElement.query(By.directive(FileUploadSubmissionComponent)).componentInstance;
+        expect(fileUploadSubmissionComponent).toBeTruthy();
+    });
+
+    it('should not render submission if exercise and submission are not set', () => {
+        fixture.detectChanges();
+
+        const fileUploadSubmissionComponent = fixture.debugElement.query(By.directive(FileUploadSubmissionComponent))?.componentInstance;
+        expect(fileUploadSubmissionComponent).not.toBeTruthy();
     });
 });
