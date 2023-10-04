@@ -323,6 +323,16 @@ export class ExamResultSummaryComponent implements OnInit {
         return false;
     }
 
+    isAfterResultsArePublished() {
+        if (this.isTestRun || this.isTestExam) {
+            return true;
+        }
+        if (this.studentExam?.exam?.publishResultsDate) {
+            return this.serverDateService.now().isAfter(this.studentExam.exam.publishResultsDate);
+        }
+        return false;
+    }
+
     private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ResultSummaryExerciseInfo> {
         const exerciseInfos: Record<number, ResultSummaryExerciseInfo> = {};
         for (const exercise of this.studentExam?.exercises ?? []) {

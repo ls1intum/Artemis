@@ -5,9 +5,9 @@
         [displayHeader]="false"
         [isPrinting]="isPrinting"
         [expandProblemStatement]="expandProblemStatement"
-        [inputExercise]="exercise"
-        [inputSubmission]="submission"
-        [inputParticipation]="exercise.studentParticipations![0]"
+        [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
+        [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
+        [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
     />
 
     <ng-template #noSubmission>

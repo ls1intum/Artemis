@@ -11,4 +11,5 @@ export class ModelingExamSummaryComponent {
     @Input() submission: ModelingSubmission;
     @Input() isPrinting?: boolean = false;
     @Input() expandProblemStatement?: boolean = false;
+    @Input() isAfterResultsArePublished?: boolean = false;
 }
