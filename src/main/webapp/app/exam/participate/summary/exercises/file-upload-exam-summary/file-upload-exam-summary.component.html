@@ -1,6 +1,6 @@
 <div>
     <jhi-file-upload-submission
-        *ngIf="exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id !== undefined; else noSubmission"
+        *ngIf="exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id; else noSubmission"
         [participationId]="exercise.studentParticipations![0].id"
         [displayHeader]="false"
         [expandProblemStatement]="expandProblemStatement"
