@@ -18,13 +18,5 @@
             [smallButton]="smallButtons"
             *ngIf="isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id"
         ></jhi-ide-button>
-        <jhi-ide-button
-            [featureToggle]="FeatureToggle.ProgrammingExercises"
-            (clickHandler)="initializeFeedback()"
-            buttonLabel="Reload Feedback"
-            [buttonType]="OrionButtonType.Reload"
-            [smallButton]="smallButtons"
-            *ngIf="isOfflineIdeAllowed && orionState.view === ExerciseView.STUDENT && orionState.opened === this.exercise.id"
-        ></jhi-ide-button>
     </ng-template>
 </jhi-exercise-details-student-actions>

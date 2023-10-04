@@ -11,7 +11,6 @@ import { ExerciseView, OrionBuildConnector, OrionExerciseConnector, OrionSharedU
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
@@ -235,47 +234,6 @@ describe('OrionConnectorService', () => {
         expect((window as any).orionExerciseConnector.initializeAssessment).toHaveBeenCalledWith(
             '5',
             '[{"id":2,"positive":false,"detailText":"abc"},{"id":3,"positive":true,"detailText":"cde"}]',
-        );
-    });
-
-    it('should forward initializeFeedback', () => {
-        const programmingExerciseStudentParticipation = [
-            {
-                credits: 0,
-                detailText: 'some text',
-                reference: 'file',
-                text: 'some text with line',
-                type: FeedbackType.MANUAL,
-                gradingInstruction: undefined,
-                line: undefined,
-                path: undefined,
-            } as Feedback,
-            {
-                credits: 1,
-                detailText: 'some text2',
-                reference: 'file2',
-                text: 'some text with line2',
-                type: FeedbackType.MANUAL,
-                gradingInstruction: undefined,
-                line: undefined,
-                path: undefined,
-            } as Feedback,
-            {
-                credits: -1,
-                detailText: 'some text3',
-                reference: 'file3',
-                text: 'some text with line3',
-                type: FeedbackType.MANUAL,
-                gradingInstruction: undefined,
-                line: undefined,
-                path: undefined,
-            } as Feedback,
-        ];
-        serviceUnderTest.initializeFeedback(programmingExerciseStudentParticipation);
-
-        expect((window as any).orionExerciseConnector.initializeFeedback).toHaveBeenCalledOnce();
-        expect((window as any).orionExerciseConnector.initializeFeedback).toHaveBeenCalledWith(
-            '[{"credits":0,"detailText":"some text","reference":"file","text":"some text with line","type":"MANUAL"},{"credits":1,"detailText":"some text2","reference":"file2","text":"some text with line2","type":"MANUAL"},{"credits":-1,"detailText":"some text3","reference":"file3","text":"some text with line3","type":"MANUAL"}]',
         );
     });
 });

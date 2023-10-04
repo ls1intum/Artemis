@@ -9,6 +9,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -283,10 +284,22 @@ export class OrionConnectorService {
 
     /**
      * Initializes the feedback comments for a student.
-     *
-     * @param feedbacks an array of {@link Feedback} for Orion to extract the right feedback.
      */
-    initializeFeedback(feedbacks: Array<Feedback>) {
+    initializeFeedback(): void {
+        const participations = theWindow().exercise.studentParticipations as ProgrammingExerciseStudentParticipation[];
+        let feedbacks: Array<Feedback> = [];
+        participations?.forEach(function (participation) {
+            participation.results?.forEach(function (result) {
+                if (result.rated !== undefined && result.rated) {
+                    if (result.feedbacks !== undefined) {
+                        feedbacks = result.feedbacks;
+                        return;
+                    }
+                    return;
+                }
+            });
+        });
+
         theWindow().orionExerciseConnector.initializeFeedback(stringifyCircular(feedbacks));
     }
 }
