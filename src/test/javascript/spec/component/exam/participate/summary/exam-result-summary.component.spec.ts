@@ -372,19 +372,19 @@ describe('ExamResultSummaryComponent', () => {
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
-        expect(component.isAfterStudentReviewStart()).toBeTrue();
+        expect(component.isAfterStudentReviewStart).toBeTrue();
 
         component.isTestExam = false;
         component.isTestRun = true;
-        expect(component.isAfterStudentReviewStart()).toBeTrue();
+        expect(component.isAfterStudentReviewStart).toBeTrue();
 
         component.isTestRun = false;
         component.studentExam.exam!.examStudentReviewStart = examStudentReviewStart;
         component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
-        expect(component.isAfterStudentReviewStart()).toBeTrue();
+        expect(component.isAfterStudentReviewStart).toBeTrue();
 
         component.studentExam.exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
-        expect(component.isAfterStudentReviewStart()).toBeFalse();
+        expect(component.isAfterStudentReviewStart).toBeFalse();
 
         expect(dateSpy).toHaveBeenCalledTimes(2);
     });
@@ -394,18 +394,18 @@ describe('ExamResultSummaryComponent', () => {
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+        expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
         component.isTestExam = false;
         component.isTestRun = true;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+        expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
         component.isTestRun = false;
         component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+        expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
         component.studentExam.exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
-        expect(component.isBeforeStudentReviewEnd()).toBeFalse();
+        expect(component.isBeforeStudentReviewEnd).toBeFalse();
 
         expect(dateSpy).toHaveBeenCalledTimes(2);
     });
