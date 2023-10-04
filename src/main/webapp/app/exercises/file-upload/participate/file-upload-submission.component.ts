@@ -150,7 +150,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     private inputValuesArePresent(): boolean {
-        return this.inputExercise !== undefined || this.inputSubmission !== undefined || this.inputParticipation !== undefined;
+        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
     }
 
     /**
