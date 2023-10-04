@@ -44,6 +44,10 @@ For each exercıse, students can start exercise, check their results and get fee
      - ✔
      - ✔
 
+Prerequisite for Server Admins
+-------------------------------
+Before instructors integrate Artemis or students access and start Artemis exercises through Moodle or any other LMS via LTI, server administrators must ensure that LTI is active with the necessary profile on the server. If you're a server admin, please make sure to configure this setting to allow instructors and students to utilize the LTI integration.
+
 LTI 1.3 Instructor Guide
 ---------------------------
 Instructors have the capability to seamlessly integrate the Artemis platform with other Learning Management Systems (LMS) like Moodle using the LTI 1.3 standard. The process is straightforward and involves a few key steps:
