@@ -10,4 +10,5 @@ export class TextExamSummaryComponent {
     @Input() exercise: Exercise;
     @Input() submission: TextSubmission;
     @Input() expandProblemStatement?: boolean = false;
+    @Input() isAfterResultsArePublished?: boolean = false;
 }
