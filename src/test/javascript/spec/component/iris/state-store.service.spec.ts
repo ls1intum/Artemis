@@ -6,6 +6,7 @@ import {
     HistoryMessageLoadedAction,
     MessageStoreState,
     NumNewMessagesResetAction,
+    RateLimitUpdatedAction,
     RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
@@ -363,6 +364,40 @@ describe('IrisStateStore', () => {
         const state2 = (await promise2) as MessageStoreState;
 
         expect(state2.messages).toHaveLength(2);
+    });
+
+    it('should update below rate limit state', async () => {
+        const obs = stateStore.getState();
+
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(new RateLimitUpdatedAction(1, 2));
+
+        const state = (await promise) as MessageStoreState;
+
+        expect(state).toStrictEqual({
+            ...mockState,
+            error: null,
+            currentMessageCount: 1,
+            rateLimit: 2,
+        });
+    });
+
+    it('should update above rate limit state', async () => {
+        const obs = stateStore.getState();
+
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(new RateLimitUpdatedAction(2, 2));
+
+        const state = (await promise) as MessageStoreState;
+
+        expect(state).toStrictEqual({
+            ...mockState,
+            error: errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED],
+            currentMessageCount: 2,
+            rateLimit: 2,
+        });
     });
 });
 

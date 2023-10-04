@@ -146,14 +146,19 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     ngOnChanges(changes: SimpleChanges) {
         if (changes.participation || changes.result) {
+            // If the participation or result changes, we need to re-initialize the component.
             this.ngOnInit();
+        }
+
+        if (changes.isBuilding?.currentValue) {
             // If it's building, we change the templateStatus to building regardless of any other settings.
-        } else if (changes.missingResultInfo) {
-            this.evaluate();
-        } else if (changes.isBuilding && changes.isBuilding.currentValue) {
             this.templateStatus = ResultTemplateStatus.IS_BUILDING;
-            // When the result was building and is not building anymore, we evaluate the result status.
-        } else if (changes.isBuilding && changes.isBuilding.previousValue && !changes.isBuilding.currentValue) {
+        } else if (changes.missingResultInfo || changes.isBuilding?.previousValue) {
+            // If ...
+            // ... the result was building and is not building anymore, or
+            // ... the missingResultInfo changed
+            // we evaluate the result status.
+
             this.evaluate();
         }
     }
