@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { FileService } from 'app/shared/http/file.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { By } from '@angular/platform-browser';
+import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('FileUploadExamSummaryComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
@@ -16,8 +17,7 @@ describe('FileUploadExamSummaryComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            declarations: [FileUploadExamSummaryComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(FileService)],
+            declarations: [FileUploadExamSummaryComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FileUploadSubmissionComponent)],
         })
             .compileComponents()
             .then(() => {
@@ -30,7 +30,6 @@ describe('FileUploadExamSummaryComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.attachmentExtension(component.submission.filePath!)).toBe('N/A');
     });
 
     it('should render submission when exercise and submisssion is set', () => {
