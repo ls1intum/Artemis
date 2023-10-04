@@ -124,6 +124,25 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.ngOnDestroy();
     });
 
+    it('validateGeneration', async () => {
+        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: [] } };
+
+        // setup
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
+        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.initializeApollonEditor(nonInteractiveModel);
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        // test
+        await addDelay(500);
+        await fixture.componentInstance.generateExercise();
+        expect(errorSpy).toHaveBeenCalledOnce();
+
+        // clear the set time interval
+        fixture.componentInstance.ngOnDestroy();
+    });
+
     it('downloadSelection', async () => {
         const div = document.createElement('div');
         fixture.componentInstance.editorContainer = new ElementRef(div);
