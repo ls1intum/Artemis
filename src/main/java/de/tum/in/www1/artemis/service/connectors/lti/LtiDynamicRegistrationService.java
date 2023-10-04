@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
+@Profile("lti")
 public class LtiDynamicRegistrationService {
 
     @Value("${server.url}")
