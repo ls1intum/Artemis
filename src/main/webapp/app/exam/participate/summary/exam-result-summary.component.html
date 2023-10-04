@@ -13,7 +13,7 @@
     *ngIf="studentExam?.exam"
     [exam]="studentExam.exam!"
     [studentExam]="studentExam"
-    [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun"
+    [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
 />
 <div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO" id="exam-summary-result-overview">
     <jhi-exam-result-overview
@@ -98,7 +98,7 @@
                                 [exercise]="exercise"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [expandProblemStatement]="expandProblemStatement"
-                                [isAfterResultsArePublished]="isAfterResultsArePublished()"
+                                [isAfterResultsArePublished]="isAfterResultsArePublished"
                             />
 
                             <jhi-modeling-exam-summary
@@ -107,7 +107,7 @@
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [isPrinting]="isPrinting"
                                 [expandProblemStatement]="expandProblemStatement"
-                                [isAfterResultsArePublished]="isAfterResultsArePublished()"
+                                [isAfterResultsArePublished]="isAfterResultsArePublished"
                             />
 
                             <jhi-quiz-exam-summary
@@ -123,12 +123,12 @@
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [exercise]="exercise"
                                 [expandProblemStatement]="expandProblemStatement"
-                                [isAfterResultsArePublished]="isAfterResultsArePublished()"
+                                [isAfterResultsArePublished]="isAfterResultsArePublished"
                             />
                         </ng-container>
 
                         <jhi-complaint-student-view
-                            *ngIf="exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart()"
+                            *ngIf="exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart"
                             class="mb-2 mt-2 ms-3"
                             [exercise]="exercise"
                             [participation]="exerciseInfos[exercise.id!]!.participation!"
@@ -149,10 +149,10 @@
                         [submission]="exerciseInfos[exercise.id!]!.submission!"
                         [isTestRun]="isTestRun"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                        [isAfterStudentReviewStart]="isAfterStudentReviewStart()"
+                        [isAfterStudentReviewStart]="isAfterStudentReviewStart"
                         [resultsPublished]="resultsPublished"
                         [isPrinting]="isPrinting"
-                        [isAfterResultsArePublished]="isAfterResultsArePublished()"
+                        [isAfterResultsArePublished]="isAfterResultsArePublished"
                     />
                 </ng-container>
             </ng-container>

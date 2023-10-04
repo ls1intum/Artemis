@@ -6,7 +6,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -105,6 +104,14 @@ export class ExamResultSummaryComponent implements OnInit {
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
+    isBeforeStudentReviewEnd = false;
+    /**
+     * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
+     * the review dates are set and the review start date has passed.
+     */
+    isAfterStudentReviewStart = false;
+    isAfterResultsArePublished = false;
+
     // Icons
     faFolderOpen = faFolderOpen;
     faInfoCircle = faInfoCircle;
@@ -164,6 +171,10 @@ export class ExamResultSummaryComponent implements OnInit {
         this.exerciseInfos = this.getExerciseInfos();
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+
+        this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
+        this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
+        this.isAfterResultsArePublished = this.getIsAfterResultsArePublished();
     }
 
     private tryLoadPlagiarismCaseInfosForStudent() {
@@ -187,10 +198,6 @@ export class ExamResultSummaryComponent implements OnInit {
     private isExamResultPublished() {
         const exam = this.studentExam.exam;
         return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
-    }
-
-    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
     }
 
     get resultsPublished(): boolean {
@@ -300,11 +307,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.examWithOnlyIdAndStudentReviewPeriod = exam;
     }
 
-    /**
-     * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
-     * the review dates are set and the review start date has passed.
-     */
-    isAfterStudentReviewStart() {
+    private getIsAfterStudentReviewStart() {
         if (this.isTestRun || this.isTestExam) {
             return true;
         }
@@ -314,7 +317,7 @@ export class ExamResultSummaryComponent implements OnInit {
         return false;
     }
 
-    isBeforeStudentReviewEnd() {
+    private getIsBeforeStudentReviewEnd() {
         if (this.isTestRun || this.isTestExam) {
             return true;
         }
@@ -324,7 +327,7 @@ export class ExamResultSummaryComponent implements OnInit {
         return false;
     }
 
-    isAfterResultsArePublished() {
+    private getIsAfterResultsArePublished() {
         if (this.isTestRun || this.isTestExam) {
             return true;
         }
