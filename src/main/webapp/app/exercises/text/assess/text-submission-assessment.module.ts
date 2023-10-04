@@ -20,6 +20,7 @@ import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-inst
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/assessment-progress-label/assessment-progress-label.module';
+import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 
 const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
 
@@ -38,6 +39,7 @@ const ENTITY_STATES = [...textSubmissionAssessmentRoutes];
         ArtemisGradingInstructionLinkIconModule,
         SubmissionResultStatusModule,
         ArtemisAssessmentProgressLabelModule,
+        ArtemisFeedbackModule,
     ],
     declarations: [
         TextSubmissionAssessmentComponent,
