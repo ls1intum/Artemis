@@ -90,7 +90,7 @@ public class FilePathService {
      * @param publicPath the public file url to convert
      * @return the actual path to that file in the local filesystem
      */
-    public Path actualPathForPublicPath(URI publicPath) {
+    public static Path actualPathForPublicPath(URI publicPath) {
         // first extract the filename from the url
         String uriPath = publicPath.getPath();
         Path path = Path.of(uriPath);
@@ -129,7 +129,7 @@ public class FilePathService {
         return null;
     }
 
-    private Path actualPathForPublicAttachmentUnitFilePath(URI publicPath, String filename) {
+    private static Path actualPathForPublicAttachmentUnitFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
         if (!publicPath.toString().contains("/slide")) {
             String attachmentUnitId = path.getName(4).toString();
@@ -148,7 +148,7 @@ public class FilePathService {
         }
     }
 
-    private Path actualPathForPublicFileUploadExercisesFilePath(URI publicPath, String filename) {
+    private static Path actualPathForPublicFileUploadExercisesFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
         try {
             String expectedExerciseId = path.getName(3).toString();
