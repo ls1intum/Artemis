@@ -173,7 +173,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
         this.filePool.forEach((value, fileName) => {
             if (value.path && !this.filePreviewPaths.has(fileName)) {
-                console.log('add file to preview with path: ', fileName, value.path);
                 this.filePreviewPaths.set(fileName, value.path);
             }
         });
