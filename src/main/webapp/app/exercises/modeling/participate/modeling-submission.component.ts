@@ -52,6 +52,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @Input() isPrinting?: boolean = false;
     @Input() expandProblemStatement?: boolean = false;
 
+    @Input() inputExercise?: ModelingExercise;
+    @Input() inputSubmission?: ModelingSubmission;
+    @Input() inputParticipation?: StudentParticipation;
+
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
 
@@ -121,32 +125,65 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe((params) => {
-            const participationId = params['participationId'] ?? this.participationId;
+        if (this.inputValuesArePresent()) {
+            this.setupComponentWithInputValues();
+        } else {
+            this.subscription = this.route.params.subscribe((params) => {
+                const participationId = params['participationId'] ?? this.participationId;
 
-            if (participationId) {
-                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(participationId).subscribe({
-                    next: (modelingSubmission) => {
-                        this.updateModelingSubmission(modelingSubmission);
-                        if (this.modelingExercise.teamMode) {
-                            this.setupSubmissionStreamForTeam();
-                        } else {
-                            this.setAutoSaveTimer();
-                        }
-                    },
-                    error: (error) => {
-                        if (error.status === 403 && !isDisplayedOnExamSummaryPage) {
-                            this.router.navigate(['accessdenied']);
-                        }
-                    },
-                });
-            }
-        });
+                if (participationId) {
+                    this.modelingSubmissionService.getLatestSubmissionForModelingEditor(participationId).subscribe({
+                        next: (modelingSubmission) => {
+                            this.updateModelingSubmission(modelingSubmission);
+                            if (this.modelingExercise.teamMode) {
+                                this.setupSubmissionStreamForTeam();
+                            } else {
+                                this.setAutoSaveTimer();
+                            }
+                        },
+                        error: (error) => {
+                            if (error.status === 403 && !isDisplayedOnExamSummaryPage) {
+                                this.router.navigate(['accessdenied']);
+                            }
+                        },
+                    });
+                }
+            });
+        }
 
         const isDisplayedOnExamSummaryPage = !this.displayHeader && this.participationId !== undefined;
         if (!isDisplayedOnExamSummaryPage) {
             window.scroll(0, 0);
         }
+    }
+
+    private inputValuesArePresent(): boolean {
+        return this.inputExercise !== undefined || this.inputSubmission !== undefined || this.inputParticipation !== undefined;
+    }
+
+    /**
+     * Uses values directly passed to this component instead of subscribing to a participation to save resources
+     *
+     * <i>e.g. used within {@link ExamResultSummaryComponent} and the respective {@link ModelingExamSummaryComponent}
+     * as directly after the exam no grading is present and only the student solution shall be displayed </i>
+     * @private
+     */
+    private setupComponentWithInputValues() {
+        if (this.inputExercise) {
+            this.modelingExercise = this.inputExercise;
+        }
+        if (this.inputSubmission) {
+            this.submission = this.inputSubmission;
+        }
+        if (this.inputParticipation) {
+            this.participation = this.inputParticipation;
+        }
+
+        if (this.submission.model) {
+            this.umlModel = JSON.parse(this.submission.model);
+            this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
+        }
+        this.explanation = this.submission.explanationText ?? '';
     }
 
     /**
