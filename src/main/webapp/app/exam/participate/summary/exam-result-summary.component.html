@@ -92,36 +92,34 @@
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
                 <ng-template #studentSolution>
                     <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted; else noSubmission">
-                        <ng-container *ngIf="exercise.type === TEXT">
+                        <ng-container [ngSwitch]="exercise.type">
                             <jhi-text-exam-summary
+                                *ngSwitchCase="TEXT"
                                 [exercise]="exercise"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [expandProblemStatement]="expandProblemStatement"
                                 [isAfterResultsArePublished]="isAfterResultsArePublished()"
                             />
-                        </ng-container>
 
-                        <ng-container *ngIf="exercise.type === MODELING">
                             <jhi-modeling-exam-summary
+                                *ngSwitchCase="MODELING"
                                 [exercise]="exercise"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [isPrinting]="isPrinting"
                                 [expandProblemStatement]="expandProblemStatement"
                                 [isAfterResultsArePublished]="isAfterResultsArePublished()"
                             />
-                        </ng-container>
 
-                        <ng-container *ngIf="exercise.type === QUIZ">
                             <jhi-quiz-exam-summary
+                                *ngSwitchCase="QUIZ"
                                 [exercise]="exercise"
                                 [exam]="studentExam.exam!"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [resultsPublished]="!!resultsPublished"
                             />
-                        </ng-container>
 
-                        <ng-container *ngIf="exercise.type === FILE_UPLOAD">
                             <jhi-file-upload-exam-summary
+                                *ngSwitchCase="FILE_UPLOAD"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [exercise]="exercise"
                                 [expandProblemStatement]="expandProblemStatement"
