@@ -149,7 +149,7 @@ describe('ProgrammingExamSummaryComponent', () => {
         expect(component.commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/test/repos/test-student1/commits/123456789ab');
     });
 
-    it('should show result if present', () => {
+    it('should show result if present and results are published', () => {
         component.isAfterResultsArePublished = true;
 
         fixture.detectChanges();
@@ -160,5 +160,14 @@ describe('ProgrammingExamSummaryComponent', () => {
 
         const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
         expect(modelingSubmissionComponent).toBeTruthy();
+    });
+
+    it('should not show results if not yet published', () => {
+        component.isAfterResultsArePublished = false;
+
+        fixture.detectChanges();
+
+        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(modelingSubmissionComponent).not.toBeTruthy();
     });
 });
