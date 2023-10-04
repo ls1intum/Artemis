@@ -12,10 +12,13 @@ This section describes some additional steps that are only of interest for produ
 
    setup/programming-exercises
    setup/customization
-   setup/privacy-statement
+   setup/legal-documents
    setup/production-setup-tips
    setup/text-assessment-analytics
-   setup/athene
+   setup/athena
    setup/apollon
+   setup/hermes
+   setup/iris
+   setup/pyris
    setup/distributed
    setup/kubernetes

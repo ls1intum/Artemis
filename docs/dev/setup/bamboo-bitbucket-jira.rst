@@ -132,34 +132,28 @@ under ``localhost:7990``.
            * - **Bamboo:**
              - **Bitbucket:**
              - **Jira:**
-           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
+           * - .. figure:: bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../_images/bamboo_bitbucket_applicationLink.png
 
                   Bamboo → Bitbucket
-             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
+             - .. figure:: bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
                   :align: center
-                  :target: ../_images/bitbucket_bamboo_applicationLink.png
 
                   Bitbucket → Bamboo
-             - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
+             - .. figure:: bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
                   :align: center
-                  :target: ../_images/jira_bamboo_applicationLink.png
 
                   Jira → Bamboo
-           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
+           * - .. figure:: bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
                   :align: center
-                  :target: ../_images/bamboo_jira_applicationLink.png
 
                   Bamboo → Jira
-             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
+             - .. figure:: bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
                   :align: center
-                  :target: ../_images/bitbucket_jira_applicationLink.png
 
                   Bitbucket → Jira
-             - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
+             - .. figure:: bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../_images/jira_bitbucket_applicationLink.png
 
                   Jira → Bitbucket
 
@@ -181,9 +175,9 @@ under ``localhost:7990``.
 
     .. list-table::
 
-        * - .. figure:: setup/bamboo-bitbucket-jira/jira_add_application_bitbucket.png
+        * - .. figure:: bamboo-bitbucket-jira/jira_add_application_bitbucket.png
 
-          - .. figure:: setup/bamboo-bitbucket-jira/jira_add_application_bamboo.png
+          - .. figure:: bamboo-bitbucket-jira/jira_add_application_bamboo.png
 
    -  Go to `Bitbucket → User Directories <http://localhost:7990/plugins/servlet/embedded-crowd/directories/list>`__
       and `Bamboo → User Directories <http://localhost:8085/plugins/servlet/embedded-crowd/directories/list>`__
@@ -194,11 +188,11 @@ under ``localhost:7990``.
 
     .. list-table::
 
-        * - .. figure:: setup/bamboo-bitbucket-jira/user_directories_bitbucket.png
+        * - .. figure:: bamboo-bitbucket-jira/user_directories_bitbucket.png
 
                 Adding Crowd Server in **Bitbucket**
 
-          - .. figure:: setup/bamboo-bitbucket-jira/user_directories_bamboo.png
+          - .. figure:: bamboo-bitbucket-jira/user_directories_bamboo.png
 
                 Adding Crowd Server in **Bamboo**
 
@@ -234,8 +228,7 @@ under ``localhost:7990``.
    Approve the agent and edit the IP address in a development setup to ``*.*.*.*`` as the Docker container doesn't
    have a static IP address.
 
-   .. figure:: setup/bamboo-bitbucket-jira/bamboo_agent_configuration.png
-      :target: ../_images/bamboo_agent_configuration.png
+   .. figure:: bamboo-bitbucket-jira/bamboo_agent_configuration.png
       :align: center
 
 #. Generate a personal access token
@@ -248,7 +241,7 @@ under ``localhost:7990``.
       - Log in as the admin user and go to `Bamboo → Profile (top right corner) → Personal access tokens →
         Create token <http://localhost:8085/profile/createAccessToken.action>`__
 
-          .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
+          .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
 
       - Insert the generated token into the file ``application-local.yml`` in the section ``continuous-integration``:
@@ -266,7 +259,7 @@ under ``localhost:7990``.
       - Log in as the admin user and go to `Bitbucket → Your profile image (top right corner) → Manage account
         <http://localhost:7990/account>`__ → HTTP access tokens → Create token
 
-          .. figure:: setup/bamboo-bitbucket-jira/bitbucket_create_token.png
+          .. figure:: bamboo-bitbucket-jira/bitbucket_create_token.png
              :align: center
 
       - Insert the generated token into the file ``application-local.yml`` in the section ``version-control``:
