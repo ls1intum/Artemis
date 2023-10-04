@@ -17,6 +17,8 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
+import { FeedbackType } from 'app/entities/feedback.model';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -24,6 +26,7 @@ describe('CodeEditorAceComponent', () => {
     let debugElement: DebugElement;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let loadRepositoryFileStub: jest.SpyInstance;
+    let getInlineFeedbackNodeStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -48,19 +51,15 @@ describe('CodeEditorAceComponent', () => {
                 debugElement = fixture.debugElement;
                 codeEditorRepositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
                 loadRepositoryFileStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
+                getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
+                getInlineFeedbackNodeStub.mockReturnValue(document.createElement('div'));
+                // Mock the ResizeObserver, which is not available in the test environment
+                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should know the lines in which inline feedback is shown', () => {
-        expect(comp.linesWithInlineFeedbackShown).toEqual([]);
-        comp.linesWithNewFeedback = [15, 5];
-        expect(comp.linesWithInlineFeedbackShown).toEqual([5, 15]);
-        comp.fileFeedbackPerLine = { 50: {}, 1050: {} };
-        expect(comp.linesWithInlineFeedbackShown).toEqual([5, 15, 50, 1050]);
     });
 
     it('without any inputs, should still render correctly without ace, showing a placeholder', () => {
@@ -111,7 +110,7 @@ describe('CodeEditorAceComponent', () => {
         const selectedFile = 'dummy';
         const fileSession = {};
         const loadFileSubject = new Subject();
-        const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
+        const initEditorSpy = jest.spyOn(comp, 'initEditor');
         loadRepositoryFileStub.mockReturnValue(loadFileSubject);
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
@@ -121,13 +120,13 @@ describe('CodeEditorAceComponent', () => {
 
         expect(comp.isLoading).toBeTrue();
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
-        expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
+        expect(initEditorSpy).not.toHaveBeenCalled();
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
         fixture.detectChanges();
 
         expect(comp.isLoading).toBeFalse();
         expect(comp.fileSession).toEqual({ dummy: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } });
-        expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
+        expect(initEditorSpy).toHaveBeenCalledWith();
     });
 
     it.each([
@@ -137,7 +136,7 @@ describe('CodeEditorAceComponent', () => {
         const selectedFile = 'dummy';
         const fileSession = {};
         const loadFileSubject = new Subject();
-        const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
+        const initEditorSpy = jest.spyOn(comp, 'initEditor');
         const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         loadRepositoryFileStub.mockReturnValue(loadFileSubject);
         comp.selectedFile = selectedFile;
@@ -148,28 +147,26 @@ describe('CodeEditorAceComponent', () => {
 
         expect(comp.isLoading).toBeTrue();
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
-        expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
+        expect(initEditorSpy).not.toHaveBeenCalled();
         loadFileSubject.error(error);
         fixture.detectChanges();
 
         expect(comp.isLoading).toBeFalse();
         expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
-        expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
+        expect(initEditorSpy).toHaveBeenCalledWith();
         expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
     });
 
-    it('should discard all new feedback after a re-init because of a file change', () => {
-        const getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
-        getInlineFeedbackNodeStub.mockReturnValue(undefined);
-        comp.addLineWidgetWithFeedback(16);
-        comp.initEditorAfterFileChange();
-        expect(comp.linesWithNewFeedback).toEqual([]);
+    it('should discard all new feedback after a re-init because of a file change', async () => {
+        comp.newFeedbackLines = [1, 2, 3];
+        await comp.initEditor();
+        expect(comp.newFeedbackLines).toEqual([]);
     });
 
     it('should not load the file from server on selected file change if the file is already in session', () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
-        const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
+        const initEditorSpy = jest.spyOn(comp, 'initEditor');
         const loadFileSpy = jest.spyOn(comp, 'loadFile');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
@@ -177,14 +174,14 @@ describe('CodeEditorAceComponent', () => {
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
 
-        expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
+        expect(initEditorSpy).toHaveBeenCalledWith();
         expect(loadFileSpy).not.toHaveBeenCalled();
     });
 
     it('should load the file from server on selected file change if the file is already in session but there was a loading error', () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: true } };
-        const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
+        const initEditorSpy = jest.spyOn(comp, 'initEditor');
         const loadFileSpy = jest.spyOn(comp, 'loadFile');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
@@ -192,11 +189,11 @@ describe('CodeEditorAceComponent', () => {
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
 
-        expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
+        expect(initEditorSpy).not.toHaveBeenCalled();
         expect(loadFileSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update file session references on file rename', () => {
+    it('should update file session references on file rename', async () => {
         const selectedFile = 'file';
         const newFileName = 'newFilename';
         const fileChange = new RenameFileChange(FileType.FILE, selectedFile, newFileName);
@@ -207,22 +204,22 @@ describe('CodeEditorAceComponent', () => {
         comp.selectedFile = newFileName;
         comp.fileSession = fileSession;
 
-        comp.onFileChange(fileChange);
+        await comp.onFileChange(fileChange);
 
         expect(comp.fileSession).toEqual({ anotherFile: fileSession.anotherFile, [fileChange.newFileName]: fileSession[selectedFile] });
     });
 
-    it('should init editor on newly created file if selected', () => {
+    it('should init editor on newly created file if selected', async () => {
         const selectedFile = 'file';
         const fileChange = new CreateFileChange(FileType.FILE, selectedFile);
         const fileSession = { anotherFile: { code: 'lorem ipsum 2', cursor: { column: 0, row: 0 }, loadingError: false } };
-        const initEditorAfterFileChangeSpy = jest.spyOn(comp, 'initEditorAfterFileChange');
+        const initEditorSpy = jest.spyOn(comp, 'initEditor');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
-        comp.onFileChange(fileChange);
+        await comp.onFileChange(fileChange);
 
-        expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
+        expect(initEditorSpy).toHaveBeenCalledWith();
         expect(comp.fileSession).toEqual({ anotherFile: fileSession.anotherFile, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } });
     });
 
@@ -241,7 +238,7 @@ describe('CodeEditorAceComponent', () => {
         expect(onFileContentChangeSpy).not.toHaveBeenCalled();
     });
 
-    it('should update build log errors and emit a message on file text change', () => {
+    it('should update build log errors and emit a message on file text change', async () => {
         const onFileContentChangeSpy = jest.spyOn(comp.onFileContentChange, 'emit');
 
         const selectedFile = 'file';
@@ -255,21 +252,21 @@ describe('CodeEditorAceComponent', () => {
         comp.annotationsArray = annotations;
 
         comp.updateAnnotations(editorChange);
-        comp.onFileTextChanged(newFileContent);
+        await comp.onFileTextChanged(newFileContent);
 
         expect(onFileContentChangeSpy).toHaveBeenCalledWith({ file: selectedFile, fileContent: newFileContent });
         const newAnnotations = [{ fileName: selectedFile, text: 'error', type: 'error', timestamp: 0, row: 4, column: 4 }];
         expect(comp.annotationsArray).toEqual(newAnnotations);
     });
 
-    it('should be in readonly mode and display feedback when in tutor assessment', () => {
+    it('should be in readonly mode and display feedback when in tutor assessment', async () => {
+        await comp.initEditor();
         comp.isTutorAssessment = true;
-        comp.fileFeedbacks = [];
-        const displayFeedbacksSpy = jest.spyOn(comp, 'displayFeedbacks');
-        comp.onFileTextChanged('newFileContent');
+        const updateLineWidgetsSpy = jest.spyOn(comp, 'updateLineWidgets');
+        await comp.onFileTextChanged('newFileContent');
 
         expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
-        expect(displayFeedbacksSpy).toHaveBeenCalledOnce();
+        expect(updateLineWidgetsSpy).toHaveBeenCalledOnce();
     });
 
     it('should be in readonly mode when the file could not be loaded', () => {
@@ -281,13 +278,13 @@ describe('CodeEditorAceComponent', () => {
         expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
     });
 
-    it('should setup inline comment buttons in gutter', () => {
+    it('should setup inline comment buttons in gutter', async () => {
+        await comp.initEditor();
         comp.isTutorAssessment = true;
         comp.readOnlyManualFeedback = false;
-        comp.fileFeedbacks = [];
         const setupLineIconsSpy = jest.spyOn(comp, 'setupLineIcons');
         const observerDomSpy = jest.spyOn(comp, 'observerDom');
-        comp.onFileTextChanged('newFileContent');
+        await comp.onFileTextChanged('newFileContent');
 
         expect(setupLineIconsSpy).toHaveBeenCalledOnce();
         expect(observerDomSpy).toHaveBeenCalledOnce();
@@ -305,45 +302,57 @@ describe('CodeEditorAceComponent', () => {
         expect(editorTabSize()).toBe(4);
     });
 
-    it('should temporarily show new feedbacks which have not been updated yet', () => {
-        const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
-        getInlineFeedbackNodeSpy.mockReturnValue(undefined);
-        comp.addLineWidgetWithFeedback(16);
-        expect(comp.linesWithNewFeedback).toEqual([16]);
+    it('should temporarily show new feedbacks which have not been updated yet', async () => {
+        await comp.initEditor();
+        comp.newFeedbackLines = [16];
+        await comp.updateLineWidgets();
+        expect(comp.editorSession.lineWidgets[16]).toBeDefined();
     });
 
-    it('should not show an updated feedback as new', () => {
+    it('should not show an updated feedback as new', async () => {
+        await comp.initEditor();
         comp.feedbacks = [];
-        const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
-        getInlineFeedbackNodeSpy.mockReturnValue(undefined);
         const adjustLineWidgetHeightStub = jest.spyOn(comp, 'adjustLineWidgetHeight');
         adjustLineWidgetHeightStub.mockImplementation(() => {});
-        comp.addLineWidgetWithFeedback(16);
-        comp.addLineWidgetWithFeedback(17);
-        comp.updateFeedback({ reference: 'line:16' });
-        expect(comp.linesWithNewFeedback).toEqual([17]);
+        comp.newFeedbackLines = [16, 17];
+        await comp.updateLineWidgets();
+        await comp.updateFeedback({ reference: 'file:src/Test.java_line:16' });
+        expect(comp.newFeedbackLines).toEqual([17]);
     });
 
-    it('should not show new feedback that is cancelled anymore', () => {
-        const getInlineFeedbackNodeSpy = jest.spyOn(comp, 'getInlineFeedbackNode');
-        getInlineFeedbackNodeSpy.mockReturnValue(undefined);
-        comp.editorSession = { lineWidgets: [], widgetManager: { removeLineWidget: () => {} } } as any;
+    it('should not show new feedback that is cancelled anymore', async () => {
+        await comp.initEditor();
         const removeLineWidget = jest.spyOn(comp.editorSession.widgetManager, 'removeLineWidget');
-        comp.addLineWidgetWithFeedback(1);
-        comp.addLineWidgetWithFeedback(16);
-        comp.cancelFeedback(16);
-        expect(comp.linesWithNewFeedback).toEqual([1]);
+        comp.newFeedbackLines = [1, 16];
+        await comp.updateLineWidgets();
+        await comp.cancelFeedback(16);
+        expect(comp.newFeedbackLines).toEqual([1]);
         expect(removeLineWidget).toHaveBeenCalled();
     });
 
-    it('should explicitly remove all ACE line widgets when being destroyed', () => {
-        const getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode');
-        getInlineFeedbackNodeStub.mockReturnValue(undefined);
-        comp.editorSession = { lineWidgets: [], widgetManager: { removeLineWidget: () => {} } } as any;
+    it('should explicitly remove all ACE line widgets when being destroyed', async () => {
+        await comp.initEditor();
+        comp.newFeedbackLines = [1, 16];
+        await comp.updateLineWidgets();
         const removeLineWidget = jest.spyOn(comp.editorSession.widgetManager, 'removeLineWidget');
-        comp.addLineWidgetWithFeedback(1);
-        comp.addLineWidgetWithFeedback(16);
         comp.ngOnDestroy();
         expect(removeLineWidget).toHaveBeenCalledTimes(2);
+    });
+
+    it('should convert an accepted feedback suggestion to a marked manual feedback', async () => {
+        await comp.initEditor();
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        comp.feedbackSuggestions = [suggestion];
+        await comp.acceptSuggestion(suggestion);
+        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.feedbacks).toEqual([{ text: 'FeedbackSuggestion:accepted:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL }]);
+    });
+
+    it('should remove discarded suggestions', async () => {
+        await comp.initEditor();
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        comp.feedbackSuggestions = [suggestion];
+        comp.discardSuggestion(suggestion);
+        expect(comp.feedbackSuggestions).toBeEmpty();
     });
 });

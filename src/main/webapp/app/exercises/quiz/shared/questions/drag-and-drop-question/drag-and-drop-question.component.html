@@ -100,6 +100,7 @@
                             (onDragOver)="preventDefault($event)"
                             (onDragLeave)="preventDefault($event)"
                             cdkDropList
+                            [cdkDropListAutoScrollStep]="60"
                         >
                             <jhi-drag-item
                                 (dragenter)="drag()"
@@ -236,7 +237,7 @@
                     </div>
                 </div>
             </div>
-            <div class="drag-and-drop-items" [ngStyle]="{ 'max-height': '100vh' }">
+            <div class="drag-and-drop-items">
                 <div class="dnd-instructions" *ngIf="!showResult">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
                 </div>
@@ -251,6 +252,7 @@
                     (onDragOver)="preventDefault($event)"
                     (onDragLeave)="preventDefault($event)"
                     cdkDropList
+                    [cdkDropListAutoScrollStep]="60"
                 >
                     <jhi-drag-item
                         id="drag-item-{{ i }}"

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -128,17 +127,18 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private void setUpDragAndDropQuestionForImport(DragAndDropQuestion dndQuestion, Map<String, MultipartFile> fileMap) throws IOException {
         if (dndQuestion.getBackgroundFilePath() != null) {
+            URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
+            URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
+            // Check whether pictureFilePublicPath is actually a picture file path
+            // (which is the case when its path starts with the path backgroundFileIntendedPath)
+            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
             // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-            Path oldPath = filePathService.actualPathForPublicPath(URI.create(dndQuestion.getBackgroundFilePath()));
-            if (oldPath != null && Files.exists(oldPath)) {
-                // Copy the file to the new path
-                Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
-                dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
-            }
-            else {
-                // A new file got uploaded, everything got already verified at this point
-                quizExerciseService.saveDndQuestionBackground(dndQuestion, fileMap, null);
-            }
+            Path oldPath = FilePathService.actualPathForPublicPath(backgroundFilePublicPath);
+            Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
+            dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
+        }
+        else {
+            log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", dndQuestion.getId());
         }
 
         for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
@@ -153,17 +153,15 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 continue;
             }
 
-            Path oldDragItemPath = filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath()));
-            if (oldDragItemPath != null && Files.exists(oldDragItemPath)) {
-                // Need to copy the file and get a new path, same as above
-                Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
-                dragItem.setPictureFilePath(
-                        filePathService.publicPathForActualPath(fileService.copyExistingFileToTarget(newDragItemPath, FilePathService.getDragItemFilePath()), null).toString());
-            }
-            else {
-                // A new file got uploaded, everything got already verified at this point
-                quizExerciseService.saveDndDragItemPicture(dragItem, fileMap);
-            }
+            URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
+            URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
+            // Check whether pictureFilePublicPath is actually a picture file path
+            // (which is the case when its path starts with the path pictureFileIntendedPath)
+            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
+            // Need to copy the file and get a new path, same as above
+            Path oldDragItemPath = FilePathService.actualPathForPublicPath(pictureFilePublicPath);
+            Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
+            dragItem.setPictureFilePath(filePathService.publicPathForActualPath(newDragItemPath, null).toString());
         }
         for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
             dragAndDropMapping.setId(null);

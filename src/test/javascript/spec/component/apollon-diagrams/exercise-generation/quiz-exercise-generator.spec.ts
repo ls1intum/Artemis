@@ -8,11 +8,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -26,19 +25,6 @@ import { addDelay } from '../../../helpers/utils/general.utils';
 Text.size = () => {
     return { width: 0, height: 0 };
 };
-
-const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1 } as QuizQuestion;
-const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
-const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3 } as QuizQuestion;
-const now = dayjs();
-
-const quizExercise = {
-    id: 1,
-    quizQuestions: [question1, question2, question3],
-    releaseDate: dayjs(now).subtract(2, 'minutes'),
-    dueDate: dayjs(now).add(2, 'minutes'),
-    quizStarted: true,
-} as QuizExercise;
 
 describe('QuizExercise Generator', () => {
     let quizExerciseService: QuizExerciseService;
@@ -78,7 +64,7 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropExercise for Class Diagram', async () => {
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
-        jest.spyOn(quizExerciseService, 'create').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
