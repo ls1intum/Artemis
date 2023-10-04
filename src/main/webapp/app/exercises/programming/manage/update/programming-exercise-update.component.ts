@@ -317,6 +317,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // update the project types for java programming exercises according to whether dependencies should be included
         if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA) {
+            const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(ProgrammingLanguage.JAVA);
             if (type == ProjectType.MAVEN_BLACKBOX) {
                 this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
                 this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
@@ -324,8 +325,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.testwiseCoverageAnalysisSupported = false;
             } else if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
-                this.sequentialTestRunsAllowed = true;
-                this.testwiseCoverageAnalysisSupported = true;
+                this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
+                this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.MAVEN_MAVEN;
                 } else {
@@ -333,8 +334,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 }
             } else {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
-                this.sequentialTestRunsAllowed = true;
-                this.testwiseCoverageAnalysisSupported = true;
+                this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
+                this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
                 if (this.withDependenciesValue) {
                     this.programmingExercise.projectType = ProjectType.GRADLE_GRADLE;
                 } else {
