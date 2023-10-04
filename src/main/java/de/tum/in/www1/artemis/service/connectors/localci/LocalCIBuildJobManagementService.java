@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -50,6 +53,8 @@ public class LocalCIBuildJobManagementService {
 
     private final LocalCIDockerService localCIDockerService;
 
+    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
+
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
@@ -61,13 +66,14 @@ public class LocalCIBuildJobManagementService {
 
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            LocalCIDockerService localCIDockerService) {
+            LocalCIDockerService localCIDockerService, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
+        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
     /**
@@ -79,6 +85,16 @@ public class LocalCIBuildJobManagementService {
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
     public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
+
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+
+        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage())
+                .projectTypes();
+
+        if (!supportedProjectTypes.contains(programmingExercise.getProjectType())) {
+            throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
+        }
+
         // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
         localCIDockerService.pullDockerImage(dockerImage);
 

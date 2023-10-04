@@ -313,7 +313,7 @@ public class LocalCIContainerService {
             else {
                 buildScript.append("""
                         chmod +x gradlew
-                        ./gradlew clean structualTests
+                        ./gradlew clean structuralTests
                         ./gradlew behaviorTests
                         """);
             }
