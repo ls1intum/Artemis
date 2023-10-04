@@ -193,13 +193,13 @@ export class ExamResultSummaryComponent implements OnInit {
         return exercise as ProgrammingExercise;
     }
 
-    get resultsPublished() {
+    get resultsPublished(): boolean {
         if (this.testRunConduction || this.testExamConduction) {
             return false;
         } else if (this.isTestRun || this.isTestExam) {
             return true;
         }
-        return this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
+        return !!(this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs()));
     }
 
     /**

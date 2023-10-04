@@ -13,7 +13,7 @@ export class ExamResultSummaryExerciseCardHeaderComponent {
     @Input() index: number;
     @Input() exercise: Exercise;
     @Input() exerciseInfo?: ResultSummaryExerciseInfo;
-    @Input() resultsPublished: boolean | any;
+    @Input() resultsPublished: boolean;
 
     faAngleRight = faAngleRight;
 
