@@ -6,7 +6,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -19,7 +18,7 @@ import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/part
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { faArrowUp, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 
@@ -58,6 +57,9 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly PlagiarismVerdict = PlagiarismVerdict;
 
+    faFolderOpen = faFolderOpen;
+    faInfoCircle = faInfoCircle;
+    faPrint = faPrint;
     faEye = faEye;
     faEyeSlash = faEyeSlash;
     faArrowUp = faArrowUp;
@@ -111,11 +113,6 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     isAfterStudentReviewStart = false;
     isAfterResultsArePublished = false;
-
-    // Icons
-    faFolderOpen = faFolderOpen;
-    faInfoCircle = faInfoCircle;
-    faPrint = faPrint;
 
     exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
 
