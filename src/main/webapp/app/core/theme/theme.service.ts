@@ -248,7 +248,6 @@ export class ThemeService {
     /**
      * Hides the notification sidebar as there will be an overlay ove the whole page
      * that covers details of the exam summary (=> exam summary cannot be read).
-     * @private
      */
     private hideNotificationSidebar(): string {
         return this.modifyNotificationSidebarDisplayStyling();
