@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.assessment;
 
+import java.util.ArrayList;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -125,5 +127,23 @@ public class ComplaintUtilService {
             Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
+    }
+
+    /**
+     * Creates a complaint and a response for the passed text submission. The response is returned in a form of an assessment update.
+     *
+     * @param textResult result of the complaint.
+     * @param tutorLogin login of the tutor responding to the complaint.
+     * @return an assessment update with the complaint response.
+     */
+    public AssessmentUpdate createComplaintAndResponse(Result textResult, String tutorLogin) {
+        Complaint complaint = new Complaint().result(textResult).complaintText("This is not fair");
+        complaintRepo.save(complaint);
+        complaint.getResult().setParticipation(null); // Break infinite reference chain
+
+        ComplaintResponse complaintResponse = createInitialEmptyResponse(tutorLogin, complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+        return new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
     }
 }
