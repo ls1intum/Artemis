@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.net.URI;
 import java.nio.file.Path;
 
 import javax.persistence.*;
@@ -34,7 +35,8 @@ public class FileUploadSubmission extends Submission {
     @PostRemove
     public void onDelete() {
         if (filePath != null) {
-            fileService.schedulePathForDeletion(Path.of(filePath), 0);
+            Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath));
+            fileService.schedulePathForDeletion(actualPath, 0);
         }
     }
 
