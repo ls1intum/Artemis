@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -33,6 +33,7 @@ import { Course } from 'app/entities/course.model';
 import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -114,7 +115,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private alertService: AlertService,
         private route: ActivatedRoute,
         private translateService: TranslateService,
-        private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
         private accountService: AccountService,
@@ -141,11 +141,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                                 this.setAutoSaveTimer();
                             }
                         },
-                        error: (error) => {
-                            if (error.status === 403 && !isDisplayedOnExamSummaryPage) {
-                                this.router.navigate(['accessdenied']);
-                            }
-                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
                     });
                 }
             });
