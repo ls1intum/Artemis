@@ -11,6 +11,7 @@ import { ExerciseView, OrionBuildConnector, OrionExerciseConnector, OrionSharedU
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { Feedback } from 'app/entities/feedback.model';
 
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
