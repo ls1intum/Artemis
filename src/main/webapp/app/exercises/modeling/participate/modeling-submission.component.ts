@@ -154,7 +154,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private inputValuesArePresent(): boolean {
-        return this.inputExercise !== undefined || this.inputSubmission !== undefined || this.inputParticipation !== undefined;
+        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
     }
 
     /**
