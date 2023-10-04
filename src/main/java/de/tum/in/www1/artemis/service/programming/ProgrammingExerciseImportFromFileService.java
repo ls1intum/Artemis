@@ -62,8 +62,8 @@ public class ProgrammingExerciseImportFromFileService {
      * @param course                       the course to which the exercise should be added
      * @return the imported programming exercise
      **/
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course)
-            throws IOException, GitAPIException, URISyntaxException {
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course,
+            boolean isImportFromSharing) throws IOException, GitAPIException, URISyntaxException {
         if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
@@ -72,6 +72,13 @@ public class ProgrammingExerciseImportFromFileService {
         try {
             importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
+
+            if (isImportFromSharing) {
+                // Exercises from Sharing are currently exported in a different zip structure containing an additional dir
+                try (Stream<Path> walk = Files.walk(importExerciseDir)) {
+                    importExerciseDir = walk.filter(Files::isDirectory).toList().get(0);
+                }
+            }
 
             zipFile.transferTo(exerciseFilePath);
             zipFileService.extractZipFileRecursively(exerciseFilePath);
@@ -92,6 +99,14 @@ public class ProgrammingExerciseImportFromFileService {
             fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
         return importedProgrammingExercise;
+    }
+
+    /**
+     * Overloaded method setting the isImportFromSharing flag to false as default
+     */
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course)
+            throws IOException, GitAPIException, URISyntaxException {
+        return this.importProgrammingExerciseFromFile(programmingExerciseForImport, zipFile, course, false);
     }
 
     /**
@@ -185,7 +200,7 @@ public class ProgrammingExerciseImportFromFileService {
 
     private void checkRepositoryForTypeExists(Path path, RepositoryType repoType) throws IOException {
         try (Stream<Path> stream = Files.walk(path)) {
-            if (stream.filter(Files::isDirectory).map(f -> f.getFileName().toString()).filter(name -> name.endsWith("-" + repoType.getName())).count() != 1) {
+            if (stream.filter(Files::isDirectory).map(f -> f.getFileName().toString()).filter(name -> name.endsWith(repoType.getName())).count() != 1) {
                 throw new BadRequestAlertException("The zip file doesn't contain the " + repoType.getName() + " repository or it does not follow the naming scheme.",
                         "programmingExercise", "repositoriesInZipNotValid");
             }
@@ -195,7 +210,7 @@ public class ProgrammingExerciseImportFromFileService {
     private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoType) {
         List<Path> result;
         try (Stream<Path> walk = Files.walk(dirPath)) {
-            result = walk.filter(Files::isDirectory).filter(file -> file.getFileName().toString().endsWith("-" + repoType)).toList();
+            result = walk.filter(Files::isDirectory).filter(file -> file.getFileName().toString().endsWith(repoType)).toList();
         }
         catch (IOException e) {
             throw new BadRequestAlertException("Could not read the directory", "programmingExercise", "couldnotreaddirectory");

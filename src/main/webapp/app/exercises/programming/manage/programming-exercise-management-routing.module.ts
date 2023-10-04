@@ -78,6 +78,19 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/programming-exercises/import-from-sharing',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':courseId/programming-exercises/:exerciseId',
         component: ProgrammingExerciseDetailComponent,
         resolve: {

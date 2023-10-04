@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
+import { DifficultyLevel, Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -21,6 +21,8 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
+import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
+import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
@@ -59,6 +61,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     submitButtonTitle: string;
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
+    isImportFromSharing: boolean;
     isEdit: boolean;
     isExamMode: boolean;
     isShowingWizardMode = false;
@@ -125,6 +128,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public updateTemplate = false;
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
+    // Additional data fro import from Sharing
+    public sharingInfo: SharingInfo = new SharingInfo();
+
     public projectTypes: ProjectType[] = [];
     // flag describing if the template and solution projects should include a dependency
     public withDependenciesValue = false;
@@ -154,6 +160,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private programmingExerciseSharingService: ProgrammingExerciseSharingService,
     ) {}
 
     /**
@@ -391,6 +398,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 tap((segments) => {
                     this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
                     this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                    this.isImportFromSharing = segments.some((segment) => segment.path === 'import-from-sharing');
                 }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
@@ -400,6 +408,59 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImportFromExistingExercise) {
                         this.createProgrammingExerciseForImport(params);
                     } else {
+                        if (this.isImportFromSharing) {
+                            this.activatedRoute.queryParams.subscribe((qparams: [string: string]) => {
+                                this.sharingInfo.basketToken = qparams['basketToken'];
+                                this.sharingInfo.returnURL = qparams['returnUrl'];
+                                this.sharingInfo.apiBaseURL = qparams['apiBaseUrl'];
+                                this.sharingInfo.selectedExercise = qparams['selectedExercise'];
+                                this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe((res: ShoppingBasket) => {
+                                    console.log('DEBUG###', res, this.sharingInfo);
+                                    this.programmingExercise.title = res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.title;
+                                    switch (res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.difficulty) {
+                                        case 'simple': {
+                                            this.programmingExercise.difficulty = DifficultyLevel.EASY;
+                                            break;
+                                        }
+                                        case 'medium': {
+                                            this.programmingExercise.difficulty = DifficultyLevel.MEDIUM;
+                                            break;
+                                        }
+                                        case 'advanced': {
+                                            this.programmingExercise.difficulty = DifficultyLevel.HARD;
+                                            break;
+                                        }
+                                    }
+
+                                    this.programmingExercise.categories = res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.keyword
+                                        // trivial keywords are omitted
+                                        .filter((keyword) => keyword.toLowerCase() !== 'artemis')
+                                        .map((keyword) => {
+                                            const category = new ExerciseCategory();
+                                            category.color = Math.floor(Math.random() * 16777215).toString(16);
+                                            category.category = keyword;
+                                            return category;
+                                        });
+                                    const pl = res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.programmingLanguage[0];
+                                    let language = this.selectedProgrammingLanguage;
+                                    if (pl.toUpperCase() === 'JAVA') {
+                                        language = ProgrammingLanguage.JAVA;
+                                    } else if (pl.toUpperCase() === 'C') {
+                                        language = ProgrammingLanguage.C;
+                                    } else if (pl.toUpperCase() === 'PYTHON') {
+                                        language = ProgrammingLanguage.PYTHON;
+                                    }
+                                    this.selectedProgrammingLanguage = language;
+
+                                    this.programmingExercise.packageName = 'unused';
+                                    this.packageNameRequired = false;
+                                    this.updateFurtherArtemisSharedOptions();
+                                });
+                            });
+                            this.programmingExerciseSharingService.loadProblemStatementForExercises(this.sharingInfo).subscribe((statement: string) => {
+                                this.programmingExercise.problemStatement = statement;
+                            });
+                        }
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
                             this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
@@ -429,7 +490,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     }
 
                     // Set submit button text depending on component state
-                    if (this.isImportFromExistingExercise || this.isImportFromFile) {
+                    if (this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing) {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
                         this.isEdit = true;
@@ -497,6 +558,45 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
+     * loads further options from sharing specific for artemis from artemis.yaml.
+     */
+    private updateFurtherArtemisSharedOptions() {
+        this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe((statement: string) => {
+            const artemisSharedOptions = JSON.parse(statement) as FurtherArtemisSharingOptions;
+            if (artemisSharedOptions.maxPoints) {
+                this.programmingExercise.maxPoints = artemisSharedOptions.maxPoints;
+            }
+            if (artemisSharedOptions.bonusPoints) {
+                this.programmingExercise.bonusPoints = artemisSharedOptions.bonusPoints;
+            }
+            if (artemisSharedOptions.mode) {
+                this.programmingExercise.mode = artemisSharedOptions.mode || ExerciseMode.INDIVIDUAL;
+            }
+            if (artemisSharedOptions.projectType) {
+                this.programmingExercise.projectType = artemisSharedOptions.projectType;
+            }
+            if (artemisSharedOptions.gradingInstructions) {
+                this.programmingExercise.gradingInstructions = artemisSharedOptions.gradingInstructions;
+            }
+            if (artemisSharedOptions.allowOfflineIDE) {
+                this.programmingExercise.allowOfflineIde = artemisSharedOptions.allowOfflineIDE;
+            }
+            if (artemisSharedOptions.allowOnlineEditor) {
+                this.programmingExercise.allowOnlineEditor = artemisSharedOptions.allowOnlineEditor;
+            }
+            if (artemisSharedOptions.showTestNamesToStudents) {
+                this.programmingExercise.showTestNamesToStudents = artemisSharedOptions.showTestNamesToStudents;
+            }
+            if (artemisSharedOptions.sequentialTestRuns) {
+                this.programmingExercise.sequentialTestRuns = artemisSharedOptions.sequentialTestRuns;
+            }
+            if (artemisSharedOptions.publishBuildPlan) {
+                this.programmingExercise.publishBuildPlanUrl = artemisSharedOptions.publishBuildPlan;
+            }
+        });
+    }
+
+    /**
      * Setups the programming exercise for import. The route determine whether the new exercise will be imported as an exam
      * or a normal exercise.
      *
@@ -504,6 +604,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     private createProgrammingExerciseForImport(params: Params) {
         this.isImportFromExistingExercise = true;
+        this.isImportFromSharing = false;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
@@ -614,7 +715,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
-            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
+            if (!this.isImportFromSharing) {
+                this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
+            } else {
+                this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.sharingInfo).subscribe({
+                    next: (response: HttpResponse<ProgrammingExercise>) => {
+                        this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
+                        window.scrollTo(0, 0);
+                        setTimeout(() => {
+                            this.onSaveSuccess(response.body!);
+                        }, 2500);
+                    },
+                    error: (err) => this.onSaveError(err),
+                });
+            }
         }
     }
 
@@ -752,16 +866,30 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
-            next: (file) => {
-                this.programmingExercise.problemStatement = file;
-                this.problemStatementLoaded = true;
-            },
-            error: () => {
-                this.programmingExercise.problemStatement = '';
-                this.problemStatementLoaded = true;
-            },
-        });
+        if (!this.isImportFromSharing) {
+            this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+                next: (file) => {
+                    this.programmingExercise.problemStatement = file;
+                    this.problemStatementLoaded = true;
+                },
+                error: () => {
+                    this.programmingExercise.problemStatement = '';
+                    this.problemStatementLoaded = true;
+                },
+            });
+        } else {
+            this.programmingExerciseSharingService.loadProblemStatementForExercises(this.sharingInfo).subscribe({
+                next: (statement: string) => {
+                    this.programmingExercise.problemStatement = statement;
+                    this.problemStatementLoaded = true;
+                },
+                error: () => {
+                    alert('Failure to excerpt problem statement');
+                    this.programmingExercise.problemStatement = 'undefined';
+                    this.problemStatementLoaded = true;
+                },
+            });
+        }
     }
 
     /**
@@ -1079,4 +1207,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
         };
     }
+}
+
+interface FurtherArtemisSharingOptions {
+    maxPoints: number;
+    bonusPoints: number;
+    mode: ExerciseMode;
+    projectType: ProjectType;
+    gradingInstructions: string;
+    staticCodeAnalysis: boolean;
+    allowOfflineIDE: boolean;
+    allowOnlineEditor: boolean;
+    showTestNamesToStudents: boolean;
+    sequentialTestRuns: boolean;
+    publishBuildPlan: boolean;
 }

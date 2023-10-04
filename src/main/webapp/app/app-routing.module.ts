@@ -126,6 +126,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     component: AboutIrisComponent,
                     pathMatch: 'full',
                 },
+                {
+                    path: 'sharing/import/:basketToken',
+                    loadChildren: () => import('./sharing/sharing.module').then((m) => m.SharingModule),
+                },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },
         ),

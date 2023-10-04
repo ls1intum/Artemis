@@ -9,7 +9,8 @@
                 "linkLabel": "Link new Programming Exercise",
                 "switchToGuidedModeLabel": "Switch to guided mode",
                 "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next"
+                "nextStepLabel": "Next",
+                "importFromSharing": "Import Programming Exercise from Sharing Platform"
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",

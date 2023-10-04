@@ -174,6 +174,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/.well-known/jwks.json").permitAll()
+            .antMatchers(HttpMethod.GET, SHARINGCONFIG_RESOURCE_API_PATH).permitAll()
+            .antMatchers(HttpMethod.GET, SHARINGIMPORT_RESOURCE_API_PATH).permitAll()
             .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
             .antMatchers("/api/**").authenticated()
         .and()

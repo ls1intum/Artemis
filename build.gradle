@@ -5,6 +5,9 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url 'https://sharing-codeability.uibk.ac.at/development/sharing/codeabilitysharingpluginapi/-/raw/master/target/'
+        }
     }
 }
 
@@ -184,11 +187,16 @@ repositories {
     maven {
         url "https://repo.gradle.org/gradle/libs-releases/"
     }
+    maven {
+        url 'https://sharing-codeability.uibk.ac.at/development/sharing/codeabilitysharingpluginapi/-/raw/master/target/'
+    }
 }
 
 ext["jackson.version"] = fasterxml_version
 
 dependencies {
+    implementation "org.codeability.sharing:SharingPluginPlatformAPI:0.4.2"
+    implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.33'
 
     // This will make sure that e.g. src/main/java/de/tum/in/www1/artemis/config/BeanInfoProcessor.java is invoked during the build
     annotationProcessor "com.google.auto.service:auto-service:1.1.1"
