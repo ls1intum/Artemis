@@ -257,13 +257,18 @@ export class ThemeService {
 
     /**
      * After printing the notification sidebar shall be displayed again.
+     *
      * @param displayAttributeBeforeHide to reset the notification sidebar to its previous state
-     * @private
+     * @return displayAttribute of the notification sidebar before hiding it
      */
     private showNotificationSidebar(displayAttributeBeforeHide: string): string {
         return this.modifyNotificationSidebarDisplayStyling(displayAttributeBeforeHide);
     }
 
+    /**
+     * @param newDisplayAttribute that is set for the {@link NotificationSidebarComponent}
+     * @return displayAttribute of the notification sidebar before hiding it
+     */
     private modifyNotificationSidebarDisplayStyling(newDisplayAttribute?: string): string {
         const notificationSidebarElement: any = document.getElementById('notification-sidebar');
         let displayBefore = '';
