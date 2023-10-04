@@ -19,20 +19,22 @@
                     </span>
                 </div>
 
-                <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
+                <ng-container *ngIf="isAfterResultsArePublished">
+                    <h5>{{ 'artemisApp.exam.examSummary.assessment' | artemisTranslate }}</h5>
 
-                <jhi-result-detail
-                    *ngIf="feedbackComponentParameters.result"
-                    [exercise]="feedbackComponentParameters.exercise"
-                    [result]="feedbackComponentParameters.result"
-                    [showScoreChart]="false"
-                    [exerciseType]="feedbackComponentParameters.exerciseType ?? ExerciseType.PROGRAMMING"
-                    [latestDueDate]="feedbackComponentParameters.latestDueDate"
-                    [messageKey]="feedbackComponentParameters.messageKey"
-                    [showMissingAutomaticFeedbackInformation]="feedbackComponentParameters.showMissingAutomaticFeedbackInformation ?? false"
-                    [isExamReviewPage]="true"
-                    [isPrinting]="isPrinting"
-                />
+                    <jhi-result-detail
+                        *ngIf="feedbackComponentParameters.result"
+                        [exercise]="feedbackComponentParameters.exercise"
+                        [result]="feedbackComponentParameters.result"
+                        [showScoreChart]="false"
+                        [exerciseType]="feedbackComponentParameters.exerciseType ?? ExerciseType.PROGRAMMING"
+                        [latestDueDate]="feedbackComponentParameters.latestDueDate"
+                        [messageKey]="feedbackComponentParameters.messageKey"
+                        [showMissingAutomaticFeedbackInformation]="feedbackComponentParameters.showMissingAutomaticFeedbackInformation ?? false"
+                        [isExamReviewPage]="true"
+                        [isPrinting]="isPrinting"
+                    />
+                </ng-container>
             </div>
 
             <div class="col-md-8">
