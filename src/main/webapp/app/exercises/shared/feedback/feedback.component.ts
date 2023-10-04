@@ -30,6 +30,7 @@ import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 import { getCommitUrl } from 'app/exercises/shared/feedback/feedback.utils';
+import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
 // Modal -> Result details view
 @Component({
@@ -190,6 +191,9 @@ export class FeedbackComponent implements OnInit {
 
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
+                        if (this.isExamReviewPage) {
+                            this.expandFeedbackItemGroups();
+                        }
                     }
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
@@ -254,5 +258,13 @@ export class FeedbackComponent implements OnInit {
 
     getCommitHash(): string {
         return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
+    }
+
+    private expandFeedbackItemGroups() {
+        this.feedbackItemNodes.forEach((feedbackNode) => {
+            if (isFeedbackGroup(feedbackNode)) {
+                feedbackNode.open = true;
+            }
+        });
     }
 }
