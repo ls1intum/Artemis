@@ -364,6 +364,8 @@ public class ProgrammingExerciseService {
 
         giveCIProjectPermissions(programmingExercise);
 
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+
         // trigger BASE and SOLUTION build plans once here
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
