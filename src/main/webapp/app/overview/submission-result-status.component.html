@@ -49,14 +49,6 @@
             <span class="text-body-secondary" *ngIf="quizNotStarted">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | artemisTranslate }}</span>
         </div>
     </ng-template>
-    <ng-container *ngIf="plagiarismSuspected">
-        <span> {{ 'artemisApp.courseOverview.exerciseDetails.plagiarismSuspected' | artemisTranslate }}</span>
-        <fa-icon
-            [icon]="faQuestionCircle"
-            placement="bottom auto"
-            [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.plagiarismSuspectedTooltip' | artemisTranslate"
-        ></fa-icon>
-    </ng-container>
     <!-- For programming exercises -->
     <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && studentParticipation">
         <jhi-programming-exercise-student-trigger-build-button

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.plagiarism;
 
 import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -31,7 +32,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.*;
 
 class ContinuousPlagiarismControlServiceTest {
 
@@ -39,31 +40,12 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PlagiarismDetectionService plagiarismChecksService = mock();
 
-    private final SubmissionRepository submissionRepository = mock();
+    private final PlagiarismComparisonRepository plagiarismComparisonRepository = mock();
 
-    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, submissionRepository);
+    private final PlagiarismCaseService plagiarismCaseService = mock();
 
-    private static StudentParticipation createStudentParticipation(long submissionId) {
-        var participation = new StudentParticipation();
-        var submission = new TextSubmission();
-        submission.setId(submissionId);
-        participation.setSubmissions(singleton(submission));
-        return participation;
-    }
-
-    private static PlagiarismComparison<TextSubmissionElement> createPlagiarismComparison(long submissionAId, long submissionBId) {
-        var comparison = new PlagiarismComparison<TextSubmissionElement>();
-
-        var plagiarismSubmissionA = new PlagiarismSubmission<>();
-        plagiarismSubmissionA.setSubmissionId(submissionAId);
-        comparison.setSubmissionA(plagiarismSubmissionA);
-
-        var plagiarismSubmissionB = new PlagiarismSubmission<>();
-        plagiarismSubmissionB.setSubmissionId(submissionBId);
-        comparison.setSubmissionB(plagiarismSubmissionB);
-
-        return comparison;
-    }
+    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
+            plagiarismCaseService);
 
     @Test
     void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
@@ -104,10 +86,10 @@ class ContinuousPlagiarismControlServiceTest {
     }
 
     @Test
-    void shouldUpdateFlagsInSubmissions() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
+    void shouldAddSubmissionsToPlagiarismCase() throws ExitException {
         // given: text exercise with cpc enabled
         var exercise = new TextExercise();
-        exercise.setDueDate(null);
+        exercise.setId(99L);
 
         var participationText1 = createStudentParticipation(1);
         var participationText2 = createStudentParticipation(2);
@@ -119,16 +101,23 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new TextPlagiarismResult();
-        textPlagiarismResult.setComparisons(Set.of(createPlagiarismComparison(1, 2)));
+        var plagiarismComparison = createPlagiarismComparison(12, 1, 2);
+        textPlagiarismResult.setComparisons(singleton(plagiarismComparison));
         when(plagiarismChecksService.checkTextExercise(exercise)).thenReturn(textPlagiarismResult);
+
+        // and: one existing plagiarism comparison
+        var existingPlagiarismComparison = createPlagiarismComparison(23, 2, 3);
+        when(plagiarismComparisonRepository.findAllByPlagiarismResultExerciseId(exercise.getId())).thenReturn(singleton(existingPlagiarismComparison));
 
         // when
         service.executeChecks();
 
         // then
-        verify(submissionRepository).updatePlagiarismSuspected(Set.of(1L, 2L), true);
-        verify(submissionRepository).updatePlagiarismSuspected(singleton(3L), false);
-        verifyNoMoreInteractions(submissionRepository);
+        var inOrder = inOrder(plagiarismCaseService);
+        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA());
+        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB());
+        inOrder.verify(plagiarismCaseService).removeSubmissionsInPlagiarismCasesForComparison(existingPlagiarismComparison.getId());
+        verifyNoMoreInteractions(plagiarismCaseService);
     }
 
     @Test
@@ -145,7 +134,7 @@ class ContinuousPlagiarismControlServiceTest {
         service.executeChecks();
 
         // then
-        verifyNoInteractions(plagiarismChecksService, submissionRepository);
+        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService);
     }
 
     @Test
@@ -158,7 +147,7 @@ class ContinuousPlagiarismControlServiceTest {
         service.executeChecks();
 
         // then
-        verifyNoInteractions(plagiarismChecksService, submissionRepository);
+        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService);
     }
 
     @Test
@@ -183,5 +172,31 @@ class ContinuousPlagiarismControlServiceTest {
 
         // then
         assertThatNoException().isThrownBy(service::executeChecks);
+    }
+
+    private static StudentParticipation createStudentParticipation(long submissionId) {
+        var participation = new StudentParticipation();
+        var submission = new TextSubmission();
+        submission.setId(submissionId);
+        participation.setSubmissions(singleton(submission));
+        return participation;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static PlagiarismComparison<TextSubmissionElement> createPlagiarismComparison(long comparisonId, long submissionIdA, long submissionIdB) {
+        var comparison = new PlagiarismComparison<TextSubmissionElement>();
+        comparison.setId(comparisonId);
+
+        var submissionA = new PlagiarismSubmission<>();
+        submissionA.setId(100 + submissionIdA);
+        submissionA.setSubmissionId(submissionIdA);
+        comparison.setSubmissionA(submissionA);
+
+        var submissionB = new PlagiarismSubmission<>();
+        submissionA.setId(100 + submissionIdB);
+        submissionB.setSubmissionId(submissionIdB);
+        comparison.setSubmissionB(submissionB);
+
+        return comparison;
     }
 }

@@ -76,13 +76,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
-    /**
-     * This field is set directly via repository @Query. It read only by the client.
-     */
-    @SuppressWarnings("unused")
-    @Column(name = "plagiarism_suspected")
-    private Boolean plagiarismSuspected;
-
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;

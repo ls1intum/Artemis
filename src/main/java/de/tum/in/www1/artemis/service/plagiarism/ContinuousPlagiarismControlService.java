@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import static java.lang.String.format;
+import static java.util.Collections.disjoint;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -23,10 +24,9 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
@@ -46,13 +46,16 @@ public class ContinuousPlagiarismControlService {
 
     private final PlagiarismDetectionService plagiarismDetectionService;
 
-    private final SubmissionRepository submissionRepository;
+    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
+
+    private final PlagiarismCaseService plagiarismCaseService;
 
     public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
-            SubmissionRepository submissionRepository) {
+            PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
-        this.submissionRepository = submissionRepository;
+        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.plagiarismCaseService = plagiarismCaseService;
     }
 
     /**
@@ -71,7 +74,7 @@ public class ContinuousPlagiarismControlService {
 
             try {
                 var result = executeChecksForExercise(exercise);
-                updatePlagiarismSuspectedFlagForAllSubmissions(result, exercise);
+                updatePlagiarismCases(result, exercise);
             }
             catch (ExitException e) {
                 log.error("Cannot check plagiarism due to Jplag error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);
@@ -97,14 +100,28 @@ public class ContinuousPlagiarismControlService {
         };
     }
 
-    private void updatePlagiarismSuspectedFlagForAllSubmissions(PlagiarismResult<?> result, Exercise exercise) {
+    private void updatePlagiarismCases(PlagiarismResult<?> result, Exercise exercise) {
         var allSubmissionIds = exercise.getStudentParticipations().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                 .map(DomainObject::getId).collect(toUnmodifiableSet());
         var submissionsIdsWithPlagiarismSuspicion = result.getComparisons().stream().flatMap(comparison -> Stream.of(comparison.getSubmissionA(), comparison.getSubmissionB()))
                 .map(PlagiarismSubmission::getSubmissionId).collect(toUnmodifiableSet());
         var submissionIdsWithoutPlagiarismSuspicion = allSubmissionIds.stream().filter(not(submissionsIdsWithPlagiarismSuspicion::contains)).collect(toUnmodifiableSet());
 
-        submissionRepository.updatePlagiarismSuspected(submissionsIdsWithPlagiarismSuspicion, true);
-        submissionRepository.updatePlagiarismSuspected(submissionIdsWithoutPlagiarismSuspicion, false);
+        // we need to add current comparisons to plagiarism cases before removing stale ones because we don't want existing plagiarism cases to be deleted
+        addCurrentComparisonsToPlagiarismCases(result);
+        removeStaleComparisonsFromPlagiarismCases(submissionIdsWithoutPlagiarismSuspicion, exercise);
+    }
+
+    private void addCurrentComparisonsToPlagiarismCases(PlagiarismResult<?> result) {
+        result.getComparisons().forEach(comparison -> {
+            plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA());
+            plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB());
+        });
+    }
+
+    private void removeStaleComparisonsFromPlagiarismCases(Set<Long> submissionIdsWithoutPlagiarismSuspicion, Exercise exercise) {
+        var existingComparisons = plagiarismComparisonRepository.findAllByPlagiarismResultExerciseId(exercise.getId());
+        existingComparisons.stream().filter(comparison -> !disjoint(Set.of(comparison.getSubmissionA().getSubmissionId(), comparison.getSubmissionB().getSubmissionId()),
+                submissionIdsWithoutPlagiarismSuspicion)).map(PlagiarismComparison::getId).forEach(plagiarismCaseService::removeSubmissionsInPlagiarismCasesForComparison);
     }
 }
