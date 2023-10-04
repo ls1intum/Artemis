@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnInit, Optional } from '@angular/core';
+import { Component, Injector, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -31,6 +31,7 @@ import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-da
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 import { getCommitUrl } from 'app/exercises/shared/feedback/feedback.utils';
 import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
+import { cloneDeep } from 'lodash-es';
 
 // Modal -> Result details view
 @Component({
@@ -38,7 +39,7 @@ import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-gr
     templateUrl: './feedback.component.html',
     styleUrls: ['./feedback.scss'],
 })
-export class FeedbackComponent implements OnInit {
+export class FeedbackComponent implements OnInit, OnChanges {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -69,6 +70,7 @@ export class FeedbackComponent implements OnInit {
     @Input() numberOfNotExecutedTests?: number;
 
     @Input() isExamReviewPage?: boolean = false;
+    @Input() isPrinting?: boolean = false;
 
     // Icons
     faXmark = faXmark;
@@ -104,6 +106,11 @@ export class FeedbackComponent implements OnInit {
 
     feedbackItemService: FeedbackItemService;
     feedbackItemNodes: FeedbackNode[];
+    /**
+     * Used to reset the feedbackItemNodes to the state before printing if {@link isPrinting} changes
+     * from true to false
+     */
+    private feedbackItemNodesBeforePrinting: FeedbackNode[];
 
     constructor(
         private resultService: ResultService,
@@ -142,6 +149,21 @@ export class FeedbackComponent implements OnInit {
             this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
         });
+    }
+
+    /**
+     * Expand the feedback items groups while the exam summary is printed and
+     * collapse them again (if collapsed before) when the printing is done
+     */
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.isPrinting) {
+            if (changes.isPrinting.currentValue) {
+                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes);
+                this.expandFeedbackItemGroups();
+            } else {
+                this.feedbackItemNodes = this.feedbackItemNodesBeforePrinting;
+            }
+        }
     }
 
     /**
