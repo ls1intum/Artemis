@@ -169,6 +169,18 @@ Exercise Creation
 
     |
 
+    .. figure:: programming/programming-online-ide.png
+                  :align: center
+
+
+    - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
+    - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
+    - **Publish Build Plan:** Allow students to access and edit their personal build plan. Useful for exercises where students should
+          configure parts of the build plan themselves.
+
+    .. note::
+            At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
+
     .. figure:: programming/programming-options-programming-language.png
               :align: center
 
@@ -262,7 +274,7 @@ Exercise Creation
     .. figure:: programming/programming-options-grading-instructions.png
               :align: center
 
-    - **Grading Instructions:** Available if **Manual Review** is active. Create instructions for the manual assessment of the exercise.
+    - **Grading Instructions:** Available if **Manual Review** is active. Create instructions for tutors to use during manual assessment.
 
     |
 
@@ -274,18 +286,10 @@ Exercise Creation
       Not supported together with static code analysis. Cannot be changed after the exercise creation.
     - **Check out repository of sample solution:** Activate this option to checkout the solution into the 'solution' path.
       This option is useful to compare the student's submission with the sample solution. This option is not available for all programming languages.
-    - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
-    - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
     - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
       This option is only available for Java/Kotlin-exercises with non-sequential test runs.
-
-      .. note::
-        At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
-
     - **Show Test Names to Students:** Activate this option to show the names of the automated test cases to the students.
       If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
-    - **Publish Build Plan:** Allow students to access and edit their personal build plan. Useful for exercises where students should
-      configure parts of the build plan themselves.
 
 - Click on |generate| to create the exercise
 
