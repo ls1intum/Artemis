@@ -134,7 +134,7 @@ describe('Notification Sidebar Component', () => {
          * so it needs to be hidden for printing for which the display property of
          * the notification sidebar is used
          *
-         * @See {@link ThemeService#print}
+         * If the id is changed it needs to be changed in {@link ThemeService#print} as well
          */
         test('should exist with the id "notification-sidebar"', () => {
             const notificationSidebar = document.getElementById('notification-sidebar');
