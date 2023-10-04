@@ -13,7 +13,7 @@ Overview
 LTI (Learning Tools Interoperability) is a standard developed by `IMS Global <https://www.1edtech.org/>`_ that allows different learning platforms and tools to work together seamlessly.
 It enables tools to integrate smoothly with a learning management system (like Moodle or edX). Artemis supports `LTI 1.1 (deprecated) <https://www.imsglobal.org/specs/ltiv1p1/implementation-guide>`_ and `LTI 1.3. <https://www.imsglobal.org/spec/lti/v1p3>`_
 The table below showcases the types of exercises supported by Artemis and their respective functionalities.
-For each exercıse, students can start the exercise, check their results and get feedback on their work. Assessment results provide a quantitative measure of a student's performance on the exercise, which is represented as a grade or score. Assessment Feedback offers qualitative insights through comments and suggestions.
+For each exercise, students can start the exercise, check their results and get feedback on their work. Assessment results provide a quantitative measure of a student's performance on the exercise, which is represented as a grade or score. Assessment Feedback offers qualitative insights through comments and suggestions.
 
 .. list-table:: Supported Exercise Interactions
    :widths: 25 15 15 15
