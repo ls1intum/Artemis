@@ -69,7 +69,7 @@ services:
         hostname: bamboo-build-agent
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:9.2.1
+        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:9.3.3
         pull_policy: if_not_present
         volumes:
             # The following path needs to be the same absolute path on the host because of the docker socket:
