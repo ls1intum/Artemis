@@ -39,13 +39,28 @@ following dependencies/tools on your machine:
    descriptions.
    It's not necessary for a successful build,
    but it's necessary for production setups as otherwise errors will show up during runtime. )
-6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
+6. A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
    There are multiple stacks available for the integration with Artemis:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
    * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__
    * `Local CI and local VC <#local-ci-and-local-vc-setup>`__ (experimental, not yet production ready)
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. note::
+
+    The following documentation describes the core setup for a development Artemis instance including a database
+    and the version control and continuous integrations systems needed for programming exercises up and running.
+    A production setup of those core services might need to be adapted further to be secure.
+    Check the :ref:`administration setup <admin_setup>` for that.
+
+.. note::
+
+    Artemis allows extension with several additional services, e.g., for mobile notifications ('Hermes',
+    automatic feedback generation using large language models ('Iris/Pyris'), …
+    Their setup is described as part of the :ref:`administration setup <admin_setup>`.
 
 ------------------------------------------------------------------------------------------------------------------------
 
