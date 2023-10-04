@@ -170,4 +170,9 @@ describe('ProgrammingExamSummaryComponent', () => {
         const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
         expect(modelingSubmissionComponent).not.toBeTruthy();
     });
+
+    it('should display clone button', () => {
+        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(CloneRepoButtonComponent))?.componentInstance;
+        expect(modelingSubmissionComponent).toBeTruthy();
+    });
 });
