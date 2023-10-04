@@ -67,7 +67,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         if (this.result) {
             this.feedbackComponentParameters = prepareFeedbackComponentParameters(
                 this.exercise,
-                this.result!,
+                this.result,
                 this.participation,
                 templateStatus,
                 this.exam.latestIndividualEndDate,

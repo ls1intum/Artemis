@@ -21,12 +21,18 @@ import { BehaviorSubject } from 'rxjs';
 import { MockProfileService } from '../../../../../helpers/mocks/service/mock-profile.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
+import { Result } from 'app/entities/result.model';
+import { Feedback } from 'app/entities/feedback.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const user = { id: 1, name: 'Test User' } as User;
 
 const exam = {
     id: 1,
     title: 'ExamForTesting',
+    latestIndividualEndDate: dayjs().subtract(10, 'minutes'),
 } as Exam;
 
 const exerciseGroup = {
@@ -48,13 +54,42 @@ const programmingParticipation = {
     participantIdentifier: 'student1',
     repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/TEST/repos/test-exercise',
 } as ProgrammingExerciseStudentParticipation;
+
 const programmingExercise = {
     id: 4,
     type: ExerciseType.PROGRAMMING,
     studentParticipations: [programmingParticipation],
     exerciseGroup,
     projectKey: 'TEST',
+    dueDate: dayjs().subtract(5, 'minutes'),
 } as ProgrammingExercise;
+
+const feedbackReference = {
+    id: 1,
+    result: { id: 2 } as Result,
+    hasLongFeedback: false,
+} as Feedback;
+
+const feedback = {
+    type: 'Test',
+    name: 'artemisApp.result.detail.feedback',
+    title: 'artemisApp.result.detail.test.passedTest',
+    positive: true,
+    credits: 3,
+    feedbackReference,
+};
+
+const result = {
+    id: 89,
+    participation: {
+        id: 55,
+        type: ParticipationType.PROGRAMMING,
+        participantIdentifier: 'student42',
+        repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+    },
+    feedbacks: [feedback],
+    assessmentType: AssessmentType.MANUAL,
+} as Result;
 
 describe('ProgrammingExamSummaryComponent', () => {
     let component: ProgrammingExamSummaryComponent;
@@ -78,9 +113,12 @@ describe('ProgrammingExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
                 component = fixture.componentInstance;
+
                 component.exercise = programmingExercise;
+                programmingParticipation.results = [result];
                 component.participation = programmingParticipation;
                 component.submission = programmingSubmission;
+                component.exam = exam;
 
                 profileService = TestBed.inject(ProfileService);
 
@@ -109,5 +147,18 @@ describe('ProgrammingExamSummaryComponent', () => {
         expect(spyOnGetProfileInfo).toHaveBeenCalledOnce();
         expect(component.commitHash).toBe('123456789ab');
         expect(component.commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/test/repos/test-student1/commits/123456789ab');
+    });
+
+    it('should show result if present', () => {
+        component.isAfterResultsArePublished = true;
+
+        fixture.detectChanges();
+
+        expect(component.feedbackComponentParameters.exercise).toEqual(programmingExercise);
+        expect(component.feedbackComponentParameters.result).toEqual(result);
+        expect(component.feedbackComponentParameters.exerciseType).toEqual(programmingExercise.type);
+
+        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
+        expect(modelingSubmissionComponent).toBeTruthy();
     });
 });
