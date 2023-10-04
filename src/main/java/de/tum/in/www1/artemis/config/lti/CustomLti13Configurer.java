@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.lti;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
@@ -18,6 +19,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
 /**
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
  */
+@Profile("lti")
 public class CustomLti13Configurer extends Lti13Configurer {
 
     private static final String LOGIN_PATH = "/auth-login";
