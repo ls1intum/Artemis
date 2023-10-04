@@ -2,6 +2,10 @@ package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -138,6 +142,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getTextContent).toList());
         irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(2).isEqualTo(List.of(irisMessage1, irisMessage2));
+
+        verify(websocketMessagingService, timeout(3000).times(4)).sendMessageToUser(eq(TEST_PREFIX + "student1"), any(), any());
     }
 
     @Test
