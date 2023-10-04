@@ -249,7 +249,6 @@ public class TutorialGroupChannelManagementService {
     private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup) {
         Function<TutorialGroup, String> determineInitialTutorialGroupChannelName = (TutorialGroup tg) -> {
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
-            // we use $ as prefix to make sure that the channel name is unique (users not allowed to start channel names with $)
             return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         };
 
