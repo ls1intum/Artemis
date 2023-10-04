@@ -21,6 +21,12 @@ public class IrisException extends HttpStatusException {
         this.translationParams = translationParams;
     }
 
+    public IrisException(String defaultMessage, Status status, String entityName, String translationKey, Map<String, Object> translationParams) {
+        super(ErrorConstants.DEFAULT_TYPE, defaultMessage, status, entityName, translationKey, getAlertParameters(translationKey, translationParams));
+        this.translationKey = translationKey;
+        this.translationParams = translationParams;
+    }
+
     public String getTranslationKey() {
         return translationKey;
     }
