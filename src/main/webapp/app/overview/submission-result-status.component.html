@@ -49,6 +49,7 @@
             <span class="text-body-secondary" *ngIf="quizNotStarted">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | artemisTranslate }}</span>
         </div>
     </ng-template>
+
     <!-- For programming exercises -->
     <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && studentParticipation">
         <jhi-programming-exercise-student-trigger-build-button

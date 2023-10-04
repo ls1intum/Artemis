@@ -189,8 +189,6 @@
                 "points": "Punkte:",
                 "bonus": "Bonus:",
                 "of": " von ",
-                "plagiarismSuspected": "Plagiarism suspicion possible.",
-                "plagiarismSuspectedTooltip": "Your submission was scanned by the continuous plagiarism control mechanism, which determined considerable similarities with at least one submission of other student. This warring has informative purpose only.",
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {

@@ -6,7 +6,6 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -27,7 +26,6 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
 
     dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
-    faQuestionCircle = faQuestionCircle;
 
     /**
      * Sets the status badge and categories of the exercise on init
