@@ -14,6 +14,8 @@ export class FileUploadExamSummaryComponent {
 
     @Input() expandProblemStatement?: boolean = false;
 
+    @Input() isAfterResultsArePublished?: boolean = false;
+
     constructor(private fileService: FileService) {}
 
     /**

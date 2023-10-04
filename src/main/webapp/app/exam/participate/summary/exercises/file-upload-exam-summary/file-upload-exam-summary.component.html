@@ -5,6 +5,9 @@
         [displayHeader]="false"
         [expandProblemStatement]="expandProblemStatement"
         [displayedInExamSummary]="true"
+        [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
+        [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
+        [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
     />
     <ng-template #noSubmission>
         <div>No submission</div>
