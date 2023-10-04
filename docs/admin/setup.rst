@@ -11,6 +11,8 @@ This section describes some additional steps that are only of interest for produ
    :maxdepth: 2
 
    setup/programming-exercises
+   setup/customization
+   setup/privacy-statement
    setup/production-setup-tips
    setup/text-assessment-analytics
    setup/athene
