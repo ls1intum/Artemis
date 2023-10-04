@@ -146,6 +146,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
             dropLocation.setQuestion(dndQuestion);
         }
 
+        setUpDragItemsForImport(dndQuestion);
+        setUpDragAndDropMappingsForImport(dndQuestion);
+    }
+
+    private void setUpDragItemsForImport(DragAndDropQuestion dndQuestion) {
         for (DragItem dragItem : dndQuestion.getDragItems()) {
             dragItem.setId(null);
             dragItem.setQuestion(dndQuestion);
@@ -163,6 +168,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
             Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
             dragItem.setPictureFilePath(filePathService.publicPathForActualPath(newDragItemPath, null).toString());
         }
+    }
+
+    private void setUpDragAndDropMappingsForImport(DragAndDropQuestion dndQuestion) {
         for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
             dragAndDropMapping.setId(null);
             dragAndDropMapping.setQuestion(dndQuestion);
