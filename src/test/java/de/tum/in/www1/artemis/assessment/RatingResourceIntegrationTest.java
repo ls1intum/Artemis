@@ -4,9 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -18,7 +19,6 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
@@ -28,9 +28,6 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private RatingService ratingService;
-
-    @Autowired
-    private RatingRepository ratingRepo;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -70,24 +67,21 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
-    @AfterEach
-    void tearDown() {
-        ratingRepo.deleteAllInBatch();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateRating_asUser() throws Exception {
-        request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
+        int response = request.postWithResponseBody("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, Integer.class, HttpStatus.CREATED);
         Rating savedRating = ratingService.findRatingByResultId(result.getId()).orElseThrow();
         assertThat(savedRating.getRating()).isEqualTo(2);
+        assertThat(response).isEqualTo(2);
         assertThat(savedRating.getResult().getId()).isEqualTo(result.getId());
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(ints = { 7, 123, -5, 0 })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateInvalidRating_asUser() throws Exception {
-        rating.setRating(7);
+    void testCreateInvalidRating_asUser(int value) throws Exception {
+        rating.setRating(value);
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.BAD_REQUEST);
         final Optional<Rating> optionalRating = ratingService.findRatingByResultId(result.getId());
         assertThat(optionalRating).isEmpty();
@@ -103,20 +97,21 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.OK, Rating.class);
+        int response = request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.OK, Integer.class);
+        assertThat(response).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRating_asUser_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+        request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Integer.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRating_asUser_Null() throws Exception {
-        Rating savedRating = request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
+        Integer savedRating = request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Integer.class);
         assertThat(savedRating).isNull();
     }
 

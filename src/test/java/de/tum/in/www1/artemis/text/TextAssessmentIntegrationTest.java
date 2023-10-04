@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -232,18 +233,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
-        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        Result textAssessment = textSubmission.getLatestResult();
-        Complaint complaint = new Complaint().result(textAssessment).complaintText("This is not fair");
-
-        complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
-
-        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
-        complaintResponse.getComplaint().setAccepted(false);
-        complaintResponse.setResponseText("rejected");
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
 
         long randomId = 12354;
         Result updatedResult = request.putWithResponseBody("/api/participations/" + randomId + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
@@ -255,18 +246,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
-        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        Result textAssessment = textSubmission.getLatestResult();
-        Complaint complaint = new Complaint().result(textAssessment).complaintText("This is not fair");
-
-        complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
-
-        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
-        complaintResponse.getComplaint().setAccepted(false);
-        complaintResponse.setResponseText("rejected");
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+        TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
 
         Result updatedResult = request.putWithResponseBody(
                 "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
@@ -319,60 +300,30 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         return request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, params);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void saveTextAssessment_studentHidden() throws Exception {
+    @ValueSource(booleans = { true, false })
+    void saveOrSubmitTextAssessment_studentHidden(boolean submit) throws Exception {
         TextSubmission submissionWithoutAssessment = prepareSubmission();
-
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
 
-        Result result = request.putWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
-
+        Result result = saveOrSubmitTextAssessment(submissionWithoutAssessment.getParticipation().getId(),
+                Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId(), textAssessmentDTO, submit, HttpStatus.OK);
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void saveTextAssessment_wrongParticipationId() throws Exception {
-        TextSubmission submissionWithoutAssessment = prepareSubmission();
-
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setFeedbacks(new ArrayList<>());
-
-        long randomId = 1343;
-        Result result = request.putWithResponseBody("/api/participations/" + randomId + "/results/" + submissionWithoutAssessment.getLatestResult().getId() + "/text-assessment",
-                textAssessmentDTO, Result.class, HttpStatus.BAD_REQUEST);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void submitTextAssessment_studentHidden() throws Exception {
+    @ValueSource(booleans = { true, false })
+    void saveOrSubmitTextAssessment_wrongParticipationId(boolean submit) throws Exception {
         TextSubmission submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
-        Result result = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
 
-        assertThat(result).as("saved result found").isNotNull();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void submitTextAssessment_wrongParticipationId() throws Exception {
-        TextSubmission submissionWithoutAssessment = prepareSubmission();
-
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setFeedbacks(new ArrayList<>());
-        long randomId = 1548;
-        Result result = request.postWithResponseBody(
-                "/api/participations/" + randomId + "/results/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO,
-                Result.class, HttpStatus.BAD_REQUEST);
-
+        Result result = saveOrSubmitTextAssessment(1343L, Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId(), textAssessmentDTO, submit,
+                HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
     }
 
@@ -1346,5 +1297,29 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
         assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission.get(block.getId())));
+    }
+
+    /**
+     * Saves or submits a text assessment.
+     *
+     * @param participationId   The participation id of a submission.
+     * @param latestResultId    The id of the latest result.
+     * @param textAssessmentDTO The DTO of the text assessment.
+     * @param submit            True, if the text assessment should be submitted. False, if it should only be saved.
+     * @param expectedStatus    Expected response status of the request.
+     * @return The response of the request in form of a result.
+     * @throws Exception If the request fails.
+     */
+    private Result saveOrSubmitTextAssessment(Long participationId, Long latestResultId, TextAssessmentDTO textAssessmentDTO, boolean submit, HttpStatus expectedStatus)
+            throws Exception {
+        if (submit) {
+            return request.postWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/submit-text-assessment", textAssessmentDTO,
+                    Result.class, expectedStatus);
+
+        }
+        else {
+            return request.putWithResponseBody("/api/participations/" + participationId + "/results/" + latestResultId + "/text-assessment", textAssessmentDTO, Result.class,
+                    expectedStatus);
+        }
     }
 }
