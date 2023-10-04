@@ -153,7 +153,7 @@ tokens instead of the predefined ones.
 
 1. Start the GitLab container defined in `docker/gitlab-jenkins-mysql.yml` by running
 
-   ::
+   .. code:: bash
 
         GITLAB_ROOT_PASSWORD=QLzq3QvpD1Zbq7A1VWvw docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d gitlab
 
@@ -191,7 +191,7 @@ tokens instead of the predefined ones.
 4. You now need to create an admin access token. You can do that using the following command (which takes a while
    to execute):
 
-   ::
+   .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_api', 'read_user', 'read_repository', 'write_repository', 'sudo'], name: 'Artemis Admin Token', expires_at: 365.days.from_now); token.set_token('artemis-gitlab-token'); token.save!"
 
@@ -203,7 +203,7 @@ tokens instead of the predefined ones.
 
 5. Adjust the GitLab setup by running, this will configure GitLab's network setting to allow local requests:
 
-   ::
+   .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
@@ -235,7 +235,7 @@ If you want to use this custom image, you have to build the image and replace al
 
 1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
 
-   ::
+   .. code:: bash
 
        docker pull gitlab/gitlab-ce:latest
 
@@ -250,7 +250,7 @@ Start GitLab
 
    Make sure to remove the comments from the command before running it.
 
-   ::
+   .. code:: bash
 
        docker run -itd --name gitlab \
            --hostname your.gitlab.domain.com \   # Specify the hostname
@@ -287,14 +287,14 @@ Start GitLab
 6. Configure GitLab to automatically generate certificates using
    LetsEncrypt. Edit the GitLab configuration
 
-   ::
+   .. code:: bash
 
        docker exec -it gitlab /bin/bash
        nano /etc/gitlab/gitlab.rb
 
    And add the following part
 
-   ::
+   .. code:: ruby
 
        letsencrypt['enable'] = true                          # GitLab 10.5 and 10.6 require this option
        external_url "https://your.gitlab.domain.com"         # Must use https protocol
@@ -305,14 +305,14 @@ Start GitLab
 
 7. Reconfigure GitLab to generate the certificate.
 
-   ::
+   .. code:: bash
 
        # Save your changes and finally run
        gitlab-ctl reconfigure
 
    If this command fails, try using
 
-   ::
+   .. code:: bash
 
        gitlab-ctl renew-le-certs
 
@@ -356,19 +356,19 @@ GitLab Access Token
 
 13. Adjust the monitoring-endpoint whitelist. Run the following command
 
-    ::
+    .. code:: bash
 
            docker exec -it gitlab /bin/bash
 
     Then edit the GitLab configuration
 
-    ::
+    .. code:: bash
 
            nano /etc/gitlab/gitlab.rb
 
     Add the following lines
 
-    ::
+    .. code:: ruby
 
        gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
        gitlab_rails['gitlab_shell_ssh_port'] = 2222
@@ -385,13 +385,13 @@ GitLab Access Token
     we decided to disable Prometheus within GitLab.
     If you also want to disable prometheus, edit the configuration again using
 
-    ::
+    .. code:: bash
 
         nano /etc/gitlab/gitlab.rb
 
     and add the following line
 
-    ::
+    .. code:: ruby
 
         prometheus_monitoring['enable'] = false
 
@@ -429,7 +429,7 @@ GitLab Access Token
 
 16. Reconfigure GitLab
 
-    ::
+    .. code:: bash
 
         gitlab-ctl reconfigure
 
@@ -439,7 +439,7 @@ Upgrade GitLab
 You can upgrade GitLab by downloading the latest Docker image and
 starting a new container with the old volumes:
 
-    ::
+    .. code:: bash
 
         docker stop gitlab
         docker rename gitlab gitlab_old
@@ -472,7 +472,7 @@ generate random access tokens and push tokens.
 1. Create a new access token in GitLab named ``Jenkins`` and give it **api** and **read_repository** rights. You can
 do either do it manually or using the following command:
 
-    ::
+    .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_repository'], name: 'Jenkins', expires_at: 365.days.from_now); token.set_token('jenkins-gitlab-token'); token.save!"
 
@@ -480,7 +480,7 @@ do either do it manually or using the following command:
 
 2. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
-    ::
+    .. code:: bash
 
        JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
        docker compose -f docker/<Jenkins setup to be launched>.yml up -d
@@ -542,7 +542,7 @@ Manual Jenkins Server Setup
 
    Run the following command to get the latest jenkins LTS docker image.
 
-   ::
+   .. code:: bash
 
        docker pull jenkins/jenkins:lts
 
@@ -625,7 +625,7 @@ Manual Jenkins Server Setup
    the VIRTUAL_HOST and VIRTUAL_PORT environment variables). **Skip this
    step if you have your own NGINX instance.**
 
-   ::
+   .. code:: bash
 
        docker run -itd --name nginx_proxy \
            -p 80:80 -p 443:443 \
@@ -643,7 +643,7 @@ Manual Jenkins Server Setup
    sure to change the email-address). **Skip this step if you have your
    own NGINX instance.**
 
-   ::
+   .. code:: bash
 
        docker run --detach \
            --name nginx_proxy-letsencrypt \
@@ -658,7 +658,7 @@ Start Jenkins
 8.  Run Jenkins by executing the following command (change the hostname
     and choose which port alternative you need)
 
-    ::
+    .. code:: bash
 
         docker run -itd --name jenkins \
             --restart always \
@@ -681,7 +681,7 @@ Start Jenkins
     admin user account (install all suggested plugins). You can get the
     initial admin password using the following command.
 
-    ::
+    .. code:: bash
 
        # Jenkins highlights the password in the logs, you can't miss it
        docker logs -f jenkins
@@ -908,7 +908,7 @@ the following steps:
     If you have xmllint installed, you can use this command, which will output the ``secret-push-token`` from
     steps 9 and 10 (you may have to adjust the username and password):
 
-    ::
+    .. code:: bash
 
         curl -u artemis_admin:artemis_admin http://localhost:8082/job/TestProject/config.xml | xmllint --nowarning --xpath "//project/triggers/com.dabsquared.gitlabjenkins.GitLabPushTrigger/secretToken/text()" - | sed 's/^.\(.*\).$/\1/'
 
@@ -966,13 +966,13 @@ and the corresponding Docker image can be found on
 
 2. If you're using ``docker compose``, you can simply use the following command and skip the next steps.
 
-   ::
+   .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d
 
 3. Build the new Docker image:
 
-   ::
+   .. code:: bash
 
         docker build --no-cache -t jenkins-artemis .
 
@@ -980,19 +980,19 @@ and the corresponding Docker image can be found on
 
 4. Stop the current Jenkins container (change jenkins to the name of your container):
 
-   ::
+   .. code:: bash
 
         docker stop jenkins
 
 5. Rename the container to ``jenkins_old`` so that it can be used as a backup:
 
-   ::
+   .. code:: bash
 
         docker rename jenkins jenkins_old
 
 6. Run the new Jenkins instance:
 
-   ::
+   .. code:: bash
 
         docker run -itd --name jenkins --restart always \
          -v jenkins_data:/var/jenkins_home \
@@ -1001,7 +1001,7 @@ and the corresponding Docker image can be found on
 
 7. You can remove the backup container if it's no longer needed:
 
-   ::
+   .. code:: bash
 
         docker rm jenkins_old
 
@@ -1043,10 +1043,12 @@ Agent setup:
 
 2. Copy the public key content (e.g. in ~/.ssh/id_rsa.pub)
 
-3. Run::
+3. Run:
 
-    docker run -d --name jenkins_agent -v /var/run/docker.sock:/var/run/docker.sock \
-    jenkins/ssh-agent:latest "<copied_public_key>"
+    .. code:: bash
+
+        docker run -d --name jenkins_agent -v /var/run/docker.sock:/var/run/docker.sock \
+        jenkins/ssh-agent:latest "<copied_public_key>"
 
 4. Get the GID of the 'docker' group with ``cat /etc/groups`` and remember it for later
 

@@ -22,14 +22,14 @@ You should be able to run the following
 command to install development tools and dependencies. You will only
 need to run this command when dependencies change in ``package.json``.
 
-::
+.. code:: bash
 
    npm install
 
 To start the client application in the browser, use the following
 command:
 
-::
+.. code:: bash
 
    npm run serve
 

@@ -258,14 +258,14 @@ Run the server with the command line (Gradle wrapper)
 If you want to run the application via the command line instead, make
 sure to pass the active profiles to the ``gradlew`` command like this:
 
-::
+.. code:: bash
 
    ./gradlew bootRun --args='--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling'
 
 As an alternative, you might want to use Jenkins and GitLab with an
 internal user management in Artemis, then you would use the profiles:
 
-::
+.. code::
 
    dev,jenkins,gitlab,artemis,scheduling
 
