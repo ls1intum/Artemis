@@ -239,5 +239,29 @@ describe('PostingContentPartComponent', () => {
 
             expect(outputEmitter).not.toHaveBeenCalled();
         });
+
+        it('should not trigger userReferenceClicked event if login is undefined', () => {
+            const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
+
+            component.onClickUserReference(undefined);
+
+            expect(outputEmitter).not.toHaveBeenCalled();
+        });
+
+        it('should trigger channelReferencedClicked event if channel id is number', () => {
+            const outputEmitter = jest.spyOn(component.channelReferenceClicked, 'emit');
+
+            component.onClickChannelReference(1);
+
+            expect(outputEmitter).toHaveBeenCalledWith(1);
+        });
+
+        it('should not trigger channelReferencedClicked event if channel id is undefined', () => {
+            const outputEmitter = jest.spyOn(component.channelReferenceClicked, 'emit');
+
+            component.onClickChannelReference(undefined);
+
+            expect(outputEmitter).not.toHaveBeenCalled();
+        });
     });
 });

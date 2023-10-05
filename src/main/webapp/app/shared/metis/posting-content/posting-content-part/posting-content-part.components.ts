@@ -119,6 +119,8 @@ export class PostingContentPartComponent {
      * @param channelId login of the referenced user
      */
     onClickChannelReference(channelId: number | undefined) {
-        this.channelReferenceClicked.emit(channelId);
+        if (channelId) {
+            this.channelReferenceClicked.emit(channelId);
+        }
     }
 }
