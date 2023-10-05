@@ -46,7 +46,7 @@ Write meaningful comments for your tests. These comments should contain informat
     }
 
 Use appropriate and descriptive names for test cases. This makes it easier for other developers to understand what you actually test without looking deeper into it.
-For the same reason you should not name your variables ``int a``, ``double b``, ``String c``, and so on. Instead, you should name the variables usin
+For the same reason you should not name your variables ``int a``, ``double b``, ``String c``, and so on. Instead, you should name the variables using ``actual`` and ``expected`` prefix.
 
 For example, if you want to test the method borrow in the class Book, ``testBorrowInBook()`` would be an appropriate name for the test case.
 
@@ -59,24 +59,15 @@ For example, if you want to test the method borrow in the class Book, ``testBorr
 
 Try to follow best practices for Java testing:
 
-* Write small and specific tests by heavily using helper functions, parameterized tests, AssertJ’s powerful assertions, not overusing variables, asserting only what’s relevant and avoiding one test for all edge cases.
-* Write self-contained tests by revealing all relevant parameters, insert data right in the test and prefer composition over inheritance.
+* Write small and specific tests by heavily using helper functions with relevant parameters.
+* Assert only what’s relevant and avoid writing one single test covering all edge cases.
 * Write dumb tests by avoiding the reuse of production code and focusing on comparing output values with hard-coded values.
-* KISS > DRY ("Keep it simple, Stupid!" and "Don't repeat yourself!")
 * Invest in a testable implementation by avoiding static access, using constructor injection, and separating business logic from asynchronous execution.
+* Instead of using random, use fixed test data, making the test logs easier to understand and when an assertion fails.
+* Make use of `JUnit 5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ features such as parameterized tests.
+* Follow `best practices <https://www.baeldung.com/spring-tests>`__ related to spring testing.
 
-For a more detailed overview definitely check out `modern best testing practices <https://phauer.com/2019/modern-best-practices-testing-java/>`__.
-
-
-Make use of JUnit 5 Features:
-https://junit.org/junit5/docs/current/user-guide/#writing-tests
-https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html
-
-Here you can find JUnit 5 best practices:
-https://howtodoinjava.com/best-practices/unit-testing-best-practices-junit-reference-guide/
-
-Also check out this page for spring related testing:
-https://www.baeldung.com/spring-tests
+For a more detailed overview check out `modern best testing practices <https://phauer.com/2019/modern-best-practices-testing-java/>`__.
 
 If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
@@ -84,12 +75,12 @@ If you want to write tests for Programming Exercises to test student's submissio
 ==============================================
 
 It's possible to write tests checking how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
-or at least to remind developers in case they do. This is especially important for commonly used endpoints which users access often or every time they use Artemis.
-However, we should consider carefully before adding such assertions to a test as it makes the test more tedious to maintain.
+or to at least remind developers in case they do. This is especially important for commonly used endpoints.
+However, we should carefully consider adding such assertions to a test as it makes the test more tedious to maintain.
 
 An example on how to track how many database calls are performed during a REST call is shown below. It uses the ``HibernateQueryInterceptor`` which counts the number of queries.
 The custom assert ``assertThatDb`` allows you to check the number of database calls in one line. It also returns the original result of the REST call and so allows you to
-add any other assertions to the test, as shown below.
+add any other assertions to the test, as shown below.how many
 
 .. code-block:: java
 
@@ -107,10 +98,9 @@ add any other assertions to the test, as shown below.
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.
-Basically, every time ``@MockBean`` appears in a class, the ApplicationContext cache gets marked as dirty, hence the runner will clean the cache after the test-class is done and restarts the application context.
-This leads to a large overhead of an additional server start.
+Every time ``@MockBean`` appears in a class, the application context cache gets marked as dirty, meaning the runner will clean the cache after the test-class is done executing. The application context is restarted, which leads to a large overhead of an additional server start.
 
-Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case which is only executed if an ``IOException`` is thrown. We did this by mocking the service method and making it throw an Exception.
+Here is an example of how to replace a ``@SpyBean``. We wanted to test an edge case which is only executed if an ``IOException`` is thrown. We did this by mocking the service method and making it throw an Exception.
 
 .. code-block:: java
 
@@ -127,7 +117,7 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case
     }
 
 To avoid the use of a new SpyBean, we now use `Static Mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`__. When taking a closer look into the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
-Now, instead of mocking the whole Service, we can just mock the static method:
+Now, instead of mocking the whole service, we can just mock the static method:
 
 .. code-block:: java
 
@@ -144,7 +134,8 @@ Now, instead of mocking the whole Service, we can just mock the static method:
         }
     }
 
-You should notice here that we can avoid the use of a Bean and also test deeper. Instead of mocking the uppermost method we only throw the exception at the place where it could actually happen. Very important to mention is that you need to close the mock at the end of the test again.
+We no longer mock the uppermost method but only throw the exception at the place where it could actually happen. At the end of the test you **need to close** the mock again.
+
 
 For a real example where a SpyBean was replaced with a static mock look at the ``SubmissionExportIntegrationTest.java`` `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
 
