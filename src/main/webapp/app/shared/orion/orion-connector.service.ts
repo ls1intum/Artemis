@@ -1,5 +1,5 @@
-import { Injectable, Injector, Input } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable, Injector } from '@angular/core';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -9,8 +9,6 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Exercise } from 'app/entities/exercise.model';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -38,9 +36,8 @@ function theWindow(): any {
 export class OrionConnectorService {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
-
-    @Input() exercise: Exercise;
-
+    private feedbackTriggerActionSubject: Subject<void> = new Subject<void>();
+    triggerAction$: Observable<void> = this.feedbackTriggerActionSubject.asObservable();
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
@@ -281,28 +278,23 @@ export class OrionConnectorService {
      * @param submissionId if of the submission, for validation purposes
      * @param feedback current feedback
      */
-    initializeAssessment(submissionId: number, feedback: Array<Feedback>) {
+    initializeAssessment(submissionId: number, feedback: Array<Feedback>): void {
         theWindow().orionExerciseConnector.initializeAssessment(String(submissionId), stringifyCircular(feedback));
     }
 
     /**
-     * Initializes the feedback comments for a student.
+     * Triggers artemis to generate feedback
      */
     initializeFeedback(): void {
-        const participations = this.exercise.studentParticipations as ProgrammingExerciseStudentParticipation[];
-        let feedbacks: Array<Feedback> = [];
-        participations?.forEach(function (participation) {
-            participation.results?.forEach(function (result) {
-                if (result.rated !== undefined && result.rated) {
-                    if (result.feedbacks !== undefined) {
-                        feedbacks = result.feedbacks;
-                        return;
-                    }
-                    return;
-                }
-            });
-        });
+        this.feedbackTriggerActionSubject.next();
+    }
 
+    /**
+     * Initializes a existing feedback array in orion
+     *
+     * @param feedbacks
+     */
+    initializeFeedbackArray(feedbacks: Array<Feedback>): void {
         theWindow().orionExerciseConnector.initializeFeedback(stringifyCircular(feedbacks));
     }
 }
