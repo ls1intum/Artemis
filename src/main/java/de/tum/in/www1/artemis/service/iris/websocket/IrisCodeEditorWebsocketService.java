@@ -16,7 +16,7 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     @Override
     protected void checkSessionType(IrisSession irisSession) {
         if (!(irisSession instanceof IrisCodeEditorSession)) {
-            throw new UnsupportedOperationException("Only IrisChatSession is supported");
+            throw new UnsupportedOperationException("Only IrisCodeEditorSession is supported");
         }
     }
     
