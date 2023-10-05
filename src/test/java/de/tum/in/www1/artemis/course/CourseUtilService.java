@@ -683,7 +683,6 @@ public class CourseUtilService {
 
     /**
      * Creates and saves a course with one modeling, one text, and one file upload exercise.
-     * 6
      *
      * @return The created course.
      */
