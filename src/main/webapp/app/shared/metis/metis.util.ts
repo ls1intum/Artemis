@@ -114,6 +114,7 @@ export enum ReferenceType {
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
     USER = 'USER',
+    CHANNEL = 'CHANNEL',
 }
 
 export enum UserRole {

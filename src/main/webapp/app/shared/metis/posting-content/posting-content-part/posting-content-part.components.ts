@@ -10,6 +10,7 @@ import {
     faFile,
     faFileUpload,
     faFont,
+    faHashtag,
     faKeyboard,
     faMessage,
     faPaperclip,
@@ -39,6 +40,7 @@ export class PostingContentPartComponent {
     protected readonly faFile = faFile;
     protected readonly faBan = faBan;
     protected readonly faAt = faAt;
+    protected readonly faHashtag = faHashtag;
 
     protected readonly ReferenceType = ReferenceType;
 
