@@ -11,7 +11,6 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { isMessagingEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-post',
@@ -46,7 +45,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
         private router: Router,
-        private alertService: AlertService,
     ) {
         super();
     }
@@ -133,14 +131,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
             if (this.isCourseMessagesPage) {
-                try {
-                    this.metisConversationService.setActiveConversation(channelId);
-                } catch (error) {
-                    this.alertService.addAlert({
-                        type: AlertType.WARNING,
-                        message: 'artemisApp.metis.channel.invalidReference',
-                    });
-                }
+                this.metisConversationService.setActiveConversation(channelId);
             } else {
                 this.router.navigate(['courses', course.id, 'messages'], {
                     queryParams: {
