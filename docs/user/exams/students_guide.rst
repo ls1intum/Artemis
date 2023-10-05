@@ -280,8 +280,8 @@ Participating in Programming Exercises
 .. _updated_problem_statement:
 
 Updated Problem Statement during the Exam
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If your instructor updates the problem statement for an exercise during the exam, you will receive a notification as seen in the screenshot below and can toggle between a diff view and the new problem statement as shown in the second and third screenshot.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If your instructor updates the problem statement for an exercise during the exam, you will receive a notification, as seen in the screenshot below, and can switch between a diff view and the new problem statement, as shown in the second and third screenshot.
 
 .. figure:: student/student-notification.png
    :alt: Problem Statement Update Notification
