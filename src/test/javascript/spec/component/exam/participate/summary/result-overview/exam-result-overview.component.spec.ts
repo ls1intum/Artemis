@@ -271,7 +271,7 @@ describe('ExamResultOverviewComponent', () => {
 
             component.scrollToExercise(INVALID_EXERCISE_ID);
 
-            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Could not find corresponding exercise with id'));
+            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Cannot scroll to exercise, could not find exercise with corresponding id'));
         });
 
         it('should return immediately when exerciseId is undefined', () => {
