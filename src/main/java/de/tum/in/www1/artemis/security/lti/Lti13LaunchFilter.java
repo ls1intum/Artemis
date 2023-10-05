@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -58,6 +59,10 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
 
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+
+            // get username from client to set authentication
+            lti13Service.setAuthenticationFromClient(request);
+
             lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
 
             writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
@@ -65,6 +70,9 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
+        }
+        catch (InternalAuthenticationServiceException ex) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
         }
     }
 

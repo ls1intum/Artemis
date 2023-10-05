@@ -97,11 +97,10 @@ public class LtiService {
             }
         }
 
-        // 2. Case: Lookup user with the LTI email address and make user login again
+        // 2. Case: Lookup user with the LTI email address and make sure it's not in use
         final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
         if (usernameLookupByEmail.isPresent()) {
-            SecurityContextHolder.getContext().setAuthentication(getUserFromLaunchRequest(email));
-            return;
+            throw new InternalAuthenticationServiceException("Please login again as " + usernameLookupByEmail);
         }
 
         // 3. Case: Create new user if an existing user is not required
@@ -137,13 +136,6 @@ public class LtiService {
 
         log.info("Signing in as {}", username);
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
-    }
-
-    @NotNull
-    private Authentication getUserFromLaunchRequest(String email) {
-        final var user = userRepository.findOneByEmailIgnoreCase(email).orElseThrow(() -> new InternalAuthenticationServiceException("User not found with email: " + email));
-        log.info("Signing in as {}", user.getLogin());
-        return UsernamePasswordAuthenticationToken.unauthenticated(user.getLogin(), user.getPassword());
     }
 
     /**

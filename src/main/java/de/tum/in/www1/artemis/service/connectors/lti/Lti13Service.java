@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
+import static de.tum.in.www1.artemis.service.connectors.lti.LtiService.SIMPLE_USER_LIST_AUTHORITY;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
@@ -7,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
@@ -17,6 +20,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
@@ -294,5 +299,13 @@ public class Lti13Service {
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
+    }
+
+    public void setAuthenticationFromClient(HttpServletRequest request) {
+        var username = request.getParameter("auth");
+        if (username != null) {
+            var user = userRepository.findOneByLogin(username).orElseThrow();
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
+        }
     }
 }

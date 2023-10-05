@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +25,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -155,10 +157,16 @@ public class PublicLtiResource {
             return;
         }
 
+        String userName = "";
+        if (SecurityUtils.isAuthenticated()) {
+            userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        }
+
         UriComponentsBuilder uriBuilder = buildRedirect(request);
         uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
         uriBuilder.queryParam("state", UriComponent.encode(state, UriComponent.Type.QUERY_PARAM));
         uriBuilder.queryParam("id_token", UriComponent.encode(idToken, UriComponent.Type.QUERY_PARAM));
+        uriBuilder.queryParam("auth", UriComponent.encode(userName, UriComponent.Type.QUERY_PARAM));
         String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself

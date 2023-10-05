@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { LoginService } from 'app/core/login/login.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-lti-exercise-launch',
@@ -12,6 +14,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private http: HttpClient,
+        private loginService: LoginService,
+        private accountService: AccountService,
     ) {
         this.isLaunching = true;
     }
@@ -20,8 +24,13 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
      * perform an LTI launch with state and id_token query parameters
      */
     ngOnInit(): void {
+        this.sendRequest();
+    }
+
+    sendRequest(): void {
         const state = this.route.snapshot.queryParamMap.get('state');
         const idToken = this.route.snapshot.queryParamMap.get('id_token');
+        const auth = this.route.snapshot.queryParamMap.get('auth');
 
         if (!state || !idToken) {
             console.error('Required parameter for LTI launch missing');
@@ -39,7 +48,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             return;
         }
 
-        const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
+        let requestBody = new HttpParams().set('state', state).set('id_token', idToken);
+        if (auth) requestBody = requestBody.set('auth', auth);
 
         this.http
             .post('api/public/lti13/auth-login', requestBody.toString(), {
@@ -57,9 +67,20 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                         console.error('No LTI targetLinkUri received for a successful launch');
                     }
                 },
-                error: () => {
-                    window.sessionStorage.removeItem('state');
-                    this.isLaunching = false;
+                error: (error) => {
+                    if (error.status === 401) {
+                        this.loginService.logout(false);
+                        // Subscribe to the authentication state to know when the user logs in
+                        this.accountService.getAuthenticationState().subscribe((account) => {
+                            if (account) {
+                                // resend request when user logs in again
+                                this.sendRequest();
+                            }
+                        });
+                    } else {
+                        window.sessionStorage.removeItem('state');
+                        this.isLaunching = false;
+                    }
                 },
             });
     }
