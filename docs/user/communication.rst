@@ -64,8 +64,8 @@ Users of a course can communicate in private via the Messages page. (see image b
 Conversation sidebar on the left, where users can search for other participants of the current course and start a conversation
 with them.
 
-If the recipient is browsing another conversation when they receive a new message, an envelope icon appears in their
-Conversation sidebar, next to the affiliated user who has sent the message. This way, users become aware of the new message
+If the recipient is browsing another conversation when they receive a new message, an icon with unread message count is displayed in their
+Conversation sidebar, next to the affiliated conversation that the new message was sent to. This way, users become aware of the new message
 within that discussion.
 
 The authorities of tutors and instructors are more restricted in the Messages Page compared to the Course Communication
@@ -77,6 +77,17 @@ Messages do not consist of titles. Users can continue a discussion around a spec
 located on the right-hand side of the Messages Page when displayed.
 
 |messages|
+
+If the message content does contain links a preview of the link will be shown under the message. This way users will have a good understanding
+of what is that link about. If they don't want to have the preview, by hovering to the preview a `X` button will appear and after clicking the
+preview will be removed.
+
+|link-preview|
+
+If the message contains more then one link then the preview will not have an preview image of the link in order to have more compact previews
+multiple links.
+
+|link-preview-multiple|
 
 Features for Users
 ------------------
@@ -181,6 +192,27 @@ Reference Lecture Attachments
 
 Users can refer to lectures of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
 editor (see image above). Here, lecture attachments can be found in a nested structure.
+
+Reference Lecture Attachment Units
+"""""""""""""""""""""""""""""
+
+Users can refer to lecture attachment units of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
+editor (see image below). Here, lecture attachment units can be found when users hover over the specific lecture.
+
+Reference Lecture Unit Slides
+"""""""""""""""""""""""""""""
+
+Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
+hover over specific unit (see image below).
+
+|slide-reference-menu|
+
+    After the user references a single slide they can see as image included in the message. Additionally they can preview the slide
+    in order to easily read the content by clicking the image.
+
+    |slide-reference|
+
+    |referenced-slide-preview|
 
 Prevent Post Duplication
 ^^^^^^^^^^^^^^^^^^^^^^^^
