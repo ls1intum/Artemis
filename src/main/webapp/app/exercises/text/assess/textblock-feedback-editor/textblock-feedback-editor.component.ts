@@ -7,7 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { faAngleRight, faBalanceScaleRight, faEdit, faExclamation, faExclamationTriangle, faQuestionCircle, faRobot, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight, faEdit, faExclamation, faExclamationTriangle, faLightbulb, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 @Component({
@@ -31,6 +31,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() criteria?: GradingCriterion[];
     private textareaElement: HTMLTextAreaElement;
 
+    // Expose to template
+    protected readonly Feedback = Feedback;
+
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
     @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
@@ -49,9 +52,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     faEdit = faEdit;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
-    faRobot = faRobot;
+    faLightbulb = faLightbulb;
     faExclamation = faExclamation;
-    faBalanceScaleRight = faBalanceScaleRight;
     faTimes = faTimes;
     faTrash = faTrash;
     faAngleRight = faAngleRight;
