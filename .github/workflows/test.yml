@@ -86,7 +86,7 @@ jobs:
       run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-mysql:
-#      needs: [ server-tests ]
+      needs: [ server-tests ]
       runs-on: ubuntu-latest
       timeout-minutes: 120
       # Limit the number of concurrent mysql tests to one in total
@@ -140,7 +140,7 @@ jobs:
             run: bash supporting_scripts/extract_number_of_server_starts.sh
 
   server-tests-postgres:
-#      needs: [ server-tests ]
+      needs: [ server-tests ]
       runs-on: ubuntu-latest
       timeout-minutes: 150
       # Limit the number of concurrent postgres tests to one in total
