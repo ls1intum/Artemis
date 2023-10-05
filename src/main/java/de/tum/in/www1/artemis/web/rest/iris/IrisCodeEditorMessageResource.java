@@ -18,8 +18,8 @@ import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
-import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -40,7 +40,7 @@ public class IrisCodeEditorMessageResource {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    private final IrisWebsocketService irisWebsocketService;
+    private final IrisCodeEditorWebsocketService irisCodeEditorWebsocketService;
 
     private final IrisMessageContentRepository irisMessageContentRepository;
 
@@ -48,14 +48,14 @@ public class IrisCodeEditorMessageResource {
 
     public IrisCodeEditorMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService,
             IrisCodeEditorSessionService irisCodeEditorSessionService, IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository,
-            IrisWebsocketService irisWebsocketService, IrisMessageContentRepository irisMessageContentRepository,
+            IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, IrisMessageContentRepository irisMessageContentRepository,
             IrisExercisePlanComponentRepository irisExercisePlanComponentRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
-        this.irisWebsocketService = irisWebsocketService;
+        this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.irisMessageContentRepository = irisMessageContentRepository;
         this.irisExercisePlanComponentRepository = irisExercisePlanComponentRepository;
     }
@@ -93,7 +93,7 @@ public class IrisCodeEditorMessageResource {
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
-        irisWebsocketService.sendMessage(savedMessage);
+        irisCodeEditorWebsocketService.sendMessage(savedMessage);
 
         var uriString = "/api/iris/code-editor-sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
