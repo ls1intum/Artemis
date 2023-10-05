@@ -736,6 +736,7 @@ public class CourseUtilService {
      * Creates and saves a course with exercises and submissions. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and
      * text exercises in a cyclic manner.
      *
+     * @param shortName                     The short name of the course.
      * @param userPrefix                    The prefix of the course user groups.
      * @param suffix                        The suffix of the course user groups.
      * @param numberOfExercises             Number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
