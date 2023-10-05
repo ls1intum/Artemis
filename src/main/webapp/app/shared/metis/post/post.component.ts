@@ -138,7 +138,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                 } catch (error) {
                     this.alertService.addAlert({
                         type: AlertType.WARNING,
-                        message: "The referenced channel doesn't exist",
+                        message: 'artemisApp.metis.channel.invalidReference',
                     });
                 }
             } else {
