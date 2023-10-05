@@ -345,31 +345,25 @@ describe('ExamResultSummaryComponent', () => {
     it('should correctly determine if the results are published', () => {
         component.studentExam = studentExam;
         component.testRunConduction = true;
-        component.ngOnInit();
         expect(component.resultsPublished).toBeFalse();
 
         component.testExamConduction = true;
         component.testRunConduction = false;
-        component.ngOnInit();
         expect(component.resultsPublished).toBeFalse();
 
         component.isTestRun = true;
         component.testExamConduction = false;
-        component.ngOnInit();
         expect(component.resultsPublished).toBeTrue();
 
         component.isTestExam = true;
         component.isTestRun = false;
-        component.ngOnInit();
         expect(component.resultsPublished).toBeTrue();
 
         component.isTestExam = false;
-        component.ngOnInit();
         // const publishResultsDate is in the past
         expect(component.resultsPublished).toBeTrue();
 
         component.studentExam.exam!.publishResultsDate = dayjs().add(2, 'hours');
-        component.ngOnInit();
         expect(component.resultsPublished).toBeFalse();
     });
 

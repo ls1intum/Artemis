@@ -197,15 +197,6 @@ export class ExamResultSummaryComponent implements OnInit {
         return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
-    get resultsPublished(): boolean {
-        if (this.testRunConduction || this.testExamConduction) {
-            return false;
-        } else if (this.isTestRun || this.isTestExam) {
-            return true;
-        }
-        return !!(this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs()));
-    }
-
     /**
      * called for exportPDF Button
      */
@@ -332,6 +323,15 @@ export class ExamResultSummaryComponent implements OnInit {
             return this.serverDateService.now().isAfter(this.studentExam.exam.publishResultsDate);
         }
         return false;
+    }
+
+    get resultsPublished(): boolean | any {
+        if (this.testRunConduction || this.testExamConduction) {
+            return false;
+        } else if (this.isTestRun || this.isTestExam) {
+            return true;
+        }
+        return !!(this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs()));
     }
 
     private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ResultSummaryExerciseInfo> {
