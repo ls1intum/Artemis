@@ -10,11 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
@@ -27,10 +27,10 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     private UserUtilService userUtilService;
 
     @Autowired
-    private CourseUtilService courseUtilService;
+    private ExamUtilService examUtilService;
 
     @Autowired
-    private ExamUtilService examUtilService;
+    private LectureUtilService lectureUtilService;
 
     private static final int NUMBER_OF_TUTORS = 1;
 
@@ -47,7 +47,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
-        var courses = courseUtilService.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 1, NUMBER_OF_TUTORS);
+        var courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, true, true, NUMBER_OF_TUTORS);
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
