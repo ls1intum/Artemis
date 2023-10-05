@@ -12,6 +12,7 @@
                 *ngFor="let postingContentPart of postingContentParts"
                 [postingContentPart]="postingContentPart"
                 (userReferenceClicked)="userReferenceClicked.emit($event)"
+                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
             >
             </jhi-posting-content-part>
 
@@ -24,6 +25,7 @@
             *ngFor="let postingContentPart of postingContentParts"
             [postingContentPart]="postingContentPart"
             (userReferenceClicked)="userReferenceClicked.emit($event)"
+            (channelReferenceClicked)="channelReferenceClicked.emit($event)"
         >
         </jhi-posting-content-part>
         <span class="edited-text" *ngIf="isEdited">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>

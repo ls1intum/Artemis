@@ -13,6 +13,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input() isLastAnswer: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() userReferenceClicked = new EventEmitter<string>();
+    @Output() channelReferenceClicked = new EventEmitter<number>();
 
     @Input()
     isReadOnlyMode = false;

@@ -13,6 +13,7 @@
         [content]="posting.content"
         [isEdited]="!!posting.updatedDate"
         (userReferenceClicked)="userReferenceClicked.emit($event)"
+        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
     >
     </jhi-posting-content>
     <ng-container #createEditAnswerPostContainer></ng-container>

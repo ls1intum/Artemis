@@ -121,4 +121,24 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             }
         }
     }
+
+    /**
+     * Navigate to the referenced channel
+     *
+     * @param channelId id of the referenced channel
+     */
+    onChannelReferenceClicked(channelId: number) {
+        const course = this.metisService.getCourse();
+        if (isMessagingEnabled(course)) {
+            if (this.isCourseMessagesPage) {
+                this.metisConversationService.setActiveConversation(channelId);
+            } else {
+                this.router.navigate(['courses', course.id, 'messages'], {
+                    queryParams: {
+                        conversationId: channelId,
+                    },
+                });
+            }
+        }
+    }
 }

@@ -18,6 +18,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isEdited = false;
 
     @Output() userReferenceClicked = new EventEmitter<string>();
+    @Output() channelReferenceClicked = new EventEmitter<number>();
 
     showContent = false;
     currentlyLoadedPosts: Post[];
@@ -143,8 +144,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    const channelId = parseInt(this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)));
                     queryParams = {
-                        channelId: this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)),
+                        channelId: isNaN(channelId) ? undefined : channelId,
                     } as Params;
                 }
 

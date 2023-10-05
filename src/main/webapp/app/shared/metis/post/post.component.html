@@ -62,6 +62,7 @@
             [isEdited]="!!posting.updatedDate"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
             (userReferenceClicked)="onUserReferenceClicked($event)"
+            (channelReferenceClicked)="onChannelReferenceClicked($event)"
         ></jhi-posting-content>
     </div>
 </div>
@@ -78,4 +79,5 @@
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate"
     (userReferenceClicked)="onUserReferenceClicked($event)"
+    (channelReferenceClicked)="onChannelReferenceClicked($event)"
 ></jhi-post-footer>
