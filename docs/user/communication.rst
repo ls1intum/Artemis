@@ -78,13 +78,13 @@ located on the right-hand side of the Messages Page when displayed.
 
 |messages|
 
-If the message content does contain links a preview of the link will be shown under the message. This way users will have a good understanding
-of what is that link about. If they don't want to have the preview, by hovering to the preview a `X` button will appear and after clicking the
-preview will be removed.
+If the message content contains links, a preview of the link will be shown under the message. This way, users will have a good understanding
+of what that link is about. If they don't want to have the preview, by hovering over the preview, an `X` button will appear,
+and after clicking, the preview will be removed.
 
 |link-preview|
 
-If the message contains more then one link then the preview will not have an preview image of the link in order to have more compact previews
+If the message contains more than one link, then the preview will not have a preview image of the link to have more compact previews
 multiple links.
 
 |link-preview-multiple|
@@ -298,11 +298,11 @@ Additionally, announcements visually differ from normal posts and are always dis
 .. |student-user| image:: communication/user-authorities/student.png
     :width: 600
 .. |messages| image:: communication/messages.png
-    :width: 1000
+    :width: 1200
 .. |slide-reference| image:: communication/slide-reference.png
     :width: 600
 .. |slide-reference-menu| image:: communication/slide-reference-menu.png
-    :width: 600
+    :width: 1000
 .. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
     :width: 600
 .. |link-preview| image:: communication/link-preview.png
