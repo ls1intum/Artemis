@@ -207,12 +207,12 @@ hover over specific unit (see image below).
 
 |slide-reference-menu|
 
-    After the user references a single slide they can see as image included in the message. Additionally they can preview the slide
-    in order to easily read the content by clicking the image.
+After the user references a single slide they can see as image included in the message. Additionally they can preview the slide
+in order to easily read the content by clicking the image.
 
-    |slide-reference|
+|slide-reference|
 
-    |referenced-slide-preview|
+|referenced-slide-preview|
 
 Prevent Post Duplication
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -298,7 +298,7 @@ Additionally, announcements visually differ from normal posts and are always dis
 .. |student-user| image:: communication/user-authorities/student.png
     :width: 600
 .. |messages| image:: communication/messages.png
-    :width: 1200
+    :width: 1000
 .. |slide-reference| image:: communication/slide-reference.png
     :width: 600
 .. |slide-reference-menu| image:: communication/slide-reference-menu.png
