@@ -5,7 +5,7 @@ Server Tests
 0. Assert using the most specific overload method
 ==================================================
 
-When asserting in server tests, use ``assertThat`` from the `AssertJ <https://github.com/assertj/assertj>`__ library. The call **must** be followed by another assertion statement such as ``isEqualTo()``. It is best practice to use specific assertion statements rather than always expecting boolean values.
+When asserting in server tests, use ``assertThat`` from the `AssertJ <https://github.com/assertj/assertj>`__ library. Another assertion statement, such as ``isEqualTo()``, **must**  follow the call. Using specific assertion statements rather than always expecting boolean values is best practice.
 
 For example, instead of
 
@@ -21,8 +21,8 @@ use the built-in assertions directly:
     assertThat(submissionInDb).isPresent();
     assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
 
-This provides better error messages when an assertion fails and improves the code readability. However, be aware that not all methods can be used for assertions like this.
-If you cannot avoid using ``isTrue``, specify a custom error message using the ``as`` keyword:
+These assertions provide better error messages when they fail and improve the code readability. However, not all methods are suitable for this type of assertion.
+If the ``isTrue`` assertion is unavoidable, specify a custom error message using the ``as`` keyword:
 
 .. code-block:: java
 
@@ -141,5 +141,3 @@ For a real example where a SpyBean was replaced with a static mock look at the `
 
 3. UtilServices and Factories
 =============================
-
-
