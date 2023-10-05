@@ -13,7 +13,7 @@ services:
         # might want to access external services on the docker host
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        #TODO: check if it works without root not sure so because of the docker socket ...
+        # run as root user to be able to access the docker socket
         user: 0:0
         ports:
             - "8080:8080"

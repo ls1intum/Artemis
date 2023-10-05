@@ -133,3 +133,17 @@ For unauthorized access, your Git client will display the respective error messa
     <iframe src="https://live.rbg.tum.de/w/artemisintro/34539?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Video showcasing unauthorized access to a local VC repository on TUM-Live.
     </iframe>
+
+.. _Setup with Docker Compose:
+
+Setup with Docker Compose
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can also use Docker Compose to set up the local CI and local VC systems. Using the following command, you can start the Artemis and MySQL containers:
+
+::
+
+    docker compose -f docker/artemis-dev-local-vc-local-ci-mysql.yml up
+
+.. HINT::
+    If you want to run the Docker containers locally on Windows, you will have to change the value for the Docker connection URI. You can add ``ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI="tcp://host.docker.internal:2375"`` to the environment file, found in ``docker/artemis/config/dev-local-vc-local-ci.env``. This overwrites the default value ``unix:///var/run/docker.sock`` for this property defined in ``src/main/resources/config/application-docker.yml``.
