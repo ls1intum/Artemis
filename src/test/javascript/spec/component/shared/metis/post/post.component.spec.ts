@@ -13,6 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import {
+    metisChannel,
     metisCourse,
     metisExercise,
     metisLecture,
@@ -228,5 +229,28 @@ describe('PostComponent', () => {
         component.onUserReferenceClicked(metisUser1.login!);
 
         expect(createOneToOneChatSpy).toHaveBeenCalledWith(metisUser1.login!);
+    });
+
+    it('should navigate to channel when not on messaging page', () => {
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        component.onChannelReferenceClicked(metisChannel.id!);
+
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', metisCourse.id, 'messages'], {
+            queryParams: {
+                conversationId: metisChannel.id!,
+            },
+        });
+    });
+
+    it('should navigate to channel when on messaging page', () => {
+        const metisConversationService = TestBed.inject(MetisConversationService);
+        const setActiveConversationSpy = jest.fn();
+        Object.defineProperty(metisConversationService, 'setActiveConversation', { value: setActiveConversationSpy });
+        component.isCourseMessagesPage = true;
+
+        component.onChannelReferenceClicked(metisChannel.id!);
+
+        expect(setActiveConversationSpy).toHaveBeenCalledWith(metisChannel.id!);
     });
 });
