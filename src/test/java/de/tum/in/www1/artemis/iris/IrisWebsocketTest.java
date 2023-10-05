@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
-import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketService;
 
 @ActiveProfiles("iris")
 class IrisWebsocketTest extends AbstractIrisIntegrationTest {

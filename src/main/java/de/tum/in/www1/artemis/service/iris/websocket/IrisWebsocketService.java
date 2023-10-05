@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.iris;
+package de.tum.in.www1.artemis.service.iris.websocket;
 
 import java.util.Collections;
 import java.util.Map;
