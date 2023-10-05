@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.message.*;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
@@ -148,13 +149,16 @@ public class IrisCodeEditorMessageResource {
         if (!Objects.equals(session.getId(), sessionId)) {
             throw new ConflictException("The specified sessionId is incorrect", "IrisMessage", "irisMessageSessionConflict");
         }
+        if (!(session instanceof IrisCodeEditorSession codeEditorSession)) {
+            throw new BadRequestException("Session is not a code editor session");
+        }
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only edit the plan messages sent by Iris");
         }
 
         // irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
-        irisCodeEditorSessionService.requestAndHandleResponse(session);// TODO: second request for plan realization
+        irisCodeEditorSessionService.requestExerciseChanges(codeEditorSession, exercisePlan);
         return ResponseEntity.ok(null);
     }
 
@@ -171,7 +175,7 @@ public class IrisCodeEditorMessageResource {
      */
     @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<ExercisePlanComponent> updateComponentPlan(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
+    public ResponseEntity<IrisExercisePlanComponent> updateComponentPlan(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
             @PathVariable Long componentId, @RequestBody String plan) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
