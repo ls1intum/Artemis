@@ -97,7 +97,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
         ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
 
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
         participantScoreScheduleService.activate();
         ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
