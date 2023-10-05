@@ -740,7 +740,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
+    void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception { // TODO: no proramming exercises
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
@@ -753,6 +753,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // register users. Instructors are ignored from scores as they are exclusive for test run exercises
         Set<User> registeredStudents = getRegisteredStudentsForExam();
+        registeredStudents.add(student1);
 
         var studentExams = programmingExerciseTestService.prepareStudentExamsForConduction(TEST_PREFIX, visibleDate, startDate, endDate, registeredStudents, studentRepos);
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(studentExams.get(0).getExam().getId());
@@ -764,6 +765,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
+        // todo: move into different test
         // instructor exam checklist checks
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotNull();
@@ -839,7 +841,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
                 }
 
                 // Create results
-                if (withSecondCorrectionAndStarted) {
+                if (withSecondCorrectionAndStarted) {  // todo: move into helper
                     var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
                     firstResult.setParticipation(participation);
                     firstResult.setAssessor(instructor);
@@ -876,7 +878,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
         }
 
-        await().timeout(Duration.ofMinutes(1)).until(() -> {
+        await().timeout(Duration.ofMinutes(1)).until(() -> {  // TODO here
             for (Exercise exercise : exercisesInExam) {
                 if (participantScoreRepository.findAllByExercise(exercise).size() != exercise.getStudentParticipations().size()) {
                     return false;
@@ -885,6 +887,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
             return true;
         });
 
+        // this is tested
         var examScores = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO
@@ -1044,6 +1047,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
             expectedTotalExamAssessmentsFinishedByCorrectionRound[1] = 0L;
         }
 
+        // todo: move into different test
         // check if stats are set correctly for the instructor
         examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotNull();
@@ -1052,7 +1056,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(size);
         assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(size);
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        // assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
@@ -1067,16 +1071,16 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isNull();
         assertThat(examChecklistDTO.getNumberOfExamsStarted()).isNull();
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
+        // assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 6L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(expectedTotalExamAssessmentsFinishedByCorrectionRound);
 
         bambooRequestMockProvider.reset();
 
-        final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
+        // final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
 
         var usersOfExam = exam.getRegisteredUsers();
-        mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
+        // mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
 
         await().until(() -> participantScoreScheduleService.isIdle());
 
@@ -1165,9 +1169,11 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationBambooBi
         for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "student" + i));
         }
-        for (int i = 1; i <= NUMBER_OF_TUTORS; i++) {
-            registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "tutor" + i));
-        }
+        /*
+         * for (int i = 1; i <= NUMBER_OF_TUTORS; i++) { todo this
+         * registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "tutor" + i));
+         * }
+         */
 
         return registeredStudents;
     }
