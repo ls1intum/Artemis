@@ -194,7 +194,7 @@ Users can refer to lectures of the current course, via the dropdown menu ``Lectu
 editor (see image above). Here, lecture attachments can be found in a nested structure.
 
 Reference Lecture Attachment Units
-"""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""
 
 Users can refer to lecture attachment units of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
 editor (see image below). Here, lecture attachment units can be found when users hover over the specific lecture.
