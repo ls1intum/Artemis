@@ -47,7 +47,8 @@ public class IrisCodeEditorMessageResource {
 
     public IrisCodeEditorMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService,
             IrisCodeEditorSessionService irisCodeEditorSessionService, IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository,
-            IrisWebsocketService irisWebsocketService, IrisMessageContentRepository irisMessageContentRepository) {
+            IrisWebsocketService irisWebsocketService, IrisMessageContentRepository irisMessageContentRepository,
+            IrisExercisePlanComponentRepository irisExercisePlanComponentRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
@@ -55,6 +56,7 @@ public class IrisCodeEditorMessageResource {
         this.irisMessageRepository = irisMessageRepository;
         this.irisWebsocketService = irisWebsocketService;
         this.irisMessageContentRepository = irisMessageContentRepository;
+        this.irisExercisePlanComponentRepository = irisExercisePlanComponentRepository;
     }
 
     /**

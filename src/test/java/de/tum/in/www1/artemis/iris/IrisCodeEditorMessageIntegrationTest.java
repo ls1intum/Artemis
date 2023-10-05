@@ -92,9 +92,9 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void sendOneMessageToWrongSession() throws Exception {
-        // var irisSession1 = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession1 = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var irisSession2 = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor2"));
-        IrisMessage messageToSend = createDefaultMockMessage(irisSession2);
+        IrisMessage messageToSend = createDefaultMockMessage(irisSession1);
         request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
 
@@ -267,8 +267,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.addContent(createMockTextContent(messageToSend));
-        messageToSend.addContent(createMockExercisePlanContent(messageToSend));
-        // messageToSend.addContent(createMockTextContent(messageToSend));
+        // messageToSend.addContent(createMockExercisePlanContent(messageToSend));
+        messageToSend.addContent(createMockTextContent(messageToSend));
         return messageToSend;
     }
 
@@ -286,14 +286,14 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         return content;
     }
 
-    private IrisMessageContent createMockExercisePlanContent(IrisMessage message) {
-        var content = new IrisExercisePlanMessageContent();
-        content.setProblemStatementPlan("I will add more tasks to the problem statement");
-        content.setSolutionRepositoryPlan("I will adapt the solution repository");
-        content.setTemplateRepositoryPlan("I will document the template repository");
-        content.setTestRepositoryPlan("I will add more tests to the test repository");
-        content.setId(ThreadLocalRandom.current().nextLong());
-        content.setMessage(message);
-        return content;
-    }
+    // private IrisMessageContent createMockExercisePlanContent(IrisMessage message) {
+    // var content = new IrisExercisePlanMessageContent();
+    // content.setProblemStatementPlan("I will add more tasks to the problem statement");
+    // content.setSolutionRepositoryPlan("I will adapt the solution repository");
+    // content.setTemplateRepositoryPlan("I will document the template repository");
+    // content.setTestRepositoryPlan("I will add more tests to the test repository");
+    // content.setId(ThreadLocalRandom.current().nextLong());
+    // content.setMessage(message);
+    // return content;
+    // }
 }

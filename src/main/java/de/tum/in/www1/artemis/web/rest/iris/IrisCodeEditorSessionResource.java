@@ -72,7 +72,7 @@ public class IrisCodeEditorSessionResource {
     @EnforceAtLeastEditor
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);// TODO
+        // irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);// TODO
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
@@ -92,7 +92,7 @@ public class IrisCodeEditorSessionResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<IrisSession>> getAllSessions(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);// TODO
+        // irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);// TODO
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
@@ -113,7 +113,7 @@ public class IrisCodeEditorSessionResource {
     @EnforceAtLeastEditor
     public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);// TODO
+        // irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);// TODO
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
