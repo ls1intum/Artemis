@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
@@ -68,9 +67,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
@@ -95,12 +91,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise.setReleaseDate(ZonedDateTime.now());  // TODO move this into a helper function when fixed
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseUtilService.createActiveProgrammingExerciseWithTestCases();
 
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+        // programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
@@ -533,6 +526,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
         mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
+        long DELAY_MS = 600;
         setupProgrammingExerciseDates(now, DELAY_MS, null);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         testCases.stream().findFirst().orElseThrow().setVisibility(Visibility.AFTER_DUE_DATE);

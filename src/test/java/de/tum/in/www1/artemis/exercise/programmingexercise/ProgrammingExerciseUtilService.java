@@ -310,6 +310,21 @@ public class ProgrammingExerciseUtilService {
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
+    /**
+     * Creates an active programming exercise with test cases.
+     *
+     * @return newly created programming exercise.
+     */
+    public ProgrammingExercise createActiveProgrammingExerciseWithTestCases() {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        ProgrammingExercise programmingExercise = addProgrammingExerciseToCourse(course, false, ZonedDateTime.now().plusDays(1));
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        addTestCasesToProgrammingExercise(programmingExercise);
+
+        return programmingExerciseRepository.save(programmingExercise);
+    }
+
     public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
         addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, false);
     }
