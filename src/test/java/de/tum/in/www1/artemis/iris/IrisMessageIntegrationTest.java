@@ -160,13 +160,12 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
-        assertThat(
-                messages)
-                        .hasSize(3)
-                        .usingElementComparator((o1,
-                                o2) -> o1.getContent().size() == o2.getContent().size() && o1.getContent().stream().map(IrisMessageContent::getTextContent).toList()
-                                        .equals(o2.getContent().stream().map(IrisMessageContent::getTextContent).toList()) ? 0 : -1)
-                        .isEqualTo(List.of(message2, message3, message4));
+        assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
+            return o1.getContent().size() == o2.getContent().size()
+                    && o1.getContent().stream().map(IrisMessageContent::getTextContent).toList().equals(o2.getContent().stream().map(IrisMessageContent::getTextContent).toList())
+                            ? 0
+                            : -1;
+        }).isEqualTo(List.of(message2, message3, message4));
     }
 
     @Test
