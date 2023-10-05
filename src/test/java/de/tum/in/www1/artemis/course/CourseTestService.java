@@ -55,7 +55,10 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exam.ExamFactory;
@@ -92,6 +95,7 @@ import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
@@ -2163,6 +2167,43 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).isEmpty();
+    }
+
+    /**
+     * Test
+     */
+    public void testSearchMembersForUserMentionsSearchTermFilteringCorrect() throws Exception {
+        var course = createCourseForUserSearchTest();
+        MultiValueMap<String, String> queryParameter = new LinkedMultiValueMap<>();
+
+        queryParameter.add("loginOrName", userPrefix + "tutor");
+        var result = request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.OK, UserNameAndLoginDTO.class, queryParameter);
+
+        assertThat(result).hasSize(numberOfTutors);
+        result.forEach(dto -> assertThat(dto.name().contains(userPrefix + "tutor")).isTrue());
+    }
+
+    /**
+     * Test
+     */
+    public void testSearchMembersForUserMentionsSearchResultLimit() throws Exception {
+        var course = createCourseForUserSearchTest();
+        MultiValueMap<String, String> queryParameter = new LinkedMultiValueMap<>();
+
+        queryParameter.set("loginOrName", "");
+        var result = request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.OK, UserNameAndLoginDTO.class, queryParameter);
+
+        assertThat(result).hasSize(10);
+        assertThat(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors).isGreaterThan(10);
+    }
+
+    /**
+     * Test
+     */
+    public void testSearchMembersForUserMentionsNoSearchTerm() throws Exception {
+        var course = createCourseForUserSearchTest();
+
+        request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.BAD_REQUEST, UserNameAndLoginDTO.class);
     }
 
     private Course createCourseForUserSearchTest() {
