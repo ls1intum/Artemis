@@ -5,7 +5,7 @@ Server Tests
 0. Assert using the most specific overload method
 ==================================================
 
-When expecting results use ``assertThat`` from the AssertJ library (add link) for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
+When asserting in server tests, use ``assertThat`` from the `AssertJ <https://github.com/assertj/assertj>`__ library. The call **must** be followed by another assertion statement such as ``isEqualTo()``. It is best practice to use specific assertion statements rather than always expecting boolean values.
 
 For example, instead of
 
@@ -14,31 +14,26 @@ For example, instead of
     assertThat(submissionInDb.isPresent()).isTrue();
     assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
 
-use the methods from inside the ``assertThat`` directly:
+use the built-in assertions directly:
 
 .. code-block:: java
 
     assertThat(submissionInDb).isPresent();
     assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
 
-This gives better error messages when an assertion fails and improves the code readability. However, be aware that not all methods can be used for assertions like this.
-
-If you can't avoid using ``isTrue`` use the ``as`` keyword to add a custom error message:
+This provides better error messages when an assertion fails and improves the code readability. However, be aware that not all methods can be used for assertions like this.
+If you cannot avoid using ``isTrue``, specify a custom error message using the ``as`` keyword:
 
 .. code-block:: java
 
     assertThat(submission.isSubmittedInTime()).as("submission was not in time").isTrue();
 
-Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-core-assertions-guide>`__, especially the `section about avoiding incorrect usage <https://assertj.github.io/doc/#assertj-core-incorrect-usage>`__.
-
-
-Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
+For more information, please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-core-assertions-guide>`__, especially the `section about avoiding incorrect usage <https://assertj.github.io/doc/#assertj-core-incorrect-usage>`__.
 
 1. General Testing Tips
 ========================
 
-Write meaningful comments for your tests.
-These comments should contain information about what is tested specifically.
+Write meaningful comments for your tests. These comments should contain information about what is tested specifically.
 
 .. code-block:: java
 
@@ -51,7 +46,9 @@ These comments should contain information about what is tested specifically.
     }
 
 Use appropriate and descriptive names for test cases. This makes it easier for other developers to understand what you actually test without looking deeper into it.
-This is the same reason why you should not name your variables int a, double b, String c, and so on. For example, if you want to test the method borrow in the class Book, testBorrowInBook() would be an appropriate name for the test case.
+For the same reason you should not name your variables ``int a``, ``double b``, ``String c``, and so on. Instead, you should name the variables usin
+
+For example, if you want to test the method borrow in the class Book, ``testBorrowInBook()`` would be an appropriate name for the test case.
 
 .. code-block:: java
 
@@ -60,15 +57,15 @@ This is the same reason why you should not name your variables int a, double b, 
         // Test Code
     }
 
-Try to follow the best practices for Java testing:
+Try to follow best practices for Java testing:
 
-* Write small and specific tests by heavily using helper functions, parameterized tests, AssertJ’s powerful assertions, not overusing variables, asserting only what’s relevant and avoiding one test for all corner cases.
+* Write small and specific tests by heavily using helper functions, parameterized tests, AssertJ’s powerful assertions, not overusing variables, asserting only what’s relevant and avoiding one test for all edge cases.
 * Write self-contained tests by revealing all relevant parameters, insert data right in the test and prefer composition over inheritance.
 * Write dumb tests by avoiding the reuse of production code and focusing on comparing output values with hard-coded values.
 * KISS > DRY ("Keep it simple, Stupid!" and "Don't repeat yourself!")
-* Invest in a testable implementation by avoiding static access, using constructor injection, using Clocks and separating business logic from asynchronous execution.
+* Invest in a testable implementation by avoiding static access, using constructor injection, and separating business logic from asynchronous execution.
 
-For a more detailed overview definitely check out: https://phauer.com/2019/modern-best-practices-testing-java/
+For a more detailed overview definitely check out `modern best testing practices <https://phauer.com/2019/modern-best-practices-testing-java/>`__.
 
 
 Make use of JUnit 5 Features:
@@ -86,12 +83,12 @@ If you want to write tests for Programming Exercises to test student's submissio
 2. Counting database query calls within tests
 ==============================================
 
-It's possible to write tests that check how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
-or at least to remind developers in case they do. It's especially important for commonly used endpoints that users access multiple times or every time they use Artemis.
+It's possible to write tests checking how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
+or at least to remind developers in case they do. This is especially important for commonly used endpoints which users access often or every time they use Artemis.
 However, we should consider carefully before adding such assertions to a test as it makes the test more tedious to maintain.
 
 An example on how to track how many database calls are performed during a REST call is shown below. It uses the ``HibernateQueryInterceptor`` which counts the number of queries.
-For ease of use, a custom assert ``assertThatDb`` was added that allows to do the check in one line. It also returns the original result of the REST call and so allows you to
+The custom assert ``assertThatDb`` allows you to check the number of database calls in one line. It also returns the original result of the REST call and so allows you to
 add any other assertions to the test, as shown below.
 
 .. code-block:: java
@@ -111,7 +108,7 @@ add any other assertions to the test, as shown below.
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.
 Basically, every time ``@MockBean`` appears in a class, the ApplicationContext cache gets marked as dirty, hence the runner will clean the cache after the test-class is done and restarts the application context.
-This leads to a large overhead, which tends to make the tests take a lot more time.
+This leads to a large overhead of an additional server start.
 
 Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case which is only executed if an ``IOException`` is thrown. We did this by mocking the service method and making it throw an Exception.
 
@@ -129,9 +126,8 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case
         }
     }
 
-As mentioned above, we should really avoid this.
-Instead we can use `Static Mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`_. When we look deeper in the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
-Now, instead of mocking the whole Service, we can just mock the static method, like this:
+To avoid the use of a new SpyBean, we now use `Static Mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`__. When taking a closer look into the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
+Now, instead of mocking the whole Service, we can just mock the static method:
 
 .. code-block:: java
 
@@ -150,7 +146,9 @@ Now, instead of mocking the whole Service, we can just mock the static method, l
 
 You should notice here that we can avoid the use of a Bean and also test deeper. Instead of mocking the uppermost method we only throw the exception at the place where it could actually happen. Very important to mention is that you need to close the mock at the end of the test again.
 
-For a real example where a SpyBean was replaced with a static mock look at the SubmissionExportIntegrationTest.java in `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
+For a real example where a SpyBean was replaced with a static mock look at the ``SubmissionExportIntegrationTest.java`` `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
 
 3. UtilServices and Factories
-=========================
+=============================
+
+
