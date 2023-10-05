@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
 
+import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,6 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
-import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -38,15 +38,15 @@ public class IrisMessageResource {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    private final IrisWebsocketService irisWebsocketService;
+    private final IrisChatWebsocketService irisChatWebsocketService;
 
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisWebsocketService irisWebsocketService) {
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
-        this.irisWebsocketService = irisWebsocketService;
+        this.irisChatWebsocketService = irisChatWebsocketService;
     }
 
     /**
@@ -81,7 +81,7 @@ public class IrisMessageResource {
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
-        irisWebsocketService.sendMessage(savedMessage);
+        irisChatWebsocketService.sendMessage(savedMessage);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
