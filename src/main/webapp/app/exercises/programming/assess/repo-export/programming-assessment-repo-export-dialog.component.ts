@@ -46,7 +46,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             filterLateSubmissions: false,
             excludePracticeSubmissions: false,
             combineStudentCommits: true,
-            // if there are ids given we anonimize the export (double-blind)
+            // if there are ids given we anonymize the export (double-blind)
             anonymizeRepository: !!this.participationIdList?.length,
             addParticipantName: !this.participationIdList?.length,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
