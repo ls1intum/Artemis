@@ -29,8 +29,8 @@ import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisConstants;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
-import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -49,7 +49,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisSettingsService irisSettingsService; // Will need this when we have settings to consider
 
-    private final IrisWebsocketService irisWebsocketService;
+    private final IrisCodeEditorWebsocketService irisCodeEditorWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -60,12 +60,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private final RepositoryService repositoryService;
 
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
-            IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, GitService gitService,
-            RepositoryService repositoryService) {
+            IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
+            GitService gitService, RepositoryService repositoryService) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
-        this.irisWebsocketService = irisWebsocketService;
+        this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
         this.gitService = gitService;
@@ -130,15 +130,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         irisConnectorService.sendRequest(new IrisTemplate(IrisConstants.CODE_EDITOR_INITIAL_REQUEST), "gpt-4-32k", params).handleAsync((responseMessage, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
-                irisWebsocketService.sendException(session, err.getCause());
+                irisCodeEditorWebsocketService.sendException(session, err.getCause());
             }
             else if (responseMessage == null) {
                 log.error("No response from Iris model");
-                irisWebsocketService.sendException(session, new IrisNoResponseException());
+                irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
             }
             else {
                 var irisMessageSaved = irisMessageService.saveMessage(responseMessage.message(), session, IrisMessageSender.LLM);
-                irisWebsocketService.sendMessage(irisMessageSaved);
+                irisCodeEditorWebsocketService.sendMessage(irisMessageSaved);
             }
             return null;
         });
@@ -165,11 +165,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         irisConnectorService.sendRequest(new IrisTemplate(prompt), "gpt-4-32k", params).handleAsync((responseMessage, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
-                irisWebsocketService.sendException(session, err.getCause());
+                irisCodeEditorWebsocketService.sendException(session, err.getCause());
             }
             else if (responseMessage == null) {
                 log.error("No response from Iris model");
-                irisWebsocketService.sendException(session, new IrisNoResponseException());
+                irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
             }
             else {
                 // TODO: Apply changes to exercise

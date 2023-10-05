@@ -19,7 +19,8 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
-import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketService;
 
 @ActiveProfiles("iris")
 class IrisWebsocketTest extends AbstractIrisIntegrationTest {
@@ -27,7 +28,7 @@ class IrisWebsocketTest extends AbstractIrisIntegrationTest {
     private static final String TEST_PREFIX = "iriswebsocketintegration";
 
     @Autowired
-    private IrisWebsocketService irisWebsocketService;
+    private IrisChatWebsocketService irisChatWebsocketService;
 
     @Autowired
     private IrisSessionService irisSessionService;
@@ -53,7 +54,7 @@ class IrisWebsocketTest extends AbstractIrisIntegrationTest {
         message.setSession(irisSession);
         message.setContent(List.of(createMockContent(message), createMockContent(message)));
         message.setMessageDifferentiator(101010);
-        irisWebsocketService.sendMessage(message);
+        irisChatWebsocketService.sendMessage(message);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/sessions/" + irisSession.getId()),
                 eq(new IrisWebsocketService.IrisWebsocketDTO(message)));
     }
