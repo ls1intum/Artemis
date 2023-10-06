@@ -29,6 +29,8 @@ public class AthenaDTOConverter {
      * @return *ExerciseDTO for Athena
      */
     public Object ofExercise(Exercise exercise) {
+        // Fetch grading criteria + instructions
+        // TODO: fetch from DB and add to DTO
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 return TextExerciseDTO.of((TextExercise) exercise);
