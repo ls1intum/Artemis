@@ -47,7 +47,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 })
 class DummyComponent {}
 
-describe('Exam Update Component', () => {
+describe('ExamUpdateComponent', () => {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
