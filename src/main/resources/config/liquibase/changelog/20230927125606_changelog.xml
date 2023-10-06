@@ -15,10 +15,10 @@
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="conduct_agreement"
                                  constraintName="conduct_agreement_course_idFK" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
-                                 validate="true"/>
+                                 validate="true" onDelete="CASCADE"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="conduct_agreement"
                                  constraintName="conduct_agreement_user_idFK" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"
-                                 validate="true"/>
+                                 validate="true" onDelete="CASCADE"/>
     </changeSet>
 </databaseChangeLog>
