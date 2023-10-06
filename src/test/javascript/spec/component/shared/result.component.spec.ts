@@ -5,21 +5,64 @@ import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { SimpleChange } from '@angular/core';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { Exercise } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import dayjs from 'dayjs/esm';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+const mockExercise: Exercise = {
+    id: 1,
+    title: 'Sample Exercise',
+    maxPoints: 100,
+    dueDate: dayjs().subtract(3, 'hours'),
+    assessmentType: AssessmentType.AUTOMATIC,
+} as Exercise;
+
+const mockParticipation: Participation = {
+    id: 1,
+    type: ParticipationType.STUDENT,
+    exercise: mockExercise,
+};
+
+const mockResult: Result = {
+    id: 1,
+    completionDate: dayjs().subtract(2, 'hours'),
+    score: 85,
+    rated: true,
+    feedbacks: [
+        {
+            id: 1,
+            text: 'Well done!',
+        },
+    ],
+    participation: mockParticipation,
+};
 
 describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
+    let modalService: NgbModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ResultComponent, TranslatePipeMock],
-            providers: [],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ResultComponent);
                 comp = fixture.componentInstance;
+                modalService = TestBed.inject(NgbModal);
+
+                fixture.detectChanges();
             });
     });
 
@@ -48,5 +91,41 @@ describe('ResultComponent', () => {
         });
 
         expect(comp.templateStatus).toEqual(ResultTemplateStatus.IS_BUILDING);
+    });
+
+    describe('should display HAS_RESULT status properly', () => {
+        const RESULT_SCORE_SELECTOR = '#result-score';
+
+        it('should not display if result is not present', () => {
+            const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
+            expect(button).not.toBeTruthy();
+        });
+
+        it('should display result if present', () => {
+            comp.result = mockResult;
+            comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
+            expect(button).toBeTruthy();
+        });
+
+        it('should display modal onClick', () => {
+            const showDetailsSpy = jest.spyOn(comp, 'showDetails');
+            const openModalSpy = jest.spyOn(modalService, 'open');
+
+            comp.result = mockResult;
+            comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
+            expect(button).toBeTruthy();
+
+            button.dispatchEvent(new Event('click'));
+            expect(showDetailsSpy).toHaveBeenCalled();
+            expect(openModalSpy).toHaveBeenCalled();
+        });
     });
 });
