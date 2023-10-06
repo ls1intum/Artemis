@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { SelectableItem } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 describe('ChannelMentionCommand', () => {
@@ -22,9 +22,9 @@ describe('ChannelMentionCommand', () => {
         };
 
         channelServiceMock = {
-            getChannelsOfCourse: () =>
+            getPublicChannelsOfCourse: () =>
                 of(
-                    new HttpResponse<ChannelDTO[]>({
+                    new HttpResponse<ChannelIdAndNameDTO[]>({
                         body: [
                             { name: 'Channel 1', id: 1 },
                             { name: 'Channel 2', id: 2 },
@@ -66,7 +66,7 @@ describe('ChannelMentionCommand', () => {
     });
 
     it('should perform a channel search and cache result', () => {
-        const getChannelsOfCourseSpy = jest.spyOn(channelServiceMock, 'getChannelsOfCourse');
+        const getChannelsOfCourseSpy = jest.spyOn(channelServiceMock, 'getPublicChannelsOfCourse');
 
         channelMentionCommand.performSearch('channel').subscribe((response) => {
             expect(response.body).toEqual([
@@ -81,7 +81,7 @@ describe('ChannelMentionCommand', () => {
     });
 
     it('should filter channels based on searchTerm', () => {
-        const getChannelsOfCourseSpy = jest.spyOn(channelServiceMock, 'getChannelsOfCourse');
+        const getChannelsOfCourseSpy = jest.spyOn(channelServiceMock, 'getPublicChannelsOfCourse');
 
         channelMentionCommand.performSearch('1').subscribe((response) => {
             expect(response.body).toEqual([{ name: 'Channel 1', id: 1 }]);

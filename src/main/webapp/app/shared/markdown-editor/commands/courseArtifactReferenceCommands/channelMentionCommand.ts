@@ -40,7 +40,7 @@ export class ChannelMentionCommand extends InteractiveSearchCommand {
     }
 
     private filterCachedResponse(searchTerm: string): HttpResponse<ChannelIdAndNameDTO[]> {
-        const channels = this.cachedResponse.body!.filter((dto) => dto.name?.includes(searchTerm.toLowerCase()));
+        const channels = this.cachedResponse.body!.filter((dto) => dto.name?.toLowerCase().includes(searchTerm.toLowerCase()));
         return new HttpResponse({ body: channels });
     }
 }
