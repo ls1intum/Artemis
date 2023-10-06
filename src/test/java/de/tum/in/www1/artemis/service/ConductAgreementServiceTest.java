@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class CourseCodeOfConductAgreementServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ConductAgreementServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "coursecodeofconductservice";
 
@@ -26,7 +26,7 @@ class CourseCodeOfConductAgreementServiceTest extends AbstractSpringIntegrationB
     private CourseRepository courseRepository;
 
     @Autowired
-    private CourseCodeOfConductAgreementService courseCodeOfConductAgreementService;
+    private ConductAgreementService conductAgreementService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -41,15 +41,15 @@ class CourseCodeOfConductAgreementServiceTest extends AbstractSpringIntegrationB
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
         courseRepository.save(course);
-        var resultBeforeAgreement = courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
+        var resultBeforeAgreement = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
         assertThat(resultBeforeAgreement).isFalse();
 
-        courseCodeOfConductAgreementService.setUserAgreesToCodeOfConductInCourse(user, course);
-        var resultAfterAgreement = courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
+        conductAgreementService.setUserAgreesToCodeOfConductInCourse(user, course);
+        var resultAfterAgreement = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
         assertThat(resultAfterAgreement).isTrue();
 
-        courseCodeOfConductAgreementService.resetUsersAgreeToCodeOfConductInCourse(course);
-        var resultAfterReset = courseCodeOfConductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
+        conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(course);
+        var resultAfterReset = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
         assertThat(resultAfterReset).isFalse();
     }
 }

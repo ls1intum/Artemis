@@ -7,14 +7,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.CourseCodeOfConductAgreement;
-import de.tum.in.www1.artemis.domain.CourseCodeOfConductAgreementId;
+import de.tum.in.www1.artemis.domain.ConductAgreement;
+import de.tum.in.www1.artemis.domain.ConductAgreementId;
 
 /**
  * Spring Data repository for the Code of Conduct Agreement entity.
  */
 @Repository
-public interface CourseCodeOfConductAgreementRepository extends JpaRepository<CourseCodeOfConductAgreement, CourseCodeOfConductAgreementId> {
+public interface ConductAgreementRepository extends JpaRepository<ConductAgreement, ConductAgreementId> {
 
     /**
      * Find the user's agreement to a course's code of conduct.
@@ -23,7 +23,7 @@ public interface CourseCodeOfConductAgreementRepository extends JpaRepository<Co
      * @param userId   the user's ID
      * @return the user's agreement to the course's code of conduct
      */
-    Optional<CourseCodeOfConductAgreement> findByCourseIdAndUserId(Long courseId, Long userId);
+    Optional<ConductAgreement> findByCourseIdAndUserId(Long courseId, Long userId);
 
     /**
      * Delete all users' agreements to a course's code of conduct.

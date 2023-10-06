@@ -4,20 +4,20 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * The primary key for CourseCodeOfConductAgreement
+ * The primary key for ConductAgreement
  */
-public class CourseCodeOfConductAgreementId implements Serializable {
+public class ConductAgreementId implements Serializable {
 
     private Long course;
 
     private Long user;
 
-    CourseCodeOfConductAgreementId(Long course, Long user) {
+    ConductAgreementId(Long course, Long user) {
         this.course = course;
         this.user = user;
     }
 
-    CourseCodeOfConductAgreementId() {
+    ConductAgreementId() {
         // Needed for JPA
     }
 
@@ -43,7 +43,7 @@ public class CourseCodeOfConductAgreementId implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        CourseCodeOfConductAgreementId that = (CourseCodeOfConductAgreementId) o;
+        ConductAgreementId that = (ConductAgreementId) o;
         return course.equals(that.course) && user.equals(that.user);
     }
 

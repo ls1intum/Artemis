@@ -10,10 +10,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * A user's agreement of a course's code of conduct.
  */
 @Entity
-@Table(name = "course_code_of_conduct_agreement")
+@Table(name = "conduct_agreement")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@IdClass(CourseCodeOfConductAgreementId.class)
-public class CourseCodeOfConductAgreement {
+@IdClass(ConductAgreementId.class)
+public class ConductAgreement {
 
     @Id
     @ManyToOne
@@ -49,7 +49,7 @@ public class CourseCodeOfConductAgreement {
             return false;
         if (!super.equals(o))
             return false;
-        CourseCodeOfConductAgreement that = (CourseCodeOfConductAgreement) o;
+        ConductAgreement that = (ConductAgreement) o;
         return course.equals(that.course) && user.equals(that.user);
     }
 

@@ -2,21 +2,21 @@ package de.tum.in.www1.artemis.service;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ConductAgreement;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.CourseCodeOfConductAgreement;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseCodeOfConductAgreementRepository;
+import de.tum.in.www1.artemis.repository.ConductAgreementRepository;
 
 /**
  * Service Implementation for managing a user's agreement to a course's code of conduct.
  */
 @Service
-public class CourseCodeOfConductAgreementService {
+public class ConductAgreementService {
 
-    private final CourseCodeOfConductAgreementRepository courseCodeOfConductAgreementRepository;
+    private final ConductAgreementRepository conductAgreementRepository;
 
-    CourseCodeOfConductAgreementService(CourseCodeOfConductAgreementRepository courseCodeOfConductAgreementRepository) {
-        this.courseCodeOfConductAgreementRepository = courseCodeOfConductAgreementRepository;
+    ConductAgreementService(ConductAgreementRepository conductAgreementRepository) {
+        this.conductAgreementRepository = conductAgreementRepository;
     }
 
     /**
@@ -27,7 +27,7 @@ public class CourseCodeOfConductAgreementService {
      * @return if the user agreed to the course's code of conduct
      */
     public boolean fetchUserAgreesToCodeOfConductInCourse(User user, Course course) {
-        return courseCodeOfConductAgreementRepository.findByCourseIdAndUserId(course.getId(), user.getId()).isPresent();
+        return conductAgreementRepository.findByCourseIdAndUserId(course.getId(), user.getId()).isPresent();
     }
 
     /**
@@ -37,10 +37,10 @@ public class CourseCodeOfConductAgreementService {
      * @param course the code of conduct's course
      */
     public void setUserAgreesToCodeOfConductInCourse(User user, Course course) {
-        CourseCodeOfConductAgreement courseCodeOfConductAgreement = new CourseCodeOfConductAgreement();
-        courseCodeOfConductAgreement.setCourse(course);
-        courseCodeOfConductAgreement.setUser(user);
-        courseCodeOfConductAgreementRepository.save(courseCodeOfConductAgreement);
+        ConductAgreement conductAgreement = new ConductAgreement();
+        conductAgreement.setCourse(course);
+        conductAgreement.setUser(user);
+        conductAgreementRepository.save(conductAgreement);
     }
 
     /**
@@ -49,6 +49,6 @@ public class CourseCodeOfConductAgreementService {
      * @param course the code of conduct's course
      */
     public void resetUsersAgreeToCodeOfConductInCourse(Course course) {
-        courseCodeOfConductAgreementRepository.deleteByCourseId(course.getId());
+        conductAgreementRepository.deleteByCourseId(course.getId());
     }
 }

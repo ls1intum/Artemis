@@ -105,7 +105,7 @@ public class CourseResource {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    private final CourseCodeOfConductAgreementService courseCodeOfConductAgreementService;
+    private final ConductAgreementService conductAgreementService;
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
@@ -118,7 +118,7 @@ public class CourseResource {
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            CourseCodeOfConductAgreementService courseCodeOfConductAgreementService) {
+            ConductAgreementService conductAgreementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -138,7 +138,7 @@ public class CourseResource {
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
-        this.courseCodeOfConductAgreementService = courseCodeOfConductAgreementService;
+        this.conductAgreementService = conductAgreementService;
     }
 
     /**
@@ -238,7 +238,7 @@ public class CourseResource {
         }
 
         if (!Objects.equals(courseUpdate.getCourseInformationSharingMessagingCodeOfConduct(), existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
-            courseCodeOfConductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
+            conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
         courseUpdate.setId(courseId); // Don't persist a wrong ID
