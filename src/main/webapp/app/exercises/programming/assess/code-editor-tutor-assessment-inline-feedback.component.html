@@ -1,12 +1,13 @@
 <div
     id="code-editor-inline-feedback-{{ codeLine }}"
-    class="alert p-1 border rounded"
+    class="alert p-1 mb-1 border rounded"
     [style.max-width]="'780px'"
     [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
     [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
     [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined"
     [class.alert-secondary]="readOnly && feedback.isSubsequent"
 >
+    <jhi-feedback-suggestion-badge *ngIf="Feedback.isFeedbackSuggestion(feedback) && !readOnly" [feedback]="feedback"></jhi-feedback-suggestion-badge>
     <div *ngIf="!viewOnly; else readOnlyFeedback" class="m-2" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
         <div class="row align-items-start">
             <div class="form-group col-8 m-0">
@@ -20,7 +21,7 @@
                 <label jhiTranslate="artemisApp.exercise.score"></label>
             </div>
             <div class="form-group col-1 m-0" *ngIf="feedback.gradingInstruction!">
-                <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
+                <jhi-grading-instruction-link-icon [feedback]="feedback"></jhi-grading-instruction-link-icon>
             </div>
         </div>
         <div class="row align-items-start">

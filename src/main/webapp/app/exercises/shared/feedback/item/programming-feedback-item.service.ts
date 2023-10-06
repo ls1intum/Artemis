@@ -1,6 +1,14 @@
 import { FeedbackItemService } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { Injectable } from '@angular/core';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+} from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/programming-feedback-groups';
@@ -39,6 +47,8 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             return this.createSubmissionPolicyFeedbackItem(feedback);
         } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
             return this.createScaFeedbackItem(feedback, showTestDetails);
+        } else if (Feedback.isFeedbackSuggestion(feedback)) {
+            return this.createFeedbackSuggestionItem(feedback, showTestDetails);
         } else if (feedback.type === FeedbackType.AUTOMATIC) {
             return this.createAutomaticFeedbackItem(feedback, showTestDetails);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
@@ -84,6 +94,32 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
+            feedbackReference: feedback,
+        };
+    }
+
+    /**
+     * Creates a feedback item from a feedback suggestion.
+     * @param feedback The feedback suggestion.
+     * @param showTestDetails
+     */
+    private createFeedbackSuggestionItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        // A feedback suggestion should look like a manual feedback
+        let titleWithoutIdentifier = feedback.text ?? '';
+        // Remove prefix if it exists
+        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (titleWithoutIdentifier.startsWith(prefix)) {
+                titleWithoutIdentifier = titleWithoutIdentifier.substring(prefix.length);
+                break;
+            }
+        }
+        return {
+            type: 'Reviewer', // Treat it like normal feedback from the TA
+            name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
+            title: titleWithoutIdentifier,
+            text: feedback.detailText,
+            positive: feedback.positive,
+            credits: feedback.credits,
             feedbackReference: feedback,
         };
     }
