@@ -221,25 +221,25 @@ export class ResultComponent implements OnInit, OnChanges {
         }
 
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
-        const componentInstance: FeedbackComponent = modalRef.componentInstance;
+        const modalComponentInstance: FeedbackComponent = modalRef.componentInstance;
 
-        componentInstance.exercise = this.exercise;
-        componentInstance.result = result;
+        modalComponentInstance.exercise = this.exercise;
+        modalComponentInstance.result = result;
         if (feedbackComponentParameters.exerciseType) {
-            componentInstance.exerciseType = feedbackComponentParameters.exerciseType;
+            modalComponentInstance.exerciseType = feedbackComponentParameters.exerciseType;
         }
         if (feedbackComponentParameters.showScoreChart) {
-            componentInstance.showScoreChart = feedbackComponentParameters.showScoreChart;
+            modalComponentInstance.showScoreChart = feedbackComponentParameters.showScoreChart;
         }
         if (feedbackComponentParameters.messageKey) {
-            componentInstance.messageKey = feedbackComponentParameters.messageKey;
+            modalComponentInstance.messageKey = feedbackComponentParameters.messageKey;
         }
         if (feedbackComponentParameters.latestDueDate) {
             this.latestDueDate = feedbackComponentParameters.latestDueDate;
-            componentInstance.latestDueDate = feedbackComponentParameters.latestDueDate;
+            modalComponentInstance.latestDueDate = feedbackComponentParameters.latestDueDate;
         }
         if (feedbackComponentParameters.showMissingAutomaticFeedbackInformation) {
-            componentInstance.showMissingAutomaticFeedbackInformation = feedbackComponentParameters.showMissingAutomaticFeedbackInformation;
+            modalComponentInstance.showMissingAutomaticFeedbackInformation = feedbackComponentParameters.showMissingAutomaticFeedbackInformation;
         }
     }
 

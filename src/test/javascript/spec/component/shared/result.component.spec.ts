@@ -9,13 +9,16 @@ import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import * as utils from 'app/exercises/shared/feedback/feedback.utils';
+import { FeedbackComponentPreparedParams } from 'app/exercises/shared/feedback/feedback.utils';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -43,6 +46,16 @@ const mockResult: Result = {
         },
     ],
     participation: mockParticipation,
+};
+
+const preparedFeedback: FeedbackComponentPreparedParams = {
+    exercise: mockExercise,
+    result: mockResult,
+    exerciseType: ExerciseType.PROGRAMMING,
+    showScoreChart: true,
+    messageKey: 'artemisApp.result.notLatestSubmission',
+    latestDueDate: dayjs().subtract(1, 'hours'),
+    showMissingAutomaticFeedbackInformation: true,
 };
 
 describe('ResultComponent', () => {
@@ -111,10 +124,15 @@ describe('ResultComponent', () => {
             expect(button).toBeTruthy();
         });
 
-        it('should display modal onClick', () => {
-            const showDetailsSpy = jest.spyOn(comp, 'showDetails');
-            const openModalSpy = jest.spyOn(modalService, 'open');
+        it('should display modal onClick and initialize results modal', () => {
+            const mockModalRef: NgbModalRef = { componentInstance: {} } as NgbModalRef;
+            const modalComponentInstance: FeedbackComponent = mockModalRef.componentInstance;
 
+            const showDetailsSpy = jest.spyOn(comp, 'showDetails');
+            const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const prepareFeedbackSpy = jest.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
+
+            comp.exercise = preparedFeedback.exercise;
             comp.result = mockResult;
             comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
 
@@ -124,8 +142,17 @@ describe('ResultComponent', () => {
             expect(button).toBeTruthy();
 
             button.dispatchEvent(new Event('click'));
+
             expect(showDetailsSpy).toHaveBeenCalled();
             expect(openModalSpy).toHaveBeenCalled();
+            expect(prepareFeedbackSpy).toHaveBeenCalledOnce();
+            expect(modalComponentInstance.exercise).toEqual(preparedFeedback.exercise);
+            expect(modalComponentInstance.result).toEqual(preparedFeedback.result);
+            expect(modalComponentInstance.exerciseType).toEqual(preparedFeedback.exerciseType);
+            expect(modalComponentInstance.showScoreChart).toEqual(preparedFeedback.showScoreChart);
+            expect(modalComponentInstance.messageKey).toEqual(preparedFeedback.messageKey);
+            expect(modalComponentInstance.latestDueDate).toEqual(preparedFeedback.latestDueDate);
+            expect(modalComponentInstance.showMissingAutomaticFeedbackInformation).toEqual(preparedFeedback.showMissingAutomaticFeedbackInformation);
         });
     });
 });
