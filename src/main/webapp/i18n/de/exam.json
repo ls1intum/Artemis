@@ -693,7 +693,7 @@
             },
             "dateChange": {
                 "title": "Bestätige Änderung der Prüfungszeit",
-                "message": "Das Ändern der Arbeitszeit wird eine Benachrichtigung an alle Studierenden senden und ihren Arbeitsablauf während der Klausur stören."
+                "message": "Die Prüfung wird gerade abgehalten. Wenn Sie die Zeiten einer aktiven Prüfung ändern, werden alle aktiven Studenten über die Änderung der Dauer informiert!"
             }
         },
         "studentExamDetail": {
