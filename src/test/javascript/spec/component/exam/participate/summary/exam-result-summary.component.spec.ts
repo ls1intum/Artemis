@@ -27,7 +27,7 @@ import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
-import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
+import { ExamResultSummaryComponent, ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
@@ -52,6 +52,8 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { Course } from 'app/entities/course.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -163,6 +165,7 @@ function sharedSetup(url: string[]) {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
             ],
             providers: [
                 {
@@ -184,6 +187,7 @@ function sharedSetup(url: string[]) {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -503,6 +507,24 @@ describe('ExamResultSummaryComponent', () => {
             expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_SUMMARY_RESULT_OVERVIEW_ID);
             expect(scrollIntoViewSpy).toHaveBeenCalled();
             expect(scrollToSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('toggleShowSampleSolution', () => {
+        it('should be called on button click', () => {
+            component.exerciseInfos = {
+                1: { isCollapsed: false, displayExampleSolution: true } as ResultSummaryExerciseInfo,
+            };
+            exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
+            const toggleShowSampleSolutionSpy = jest.spyOn(component, 'toggleShowSampleSolution');
+
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.nativeElement.querySelector(`#show-sample-solution-button-${textExercise.id}`);
+            expect(button).toBeTruthy();
+
+            button.click();
+            expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
     });
 });

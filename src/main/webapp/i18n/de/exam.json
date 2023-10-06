@@ -159,7 +159,9 @@
                 "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
             },
             "error": {
-                "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
+                "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden.",
+                "cannotShowExampleSolution": "Beispiellösung wurde nicht gefunden",
+                "cannotDisplayExerciseDetails": "Aufgabe {{ exerciseGroupTitle }} kann nicht angezeigt werden"
             },
             "problemStatementUpdate": {
                 "showDiff": "Zeige Unterschiede",

@@ -159,7 +159,9 @@
                 "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
-                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."
+                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams.",
+                "cannotShowExampleSolution": "Example solution could not be found",
+                "cannotDisplayExerciseDetails": "Exercise {{ exerciseGroupTitle }} cannot be displayed properly"
             },
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",

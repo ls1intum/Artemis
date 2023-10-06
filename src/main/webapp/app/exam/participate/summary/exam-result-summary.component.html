@@ -62,6 +62,7 @@
                             You are viewing the example solution.
                         </span>
                         <button
+                            [id]="'show-sample-solution-button-' + exercise.id"
                             *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING"
                             class="btn float-end"
                             [class]="exerciseInfos[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"
