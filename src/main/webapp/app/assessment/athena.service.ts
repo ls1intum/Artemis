@@ -85,6 +85,14 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:" prefix
      */
     public getProgrammingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
+        const feedback = new Feedback();
+        feedback.credits = -1;
+        feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + 'Test';
+        feedback.detailText = 'Test Suggestion';
+        feedback.reference = 'file:src/de/athena/BubbleSort.java_line:1';
+        feedback.gradingInstruction = undefined;
+        feedback.type = FeedbackType.AUTOMATIC;
+        return of([feedback]);
         return this.getFeedbackSuggestions<ProgrammingFeedbackSuggestion>(exercise, submissionId).pipe(
             map((suggestions) => {
                 return suggestions.map((suggestion) => {

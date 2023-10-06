@@ -21,6 +21,11 @@
                 "accepted": "Automatisch erstellter Vorschlag",
                 "adapted": "Automatisch erstellter Vorschlag, bearbeitet"
             },
+            "suggestionPendingDialog": {
+                "title": "Ausstehende Feedback-Vorschläge",
+                "description": "Es sind ausstehende Feedback-Vorschläge verfügbar. Diese werden beim Absenden verworfen. Wirklich absenden?",
+                "discardAndSubmit": "Vorschläge verwerfen & absenden"
+            },
             "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."

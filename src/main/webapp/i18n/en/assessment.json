@@ -21,6 +21,11 @@
                 "accepted": "Automatically generated feedback",
                 "adapted": "Automatically generated feedback, manually adapted"
             },
+            "suggestionPendingDialog": {
+                "title": "Pending Feedback Suggestions",
+                "description": "There are pending feedback suggestions available. They will be discarded when submitting. Do you really want to submit?",
+                "discardAndSubmit": "Discard suggestions & submit"
+            },
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."

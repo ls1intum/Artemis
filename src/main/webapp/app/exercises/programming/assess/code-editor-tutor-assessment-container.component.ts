@@ -39,6 +39,8 @@ import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/co
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AthenaService } from 'app/assessment/athena.service';
+import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -132,6 +134,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private repositoryFileService: CodeEditorRepositoryFileService,
         private programmingExerciseService: ProgrammingExerciseService,
         private profileService: ProfileService,
+        private modalService: NgbModal,
         private athenaService: AthenaService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -338,9 +341,28 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
+     * Show confirmation dialog for discarding suggestions before submitting (if there are any)
+     * @return true if the user confirmed the discard (=> continue to submit), false otherwise
+     */
+    async discardPendingSubmissionsWithConfirmation(): Promise<boolean> {
+        if (this.feedbackSuggestions.length > 0) {
+            const modalRef = this.modalService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, { size: 'lg', backdrop: 'static', animation: true });
+            const suggestionsDiscardConfirmed: boolean = await firstValueFrom(modalRef.closed);
+            if (!suggestionsDiscardConfirmed) {
+                return false;
+            }
+            this.feedbackSuggestions = []; // Discard all pending suggestions
+        }
+        return true;
+    }
+
+    /**
      * Submit the assessment
      */
-    submit(): void {
+    async submit(): Promise<void> {
+        if (!(await this.discardPendingSubmissionsWithConfirmation())) {
+            return;
+        }
         this.submitBusy = true;
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
         this.assessmentsAreValid = false;
