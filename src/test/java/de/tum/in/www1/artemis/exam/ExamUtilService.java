@@ -105,10 +105,10 @@ public class ExamUtilService {
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
      *
-     * @param user    The user who should be registered for the exam
-     * @param visible The visible date of the exam
-     * @param start   The start date of the exam
-     * @param end     The end date of the exam
+     * @param user    The User who should be registered for the Exam
+     * @param visible The visible date of the Exam
+     * @param start   The start date of the Exam
+     * @param end     The end date of the Exam
      * @return The newly created course
      */
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
@@ -123,7 +123,7 @@ public class ExamUtilService {
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises. Sets the visible (now - 1 min), start (now) and end
      * (now + 1 min) date with default values.
      *
-     * @param user The user who should be registered for the exam
+     * @param user The User who should be registered for the Exam
      * @return The newly created course
      */
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user) {
@@ -138,7 +138,7 @@ public class ExamUtilService {
      * Creates and saves a StudentExam for a test run.
      *
      * @param exam                        The exam for which the test run should be created
-     * @param instructor                  The user who should be registered for the test run
+     * @param instructor                  The User who should be registered for the test run
      * @param exerciseGroupsWithExercises The ExerciseGroups with Exercises that should be added to the test run
      * @return The newly created StudentExam
      */
@@ -153,7 +153,7 @@ public class ExamUtilService {
      * Creates and saves a StudentExam and StudentParticipations for a test run.
      *
      * @param exam       The exam for which the test run should be created
-     * @param instructor The user who should be registered for the test run
+     * @param instructor The User who should be registered for the test run
      * @param exercises  The Exercises that should be added to the test run
      * @return The newly created StudentExam
      */
@@ -192,7 +192,7 @@ public class ExamUtilService {
     /**
      * Creates and saves an Exam with one mandatory ExerciseGroup with three TextExercises.
      *
-     * @param course The course to which the exam should be added
+     * @param course The Course to which the Exam should be added
      * @return The newly created Exam
      */
     public Exam setupSimpleExamWithExerciseGroupExercise(Course course) {
@@ -218,12 +218,12 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves an Exam with three mandatory and two optional ExerciseGroups. Each ExerciseGroup contains three TextExercises. Registers students for the exam given the
+     * Creates and saves an Exam with three mandatory and two optional ExerciseGroups. Each ExerciseGroup contains three TextExercises. Registers students for the Exam given the
      * userPrefix and numberOfStudents.
      *
      * @param userPrefix       The prefix of the users
-     * @param course           The course to which the exam should be added
-     * @param numberOfStudents The number of students that should be registered for the exam
+     * @param course           The Course to which the Exam should be added
+     * @param numberOfStudents The number of students that should be registered for the Exam
      * @return The newly created Exam
      */
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course, int numberOfStudents) {
@@ -277,11 +277,11 @@ public class ExamUtilService {
     }
 
     /**
-     * Saves the updated Exam after registering new Users.
+     * Saves and updates the Exam after registering new Users.
      *
      * @param exam             The exam for which the users should be registered
      * @param userPrefix       The prefix of the users
-     * @param numberOfStudents The number of students that should be registered for the exam
+     * @param numberOfStudents The number of students that should be registered for the Exam
      * @return The updated Exam
      */
     public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int numberOfStudents) {
@@ -313,7 +313,7 @@ public class ExamUtilService {
     /**
      * Creates and saves an Exam without ExerciseGroups and Exercises.
      *
-     * @param course The course to which the exam should be added
+     * @param course The Course to which the Exam should be added
      * @return The newly created Exam
      */
     public Exam addExam(Course course) {
@@ -324,7 +324,7 @@ public class ExamUtilService {
     /**
      * Creates and saves a test Exam without ExerciseGroups and Exercises.
      *
-     * @param course The course to which the exam should be added
+     * @param course The Course to which the Exam should be added
      * @return The newly created Exam
      */
     public Exam addTestExam(Course course) {
@@ -333,10 +333,10 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves a test Exam without Exercises and registers the given user to the exam.
+     * Creates and saves a test Exam without Exercises and registers the given user to the Exam.
      *
-     * @param course The course to which the exam should be added
-     * @param user   The user who should be registered for the exam
+     * @param course The Course to which the Exam should be added
+     * @param user   The User who should be registered for the Exam
      * @return The newly created Exam
      */
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
@@ -354,12 +354,12 @@ public class ExamUtilService {
     /**
      * Creates and saves an Exam with a registered User and an optional ExerciseGroup.
      *
-     * @param course        The course to which the exam should be added
-     * @param user          The user who should be registered for the exam
-     * @param exerciseGroup True, if an empty ExerciseGroup should be added to the exam
-     * @param visibleDate   The visible date of the exam
-     * @param startDate     The start date of the exam
-     * @param endDate       The end date of the exam
+     * @param course        The Course to which the Exam should be added
+     * @param user          The User who should be registered for the Exam
+     * @param exerciseGroup True, if an empty ExerciseGroup should be added to the Exam
+     * @param visibleDate   The visible date of the Exam
+     * @param startDate     The start date of the Exam
+     * @param endDate       The end date of the Exam
      * @return The newly created Exam
      */
     public Exam addExamWithUser(Course course, User user, boolean exerciseGroup, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
@@ -382,12 +382,30 @@ public class ExamUtilService {
         return exam;
     }
 
-    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime resultsPublicationDate) {
+    /**
+     * Creates and saves an Exam with a registered User, with a results publication date and without an ExerciseGroup.
+     *
+     * @param course             The Course to which the Exam should be added
+     * @param user               The User who should be registered for the Exam
+     * @param visibleDate        The visible date of the Exam
+     * @param startDate          The start date of the Exam
+     * @param endDate            The end date of the Exam
+     * @param publishResultsDate The results publication date of the Exam
+     * @return The newly created Exam
+     */
+    public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultsDate) {
         Exam exam = addExamWithUser(course, user, false, visibleDate, startDate, endDate);
-        exam.setPublishResultsDate(resultsPublicationDate);
+        exam.setPublishResultsDate(publishResultsDate);
         return examRepository.save(exam);
     }
 
+    /**
+     * Creates and saves an Exam with a registered User and an ExerciseGroup. The Exam is visible, starts in 10 minutes, and ends in 60 minutes.
+     *
+     * @param course    The Course to which the Exam should be added
+     * @param mandatory True, if the ExerciseGroup should be mandatory
+     * @return The newly created Exam
+     */
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ExamFactory.generateExam(course);
         ExamFactory.generateExerciseGroup(mandatory, exam);
@@ -395,6 +413,13 @@ public class ExamUtilService {
         return exam;
     }
 
+    /**
+     * Creates and saves a test Exam with a registered User and an ExerciseGroup. The Exam is visible, starts in 10 minutes, and ends in 80 minutes.
+     *
+     * @param course    The Course to which the Exam should be added
+     * @param mandatory True, if the ExerciseGroup should be mandatory
+     * @return The newly created Exam
+     */
     public Exam addTestExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ExamFactory.generateTestExam(course);
         ExamFactory.generateExerciseGroup(mandatory, exam);
@@ -402,6 +427,15 @@ public class ExamUtilService {
         return exam;
     }
 
+    /**
+     * Creates and saves an Exam without ExerciseGroups and Exercises.
+     *
+     * @param course      The Course to which the Exam should be added
+     * @param visibleDate The visible date of the Exam
+     * @param startDate   The start date of the Exam
+     * @param endDate     The end date of the Exam
+     * @return The newly created Exam
+     */
     public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ExamFactory.generateExam(course);
         exam.setVisibleDate(visibleDate);
@@ -413,24 +447,48 @@ public class ExamUtilService {
         return exam;
     }
 
-    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultDate) {
+    /**
+     * Creates and saves an Exam without ExerciseGroups and Exercises.
+     *
+     * @param course             The Course to which the Exam should be added
+     * @param visibleDate        The visible date of the Exam
+     * @param startDate          The start date of the Exam
+     * @param endDate            The end date of the Exam
+     * @param publishResultsDate The results publication date of the Exam
+     * @return The newly created Exam
+     */
+    public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime publishResultsDate) {
         Exam exam = ExamFactory.generateExam(course);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
-        exam.setPublishResultsDate(publishResultDate);
+        exam.setPublishResultsDate(publishResultsDate);
         exam.setWorkingTime(exam.getDuration());
         exam.setGracePeriod(180);
         exam = examRepository.save(exam);
         return exam;
     }
 
+    /**
+     * Creates and saves a Channel for the given Exam.
+     *
+     * @param exam        The Exam for which the Channel should be created
+     * @param channelName The channel name
+     * @return The newly created Channel
+     */
     public Channel addExamChannel(Exam exam, String channelName) {
         Channel channel = ConversationFactory.generatePublicChannel(exam.getCourse(), channelName, true);
         channel.setExam(exam);
         return conversationRepository.save(channel);
     }
 
+    /**
+     * Creates and saves an Exam and corresponding StudentExam with a registered User. The Exam started 1 hour ago and ends in 1 hour.
+     *
+     * @param course The Course to which the Exam should be added
+     * @param user   The User who should be registered for the Exam
+     * @return The newly created Exam
+     */
     public Exam addActiveExamWithRegisteredUser(Course course, User user) {
         Exam exam = ExamFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -453,6 +511,13 @@ public class ExamUtilService {
         return exam;
     }
 
+    /**
+     * Creates and saves an Exam with a registered User and without a StudentExam. The Exam started 1 hour ago and ends in 1 hour.
+     *
+     * @param course The Course to which the Exam should be added
+     * @param user   The User who should be registered for the Exam
+     * @return The newly created Exam
+     */
     public Exam addActiveTestExamWithRegisteredUserWithoutStudentExam(Course course, User user) {
         Exam exam = ExamFactory.generateTestExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -468,6 +533,12 @@ public class ExamUtilService {
         return exam;
     }
 
+    /**
+     * Creates and saves an Exam with five ExerciseGroups (0: modelling, 1: text, 2: file upload, 3: quiz, 4: empty)
+     *
+     * @param course The Course to which the Exam should be added
+     * @return The newly created Exam
+     */
     public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
         Exam exam = addExam(course);
         for (int i = 0; i <= 4; i++) {
@@ -500,16 +571,36 @@ public class ExamUtilService {
         return exam;
     }
 
+    /**
+     * Creates and saves a StudentExam for the given Exam.
+     *
+     * @param exam The Exam for which the StudentExam should be created
+     * @return The newly created StudentExam
+     */
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
 
-    public StudentExam addStudentExamWithUser(Exam exam, String user) {
-        return addStudentExamWithUser(exam, userRepo.findOneByLogin(user).orElseThrow());
+    /**
+     * Creates and saves a StudentExam for the given Exam and the user's login.
+     *
+     * @param exam      The Exam for which the StudentExam should be created
+     * @param userLogin The login of the User for which the StudentExam should be created
+     * @return The newly created StudentExam
+     */
+    public StudentExam addStudentExamWithUser(Exam exam, String userLogin) {
+        return addStudentExamWithUser(exam, userRepo.findOneByLogin(userLogin).orElseThrow());
     }
 
+    /**
+     * Creates and saves a StudentExam for the given Exam and User.
+     *
+     * @param exam The Exam for which the StudentExam should be created
+     * @param user The User for which the StudentExam should be created
+     * @return The newly created StudentExam
+     */
     public StudentExam addStudentExamWithUser(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
@@ -519,15 +610,15 @@ public class ExamUtilService {
     }
 
     /**
-     * Adds an exam session with the given parameters to the given student exam, associates the exam session with the given student exam and saves both entities in the database.
+     * Creates and saves an ExamSession with the given parameters and adds it to the given student exam.
      *
-     * @param studentExam        the student exam to which the exam session should be added
-     * @param sessionToken       the session token of the exam session
-     * @param ipAddress          the IP address of the exam session
-     * @param browserFingerprint the browser fingerprint hash of the exam session
-     * @param instanceId         the instance id of the exam session
-     * @param userAgent          the user agent of the exam session
-     * @return the exam session that was added to the student exam
+     * @param studentExam        The StudentExam to which the ExamSession should be added
+     * @param sessionToken       The session token of the ExamSession
+     * @param ipAddress          The IP address of the ExamSession
+     * @param browserFingerprint The browser fingerprint hash of the ExamSession
+     * @param instanceId         The instance id of the ExamSession
+     * @param userAgent          The user agent of the ExamSession
+     * @return The ExamSession that was added to the student exam
      */
     public ExamSession addExamSessionToStudentExam(StudentExam studentExam, String sessionToken, String ipAddress, String browserFingerprint, String instanceId, String userAgent) {
         ExamSession examSession = new ExamSession();
@@ -544,17 +635,37 @@ public class ExamUtilService {
         return examSession;
     }
 
-    public StudentExam addStudentExamForActiveExamWithUser(String user) {
+    /**
+     * Creates and saves a StudentExam with a registered User. Also creates and saves an empty course and an Exam that started 1 hour ago and ends in 1 hour.
+     *
+     * @param userLogin The login of the User for which the StudentExam should be created
+     * @return The newly created StudentExam
+     */
+    public StudentExam addStudentExamForActiveExamWithUser(String userLogin) {
         Course course = courseUtilService.addEmptyCourse();
-        User studentUser = userUtilService.getUserByLogin(user);
+        User studentUser = userUtilService.getUserByLogin(userLogin);
         Exam exam = addActiveTestExamWithRegisteredUserWithoutStudentExam(course, studentUser);
         return addStudentExamWithUser(exam, studentUser, 0);
     }
 
+    /**
+     * Creates and saves a StudentExam with a registered User.
+     *
+     * @param exam      The Exam for which the StudentExam should be created
+     * @param userLogin The login of the User for which the StudentExam should be created
+     * @return The newly created StudentExam
+     */
     public StudentExam addStudentExamForTestExam(Exam exam, String userLogin) {
         return addStudentExamForTestExam(exam, userUtilService.getUserByLogin(userLogin));
     }
 
+    /**
+     * Creates and saves a StudentExam with a registered User.
+     *
+     * @param exam The Exam for which the StudentExam should be created
+     * @param user The User for which the StudentExam should be created
+     * @return The newly created StudentExam
+     */
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ExamFactory.generateStudentExamForTestExam(exam);
         studentExam.setUser(user);
@@ -562,6 +673,14 @@ public class ExamUtilService {
         return studentExam;
     }
 
+    /**
+     * Creates and saves a StudentExam with a registered User and additional working time.
+     *
+     * @param exam                  The Exam for which the StudentExam should be created
+     * @param user                  The User for which the StudentExam should be created
+     * @param additionalWorkingTime The additional working time for the StudentExam in seconds
+     * @return The newly created StudentExam
+     */
     public StudentExam addStudentExamWithUser(Exam exam, User user, int additionalWorkingTime) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
@@ -570,10 +689,27 @@ public class ExamUtilService {
         return studentExam;
     }
 
+    /**
+     * Creates and saves ExerciseGroups and Exercises for the given Exam.
+     * (Groups 0: text, 1: quiz, 2: file upload, 3: modeling, 4: bonus text, 5: not included text, 7 (optional): programming).
+     *
+     * @param exam                    The Exam for which the ExerciseGroups and Exercises should be created
+     * @param withProgrammingExercise True, if a ProgrammingExercise should be added
+     * @return The updated Exam
+     */
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         return addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, false);
     }
 
+    /**
+     * Creates and saves ExerciseGroups and Exercises for the given Exam
+     * (Groups 0: text, 1: quiz, 2: file upload, 3: modeling, 4: bonus text, 5: not included text, 7 (optional): programming).
+     *
+     * @param exam                     The Exam for which the ExerciseGroups and Exercises should be created
+     * @param withProgrammingExercise  True, if a ProgrammingExercise should be added
+     * @param withAllQuizQuestionTypes True, if all QuizQuestionTypes should be added to the QuizExercise
+     * @return The updated Exam
+     */
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
         ExamFactory.generateExerciseGroup(true, exam); // text
         ExamFactory.generateExerciseGroup(true, exam); // quiz
@@ -651,12 +787,13 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves a text, modeling, optional programming and optional quiz exercise and adds them to the exam.
+     * Creates and saves ExerciseGroups and Exercises for the given Exam.
+     * (Groups 0: text, 1: modeling, 2 (optional): programming, 3 (optional): quiz).
      *
-     * @param initialExam             the exam to which the exercises should be added
-     * @param withProgrammingExercise whether a programming exercise should be added
-     * @param withQuizExercise        whether a quiz exercise should be added
-     * @return the exam with the added exercises
+     * @param initialExam             The Exam for which the ExerciseGroups and Exercises should be created
+     * @param withProgrammingExercise True, if a ProgrammingExercise should be added
+     * @param withQuizExercise        True, if a QuizExercise should be added
+     * @return The updated Exam
      */
     public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ExamFactory.generateExerciseGroup(true, initialExam); // text
@@ -706,10 +843,10 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves an active course with an exam and an exercise group.
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course with default group names.
      *
-     * @param mandatory true if the exercise group is mandatory
-     * @return the created exercise group
+     * @param mandatory True, if the ExerciseGroup should be mandatory
+     * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -738,10 +875,10 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves an active course with an exam and an exercise group. The exam has a review date [now; now + 60min].
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course. The exam has a review date [now; now + 60min].
      *
-     * @param mandatory true if the exercise group is mandatory
-     * @return the created exercise group
+     * @param mandatory True, if the ExerciseGroup should be mandatory
+     * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -770,10 +907,10 @@ public class ExamUtilService {
     }
 
     /**
-     * creates and saves an exam exercise group in a course that is currently active.
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course.
      *
-     * @param mandatory if the exerciseGroup is mandatory
-     * @return exercise group created
+     * @param mandatory True, if the ExerciseGroup should be mandatory
+     * @return The newly created ExerciseGroup
      */
     public ExerciseGroup createAndSaveActiveExerciseGroup(boolean mandatory) {
         Course course = courseUtilService.createAndSaveCourse(1L, pastTimestamp, futureFutureTimestamp, Set.of());
@@ -785,12 +922,12 @@ public class ExamUtilService {
     }
 
     /**
-     * sets the visible, start and end date of the exam. The working time gets set accordingly.
+     * Sets the visible, start and end date of the Exam. The working time gets set accordingly. Does not save the changes to the database.
      *
-     * @param exam        exam that gets the dates set
-     * @param visibleDate new visible date of the exam
-     * @param startDate   new start date of the exam
-     * @param endDate     new end date of the exam
+     * @param exam        The Exam that gets the dates set
+     * @param visibleDate The new visible date of the Exam
+     * @param startDate   The new start date of the Exam
+     * @param endDate     The new end date of the Exam
      */
     public void setVisibleStartAndEndDateOfExam(Exam exam, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         exam.setVisibleDate(visibleDate);
@@ -799,6 +936,16 @@ public class ExamUtilService {
         exam.setWorkingTime(exam.getDuration());
     }
 
+    /**
+     * Creates and saves StudentParticipations and Submissions for the given Exam. Expects the exam to have six ExerciseGroups
+     * (Expected Groups 0: text, 1: quiz, 2: file upload, 3: modeling, 4: any, 5: any, 6: programming).
+     *
+     * @param exam          The Exam for which the StudentParticipations and Submissions should be created
+     * @param studentExam   The StudentExam for which the StudentParticipations and Submissions should be created
+     * @param validModel    The valid model for the modeling exercise
+     * @param localRepoPath The local repository path for the programming exercise
+     * @return The updated StudentExam
+     */
     public StudentExam addExercisesWithParticipationsAndSubmissionsToStudentExam(Exam exam, StudentExam studentExam, String validModel, URI localRepoPath) {
         var exerciseGroups = exam.getExerciseGroups();
         // text exercise
@@ -889,10 +1036,10 @@ public class ExamUtilService {
     }
 
     /**
-     * gets the number of programming exercises in the exam
+     * Gets the number of programming exercises in the Exam
      *
-     * @param examId id of the exam to be searched for programming exercises
-     * @return number of programming exercises in the exams
+     * @param examId The id of the Exam to be searched for programming exercises
+     * @return The number of programming exercises in the Exam
      */
     public int getNumberOfProgrammingExercises(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);

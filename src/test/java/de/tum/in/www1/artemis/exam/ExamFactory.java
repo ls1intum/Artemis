@@ -56,10 +56,10 @@ public class ExamFactory {
      * Creates an Exam without a Channel
      *
      * @param course      The associated course
-     * @param visibleDate The visible date of the exam
-     * @param startDate   The start date of the exam
-     * @param endDate     The end date of the exam
-     * @param testExam    True, if the exam is a test exam
+     * @param visibleDate The visible date of the Exam
+     * @param startDate   The start date of the Exam
+     * @param endDate     The end date of the Exam
+     * @param testExam    True, if the Exam is a test exam
      * @return The newly created Exam
      */
     public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
@@ -70,10 +70,10 @@ public class ExamFactory {
      * Creates an Exam with a Channel
      *
      * @param course      The associated course
-     * @param visibleDate The visible date of the exam
-     * @param startDate   The start date of the exam
-     * @param endDate     The end date of the exam
-     * @param testExam    True, if the exam is a test exam
+     * @param visibleDate The visible date of the Exam
+     * @param startDate   The start date of the Exam
+     * @param endDate     The end date of the Exam
+     * @param testExam    True, if the Exam is a test exam
      * @param channelName The channel name
      * @return The newly created Exam
      */
