@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 
 class ConductAgreementServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "coursecodeofconductservice";
+    private static final String TEST_PREFIX = "conductagreementservice";
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 

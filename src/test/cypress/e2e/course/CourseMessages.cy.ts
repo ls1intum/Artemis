@@ -35,7 +35,6 @@ describe('Course messages', () => {
         describe('Create channel', () => {
             it('check for pre-created channels', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 courseMessages.browseChannelsButton();
                 courseMessages.checkChannelsExists('tech-support');
                 courseMessages.checkChannelsExists('organization');
@@ -45,7 +44,6 @@ describe('Course messages', () => {
 
             it('instructors should be able to create public announcement channel', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                courseMessages.acceptCodeOfConductButton();
                 const name = 'public-ancmnt-ch';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
