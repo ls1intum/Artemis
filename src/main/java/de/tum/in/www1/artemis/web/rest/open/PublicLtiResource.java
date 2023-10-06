@@ -166,7 +166,7 @@ public class PublicLtiResource {
         uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
         uriBuilder.queryParam("state", UriComponent.encode(state, UriComponent.Type.QUERY_PARAM));
         uriBuilder.queryParam("id_token", UriComponent.encode(idToken, UriComponent.Type.QUERY_PARAM));
-        uriBuilder.queryParam("auth", UriComponent.encode(userName, UriComponent.Type.QUERY_PARAM));
+        uriBuilder.queryParam("authenticatedUser", UriComponent.encode(userName, UriComponent.Type.QUERY_PARAM));
         String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself

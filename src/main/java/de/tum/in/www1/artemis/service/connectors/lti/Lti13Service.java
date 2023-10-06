@@ -301,8 +301,13 @@ public class Lti13Service {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
 
-    public void setAuthenticationFromClient(HttpServletRequest request) {
-        var username = request.getParameter("auth");
+    /**
+     * Authenticates the user based on the provided request parameter if the user was previously authenticated in the same browser session.
+     *
+     * @param request the HTTP request containing the user authentication parameter
+     */
+    public void authenticateUserFromRequestParam(HttpServletRequest request) {
+        var username = request.getParameter("authenticatedUser");
         if (username != null) {
             var user = userRepository.findOneByLogin(username).orElseThrow();
             SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
