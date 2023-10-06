@@ -470,4 +470,39 @@ describe('ExamResultSummaryComponent', () => {
             expect(scoreAsPercentage).toBeUndefined();
         });
     });
+
+    describe('scrollToOverviewOrTop', () => {
+        const BACK_TO_OVERVIEW_BUTTON_ID = 'back-to-overview-button';
+        const EXAM_SUMMARY_RESULT_OVERVIEW_ID = 'exam-summary-result-overview';
+
+        it('should scroll to top when overview is not displayed', () => {
+            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+
+            const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
+            button.click();
+
+            expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
+        });
+
+        it('should scroll to overview when it is displayed', () => {
+            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+            const scrollIntoViewSpy = jest.fn();
+
+            const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
+                scrollIntoView: scrollIntoViewSpy,
+            } as unknown as HTMLElement);
+
+            component.studentExam = studentExam;
+            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
+            button.click();
+
+            expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_SUMMARY_RESULT_OVERVIEW_ID);
+            expect(scrollIntoViewSpy).toHaveBeenCalled();
+            expect(scrollToSpy).not.toHaveBeenCalled();
+        });
+    });
 });
