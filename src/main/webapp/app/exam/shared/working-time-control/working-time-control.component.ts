@@ -22,6 +22,7 @@ import { round } from 'app/shared/util/utils';
 export class WorkingTimeControlComponent implements ControlValueAccessor {
     // Control disabled state
     @Input() disabled = false;
+    @Input() allowNegative = false;
     @Input() showRelative = false;
 
     @Input() durationLabelText?: string;
@@ -130,7 +131,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
         if (this.exam) {
             const regularWorkingTime = this.exam.workingTime!;
             const absoluteWorkingTimeSeconds = round(regularWorkingTime * (1.0 + this.workingTime.percent / 100), 0);
-            console.log(regularWorkingTime, absoluteWorkingTimeSeconds);
             this.setWorkingTimeDuration(absoluteWorkingTimeSeconds);
         }
     }
