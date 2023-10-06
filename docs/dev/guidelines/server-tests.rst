@@ -9,7 +9,7 @@ This section covers recommended practices for writing Artemis server tests. If y
 Use appropriate and descriptive names for test cases so developers can easily understand what you test without looking deeper into it.
 To increase readability, prefix variable names with ``actual`` and ``expected`` instead of naming them ``int a``, ``double b``, ``String c``.
 
-For example, if you want to test the method borrow in the class Book, ``testBorrowInBook()`` would be an appropriate name for the test case. The two variables compared in the test use the ``actual`` and ``expected`` prefix.
+For example, if you want to test the method borrow in the class Book, ``testBorrowInBook()`` would be an appropriate name for the test case.
 
 .. code-block:: java
 
@@ -119,6 +119,7 @@ BambooBitbucketJira is the runtime bottleneck since it takes the longest with mo
 Additionally, consider the spring profiles the new test cases need when deciding on the test group.
 
 Follow these tips to write performant tests:
+
 * Avoid database access as much as possible. It is very time-consuming, especially when running tests against MySQL or Postgres.
 * Avoid unnecessary mocked requests by directly setting up the data and saving it in the database.
 * Use the `Awaitility <https://github.com/awaitility>`__ library for asserting async code.
@@ -148,7 +149,7 @@ Below is an example of how to replace a ``@SpyBean``. To test an edge case where
         }
     }
 
-To avoid new SpyBeans, we now use `Static Mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`__. Upon examining the ``export()`` method, we find a ``File.newOutputStream(..)`` call.
+To avoid new SpyBeans, we now use `static mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`__. Upon examining the ``export()`` method, we find a ``File.newOutputStream(..)`` call.
 Now, instead of mocking the whole service, we can mock the static method:
 
 .. code-block:: java
