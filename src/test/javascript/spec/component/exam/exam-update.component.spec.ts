@@ -252,7 +252,7 @@ describe('Exam Update Component', () => {
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            component.calculateWorkingTime();
+            component.updateExamWorkingTime();
             // Without a valid startDate, the workingTime should be 0
             // examWithoutExercises.workingTime is stored in seconds
             expect(examWithoutExercises.workingTime).toBe(0);
@@ -261,13 +261,13 @@ describe('Exam Update Component', () => {
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            component.calculateWorkingTime();
+            component.updateExamWorkingTime();
             expect(examWithoutExercises.workingTime).toBe(7200);
             expect(component.workingTimeInMinutes).toBe(120);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = undefined;
-            component.calculateWorkingTime();
+            component.updateExamWorkingTime();
             // Without an endDate, the working time should be 0;
             expect(examWithoutExercises.workingTime).toBe(0);
             expect(component.workingTimeInMinutes).toBe(0);
@@ -279,7 +279,7 @@ describe('Exam Update Component', () => {
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
-            component.calculateWorkingTime();
+            component.updateExamWorkingTime();
             expect(examWithoutExercises.workingTime).toBe(3600);
             expect(component.workingTimeInMinutes).toBe(60);
         });

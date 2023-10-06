@@ -31,7 +31,8 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
-import { ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
