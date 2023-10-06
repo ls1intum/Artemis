@@ -13,8 +13,9 @@ services:
         # might want to access external services on the docker host
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        # run as root user to be able to access the docker socket
-        user: 0:0
+        # Unix: insert the docker group id of the host system to allow the container to access the docker socket. You can retrieve the docker gid using the command: getent group docker | cut -d: -f3
+        group_add:
+            - "999"
         ports:
             - "8080:8080"
             - "5005:5005" # Java Remote Debugging port declared in the java cmd options
