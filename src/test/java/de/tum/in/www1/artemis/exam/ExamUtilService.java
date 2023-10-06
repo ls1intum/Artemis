@@ -102,6 +102,15 @@ public class ExamUtilService {
     @Autowired
     private ExamSessionRepository examSessionRepository;
 
+    /**
+     * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
+     *
+     * @param user    The user who should be registered for the exam
+     * @param visible The visible date of the exam
+     * @param start   The start date of the exam
+     * @param end     The end date of the exam
+     * @return The newly created course
+     */
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
         Course course = courseUtilService.createCourse();
         Exam exam = addExamWithUser(course, user, false, visible, start, end);
@@ -110,6 +119,13 @@ public class ExamUtilService {
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises. Sets the visible (now - 1 min), start (now) and end
+     * (now + 1 min) date with default values.
+     *
+     * @param user The user who should be registered for the exam
+     * @return The newly created course
+     */
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user) {
         Course course = courseUtilService.createCourse();
         Exam exam = addExamWithUser(course, user, false, ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
@@ -118,6 +134,14 @@ public class ExamUtilService {
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a StudentExam for a test run.
+     *
+     * @param exam                        The exam for which the test run should be created
+     * @param instructor                  The user who should be registered for the test run
+     * @param exerciseGroupsWithExercises The ExerciseGroups with Exercises that should be added to the test run
+     * @return The newly created StudentExam
+     */
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
         List<Exercise> exercises = new ArrayList<>();
         exerciseGroupsWithExercises.forEach(exerciseGroup -> exercises.add(exerciseGroup.getExercises().iterator().next()));
@@ -125,6 +149,14 @@ public class ExamUtilService {
         return studentExamRepository.save(testRun);
     }
 
+    /**
+     * Creates and saves a StudentExam and StudentParticipations for a test run.
+     *
+     * @param exam       The exam for which the test run should be created
+     * @param instructor The user who should be registered for the test run
+     * @param exercises  The Exercises that should be added to the test run
+     * @return The newly created StudentExam
+     */
     public StudentExam generateTestRunForInstructor(Exam exam, User instructor, List<Exercise> exercises) {
         var testRun = ExamFactory.generateExamTestRun(exam);
         testRun.setUser(instructor);
@@ -157,6 +189,12 @@ public class ExamUtilService {
         return testRun;
     }
 
+    /**
+     * Creates and saves an Exam with one mandatory ExerciseGroup with three TextExercises.
+     *
+     * @param course The course to which the exam should be added
+     * @return The newly created Exam
+     */
     public Exam setupSimpleExamWithExerciseGroupExercise(Course course) {
         var exam = ExamFactory.generateExam(course);
         exam.setNumberOfExercisesInExam(1);
@@ -179,6 +217,15 @@ public class ExamUtilService {
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
     }
 
+    /**
+     * Creates and saves an Exam with three mandatory and two optional ExerciseGroups. Each ExerciseGroup contains three TextExercises. Registers students for the exam given the
+     * userPrefix and numberOfStudents.
+     *
+     * @param userPrefix       The prefix of the users
+     * @param course           The course to which the exam should be added
+     * @param numberOfStudents The number of students that should be registered for the exam
+     * @return The newly created Exam
+     */
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course, int numberOfStudents) {
         Exam exam = ExamFactory.generateExam(course);
         exam.setNumberOfExercisesInExam(4);
@@ -229,18 +276,26 @@ public class ExamUtilService {
         return registerUsersForExamAndSaveExam(exam, userPrefix, numberOfStudents);
     }
 
+    /**
+     * Saves the updated Exam after registering new Users.
+     *
+     * @param exam             The exam for which the users should be registered
+     * @param userPrefix       The prefix of the users
+     * @param numberOfStudents The number of students that should be registered for the exam
+     * @return The updated Exam
+     */
     public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int numberOfStudents) {
         return registerUsersForExamAndSaveExam(exam, userPrefix, 1, numberOfStudents);
     }
 
     /**
-     * registers students for exam and saves the exam in the repository
+     * Saves and updates the Exam after registering new Users.
      *
-     * @param exam       exam to which students should be registered to
-     * @param userPrefix prefix of the users
-     * @param from       index of the first student to be registered
-     * @param to         index of the last student to be registered
-     * @return exam that was saved in the repository
+     * @param exam       The exam for which the users should be registered
+     * @param userPrefix The prefix of the users
+     * @param from       The index of the first student to be registered
+     * @param to         The index of the last student to be registered
+     * @return The updated Exam
      */
     public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int from, int to) {
 
@@ -255,16 +310,35 @@ public class ExamUtilService {
         return examRepository.save(exam);
     }
 
+    /**
+     * Creates and saves an Exam without ExerciseGroups and Exercises.
+     *
+     * @param course The course to which the exam should be added
+     * @return The newly created Exam
+     */
     public Exam addExam(Course course) {
         Exam exam = ExamFactory.generateExam(course);
         return examRepository.save(exam);
     }
 
+    /**
+     * Creates and saves a test Exam without ExerciseGroups and Exercises.
+     *
+     * @param course The course to which the exam should be added
+     * @return The newly created Exam
+     */
     public Exam addTestExam(Course course) {
         Exam exam = ExamFactory.generateTestExam(course);
         return examRepository.save(exam);
     }
 
+    /**
+     * Creates and saves a test Exam without Exercises and registers the given user to the exam.
+     *
+     * @param course The course to which the exam should be added
+     * @param user   The user who should be registered for the exam
+     * @return The newly created Exam
+     */
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
         Exam exam = ExamFactory.generateTestExam(course);
         exam = examRepository.save(exam);
@@ -278,15 +352,15 @@ public class ExamUtilService {
     }
 
     /**
-     * creates and saves an exam with the passed user
+     * Creates and saves an Exam with a registered User and an optional ExerciseGroup.
      *
-     * @param course        course of the exam
-     * @param user          registered exam user
-     * @param exerciseGroup should an (empty) exercise group be added
-     * @param visibleDate   visible date of the exam
-     * @param startDate     start date of the exam
-     * @param endDate       end date of the exam
-     * @return newly created exam
+     * @param course        The course to which the exam should be added
+     * @param user          The user who should be registered for the exam
+     * @param exerciseGroup True, if an empty ExerciseGroup should be added to the exam
+     * @param visibleDate   The visible date of the exam
+     * @param startDate     The start date of the exam
+     * @param endDate       The end date of the exam
+     * @return The newly created Exam
      */
     public Exam addExamWithUser(Course course, User user, boolean exerciseGroup, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ExamFactory.generateExam(course);
