@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -21,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import net.minidev.json.JSONObject;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
@@ -71,8 +71,8 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
         }
-        catch (InternalAuthenticationServiceException ex) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
+        catch (LtiEmailAlreadyInUseException ex) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
         }
     }
 
