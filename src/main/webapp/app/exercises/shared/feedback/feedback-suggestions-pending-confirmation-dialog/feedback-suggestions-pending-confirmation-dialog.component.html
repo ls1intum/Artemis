@@ -14,8 +14,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="close(false)">
             <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" ngClass="btn btn-danger" (click)="close(true)">
-            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;
+        <button type="submit" ngClass="btn btn-primary" (click)="close(true)">
             <span jhiTranslate="artemisApp.assessment.suggestionPendingDialog.discardAndSubmit">Discard suggestions & submit</span>
         </button>
     </div>
