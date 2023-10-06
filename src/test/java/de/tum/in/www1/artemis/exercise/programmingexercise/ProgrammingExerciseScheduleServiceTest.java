@@ -80,7 +80,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
     private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1000;
 
-    private static final long DELAY_MS = 400;
+    private static final long DELAY_MS = 600;
 
     private static final long TIMEOUT_MS = 5000;
 
@@ -92,8 +92,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationGi
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         programmingExercise = programmingExerciseUtilService.createActiveProgrammingExerciseWithTestCases();
-
-        // programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
