@@ -8,7 +8,8 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 export class ChannelMentionCommand extends InteractiveSearchCommand {
     buttonIcon = faHashtag;
-    cachedResponse: HttpResponse<ChannelDTO[]>;
+
+    private cachedResponse: HttpResponse<ChannelDTO[]>;
 
     constructor(
         private readonly channelService: ChannelService,
@@ -39,7 +40,7 @@ export class ChannelMentionCommand extends InteractiveSearchCommand {
     }
 
     private filterCachedResponse(searchTerm: string): HttpResponse<ChannelDTO[]> {
-        const channels = this.cachedResponse.body!.filter((dto) => dto.name?.includes(searchTerm));
+        const channels = this.cachedResponse.body!.filter((dto) => dto.name?.includes(searchTerm.toLowerCase()));
         return new HttpResponse({ body: channels });
     }
 }
