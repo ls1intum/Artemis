@@ -57,6 +57,15 @@ public class IrisWebsocketService {
      * @param throwable   that should be send over the websocket
      */
     public void sendException(IrisSession irisSession, Throwable throwable) {
+        System.out.println("START SEND EXCEPTION STACK TRACE");
+        System.out.println("----------------------- START SOURCE THROWABLE -------------------");
+        throwable.printStackTrace();
+        System.out.println("----------------------- END SOURCE THROWABLE -------------------");
+        for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+            System.out.println(ste + "\n");
+        }
+        System.out.println("END SEND EXCEPTION STACK TRACE");
+
         if (!(irisSession instanceof IrisChatSession)) {
             throw new UnsupportedOperationException("Only IrisChatSession is supported");
         }
