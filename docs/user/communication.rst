@@ -64,8 +64,8 @@ Users of a course can communicate in private via the Messages page. (see image b
 Conversation sidebar on the left, where users can search for other participants of the current course and start a conversation
 with them.
 
-If the recipient is browsing another conversation when they receive a new message, an icon with unread message count is displayed in their
-Conversation sidebar, next to the affiliated conversation that the new message was sent to. This way, users become aware of the new message
+If the recipient is browsing another conversation when they receive a new message, an icon with an unread-messages counter is displayed in their
+conversation sidebar, next to the affiliated conversation that the new message was sent to. This way, users become aware of the new message
 within that discussion.
 
 The authorities of tutors and instructors are more restricted in the Messages Page compared to the Course Communication
@@ -85,7 +85,7 @@ and after clicking, the preview will be removed.
 |link-preview|
 
 If the message contains more than one link, then the preview will not have a preview image of the link to have more compact previews
-multiple links.
+for multiple links.
 
 |link-preview-multiple|
 
@@ -203,7 +203,7 @@ Reference Lecture Unit Slides
 """""""""""""""""""""""""""""
 
 Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
-hover over specific unit (see image below).
+hover over a specific unit (see image below).
 
 |slide-reference-menu|
 
