@@ -58,9 +58,19 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
 
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
-            lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
 
-            writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
+            // here we need to check if this is a deep-linking request or a launch request
+            if (ltiIdToken.getClaim(Claims.MESSAGE_TYPE) == "LtiDeepLinkingRequest") {
+
+                writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
+                // ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS) -- needed
+            }
+            else {
+                lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+                writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
+            }
+
+            // writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());

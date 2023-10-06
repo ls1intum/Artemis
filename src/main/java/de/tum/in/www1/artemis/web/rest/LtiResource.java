@@ -41,4 +41,12 @@ public class LtiResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
     }
+
+    @PostMapping("/lti13/deep-linking")
+    @EnforceAtLeastInstructor
+    public void lti13DynamicRegistration(String platformReturnUrl) {
+
+        // here create a dummy response to send back to the platform
+
+    }
 }
