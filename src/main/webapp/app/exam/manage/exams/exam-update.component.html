@@ -64,6 +64,11 @@
                     </h6>
                 </div>
             </div>
+            <ng-template #workingTimeConfirmationContent>
+                <div class="bg-light rounded-2 p-3">
+                    <jhi-working-time-change *ngIf="oldWorkingTime && newWorkingTime" [oldWorkingTime]="oldWorkingTime" [newWorkingTime]="newWorkingTime" />
+                </div>
+            </ng-template>
             <div class="row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -81,7 +86,7 @@
                         labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
-                        (valueChange)="calculateWorkingTime()"
+                        (valueChange)="updateExamWorkingTime()"
                         [error]="!isValidStartDate"
                         [startAt]="exam.startDate || exam.visibleDate"
                         name="startDate"
@@ -93,7 +98,7 @@
                         labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
-                        (valueChange)="calculateWorkingTime()"
+                        (valueChange)="updateExamWorkingTime()"
                         [error]="!isValidEndDate"
                         [startAt]="exam.endDate || exam.startDate"
                         name="endDate"

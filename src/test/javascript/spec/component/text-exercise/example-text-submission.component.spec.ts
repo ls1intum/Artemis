@@ -31,7 +31,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
-import { ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -109,7 +109,10 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should fetch example submission with result for existing example submission and switch to edit state', async () => {
         // GIVEN
         // @ts-ignore
-        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
         jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
         jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
         jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
@@ -127,7 +130,10 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should mark text blocks not included in the example submission correctly', async () => {
         // GIVEN
         // @ts-ignore
-        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
         jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
@@ -209,7 +215,10 @@ describe('ExampleTextSubmissionComponent', () => {
         jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
 
         // @ts-ignore
-        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
         await comp.ngOnInit();
 
         comp.exercise = exercise;
@@ -227,7 +236,10 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should save assessment', async () => {
         // GIVEN
         // @ts-ignore
-        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
         await comp.ngOnInit();
 
         comp.exercise = exercise;
@@ -312,7 +324,10 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should verify correct tutorial submission', async () => {
         // GIVEN
         // @ts-ignore
-        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        activatedRouteSnapshot.paramMap.params = {
+            exerciseId: EXERCISE_ID,
+            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+        };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
         jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));

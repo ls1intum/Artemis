@@ -31,9 +31,7 @@ export class ExamEditWorkingTimeDialogComponent {
     }
 
     get newWorkingTime() {
-        const currentWorkingTimeSeconds = normalWorkingTime(this.exam);
-        if (!currentWorkingTimeSeconds) return undefined;
-        return currentWorkingTimeSeconds + this.workingTimeSeconds;
+        return this.oldWorkingTime ? this.oldWorkingTime + this.workingTimeSeconds : undefined;
     }
 
     constructor(

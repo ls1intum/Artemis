@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -16,8 +16,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { normalWorkingTime } from 'app/exam/participate/exam.utils';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -36,6 +37,7 @@ export class ExamUpdateComponent implements OnInit {
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
+    @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
 
     documentationType = DocumentationType.Exams;
 
@@ -97,6 +99,14 @@ export class ExamUpdateComponent implements OnInit {
         return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
     }
 
+    get oldWorkingTime(): number | undefined {
+        return normalWorkingTime({ startDate: this.originalStartDate, endDate: this.originalEndDate } as Exam);
+    }
+
+    get newWorkingTime(): number | undefined {
+        return this.exam.workingTime;
+    }
+
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state, and we edited an existing exam
@@ -107,16 +117,12 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     /**
-     * Calculates the WorkingTime for real exams based on the start- and end-time.
+     * Updates the working time for real exams based on the start and end dates.
      */
-    calculateWorkingTime() {
+    updateExamWorkingTime() {
         if (this.exam.testExam) return;
 
-        if (this.exam.startDate && this.exam.endDate) {
-            this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-        } else {
-            this.exam.workingTime = 0;
-        }
+        this.exam.workingTime = normalWorkingTime(this.exam);
     }
 
     /**
@@ -142,7 +148,8 @@ export class ExamUpdateComponent implements OnInit {
         if (datesChanged && this.isOngoingExam) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.warning');
+            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.message');
+            modalRef.componentInstance.contentRef = this.workingTimeConfirmationContent;
             modalRef.result.then(this.save.bind(this));
         } else {
             this.save();
@@ -223,10 +230,10 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns true if the exam is currently ongoing, false otherwise.
+     * Returns true if the original exam is currently ongoing before any changes, false otherwise.
      */
     get isOngoingExam(): boolean {
-        return !!this.exam.id && !!this.exam.startDate && !!this.exam.endDate && dayjs().isBetween(this.exam.startDate, this.exam.endDate);
+        return !!this.exam.id && !!this.originalStartDate && !!this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate);
     }
 
     get isValidConfiguration(): boolean {

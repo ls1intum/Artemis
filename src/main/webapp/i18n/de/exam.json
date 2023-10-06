@@ -692,8 +692,8 @@
                 "viewCases": "Fälle anzeigen"
             },
             "dateChange": {
-                "title": "Die Änderung der Zeiten einer aktiven Klausur wird den Arbeitsablauf der Studierenden stören!",
-                "warning": "Das Ändern dieser Werte wird eine Benachrichtigung an alle Studierenden senden und ihren Arbeitsablauf während der Klausur stören."
+                "title": "Bestätige Änderung der Prüfungszeit",
+                "message": "Das Ändern der Arbeitszeit wird eine Benachrichtigung an alle Studierenden senden und ihren Arbeitsablauf während der Klausur stören."
             }
         },
         "studentExamDetail": {
