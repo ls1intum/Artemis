@@ -307,6 +307,9 @@ public class LocalCIBuildJobExecutionService {
 
         TarArchiveEntry tarEntry;
         for (TarArchiveInputStream testResultsTarInputStream : testResultsTarInputStreams) {
+            if (testResultsTarInputStream == null) {
+                continue;
+            }
             while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
                 // Go through all tar entries that are test result files.
                 if (!isValidTestResultFile(tarEntry)) {

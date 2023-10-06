@@ -21,6 +21,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
@@ -145,7 +146,13 @@ public class LocalCIContainerService {
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
      */
     public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) {
-        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
+        try {
+            return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
+        }
+        catch (NotFoundException e) {
+            return null;
+        }
+
     }
 
     /**
@@ -304,9 +311,11 @@ public class LocalCIContainerService {
                 buildScript.append("""
                         cd structural
                         mvn clean test
-                        cd ..
-                        cd behavior
-                        mvn clean test
+                        if [ $? -eq 0 ]; then
+                            cd ..
+                            cd behavior
+                            mvn clean test
+                        fi
                         cd ..
                         """);
             }
@@ -314,7 +323,9 @@ public class LocalCIContainerService {
                 buildScript.append("""
                         chmod +x gradlew
                         ./gradlew clean structuralTests
-                        ./gradlew behaviorTests
+                        if [ $? -eq 0 ]; then
+                            ./gradlew behaviorTests
+                        fi
                         """);
             }
         }
