@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -59,33 +59,33 @@ describe('DataExportConfirmationDialogComponent', () => {
         expect(inputFormGroup).not.toBeNull();
     });
 
-    it('should correctly enable and disable request button', async () => {
+    it('should correctly enable and disable request button', fakeAsync(async () => {
         // Form can't be submitted if the expected login doesn't match the entered login
         comp.expectedLogin = 'login';
         comp.enteredLogin = '';
         comp.dialogError = new Observable<string>();
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
         expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
-        // TODO: why do changes not propagate to the UI?
-        // expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered incorrect login --> button is disabled
         comp.enteredLogin = 'my login';
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
         expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
-        // TODO: why do changes not propagate to the UI?
-        // expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered correct login --> button is enabled
         comp.enteredLogin = 'login';
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
         expect(comp.dataExportConfirmationForm.invalid).toBeFalse();
-        // TODO: why do changes not propagate to the UI?
-        // expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
-    });
+        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
+    }));
 
     it('should handle dialog error events correctly', () => {
         comp.enteredLogin = 'login';
