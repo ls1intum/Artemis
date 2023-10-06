@@ -2,10 +2,38 @@
 Server Tests
 ************
 
-This deals with best practices when it comes to Artemis server tests. Good code quality improves developer happiness which in turn improves the productivity (quote?).
-If you want to write tests for Artemis programming exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
+This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
-0. Assert using the most specific overload method
+0. General testing tips
+========================
+Use appropriate and descriptive names for test cases so developers can easily understand what you test without looking deeper into it.
+To increase readability, prefix variable names with ``actual`` and ``expected`` instead of naming them ``int a``, ``double b``, ``String c``.
+
+For example, if you want to test the method borrow in the class Book, ``testBorrowInBook()`` would be an appropriate name for the test case. The two variables compared in the test use the ``actual`` and ``expected`` prefix.
+
+.. code-block:: java
+
+    @Test
+    void testBorrowInBook() {
+        [...]
+
+        assertThat(actualBook).isEqualTo(expectedBook);
+    }
+
+Try to follow best practices for Java testing:
+
+* Write small and specific tests by using helper functions with relevant parameters.
+* Assert what’s relevant and avoid writing a single test covering all edge cases.
+* Write dumb tests by avoiding the reuse of production code and focusing on comparing output values with hard-coded values.
+* Invest in a testable implementation by avoiding static access, using constructor injection, and separating business logic from asynchronous execution.
+* Instead of using random, use fixed test data to make error messages better understandable.
+* Make use of `JUnit 5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ features such as parameterized tests.
+* Follow `best practices <https://www.baeldung.com/spring-tests>`__ related to spring testing.
+
+For a more detailed overview check out `modern best testing practices <https://phauer.com/2019/modern-best-practices-testing-java/>`__.
+
+
+1. Assert using the most specific overload method
 ==================================================
 
 When asserting in server tests, use ``assertThat`` from the `AssertJ <https://github.com/assertj/assertj>`__ library. Another assertion statement, such as ``isEqualTo()``, **must**  follow the call. Using specific assertion statements rather than always expecting boolean values is best practice.
@@ -33,34 +61,24 @@ If the ``isTrue`` assertion is unavoidable, specify a custom error message using
 
 For more information, please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-core-assertions-guide>`__, especially the `section about avoiding incorrect usage <https://assertj.github.io/doc/#assertj-core-incorrect-usage>`__.
 
-1. General Testing Tips
-========================
-Use appropriate and descriptive names for test cases so developers can easily understand what you test without looking deeper into it.
-To increase readability, prefix variable names with ``actual`` and ``expected`` instead of naming them ``int a``, ``double b``, ``String c``.
 
-For example, if you want to test the method borrow in the class Book, ``testBorrowInBook()`` would be an appropriate name for the test case. The two variables compared in the test use the ``actual`` and ``expected`` prefix.
+2. ArchUnit
+===========
+Use the `ArchUnit <https://www.archunit.org/>`__ library to prevent the unintentional inclusion of unnecessary packages. We use the library to enforce consistency in the code base.
+Here is a simple ArchUnit test using an ArchRule to forbid JUnit assertions (in favor of AssertJ ones).
 
 .. code-block:: java
 
-    @Test
-    void testBorrowInBook() {
-        [...]
-        assertThat(actualBook).isEqualTo(expectedBook);
+    void testNoJunitJupiterAssertions() {
+        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
+
+        noJunitJupiterAssertions.check(testClasses);
     }
 
-Try to follow best practices for Java testing:
+We first define the ArchRule prohibiting the JUnit assertion package and then enforce it in test classes.
 
-* Write small and specific tests by using helper functions with relevant parameters.
-* Assert what’s relevant and avoid writing a single test covering all edge cases.
-* Write dumb tests by avoiding the reuse of production code and focusing on comparing output values with hard-coded values.
-* Invest in a testable implementation by avoiding static access, using constructor injection, and separating business logic from asynchronous execution.
-* Instead of using random, use fixed test data to make error messages better understandable.
-* Make use of `JUnit 5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ features such as parameterized tests.
-* Follow `best practices <https://www.baeldung.com/spring-tests>`__ related to spring testing.
 
-For a more detailed overview check out `modern best testing practices <https://phauer.com/2019/modern-best-practices-testing-java/>`__.
-
-2. Counting database query calls within tests
+3. Counting database query calls within tests
 ==============================================
 
 It's possible to write tests checking how many database accesses a REST call performs. These tests ensure that code changes don't lead to more database calls or remind developers they do, which is especially important for commonly used endpoints.
@@ -80,7 +98,34 @@ The test below tracks how many database accesses a REST call performs. The custo
         }
     }
 
-3. Avoid using @MockBean
+4. UtilServices and factories
+=============================
+When setting up data in tests, use helper functions from corresponding UtilService and Factory classes. We use the factory method pattern to structure test cases, depicted in the simplified class
+diagram below. In this example, the ``ExerciseTestFactory`` generates exercises for tests, while the ``FileUploadTestFactory`` specializes in file upload exercises. The ``FileUploadIntegrationTest``
+utilizes the services provided by ``FileUploadTestService``. The ``FileUploadTestService`` manages the creation and communication with the database.
+
+.. figure:: resources/FileUpload_UtilService_Factory.png
+    :align: center
+    :alt: File upload UtilService and Factory
+
+
+In general, **UtilServices** manage the communication with the database, and **Factories** are responsible for object creation and initialization. If you cannot find the correct helper function, add a new one to the most fitting UtilService or Factory and enhance it with JavaDoc.
+
+
+5. Test performance tips
+========================
+Fast tests provide quick feedback, enabling developers to address issues and speed up the development process. We execute test groups (BambooBitbucketJira, JenkinsGitlab, LocalCILocalVC, GitlabCIGitlabSaml, Unit Tests, Independent Tests) in parallel, trying to balance them out.
+BambooBitbucketJira is the runtime bottleneck since it takes the longest with most tests. When creating a new integration test, keep the test group balance in mind and consider adding the class to any other group, especially LocalCILocalVC, GitlabCIGitlabSaml, or Independent Tests.
+Additionally, consider the spring profiles the new test cases need when deciding on the test group.
+
+Follow these tips to write performant tests:
+* Avoid database access as much as possible. It is very time-consuming, especially when running tests against MySQL or Postgres.
+* Avoid unnecessary mocked requests by directly setting up the data and saving it in the database.
+* Use the `Awaitility <https://github.com/awaitility>`__ library for asserting async code.
+* Limit object creation in tests and the test setup.
+
+
+6. Avoid using @MockBean
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary or possibly in an abstract Superclass. `Here <https://www.baeldung.com/spring-tests>`__ you can see why in more detail.
@@ -123,47 +168,6 @@ Now, instead of mocking the whole service, we can mock the static method:
 
 We no longer mock the uppermost method but only throw the exception at the place where it could actually happen. At the end of the test, you **need to close** the mock again.
 For a real example where we replaced a SpyBean with a static mock, look at the ``SubmissionExportIntegrationTest.java`` `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
-
-
-3. UtilServices and Factories
-=============================
-When setting up data in tests, use helper functions from corresponding UtilService and Factory classes. We use the factory method pattern to structure test cases, depicted in the simplified class
-diagram below.
-
-.. figure:: resources/FileUpload_UtilService_Factory.png
-    :align: center
-    :alt: File upload UtilService and Factory
-
-
-In this example, the ``ExerciseTestFactory`` generates exercises for tests, while the ````FileUploadTestFactory``specializes in file upload exercises. The ``FileUploadIntegrationTest``
-utilizes the services provided by ````FileUploadTestService``. The ``FileUploadTestService`` manages the creation and communication with the database.
-In general, **UtilServices** manage the communication with the database, and **Factories** are responsible for object creation and initialization.
-
-If you cannot find the correct helper function, add a new one to the most fitting UtilService or Factory and enhance it with JavaDoc.
-
-
-4. Group Balancing
-==================
-
-
-5. ArchUnit
-===========
-Use the `ArchUnit <https://www.archunit.org/>`__ library to prevent the unintentional inclusion of unnecessary packages. We use it to enforce consistency in the code base.
-Here is a simple ArchUnit test using an ArchRule forbidding JUnit assertions (in favor of AssertJ ones).
-
-.. code-block:: java
-
-    void testNoJunitJupiterAssertions() {
-        ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
-
-        noJunitJupiterAssertions.check(testClasses);
-    }
-
-We define the ArchRule prohibiting the JUnit assertion package and enforce it in test classes.
-
-6. Avoid Database Access
-========================
-
 
 
 
