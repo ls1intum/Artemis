@@ -463,4 +463,33 @@ describe('ModelingSubmissionComponent', () => {
         expect(referencedFeedback).toHaveLength(1);
         expect(referencedFeedback![0].isSubsequent).toBeTrue();
     });
+
+    it('should be set up with input values if present instead of loading new values from server', () => {
+        // @ts-ignore method is private
+        const setUpComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
+        const getDataForFileUploadEditorSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor');
+        const modelingSubmission = submission;
+        modelingSubmission.model = JSON.stringify({
+            elements: [
+                {
+                    content: 'some element',
+                },
+            ],
+        });
+        comp.inputExercise = participation.exercise;
+        comp.inputSubmission = modelingSubmission;
+        comp.inputParticipation = participation;
+
+        fixture.detectChanges();
+
+        expect(setUpComponentWithInputValuesSpy).toHaveBeenCalledOnce();
+        expect(comp.modelingExercise).toEqual(participation.exercise);
+        expect(comp.submission).toEqual(modelingSubmission);
+        expect(comp.participation).toEqual(participation);
+        expect(comp.umlModel).toBeTruthy();
+        expect(comp.hasElements).toBeTrue();
+
+        // should not fetch additional information from server, reason for input values!
+        expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
+    });
 });
