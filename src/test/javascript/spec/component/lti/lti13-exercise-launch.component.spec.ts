@@ -5,12 +5,16 @@ import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angu
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
+import { LoginService } from 'app/core/login/login.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
     let comp: Lti13ExerciseLaunchComponent;
     let route: ActivatedRoute;
     let http: HttpClient;
+    let loginService: LoginService;
+    let accountService: AccountService;
 
     beforeEach(() => {
         route = {
@@ -21,7 +25,11 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: LoginService, useValue: loginService },
+                { provide: AccountService, useValue: accountService },
+            ],
         })
             .compileComponents()
             .then(() => {
