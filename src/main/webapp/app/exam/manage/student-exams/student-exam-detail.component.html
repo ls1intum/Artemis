@@ -1,11 +1,18 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        <h4 *ngIf="!isTestRun" class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+        <h4
+            *ngIf="!isTestRun; else testRunExamTitle"
+            class="mb-0"
+            jhiTranslate="artemisApp.studentExamDetail.studentExam"
+            [translateValues]="{ examTitle: studentExam.exam!.title! }"
+        >
             Student exam ({{ studentExam.exam!.title! }})
         </h4>
-        <h4 *ngIf="isTestRun" class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam.exam!.title! }">
-            Test Run ({{ studentExam.exam!.title! }})
-        </h4>
+        <ng-template #testRunExamTitle>
+            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+                Test Run ({{ studentExam.exam!.title! }})
+            </h4>
+        </ng-template>
     </div>
 </div>
 <br />
@@ -144,31 +151,39 @@
     <ng-template #toggleSubmitPopUp let-modal>
         <div class="modal-header">
             <h4 class="modal-title">
-                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
-                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+                <span *ngIf="studentExam.submitted; else notSubmittedModalTitle" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted"
+                    >Change Student Exam to Unsubmitted</span
+                >
+                <ng-template #notSubmittedModalTitle>
+                    <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+                </ng-template>
             </h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
             <p jhiTranslate="artemisApp.studentExams.confirmDialog.question">Are you sure you want to change the submission state?</p>
-            <p *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submitText">
+            <p *ngIf="!studentExam.submitted; else submittedConfirmationDialog" jhiTranslate="artemisApp.studentExams.confirmDialog.submitText">
                 This will set the submission date of the exam to this moment, and set the submitted status to 'Yes'. Un-submitting the student exam later is possible.
             </p>
-            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText">
-                This will remove the submission date and set the submitted status to 'No'.
-            </p>
-            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove">Recovering those after the deletion is not possible!</p>
+            <ng-template #submittedConfirmationDialog>
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText">This will remove the submission date and set the submitted status to 'No'.</p>
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove">Recovering those after the deletion is not possible!</p>
+            </ng-template>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
-                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
-                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
+                <span *ngIf="!studentExam.submitted; else isSubmittedFooter" jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
+                <ng-template #isSubmittedFooter>
+                    <span jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
+                </ng-template>
             </button>
         </div>
     </ng-template>
     <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && examIsOver()" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="busy">
-        <span *ngIf="!studentExam.submitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
-        <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
+        <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
+        <ng-template #toggleNotSubmitted>
+            <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
+        </ng-template>
     </button>
 
     <div class="mb-3">
