@@ -19,7 +19,7 @@
 <div *ngIf="student && studentExam">
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
-        <ol class="list-without-enumeration ms-4">
+        <ol class="list-without-numeration ms-4">
             <li>
                 <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
                 {{ student.name }}
@@ -126,7 +126,7 @@
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
         <div class="me-2 ms-4">
-            <ol class="list-without-enumeration">
+            <ol class="list-without-numeration">
                 <li>
                     <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
                     {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
