@@ -262,9 +262,9 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
         expect(studentExamDetailComponent.examIsOver()).toBeFalse();
-        studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
+        studentExam.exam!.startDate = dayjs().add(-20, 'seconds');
         expect(studentExamDetailComponent.examIsOver()).toBeFalse();
-        studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
+        studentExam.exam!.startDate = dayjs().add(-200, 'seconds');
         expect(studentExamDetailComponent.examIsOver()).toBeTrue();
         studentExam.exam = undefined;
         expect(studentExamDetailComponent.examIsOver()).toBeFalse();
