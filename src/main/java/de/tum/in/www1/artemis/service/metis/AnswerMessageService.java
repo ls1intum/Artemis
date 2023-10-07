@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -11,8 +12,14 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -87,7 +94,7 @@ public class AnswerMessageService extends PostingService {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, author);
         }
 
-        parseUserMentions(course, answerMessage.getContent());
+        List<User> mentionedUsers = parseUserMentions(course, answerMessage.getContent());
 
         // use post from database rather than user input
         answerMessage.setPost(post);

@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -101,7 +104,7 @@ public class ConversationMessagingService extends PostingService {
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
 
-        parseUserMentions(course, newMessage.getContent());
+        List<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
 
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
@@ -121,13 +124,30 @@ public class ConversationMessagingService extends PostingService {
         }
 
         // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
-        notifyAboutMessageCreation(author, savedConversation, course, createdMessage);
+        notifyAboutMessageCreation(author, savedConversation, course, createdMessage, mentionedUsers);
 
         return createdMessage;
     }
 
-    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage) {
+    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, List<User> mentionedUsers) {
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+
+        Map<Long, ConversationWebSocketRecipientSummary> recipientMap = webSocketRecipients.stream()
+                .collect(Collectors.toMap((recipient) -> recipient.user().getId(), Function.identity()));
+
+        mentionedUsers.forEach(user -> {
+            if (Objects.equals(user.getId(), author.getId())) {
+                return;
+            }
+
+            ConversationWebSocketRecipientSummary recipient = recipientMap.get(user.getId());
+            if (recipient != null) {
+                webSocketRecipients.remove(recipient);
+            }
+
+            webSocketRecipients.add(new ConversationWebSocketRecipientSummary(user, false, authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)));
+        });
+
         Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
