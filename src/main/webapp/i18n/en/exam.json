@@ -714,6 +714,7 @@
             "cancelAssessment": " Cancel Assessment",
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+            "endOfIndividualWorkingTime": "End of individual working time:",
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
             "hasComplaint": "Has Complaint",
