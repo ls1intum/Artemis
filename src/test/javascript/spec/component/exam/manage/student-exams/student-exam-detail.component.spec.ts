@@ -373,4 +373,41 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.grade).toBe(studentExamWithGradeFromServer.studentResult.overallGrade);
         expect(studentExamDetailComponent.gradeAfterBonus).toBe(studentExamWithGradeFromServer.studentResult.gradeWithBonus.finalGrade.toString());
     });
+
+    describe('change student exam to submitted button', () => {
+        beforeEach(() => {
+            setupComponentToDisplayExamSubmittedButton();
+        });
+
+        it('should be displayed when individual working time is over', () => {
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'examIsOver').mockReturnValue(true);
+
+            studentExamDetailComponentFixture.detectChanges();
+
+            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector('#adjust-submitted-state-button');
+            expect(buttonElement).toBeTruthy();
+            expect(examIsOverSpy).toHaveBeenCalled();
+        });
+
+        it('should NOT be displayed when individual working time is NOT over', () => {
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'examIsOver').mockReturnValue(false);
+
+            studentExamDetailComponentFixture.detectChanges();
+
+            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector('#adjust-submitted-state-button');
+            expect(examIsOverSpy).toHaveBeenCalled();
+            expect(buttonElement).not.toBeTruthy();
+        });
+    });
+
+    /**
+     * Sets up the component to be in a state where the button should be displayed when not considering {@link StudentExamDetailComponent#examIsOver}
+     */
+    function setupComponentToDisplayExamSubmittedButton() {
+        studentExamDetailComponent.student = student;
+        studentExamDetailComponent.studentExam = studentExam;
+        studentExamDetailComponent.course = course;
+        studentExamDetailComponent.course.isAtLeastInstructor = true;
+        studentExamDetailComponent.isTestExam = false;
+    }
 });

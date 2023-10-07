@@ -179,7 +179,14 @@
             </button>
         </div>
     </ng-template>
-    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && examIsOver()" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="busy">
+    <button
+        class="btn btn-danger mb-3"
+        *ngIf="course?.isAtLeastInstructor && examIsOver()"
+        type="button"
+        (click)="openConfirmationModal(toggleSubmitPopUp)"
+        [disabled]="busy"
+        id="adjust-submitted-state-button"
+    >
         <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
         <ng-template #toggleNotSubmitted>
             <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
