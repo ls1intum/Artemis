@@ -48,9 +48,9 @@ Instructors have three options for creating a lecture.
 
        |create-lecture-automatic-unit-processing|
 
-    Once the units are processed, instructors can view how the units are split (start page and end page). A name is automatically generated for each lecture unit. Instructors
-    can also customize the table entries by removing or adding new units. Additionally, they can enter keywords if they want particular slides
-    to be removed. Slides containing the keyword will be removed.
+    Once the units are processed, instructors can view how the units are split, beginning from a start page to an end page. A name is automatically generated for each lecture unit.
+    Instructors can also customize the table entries by removing or adding new units. Additionally, they can enter keywords if they want particular slides
+    to be removed. Slides containing one of the comma-separated keywords will be removed.
 
        |processed-lecture-units|
 
