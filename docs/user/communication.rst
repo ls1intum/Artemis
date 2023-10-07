@@ -79,12 +79,12 @@ located on the right-hand side of the Messages Page when displayed.
 |messages|
 
 If the message content contains links, a preview of the link will be shown under the message. This way, users will have a good understanding
-of what that link is about. If they don't want to have the preview, by hovering over the preview, an `X` button will appear,
-and after clicking, the preview will be removed.
+of what that link is about. If they prefer not to have a preview, they can hover over the preview and click the appearing `X` button.
+The preview will be removed.
 
 |link-preview|
 
-If the message contains more than one link, then the preview will not have a preview image of the link to have more compact previews
+If the message contains more than one link, the preview will not have a preview image of the link to have more compact previews
 for multiple links.
 
 |link-preview-multiple|
@@ -197,17 +197,17 @@ Reference Lecture Attachment Units
 """"""""""""""""""""""""""""""""""
 
 Users can refer to lecture attachment units of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
-editor (see image below). Here, lecture attachment units can be found when users hover over the specific lecture.
+editor, see image below. Here, lecture attachment units can be found when users hover over the specific lecture.
 
 Reference Lecture Unit Slides
 """""""""""""""""""""""""""""
 
 Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
-hover over a specific unit (see image below).
+hover over a specific unit, see image below.
 
 |slide-reference-menu|
 
-After the user references a single slide they can see as image included in the message. Additionally they can preview the slide
+After the user references a single slide they can see it as an image included in the message. Additionally, they can preview the slide
 in order to easily read the content by clicking the image.
 
 |slide-reference|
