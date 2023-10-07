@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -104,7 +101,7 @@ public class ConversationMessagingService extends PostingService {
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
 
-        List<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
+        Set<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
 
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
@@ -129,26 +126,11 @@ public class ConversationMessagingService extends PostingService {
         return createdMessage;
     }
 
-    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, List<User> mentionedUsers) {
+    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-
-        Map<Long, ConversationWebSocketRecipientSummary> recipientMap = webSocketRecipients.stream()
-                .collect(Collectors.toMap((recipient) -> recipient.user().getId(), Function.identity()));
-
-        mentionedUsers.forEach(user -> {
-            if (Objects.equals(user.getId(), author.getId())) {
-                return;
-            }
-
-            ConversationWebSocketRecipientSummary recipient = recipientMap.get(user.getId());
-            if (recipient != null) {
-                webSocketRecipients.remove(recipient);
-            }
-
-            webSocketRecipients.add(new ConversationWebSocketRecipientSummary(user, false, authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)));
-        });
-
         Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
+        // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
+        broadcastRecipients.addAll(mentionedUsers);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
@@ -170,7 +152,9 @@ public class ConversationMessagingService extends PostingService {
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        var notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
+        // Add all mentioned users, except the author (if mentioned). Since working with sets, there are no duplicate user entries
+        notificationRecipients.addAll(mentionedUsers.stream().filter(user -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet()));
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
     }
 

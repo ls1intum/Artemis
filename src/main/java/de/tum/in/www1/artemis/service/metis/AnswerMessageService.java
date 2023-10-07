@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -94,7 +93,7 @@ public class AnswerMessageService extends PostingService {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, author);
         }
 
-        List<User> mentionedUsers = parseUserMentions(course, answerMessage.getContent());
+        Set<User> mentionedUsers = parseUserMentions(course, answerMessage.getContent());
 
         // use post from database rather than user input
         answerMessage.setPost(post);
@@ -110,6 +109,10 @@ public class AnswerMessageService extends PostingService {
         if (conversationService.isMember(post.getConversation().getId(), post.getAuthor().getId())) {
             usersInvolved.add(post.getAuthor());
         }
+
+        // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
+        usersInvolved.addAll(mentionedUsers);
+
         usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author));
         return savedAnswerMessage;
     }
