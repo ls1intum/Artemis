@@ -65,6 +65,8 @@ export class StudentExamDetailComponent implements OnInit {
         percent: 0,
     };
 
+    individualEndDate: dayjs.Dayjs | undefined;
+
     // Icons
     faSave = faSave;
 
@@ -204,7 +206,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     private initWorkingTimeForm() {
         this.setWorkingTimeDuration(this.studentExam.workingTime!);
-        this.updateWorkingTimePercent();
+        this.updateVariablesDependingOnWorkingTimeForm();
 
         this.lastSavedWorkingTime = { ...this.workingTimeFormValues };
     }
@@ -227,6 +229,13 @@ export class StudentExamDetailComponent implements OnInit {
         this.workingTimeFormValues.hours = workingTime.days * 24 + workingTime.hours;
         this.workingTimeFormValues.minutes = workingTime.minutes;
         this.workingTimeFormValues.seconds = workingTime.seconds;
+
+        this.updateIndividualEndDate();
+    }
+
+    updateVariablesDependingOnWorkingTimeForm() {
+        this.updateWorkingTimePercent();
+        this.updateWorkingTimeDuration();
     }
 
     /**
@@ -234,6 +243,10 @@ export class StudentExamDetailComponent implements OnInit {
      */
     updateWorkingTimePercent() {
         this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds(this.workingTimeFormValues));
+    }
+
+    updateIndividualEndDate() {
+        this.individualEndDate = dayjs(this.studentExam.exam!.startDate).add(this.getWorkingTimeSeconds(this.workingTimeFormValues), 'seconds');
     }
 
     /**
