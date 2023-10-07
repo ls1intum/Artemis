@@ -152,9 +152,7 @@ public class ConversationMessagingService extends PostingService {
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
-        // Add all mentioned users, except the author (if mentioned). Since working with sets, there are no duplicate user entries
-        notificationRecipients.addAll(mentionedUsers.stream().filter(user -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet()));
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
     }
 
@@ -168,16 +166,18 @@ public class ConversationMessagingService extends PostingService {
      * @param author              the author of the message
      * @param conversation        the conversation the new message has been written in
      * @param webSocketRecipients the list of users that should be filtered
+     * @param mentionedUsers      users mentioend within the message
      * @return filtered list of users that are supposed to receive a notification
      */
-    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients) {
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients,
+            Set<User> mentionedUsers) {
         // Initialize filter with check for author
         Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.user().getId(), author.getId());
 
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden() || mentionedUsers.contains(recipientSummary.user()));
             }
 
             // If a channel is not visible to students, filter out participants that are only students
