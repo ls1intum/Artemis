@@ -104,8 +104,8 @@ export class ExamParticipation {
     }
 
     getResultScore() {
-        cy.reloadUntilFound('#result-score');
-        return cy.get('#result-score');
+        cy.reloadUntilFound('#exercise-result-score');
+        return cy.get('#exercise-result-score');
     }
 
     checkExamFinishedTitle(title: string) {

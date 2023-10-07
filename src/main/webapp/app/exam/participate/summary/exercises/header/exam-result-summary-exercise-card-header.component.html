@@ -5,7 +5,7 @@
             {{ exercise.exerciseGroup?.title }}
         </h5>
 
-        <div class="ms-3">
+        <div class="ms-3" id="exercise-result-score">
             <div *ngIf="resultsPublished && exerciseInfo?.achievedPoints !== undefined; else withoutAchievedPoints" class="d-flex">
                 [{{ exerciseInfo?.achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
 
