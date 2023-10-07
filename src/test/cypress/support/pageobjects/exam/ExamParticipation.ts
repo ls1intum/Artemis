@@ -133,7 +133,7 @@ export class ExamParticipation {
 
     verifyTextExerciseOnFinalPage(textFixture: string) {
         cy.fixture(textFixture).then((submissionText) => {
-            cy.contains(submissionText).should('be.visible');
+            cy.get('textarea').should('have.value', submissionText);
         });
     }
 }
