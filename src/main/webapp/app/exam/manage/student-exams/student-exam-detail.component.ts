@@ -118,7 +118,6 @@ export class StudentExamDetailComponent implements OnInit {
                 if (res.body) {
                     this.setStudentExam(res.body);
                 }
-                this.lastSavedWorkingTime = { ...this.workingTimeFormValues };
                 this.isSavingWorkingTime = false;
                 this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
             },
@@ -206,6 +205,8 @@ export class StudentExamDetailComponent implements OnInit {
     private initWorkingTimeForm() {
         this.setWorkingTimeDuration(this.studentExam.workingTime!);
         this.updateWorkingTimePercent();
+
+        this.lastSavedWorkingTime = { ...this.workingTimeFormValues };
     }
 
     /**
