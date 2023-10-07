@@ -110,8 +110,18 @@ public class AnswerMessageService extends PostingService {
             usersInvolved.add(post.getAuthor());
         }
 
-        // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
-        usersInvolved.addAll(mentionedUsers);
+        mentionedUsers.forEach(user -> {
+            boolean isChannelAndCourseWide = post.getConversation() instanceof Channel channel && channel.getIsCourseWide();
+            boolean isChannelVisibleToStudents = !(post.getConversation() instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
+            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getCourse(), user);
+
+            // Only send a notification to the mentioned user if...
+            // (for course-wide channels) ...the course-wide channel is visible
+            // (for all other cases) ...the user is a member of the conversation
+            if ((isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId())) {
+                usersInvolved.add(user);
+            }
+        });
 
         usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author));
         return savedAnswerMessage;
