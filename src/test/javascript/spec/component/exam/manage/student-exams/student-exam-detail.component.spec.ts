@@ -261,13 +261,13 @@ describe('StudentExamDetailComponent', () => {
     it('should get examIsOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
+        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
         studentExam.exam!.startDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
+        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
         studentExam.exam!.startDate = dayjs().add(-200, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toBeTrue();
+        expect(studentExamDetailComponent.isExamOver()).toBeTrue();
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
+        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
     });
 
     it('should toggle to unsubmitted', () => {
@@ -380,7 +380,7 @@ describe('StudentExamDetailComponent', () => {
         });
 
         it('should be displayed when individual working time is over', () => {
-            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'examIsOver').mockReturnValue(true);
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(true);
 
             studentExamDetailComponentFixture.detectChanges();
 
@@ -390,7 +390,7 @@ describe('StudentExamDetailComponent', () => {
         });
 
         it('should NOT be displayed when individual working time is NOT over', () => {
-            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'examIsOver').mockReturnValue(false);
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(false);
 
             studentExamDetailComponentFixture.detectChanges();
 
@@ -401,7 +401,7 @@ describe('StudentExamDetailComponent', () => {
     });
 
     /**
-     * Sets up the component to be in a state where the button should be displayed when not considering {@link StudentExamDetailComponent#examIsOver}
+     * Sets up the component to be in a state where the button should be displayed when not considering {@link StudentExamDetailComponent#isExamOver}
      */
     function setupComponentToDisplayExamSubmittedButton() {
         studentExamDetailComponent.student = student;

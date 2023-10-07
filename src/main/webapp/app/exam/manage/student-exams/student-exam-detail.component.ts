@@ -259,7 +259,7 @@ export class StudentExamDetailComponent implements OnInit {
     /**
      * Checks if the exam is over considering the individual working time of the student and the grace period
      */
-    examIsOver(): boolean {
+    isExamOver(): boolean {
         if (this.studentExam.exam) {
             const individualExamEndDate = dayjs(this.studentExam.exam.startDate)
                 .add(this.getWorkingTimeSeconds(this.lastSavedWorkingTime), 'seconds')

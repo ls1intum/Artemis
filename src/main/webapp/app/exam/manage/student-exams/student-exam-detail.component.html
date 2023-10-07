@@ -181,7 +181,7 @@
     </ng-template>
     <button
         class="btn btn-danger mb-3"
-        *ngIf="course?.isAtLeastInstructor && examIsOver()"
+        *ngIf="course?.isAtLeastInstructor && isExamOver()"
         type="button"
         (click)="openConfirmationModal(toggleSubmitPopUp)"
         [disabled]="busy"
