@@ -16,6 +16,13 @@ import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/par
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
+type WorkingTimeFormValues = {
+    hours: number;
+    minutes: number;
+    seconds: number;
+    percent: number;
+};
+
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
@@ -44,7 +51,14 @@ export class StudentExamDetailComponent implements OnInit {
     isBonus = false;
     passed = false;
 
-    workingTimeFormValues = {
+    workingTimeFormValues: WorkingTimeFormValues = {
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        percent: 0,
+    };
+
+    lastSavedWorkingTime: WorkingTimeFormValues = {
         hours: 0,
         minutes: 0,
         seconds: 0,
@@ -98,12 +112,13 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.getWorkingTimeSeconds();
+        const seconds = this.getWorkingTimeSeconds(this.workingTimeFormValues);
         this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe({
             next: (res) => {
                 if (res.body) {
                     this.setStudentExam(res.body);
                 }
+                this.lastSavedWorkingTime = { ...this.workingTimeFormValues };
                 this.isSavingWorkingTime = false;
                 this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
             },
@@ -217,18 +232,18 @@ export class StudentExamDetailComponent implements OnInit {
      * Uses the current durations saved in the form to update the extension percent value.
      */
     updateWorkingTimePercent() {
-        this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds());
+        this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds(this.workingTimeFormValues));
     }
 
     /**
      * Calculates how many seconds the currently set working time has in total.
      */
-    private getWorkingTimeSeconds(): number {
+    private getWorkingTimeSeconds(workingTimeFormValues: WorkingTimeFormValues): number {
         const duration = {
             days: 0,
-            hours: this.workingTimeFormValues.hours,
-            minutes: this.workingTimeFormValues.minutes,
-            seconds: this.workingTimeFormValues.seconds,
+            hours: workingTimeFormValues.hours,
+            minutes: workingTimeFormValues.minutes,
+            seconds: workingTimeFormValues.seconds,
         };
         return this.artemisDurationFromSecondsPipe.durationToSeconds(duration);
     }
@@ -240,13 +255,19 @@ export class StudentExamDetailComponent implements OnInit {
         return this.isSavingWorkingTime || (this.isTestRun && !!this.studentExam.submitted) || !this.studentExam.exam;
     }
 
+    /**
+     * Checks if the exam is over considering the individual working time of the student and the grace period
+     */
     examIsOver(): boolean {
         if (this.studentExam.exam) {
-            // only show the button when the exam is over
-            return dayjs(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod!, 'seconds').isBefore(dayjs());
-        } else {
-            return false;
+            const individualExamEndDate = dayjs(this.studentExam.exam.startDate)
+                .add(this.getWorkingTimeSeconds(this.lastSavedWorkingTime), 'seconds')
+                .add(this.studentExam.exam.gracePeriod!, 'seconds');
+
+            return individualExamEndDate.isBefore(dayjs());
         }
+
+        return false;
     }
 
     /**
