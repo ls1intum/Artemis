@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 
 import java.util.Arrays;
 import java.util.List;
