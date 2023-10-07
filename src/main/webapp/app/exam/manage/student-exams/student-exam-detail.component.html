@@ -105,12 +105,10 @@
                 </div>
             </div>
 
-            <ng-container *ngIf="this.workingTimeFormValues.percent">
-                <p>
-                    {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }} -
-                    {{ individualEndDate | artemisDate: 'time' : true }}
-                </p>
-            </ng-container>
+            <p *ngIf="this.workingTimeFormValues.percent">
+                {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }} -
+                {{ individualEndDate | artemisDate: 'time' : true }}
+            </p>
 
             <button id="save" type="submit" class="btn btn-primary me-2" [disabled]="!form.valid || isFormDisabled()">
                 <fa-icon [icon]="faSave"></fa-icon>
