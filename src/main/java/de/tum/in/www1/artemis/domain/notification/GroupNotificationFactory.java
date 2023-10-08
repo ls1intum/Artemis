@@ -144,6 +144,11 @@ public class GroupNotificationFactory {
                 text = notificationText;
                 textIsPlaceholder = false;
             }
+            case PROGRAMMING_BUILD_RUN_UPDATE -> {
+                title = NotificationConstants.PROGRAMMING_BUILD_RUN_UPDATE_TITLE;
+                text = notificationText;
+                textIsPlaceholder = false;
+            }
             case ILLEGAL_SUBMISSION -> {
                 title = NotificationConstants.ILLEGAL_SUBMISSION_TITLE;
                 text = NotificationConstants.ILLEGAL_SUBMISSION_TEXT;

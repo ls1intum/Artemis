@@ -66,6 +66,8 @@ public class NotificationConstants {
 
     public static final String PROGRAMMING_REPOSITORY_LOCKS_TITLE = "artemisApp.groupNotification.title.repositoryLocks";
 
+    public static final String PROGRAMMING_BUILD_RUN_UPDATE_TITLE = "artemisApp.groupNotification.title.buildRun";
+
     public static final String NEW_PLAGIARISM_CASE_STUDENT_TITLE = "artemisApp.singleUserNotification.title.newPlagiarismCaseStudent";
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = "artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent";
@@ -238,7 +240,8 @@ public class NotificationConstants {
             .put(CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_ADD_USER_CHANNEL_TITLE).put(CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
             .put(CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE).put(CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
             .put(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE).put(DATA_EXPORT_CREATED, DATA_EXPORT_CREATED_TITLE)
-            .put(DATA_EXPORT_FAILED, DATA_EXPORT_FAILED_TITLE).put(PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_REPOSITORY_LOCKS_TITLE).build();
+            .put(DATA_EXPORT_FAILED, DATA_EXPORT_FAILED_TITLE).put(PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_REPOSITORY_LOCKS_TITLE)
+            .put(PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_BUILD_RUN_UPDATE_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

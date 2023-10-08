@@ -96,8 +96,8 @@ public class GroupNotificationService {
                 case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED -> createNotification((Exam) notificationSubject, author, group, notificationType,
                         (List<String>) typeSpecificInformation);
                 // Critical Types
-                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, PROGRAMMING_REPOSITORY_LOCKS -> createNotification((Exercise) notificationSubject, author, group, notificationType,
-                        (String) typeSpecificInformation);
+                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE -> createNotification((Exercise) notificationSubject,
+                        author, group, notificationType, (String) typeSpecificInformation);
                 // Additional Types
                 case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST -> createNotification((Exercise) notificationSubject, author, group, notificationType,
                         (String) typeSpecificInformation);
@@ -193,6 +193,17 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutRepositoryLocks(ProgrammingExercise exercise, String notificationText) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_REPOSITORY_LOCKS, exercise, notificationText, null);
+    }
+
+    /**
+     * Notify editor and instructor groups about started or completed build runs for all participants of an exercise.
+     *
+     *
+     * @param exercise         the exercise where the builds status changed
+     * @param notificationText the notification text
+     */
+    public void notifyEditorAndInstructorGroupsAboutBuildRunUpdate(ProgrammingExercise exercise, String notificationText) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_BUILD_RUN_UPDATE, exercise, notificationText, null);
     }
 
     /**
