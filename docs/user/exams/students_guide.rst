@@ -278,6 +278,7 @@ Participating in Programming Exercises
     This will reset your changes to the latest commit. Manual merging is not possible with the online code editor.
 
 - The instructors can set submission policies, defining the effect of your submissions on your participation. The policies and their effects are as follows:
+
     - **None** You can submit as many times as you want without any consequences.
     - **Lock Repository** There's a limit on the number of allowed submissions. Once you exceed the limit, your repository will be locked and further submissions will not be allowed.
     
