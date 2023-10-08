@@ -53,7 +53,7 @@
                 "newManualFeedbackRequest": "Eine neue Anfrage zu manuellem Feedback wurde eingereicht",
                 "duplicateTestCase": "Doppelte Testfälle wurden gefunden.",
                 "repositoryLocks": "Zugriffsrechte aktualisiert",
-                "buildRun": "Build run update",
+                "buildRun": "Neubewertung der Einreichungen",
                 "illegalSubmission": "Unzulässige Einreichung eines Studenten",
                 "newExercisePost": "Neuer Aufgabenbeitrag",
                 "newLecturePost": "Neuer Vorlesungsbeitrag",
