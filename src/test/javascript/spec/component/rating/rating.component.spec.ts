@@ -6,7 +6,6 @@ import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
-import { Rating } from 'app/entities/rating.model';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -62,20 +61,19 @@ describe('RatingComponent', () => {
 
     it('should create new local rating', () => {
         ratingComponent.ngOnInit();
-        expect(ratingComponent.rating.result?.id).toBe(89);
-        expect(ratingComponent.rating.rating).toBe(0);
+        expect(ratingComponent.rating).toBe(0);
     });
 
     it('should set rating received from server', () => {
-        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(new Rating({ id: 90 } as Result, 1)));
+        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(1));
         ratingComponent.ngOnInit();
-        expect(ratingComponent.rating.result?.id).toBe(90);
-        expect(ratingComponent.rating.rating).toBe(1);
+        expect(ratingComponent.rating).toBe(1);
     });
 
     describe('OnRate', () => {
         beforeEach(() => {
-            ratingComponent.rating = new Rating({ id: 89 } as Result, 0);
+            ratingComponent.rating = 0;
+            ratingComponent.result = { id: 89 } as Result;
             jest.spyOn(ratingService, 'createRating');
             jest.spyOn(ratingService, 'updateRating');
         });
@@ -99,21 +97,19 @@ describe('RatingComponent', () => {
             });
             expect(ratingService.createRating).toHaveBeenCalledOnce();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
-            expect(ratingComponent.rating.result?.id).toBe(89);
-            expect(ratingComponent.rating.rating).toBe(2);
+            expect(ratingComponent.rating).toBe(2);
         });
 
         it('should update rating', () => {
-            ratingComponent.rating.id = 89;
+            ratingComponent.rating = 1;
             ratingComponent.onRate({
-                oldValue: 0,
+                oldValue: 1,
                 newValue: 2,
                 starRating: new StarRatingComponent(),
             });
             expect(ratingService.updateRating).toHaveBeenCalledOnce();
             expect(ratingService.createRating).not.toHaveBeenCalled();
-            expect(ratingComponent.rating.result?.id).toBe(89);
-            expect(ratingComponent.rating.rating).toBe(2);
+            expect(ratingComponent.rating).toBe(2);
         });
     });
 });

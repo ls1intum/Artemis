@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { FileBadge, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
 import { faChevronDown, faChevronRight, faEdit, faFile, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
@@ -14,6 +14,7 @@ export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserN
     @Input() onCollapseExpand: () => void;
     @Input() isCompressed = false;
     @Input() disableActions: boolean;
+    @Input() badges: FileBadge[] = [];
     @Output() onSetCreatingNodeInFolder = new EventEmitter<{ item: TreeviewItem<string>; fileType: FileType }>();
 
     // Icons

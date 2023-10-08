@@ -162,6 +162,18 @@
                         "body": "Some students have not generated their learning paths yet. This is not critical. Their learning paths will be created once they request their learning path for the first time.",
                         "action": "Generate",
                         "hint": "Generate missing Learning Paths"
+                    },
+                    "noCompetencies": {
+                        "title": "No Competencies",
+                        "body": "You have not created competencies yet. Learning paths are composed of the competencies students have to fulfill. Go to the competency management tab to create new competencies or import existing ones.",
+                        "action": "Competency Management",
+                        "hint": "Go to competency management"
+                    },
+                    "noRelations": {
+                        "title": "No Relations",
+                        "body": "You have not configured relations between competencies. Learning paths use this information about the structure of the learning materials to reliably provide high quality recommendations to students. Go to the competency management tab to configure competency relations.",
+                        "action": "Competency Management",
+                        "hint": "Go to competency management"
                     }
                 },
                 "isDisabled": "Learning Paths are currently disabled for this course.",
