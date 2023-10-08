@@ -154,6 +154,9 @@ class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
+    @Autowired
+    private ZipFileTestUtilService zipFileTestUtilService;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -490,7 +493,7 @@ class ProgrammingExerciseIntegrationTestService {
         // Checks
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
         Optional<Path> extractedRepo1 = entries.stream()
-                .filter(entry -> entry.toString().endsWith(Path.of("-" + String.valueOf(participation1.getId()) + "-student-submission.git", ".git").toString())).findFirst();
+                .filter(entry -> entry.toString().endsWith(Path.of("-" + participation1.getId() + "-student-submission.git", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
@@ -505,8 +508,7 @@ class ProgrammingExerciseIntegrationTestService {
      * @return the list of files that the {@code downloadedFile} contained.
      */
     private List<Path> unzipExportedFile() throws Exception {
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Path.of(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(downloadedFile.getAbsolutePath());
         try (var files = Files.walk(extractedZipDir)) {
             return files.toList();
         }

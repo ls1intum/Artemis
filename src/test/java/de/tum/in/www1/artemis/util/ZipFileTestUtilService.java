@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -22,9 +23,10 @@ public class ZipFileTestUtilService {
      * Extracts a zip file recursively.
      *
      * @param zipFile The path to the zip file
+     * @return path to the directory containing the exported files
      * @throws IOException if something goes wrong
      */
-    public void extractZipFileRecursively(String zipFile) throws IOException {
+    public Path extractZipFileRecursively(String zipFile) throws IOException {
         File file = new File(zipFile);
 
         try (ZipFile zip = new ZipFile(file)) {
@@ -58,6 +60,7 @@ public class ZipFileTestUtilService {
                     extractZipFileRecursively(destFile.getAbsolutePath());
                 }
             }
+            return parentFolder.toPath();
         }
     }
 }
