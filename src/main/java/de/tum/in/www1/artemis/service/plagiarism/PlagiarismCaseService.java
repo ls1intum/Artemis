@@ -120,8 +120,10 @@ public class PlagiarismCaseService {
      * <li>Add the submission of the student to existing plagiarism case otherwise</li>
      * </ul>
      *
-     * @param plagiarismComparison the plagiarism comparison for which to create the plagiarism case
-     * @param plagiarismSubmission the plagiarism submission of the student for which to create the plagiarism case
+     * @param plagiarismComparison                 the plagiarism comparison for which to create the plagiarism case
+     * @param plagiarismSubmission                 the plagiarism submission of the student for which to create the plagiarism case
+     * @param createdByContinuousPlagiarismControl true is the plagiarism comparison was created by the continuous plagiarism control
+     * @return the created or updated plagiarism case
      */
     public PlagiarismCase createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission,
             boolean createdByContinuousPlagiarismControl) {
