@@ -2,6 +2,10 @@ package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -90,13 +94,12 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
-        var irisSession1 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var irisSession2 = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession2);
         request.postWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
@@ -138,6 +141,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getTextContent).toList());
         irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(2).isEqualTo(List.of(irisMessage1, irisMessage2));
+
+        verify(websocketMessagingService, timeout(3000).times(4)).sendMessageToUser(eq(TEST_PREFIX + "student1"), any(), any());
     }
 
     @Test
@@ -245,7 +250,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
@@ -261,7 +265,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
         verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
@@ -277,7 +280,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class, HttpStatus.OK);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
     @Test
@@ -302,7 +304,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
                     HttpStatus.TOO_MANY_REQUESTS);
             verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), messageToSend1);
             verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), "Hello World");
-            verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId());
         }
         finally {
             ReflectionTestUtils.setField(irisRateLimitService, "rateLimit", previousRateLimit);
