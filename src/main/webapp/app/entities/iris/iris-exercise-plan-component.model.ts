@@ -5,7 +5,7 @@ export enum ExerciseComponent {
     TEST_REPOSITORY,
 }
 export class IrisExercisePlanComponent {
-    id: number;
+    id?: number;
     exercisePlan: number;
     component: ExerciseComponent;
     instructions: string;

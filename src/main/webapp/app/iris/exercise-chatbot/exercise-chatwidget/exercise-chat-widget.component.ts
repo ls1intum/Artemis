@@ -37,12 +37,12 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
@@ -306,8 +306,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     loadFirstMessage(): void {
         const firstMessageContent = {
             textContent: 'artemisApp.exerciseChatbot.firstMessage',
-            type: IrisMessageContentType.TEXT,
-        } as IrisMessageContent;
+        } as IrisMessageTextContent;
 
         const firstMessage = {
             sender: IrisSender.ARTEMIS_CLIENT,
@@ -593,8 +592,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A new IrisClientMessage object representing the user message.
      */
     newUserMessage(message: string): IrisClientMessage {
-        const content: IrisMessageContent = {
-            type: IrisMessageContentType.TEXT,
+        const content: IrisMessageTextContent = {
             textContent: message,
         };
         return {

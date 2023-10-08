@@ -58,8 +58,8 @@ describe('Iris Http Code Editor Message Service', () => {
                 .updateComponentPlan(
                     mockPlanConversation.id,
                     mockServerPlanMessage.id,
-                    mockMessagePlanContent.id,
-                    mockExercisePlanComponent.id,
+                    mockMessagePlanContent.id!,
+                    mockExercisePlanComponent.id!,
                     'I will add a QuickSort algorithm task.',
                 )
                 .pipe(take(1))
@@ -73,7 +73,7 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockExercisePlanComponent };
             //const expected = { ...returnedFromService, id: 0 };
             service
-                .executePlan(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id)
+                .executePlan(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.ok).toBeTrue());
             const req = httpMock.expectOne({ method: 'POST' });

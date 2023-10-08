@@ -28,7 +28,6 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -148,7 +147,6 @@ describe('ExerciseChatWidgetComponent', () => {
                     sender: IrisSender.USER,
                     content: [
                         {
-                            type: IrisMessageContentType.TEXT,
                             textContent: 'Hello',
                         },
                     ],
@@ -395,7 +393,6 @@ describe('ExerciseChatWidgetComponent', () => {
             sender: IrisSender.USER,
             content: [
                 {
-                    type: IrisMessageContentType.TEXT,
                     textContent: testMessage,
                 },
             ],
