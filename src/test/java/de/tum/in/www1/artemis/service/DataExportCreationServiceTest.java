@@ -21,6 +21,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -62,6 +63,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     private static final String FILE_FORMAT_ZIP = ".zip";
 
     private static final String FILE_FORMAT_CSV = ".csv";
+
+    @Value("${artemis.repo-download-clone-path}")
+    private Path repoDownloadClonePath;
 
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
@@ -191,6 +195,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
     private Course prepareCourseDataForDataExportCreation(boolean assessmentDueDateInTheFuture, String courseShortName) throws Exception {
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        if (!Files.exists(repoDownloadClonePath)) {
+            Files.createDirectories(repoDownloadClonePath);
+        }
         Course course1;
         if (assessmentDueDateInTheFuture) {
             course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
@@ -262,6 +269,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
                 courseShortName, true, true);
+        if (!Files.exists(repoDownloadClonePath)) {
+            Files.createDirectories(repoDownloadClonePath);
+        }
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
