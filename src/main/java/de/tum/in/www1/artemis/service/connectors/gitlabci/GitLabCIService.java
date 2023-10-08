@@ -114,7 +114,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
-        setupGitLabCIConfiguration(repositoryURL, exercise, planKey);
+        setupGitLabCIConfiguration(repositoryURL, exercise, generateBuildPlanId(exercise.getProjectKey(), planKey));
         // TODO: triggerBuild(repositoryURL, exercise.getBranch());
     }
 
@@ -202,7 +202,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         // When sending the build results back, the build plan key is used to identify the participation.
         // Therefore, we return the key here even though GitLab CI does not need it.
-        return targetProjectKey + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return generateBuildPlanId(targetProjectKey, targetPlanName);
+    }
+
+    private String generateBuildPlanId(String projectKey, String planKey) {
+        return projectKey + "-" + planKey.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     @Override
