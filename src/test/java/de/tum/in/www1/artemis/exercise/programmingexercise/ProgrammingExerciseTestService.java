@@ -1578,16 +1578,13 @@ public class ProgrammingExerciseTestService {
         // extract archive content and check that all expected files exist.
         Path courseArchivePath = courseArchivesDirPath.resolve(updatedCourse.getCourseArchivePath());
         Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
-        try (var files = Files.walk(courseArchivesDirPath.resolve(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             assertThat(files).map(Path::getFileName).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
                     .anyMatch((filename) -> filename.toString().matches(".*student1.zip"));
         }
-
-        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
-        FileUtils.delete(courseArchivePath.toFile());
     }
 
     // Test
