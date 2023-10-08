@@ -27,3 +27,14 @@ export class IrisMessagePlanContent extends IrisMessageContent {
         super(IrisMessageContentType.PLAN);
     }
 }
+
+export function isTextContent(content: IrisMessageContent) {
+    return content instanceof IrisMessageTextContent;
+}
+
+export function getTextContent(content: IrisMessageContent) {
+    if (content instanceof IrisMessageTextContent) {
+        const irisMessageTextContent = content;
+        return irisMessageTextContent.textContent;
+    }
+}

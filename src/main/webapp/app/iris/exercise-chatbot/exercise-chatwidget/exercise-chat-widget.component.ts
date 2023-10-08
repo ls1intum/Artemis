@@ -37,7 +37,7 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import { IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageContent, IrisMessageTextContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -671,5 +671,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
+    }
+
+    isTextContent(content: IrisMessageContent) {
+        return isTextContent(content);
+    }
+
+    getTextContent(content: IrisMessageContent) {
+        return getTextContent(content);
     }
 }
