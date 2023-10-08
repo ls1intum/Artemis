@@ -277,6 +277,20 @@ Participating in Programming Exercises
     You can use the |resolve_conflict| button, which is then displayed instead of the submit button, to resolve the conflict within the online code editor.
     This will reset your changes to the latest commit. Manual merging is not possible with the online code editor.
 
+- The instructors can set submission policies, defining the effect of your submissions on your participation. The policies and their effects are as follows:
+    - **None** You can submit as many times as you want without any consequences.
+    - **Lock Repository** There's a limit on the number of allowed submissions. Once you exceed the limit, your repository will be locked and further submissions will not be allowed.
+    
+        .. figure:: student/submission_policy_lock.png
+            :alt: Effect of the Lock Repository Policy
+            :align: center
+
+    - **Submission Penalty** There's a limit on the number of allowed submissions. Once you exceed the limit, you will be penalized for each additional submission.
+
+        .. figure:: student/submission_policy_penalty.png
+            :alt: Effect of the Submission Penalty Policy
+            :align: center
+
 End Screen
 ^^^^^^^^^^
 - When you are finished with the exercises, or the time runs out you navigate to the *End Screen*.
