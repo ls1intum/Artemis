@@ -56,7 +56,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     private themeSubscription: Subscription;
 
     constructor(
-        elementRef: ElementRef,
+        public elementRef: ElementRef, // needed for resize detection in code-editor-ace.component.ts
         private zone: NgZone,
         private themeService: ThemeService,
     ) {
