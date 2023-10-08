@@ -170,11 +170,15 @@ class ProgrammingExerciseIntegrationTestService {
 
     private Git localGit;
 
+    private File remoteRepoFile;
+
     private Git remoteGit;
 
     private File localRepoFile2;
 
     private Git localGit2;
+
+    private File remoteRepo2File;
 
     private Git remoteGit2;
 
@@ -204,18 +208,18 @@ class ProgrammingExerciseIntegrationTestService {
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
         localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
-        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
+        remoteRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit = LocalRepository.initialize(remoteRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
-        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
+        config.setString("remote", "origin", "url", remoteRepoFile.getAbsolutePath());
         config.save();
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
         localGit2 = LocalRepository.initialize(localRepoFile2, defaultBranch);
-        File originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit2 = LocalRepository.initialize(originRepoFile2, defaultBranch);
+        remoteRepo2File = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit2 = LocalRepository.initialize(remoteRepo2File, defaultBranch);
         StoredConfig config2 = localGit2.getRepository().getConfig();
-        config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
+        config2.setString("remote", "origin", "url", remoteRepo2File.getAbsolutePath());
         config2.save();
 
         // TODO use createProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
@@ -230,27 +234,36 @@ class ProgrammingExerciseIntegrationTestService {
 
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        doReturn(new GitUtilService.MockFileRepositoryUrl(remoteRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
     }
 
     void tearDown() throws IOException {
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
-        if (localRepoFile != null && localRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepoFile);
-        }
         if (localGit != null) {
             localGit.close();
         }
-        if (remoteGit != null) {
-            remoteGit.close();
+        if (localRepoFile != null && localRepoFile.exists()) {
+            FileUtils.deleteDirectory(localRepoFile);
         }
         if (localGit2 != null) {
             localGit2.close();
         }
+        if (localRepoFile2 != null && localRepoFile2.exists()) {
+            FileUtils.deleteDirectory(localRepoFile2);
+        }
+        if (remoteGit != null) {
+            remoteGit.close();
+        }
+        if (remoteRepoFile != null && remoteRepoFile.exists()) {
+            FileUtils.deleteDirectory(remoteRepoFile);
+        }
         if (remoteGit2 != null) {
             remoteGit2.close();
+        }
+        if (remoteRepo2File != null && remoteRepo2File.exists()) {
+            FileUtils.deleteDirectory(remoteRepo2File);
         }
     }
 
