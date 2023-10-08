@@ -30,9 +30,10 @@ public class ZipFileTestUtilService {
         try (ZipFile zip = new ZipFile(file)) {
             String newPath = zipFile.substring(0, zipFile.length() - 4);
 
-            new File(newPath).mkdir();
-            Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
+            File parentFolder = new File(newPath);
+            parentFolder.mkdir();
 
+            Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
             // Process each entry
             while (zipFileEntries.hasMoreElements()) {
                 // grab a zip file entry
@@ -40,7 +41,7 @@ public class ZipFileTestUtilService {
                 String currentEntry = entry.getName();
                 File destFile = new File(newPath, currentEntry);
 
-                if (!destFile.getCanonicalPath().startsWith(newPath)) {
+                if (!destFile.getCanonicalPath().startsWith(parentFolder.getCanonicalPath())) {
                     fail("Bad zip entry");
                 }
 
