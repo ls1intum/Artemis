@@ -23,7 +23,6 @@ public class ZipFileTestUtilService {
      * @throws IOException if something goes wrong
      */
     public void extractZipFileRecursively(String zipFile) throws IOException {
-        int BUFFER = 2048;
         File file = new File(zipFile);
 
         try (ZipFile zip = new ZipFile(file)) {
