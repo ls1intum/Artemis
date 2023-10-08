@@ -236,6 +236,11 @@ public class ProgrammingExerciseService {
         return savedProgrammingExercise;
     }
 
+    public void triggerBaseAndSolutionBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
+    }
+
     public void scheduleOperations(Long programmingExerciseId) {
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
     }
@@ -363,10 +368,6 @@ public class ProgrammingExerciseService {
         continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
 
         giveCIProjectPermissions(programmingExercise);
-
-        // trigger BASE and SOLUTION build plans once here
-        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
-        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
     /**
