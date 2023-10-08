@@ -234,6 +234,16 @@ public class SingleUserNotificationService {
     }
 
     /**
+     * Notify student about possible plagiarism case without explicit notification author.
+     *
+     * @param plagiarismCase that hold the major information for the plagiarism case
+     * @param student        who should be notified
+     */
+    public void notifyUserAboutNewPlagiarismCaseBySystem(PlagiarismCase plagiarismCase, User student) {
+        notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, null);
+    }
+
+    /**
      * Notify student about plagiarism case verdict.
      *
      * @param plagiarismCase that hold the major information for the plagiarism case
