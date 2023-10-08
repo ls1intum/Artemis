@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.assertj.core.api.Assertions.fail;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -37,6 +40,10 @@ public class ZipFileTestUtilService {
                 ZipEntry entry = zipFileEntries.nextElement();
                 String currentEntry = entry.getName();
                 File destFile = new File(newPath, currentEntry);
+
+                if (!destFile.toPath().normalize().startsWith(Path.of(newPath))) {
+                    fail("Bad zip entry");
+                }
 
                 if (!entry.isDirectory()) {
                     FileUtils.copyInputStreamToFile(zip.getInputStream(entry), destFile);
