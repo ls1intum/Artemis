@@ -45,6 +45,10 @@ public class ZipFileTestUtilService {
                     fail("Bad zip entry");
                 }
 
+                File destinationParent = destFile.getParentFile();
+                // create the parent directory structure if needed
+                destinationParent.mkdirs();
+
                 if (!entry.isDirectory()) {
                     FileUtils.copyInputStreamToFile(zip.getInputStream(entry), destFile);
                 }
