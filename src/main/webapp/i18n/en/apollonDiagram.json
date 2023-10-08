@@ -13,7 +13,8 @@
             "deleted": "Deleted Apollon Diagram with ID {{ param }}",
             "create": {
                 "success": "Apollon Diagram with title {{ title }} was created successfully",
-                "error": "Error while creating Apollon Diagram"
+                "error": "Error while creating Apollon Diagram",
+                "validationError": "Validation Error: Please add interactive elements first."
             },
             "update": {
                 "error": "Error while updating Apollon Diagram"

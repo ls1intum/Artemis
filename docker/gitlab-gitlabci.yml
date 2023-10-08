@@ -34,7 +34,7 @@ services:
         shm_size: "256m"
     gitlab-runner:
         image: docker.io/gitlab/gitlab-runner:latest
-        pull_policy: always
+        pull_policy: if_not_present
         container_name: artemis-gitlab-runner
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
