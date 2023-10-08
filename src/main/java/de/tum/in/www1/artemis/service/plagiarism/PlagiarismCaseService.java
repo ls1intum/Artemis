@@ -106,9 +106,9 @@ public class PlagiarismCaseService {
     public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         // handle student A
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA());
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), false);
         // handle student B
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB());
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), false);
     }
 
     /**
@@ -123,7 +123,8 @@ public class PlagiarismCaseService {
      * @param plagiarismComparison the plagiarism comparison for which to create the plagiarism case
      * @param plagiarismSubmission the plagiarism submission of the student for which to create the plagiarism case
      */
-    public PlagiarismCase createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission) {
+    public PlagiarismCase createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission,
+            boolean createdByContinuousPlagiarismControl) {
         var plagiarismCase = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismSubmission.getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCase.isPresent()) {
@@ -140,6 +141,7 @@ public class PlagiarismCaseService {
             PlagiarismCase newPlagiarismCase = new PlagiarismCase();
             newPlagiarismCase.setExercise(plagiarismComparison.getPlagiarismResult().getExercise());
             newPlagiarismCase.setStudent(student);
+            newPlagiarismCase.setCreatedByContinuousPlagiarismControl(createdByContinuousPlagiarismControl);
             var savedPlagiarismCase = plagiarismCaseRepository.save(newPlagiarismCase);
             plagiarismSubmission.setPlagiarismCase(savedPlagiarismCase);
             // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them

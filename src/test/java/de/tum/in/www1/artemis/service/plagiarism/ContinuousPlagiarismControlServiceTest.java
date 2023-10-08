@@ -114,8 +114,8 @@ class ContinuousPlagiarismControlServiceTest {
 
         // then
         var inOrder = inOrder(plagiarismCaseService);
-        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA());
-        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB());
+        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true);
+        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true);
         inOrder.verify(plagiarismCaseService).removeSubmissionsInPlagiarismCasesForComparison(existingPlagiarismComparison.getId());
         verifyNoMoreInteractions(plagiarismCaseService);
     }

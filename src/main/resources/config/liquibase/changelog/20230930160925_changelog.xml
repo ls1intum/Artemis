@@ -16,10 +16,8 @@
         <addColumn tableName="exercise">
             <column name="plagiarism_detection_config_id" type="bigint"/>
         </addColumn>
-        <addColumn tableName="submission">
-            <column name="plagiarism_suspected" type="bit" defaultValue="null">
-                <constraints nullable="true"/>
-            </column>
+        <addColumn tableName="plagiarism_case">
+            <column name="created_by_continuous_plagiarism_control" type="BIT"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

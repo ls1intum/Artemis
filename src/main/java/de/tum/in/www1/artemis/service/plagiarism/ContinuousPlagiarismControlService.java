@@ -70,7 +70,7 @@ public class ContinuousPlagiarismControlService {
     /**
      * Daily triggers plagiarism checks as a part of continuous plagiarism control.
      */
-    @Scheduled(cron = "${artemis.scheduling.continuous-plagiarism-control-trigger-time:0 0 5 * * *}")
+    @Scheduled(initialDelay = 30_000, fixedDelay = 60_000)
     public void executeChecks() {
         log.info("Starting continuous plagiarism control...");
 
@@ -123,8 +123,8 @@ public class ContinuousPlagiarismControlService {
     }
 
     private void createOrUpdatePlagiarismCases(PlagiarismComparison<?> comparison) {
-        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA()),
-                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB()));
+        var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
+                plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
 
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null).map(ContinuousPlagiarismControlService::buildCpcPost)
                 .forEach(postService::createContinuousPlagiarismControlPlagiarismCasePost);
@@ -142,7 +142,7 @@ public class ContinuousPlagiarismControlService {
     }
 
     private void removeStalePlagiarismCases(long exerciseId) {
-        var cases = plagiarismCaseRepository.findAllByExerciseIdWithPlagiarismSubmissions(exerciseId);
-        cases.stream().filter(plagiarismCase -> plagiarismCase.getPlagiarismSubmissions().isEmpty()).forEach(plagiarismCaseRepository::delete);
+        var currentPlagiarismCases = plagiarismCaseRepository.findAllCreatedByContinuousPlagiarismControlByExerciseIdWithPlagiarismSubmissions(exerciseId);
+        currentPlagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPlagiarismSubmissions().isEmpty()).forEach(plagiarismCaseRepository::delete);
     }
 }

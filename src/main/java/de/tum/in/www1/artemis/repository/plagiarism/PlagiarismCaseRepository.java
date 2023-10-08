@@ -135,6 +135,15 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             """)
     List<PlagiarismCase> findAllByExerciseIdWithPlagiarismSubmissions(@Param("exerciseId") long exerciseId);
 
+    @Query("""
+            SELECT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+            WHERE plagiarismCase.exercise.id = :exerciseId
+                AND plagiarismCase.createdByContinuousPlagiarismControl = true
+            """)
+    List<PlagiarismCase> findAllCreatedByContinuousPlagiarismControlByExerciseIdWithPlagiarismSubmissions(@Param("exerciseId") long exerciseId);
+
     default PlagiarismCase findByIdWithPlagiarismSubmissionsElseThrow(long plagiarismCaseId) {
         return findByIdWithPlagiarismSubmissions(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
     }
