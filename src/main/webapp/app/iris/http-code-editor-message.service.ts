@@ -14,7 +14,7 @@ type EntityPlanResponseType = HttpResponse<IrisExercisePlanComponent>;
  * Provides a singleton root-level IrisHttpMessageService to perform CRUD operations on messages
  */
 @Injectable({ providedIn: 'root' })
-export class IrisHttpMessageService {
+export class IrisHttpCodeEditorMessageService {
     public resourceUrl = 'api/iris/code-editor-sessions';
 
     constructor(private httpClient: HttpClient) {}
@@ -94,8 +94,8 @@ export class IrisHttpMessageService {
      * @param messageId of the message
      * @param contentId of the content
      */
-    executePlan(sessionId: number, messageId: number, contentId: number): Observable<HttpResponse<any>> {
-        return this.httpClient.post(`${this.resourceUrl}/${sessionId}/messages/${messageId}/contents/${contentId}/execute`, null, { observe: 'response' });
+    executePlan(sessionId: number, messageId: number, contentId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceUrl}/${sessionId}/messages/${messageId}/contents/${contentId}/execute`, {}, { observe: 'response' });
     }
 
     /**
