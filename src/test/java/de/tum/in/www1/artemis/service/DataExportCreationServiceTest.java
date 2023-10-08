@@ -266,12 +266,12 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     private Exam prepareExamDataForDataExportCreation(String courseShortName) throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
-                courseShortName, true, true);
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
         }
+        var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
+                courseShortName, true, true);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
