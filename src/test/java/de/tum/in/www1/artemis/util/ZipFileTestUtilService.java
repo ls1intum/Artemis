@@ -39,7 +39,7 @@ public class ZipFileTestUtilService {
                 // grab a zip file entry
                 ZipEntry entry = zipFileEntries.nextElement();
                 String currentEntry = entry.getName();
-                File destFile = new File(newPath, currentEntry);
+                File destFile = new File(parentFolder, currentEntry);
 
                 if (!destFile.getCanonicalPath().startsWith(parentFolder.getCanonicalPath())) {
                     fail("Bad zip entry");
