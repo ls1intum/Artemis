@@ -5,11 +5,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.domain.plagiarism.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 
 class PlagiarismDetectionConfigHelperTest {
 

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.*;
+import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

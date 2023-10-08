@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 
 class ContinuousPlagiarismControlServiceTest {
 
