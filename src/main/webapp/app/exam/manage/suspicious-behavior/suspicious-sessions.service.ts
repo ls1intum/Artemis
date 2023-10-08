@@ -11,11 +11,11 @@ export class SuspiciousSessionsService {
 
     getSuspiciousSessions(courseId: number, examId: number, options: SuspiciousSessionsAnalysisOptions): Observable<SuspiciousExamSessions[]> {
         let params = new HttpParams()
-            .set('differentStudentExamsSameIPAddress', options.differentStudentExamsSameIPAddress.toString())
-            .set('differentStudentExamsSameBrowserFingerprint', options.differentStudentExamsSameBrowserFingerprint.toString())
-            .set('sameStudentExamDifferentIPAddresses', options.sameStudentExamDifferentIPAddresses.toString())
-            .set('sameStudentExamDifferentBrowserFingerprints', options.sameStudentExamDifferentBrowserFingerprints.toString())
-            .set('ipOutsideOfRange', options.ipOutsideOfRange.toString());
+            .set('differentStudentExamsSameIPAddress', options.sameIpAddressDifferentStudentExams.toString())
+            .set('differentStudentExamsSameBrowserFingerprint', options.sameBrowserFingerprintDifferentStudentExams.toString())
+            .set('sameStudentExamDifferentIPAddresses', options.differentIpAddressesSameStudentExam.toString())
+            .set('sameStudentExamDifferentBrowserFingerprints', options.differentIpAddressesSameStudentExam.toString())
+            .set('ipOutsideOfRange', options.ipAddressOutsideOfRange.toString());
 
         // If subnet is provided, add it to the params
         if (options.ipSubnet) {

@@ -31,24 +31,24 @@ export class SuspiciousExamSessions {
 }
 export class SuspiciousSessionsAnalysisOptions {
     constructor(
-        diffStudentExamsSameIPAddress: boolean,
-        diffStudentExamsSameBrowserFingerprint: boolean,
-        sameStudentExamDifferentIPAddresses: boolean,
-        sameStudentExamDifferentBrowserFingerprints: boolean,
-        ipOutsideOfASpecificRange: boolean,
-        ipSubnet?: string,
+        sameIpAddressDifferentStudentExams: boolean,
+        sameBrowserFingerprintDifferentStudentExams: boolean,
+        differentIpAddressesSameStudentExam: boolean,
+        differentBrowserFingerprintsSameStudentExam: boolean,
+        ipAddressOutsideOfRange: boolean,
+        subnet?: string,
     ) {
-        this.differentStudentExamsSameIPAddress = diffStudentExamsSameIPAddress;
-        this.differentStudentExamsSameBrowserFingerprint = diffStudentExamsSameBrowserFingerprint;
-        this.sameStudentExamDifferentIPAddresses = sameStudentExamDifferentIPAddresses;
-        this.sameStudentExamDifferentBrowserFingerprints = sameStudentExamDifferentBrowserFingerprints;
-        this.ipOutsideOfRange = ipOutsideOfASpecificRange;
-        this.ipSubnet = ipSubnet;
+        this.sameIpAddressDifferentStudentExams = sameIpAddressDifferentStudentExams;
+        this.sameBrowserFingerprintDifferentStudentExams = sameBrowserFingerprintDifferentStudentExams;
+        this.differentIpAddressesSameStudentExam = differentIpAddressesSameStudentExam;
+        this.differentBrowserFingerprintsSameStudentExam = differentBrowserFingerprintsSameStudentExam;
+        this.ipAddressOutsideOfRange = ipAddressOutsideOfRange;
+        this.ipSubnet = subnet;
     }
-    differentStudentExamsSameIPAddress = false;
-    differentStudentExamsSameBrowserFingerprint = false;
-    sameStudentExamDifferentIPAddresses = false;
-    sameStudentExamDifferentBrowserFingerprints = false;
-    ipOutsideOfRange = false;
+    sameIpAddressDifferentStudentExams = false;
+    sameBrowserFingerprintDifferentStudentExams = false;
+    differentIpAddressesSameStudentExam = false;
+    differentBrowserFingerprintsSameStudentExam = false;
+    ipAddressOutsideOfRange = false;
     ipSubnet?: string;
 }
