@@ -202,7 +202,7 @@ During the exam creation and configuration, you can create your exam and configu
 
         Configure the Grading of a Programming Exercise
 
-    - The *Configure Grading* screen also allows the configuration of :ref:`Submission Policies <configure_submission_policies>`
+    - The *Configure Grading* screen also allows the configuration of :ref:`Submission Policies <configure_submission_policies>`.
 
 .. _register_students:
 
