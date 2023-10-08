@@ -116,6 +116,17 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Persists the continuous plagiarism control plagiarism case post,
+     * and sends a notification to affected user groups
+     *
+     * @param post post to create
+     */
+    public void createContinuousPlagiarismControlPlagiarismCasePost(Post post) {
+        var savedPost = postRepository.save(post);
+        plagiarismCaseService.saveAnonymousPostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
+    }
+
+    /**
      * Checks course, user and post validity,
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out

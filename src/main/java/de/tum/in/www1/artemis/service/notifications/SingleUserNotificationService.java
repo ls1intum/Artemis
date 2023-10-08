@@ -239,7 +239,7 @@ public class SingleUserNotificationService {
      * @param plagiarismCase that hold the major information for the plagiarism case
      * @param student        who should be notified
      */
-    public void notifyUserAboutNewPlagiarismCaseBySystem(PlagiarismCase plagiarismCase, User student) {
+    public void notifyUserAboutNewPlagiarismCaseAnonymous(PlagiarismCase plagiarismCase, User student) {
         notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, null);
     }
 

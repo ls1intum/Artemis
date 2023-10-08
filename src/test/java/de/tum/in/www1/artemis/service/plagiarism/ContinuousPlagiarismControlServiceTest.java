@@ -45,7 +45,7 @@ class ContinuousPlagiarismControlServiceTest {
     private final PlagiarismCaseService plagiarismCaseService = mock();
 
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService);
+            plagiarismCaseService, null, null);
 
     @Test
     void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
