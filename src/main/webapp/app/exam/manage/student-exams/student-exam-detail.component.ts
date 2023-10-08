@@ -235,7 +235,7 @@ export class StudentExamDetailComponent implements OnInit {
 
     updateVariablesDependingOnWorkingTimeForm() {
         this.updateWorkingTimePercent();
-        this.updateWorkingTimeDuration();
+        this.updateIndividualEndDate();
     }
 
     /**
