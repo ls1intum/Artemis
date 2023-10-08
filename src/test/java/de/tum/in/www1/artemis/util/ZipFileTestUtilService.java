@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -41,7 +40,7 @@ public class ZipFileTestUtilService {
                 String currentEntry = entry.getName();
                 File destFile = new File(newPath, currentEntry);
 
-                if (!destFile.toPath().normalize().startsWith(Path.of(newPath))) {
+                if (!destFile.getCanonicalPath().startsWith(newPath)) {
                     fail("Bad zip entry");
                 }
 
