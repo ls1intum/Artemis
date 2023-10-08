@@ -49,7 +49,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         }
 
         let requestBody = new HttpParams().set('state', state).set('id_token', idToken);
-        if (auth) requestBody = requestBody.set('auth', auth);
+        if (auth) requestBody = requestBody.set('authenticatedUser', auth);
 
         this.http
             .post('api/public/lti13/auth-login', requestBody.toString(), {
@@ -69,14 +69,18 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                 },
                 error: (error) => {
                     if (error.status === 401) {
-                        this.loginService.logout(false);
-                        // Subscribe to the authentication state to know when the user logs in
-                        this.accountService.getAuthenticationState().subscribe((account) => {
-                            if (account) {
-                                // resend request when user logs in again
-                                this.sendRequest();
-                            }
-                        });
+                        if (this.accountService.isAuthenticated() && this.accountService.userIdentity?.login === auth) {
+                            this.sendRequest();
+                        } else {
+                            this.loginService.logout(false);
+                            // Subscribe to the authentication state to know when the user logs in
+                            this.accountService.getAuthenticationState().subscribe((user) => {
+                                if (user) {
+                                    // resend request when user logs in again
+                                    this.sendRequest();
+                                }
+                            });
+                        }
                     } else {
                         window.sessionStorage.removeItem('state');
                         this.isLaunching = false;
