@@ -63,6 +63,7 @@
                 "pageTitle": "Plagiatsfälle",
                 "plagiarismCases": "Plagiatsfälle",
                 "plagiarismCase": "Plagiatsfall",
+                "plagiarismCaseSignificantSimilarity": "Significant Similarity",
                 "resolvedPlagiarismCase": "Gelöster Plagiatsfall",
                 "notification": {
                     "title": "Plagiatsfall: {{ exercise }}",
