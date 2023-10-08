@@ -82,7 +82,7 @@ public class ExamSessionService {
 
     /**
      * Retrieves all suspicious exam sessions for given exam id
-     * An exam session is suspicious if it has the same browser fingerprint or ip address and belongs to a different student exam
+     * For a detailed description of the criteria, see {@link SuspiciousSessionsAnalysisOptions}
      *
      * @param examId          id of the exam for which suspicious exam sessions shall be retrieved
      * @param analysisOptions options for the analysis of suspicious sessions
