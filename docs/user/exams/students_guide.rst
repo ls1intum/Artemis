@@ -275,7 +275,10 @@ Participating in Programming Exercises
 
     If you work in the online code editor and a merge conflict occurs, the file browser will display the conflict state |conflict_state|.
     You can use the |resolve_conflict| button, which is then displayed instead of the submit button, to resolve the conflict within the online code editor.
-    This will reset your changes to the latest commit. Manual merging is not possible with the online code editor.
+    This will reset your changes to the latest commit.
+
+    .. warning::
+       Manual merging is not possible with the online code editor.
 
 .. _updated_problem_statement:
 

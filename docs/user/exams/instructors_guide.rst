@@ -349,7 +349,7 @@ The exam conduction starts when the exam becomes visible to the students and end
 
 Updating an Exercise during the Exam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In case you have to update the exercise during an exam for programming, modeling, text, or file-upload exercises, you can go to the exercise details page and click on |edit| to edit the exercise. At the bottom of this page, you can enter a notification text that is shown to the students in the exam mode. The screenshot below shows an example notification. You can see how the updated problem statement looks for the student in :ref:`Updated Problem Statement during the Exam <updated_problem_statement>`.
+In case you have to update the exercise during an exam for programming, modeling, text, or file-upload exercises, you can go to the exercise details page and click on |edit| to edit the exercise. At the bottom of the exercise edit page, you can enter a notification text that is shown to the students in the exam mode. The screenshot below shows an example notification. You can see how the updated problem statement looks for the student in :ref:`Updated Problem Statement during the Exam <updated_problem_statement>`.
 
 .. figure:: instructor/exercise-notification.png
     :alt: Exercise Notification
