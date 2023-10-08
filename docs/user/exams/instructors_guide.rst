@@ -201,6 +201,7 @@ During the exam creation and configuration, you can create your exam and configu
         :align: center
 
         Configure the Grading of a Programming Exercise
+
     - The *Configure Grading* screen also allows the configuration of :ref:`Submission Policies <configure_submission_policies>`
 
 .. _register_students:
@@ -220,7 +221,7 @@ During the exam creation and configuration, you can create your exam and configu
 
         Import Students Dialog
 
-    3. Register every student in the course by pressing the |register_course_students| button.
+    1. Register every student in the course by pressing the |register_course_students| button.
 
 .. note::
     Just registering the students to the exam will not allow them to participate in the exam. First, individual :ref:`student exams <student_exams>` must be generated.
