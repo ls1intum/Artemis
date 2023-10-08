@@ -241,6 +241,9 @@ class ProgrammingExerciseIntegrationTestService {
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
+        if (repoDownloadClonePath != null && Files.exists(Path.of(repoDownloadClonePath))) {
+            FileUtils.deleteDirectory(new File(repoDownloadClonePath));
+        }
         if (localGit != null) {
             localGit.close();
         }
@@ -1794,8 +1797,6 @@ class ProgrammingExerciseIntegrationTestService {
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
-
-        FileUtils.deleteDirectory(jPlagReposDir.toFile());
     }
 
     void testGetPlagiarismResult() throws Exception {
