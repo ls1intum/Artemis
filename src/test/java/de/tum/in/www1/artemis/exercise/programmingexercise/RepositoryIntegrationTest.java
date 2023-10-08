@@ -138,6 +138,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private LocalRepository templateRepository;
 
+    private LocalRepository tempRepository;
+
     private final List<BuildLogEntry> logs = new ArrayList<>();
 
     private final BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
@@ -243,6 +245,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         reset(gitService);
         studentRepository.resetLocalRepo();
         templateRepository.resetLocalRepo();
+        if (tempRepository != null) {
+            tempRepository.resetLocalRepo();
+        }
     }
 
     @Test
@@ -337,31 +342,31 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFiles_solutionParticipation() throws Exception {
         // Create template repo
-        var solutionRepository = new LocalRepository(defaultBranch);
-        solutionRepository.configureRepos("solutionLocalRepo", "solutionOriginRepo");
+        tempRepository = new LocalRepository(defaultBranch);
+        tempRepository.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
         // add file to the template repo folder
-        var solutionFilePath = Path.of(solutionRepository.localRepoFile + "/" + currentLocalFileName);
+        var solutionFilePath = Path.of(tempRepository.localRepoFile + "/" + currentLocalFileName);
         var solutionFile = Files.createFile(solutionFilePath).toFile();
 
         // write content to the created file
         FileUtils.write(solutionFile, currentLocalFileContent, Charset.defaultCharset());
 
         // add folder to the template repo folder
-        Path solutionFolderPath = Path.of(solutionRepository.localRepoFile + "/" + currentLocalFolderName);
+        Path solutionFolderPath = Path.of(tempRepository.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(solutionFolderPath);
 
         programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl()), eq(true), any());
 
         var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Path.of(solutionRepository.localRepoFile + "/" + key)).exists();
+            assertThat(Path.of(tempRepository.localRepoFile + "/" + key)).exists();
         }
     }
 
@@ -624,17 +629,16 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
 
         // Create assignment repository and participation for the instructor.
-        LocalRepository instructorAssignmentRepository = new LocalRepository(defaultBranch);
-        instructorAssignmentRepository.configureRepos("localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
-        var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUrl(instructorAssignmentRepository.localRepoFile);
+        tempRepository = new LocalRepository(defaultBranch);
+        tempRepository.configureRepos("localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
+        var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUrl(tempRepository.localRepoFile);
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUrl.getURI());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(instructorAssignmentRepository.localRepoFile.toPath(), null)).when(gitService)
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
 
         request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
-        instructorAssignmentRepository.resetLocalRepo();
     }
 
     @Test
