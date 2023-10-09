@@ -234,7 +234,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound);
     }
 
-    private handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
+    private async handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
         this.loadingInitialSubmission = false;
 
         // Set domain to correctly fetch data
@@ -261,7 +261,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.handleFeedback();
         this.getComplaint();
         this.calculateTotalScore();
-        return this.loadFeedbackSuggestions();
+        // Only load suggestions for new assessments, they don't make sense later.
+        // The assessment is new if it only contains automatic feedback.
+        if ((this.manualResult?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+            await this.loadFeedbackSuggestions();
+        }
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
