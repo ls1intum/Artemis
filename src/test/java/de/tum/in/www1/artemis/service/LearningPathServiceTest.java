@@ -579,8 +579,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             LearningPath learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, user);
             learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPath.getId());
             NgxLearningPathDTO actual = learningPathService.generateNgxPathRepresentation(learningPath);
-            // competenc start & end, lecture unit, and one exercise per difficulty level
-            assertThat(actual.nodes().size()).isEqualTo(6);
+            // competency start & end, lecture unit, and one exercise per difficulty level
+            assertThat(actual.nodes()).hasSize(6);
         }
 
         private void generateLectureUnits(int numberOfLectureUnits) {
