@@ -42,9 +42,11 @@
     <label for="ip-outside-of-range">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange' | artemisTranslate }}</label>
 </div>
 <div *ngIf="checkboxCriterionIPOutsideOfASpecificRangeChecked" class="form-group col-6">
-    <label class="col-4" for="ip-subnet">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
+    <div class="d-flex">
+        <label for="ip-subnet">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
+        <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
+    </div>
     <input type="text" class="form-control col-4" id="ip-subnet" [(ngModel)]="ipSubnet" [pattern]="ipSubnetRegexPattern" required />
-    <jhi-help-icon placement="right" text="artemisApp.examManagement.suspiciousBehavior.subnetHelp"></jhi-help-icon>
 </div>
 <div class="mt-3 mb-3">
     <jhi-button [title]="'artemisApp.examManagement.suspiciousBehavior.analyzeSessions'" [disabled]="!analyzeButtonEnabled" [isLoading]="analyzing" (onClick)="analyzeSessions()">
