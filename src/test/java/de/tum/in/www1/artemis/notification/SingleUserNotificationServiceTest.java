@@ -318,7 +318,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      * Test for checkNotificationForExerciseRelease method with a past assessment due date
      */
     @Test
-    void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
+    void testCheckNotificationForAssessmentExerciseSubmission_pastAssessmentDueDate() {
         exercise = TextExerciseFactory.generateTextExercise(null, null, ZonedDateTime.now().minusMinutes(1), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         assertThat(notificationRepository.findAll()).as("One new notification should have been created").hasSize(1);
