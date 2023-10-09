@@ -51,26 +51,32 @@ export class AthenaService {
      *
      * @param exercise
      * @param submission  the submission
-     * @return observable that emits the feedback suggestions as TextBlockRef objects
-     * with TextBlocks and Feedback with the "FeedbackSuggestion:" prefix
+     * @return observable that emits the referenced feedback suggestions as TextBlockRef objects
+     * with TextBlocks and the unreferenced feedback suggestions as Feedback objects
+     * with the "FeedbackSuggestion:" prefix
      */
-    public getTextFeedbackSuggestions(exercise: Exercise, submission: TextSubmission): Observable<TextBlockRef[]> {
+    public getTextFeedbackSuggestions(exercise: Exercise, submission: TextSubmission): Observable<(TextBlockRef | Feedback)[]> {
         return this.getFeedbackSuggestions<TextFeedbackSuggestion>(exercise, submission.id!).pipe(
             map((suggestions) => {
-                // Convert suggestions to TextBlockRefs for easier handling in the components
+                // Convert referenced feedback suggestions to TextBlockRefs for easier handling in the components
                 return suggestions.map((suggestion) => {
-                    const textBlock = new TextBlock();
-                    textBlock.startIndex = suggestion.indexStart;
-                    textBlock.endIndex = suggestion.indexEnd;
-                    textBlock.setTextFromSubmission(submission);
                     const feedback = new Feedback();
                     feedback.credits = suggestion.credits;
                     // Text feedback suggestions are automatically accepted, so we can set the text directly
                     feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
                     feedback.gradingInstruction = suggestion.gradingInstruction;
-                    feedback.reference = textBlock.id;
                     feedback.type = FeedbackType.AUTOMATIC;
+                    if (suggestion.indexStart == null) {
+                        // unreferenced feedback, return Feedback object
+                        return feedback;
+                    }
+                    // convert to TextBlockRef
+                    const textBlock = new TextBlock();
+                    textBlock.startIndex = suggestion.indexStart;
+                    textBlock.endIndex = suggestion.indexEnd;
+                    textBlock.setTextFromSubmission(submission);
+                    feedback.reference = textBlock.id;
                     return new TextBlockRef(textBlock, feedback);
                 });
             }),
