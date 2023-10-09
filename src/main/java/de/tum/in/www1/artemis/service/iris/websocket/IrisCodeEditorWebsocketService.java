@@ -1,15 +1,20 @@
 package de.tum.in.www1.artemis.service.iris.websocket;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     
-    public IrisCodeEditorWebsocketService(WebsocketMessagingService websocketMessagingService) {
-        super(websocketMessagingService, "code-editor-sessions");
+    public IrisCodeEditorWebsocketService(
+            WebsocketMessagingService websocketMessagingService,
+            IrisRateLimitService rateLimitService
+    ) {
+        super(websocketMessagingService, rateLimitService, "code-editor-sessions");
     }
     
     @Override
@@ -20,8 +25,8 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
     
     @Override
-    protected String getUserLogin(IrisSession irisSession) {
-        return ((IrisCodeEditorSession) irisSession).getUser().getLogin();
+    protected User getUser(IrisSession irisSession) {
+        return ((IrisCodeEditorSession) irisSession).getUser();
     }
     
 }

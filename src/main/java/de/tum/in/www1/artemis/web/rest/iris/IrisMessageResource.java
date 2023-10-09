@@ -44,14 +44,9 @@ public class IrisMessageResource {
 
     private final UserRepository userRepository;
 
-    public IrisMessageResource(
-            IrisSessionRepository irisSessionRepository,
-            IrisSessionService irisSessionService,
-            IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository,
-            IrisChatWebsocketService irisChatWebsocketService,
-            IrisRateLimitService rateLimitService,
-            UserRepository userRepository) {
+    public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService) {
+            IrisRateLimitService rateLimitService, UserRepository userRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
