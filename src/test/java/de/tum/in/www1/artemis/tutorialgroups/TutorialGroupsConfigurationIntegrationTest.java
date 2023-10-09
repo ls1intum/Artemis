@@ -242,7 +242,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
         // when
         // change time zone to berlin and change end period
-        var course = courseRepository.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(courseId);
+        var course = courseRepository.findByIdForUpdateElseThrow(courseId);
         course.setTimeZone("Europe/Berlin");
         course.setTutorialGroupsConfiguration(null);
 

@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -75,6 +78,9 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @BeforeEach
     void setupTestScenario() {
+        // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         participantScoreScheduleService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);

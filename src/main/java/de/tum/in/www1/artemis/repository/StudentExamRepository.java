@@ -71,9 +71,17 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT se
             FROM StudentExam se
             WHERE se.exam.id = :examId
-            	AND se.testRun = FALSE
+                AND se.testRun = FALSE
             """)
     Set<StudentExam> findByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(DISTINCT se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+                AND se.testRun = FALSE
+            """)
+    long countByExamId(@Param("examId") long examId);
 
     @Query("""
             SELECT se
