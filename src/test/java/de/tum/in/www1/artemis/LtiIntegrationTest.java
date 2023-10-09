@@ -230,12 +230,8 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         addJiraMocks(email, TEST_PREFIX + "student1");
 
         Long exerciseId = programmingExercise.getId();
-        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        URI header = request.post("/api/public/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
-
-        var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        assertParametersExistingStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
-        assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
+        request.postWithoutLocation("/api/public/lti/launch/" + exerciseId, requestBody.getBytes(), HttpStatus.BAD_REQUEST, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
     @ParameterizedTest

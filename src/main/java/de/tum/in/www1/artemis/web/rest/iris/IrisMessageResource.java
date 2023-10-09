@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.service.iris.*;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -40,13 +42,20 @@ public class IrisMessageResource {
 
     private final IrisChatWebsocketService irisChatWebsocketService;
 
+    private final IrisRateLimitService rateLimitService;
+
+    private final UserRepository userRepository;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService) {
+            IrisRateLimitService rateLimitService, UserRepository userRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
+        this.rateLimitService = rateLimitService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -77,7 +86,10 @@ public class IrisMessageResource {
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
+
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
@@ -100,7 +112,10 @@ public class IrisMessageResource {
     public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
+
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
             throw new BadRequestException("Only the last message can be resent");

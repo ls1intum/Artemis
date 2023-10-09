@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+import de.tum.in.www1.artemis.domain.User;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
@@ -20,10 +22,15 @@ public abstract class IrisWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
     
+    private final IrisRateLimitService rateLimitService;
+    
     private final String topic;
 
-    public IrisWebsocketService(WebsocketMessagingService websocketMessagingService, String topic) {
+    public IrisWebsocketService(WebsocketMessagingService websocketMessagingService,
+                                IrisRateLimitService rateLimitService,
+                                String topic) {
         this.websocketMessagingService = websocketMessagingService;
+        this.rateLimitService = rateLimitService;
         this.topic = topic;
     }
     
@@ -38,7 +45,7 @@ public abstract class IrisWebsocketService {
      * @param irisSession with the user to which the message should be sent
      * @return the user login of the user to which the message should be sent
      */
-    protected abstract String getUserLogin(IrisSession irisSession);
+    protected abstract User getUser(IrisSession irisSession);
     
     /**
      * Sends a message over the websocket to a specific user
@@ -48,9 +55,11 @@ public abstract class IrisWebsocketService {
     public void sendMessage(IrisMessage irisMessage) {
         var session = irisMessage.getSession();
         checkSessionType(session);
-        String userLogin = getUserLogin(session);
+        var user = getUser(session);
+        String userLogin = user.getLogin();
         String irisWebsocketTopic = String.format("%s/%s/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, topic, session.getId());
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage));
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage, rateLimitInfo));
     }
 
     /**
@@ -61,9 +70,11 @@ public abstract class IrisWebsocketService {
      */
     public void sendException(IrisSession irisSession, Throwable throwable) {
         checkSessionType(irisSession);
-        String userLogin = getUserLogin(irisSession);
+        var user = getUser(irisSession);
+        String userLogin = user.getLogin();
         String irisWebsocketTopic = String.format("%s/%s/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, topic, irisSession.getId());
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(throwable));
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(throwable, rateLimitInfo));
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -79,7 +90,10 @@ public abstract class IrisWebsocketService {
 
         private final Map<String, Object> translationParams;
 
-        public IrisWebsocketDTO(IrisMessage message) {
+        private final IrisRateLimitService.IrisRateLimitInformation rateLimitInfo;
+
+        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+            this.rateLimitInfo = rateLimitInfo;
             this.type = IrisWebsocketMessageType.MESSAGE;
             this.message = message;
             this.errorMessage = null;
@@ -87,7 +101,8 @@ public abstract class IrisWebsocketService {
             this.translationParams = null;
         }
 
-        public IrisWebsocketDTO(Throwable throwable) {
+        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+            this.rateLimitInfo = rateLimitInfo;
             this.type = IrisWebsocketMessageType.ERROR;
             this.message = null;
             this.errorMessage = throwable.getMessage();
@@ -113,6 +128,10 @@ public abstract class IrisWebsocketService {
 
         public Map<String, Object> getTranslationParams() {
             return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
+        }
+
+        public IrisRateLimitService.IrisRateLimitInformation getRateLimitInfo() {
+            return rateLimitInfo;
         }
 
         public enum IrisWebsocketMessageType {

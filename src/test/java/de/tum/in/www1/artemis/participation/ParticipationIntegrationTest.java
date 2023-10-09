@@ -646,6 +646,31 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getAllParticipationsForExercise_withLatestResults_forQuizExercise() throws Exception {
+        var quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.INDIVIDUAL, course);
+        course.addExercises(quizExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(quizExercise);
+
+        var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, TEST_PREFIX + "student1");
+        var result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
+        var notGradedResult = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        notGradedResult.setRated(false);
+        resultRepository.save(notGradedResult);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("withLatestResults", "true");
+        var participations = request.getList("/api/exercises/" + quizExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
+
+        var receivedParticipationWithResult = participations.stream().filter(p -> ((User) p.getParticipant()).getLogin().equals(TEST_PREFIX + "student1")).findFirst()
+                .orElseThrow();
+        assertThat(receivedParticipationWithResult.getResults()).containsOnly(result1);
+        assertThat(receivedParticipationWithResult.getSubmissions()).isEmpty();
+        assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllParticipationsForExercise_withLatestResults_multipleAssessments() throws Exception {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");

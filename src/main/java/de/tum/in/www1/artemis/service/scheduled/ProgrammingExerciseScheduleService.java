@@ -840,9 +840,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void rescheduleProgrammingExerciseDuringExamConduction(ProgrammingExercise programmingExercise) {
+        // Note: the programming exercise might not include student participations, so we load it with student participations here
+        var programmingExerciseWithStudentParticipations = programmingExerciseRepository.findWithEagerStudentParticipationsByIdElseThrow(programmingExercise.getId());
         // Collect the individual due date of each student participation
-        var participationsWithDueDate = programmingExercise.getStudentParticipations().stream().filter(ProgrammingExerciseStudentParticipation.class::isInstance)
-                .map(studentParticipation -> {
+        var participationsWithDueDate = programmingExerciseWithStudentParticipations.getStudentParticipations().stream()
+                .filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(studentParticipation -> {
                     var dueDate = studentExamRepository.getIndividualDueDate(programmingExercise, studentParticipation);
                     return new Tuple<>(dueDate, (ProgrammingExerciseStudentParticipation) studentParticipation);
                 }).collect(Collectors.toSet());
