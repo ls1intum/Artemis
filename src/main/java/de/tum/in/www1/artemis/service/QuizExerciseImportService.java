@@ -104,8 +104,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
                 if (dndQuestion.getBackgroundFilePath() != null) {
+                    URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
+                    URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
+                    // Check whether pictureFilePublicPath is actually a picture file path
+                    // (which is the case when its path starts with the path backgroundFileIntendedPath)
+                    FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
                     // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-                    Path oldPath = filePathService.actualPathForPublicPath(URI.create(dndQuestion.getBackgroundFilePath()));
+                    Path oldPath = filePathService.actualPathForPublicPath(backgroundFilePublicPath);
                     Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
                     dndQuestion.setBackgroundFilePath(filePathService.publicPathForActualPath(newPath, null).toString());
                 }
@@ -121,8 +126,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
                     dragItem.setId(null);
                     dragItem.setQuestion(dndQuestion);
                     if (dragItem.getPictureFilePath() != null) {
+                        URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
+                        URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
+                        // Check whether pictureFilePublicPath is actually a picture file path
+                        // (which is the case when its path starts with the path pictureFileIntendedPath)
+                        FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
                         // Need to copy the file and get a new path, same as above
-                        Path oldDragItemPath = filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath()));
+                        Path oldDragItemPath = filePathService.actualPathForPublicPath(pictureFilePublicPath);
                         Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
                         dragItem.setPictureFilePath(filePathService.publicPathForActualPath(newDragItemPath, null).toString());
                     }
