@@ -225,11 +225,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         metricsBean.updatePublicArtemisMetrics();
 
-        var totalNumberOfExams = examRepository.count();
-        var numberOfActiveExams = examRepository.countAllActiveExams(ZonedDateTime.now());
+        long totalNumberOfExams = examRepository.count();
+        long numberOfActiveExams = examRepository.countAllActiveExams(ZonedDateTime.now());
 
         // Assert that there is at least one non-active exam in the database so that the values returned from the metrics are different
-        assertThat(numberOfActiveExams.intValue()).isNotEqualTo(totalNumberOfExams);
+        assertThat(numberOfActiveExams).isNotEqualTo(totalNumberOfExams);
 
         assertMetricEquals(totalNumberOfExams, "artemis.statistics.public.exams");
         assertMetricEquals(numberOfActiveExams, "artemis.statistics.public.active_exams");
@@ -240,9 +240,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
 
         var course1 = courseUtilService.createCourse();
+        course1.setTitle("Course 1");
         course1.setSemester(null);
         course1.setStudentGroupName(TEST_PREFIX + "course1Students");
-        courseRepository.save(course1);
+        course1 = courseRepository.save(course1);
         var exam1 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
         exam1.setTitle("exam" + UUID.randomUUID());
@@ -253,7 +254,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var course2 = courseUtilService.createCourse();
         course2.setSemester("WS 2023/24");
         course2.setStudentGroupName(TEST_PREFIX + "course2Students");
-        courseRepository.save(course2);
+        course2 = courseRepository.save(course2);
         var exam2 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
         exam2.setTitle("exam" + UUID.randomUUID());
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(1));
@@ -269,11 +270,16 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         metricsBean.updatePublicArtemisMetrics();
 
-        assertMetricEquals(3, "artemis.statistics.public.course_students", "courseName", course1.getTitle(), "semester", "No semester");
-        assertMetricEquals(1, "artemis.statistics.public.course_students", "courseName", course2.getTitle(), "semester", "WS 2023/24");
+        String course1Id = Long.toString(course1.getId());
+        String course2Id = Long.toString(course2.getId());
 
-        assertMetricEquals(2, "artemis.statistics.public.exam_students", "examName", exam1.getTitle(), "semester", "No semester");
-        assertMetricEquals(1, "artemis.statistics.public.exam_students", "examName", exam2.getTitle(), "semester", "WS 2023/24");
+        assertMetricEquals(3, "artemis.statistics.public.course_students", "courseId", course1Id, "courseName", course1.getTitle(), "semester", "No semester");
+        assertMetricEquals(1, "artemis.statistics.public.course_students", "courseId", course2Id, "courseName", course2.getTitle(), "semester", "WS 2023/24");
+
+        assertMetricEquals(2, "artemis.statistics.public.exam_students", "courseId", course1Id, "courseName", course1.getTitle(), "examId", Long.toString(exam1.getId()),
+                "examName", exam1.getTitle(), "semester", "No semester");
+        assertMetricEquals(1, "artemis.statistics.public.exam_students", "courseId", course2Id, "examId", Long.toString(exam2.getId()), "examName", exam2.getTitle(), "semester",
+                "WS 2023/24");
     }
 
     @Test
