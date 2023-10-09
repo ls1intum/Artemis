@@ -165,7 +165,7 @@
                 margin-right: auto;
                 min-height: 50px;
                 overflow: auto;
-                max-height: 80vh;
+                max-height: calc(100vh - 90px);
 
                 @media (min-width: 1200px) {
                     flex-direction: column;

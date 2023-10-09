@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,11 +59,11 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
-    private final LtiService ltiService;
+    private final Optional<LtiService> ltiService;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, LtiService ltiService) {
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiService> ltiService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.ltiService = ltiService;
@@ -152,7 +153,7 @@ public class UserResource {
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (!ltiService.isLtiCreatedUser(user) || !user.isInternal()) {
+        if ((ltiService.isPresent() && !ltiService.get().isLtiCreatedUser(user)) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());
