@@ -62,16 +62,17 @@ export class AthenaService {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
                     feedback.credits = suggestion.credits;
-                    // Text feedback suggestions are automatically accepted, so we can set the text directly
+                    // Text feedback suggestions are automatically accepted, so we can set the text directly:
                     feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
                     feedback.gradingInstruction = suggestion.gradingInstruction;
-                    feedback.type = FeedbackType.AUTOMATIC;
                     if (suggestion.indexStart == null) {
-                        // unreferenced feedback, return Feedback object
+                        // Unreferenced feedback, return Feedback object
+                        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
                         return feedback;
                     }
-                    // convert to TextBlockRef
+                    // Referenced feedback, convert to TextBlockRef
+                    feedback.type = FeedbackType.MANUAL;
                     const textBlock = new TextBlock();
                     textBlock.startIndex = suggestion.indexStart;
                     textBlock.endIndex = suggestion.indexEnd;
@@ -100,13 +101,14 @@ export class AthenaService {
                     feedback.detailText = suggestion.description;
                     if (suggestion.filePath != undefined && suggestion.lineStart != undefined) {
                         // Referenced feedback
+                        feedback.type = FeedbackType.MANUAL;
                         feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineStart}`; // Ignore lineEnd for now because Artemis does not support it
                     } else {
                         // Unreferenced feedback
+                        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
                         feedback.reference = undefined;
                     }
                     feedback.gradingInstruction = suggestion.gradingInstruction;
-                    feedback.type = FeedbackType.AUTOMATIC;
                     return feedback;
                 });
             }),
