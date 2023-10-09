@@ -693,7 +693,8 @@
             },
             "dateChange": {
                 "title": "Bestätige Änderung der Prüfungszeit",
-                "message": "Die Prüfung wird gerade abgehalten. Wenn Sie die Zeiten einer aktiven Prüfung ändern, werden alle aktiven Studenten über die Änderung der Dauer informiert!"
+                "message": "Die Prüfung wird gerade abgehalten. Wenn Sie die Zeiten einer aktiven Prüfung ändern, werden alle aktiven Studenten über die Änderung der Dauer informiert!",
+                "label": "Die Prüfung wird gerade abgehalten"
             }
         },
         "studentExamDetail": {

@@ -56,13 +56,13 @@
             <hr />
             <!-- Section exam conduction (release dates and working time) -->
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.conduction">Exam Conduction</h5>
-            <div *ngIf="isOngoingExam" class="row mb-3">
-                <div class="col d-flex">
-                    <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.dateChange.warning' | artemisTranslate }}"></fa-icon>
-                    <h6 class="mt-1 mx-1" jhiTranslate="artemisApp.examManagement.dateChange.title">
+            <div *ngIf="isOngoingExam" class="mb-3">
+                <span class="d-inline-flex" ngbTooltip="{{ 'artemisApp.examManagement.dateChange.message' | artemisTranslate }}">
+                    <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                    <span class="fw-bold mx-1" jhiTranslate="artemisApp.examManagement.dateChange.label">
                         Changing the times of an active exam will disrupt the workflow of the students!
-                    </h6>
-                </div>
+                    </span>
+                </span>
             </div>
             <ng-template #workingTimeConfirmationContent>
                 <div class="bg-light rounded-2 p-3">

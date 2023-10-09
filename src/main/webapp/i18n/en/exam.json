@@ -694,7 +694,8 @@
             },
             "dateChange": {
                 "title": "Confirm working time change",
-                "message": "The exam conduction is currently in progress. Changing the times of an active exam will notify all active students about the duration change!"
+                "message": "The exam conduction is currently in progress. Changing the times of an active exam will notify all active students about the duration change!",
+                "label": "The exam conduction is currently in progress"
             }
         },
         "studentExamDetail": {
