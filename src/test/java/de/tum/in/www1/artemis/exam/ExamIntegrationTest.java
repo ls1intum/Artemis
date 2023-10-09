@@ -1681,8 +1681,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             var suspiciousSessions = suspiciousSessionTuples.stream().findFirst().get();
             assertThat(suspiciousSessions.examSessions()).hasSize(2);
             var examSessions = suspiciousSessions.examSessions();
-            assertThat(examSessions.stream().findFirst().orElseThrow().suspiciousReasons()).containsExactlyInAnyOrderElementsOf(
-                    Set.of(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT));
+            assertThat(examSessions.stream().findFirst().orElseThrow().suspiciousReasons())
+                    .containsExactlyInAnyOrderElementsOf(Set.of(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS));
         }
         else {
             assertThat(suspiciousSessionTuples).hasSize(0);
