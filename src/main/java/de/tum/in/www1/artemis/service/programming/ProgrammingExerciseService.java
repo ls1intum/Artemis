@@ -341,9 +341,12 @@ public class ProgrammingExerciseService {
      * 1. Create the project for the exercise on the CI Server
      * 2. Create template and solution build plan in this project
      * 3. Configure CI permissions
+     * 4. Trigger initial build for template and solution build plan (if the exercise is not imported)
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
      *                                exercise should contain a fully initialized template and solution participation.
+     * @param isImported          defines if the programming exercise is imported from a source exercise, if the
+     *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImported) {
         String projectKey = programmingExercise.getProjectKey();
