@@ -71,8 +71,8 @@ public class SingleUserNotificationService {
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related
-            case NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject, notificationType,
-                    (User) typeSpecificInformation, author);
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject,
+                    notificationType, (User) typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> createNotification(
                     ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
@@ -234,13 +234,14 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Notify student about possible plagiarism case without explicit notification author.
+     * Notify student about possible plagiarism case opened by the continuous plagiarism control.
+     * The notification is created without explicit notification author.
      *
      * @param plagiarismCase that hold the major information for the plagiarism case
      * @param student        who should be notified
      */
-    public void notifyUserAboutNewPlagiarismCaseAnonymous(PlagiarismCase plagiarismCase, User student) {
-        notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, null);
+    public void notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
+        notifyRecipientWithNotificationType(plagiarismCase, NEW_CPC_PLAGIARISM_CASE_STUDENT, student, null);
     }
 
     /**

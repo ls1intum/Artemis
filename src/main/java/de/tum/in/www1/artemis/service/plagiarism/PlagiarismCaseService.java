@@ -95,7 +95,7 @@ public class PlagiarismCaseService {
         PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         plagiarismCase.setPost(post);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
-        singleUserNotificationService.notifyUserAboutNewPlagiarismCaseAnonymous(plagiarismCase, plagiarismCase.getStudent());
+        singleUserNotificationService.notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(plagiarismCase, plagiarismCase.getStudent());
     }
 
     /**
