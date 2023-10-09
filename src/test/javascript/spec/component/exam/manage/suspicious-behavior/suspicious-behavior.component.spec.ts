@@ -108,11 +108,11 @@ describe('SuspiciousBehaviorComponent', () => {
         component.analyzeSessions();
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledOnce();
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2, {
-            differentStudentExamsSameIPAddress: true,
-            differentStudentExamsSameBrowserFingerprint: true,
-            sameStudentExamDifferentIPAddresses: false,
-            sameStudentExamDifferentBrowserFingerprints: false,
-            ipOutsideOfRange: false,
+            sameIpAddressDifferentStudentExams: true,
+            sameBrowserFingerprintDifferentStudentExams: true,
+            differentIpAddressesSameStudentExam: false,
+            differentBrowserFingerprintsSameStudentExam: false,
+            ipAddressOutsideOfRange: false,
         });
         expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
     });
