@@ -486,7 +486,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.unreferencedFeedback = [];
         const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
         feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
-        const athenaServiceFeedbackSuggestionsStub = jest.spyOn(athenaService, 'getFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
+        const athenaServiceFeedbackSuggestionsStub = jest.spyOn(athenaService, 'getFeedbackSuggestionsForText').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
         component.loadFeedbackSuggestions();
         tick();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
@@ -605,7 +605,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // Set up initial state with an existing text block that doesn't overlap
         const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
 
-        jest.spyOn(athenaService, 'getFeedbackSuggestions').mockReturnValue(of(feedbackSuggestions));
+        jest.spyOn(athenaService, 'getFeedbackSuggestionsForText').mockReturnValue(of(feedbackSuggestions));
 
         component.loadFeedbackSuggestions();
 
@@ -627,7 +627,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should not load feedback suggestions if there already are assessments', fakeAsync(() => {
         // preparation already added an assessment
-        const athenaServiceFeedbackSuggestionsSpy = jest.spyOn(athenaService, 'getFeedbackSuggestions');
+        const athenaServiceFeedbackSuggestionsSpy = jest.spyOn(athenaService, 'getFeedbackSuggestionsForText');
         component.loadFeedbackSuggestions();
         tick();
         expect(athenaServiceFeedbackSuggestionsSpy).not.toHaveBeenCalled();
