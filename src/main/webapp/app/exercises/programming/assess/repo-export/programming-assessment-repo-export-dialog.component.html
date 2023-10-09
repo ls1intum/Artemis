@@ -80,7 +80,7 @@
                     type="checkbox"
                     name="addParticipantName"
                     [(ngModel)]="this.repositoryExportOptions.addParticipantName"
-                    [disabled]="!!participationIdList?.length"
+                    [disabled]="!isAtLeastInstructor"
                 />
                 <strong
                     *ngIf="!isRepoExportForMultipleExercises"
@@ -111,7 +111,7 @@
                         type="checkbox"
                         name="anonymizeRepository"
                         [(ngModel)]="this.repositoryExportOptions.anonymizeRepository"
-                        [disabled]="!!participationIdList?.length"
+                        [disabled]="!isAtLeastInstructor"
                     />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title">Anonymize repository</strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip"></jhi-help-icon>

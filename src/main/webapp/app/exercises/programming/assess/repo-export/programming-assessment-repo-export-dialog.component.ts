@@ -41,19 +41,19 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     ngOnInit() {
         this.isLoading = true;
         this.exportInProgress = false;
+        this.isRepoExportForMultipleExercises = this.programmingExercises.length > 1;
+        this.isAtLeastInstructor = this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor);
+        this.isLoading = false;
         this.repositoryExportOptions = {
             exportAllParticipants: false,
             filterLateSubmissions: false,
             excludePracticeSubmissions: false,
             combineStudentCommits: true,
-            // if there are ids given we anonymize the export (double-blind)
-            anonymizeRepository: !!this.participationIdList?.length,
-            addParticipantName: !this.participationIdList?.length,
+            // we anonymize the export for tutors (double-blind)
+            anonymizeRepository: !this.isAtLeastInstructor,
+            addParticipantName: this.isAtLeastInstructor,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
         };
-        this.isRepoExportForMultipleExercises = this.programmingExercises.length > 1;
-        this.isAtLeastInstructor = this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor);
-        this.isLoading = false;
     }
 
     clear() {
