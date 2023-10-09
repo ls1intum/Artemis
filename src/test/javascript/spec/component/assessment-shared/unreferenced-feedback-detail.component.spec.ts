@@ -2,28 +2,28 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
-describe('Assessment Detail Component', () => {
-    let comp: AssessmentDetailComponent;
-    let fixture: ComponentFixture<AssessmentDetailComponent>;
+describe('Unreferenced Feedback Detail Component', () => {
+    let comp: UnreferencedFeedbackDetailComponent;
+    let fixture: ComponentFixture<UnreferencedFeedbackDetailComponent>;
     let sgiService: StructuredGradingCriterionService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule)],
             declarations: [
-                AssessmentDetailComponent,
+                UnreferencedFeedbackDetailComponent,
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(FaLayersComponent),
@@ -36,7 +36,7 @@ describe('Assessment Detail Component', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(AssessmentDetailComponent);
+                fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
                 sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
             });
@@ -44,33 +44,52 @@ describe('Assessment Detail Component', () => {
 
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
-        comp.assessment = {
+        comp.feedback = {
             id: 1,
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
         // Fake call as a DragEvent
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
-            comp.assessment.gradingInstruction = instruction;
-            comp.assessment.credits = instruction.credits;
+            comp.feedback.gradingInstruction = instruction;
+            comp.feedback.credits = instruction.credits;
         });
         // Call spy function with empty event
-        comp.updateAssessmentOnDrop(new Event(''));
+        comp.updateFeedbackOnDrop(new Event(''));
 
-        expect(comp.assessment.gradingInstruction).toBe(instruction);
-        expect(comp.assessment.credits).toBe(instruction.credits);
+        expect(comp.feedback.gradingInstruction).toBe(instruction);
+        expect(comp.feedback.credits).toBe(instruction.credits);
     });
 
     it('should emit the assessment change after deletion', () => {
-        comp.assessment = {
+        comp.feedback = {
             id: 1,
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
-        const emitSpy = jest.spyOn(comp.deleteAssessment, 'emit');
+        const emitSpy = jest.spyOn(comp.onFeedbackDelete, 'emit');
         comp.delete();
         fixture.detectChanges();
 
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {
+        comp.feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: 'FeedbackSuggestion:accepted:feedback1',
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback;
+        const emitSpy = jest.spyOn(comp.onFeedbackChange, 'emit');
+        comp.emitChanges();
+        expect(emitSpy).toHaveBeenCalledWith({
+            id: 1,
+            type: FeedbackType.AUTOMATIC_ADAPTED,
+            text: 'FeedbackSuggestion:adapted:feedback1',
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback);
     });
 });

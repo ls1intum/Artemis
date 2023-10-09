@@ -103,3 +103,20 @@ export enum GitConflictState {
     CHECKOUT_CONFLICT = 'CHECKOUT_CONFLICT',
     OK = 'OK',
 }
+
+/**
+ * Enumeration defining the icon in a file badge.
+ */
+export enum FileBadgeType {
+    FEEDBACK_SUGGESTION = 'FEEDBACK_SUGGESTION',
+}
+
+/**
+ * A file badge is a badge in the file tree of the code editor with an icon and a count.
+ */
+export class FileBadge {
+    constructor(
+        public type: FileBadgeType,
+        public count: number,
+    ) {}
+}

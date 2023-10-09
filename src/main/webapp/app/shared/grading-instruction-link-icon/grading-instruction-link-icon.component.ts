@@ -10,7 +10,7 @@ import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 })
 export class GradingInstructionLinkIconComponent implements OnInit {
     @Input() linkIcon = faLink;
-    @Input() assessment: Feedback;
+    @Input() feedback: Feedback;
     instruction: GradingInstruction | undefined;
     confirmIcon = faTrash;
     showConfirm = false;
@@ -18,7 +18,7 @@ export class GradingInstructionLinkIconComponent implements OnInit {
     constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngOnInit(): void {
-        this.instruction = this.assessment.gradingInstruction;
+        this.instruction = this.feedback.gradingInstruction;
     }
 
     /**
@@ -26,7 +26,7 @@ export class GradingInstructionLinkIconComponent implements OnInit {
      */
     removeLink(): void {
         this.toggle();
-        this.assessment.gradingInstruction = undefined;
+        this.feedback.gradingInstruction = undefined;
     }
 
     /**
