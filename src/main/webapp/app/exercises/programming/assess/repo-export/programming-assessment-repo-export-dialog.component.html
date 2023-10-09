@@ -75,13 +75,7 @@
         </div>
         <div *ngIf="!singleParticipantMode" class="checkbox">
             <label class="control-label">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    name="addParticipantName"
-                    [(ngModel)]="this.repositoryExportOptions.addParticipantName"
-                    [disabled]="!isAtLeastInstructor"
-                />
+                <input class="form-check-input" type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
                 <strong
                     *ngIf="!isRepoExportForMultipleExercises"
                     [jhiTranslate]="
