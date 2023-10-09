@@ -289,7 +289,7 @@ public class CompetencyProgressService {
      * @return true if the competency can be mastered without completing any exercises, false otherwise
      */
     public static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
-        return ((double) competency.getLectureUnits().size()) / (3 * (competency.getLectureUnits().size() + competency.getExercises().size())) * 100 >= competency
-                .getMasteryThreshold();
+        final var numberOfLearningObjects = competency.getLectureUnits().size() + competency.getExercises().size();
+        return ((double) competency.getLectureUnits().size()) / (3 * numberOfLearningObjects) * 100 >= competency.getMasteryThreshold();
     }
 }
