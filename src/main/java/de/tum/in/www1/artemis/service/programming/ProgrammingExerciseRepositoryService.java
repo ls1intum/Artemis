@@ -545,8 +545,7 @@ public class ProgrammingExerciseRepositoryService {
         // staging project files are only required for maven
         final boolean isMaven = isMavenProject(projectType);
         if (isMaven && stagePomXml.isPresent()) {
-            // FileUtils.copyFile(stagePomXml.get().getFile(), buildStagePath.resolve(POM_XML).toFile());
-            Files.copy(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML));
+            FileUtils.copyInputStreamToFile(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML).toFile());
         }
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory);
