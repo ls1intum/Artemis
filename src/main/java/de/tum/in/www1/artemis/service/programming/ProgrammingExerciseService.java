@@ -193,6 +193,7 @@ public class ProgrammingExerciseService {
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
+     * @param imported            defines if the programming exercise is imported
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
