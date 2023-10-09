@@ -244,9 +244,6 @@ class ProgrammingExerciseIntegrationTestService {
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
-        if (repoDownloadClonePath != null && Files.exists(Path.of(repoDownloadClonePath))) {
-            FileUtils.deleteDirectory(new File(repoDownloadClonePath));
-        }
         if (localGit != null) {
             localGit.close();
         }
