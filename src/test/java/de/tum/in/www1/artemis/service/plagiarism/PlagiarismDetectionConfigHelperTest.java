@@ -59,7 +59,6 @@ class PlagiarismDetectionConfigHelperTest {
 
         // then
         assertThat(exercise.getPlagiarismDetectionConfig()).isNotSameAs(config);
-        assertThat(exercise.getPlagiarismDetectionConfig()).extracting(PlagiarismDetectionConfig::getExercise).isNull();
         assertThat(exercise.getPlagiarismDetectionConfig()).extracting(PlagiarismDetectionConfig::getId).isNull();
         assertThat(exercise.getPlagiarismDetectionConfig()).extracting(PlagiarismDetectionConfig::getSimilarityThreshold).isEqualTo(99.0f);
         assertThat(exercise.getPlagiarismDetectionConfig()).extracting(PlagiarismDetectionConfig::getMinimumScore).isEqualTo(98);

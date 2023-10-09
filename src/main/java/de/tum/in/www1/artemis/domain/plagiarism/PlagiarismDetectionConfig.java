@@ -4,18 +4,14 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
 
 /**
  * Stores configuration for manual and continuous plagiarism control.
@@ -25,10 +21,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismDetectionConfig extends DomainObject {
-
-    @OneToOne(mappedBy = "plagiarismDetectionConfig", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("plagiarismDetectionConfig")
-    private Exercise exercise;
 
     @Column(name = "continuous_plagiarism_control_enabled")
     private boolean continuousPlagiarismControlEnabled = false;
@@ -44,14 +36,6 @@ public class PlagiarismDetectionConfig extends DomainObject {
 
     @Column(name = "minimum_size")
     private int minimumSize;
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
 
     public boolean isContinuousPlagiarismControlEnabled() {
         return continuousPlagiarismControlEnabled;
@@ -119,20 +103,19 @@ public class PlagiarismDetectionConfig extends DomainObject {
         PlagiarismDetectionConfig that = (PlagiarismDetectionConfig) o;
         return continuousPlagiarismControlEnabled == that.continuousPlagiarismControlEnabled
                 && continuousPlagiarismControlPostDueDateChecksEnabled == that.continuousPlagiarismControlPostDueDateChecksEnabled
-                && Float.compare(similarityThreshold, that.similarityThreshold) == 0 && minimumScore == that.minimumScore && minimumSize == that.minimumSize
-                && Objects.equals(exercise, that.exercise);
+                && Float.compare(similarityThreshold, that.similarityThreshold) == 0 && minimumScore == that.minimumScore && minimumSize == that.minimumSize;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), exercise, continuousPlagiarismControlEnabled, continuousPlagiarismControlPostDueDateChecksEnabled, similarityThreshold, minimumScore,
+        return Objects.hash(super.hashCode(), continuousPlagiarismControlEnabled, continuousPlagiarismControlPostDueDateChecksEnabled, similarityThreshold, minimumScore,
                 minimumSize);
     }
 
     @Override
     public String toString() {
-        return "PlagiarismDetectionConfig{" + "exercise=" + exercise + ", continuousPlagiarismControlEnabled=" + continuousPlagiarismControlEnabled
-                + ", continuousPlagiarismControlPostDueDateChecksEnabled=" + continuousPlagiarismControlPostDueDateChecksEnabled + ", similarityThreshold=" + similarityThreshold
-                + ", minimumScore=" + minimumScore + ", minimumSize=" + minimumSize + '}';
+        return "PlagiarismDetectionConfig{continuousPlagiarismControlEnabled=" + continuousPlagiarismControlEnabled + ", continuousPlagiarismControlPostDueDateChecksEnabled="
+                + continuousPlagiarismControlPostDueDateChecksEnabled + ", similarityThreshold=" + similarityThreshold + ", minimumScore=" + minimumScore + ", minimumSize="
+                + minimumSize + '}';
     }
 }
