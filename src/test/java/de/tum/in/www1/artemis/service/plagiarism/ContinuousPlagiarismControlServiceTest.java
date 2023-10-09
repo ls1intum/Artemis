@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.mockito.Mockito.inOrder;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -11,28 +13,31 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.BasecodeException;
 import de.jplag.exceptions.ExitException;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.service.metis.PostService;
 
 class ContinuousPlagiarismControlServiceTest {
 
@@ -44,8 +49,12 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PlagiarismCaseService plagiarismCaseService = mock();
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository = mock();
+
+    private final PostService postService = mock();
+
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, null, null);
+            plagiarismCaseService, plagiarismCaseRepository, postService);
 
     @Test
     void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
@@ -69,7 +78,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new TextPlagiarismResult();
-        textPlagiarismResult.setComparisons(Set.of(new PlagiarismComparison<>()));
+        textPlagiarismResult.setComparisons(singleton(new PlagiarismComparison<>()));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
         var modelingPlagiarismResult = new ModelingPlagiarismResult();
         when(plagiarismChecksService.checkModelingExercise(modelingExercise)).thenReturn(modelingPlagiarismResult);
@@ -90,6 +99,7 @@ class ContinuousPlagiarismControlServiceTest {
         // given: text exercise with cpc enabled
         var exercise = new TextExercise();
         exercise.setId(99L);
+        exercise.setTitle("Exercise 1");
 
         var participationText1 = createStudentParticipation(1);
         var participationText2 = createStudentParticipation(2);
@@ -97,7 +107,7 @@ class ContinuousPlagiarismControlServiceTest {
         var participations = Set.of(participationText1, participationText2, participationText3);
         exercise.setStudentParticipations(participations);
 
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new TextPlagiarismResult();
@@ -105,19 +115,46 @@ class ContinuousPlagiarismControlServiceTest {
         textPlagiarismResult.setComparisons(singleton(plagiarismComparison));
         when(plagiarismChecksService.checkTextExercise(exercise)).thenReturn(textPlagiarismResult);
 
-        // and: one existing plagiarism comparison
-        var existingPlagiarismComparison = createPlagiarismComparison(23, 2, 3);
-        when(plagiarismComparisonRepository.findAllByPlagiarismResultExerciseId(exercise.getId())).thenReturn(singleton(existingPlagiarismComparison));
+        // and: plagiarism cases created implicitly
+        var plagiarismCaseA = createPlagiarismCase(exercise);
+        when(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true)).thenReturn(plagiarismCaseA);
+        var plagiarismCaseB = createPlagiarismCase(exercise);
+        when(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true)).thenReturn(plagiarismCaseB);
 
         // when
         service.executeChecks();
 
         // then
-        var inOrder = inOrder(plagiarismCaseService);
-        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true);
-        inOrder.verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true);
-        inOrder.verify(plagiarismCaseService).removeSubmissionsInPlagiarismCasesForComparison(existingPlagiarismComparison.getId());
-        verifyNoMoreInteractions(plagiarismCaseService);
+        verify(plagiarismComparisonRepository).updatePlagiarismComparisonStatus(12L, PlagiarismStatus.CONFIRMED);
+        verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true);
+        verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true);
+        verify(postService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(any());
+        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService);
+    }
+
+    @Test
+    void shouldRemoveStalePlagiarismCase() throws ExitException {
+        // given: text exercise with cpc enabled
+        var exercise = new TextExercise();
+        exercise.setId(99L);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
+
+        // and: results of plagiarism checks
+        var textPlagiarismResult = new TextPlagiarismResult();
+        textPlagiarismResult.setComparisons(emptySet());
+        when(plagiarismChecksService.checkTextExercise(exercise)).thenReturn(textPlagiarismResult);
+
+        // and: stale plagiarism case
+        var plagiarismCase = createPlagiarismCase(exercise);
+        plagiarismCase.setPlagiarismSubmissions(emptySet());
+        when(plagiarismCaseRepository.findAllCreatedByContinuousPlagiarismControlByExerciseIdWithPlagiarismSubmissions(99L)).thenReturn(List.of(plagiarismCase));
+
+        // when
+        service.executeChecks();
+
+        // then
+        verify(plagiarismCaseRepository).delete(plagiarismCase);
+        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService);
     }
 
     @Test
@@ -128,7 +165,7 @@ class ContinuousPlagiarismControlServiceTest {
         exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         exercise.getPlagiarismDetectionConfig().setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
 
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
 
         // when
         service.executeChecks();
@@ -154,8 +191,7 @@ class ContinuousPlagiarismControlServiceTest {
     void shouldSilentAnyJPlagExceptionsThrown() throws Exception {
         // given
         var textExercise = new TextExercise();
-        Set<Exercise> exercises = Set.of(textExercise);
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(exercises);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new BasecodeException("msg"));
 
         // then
@@ -166,8 +202,7 @@ class ContinuousPlagiarismControlServiceTest {
     void shouldSilentAnyUnknownExceptionsThrown() throws Exception {
         // given
         var textExercise = new TextExercise();
-        Set<Exercise> exercises = Set.of(textExercise);
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(exercises);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException());
 
         // then
@@ -198,5 +233,20 @@ class ContinuousPlagiarismControlServiceTest {
         comparison.setSubmissionB(submissionB);
 
         return comparison;
+    }
+
+    private static PlagiarismCase createPlagiarismCase(Exercise exercise) {
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+
+        var student = new User();
+        student.setFirstName("Student1");
+        student.setLangKey("en");
+        plagiarismCase.setStudent(student);
+
+        var course = new Course();
+        exercise.setCourse(course);
+
+        return plagiarismCase;
     }
 }
