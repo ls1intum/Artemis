@@ -68,9 +68,9 @@ export async function generateDragAndDropQuizExercise(
     const quizExercise = createDragAndDropQuizExercise(course, title, dragAndDropQuestion);
 
     // Save the quiz exercise
-    await lastValueFrom(quizExerciseService.create(quizExercise));
+    const creationResponse = await lastValueFrom(quizExerciseService.create(quizExercise));
 
-    return quizExercise;
+    return creationResponse.body ?? quizExercise;
 }
 
 /**
