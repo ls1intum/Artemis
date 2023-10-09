@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.iris.message;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -14,6 +15,7 @@ public class IrisExercisePlanComponent extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "exercise_plan_id")
+    @JsonIgnore
     private IrisExercisePlanMessageContent exercisePlan;
 
     @NotNull
