@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -15,10 +17,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -52,6 +57,33 @@ public class LearningPathService {
     private final CompetencyRepository competencyRepository;
 
     private final CompetencyRelationRepository competencyRelationRepository;
+
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
+     */
+    private static final double DUE_DATE_UTILITY = 10;
+
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the number of mastered prior competencies.
+     */
+    private static final double PRIOR_UTILITY = 150;
+
+    /**
+     * Base utility and ratios that are used to calculate a competencies' utility with respect to the number of competencies that this competency extends or assumes.
+     * <p>
+     * Ratios donate the importance of the relation compared to the other.
+     * Important: EXTENDS_UTILITY_RATIO should be smaller than ASSUMES_UTILITY_RATIO to prefer extends-relation to assumes-relations.
+     */
+    private static final double EXTENDS_UTILITY_RATIO = 1;
+
+    private static final double ASSUMES_UTILITY_RATIO = 2;
+
+    private static final double EXTENDS_OR_ASSUMES_UTILITY = 100;
+
+    /**
+     * Base utility that is used to calculate a competencies' utility with respect to the mastery level.
+     */
+    private static final double MASTERY_PROGRESS_UTILITY = 1;
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository) {
@@ -389,6 +421,322 @@ public class LearningPathService {
         }
     }
 
+    /**
+     * Generates Ngx path representation of the learning path.
+     *
+     * @param learningPath the learning path for which the Ngx representation should be created
+     * @return Ngx path representation of the learning path
+     * @see NgxLearningPathDTO
+     */
+    public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
+        Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
+        Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
+
+        var recommendedOrderOfCompetenciesById = getRecommendedOrderOfCompetencies(learningPath);
+        var recommendedOrderOfCompetencies = recommendedOrderOfCompetenciesById.stream()
+                .map(id -> learningPath.getCompetencies().stream().filter(competency -> competency.getId().equals(id)).findFirst().get()).toList();
+
+        // generate ngx representation of recommended competencies
+        // IMPORTANT generateNgxGraphRepresentationForCompetency will be replaced by future PR
+        recommendedOrderOfCompetencies.forEach(competency -> generateNgxGraphRepresentationForCompetency(learningPath, competency, nodes, edges));
+        // generate edges between competencies
+        for (int i = 0; i < recommendedOrderOfCompetencies.size() - 1; i++) {
+            var sourceNodeId = getCompetencyEndNodeId(recommendedOrderOfCompetenciesById.get(i));
+            var targetNodeId = getCompetencyStartNodeId(recommendedOrderOfCompetenciesById.get(i + 1));
+            edges.add(new NgxLearningPathDTO.Edge(getRelationEdgeId(sourceNodeId, targetNodeId), sourceNodeId, targetNodeId));
+        }
+
+        return new NgxLearningPathDTO(nodes, edges);
+    }
+
+    /**
+     * Analyzes the current progress within the learning path and generates a recommended ordering of competencies.
+     *
+     * @param learningPath the learning path that should be analyzed
+     * @return the recommended ordering of competencies
+     */
+    private List<Long> getRecommendedOrderOfCompetencies(LearningPath learningPath) {
+        RecommendationState state = generateInitialRecommendationState(learningPath);
+        var pendingCompetencies = getPendingCompetencies(learningPath.getCompetencies(), state);
+        return simulateProgression(pendingCompetencies, state);
+    }
+
+    /**
+     * Generates the initial state of the recommendation containing all necessary information for the prediction.
+     *
+     * @param learningPath the learning path that should be analyzed
+     * @return the initial RecommendationState
+     * @see RecommendationState
+     */
+    private RecommendationState generateInitialRecommendationState(LearningPath learningPath) {
+        Map<Long, Set<Long>> matchingClusters = getMatchingCompetencyClusters(learningPath.getCompetencies());
+        Map<Long, Set<Long>> priorsCompetencies = getPriorCompetencyMapping(learningPath.getCompetencies(), matchingClusters);
+        Map<Long, Long> extendsCompetencies = getExtendsCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        Map<Long, Long> assumesCompetencies = getAssumesCompetencyMapping(learningPath.getCompetencies(), matchingClusters, priorsCompetencies);
+        Set<Long> masteredCompetencies = new HashSet<>();
+        // map of non-mastered competencies to their normalized mastery score with respect to the associated threshold
+        Map<Long, Double> competencyMastery = new HashMap<>();
+        learningPath.getCompetencies().forEach(competency -> {
+            // fetched learning path only contains data of the associated user
+            final var progress = competency.getUserProgress().stream().findFirst();
+            if (progress.isEmpty()) {
+                competencyMastery.put(competency.getId(), 0d);
+            }
+            else if (CompetencyProgressService.isMastered(progress.get())) {
+                // add competency to mastered set if mastered
+                masteredCompetencies.add(competency.getId());
+            }
+            else {
+                // calculate mastery progress if not completed yet
+                competencyMastery.put(competency.getId(), CompetencyProgressService.getMasteryProgress(progress.get()));
+            }
+        });
+        return new RecommendationState(masteredCompetencies, competencyMastery, matchingClusters, priorsCompetencies, extendsCompetencies, assumesCompetencies);
+    }
+
+    /**
+     * Gets a map from competency ids to a set of all other competency ids that are connected via matching relations (transitive closure, including the competency itself).
+     *
+     * @param competencies the competencies for which the mapping should be generated
+     * @return map representing the matching clusters
+     */
+    private Map<Long, Set<Long>> getMatchingCompetencyClusters(Set<Competency> competencies) {
+        final Map<Long, Set<Long>> matchingClusters = new HashMap<>();
+        for (var competency : competencies) {
+            if (!matchingClusters.containsKey(competency.getId())) {
+                final var matchingCompetencies = competencyRelationRepository.getMatchingCompetenciesByCompetencyId(competency.getId());
+                // add for each in cluster to reduce database calls (once per cluster)
+                matchingCompetencies.forEach(id -> matchingClusters.put(id, matchingCompetencies));
+            }
+        }
+        return matchingClusters;
+    }
+
+    /**
+     * Gets a map from competency ids to a set of all other competency ids that are connected via a non-matching relation.
+     *
+     * @param competencies     the competencies for which the mapping should be generated
+     * @param matchingClusters the map representing the corresponding matching clusters
+     * @return map to retrieve prior competencies
+     */
+    private Map<Long, Set<Long>> getPriorCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters) {
+        Map<Long, Set<Long>> priorsMap = new HashMap<>();
+        for (var competency : competencies) {
+            if (!priorsMap.containsKey(competency.getId())) {
+                final var priors = competencyRelationRepository.getPriorCompetenciesByCompetencyIds(matchingClusters.get(competency.getId()));
+                // add for each in cluster to reduce database calls (once per cluster)
+                matchingClusters.get(competency.getId()).forEach(id -> priorsMap.put(id, priors));
+            }
+        }
+        return priorsMap;
+    }
+
+    /**
+     * Gets a map from competency ids to number of competencies that the corresponding competency extends.
+     *
+     * @param competencies      the competencies for which the mapping should be generated
+     * @param matchingClusters  the map representing the corresponding matching clusters
+     * @param priorCompetencies the map to retrieve corresponding prior competencies
+     * @return map to retrieve the number of competencies a competency extends
+     */
+    private Map<Long, Long> getExtendsCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
+        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.EXTENDS);
+    }
+
+    /**
+     * Gets a map from competency ids to number of competencies that the corresponding competency assumes.
+     *
+     * @param competencies      the competencies for which the mapping should be generated
+     * @param matchingClusters  the map representing the corresponding matching clusters
+     * @param priorCompetencies the map to retrieve corresponding prior competencies
+     * @return map to retrieve the number of competencies a competency assumes
+     */
+    private Map<Long, Long> getAssumesCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies) {
+        return getRelationsOfTypeCompetencyMapping(competencies, matchingClusters, priorCompetencies, CompetencyRelation.RelationType.ASSUMES);
+    }
+
+    /**
+     * Gets a map from competency ids to number of competencies that the corresponding competency relates to with the specified type.
+     *
+     * @param competencies      the competencies for which the mapping should be generated
+     * @param matchingClusters  the map representing the corresponding matching clusters
+     * @param priorCompetencies the map to retrieve corresponding prior competencies
+     * @param type              the relation type that should be counted
+     * @return map to retrieve the number of competencies a competency extends
+     */
+    private Map<Long, Long> getRelationsOfTypeCompetencyMapping(Set<Competency> competencies, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies,
+            CompetencyRelation.RelationType type) {
+        Map<Long, Long> map = new HashMap<>();
+        for (var competency : competencies) {
+            if (!map.containsKey(competency.getId())) {
+                long numberOfRelations = competencyRelationRepository.countRelationsOfTypeBetweenCompetencyGroups(matchingClusters.get(competency.getId()), type,
+                        priorCompetencies.get(competency.getId()));
+                // add for each in cluster to reduce database calls (once per cluster)
+                matchingClusters.get(competency.getId()).forEach(id -> map.put(id, numberOfRelations));
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Gets the set of competencies that are themselves not mastered and no matching competency is mastered.
+     *
+     * @param competencies the set of competencies that should be filtered
+     * @param state        the current state of the recommendation system
+     * @return set of pending competencies
+     */
+    private Set<Competency> getPendingCompetencies(Set<Competency> competencies, RecommendationState state) {
+        Set<Competency> pendingCompetencies = new HashSet<>(competencies);
+        pendingCompetencies.removeIf(competency -> state.masteredCompetencies.contains(competency.getId())
+                || state.matchingClusters.get(competency.getId()).stream().anyMatch(state.masteredCompetencies::contains));
+        return pendingCompetencies;
+    }
+
+    /**
+     * Generates a recommended ordering of competencies.
+     *
+     * @param pendingCompetencies the set of pending competencies
+     * @param state               the current state of the recommendation system
+     * @return recommended ordering of competencies
+     */
+    private List<Long> simulateProgression(Set<Competency> pendingCompetencies, RecommendationState state) {
+        List<Long> recommendedOrder = new ArrayList<>();
+        while (!pendingCompetencies.isEmpty()) {
+            Map<Long, Double> utilities = computeUtilities(pendingCompetencies, state);
+            var maxEntry = utilities.entrySet().stream().max(Comparator.comparingDouble(Map.Entry::getValue));
+            // is present since outstandingCompetencies is not empty
+            Long competencyId = maxEntry.get().getKey();
+
+            // add competency to recommended order
+            recommendedOrder.add(competencyId);
+
+            // simulate completion of competency
+            state.masteredCompetencies.add(competencyId);
+            pendingCompetencies
+                    .removeIf(competency -> competency.getId().equals(competencyId) || state.matchingClusters.get(competency.getId()).stream().anyMatch(competencyId::equals));
+        }
+        return recommendedOrder;
+    }
+
+    /**
+     * Generates a mapping from competency ids to their corresponding utility in the current state.
+     *
+     * @param competencies the set of competencies for which the mapping should be generated
+     * @param state        the current state of the recommendation system
+     * @return map to retrieve the utility of a competency
+     */
+    private Map<Long, Double> computeUtilities(Set<Competency> competencies, RecommendationState state) {
+        Map<Long, Double> utilities = new HashMap<>();
+        for (var competency : competencies) {
+            utilities.put(competency.getId(), computeUtilityOfCompetency(competency, state));
+        }
+        return utilities;
+    }
+
+    /**
+     * Gets the utility of a competency in the current state.
+     *
+     * @param competency the competency for which the utility should be computed
+     * @param state      the current state of the recommendation system
+     * @return the utility of the given competency
+     */
+    private double computeUtilityOfCompetency(Competency competency, RecommendationState state) {
+        // if competency is already mastered there competency has no utility
+        if (state.masteredCompetencies.contains(competency.getId())) {
+            return 0;
+        }
+        double utility = 0;
+        utility += computeDueDateUtility(competency);
+        utility += computePriorUtility(competency, state);
+        utility += computeExtendsOrAssumesUtility(competency, state);
+        utility += computeMasteryUtility(competency, state);
+        return utility;
+    }
+
+    /**
+     * Gets the utility of the competency with respect to the earliest due date of the competency.
+     *
+     * @param competency the competency for which the utility should be computed
+     * @return due date utility of the competency
+     */
+    private static double computeDueDateUtility(Competency competency) {
+        final var earliestDueDate = getEarliestDueDate(competency);
+        if (earliestDueDate.isEmpty()) {
+            return 0;
+        }
+        double timeDelta = ChronoUnit.DAYS.between(ZonedDateTime.now(), earliestDueDate.get());
+
+        if (timeDelta < 0) {
+            // deadline has passed
+            return (-timeDelta) * DUE_DATE_UTILITY;
+        }
+        else if (timeDelta > 0) {
+            // deadline not passed yet
+            return (1 / timeDelta) * DUE_DATE_UTILITY;
+        }
+        else {
+            return DUE_DATE_UTILITY;
+        }
+    }
+
+    /**
+     * Gets the earliest due date of any learning object attached to the competency or the competency itself.
+     *
+     * @param competency the competency for which the earliest due date should be retrieved
+     * @return earliest due date of the competency
+     */
+    private static Optional<ZonedDateTime> getEarliestDueDate(Competency competency) {
+        final var lectureDueDates = competency.getLectureUnits().stream().map(LectureUnit::getLecture).map(Lecture::getEndDate);
+        final var exerciseDueDates = competency.getExercises().stream().map(Exercise::getDueDate);
+        return Stream.concat(Stream.concat(Stream.of(competency.getSoftDueDate()), lectureDueDates), exerciseDueDates).filter(Objects::nonNull).min(Comparator.naturalOrder());
+    }
+
+    /**
+     * Gets the utility of the competency with respect to prior competencies.
+     *
+     * @param competency the competency for which the utility should be computed
+     * @param state      the current state of the recommendation system
+     * @return prior utility of the competency
+     */
+    private static double computePriorUtility(Competency competency, RecommendationState state) {
+        // return max utility if no prior competencies are present
+        if (state.priorCompetencies.get(competency.getId()).size() == 0) {
+            return PRIOR_UTILITY;
+        }
+        final double masteredPriorCompetencies = state.priorCompetencies.get(competency.getId()).stream()
+                .filter(id -> state.masteredCompetencies.contains(id) || state.matchingClusters.get(id).stream().anyMatch(state.masteredCompetencies::contains)).count();
+        final double weight = masteredPriorCompetencies / state.priorCompetencies.get(competency.getId()).size();
+        return weight * PRIOR_UTILITY;
+    }
+
+    /**
+     * Gets the utility of the competency with respect to prior competencies that are extended or assumed by this competency.
+     *
+     * @param competency the competency for which the utility should be computed
+     * @param state      the current state of the recommendation system
+     * @return extends or assumes utility of the competency
+     */
+    private static double computeExtendsOrAssumesUtility(Competency competency, RecommendationState state) {
+        final double weight = state.extendsCompetencies.get(competency.getId()) * EXTENDS_UTILITY_RATIO + state.assumesCompetencies.get(competency.getId()) * ASSUMES_UTILITY_RATIO;
+        // return max utility if competency does not extend or assume other competencies
+        if (weight == 0) {
+            return EXTENDS_OR_ASSUMES_UTILITY;
+        }
+        return (1 / weight) * EXTENDS_OR_ASSUMES_UTILITY;
+
+    }
+
+    /**
+     * Gets the utility of the competency with respect to users mastery progress within the competency.
+     *
+     * @param competency the competency for which the utility should be computed
+     * @param state      the current state of the recommendation system
+     * @return mastery utility of the competency
+     */
+    private static double computeMasteryUtility(Competency competency, RecommendationState state) {
+        return state.competencyMastery.get(competency.getId()) * MASTERY_PROGRESS_UTILITY;
+    }
+
     public static String getCompetencyStartNodeId(long competencyId) {
         return "node-" + competencyId + "-start";
     }
@@ -443,5 +791,9 @@ public class LearningPathService {
 
     public static String getDirectEdgeId(long competencyId) {
         return "edge-" + competencyId + "-direct";
+    }
+
+    private record RecommendationState(Set<Long> masteredCompetencies, Map<Long, Double> competencyMastery, Map<Long, Set<Long>> matchingClusters,
+            Map<Long, Set<Long>> priorCompetencies, Map<Long, Long> extendsCompetencies, Map<Long, Long> assumesCompetencies) {
     }
 }
