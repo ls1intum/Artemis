@@ -3,16 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -91,7 +82,9 @@ public class LocalCIBuildJobManagementService {
         List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage())
                 .projectTypes();
 
-        if (!supportedProjectTypes.contains(programmingExercise.getProjectType())) {
+        var projectType = programmingExercise.getProjectType();
+
+        if (projectType == null || !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
             throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
         }
 
