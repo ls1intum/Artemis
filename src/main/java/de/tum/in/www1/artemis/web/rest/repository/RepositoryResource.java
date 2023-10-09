@@ -170,8 +170,9 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            InputStream inputStream = request.getInputStream();
-            repositoryService.createFile(repository, filePath, inputStream);
+            try (var inputStream = request.getInputStream()) {
+                repositoryService.createFile(repository, filePath, inputStream);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -189,8 +190,9 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            InputStream inputStream = request.getInputStream();
-            repositoryService.createFolder(repository, folderPath, inputStream);
+            try (InputStream inputStream = request.getInputStream()) {
+                repositoryService.createFolder(repository, folderPath, inputStream);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -389,8 +391,8 @@ public abstract class RepositoryResource {
             throw new IOException("File could not be found.");
         }
 
-        InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
-        FileUtils.copyToFile(inputStream, file.get());
-        inputStream.close();
+        try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
+            FileUtils.copyToFile(inputStream, file.get());
+        }
     }
 }

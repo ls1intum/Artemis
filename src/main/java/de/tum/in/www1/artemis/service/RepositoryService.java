@@ -188,7 +188,6 @@ public class RepositoryService {
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         FileUtils.copyToFile(inputStream, file);
         repository.setContent(null); // invalidate cache
-        inputStream.close();
     }
 
     /**
@@ -207,7 +206,6 @@ public class RepositoryService {
         File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
         FileUtils.copyToFile(inputStream, keep);
         repository.setContent(null); // invalidate cache
-        inputStream.close();
     }
 
     /**
