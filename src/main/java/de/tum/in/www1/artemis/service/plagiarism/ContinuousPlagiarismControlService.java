@@ -132,11 +132,10 @@ public class ContinuousPlagiarismControlService {
 
     private static Post buildCpcPost(PlagiarismCase plagiarismCase) {
         var post = new Post();
-        post.setTitle("(title placeholder)");
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setPlagiarismCase(plagiarismCase);
-        post.setContent("(content placeholder)");
+        post.setContent(ContinuousPlagiarismControlPostContentProvider.getPostContent(plagiarismCase));
         post.setCreationDate(ZonedDateTime.now());
         return post;
     }
