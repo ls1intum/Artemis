@@ -26,15 +26,23 @@ export class LearningPathService {
     getLearningPathNgxGraph(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
         return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/learning-path/${learningPathId}/graph`, { observe: 'response' }).pipe(
             map((ngxLearningPathResponse) => {
-                if (!ngxLearningPathResponse.body!.nodes) {
-                    ngxLearningPathResponse.body!.nodes = [];
-                }
-                if (!ngxLearningPathResponse.body!.edges) {
-                    ngxLearningPathResponse.body!.edges = [];
-                }
-                return ngxLearningPathResponse;
+                return this.sanitizeNgxLearningPathResponse(ngxLearningPathResponse);
             }),
         );
+    }
+
+    getLearningPathNgxPath(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
+        return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/learning-path/${learningPathId}/path`, { observe: 'response' }).pipe(
+            map((ngxLearningPathResponse) => {
+                return this.sanitizeNgxLearningPathResponse(ngxLearningPathResponse);
+            }),
+        );
+    }
+
+    private sanitizeNgxLearningPathResponse(ngxLearningPathResponse: HttpResponse<NgxLearningPathDTO>) {
+        ngxLearningPathResponse.body!.nodes ??= [];
+        ngxLearningPathResponse.body!.edges ??= [];
+        return ngxLearningPathResponse;
     }
 
     getLearningPathId(courseId: number) {
