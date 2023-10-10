@@ -38,7 +38,6 @@ import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { AssessmentNote } from 'app/entities/assessment-note.model';
 import { AthenaService } from 'app/assessment/athena.service';
 
 @Component({
@@ -541,15 +540,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Updates the assessment note field of the result on input and validates the feedback afterward.
-     * @param assessmentNote the object with the current text from the text box
-     */
-    onUpdateAssessmentNote(assessmentNote: AssessmentNote) {
-        this.manualResult!.assessmentNote = assessmentNote;
-        this.validateFeedback();
-    }
-
-    /**
      * Defines whether the inline feedback should be read only or not
      */
     readOnly() {
@@ -676,13 +666,5 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
 
         return totalScore;
-    }
-
-    getAssessmentNoteIfPresentOrCreateNewOne() {
-        if (this.manualResult?.assessmentNote === undefined) {
-            return new AssessmentNote();
-        } else {
-            return this.manualResult.assessmentNote;
-        }
     }
 }
