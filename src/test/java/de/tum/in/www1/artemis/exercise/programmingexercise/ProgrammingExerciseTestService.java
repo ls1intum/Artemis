@@ -696,8 +696,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
-        // This would otherwise try to connect to Jenkins in case the continuousIntegrationService is of type JenkinsService,
-        // which is behavior that is already tested elsewhere anyway
+        // only needed for some CI systems, other more specific tests assert relevant parameters the mock is called with
         doNothing().when(continuousIntegrationService).updateBuildPlanURL(any(), any(), any());
 
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;

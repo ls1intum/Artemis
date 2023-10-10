@@ -157,7 +157,7 @@ public interface ContinuousIntegrationService {
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch);
 
     /**
-     * Updates the build plan URL inside the Jenkins config of the imported exercise.
+     * Updates the build plan URL inside the CI build plan config of the imported exercise.
      *
      * @param templateExercise The exercise containing the old build plan URL.
      * @param newExercise      The newly imported exercise of which the build plan URL is updated.

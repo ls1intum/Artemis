@@ -29,7 +29,7 @@ public class JenkinsBuildPlanUtils {
             throw new IllegalArgumentException("Pipeline Script not found");
         }
         // Replace URL
-        // TODO: properly replace the previousUrl with nreUrl by looking up the ciRepoName in the pipelineScript
+        // TODO: properly replace the previousUrl with newUrl by looking up the ciRepoName in the pipelineScript
         pipeLineScript = pipeLineScript.replace(previousUrl, newUrl);
 
         scriptNode.getFirstChild().setTextContent(pipeLineScript);
