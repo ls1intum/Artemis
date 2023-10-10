@@ -689,7 +689,7 @@
                     "sameIpAddressDifferentStudentExams": "Different student exams with the same IP address",
                     "differentIpAddressesSameStudentExam": "Different IP addresses for the same student exam",
                     "differentBrowserFingerprintsSameStudentExam": "Different browser fingerprints for the same student exam",
-                    "ipOutsideOfRange": "IP address outside of range <span class='text-info'>{{ range }}</span>"
+                    "ipOutsideOfRange": "IP address outside of range <span class=\"text-info\">{{ range }}</span>"
                 }
             },
             "plagiarismCasesOverview": {

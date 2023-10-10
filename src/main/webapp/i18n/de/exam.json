@@ -688,7 +688,7 @@
                     "sameIpAddressDifferentStudentExams": "Verschiedene Studierendenklausuren mit derselben IP-Adresse",
                     "differentIpAddressesSameStudentExam": "Verschiedene IP-Adressen für dieselbe Studierendenklausur",
                     "differentBrowserFingerprintsSameStudentExam": "Verschiedene Browser-Fingerabdrücke für dieselbe Studierendenklausur",
-                    "ipOutsideOfRange": "IP-Adresse außerhalb des spezifizierten Bereichs {{ range }}"
+                    "ipOutsideOfRange": "IP-Adresse außerhalb des spezifizierten Bereichs <span class=\"text-info\">{{ range }}</span>"
                 }
             },
             "plagiarismCasesOverview": {
