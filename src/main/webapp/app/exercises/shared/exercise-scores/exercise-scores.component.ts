@@ -396,7 +396,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     /**
      * Cancel the current assessment and reload the submissions to reflect the change.
      */
-    cancelAssessment(result: Result) {
+    cancelAssessment(result: Result, participation: Participation) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
 
         if (confirmCancel && result.submission?.id) {
@@ -409,7 +409,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id);
                     break;
                 case ExerciseType.TEXT:
-                    cancelSubscription = this.textAssessmentService.cancelAssessment(result.participation!.id!, result.submission.id);
+                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, result.submission.id);
                     break;
                 case ExerciseType.FILE_UPLOAD:
                     cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id);

@@ -2,7 +2,7 @@ services:
     jhipster-registry:
         container_name: artemis-jhipster-registry
         image: docker.io/jhipster/jhipster-registry:v6.1.2
-        pull_policy: always
+        pull_policy: if_not_present
         volumes:
             - ./registry:/central-config
         # When run with the "dev" Spring profile, the JHipster Registry will
@@ -25,7 +25,7 @@ services:
     activemq-broker:
         container_name: artemis-activemq-broker
         image: docker.io/vromero/activemq-artemis:latest
-        pull_policy: always
+        pull_policy: if_not_present
         environment:
             ARTEMIS_USERNAME: guest
             ARTEMIS_PASSWORD: guest
