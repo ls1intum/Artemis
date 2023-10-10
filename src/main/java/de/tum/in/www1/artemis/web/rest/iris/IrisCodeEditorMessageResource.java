@@ -158,6 +158,7 @@ public class IrisCodeEditorMessageResource {
 
         // irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
+        // TODO: Wait for requestExerciseChanges()
         irisCodeEditorSessionService.requestExerciseChanges(codeEditorSession, exercisePlan);
         return ResponseEntity.ok(null);
     }
