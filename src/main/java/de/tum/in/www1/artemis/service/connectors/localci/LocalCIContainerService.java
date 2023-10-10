@@ -295,18 +295,7 @@ public class LocalCIContainerService {
     private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
         boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
 
-        if (!hasSequentialTestRuns) {
-            if (isMaven) {
-                buildScript.append("""
-                        mvn clean test""");
-            }
-            else {
-                buildScript.append("""
-                        chmod +x gradlew
-                        ./gradlew clean test""");
-            }
-        }
-        else {
+        if (hasSequentialTestRuns) {
             if (isMaven) {
                 buildScript.append("""
                         cd structural
@@ -327,6 +316,17 @@ public class LocalCIContainerService {
                             ./gradlew behaviorTests
                         fi
                         """);
+            }
+        }
+        else {
+            if (isMaven) {
+                buildScript.append("""
+                        mvn clean test""");
+            }
+            else {
+                buildScript.append("""
+                        chmod +x gradlew
+                        ./gradlew clean test""");
             }
         }
     }

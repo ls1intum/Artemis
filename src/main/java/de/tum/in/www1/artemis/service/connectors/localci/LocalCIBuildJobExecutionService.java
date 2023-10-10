@@ -276,21 +276,21 @@ public class LocalCIBuildJobExecutionService {
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA, KOTLIN -> {
                 if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
-                    if (!programmingExercise.hasSequentialTestRuns()) {
-                        testResultPaths.add("/repositories/test-repository/target/surefire-reports");
-                    }
-                    else {
+                    if (programmingExercise.hasSequentialTestRuns()) {
                         testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
                         testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
                     }
+                    else {
+                        testResultPaths.add("/repositories/test-repository/target/surefire-reports");
+                    }
                 }
                 else {
-                    if (!programmingExercise.hasSequentialTestRuns()) {
-                        testResultPaths.add("/repositories/test-repository/build/test-results/test");
-                    }
-                    else {
+                    if (programmingExercise.hasSequentialTestRuns()) {
                         testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
                         testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
+                    }
+                    else {
+                        testResultPaths.add("/repositories/test-repository/build/test-results/test");
                     }
                 }
                 return testResultPaths;
