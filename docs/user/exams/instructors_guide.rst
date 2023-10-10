@@ -433,6 +433,18 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
     :alt: Submissions
     :align: center
 
+3.2 Suspicious Behavior Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You can check for specific suspicious behavior in the suspicious behavior dashboard. The dashboard allows to detect exam sessions that fulfill certain criteria and gives an overview of the plagiarism detection.
+An exam session is a unique combination of IP address, user agent, instance id, a session token and the browser fingerprint. It is created whenever a student enters their exam.
+You can see the available analysis options in the first screenshot below. To start the analysis, click the |analyze_sessions| button. When the analysis detects at least one suspicious case, the instructor can click the |view_cases| button to see the details of the suspicious exam sessions.
+The second screenshot shows the details of a suspicious exam session.
+
+In the lower half of the dashboard the instructor can view the plagiarism detection overview. It only lists exercises that support plagiarism detection. The number of potential plagiarism results are the results returned when running the detection. The number of plagiarism results are the cases a instructor has classified and confirmed as plagiarism.
+To view the current detection results or run a detection click on the |view_plagiarism_results| button. This navigates to the plagiarism detection page of the exercise.
+Once the instructor has confirmed at least one case, the |view_cases| button is visible at the bottom left of the table that navigates to all confirmed plagiarism cases of the exam.
+
+
 3.3 Plagiarism detection
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
