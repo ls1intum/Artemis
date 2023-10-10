@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { AssessmentNote } from 'app/entities/assessment-note.model';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
@@ -14,7 +13,6 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
-    @Input() assessmentNote: AssessmentNote;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
 
@@ -32,8 +30,6 @@ export class UnreferencedFeedbackComponent {
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
     @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
-
-    @Output() assessmentNoteChange = new EventEmitter<AssessmentNote>();
 
     constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
@@ -137,27 +133,6 @@ export class UnreferencedFeedbackComponent {
         if (newFeedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
             this.updateFeedback(newFeedback);
-        }
-    }
-
-    /**
-     * Called whenever an input is made on the internal tutor note text box. This updates the assessment note of the parent
-     * component.
-     */
-    onAssessmentNoteInput(event: any) {
-        console.log(event.target.value);
-        this.assessmentNote.note = event.target.value;
-        this.assessmentNoteChange.emit(this.assessmentNote);
-    }
-
-    /**
-     * Return an empty string if the assessment note or its note field is undefined, or otherwise the text of the note.
-     */
-    getAssessmentNoteText() {
-        if (this.assessmentNote !== undefined && this.assessmentNote.note !== undefined) {
-            return this.assessmentNote.note;
-        } else {
-            return '';
         }
     }
 }
