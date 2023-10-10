@@ -33,6 +33,8 @@
 
 <ng-content></ng-content>
 
+<jhi-assessment-note (onAssessmentNoteChange)="setAssessmentNoteForResult($event)"></jhi-assessment-note>
+
 <jhi-complaints-for-tutor-form
     class="row mt-4"
     *ngIf="complaint"
