@@ -12,7 +12,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime, getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
@@ -197,7 +197,7 @@ export class StudentExamDetailComponent implements OnInit {
      * Updates the working time duration values of the form whenever the percent value has been changed by the user.
      */
     updateWorkingTimeDuration() {
-        const regularWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
+        const regularWorkingTime = examWorkingTime(this.studentExam.exam)!;
         const seconds = round(regularWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100), 0);
         this.setWorkingTimeDuration(seconds);
     }

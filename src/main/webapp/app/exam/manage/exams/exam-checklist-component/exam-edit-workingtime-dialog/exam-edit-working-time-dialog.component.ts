@@ -5,7 +5,7 @@ import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime } from 'app/exam/participate/exam.utils';
 
 @Component({
     selector: 'jhi-edit-working-time-dialog',
@@ -27,7 +27,7 @@ export class ExamEditWorkingTimeDialogComponent {
     workingTimeSeconds = 0;
 
     get oldWorkingTime() {
-        return normalWorkingTime(this.exam);
+        return examWorkingTime(this.exam);
     }
 
     get newWorkingTime() {

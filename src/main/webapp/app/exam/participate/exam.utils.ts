@@ -8,9 +8,9 @@ import { round } from 'app/shared/util/utils';
  *
  * @param exam
  * @param studentExam
- * @return {dayjs}
+ * @return {dayjs.Dayjs | undefined}
  */
-export const endTime = (exam: Exam, studentExam: StudentExam) => {
+export const endTime = (exam: Exam, studentExam: StudentExam): dayjs.Dayjs | undefined => {
     if (!exam) {
         return undefined;
     }
@@ -26,12 +26,17 @@ export const endTime = (exam: Exam, studentExam: StudentExam) => {
  * @param exam
  * @return {number | undefined}
  */
-export const normalWorkingTime = (exam: Exam): number | undefined => {
-    if (!exam || !exam.endDate || !exam.startDate) {
-        return undefined;
-    }
-    return dayjs(exam.endDate).diff(exam.startDate, 'seconds');
-};
+export const examWorkingTime = (exam?: Exam): number | undefined => normalWorkingTime(exam?.startDate, exam?.endDate);
+
+/**
+ * Calculates the time between start and end date in seconds
+ *
+ * @param startDate
+ * @param endDate
+ * @return {number | undefined}
+ */
+export const normalWorkingTime = (startDate?: dayjs.Dayjs, endDate?: dayjs.Dayjs): number | undefined =>
+    startDate && endDate ? dayjs(endDate).diff(startDate, 'seconds') : undefined;
 
 /**
  * Calculates the additional working time in seconds
@@ -57,7 +62,7 @@ export const getAdditionalWorkingTime = (exam: Exam, studentExam: StudentExam): 
  * @return The relative working time extension in percent points rounded to two digits after the decimal separator.
  */
 export const getRelativeWorkingTimeExtension = (exam: Exam, studentExamWorkingTime: number): number => {
-    const regularExamDuration = normalWorkingTime(exam)!;
+    const regularExamDuration = examWorkingTime(exam)!;
     return round((studentExamWorkingTime / regularExamDuration - 1.0) * 100, 2);
 };
 

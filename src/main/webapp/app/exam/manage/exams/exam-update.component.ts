@@ -1,8 +1,8 @@
 import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
-import { combineLatest } from 'rxjs';
+import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -18,13 +18,13 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
 })
-export class ExamUpdateComponent implements OnInit {
+export class ExamUpdateComponent implements OnInit, OnDestroy {
     exam: Exam;
     course: Course;
     isSaving: boolean;
@@ -34,6 +34,8 @@ export class ExamUpdateComponent implements OnInit {
 
     private originalStartDate?: dayjs.Dayjs;
     private originalEndDate?: dayjs.Dayjs;
+
+    private componentActive = true;
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
@@ -57,31 +59,37 @@ export class ExamUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        combineLatest([this.route.url, this.route.data]).subscribe(([segments, data]) => {
-            const isImport = segments.some(({ path }) => path === 'import');
-            const exam: Exam = isImport ? prepareExamForImport(data.exam) : data.exam;
+        combineLatest([this.route.url, this.route.data])
+            .pipe(takeWhile(() => this.componentActive))
+            .subscribe(([segments, data]) => {
+                const isImport = segments.some(({ path }) => path === 'import');
+                const exam: Exam = isImport ? prepareExamForImport(data.exam) : data.exam;
 
-            if (!exam.gracePeriod) {
-                exam.gracePeriod = 180;
-            }
+                if (!exam.gracePeriod) {
+                    exam.gracePeriod = 180;
+                }
 
-            // test exam only feature automatic assessment
-            if (exam.testExam) {
-                exam.numberOfCorrectionRoundsInExam = 0;
-            } else if (!exam.numberOfCorrectionRoundsInExam) {
-                exam.numberOfCorrectionRoundsInExam = 1;
-            }
+                // test exam only feature automatic assessment
+                if (exam.testExam) {
+                    exam.numberOfCorrectionRoundsInExam = 0;
+                } else if (!exam.numberOfCorrectionRoundsInExam) {
+                    exam.numberOfCorrectionRoundsInExam = 1;
+                }
 
-            this.exam = exam;
-            this.isImport = isImport;
-            this.isImportInSameCourse = isImport && exam.course?.id === data.course.id;
-            this.originalStartDate = exam.startDate?.clone();
-            this.originalEndDate = exam.endDate?.clone();
+                this.exam = exam;
+                this.isImport = isImport;
+                this.isImportInSameCourse = isImport && exam.course?.id === data.course.id;
+                this.originalStartDate = exam.startDate?.clone();
+                this.originalEndDate = exam.endDate?.clone();
 
-            this.course = data.course;
-            this.exam.course = data.course;
-            this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingEnabled(this.course);
-        });
+                this.course = data.course;
+                this.exam.course = data.course;
+                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingEnabled(this.course);
+            });
+    }
+
+    ngOnDestroy() {
+        this.componentActive = false;
     }
 
     /**
@@ -100,7 +108,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get oldWorkingTime(): number | undefined {
-        return normalWorkingTime({ startDate: this.originalStartDate, endDate: this.originalEndDate } as Exam);
+        return normalWorkingTime(this.originalStartDate, this.originalEndDate);
     }
 
     get newWorkingTime(): number | undefined {
@@ -122,7 +130,7 @@ export class ExamUpdateComponent implements OnInit {
     updateExamWorkingTime() {
         if (this.exam.testExam) return;
 
-        this.exam.workingTime = normalWorkingTime(this.exam);
+        this.exam.workingTime = examWorkingTime(this.exam);
     }
 
     /**
@@ -163,8 +171,11 @@ export class ExamUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.upsertOrImportExam()
-            ?.pipe(map((response: HttpResponse<Exam>) => response.body!))
+        this.createOrUpdateOrImportExam()
+            ?.pipe(
+                map((response: HttpResponse<Exam>) => response.body!),
+                takeWhile(() => this.componentActive),
+            )
             .subscribe({
                 next: this.onSaveSuccess.bind(this),
                 error: this.onSaveError.bind(this),
@@ -175,7 +186,7 @@ export class ExamUpdateComponent implements OnInit {
      * Creates, updates or imports the exam depending on the current state of the component.
      * @private
      */
-    private upsertOrImportExam() {
+    private createOrUpdateOrImportExam() {
         if (this.isImport && this.exam?.exerciseGroups) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
             if (!this.examExerciseImportComponent.validateUserInput()) {
