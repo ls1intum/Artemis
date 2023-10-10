@@ -199,6 +199,13 @@ public class JenkinsBuildPlanService {
         postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
     }
 
+    /**
+     * Replaces the old build plan URL with the new one, and posts the change to the Jenkins job config of the new exercise.
+     *
+     * @param templateExercise The exercise containing the old build plan URL.
+     * @param newExercise      The exercise of which the build plan URL is updated.
+     * @param buildPlanKey     The key of the build plan for the current participation.
+     */
     public void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey) {
         final String buildProjectKey = newExercise.getProjectKey();
 
