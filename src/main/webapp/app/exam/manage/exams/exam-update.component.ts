@@ -233,7 +233,7 @@ export class ExamUpdateComponent implements OnInit {
      * Returns true if the original exam is currently ongoing before any changes, false otherwise.
      */
     get isOngoingExam(): boolean {
-        return !!this.exam.id && !!this.originalStartDate && !!this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate);
+        return !!(this.exam.id && this.originalStartDate && this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate));
     }
 
     get isValidConfiguration(): boolean {
