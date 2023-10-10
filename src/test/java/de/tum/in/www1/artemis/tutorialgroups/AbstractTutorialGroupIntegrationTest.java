@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseTestService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.User;
@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 /**
  * Contains useful methods for testing the tutorial groups feature.
  */
-abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     CourseTestService courseTestService;
@@ -292,7 +292,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
         Function<TutorialGroup, String> expectedTutorialGroupName = (TutorialGroup tg) -> {
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
-            return "$" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 19));
+            return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         };
         var tutorialGroupFromDb = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroup.getId());
 

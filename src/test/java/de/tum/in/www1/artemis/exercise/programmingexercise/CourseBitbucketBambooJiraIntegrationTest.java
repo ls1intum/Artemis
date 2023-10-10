@@ -1,20 +1,28 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseFactory;
@@ -162,6 +170,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testEditCourseShouldPreserveAssociations() throws Exception {
         courseTestService.testEditCourseShouldPreserveAssociations();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEditCourseShouldPreserveIrisSettings() throws Exception {
+        courseTestService.testEditCourseShouldPreserveIrisSettings();
     }
 
     @Test
@@ -670,20 +684,63 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExercise() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExercise(TEST_PREFIX);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportExerciseDetails();
+    }
+
+    @ParameterizedTest
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("provideFileNameAndErrorMsg")
+    void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String dynamicFilenamePart, String dynamicErrorMsgPart) throws Exception {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(dynamicFilenamePart, dynamicErrorMsgPart);
+    }
+
+    private static Stream<Arguments> provideFileNameAndErrorMsg() {
+        return Stream.of(Arguments.of("multiple_choice_questions_answers", "multiple choice"), Arguments.of("short_answer_questions_answers", "short answer"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotExportDragAndDropAnswersSubmission() throws Exception {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotExportDragAndDropSubmission();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory() throws IOException {
+        courseTestService.testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise();
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise();
+        // the temp directory should be deleted
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
+        doThrow(new IOException("Error")).when(fileService).writeObjectToJsonFile(any(), any(ObjectMapper.class), any(Path.class));
         courseTestService.testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise();
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
     }
 
     @Test

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,11 +59,11 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
-    private final LtiService ltiService;
+    private final Optional<LtiService> ltiService;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, LtiService ltiService) {
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiService> ltiService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.ltiService = ltiService;
@@ -152,7 +153,7 @@ public class UserResource {
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (!ltiService.isLtiCreatedUser(user) || !user.isInternal()) {
+        if ((ltiService.isPresent() && !ltiService.get().isLtiCreatedUser(user)) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());
@@ -160,5 +161,33 @@ public class UserResource {
 
         String result = userCreationService.setRandomPasswordAndReturn(user);
         return ResponseEntity.ok().body(new UserInitializationDTO(result));
+    }
+
+    /**
+     * PUT users/accept-iris : sets the irisAccepted flag for the user to ZonedDateTime.now()
+     *
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request) if Iris was already accepted
+     */
+    @PutMapping("users/accept-iris")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> setIrisAcceptedToTimestamp() {
+        User user = userRepository.getUser();
+        if (user.getIrisAcceptedTimestamp() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+        userRepository.updateIrisAcceptedToDate(user.getId(), ZonedDateTime.now());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET users/accept-iris : gets the irisAccepted flag for the user
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the flag's value as ZonedDateTime, or with status 404 (Not Found)
+     */
+    @GetMapping("users/accept-iris")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ZonedDateTime> getIrisAcceptedForStudent() {
+        User user = userRepository.getUser();
+        return ResponseEntity.ok().body(user.getIrisAcceptedTimestamp());
     }
 }

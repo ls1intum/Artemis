@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,6 +17,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.AfterEach;
@@ -22,19 +27,34 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 
-class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ResourceLoaderService resourceLoaderService;
+
+    @Autowired
+    private FileService fileService;
 
     private final Path javaPath = Path.of("templates", "java", "java.txt");
 
     // the resource loader allows to load resources from the file system for this prefix
     private final Path overridableBasePath = Path.of("templates", "jenkins");
+
+    private static final URI VALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/BackgroundFile.jpg");
+
+    private static final URI VALID_INTENDED_BACKGROUND_PATH = URI.create("/api/" + FilePathService.getDragAndDropBackgroundFilePath() + "/");
+
+    private static final URI INVALID_BACKGROUND_PATH = URI.create("/api/uploads/images/drag-and-drop/backgrounds/1/../../../exam-users/signatures/some-file.png");
+
+    private static final URI VALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/PictureFile.jpg");
+
+    private static final URI VALID_INTENDED_DRAGITEM_PATH = URI.create("/api/" + FilePathService.getDragItemFilePath() + "/");
+
+    private static final URI INVALID_DRAGITEM_PATH = URI.create("/api/uploads/images/drag-and-drop/drag-items/1/../../../exam-users/signatures/some-file.png");
 
     @AfterEach
     void cleanup() throws IOException {
@@ -85,10 +105,67 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         }
     }
 
+    private void writeFile(String destinationPath, byte[] bytes) {
+        try {
+            FileUtils.writeByteArrayToFile(Path.of(".", "exportTest", destinationPath).toFile(), bytes);
+        }
+        catch (IOException ex) {
+            fail("Failed while writing test files", ex);
+        }
+    }
+
     @AfterEach
     @BeforeEach
     void deleteFiles() throws IOException {
         FileUtils.deleteDirectory(Path.of(".", "exportTest").toFile());
+    }
+
+    @Test
+    void testGetFileForPath() throws IOException {
+        writeFile("testFile.txt", FILE_WITH_UNIX_LINE_ENDINGS);
+        byte[] result = fileService.getFileForPath(Path.of(".", "exportTest", "testFile.txt"));
+        assertThat(result).containsExactly(FILE_WITH_UNIX_LINE_ENDINGS.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void testGetFileFOrPath_notFound() throws IOException {
+        writeFile("testFile.txt", FILE_WITH_UNIX_LINE_ENDINGS);
+        byte[] result = fileService.getFileForPath(Path.of(".", "exportTest", UUID.randomUUID() + ".txt"));
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void testHandleSaveFile_noOriginalFilename() {
+        MultipartFile file = mock(MultipartFile.class);
+        doAnswer(invocation -> null).when(file).getOriginalFilename();
+        assertThatThrownBy(() -> fileService.handleSaveFile(file, false, false)).isInstanceOf(IllegalArgumentException.class);
+        verify(file, times(1)).getOriginalFilename();
+    }
+
+    @Test
+    void testCopyExistingFileToTarget() throws IOException {
+        String payload = "test";
+        Path filePath = Path.of(".", "exportTest", "testFile.txt");
+        FileUtils.writeStringToFile(filePath.toFile(), payload, StandardCharsets.UTF_8);
+        Path newFolder = Path.of(".", "exportTest", "newFolder");
+
+        Path newPath = fileService.copyExistingFileToTarget(filePath, newFolder);
+        assertThat(newPath).isNotNull();
+
+        assertThat(FileUtils.readFileToString(newPath.toFile(), StandardCharsets.UTF_8)).isEqualTo(payload);
+    }
+
+    @Test
+    void testCopyExistingFileToTarget_newFile() {
+        assertThat(fileService.copyExistingFileToTarget(null, Path.of(".", "exportTest"))).isNull();
+    }
+
+    @Test
+    void testCopyExistingFileToTarget_temporaryFile() {
+        // We don't need to create a file here as we expect the method to terminate early
+        Path tempPath = Path.of(".", "uploads", "files", "temp", "testFile.txt");
+        Path newPath = Path.of(".", "exportTest");
+        assertThat(fileService.copyExistingFileToTarget(tempPath, newPath)).isNull();
     }
 
     @Test
@@ -202,15 +279,16 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         doc1.save(outputStream);
         doc1.close();
 
-        writeFile("testfile1.pdf", outputStream.toString());
+        writeFile("testfile1.pdf", outputStream.toByteArray());
 
+        outputStream.reset();
         PDDocument doc2 = new PDDocument();
         doc2.addPage(new PDPage());
         doc2.addPage(new PDPage());
         doc2.save(outputStream);
         doc2.close();
 
-        writeFile("testfile2.pdf", outputStream.toString());
+        writeFile("testfile2.pdf", outputStream.toByteArray());
 
         paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
         paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
@@ -218,72 +296,8 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();
         assertThat(mergedFile.get()).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(mergedFile.get());
+        PDDocument mergedDoc = Loader.loadPDF(mergedFile.get());
         assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
-    }
-
-    @Test
-    void testManageFilesForUpdatedFilePath_shouldNotThrowException() {
-        assertThatNoException().isThrownBy(() -> fileService.manageFilesForUpdatedFilePath("oldFilePath", "newFilePath", "targetFolder", 1L, true));
-    }
-
-    @Test
-    void testActualPathForPublicPath() {
-        String actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/backgrounds");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/drag-items");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "drag-items").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/course/icons");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icons").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/lecture");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture").toString());
-
-        actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/attachment-unit");
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit").toString());
-    }
-
-    @Test
-    void testActualPathForPublicFileUploadExercisePath_shouldReturnNull() {
-        String path = fileService.actualPathForPublicPath("asdasdfiles/file-asd-exercises");
-        assertThat(path).isNull();
-    }
-
-    @Test
-    void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-upload-exercises"))
-                .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
-
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> fileService.actualPathForPublicPathOrThrow("asdasdfiles/file-asd-exercises"))
-                .withMessageStartingWith("Unknown Filepath:");
-    }
-
-    @Test
-    void testPublicPathForActualTempFilePath() {
-        Path actualPath = Path.of(FilePathService.getTempFilePath(), "test");
-        String publicPath = fileService.publicPathForActualPath(actualPath.toString(), 1L);
-        assertThat(publicPath).isEqualTo(FileService.DEFAULT_FILE_SUBPATH + actualPath.getFileName());
-    }
-
-    @Test
-    void testPublicPathForActualPath_shouldReturnNull() {
-        String otherPath = fileService.publicPathForActualPath(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L);
-        assertThat(otherPath).isNull();
-    }
-
-    @Test
-    void testPublicPathForActualPathOrThrow_shouldThrowException() {
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
-            Path actualFileUploadPath = Path.of(FilePathService.getFileUploadExercisesFilePath());
-            fileService.publicPathForActualPathOrThrow(actualFileUploadPath.toString(), 1L);
-
-        }).withMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
-
-        assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> fileService.publicPathForActualPathOrThrow(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L))
-                .withMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
@@ -300,7 +314,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testConvertToUTF8Directory_shouldThrowException() {
-        assertThatRuntimeException().isThrownBy(() -> fileService.convertToUTF8Directory(Path.of("some-path")))
+        assertThatRuntimeException().isThrownBy(() -> fileService.convertFilesInDirectoryToUtf8(Path.of("some-path")))
                 .withMessageEndingWith("should be converted to UTF-8 but the directory does not exist.");
     }
 
@@ -308,16 +322,10 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testGetUniqueTemporaryPath_shouldNotThrowException() {
         assertThatNoException().isThrownBy(() -> {
-            var uniquePath = fileService.getTemporaryUniquePath(Path.of("some-random-path-which-does-not-exist"), 1);
+            var uniquePath = fileService.getTemporaryUniqueSubfolderPath(Path.of("some-random-path-which-does-not-exist"), 1);
             assertThat(uniquePath.toString()).isNotEmpty();
-            verify(fileService).scheduleForDirectoryDeletion(any(Path.class), eq(1L));
+            verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(1L));
         });
-    }
-
-    @Test
-    void testCreateDirectory_shouldNotThrowException() {
-        Path path = Path.of("some-random-path-which-does-not-exist");
-        assertThatNoException().isThrownBy(() -> fileService.createDirectory(path));
     }
 
     @Test
@@ -382,5 +390,40 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("package.xcworkspace");
         assertThat(expectedTargetFile).doesNotExist();
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that VALID_BACKGROUND_PATH starts with VALID_INTENDED_BACKGROUND_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Valid() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(VALID_BACKGROUND_PATH, VALID_INTENDED_BACKGROUND_PATH)).doesNotThrowAnyException();
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that INVALID_BACKGROUND_PATH does not start with
+     * VALID_INTENDED_BACKGROUND_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Background_Invalid_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(INVALID_BACKGROUND_PATH, VALID_INTENDED_BACKGROUND_PATH));
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that VALID_DRAGITEM_PATH starts with VALID_INTENDED_DRAGITEM_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Valid() {
+        assertThatCode(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(VALID_DRAGITEM_PATH, VALID_INTENDED_DRAGITEM_PATH)).doesNotThrowAnyException();
+    }
+
+    /**
+     * Tests whether FileService.sanitizeByCheckingIfPathContainsSubPathElseThrow correctly indicates, that INVALID_DRAGITEM_PATH does not start with VALID_INTENDED_DRAGITEM_PATH
+     */
+    @Test
+    void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Path() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(INVALID_DRAGITEM_PATH, VALID_INTENDED_DRAGITEM_PATH));
     }
 }

@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,27 +36,22 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final LocalCITriggerService localCITriggerService;
+    private final LocalCIDockerService localCIDockerService;
+
+    @Value("${artemis.continuous-integration.build.images.java.default}")
+    String dockerImage;
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCITriggerService localCITriggerService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCIDockerService localCIDockerService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.localCITriggerService = localCITriggerService;
+        this.localCIDockerService = localCIDockerService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        // For Bamboo and Jenkins, this method is called for the template and the solution repository and creates and publishes a new build plan
-        // which results in a new build being triggered.
-        // For local CI, a build plan must not be created, because all the information for building a submission and running tests is contained in the participation, so we only
-        // trigger the build here.
-        if (TEMPLATE.getName().equals(planKey)) {
-            localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
-        }
-        else if (SOLUTION.getName().equals(planKey)) {
-            localCITriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
-        }
+        // Only check whether the docker image needed for the build plan exists.
+        localCIDockerService.pullDockerImage(dockerImage);
     }
 
     @Override
@@ -70,11 +63,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
         // Empty implementation. Not needed for local CI.
-    }
-
-    @Override
-    public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        // Not needed for local CI. Implemented for Bamboo as a bug workaround.
     }
 
     @Override
@@ -139,7 +127,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newBranch, List<String> triggeredByRepositories) throws LocalCIException {
+            String newBranch) throws LocalCIException {
         // Not implemented for local CI. No build plans exist.
         // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.
     }

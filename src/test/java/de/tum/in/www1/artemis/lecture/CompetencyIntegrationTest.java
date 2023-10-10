@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 
-class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "competencyintegrationtest";
 
@@ -726,5 +726,4 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Test that a competency of a course can not be a prerequisite to the same course
         request.postWithResponseBody("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.CONFLICT);
     }
-
 }

@@ -9,9 +9,9 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-jira:9.4.3
-        pull_policy: always
+        pull_policy: if_not_present
         volumes:
-          - artemis-jira-data:/var/atlassian/application-data/jira
+            - artemis-jira-data:/var/atlassian/application-data/jira
         ports:
             - "8081:8080"
         # expose the port to make it reachable docker internally even if the external port mapping changes
@@ -24,8 +24,8 @@ services:
         hostname: bitbucket
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bitbucket:8.8.2
-        pull_policy: always
+        image: ghcr.io/ls1intum/artemis-bitbucket:8.13.1
+        pull_policy: if_not_present
         volumes:
             - artemis-bitbucket-data:/var/atlassian/application-data/bitbucket
         environment:
@@ -44,8 +44,8 @@ services:
         hostname: bamboo
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bamboo:9.2.1
-        pull_policy: always
+        image: ghcr.io/ls1intum/artemis-bamboo:9.3.3
+        pull_policy: if_not_present
         volumes:
             - artemis-bamboo-data:/var/atlassian/application-data/bamboo
         ports:
@@ -57,14 +57,20 @@ services:
             - "8085"
         networks:
             - artemis
+        healthcheck:
+            test: curl -f http://localhost:8085/rest/api/latest/server | grep "<state>RUNNING</state>"
+            interval: 10s
+            timeout: 5s
+            start_period: 40s
+            retries: 120 # = 20 minutes startup time during setup
 
     bamboo-build-agent:
         container_name: artemis-bamboo-build-agent
         hostname: bamboo-build-agent
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:9.2.1
-        pull_policy: always
+        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:9.3.3
+        pull_policy: if_not_present
         volumes:
             # The following path needs to be the same absolute path on the host because of the docker socket:
             # https://confluence.atlassian.com/bamkb/bamboo-in-docker-build-fails-due-to-a-missing-working-directory-when-using-docker-runner-1027119339.html
@@ -74,6 +80,9 @@ services:
             BAMBOO_SERVER: "http://bamboo:8085"
         networks:
             - artemis
+        depends_on:
+            bamboo:
+                condition: service_healthy
 
 networks:
     artemis:

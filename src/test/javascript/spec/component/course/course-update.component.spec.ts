@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -14,6 +14,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -107,13 +108,14 @@ describe('Course Management Update Component', () => {
             declarations: [
                 CourseUpdateComponent,
                 MarkdownEditorStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(SecuredImageComponent),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(FeatureToggleHideDirective),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveKeysPipe),
             ],
         })
@@ -140,7 +142,7 @@ describe('Course Management Update Component', () => {
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
-            const profileInfo = { inProduction: false } as ProfileInfo;
+            const profileInfo = { inProduction: false, activeProfiles: ['lti'] } as ProfileInfo;
             const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
             const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
             const organization = new Organization();
@@ -186,6 +188,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
+            flush();
         }));
     });
 

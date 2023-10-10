@@ -25,13 +25,13 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.in.www1.artemis.service.TextSubmissionExportService;
+import de.tum.in.www1.artemis.service.export.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
-public class TextPlagiarismDetectionService {
+class TextPlagiarismDetectionService {
 
     private final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
 

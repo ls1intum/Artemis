@@ -10,12 +10,14 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -23,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
@@ -39,8 +42,9 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
-class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "modelingassessment";
 
@@ -398,13 +402,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(storedResult.getParticipation()).isNotNull();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+    @CsvSource({ "INCLUDED_COMPLETELY,true", "INCLUDED_COMPLETELY,false", "INCLUDED_AS_BONUS,true", "INCLUDED_AS_BONUS,false", "NOT_INCLUDED,true", "INCLUDED_AS_BONUS,false" })
+    void testManualAssessmentSubmit(IncludedInOverallScore includedInOverallScore, boolean bonus) throws Exception {
         // setting up exercise
-        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        useCaseExercise.setIncludedInOverallScore(includedInOverallScore);
         useCaseExercise.setMaxPoints(10.0);
-        useCaseExercise.setBonusPoints(10.0);
+        useCaseExercise.setBonusPoints(bonus ? 10.0 : 0.0);
         exerciseRepo.save(useCaseExercise);
 
         // setting up student submission
@@ -412,77 +417,20 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
                 TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 150D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200D);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -2.5, 25.0);
+        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 15.0, bonus ? 175.0 : 100.0);
+
+        if (bonus) {
+            addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200.0);
+            addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 200.0);
+        }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
-        // setting up exercise
-        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        useCaseExercise.setMaxPoints(10.0);
-        useCaseExercise.setBonusPoints(0.0);
-        exerciseRepo.save(useCaseExercise);
-
-        // setting up student submission
-        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
-                TEST_PREFIX + "student1");
-        List<Feedback> feedbacks = new ArrayList<>();
-
-        setupStudentSubmissions(submission, feedbacks);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
-        // setting up exercise
-        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        useCaseExercise.setMaxPoints(10.0);
-        useCaseExercise.setBonusPoints(0.0);
-        exerciseRepo.save(useCaseExercise);
-
-        // setting up student submission
-        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
-                TEST_PREFIX + "student1");
-        List<Feedback> feedbacks = new ArrayList<>();
-
-        setupStudentSubmissions(submission, feedbacks);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
-        // setting up exercise
-        useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        useCaseExercise.setMaxPoints(10.0);
-        useCaseExercise.setBonusPoints(0.0);
-        exerciseRepo.save(useCaseExercise);
-
-        // setting up student submission
-        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
-                TEST_PREFIX + "student1");
-        List<Feedback> feedbacks = new ArrayList<>();
-
-        setupStudentSubmissions(submission, feedbacks);
-    }
-
-    private void setupStudentSubmissions(ModelingSubmission submission, List<Feedback> feedbacks) throws Exception {
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, -1.0, 0D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 1.0, 0D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 50D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100D);
-        addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100D);
-    }
-
-    private void addAssessmentFeedbackAndCheckScore(ModelingSubmission submission, List<Feedback> feedbacks, double pointsAwarded, Double expectedScore) throws Exception {
+    private void addAssessmentFeedbackAndCheckScore(ModelingSubmission submission, List<Feedback> feedbacks, Double pointsAwarded, Double expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
@@ -1332,20 +1280,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         final var submission = modelingExerciseUtilService.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.partial.json",
                 TEST_PREFIX + "student1");
 
-        // verify setup
-        assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
-        assertThat(exam.getEndDate()).isBefore(ZonedDateTime.now());
-        var optionalFetchedExercise = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId());
-        assertThat(optionalFetchedExercise).isPresent();
-        final var exerciseWithParticipation = optionalFetchedExercise.get();
-        final var studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
+        Participation studentParticipation = submission.getParticipation();
 
         // request to manually assess latest submission (correction round: 0)
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
-        ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment",
-                HttpStatus.OK, ModelingSubmission.class, params);
+        ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+                ModelingSubmission.class, params);
         // verify that no new submission was created
         assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
         // verify that the lock has been set
@@ -1357,7 +1299,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        var assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -1373,7 +1315,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
                 feedbacks, Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -1411,7 +1353,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
 
-        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
                 ModelingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
@@ -1451,8 +1393,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-                paramsGetAssessedCR2);
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class, paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
@@ -1462,13 +1403,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-                paramsGetAssessedCR1);
+        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class, paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(ResultDTO.class));
     }
 
     private void assessmentDueDatePassed() {

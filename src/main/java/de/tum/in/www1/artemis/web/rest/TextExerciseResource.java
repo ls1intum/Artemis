@@ -16,6 +16,7 @@ import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -23,12 +24,13 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.export.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -92,7 +94,7 @@ public class TextExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final TextPlagiarismDetectionService textPlagiarismDetectionService;
+    private final PlagiarismDetectionService plagiarismDetectionService;
 
     private final CourseRepository courseRepository;
 
@@ -106,7 +108,7 @@ public class TextExerciseResource {
             ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
+            InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -127,7 +129,7 @@ public class TextExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.textPlagiarismDetectionService = textPlagiarismDetectionService;
+        this.plagiarismDetectionService = plagiarismDetectionService;
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -494,18 +496,12 @@ public class TextExerciseResource {
             @RequestParam int minimumSize) throws ExitException {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
-        log.info("Start textPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
+
         long start = System.nanoTime();
-        var plagiarismResult = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
-        log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons in {}", exerciseId, plagiarismResult.getComparisons().size(),
-                TimeLogUtil.formatDurationFrom(start));
-        // TODO: limit the amount temporarily because of database issues
-        plagiarismResult.sortAndLimit(100);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", plagiarismResult.getComparisons().size());
-        start = System.nanoTime();
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(plagiarismResult);
-        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        log.info("Started manual plagiarism checks for text exercise: exerciseId={}.", exerciseId);
+        var config = new PlagiarismDetectionConfig(similarityThreshold, minimumScore, minimumSize);
+        var plagiarismResult = plagiarismDetectionService.checkTextExercise(textExercise, config);
+        log.info("Finished manual plagiarism checks for text exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(plagiarismResult);
     }
 

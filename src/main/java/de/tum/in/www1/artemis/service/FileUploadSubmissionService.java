@@ -2,14 +2,15 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,17 +36,21 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final FileService fileService;
 
+    private final FilePathService filePathService;
+
     private final ExerciseDateService exerciseDateService;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            FilePathService filePathService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
         this.exerciseDateService = exerciseDateService;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -115,7 +120,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
 
-        String newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
+        URI newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -132,14 +137,14 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        fileUploadSubmission.setFilePath(newFilePath);
+        fileUploadSubmission.setFilePath(newFilePath.toString());
         // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         return fileUploadSubmission;
     }
 
-    private String storeFile(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile file, FileUploadExercise exercise)
+    private URI storeFile(FileUploadSubmission fileUploadSubmission, StudentParticipation participation, MultipartFile file, FileUploadExercise exercise)
             throws EmptyFileException, IOException {
         if (file.isEmpty()) {
             throw new EmptyFileException(file.getOriginalFilename());
@@ -150,11 +155,11 @@ public class FileUploadSubmissionService extends SubmissionService {
         if (fileUploadSubmission.getId() == null) {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
-        final String savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final String newFilePath = fileService.publicPathForActualPath(savePath, fileUploadSubmission.getId());
+        final Path savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+        final URI newFilePath = filePathService.publicPathForActualPath(savePath, fileUploadSubmission.getId());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(savePath)));
+        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(savePath));
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }
@@ -163,7 +168,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         Optional<FileUploadSubmission> previousFileUploadSubmission = participation.findLatestSubmission();
 
         previousFileUploadSubmission.filter(previousSubmission -> previousSubmission.getFilePath() != null).ifPresent(previousSubmission -> {
-            final String oldFilePath = previousSubmission.getFilePath();
+            final URI oldFilePath = URI.create(previousSubmission.getFilePath());
             // check if we already had a file associated with this submission
             if (!oldFilePath.equals(newFilePath)) { // different name
                 // IMPORTANT: only delete the file when it has changed the name
@@ -177,7 +182,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         return newFilePath;
     }
 
-    private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
+    private Path saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
         final var exerciseId = exercise.getId();
         final var submissionId = submission.getId();
         var filename = file.getOriginalFilename();
@@ -186,22 +191,17 @@ public class FileUploadSubmissionService extends SubmissionService {
             var components = filename.split("\\\\");
             filename = components[components.length - 1];
         }
-        // replace all illegal characters with ascii characters \w means A-Za-z0-9 to avoid problems during download later on
-        filename = filename.replaceAll("[^\\w.-]", "");
+        filename = FileService.sanitizeFilename(filename);
         // if the filename is now too short, we prepend "file"
         // this prevents potential problems when users call their file e.g. ßßß.pdf
         if (filename.length() < 5) {
             filename = "file" + filename;
         }
-        final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
-        final var filePath = Path.of(dirPath, filename).toString();
-        final var savedFile = new File(filePath);
-        final var dir = new File(dirPath);
+        final Path dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
+        final Path filePath = dirPath.resolve(filename);
+        final File savedFile = filePath.toFile();
 
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        Files.copy(file.getInputStream(), savedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        FileUtils.copyInputStreamToFile(file.getInputStream(), savedFile);
 
         return filePath;
     }

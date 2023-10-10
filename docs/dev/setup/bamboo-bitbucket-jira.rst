@@ -90,78 +90,10 @@ under ``localhost:7990``.
 
 #. Make sure that Jira, Bitbucket and Bamboo have finished starting up.
 
-    (Only Linux & Windows) Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__
-    is installed before running the following script.
-
-    .. raw:: html
-
-       <details>
-       <summary>xdg-utils for Windows users</summary>
-       An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem,
-       which should be activated anyways when running Docker on Windows.
-       For the installation on the subsystem the above linked explanation can be used.
-       <br>
-       Make sure to execute the script from the subsystem.
-       </details>
-
-
    Execute the shell script ``atlassian-setup.sh`` in the
    ``docker/atlassian`` directory (e.g. with
    ``./docker/atlassian/atlassian-setup.sh``). This script creates
    groups, users and assigns the user to their respective group.
-   In addition, it configures disabled application links between the 3 applications.
-
-
-#. Enable the created `application
-   links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
-   between all 3 application (OAuth Impersonate). The links should open automatically after the shell script
-   has finished. If not open them manually:
-
-   - Bitbucket: http://localhost:7990/plugins/servlet/applinks/listApplicationLinks
-   - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
-   - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
-
-     **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
-     Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
-     ``http://localhost:8085`` **.**
-
-        .. list-table::
-           :widths: 33 33 33
-           :header-rows: 1
-
-           * - **Bamboo:**
-             - **Bitbucket:**
-             - **Jira:**
-           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
-                  :align: center
-                  :target: ../_images/bamboo_bitbucket_applicationLink.png
-
-                  Bamboo → Bitbucket
-             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
-                  :align: center
-                  :target: ../_images/bitbucket_bamboo_applicationLink.png
-
-                  Bitbucket → Bamboo
-             - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
-                  :align: center
-                  :target: ../_images/jira_bamboo_applicationLink.png
-
-                  Jira → Bamboo
-           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
-                  :align: center
-                  :target: ../_images/bamboo_jira_applicationLink.png
-
-                  Bamboo → Jira
-             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
-                  :align: center
-                  :target: ../_images/bitbucket_jira_applicationLink.png
-
-                  Bitbucket → Jira
-             - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
-                  :align: center
-                  :target: ../_images/jira_bitbucket_applicationLink.png
-
-                  Jira → Bitbucket
 
 #. The script *(step 3)* has already created the required users and assigned them to their respective group in Jira.
    Now, make sure that they are assigned correctly according to the following test setup:
@@ -215,6 +147,13 @@ under ``localhost:7990``.
    ``src/main/resources/config/application-local.yml`` as the value of
    ``artemis-authentication-token-value``.
    You can create a global variable from settings on Bamboo.
+
+#. In Bamboo create a shared username and password credential where the username and password should
+   be the same as the ones you used to create the Bitbucket admin user. The name of the shared credential
+   must be equal to the value set in ``artemis.version-control.user``.
+
+   The shared user can be created via `Bamboo → Bamboo Administration → Shared credentials <http://localhost:8085/admin/credentials/configureSharedCredentials.action>`__
+   → Add new credentials → Username and password
 
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
@@ -338,9 +277,22 @@ Configure Artemis
                user:  <bamboo-admin-user>
                password: <bamboo-admin-password>
                token: <bamboo-admin-token>   # step 10.1
-               vcs-application-link-name: LS1 Bitbucket Server
-               empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
+
+  If you run the Atlassian suite in containers and Artemis on your host machine, you may have to set internal urls for bamboo,
+  so that the CI and VCS servers are reachable from each other. If Artemis is executed in a container in the same network,
+  you won't need to specify internal URLs, as Artemis can then communicate with Bamboo and Bitbucket and Bamboo and Bitbucket
+  can communicate with each other using the same url. If you use the default docker-compose setup, you can use the following
+  configuration:
+
+   .. code:: yaml
+
+    bamboo:
+        internal-urls:
+            ci-url: http://bamboo:8085
+            vcs-url: http://bitbucket:7990
+
+
 
 #. Also, set the server URL in ``src/main/resources/config/application-local.yml``:
 
@@ -349,8 +301,8 @@ Configure Artemis
       server:
           port: 8080                                         # The port of artemis
           url: http://172.20.0.1:8080                        # needs to be an ip
-          // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
-          // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
+          # url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
+          # url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
 
 In addition, you have to start Artemis with the profiles ``bamboo``,
 ``bitbucket`` and ``jira`` so that the correct adapters will be used,

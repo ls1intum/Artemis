@@ -5,22 +5,27 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
-import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,12 +57,14 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
@@ -68,11 +75,16 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
+import de.tum.in.www1.artemis.service.export.CourseExamExportService;
+import de.tum.in.www1.artemis.service.export.DataExportUtil;
+import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -87,7 +99,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 public class CourseTestService {
 
     @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
+    private Path courseArchivesDirPath;
 
     @Autowired
     private CourseRepository courseRepo;
@@ -129,10 +141,7 @@ public class CourseTestService {
     private CourseExamExportService courseExamExportService;
 
     @Autowired
-    private ZipFileService zipFileService;
-
-    @Autowired
-    private FileService fileService;
+    private FilePathService filePathService;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -211,6 +220,15 @@ public class CourseTestService {
 
     @Autowired
     private LearningPathRepository learningPathRepository;
+
+    @Autowired
+    private ParticipantScoreScheduleService participantScoreScheduleService;
+
+    @Autowired
+    private IrisSettingsService irisSettingsService;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
 
     private static final int numberOfStudents = 8;
 
@@ -596,10 +614,27 @@ public class CourseTestService {
 
         request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
-        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(course.getId());
+        Course updatedCourse = courseRepo.findByIdForUpdateElseThrow(course.getId());
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
         assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(competencies);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
+    }
+
+    // Test
+    public void testEditCourseShouldPreserveIrisSettings() throws Exception {
+        Course course = courseUtilService.createCourseWithOrganizations();
+        course = courseRepo.save(course);
+
+        var courseWithSettings = courseRepo.findByIdElseThrow(course.getId());
+        courseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(courseWithSettings);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(null);
+        courseRepo.save(courseWithSettings);
+
+        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+
+        Course updatedCourse = courseRepo.findByIdForUpdateElseThrow(course.getId());
+        assertThat(updatedCourse.getIrisSettings()).isEqualTo(courseWithSettings.getIrisSettings());
     }
 
     // Test
@@ -946,7 +981,7 @@ public class CourseTestService {
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
         StudentParticipation practiceParticipation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
                 student1);
-        practiceParticipation.setTestRun(true);
+        practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
         Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
         practiceResult.setRated(false);
@@ -1473,8 +1508,8 @@ public class CourseTestService {
             assertThat(courseOnly.getNumberOfInstructors()).as("Amount of instructors is correct").isEqualTo(1);
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
-            String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "numberOfInstructorsTransient", "numberOfStudentsTransient",
-                    "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
+            String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "filePathService", "entityFileService", "numberOfInstructorsTransient",
+                    "numberOfStudentsTransient", "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
             assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
@@ -1525,8 +1560,8 @@ public class CourseTestService {
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
-        assertThat(auditEvents).as("Audit Event for course enrollment added").hasSize(1);
-        AuditEvent auditEvent = auditEvents.get(0);
+        AuditEvent auditEvent = auditEvents.stream().max(Comparator.comparing(AuditEvent::getTimestamp)).orElse(null);
+        assertThat(auditEvent).as("Audit Event for course enrollment added").isNotNull();
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
         request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
@@ -1910,6 +1945,109 @@ public class CourseTestService {
         return updatedCourse;
     }
 
+    public void testArchiveCourseWithQuizExercise(String userPrefix) throws Exception {
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.INDIVIDUAL);
+        quizExercise = exerciseRepo.save(quizExercise);
+        participationUtilService.createAndSaveParticipationForExercise(quizExercise, userPrefix + "student2");
+        var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()));
+        assertThat(archivePath).isNotEmpty();
+        extractAndAssertContent(archivePath.orElseThrow(), quizSubmission);
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws IOException {
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()));
+        assertThat(archivePath).isNotEmpty();
+        Predicate<Path> missingPathPredicate = path -> "Exercise-Details-quiz.json".equals(path.getFileName().toString());
+        extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotExportDragAndDropSubmission() throws IOException {
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        try (MockedStatic<ImageIO> mockedImageIO = mockStatic(ImageIO.class)) {
+            mockedImageIO.when(() -> ImageIO.read(any(File.class))).thenThrow(new IOException());
+            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            assertThat(archivePath).isNotEmpty();
+            Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(".pdf");
+            extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
+        }
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotCreateParticipationDirectory() throws IOException {
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
+        var course = courseUtilService.createCourse();
+        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        try (MockedStatic<DataExportUtil> mockedFiles = mockStatic(DataExportUtil.class)) {
+            mockedFiles.when(() -> DataExportUtil.createDirectoryIfNotExistent(any())).thenThrow(new IOException());
+            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            assertThat(archivePath).isNotEmpty();
+        }
+
+    }
+
+    public void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String fileName, String dynamicErrorMsg) throws IOException {
+        List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
+        var course = courseUtilService.createCourse();
+        var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
+        try (MockedStatic<org.apache.commons.io.FileUtils> mockedFiles = mockStatic(org.apache.commons.io.FileUtils.class)) {
+            mockedFiles.when(() -> org.apache.commons.io.FileUtils.writeLines(argThat(file -> file.toString().contains(fileName)), anyString(), anyList()))
+                    .thenThrow(new IOException());
+            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            assertThat(archivePath).isNotEmpty();
+            Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains(fileName) && path.getFileName().toString().endsWith(".txt");
+            extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
+            assertThat(exportErrors).hasSize(1);
+            assertThat(exportErrors.get(0)).contains("Failed to export " + dynamicErrorMsg + " answers");
+        }
+    }
+
+    private void extractAndAssertMissingContent(Path courseArchivePath, QuizSubmission quizSubmission, Predicate<Path> missingPathPredicate) throws IOException {
+        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        var exercise = quizSubmission.getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
+        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
+        assertThat(courseArchiveDir).exists();
+
+        try (var files = Files.walk(courseArchiveDir)) {
+            assertThat(files.filter(file -> Files.isDirectory(file) || Files.isRegularFile(file)))
+                    // exercise directory
+                    .anyMatch(file -> (exercise.getSanitizedExerciseTitle() + "_" + exercise.getId()).equals(file.getFileName().toString()))
+                    // participation directory
+                    .anyMatch(
+                            file -> ("participation-" + studentParticipation.getId() + "-" + studentParticipation.getParticipantIdentifier()).equals(file.getFileName().toString()))
+                    .noneMatch(missingPathPredicate);
+        }
+    }
+
+    private void extractAndAssertContent(Path courseArchivePath, QuizSubmission quizSubmission) throws IOException {
+        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        var exercise = quizSubmission.getParticipation().getExercise();
+        StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
+        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
+        assertThat(courseArchiveDir).exists();
+        try (var files = Files.walk(courseArchiveDir)) {
+            assertThat(files.filter(file -> Files.isDirectory(file) || Files.isRegularFile(file)))
+                    // exercise directory
+                    .anyMatch(file -> (exercise.getSanitizedExerciseTitle() + "_" + exercise.getId()).equals(file.getFileName().toString()))
+                    // participation directory
+                    .anyMatch(
+                            file -> ("participation-" + studentParticipation.getId() + "-" + studentParticipation.getParticipantIdentifier()).equals(file.getFileName().toString()))
+                    // exercise details file
+                    .anyMatch(file -> ("Exercise-Details-quiz.json").equals(file.getFileName().toString()))
+                    // drag and drop question submission pdf
+                    .anyMatch(file -> file.getFileName().toString().contains("dragAndDropQuestion") && file.getFileName().toString().endsWith(".pdf"))
+                    // MC submission txt file
+                    .anyMatch(file -> file.getFileName().toString().contains("multiple_choice_questions_answers") && file.getFileName().toString().endsWith(".txt"))
+                    // short answer submission txt file
+                    .anyMatch(file -> file.getFileName().toString().contains("short_answer_questions_answers") && file.getFileName().toString().endsWith(".txt"));
+        }
+    }
+
     /**
      * Test
      */
@@ -2078,27 +2216,12 @@ public class CourseTestService {
     }
 
     private void archiveCourseAndAssertExerciseDoesntExist(Course course, Exercise exercise) throws Exception {
-        Files.createDirectories(Path.of(courseArchivesDirPath));
-
-        String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        String cleanZipGroupName = FileService.sanitizeFilename(zipGroupName);
-        doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)), anyList(),
-                any(Path.class));
-
+        Files.createDirectories(courseArchivesDirPath);
         List<Path> files = archiveCourseAndExtractFiles(course);
-        assertThat(files).hasSize(4);
-
-        String exerciseType = "";
-        if (exercise instanceof FileUploadExercise) {
-            exerciseType = "FileUpload";
-        }
-        else if (exercise instanceof ModelingExercise) {
-            exerciseType = "Modeling";
-        }
-        else if (exercise instanceof TextExercise) {
-            exerciseType = "Text";
-        }
-        assertThat(files).doesNotContain(Path.of(exerciseType + "-" + userPrefix + "student1"));
+        // report.csv, errors.text, one submission per exercise, one problem statement per exercise and no exercise details.json per exercise
+        // because of the thrown exception. --> 2+3+3=8
+        assertThat(files).hasSize(8);
+        assertThat(files).doesNotContain(Path.of("Exercise-Details-" + exercise.getTitle() + ".json"));
     }
 
     private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
@@ -2194,9 +2317,11 @@ public class CourseTestService {
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
         // Archive the course and wait until it's complete
         Course updatedCourse = testArchiveCourseWithTestModelingAndFileUploadExercises();
+        Map<String, String> expectedHeaders = new HashMap<>();
+        expectedHeaders.put("Content-Disposition", "attachment; filename=\"" + updatedCourse.getCourseArchivePath() + "\"");
 
         // Download the archive
-        var archive = request.getFile("/api/courses/" + updatedCourse.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        var archive = request.getFile("/api/courses/" + updatedCourse.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>(), expectedHeaders);
         assertThat(archive).isNotNull();
         assertThat(archive).exists();
         assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
@@ -2718,6 +2843,7 @@ public class CourseTestService {
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
+        await().until(participantScoreScheduleService::isIdle);
         TextExercise finalExercise1 = exercise1;
         await().until(() -> participantScoreRepository.findAllByExercise(finalExercise1).size() == 2);
         TextExercise finalExercise2 = exercise2;
@@ -3087,21 +3213,18 @@ public class CourseTestService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
 
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course savedCourse = courseRepo.save(course);
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
-        String iconPath = fileService.handleSaveFile(iconFile, false, false);
-        iconPath = fileService.manageFilesForUpdatedFilePath(null, iconPath, FilePathService.getCourseIconFilePath(), course.getId());
-        course.setCourseIcon(iconPath);
-        course = courseRepo.save(course);
-        iconPath = iconPath.replace(Constants.FILEPATH_ID_PLACEHOLDER, course.getId().toString());
-        assertThat(course.getCourseIcon()).as("course icon was set correctly").isEqualTo(iconPath);
+        Course savedCourseWithFile = request.putWithMultipartFile("/api/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
+        Path path = filePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()));
 
-        course.setCourseIcon(null);
-        request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK, null);
-
+        savedCourseWithFile.setCourseIcon(null);
+        request.putWithMultipartFile("/api/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);
+        await().until(() -> !Files.exists(path));
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
-        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
+        assertThat(path).as("course icon file was deleted correctly").doesNotExist();
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {

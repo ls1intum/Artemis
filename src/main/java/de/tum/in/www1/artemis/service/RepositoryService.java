@@ -186,9 +186,8 @@ public class RepositoryService {
     public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
         Path safePath = checkIfPathIsValidAndExistanceAndReturnSafePath(repository, filePath, false);
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
-        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        FileUtils.copyToFile(inputStream, file);
         repository.setContent(null); // invalidate cache
-        inputStream.close();
     }
 
     /**
@@ -205,9 +204,8 @@ public class RepositoryService {
         Files.createDirectory(repository.getLocalPath().resolve(safePath));
         // We need to add an empty keep file so that the folder can be added to the git repository
         File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
-        Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        FileUtils.copyToFile(inputStream, keep);
         repository.setContent(null); // invalidate cache
-        inputStream.close();
     }
 
     /**

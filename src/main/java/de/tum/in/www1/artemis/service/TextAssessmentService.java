@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -22,7 +23,7 @@ public class TextAssessmentService extends AssessmentService {
     public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionService submissionService, LtiNewResultService ltiNewResultService) {
+            SubmissionService submissionService, Optional<LtiNewResultService> ltiNewResultService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService);
         this.textBlockService = textBlockService;

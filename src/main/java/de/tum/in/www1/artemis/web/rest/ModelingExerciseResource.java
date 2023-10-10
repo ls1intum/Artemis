@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -29,11 +30,12 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.export.SubmissionExportService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -85,7 +87,7 @@ public class ModelingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
+    private final PlagiarismDetectionService plagiarismDetectionService;
 
     private final ChannelService channelService;
 
@@ -96,7 +98,7 @@ public class ModelingExerciseResource {
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository) {
+            PlagiarismDetectionService plagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -111,7 +113,7 @@ public class ModelingExerciseResource {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
+        this.plagiarismDetectionService = plagiarismDetectionService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
     }
@@ -389,17 +391,11 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
-        log.info("Start modelingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
-        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
-        log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", plagiarismResult.getComparisons().size(),
-                TimeLogUtil.formatDurationFrom(start));
-        // TODO: limit the amount temporarily because of database issues
-        plagiarismResult.sortAndLimit(100);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", plagiarismResult.getComparisons().size());
-        start = System.nanoTime();
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(plagiarismResult);
-        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        log.info("Started manual plagiarism checks for modeling exercise: exerciseId={}.", exerciseId);
+        var config = new PlagiarismDetectionConfig(similarityThreshold, minimumScore, minimumSize);
+        var plagiarismResult = plagiarismDetectionService.checkModelingExercise(modelingExercise, config);
+        log.info("Finished manual plagiarism checks for modeling exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
+
         return ResponseEntity.ok(plagiarismResult);
     }
 

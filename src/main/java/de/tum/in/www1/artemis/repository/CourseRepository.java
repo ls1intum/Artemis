@@ -81,11 +81,21 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
-            SELECT DISTINCT c FROM Course c
+            SELECT DISTINCT c
+            FROM Course c
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.testCourse = false
+            """)
+    List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
 
     /**
      * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
@@ -133,8 +143,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
-    Optional<Course> findWithEagerOrganizationsAndCompetenciesAndOnlineConfigurationById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration", "irisSettings" })
+    Optional<Course> findForUpdateById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
@@ -371,8 +381,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(long courseId) {
-        return findWithEagerOrganizationsAndCompetenciesAndOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdForUpdateElseThrow(long courseId) {
+        return findForUpdateById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull

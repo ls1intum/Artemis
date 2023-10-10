@@ -14,6 +14,7 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -69,9 +70,9 @@ public class RequestUtilService {
      * @param file           the optional file to be sent
      * @param responseType   the expected response type as class
      * @param expectedStatus the expected status
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
      * @return the response as object of the given type or null if the status is not 2xx
-     * @param <T> the type of the main object to send
-     * @param <R> the type of the response object
      * @throws Exception if the request fails
      */
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
@@ -87,9 +88,9 @@ public class RequestUtilService {
      * @param files          the optional files to be sent
      * @param responseType   the expected response type as class
      * @param expectedStatus the expected status
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
      * @return the response as object of the given type or null if the status is not 2xx
-     * @param <T> the type of the main object to send
-     * @param <R> the type of the response object
      * @throws Exception if the request fails
      */
     public <T, R> R postWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus)
@@ -355,7 +356,7 @@ public class RequestUtilService {
             return null;
         }
         final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
-        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+        FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
     }
@@ -380,9 +381,9 @@ public class RequestUtilService {
      * @param responseType   the expected response type as class
      * @param expectedStatus the expected status
      * @param params         the optional parameters for the request
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
      * @return the response as object of the given type or null if the status is not 2xx
-     * @param <T> the type of the main object to send
-     * @param <R> the type of the response object
      * @throws Exception if the request fails
      */
     public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus,
@@ -400,9 +401,9 @@ public class RequestUtilService {
      * @param responseType   the expected response type as class
      * @param expectedStatus the expected status
      * @param params         the optional parameters for the request
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
      * @return the response as object of the given type or null if the status is not 2xx
-     * @param <T> the type of the main object to send
-     * @param <R> the type of the response object
      * @throws Exception if the request fails
      */
     public <T, R> R putWithMultipartFiles(String path, T paramValue, String paramName, List<MockMultipartFile> files, Class<R> responseType, HttpStatus expectedStatus,
@@ -558,17 +559,22 @@ public class RequestUtilService {
     }
 
     public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        return getFile(path, expectedStatus, params, null);
+    }
+
+    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
+        verifyExpectedResponseHeaders(expectedResponseHeaders, res);
 
         String tmpDirectory = System.getProperty("java.io.tmpdir");
         var filename = res.getResponse().getHeader("filename");
         var tmpFile = Files.createFile(Path.of(tmpDirectory, filename));
-        Files.write(tmpFile, res.getResponse().getContentAsByteArray());
+        FileUtils.writeByteArrayToFile(tmpFile.toFile(), res.getResponse().getContentAsByteArray());
         return tmpFile.toFile();
     }
 

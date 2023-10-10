@@ -1,9 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 
 @Component({
@@ -39,10 +38,9 @@ export class ExamExerciseImportComponent implements OnInit {
 
     // Icons
     faCheckDouble = faCheckDouble;
-    faFileUpload = faFileUpload;
-    faProjectDiagram = faProjectDiagram;
-    faKeyboard = faKeyboard;
     faFont = faFont;
+
+    getExerciseIcon = getIcon;
 
     constructor() {}
 
@@ -315,24 +313,5 @@ export class ExamExerciseImportComponent implements OnInit {
             }
         });
         return validConfiguration;
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    getExerciseIcon(exercise: Exercise): IconProp {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return this.faCheckDouble;
-            case ExerciseType.FILE_UPLOAD:
-                return this.faFileUpload;
-            case ExerciseType.MODELING:
-                return this.faProjectDiagram;
-            case ExerciseType.PROGRAMMING:
-                return this.faKeyboard;
-            default:
-                return this.faFont;
-        }
     }
 }

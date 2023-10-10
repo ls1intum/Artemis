@@ -305,7 +305,7 @@ public class ParticipationUtilService {
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).successful(true).score(100D);
+        Result result = new Result().participation(participation).successful(true).score(100D).rated(true);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -620,7 +620,6 @@ public class ParticipationUtilService {
         doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         doNothing().when(versionControlService).addWebHookForParticipation(any());
     }
 }

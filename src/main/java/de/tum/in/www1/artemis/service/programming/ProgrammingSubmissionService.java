@@ -150,12 +150,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
             participationService.resumeProgrammingExercise(programmingExerciseStudentParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
-            try {
-                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
-            }
-            catch (ContinuousIntegrationException ex) {
-                // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
-            }
+        }
+
+        // TODO: there might be cases in which Artemis should NOT trigger the build
+        try {
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
+        }
+        catch (ContinuousIntegrationException ex) {
+            // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
         }
 
         // There can't be two submissions for the same participation and commitHash!
@@ -272,7 +274,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
         var dueDate = ExerciseDateService.getDueDate(participation);
-        if (dueDate.isEmpty() || participation.isTestRun()) {
+        // Without a due date or in the practice mode, the student can always submit
+        if (dueDate.isEmpty() || participation.isPracticeMode()) {
             return true;
         }
         return dueDate.get().plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS).isAfter(programmingSubmission.getSubmissionDate());
@@ -601,5 +604,31 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Make sure that submission is set back after saving
         newResult.setSubmission(existingSubmission);
         return newResult;
+    }
+
+    /**
+     * We need to create the submissions for the solution and template repository for the first time,
+     * so that the client displays the correct results
+     *
+     * @param programmingExercise exercise that needs submissions for its template and solution repository
+     */
+    public void createInitialSubmissions(ProgrammingExercise programmingExercise) {
+        createInitialSubmission(programmingExercise, programmingExercise.getSolutionParticipation());
+        createInitialSubmission(programmingExercise, programmingExercise.getTemplateParticipation());
+    }
+
+    /**
+     * Creates an initial submission of an {@link AbstractBaseProgrammingExerciseParticipation} with the current commit hash
+     * in the repository
+     *
+     * @param programmingExercise Exercise for which the participation is created
+     * @param participation       Template or Solution Participation
+     */
+    private void createInitialSubmission(ProgrammingExercise programmingExercise, AbstractBaseProgrammingExerciseParticipation participation) {
+        ProgrammingSubmission submission = (ProgrammingSubmission) submissionRepository.initializeSubmission(participation, programmingExercise, SubmissionType.INSTRUCTOR);
+        var latestHash = gitService.getLastCommitHash(participation.getVcsRepositoryUrl());
+        submission.setCommitHash(latestHash.getName());
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submissionRepository.save(submission);
     }
 }

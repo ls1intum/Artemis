@@ -4,9 +4,10 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,8 +17,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -34,7 +36,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "resultlistenerintegrationtest";
 
@@ -92,8 +94,11 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void setupTestScenario() {
+        // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
         participantScoreScheduleService.activate();
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
@@ -103,7 +108,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         idOfStudent1 = student1.getId();
         // creating course
         Course course = courseUtilService.createCourse();
-        Long idOfCourse = course.getId();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
@@ -422,7 +426,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();
-        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreScheduleService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();

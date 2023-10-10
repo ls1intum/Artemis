@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -13,19 +15,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
-class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exercisescoreschart";
 
@@ -73,6 +78,9 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     void setupTestScenario() {
+        // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         participantScoreScheduleService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -111,6 +119,7 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
 
         participantScoreScheduleService.executeScheduledTasks();
+        await().until(participantScoreScheduleService::isIdle);
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 3);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 2);
     }

@@ -184,16 +184,30 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return participations for exercise.
      */
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.results r
-            LEFT JOIN FETCH r.submission s
-            LEFT JOIN FETCH p.submissions
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND (r.id = (SELECT max(id) FROM p.results)
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH p.submissions
+            WHERE p.exercise.id = :exerciseId
+                AND (r.id = (SELECT max(p_r.id) FROM p.results p_r)
                     OR r.assessmentType <> 'AUTOMATIC'
                     OR r IS NULL)
             """)
     Set<StudentParticipation> findByExerciseIdWithLatestAndManualResults(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH p.submissions
+            WHERE p.exercise.id = :exerciseId
+                AND (r.id = (SELECT max(p_r.id) FROM p.results p_r WHERE p_r.rated = true)
+                    OR r.assessmentType <> 'AUTOMATIC'
+                    OR r IS NULL)
+            """)
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResults(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -491,16 +505,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query(value = """
-            SELECT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH p.results r
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.results r
             WHERE p.exercise.id = :#{#exerciseId}
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL
             """, countQuery = """
-            SELECT count(p) FROM StudentParticipation p
-            LEFT JOIN p.submissions s
-            LEFT JOIN p.results r
+            SELECT count(p)
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions s
+                LEFT JOIN p.results r
             WHERE p.exercise.id = :#{#exerciseId}
                   AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
                   AND r.completionDate IS NOT NULL
@@ -976,6 +992,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             GROUP BY COALESCE(p.student.id, ts.id)
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
+
+    @Query("""
+            SELECT p FROM StudentParticipation p
+                  LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :exerciseId
+
+            """)
+    Set<StudentParticipation> findByExerciseIdWithEagerSubmissions(long exerciseId);
 
     /**
      * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.
