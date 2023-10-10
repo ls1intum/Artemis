@@ -129,8 +129,6 @@
                     [(feedbacks)]="unreferencedFeedback"
                     [feedbackSuggestions]="unreferencedFeedbackSuggestions"
                     (feedbacksChange)="validateFeedback()"
-                    (assessmentNoteChange)="onUpdateAssessmentNote($event)"
-                    [assessmentNote]="getAssessmentNoteIfPresentOrCreateNewOne()"
                     [readOnly]="readOnly()"
                     [highlightDifferences]="highlightDifferences"
                     (onAcceptSuggestion)="removeSuggestion($event)"
