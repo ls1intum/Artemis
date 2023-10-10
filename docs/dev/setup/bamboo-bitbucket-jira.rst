@@ -90,78 +90,10 @@ under ``localhost:7990``.
 
 #. Make sure that Jira, Bitbucket and Bamboo have finished starting up.
 
-    (Only Linux & Windows) Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__
-    is installed before running the following script.
-
-    .. raw:: html
-
-       <details>
-       <summary>xdg-utils for Windows users</summary>
-       An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem,
-       which should be activated anyways when running Docker on Windows.
-       For the installation on the subsystem the above linked explanation can be used.
-       <br>
-       Make sure to execute the script from the subsystem.
-       </details>
-
-
    Execute the shell script ``atlassian-setup.sh`` in the
    ``docker/atlassian`` directory (e.g. with
    ``./docker/atlassian/atlassian-setup.sh``). This script creates
    groups, users and assigns the user to their respective group.
-   In addition, it configures disabled application links between the 3 applications.
-
-
-#. Enable the created `application
-   links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
-   between all 3 application (OAuth Impersonate). The links should open automatically after the shell script
-   has finished. If not open them manually:
-
-   - Bitbucket: http://localhost:7990/plugins/servlet/applinks/listApplicationLinks
-   - Bamboo: http://localhost:8085/plugins/servlet/applinks/listApplicationLinks
-   - Jira: http://localhost:8081/plugins/servlet/applinks/listApplicationLinks
-
-     **You manually have to adjust the Display URL for the Bamboo → Bitbucket AND
-     Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
-     ``http://localhost:8085`` **.**
-
-        .. list-table::
-           :widths: 33 33 33
-           :header-rows: 1
-
-           * - **Bamboo:**
-             - **Bitbucket:**
-             - **Jira:**
-           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
-                  :align: center
-                  :target: ../_images/bamboo_bitbucket_applicationLink.png
-
-                  Bamboo → Bitbucket
-             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
-                  :align: center
-                  :target: ../_images/bitbucket_bamboo_applicationLink.png
-
-                  Bitbucket → Bamboo
-             - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
-                  :align: center
-                  :target: ../_images/jira_bamboo_applicationLink.png
-
-                  Jira → Bamboo
-           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
-                  :align: center
-                  :target: ../_images/bamboo_jira_applicationLink.png
-
-                  Bamboo → Jira
-             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
-                  :align: center
-                  :target: ../_images/bitbucket_jira_applicationLink.png
-
-                  Bitbucket → Jira
-             - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
-                  :align: center
-                  :target: ../_images/jira_bitbucket_applicationLink.png
-
-                  Jira → Bitbucket
 
 #. The script *(step 3)* has already created the required users and assigned them to their respective group in Jira.
    Now, make sure that they are assigned correctly according to the following test setup:
