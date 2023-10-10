@@ -37,9 +37,10 @@ class ConductAgreementServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    void fetchAndAgreeAndResetCodeOfConductAgreement() {
+    void fetchAndAgreeAndResetConductAgreement() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         courseRepository.save(course);
         var resultBeforeAgreement = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
         assertThat(resultBeforeAgreement).isFalse();
