@@ -9,7 +9,7 @@
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}
         <!-- all sessions have the same reasons, so we can just use the first one -->
         <ng-container *ngFor="let reason of suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons; let i = index">
-            <span class="bold">{{ mapEnumToTranslationString(reason) | artemisTranslate: { range: ipSubnet } }}</span>
+            <span class="bold" [jhiTranslate]="mapEnumToTranslationString(reason)" [translateValues]="{ range: ipSubnet }"></span>
             <span *ngIf="i < suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons?.length! - 1">,</span>
         </ng-container>
     </p>
