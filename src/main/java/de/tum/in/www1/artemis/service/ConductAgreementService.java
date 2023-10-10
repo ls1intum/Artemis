@@ -27,6 +27,12 @@ public class ConductAgreementService {
      * @return if the user agreed to the course's code of conduct
      */
     public boolean fetchUserAgreesToCodeOfConductInCourse(User user, Course course) {
+        if (course.getCourseInformationSharingMessagingCodeOfConduct() == null) {
+            return true;
+        }
+        if (course.getCourseInformationSharingMessagingCodeOfConduct().isEmpty()) {
+            return true;
+        }
         return conductAgreementRepository.findByCourseIdAndUserId(course.getId(), user.getId()).isPresent();
     }
 
