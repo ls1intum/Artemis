@@ -681,7 +681,7 @@
                 "suspiciousSessions": {
                     "title": "Verdächtige Sitzungen",
                     "view": "Verdächtige Sitzungen anzeigen",
-                    "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Fälle.",
+                    "number": "Diese Klausur hat <span class='bold'> {{ numberOfSuspiciousSessions }} </span> verdächtige Fälle.",
                     "reasons": "Verdächtig aufgrund von:",
                     "case": "Fall",
                     "sameBrowserFingerprintDifferentStudentExams": "Verschiedene Studierendenklausuren mit demselben Browser-Fingerabdruck",

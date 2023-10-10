@@ -682,7 +682,7 @@
                 "suspiciousSessions": {
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",
-                    "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
+                    "number": "This exam has <span class='bold'> {{ numberOfSuspiciousSessions }} </span> cases.",
                     "reasons": "Suspicious because of:",
                     "case": "Case",
                     "sameBrowserFingerprintDifferentStudentExams": "Different student exams with the same browser fingerprint",
