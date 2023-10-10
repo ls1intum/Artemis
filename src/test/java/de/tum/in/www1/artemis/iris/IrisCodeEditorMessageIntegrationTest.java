@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -179,7 +178,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         var exercisePlanContent = irisMessage.getContent().get(0);
         setupExercise();
-        assertTrue(exercisePlanContent instanceof IrisExercisePlanMessageContent);
+        assertThat(exercisePlanContent instanceof IrisExercisePlanMessageContent).isEqualTo(true);
         var components = ((IrisExercisePlanMessageContent) exercisePlanContent).getComponents();
         components.stream().forEach((component) -> {
             try {
