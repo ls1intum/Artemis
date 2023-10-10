@@ -126,7 +126,12 @@
                 "processUnits": "Einheiten festlegen",
                 "processAutomatically": "Automatische Einheitenverarbeitung",
                 "removeSlides": "Entferne Folien",
-                "removeSlidesInfo": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt. Mehrere Schlüsselsätze werden mit einem Komma getrennt; zwischen Groß- und Kleinbuchstaben wird nicht unterschieden. Ein Beispiel: 'Pause, Beispiellösungen'",
+                "removeSlidesInfo": {
+                    "firstLine": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt.",
+                    "secondLine": "Mehrere Schlüsselsätze werden mit einem Komma getrennt, zwischen Groß- und Kleinbuchstaben wird nicht unterschieden.",
+                    "thirdLine": "Folgende Folien werden entfernt:"
+                },
+                "timeout": "Zeitüberschreitung während der automatischen Einheitenverarbeitung. Bitte versuchen Sie es erneut.",
                 "removeSlidesPlaceholder": "Beispiel: 'Pause, Beispiellösungen'",
                 "validation": {
                     "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",

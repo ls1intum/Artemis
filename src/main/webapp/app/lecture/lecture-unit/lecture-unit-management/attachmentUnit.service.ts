@@ -1,9 +1,11 @@
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 type EntityResponseType = HttpResponse<AttachmentUnit>;
 
@@ -41,11 +43,26 @@ export class AttachmentUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    getSplitUnitsData(lectureId: number, formData: FormData) {
-        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/process-units`, formData, { observe: 'response' });
+    getSplitUnitsData(lectureId: number, filename: string) {
+        const params = new HttpParams().set('filename', filename);
+        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/process-units`, { params, observe: 'response' });
     }
 
-    createUnits(lectureId: number, formData: FormData) {
-        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/attachment-units/split`, formData, { observe: 'response' });
+    createUnits(lectureId: number, filename: string, lectureUnitInformation: LectureUnitInformationDTO) {
+        const formData: FormData = new FormData();
+        formData.append('filename', filename);
+        formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformation));
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/process-units/split`, formData, { observe: 'response' });
+    }
+
+    uploadSlidesForProcessing(lectureId: number, file: File) {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        return this.httpClient.post<string>(`${this.resourceURL}/lectures/${lectureId}/process-units/upload`, formData, { observe: 'response' });
+    }
+
+    getSlidesToRemove(lectureId: number, filename: string, keyPhrases: string) {
+        const params = new HttpParams().set('filename', filename).set('commaSeparatedKeyPhrases', keyPhrases);
+        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/process-units/slides-to-remove`, { params, observe: 'response' });
     }
 }

@@ -50,13 +50,13 @@ public class LectureUnitProcessingService {
      * Split units from given file according to given split information and saves them.
      *
      * @param lectureUnitInformationDTO The split information
-     * @param file                      The file (lecture slide) to be split
+     * @param fileBytes                 The byte content of the file (lecture slides) to be split
      * @param lecture                   The lecture that the attachment unit belongs to
      * @return The prepared units to be saved
      */
-    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
+    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(file.getBytes())) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(fileBytes)) {
             List<AttachmentUnit> units = new ArrayList<>();
             Splitter pdfSplitter = new Splitter();
 
@@ -101,6 +101,40 @@ public class LectureUnitProcessingService {
     }
 
     /**
+     * Gets the slides that should be removed by the given keyphrase
+     *
+     * @param fileBytes                The byte content of the file (lecture slides) to be split
+     * @param commaSeparatedKeyPhrases key phrases that identify slides about to be removed
+     * @return list of the number of slides that will be removed
+     */
+    public List<Integer> getSlidesToRemoveByKeyphrase(byte[] fileBytes, String commaSeparatedKeyPhrases) {
+        List<Integer> slidesToRemove = new ArrayList<>();
+        if (commaSeparatedKeyPhrases.isEmpty()) {
+            return slidesToRemove;
+        }
+        try (PDDocument document = Loader.loadPDF(fileBytes)) {
+            PDFTextStripper pdfTextStripper = new PDFTextStripper();
+            Splitter pdfSplitter = new Splitter();
+            List<PDDocument> pages = pdfSplitter.split(document);
+
+            for (int index = 0; index <= pages.size() - 1; index++) {
+                PDDocument currentPage = pages.get(index);
+                String slideText = pdfTextStripper.getText(currentPage);
+
+                if (slideContainsKeyphrase(slideText, commaSeparatedKeyPhrases)) {
+                    slidesToRemove.add(index);
+                }
+                currentPage.close(); // make sure to close the document
+            }
+        }
+        catch (IOException e) {
+            log.error("Error while retrieving slides to remove from document", e);
+            throw new InternalServerErrorException("Error while retrieving slides to remove from document");
+        }
+        return slidesToRemove;
+    }
+
+    /**
      * Removes the slides containing any of the key phrases from the given document.
      *
      * @param document                             document to remove slides from
@@ -138,14 +172,14 @@ public class LectureUnitProcessingService {
     /**
      * Prepare information of split units for client
      *
-     * @param file The file (lecture slide) to be split
+     * @param fileBytes The byte content of the file (lecture slides) to be split
      * @return The prepared information of split units LectureUnitInformationDTO
      */
-    public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) {
+    public LectureUnitInformationDTO getSplitUnitData(byte[] fileBytes) {
 
         try {
-            log.debug("Start preparing information of split units for the file {}", file);
-            Outline unitsInformation = separateIntoUnits(file);
+            log.debug("Start preparing information of split units.");
+            Outline unitsInformation = separateIntoUnits(fileBytes);
             Map<Integer, LectureUnitSplit> unitsDocumentMap = unitsInformation.splits;
             int numberOfPages = unitsInformation.totalPages;
 
@@ -166,11 +200,11 @@ public class LectureUnitProcessingService {
      * is going to be split. The map looks like the following:
      * Map<OutlineNumber, (UnitName, StartPage, EndPage)>
      *
-     * @param file The file (lecture pdf) to be split
+     * @param fileBytes The byte content of the file (lecture pdf) to be split
      * @return The prepared map
      */
-    private Outline separateIntoUnits(MultipartFile file) throws IOException {
-        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
+    private Outline separateIntoUnits(byte[] fileBytes) throws IOException {
+        try (PDDocument document = Loader.loadPDF(fileBytes)) {
             Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
             Splitter pdfSplitter = new Splitter();
             PDFTextStripper pdfStripper = new PDFTextStripper();

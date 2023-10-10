@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.gson.Gson;
+
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -21,11 +23,7 @@ import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.AttachmentUnitService;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
-import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
-import de.tum.in.www1.artemis.service.SlideSplitterService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -39,6 +37,8 @@ public class AttachmentUnitResource {
     private final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
 
     private static final String ENTITY_NAME = "attachmentUnit";
+
+    private static final Gson gson = new Gson();
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -56,9 +56,13 @@ public class AttachmentUnitResource {
 
     private final SlideSplitterService slideSplitterService;
 
+    private final FileService fileService;
+
+    private final FilePathService filePathService;
+
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            CompetencyProgressService competencyProgressService, SlideSplitterService slideSplitterService) {
+            CompetencyProgressService competencyProgressService, SlideSplitterService slideSplitterService, FileService fileService, FilePathService filePathService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -67,6 +71,8 @@ public class AttachmentUnitResource {
         this.attachmentUnitService = attachmentUnitService;
         this.competencyProgressService = competencyProgressService;
         this.slideSplitterService = slideSplitterService;
+        this.fileService = fileService;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -161,17 +167,45 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/attachment-units/split : creates new attachment units. The provided file must be a pdf file.
+     * POST lectures/:lectureId/process-units/upload : Temporarily uploads a file which will be processed into lecture units
      *
-     * @param lectureId                 the id of the lecture to which the attachment units should be added
-     * @param lectureUnitInformationDTO the units that should be created
-     * @param file                      the file to be splitted
+     * @param file      the file that will be processed
+     * @param lectureId the id of the lecture to which the attachment units will be added
+     * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
+     */
+    @PostMapping("lectures/{lectureId}/process-units/upload")
+    @EnforceAtLeastEditor
+    public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
+        // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-units.component.ts
+        // TODO: increase to 30 after testing
+        int MINUTES_UNTIL_DELETION = 3;
+        log.debug("REST request to upload file: {}", file.getOriginalFilename());
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+
+        URI fileURI = fileService.handleSaveFile(file, false, false);
+        fileService.schedulePathForDeletion(filePathService.actualPathForPublicPath(fileURI), MINUTES_UNTIL_DELETION);
+        String fileName = filePathService.actualPathForPublicPath(fileURI).getFileName().toString();
+
+        return ResponseEntity.ok().body(gson.toJson(fileName));
+    }
+
+    /**
+     * POST lectures/:lectureId/process-units/split : creates new attachment units from the given file and lecture unit information
+     *
+     * @param lectureId                 the id of the lecture to which the attachment units will be added
+     * @param lectureUnitInformationDTO the units that will be created
+     * @param filename                  the name of the lecture file, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
-    @PostMapping("lectures/{lectureId}/attachment-units/split")
+    @PostMapping("lectures/{lectureId}/process-units/split")
     @EnforceAtLeastEditor
     public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart LectureUnitInformationDTO lectureUnitInformationDTO,
-            @RequestPart MultipartFile file) {
+            @RequestPart String filename) {
         log.debug("REST request to create AttachmentUnits {} with lectureId {}", lectureUnitInformationDTO, lectureId);
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
@@ -181,10 +215,8 @@ public class AttachmentUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         try {
-            if (!Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-                throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
-            }
-            List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, file, lecture);
+            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
+            List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes, lecture);
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
             savedAttachmentUnits.forEach(competencyProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
@@ -196,16 +228,16 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/process-units : Prepare attachment units information
+     * GET lectures/:lectureId/process-units : Calculates lecture units by splitting up the given file
      *
-     * @param file      the file to get the units data
-     * @param lectureId the id of the lecture to which the file is going to be splitted
+     * @param lectureId the id of the lecture to which the file is going to be split
+     * @param filename  the name of the lecture file to be split, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
      */
-    @PostMapping("lectures/{lectureId}/process-units")
+    @GetMapping("lectures/{lectureId}/process-units")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @RequestParam("file") MultipartFile file) {
-        log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
+    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @RequestParam("filename") String filename) {
+        log.debug("REST request to split lecture file : {}", filename);
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -213,8 +245,39 @@ public class AttachmentUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        LectureUnitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
-        return ResponseEntity.ok().body(attachmentUnitsData);
+        try {
+            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
+            LectureUnitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(fileBytes);
+            return ResponseEntity.ok().body(attachmentUnitsData);
+        }
+        catch (IOException e) {
+            log.error("Could not calculate lecture units automatically", e);
+            throw new InternalServerErrorException("Could not calculate lecture units automatically");
+        }
+    }
+
+    /**
+     * GET lectures/:lectureId/process-units/slides-to-remove : gets the slides to be removed
+     *
+     * @param lectureId                the id of the lecture to which the unit belongs
+     * @param filename                 the name of the file to be parsed, located in the temp folder
+     * @param commaSeparatedKeyPhrases the comma seperated keyphrases to be removed
+     * @return the ResponseEntity with status 200 (OK) and with body the list of slides to be removed
+     */
+    @GetMapping("lectures/{lectureId}/process-units/slides-to-remove")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @RequestParam String filename, @RequestParam String commaSeparatedKeyPhrases) {
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+        try {
+            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
+            List<Integer> slidesToRemove = this.lectureUnitProcessingService.getSlidesToRemoveByKeyphrase(fileBytes, commaSeparatedKeyPhrases);
+            return ResponseEntity.ok().body(slidesToRemove);
+        }
+        catch (IOException e) {
+            log.error("Could not calculate slides to remove", e);
+            throw new InternalServerErrorException("Could not calculate slides to remove");
+        }
     }
 
     /**

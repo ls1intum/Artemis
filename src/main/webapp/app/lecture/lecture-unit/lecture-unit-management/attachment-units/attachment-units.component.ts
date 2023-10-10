@@ -1,23 +1,24 @@
 import { Component, OnInit } from '@angular/core';
-import { faBan, faClock, faExclamationTriangle, faGlobe, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { objectToJsonBlob } from 'app/utils/blob-util';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap } from 'rxjs/operators';
 
-type LectureUnitDTOS = {
+export type LectureUnitDTOS = {
     unitName: string;
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
 };
 
-type LectureUnitInformationDTO = {
+export type LectureUnitInformationDTO = {
     units: LectureUnitDTOS[];
     numberOfPages: number;
     removeSlidesCommaSeparatedKeyPhrases: string;
@@ -37,17 +38,22 @@ export class AttachmentUnitsComponent implements OnInit {
     numberOfPages: number;
     faSave = faSave;
     faBan = faBan;
-    faGlobe = faGlobe;
-    faClock = faClock;
     faTimes = faTimes;
     faPlus = faPlus;
     faExclamationTriangle = faExclamationTriangle;
     faQuestionCircle = faQuestionCircle;
 
-    file: File;
-    fileName: string;
     invalidUnitTableMessage?: string;
-    removeSlidesCommaSeparatedKeyPhrases: string;
+    //Comma-seperated keyphrases used to detect slides to be removed
+    keyphrases: string;
+    private search = new Subject<void>();
+    removedSlidesNumbers: number[];
+
+    file: File;
+    filename: string;
+    //time until the temporary file gets deleted. Must be less or equal than MINUTES_UNTIL_DELETION in AttachmentUnitResource.java
+    //TODO: increase to 30 after testing
+    readonly MINUTES_UNTIL_DELETION = 3;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -57,7 +63,6 @@ export class AttachmentUnitsComponent implements OnInit {
         private translateService: TranslateService,
     ) {
         this.file = this.router.getCurrentNavigation()!.extras.state!.file;
-        this.fileName = this.router.getCurrentNavigation()!.extras.state!.fileName;
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {
             this.lectureId = Number(params.get('lectureId'));
@@ -66,45 +71,75 @@ export class AttachmentUnitsComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.removeSlidesCommaSeparatedKeyPhrases = '';
+        this.keyphrases = '';
+        this.removedSlidesNumbers = [];
         this.isLoading = true;
         this.isProcessingMode = true;
 
-        const formData: FormData = new FormData();
-        formData.append('file', this.file);
+        //timeout after given time because the temporary file in the backend gets deleted
+        setTimeout(
+            () => {
+                this.cancelSplit();
+                this.alertService.info(this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.timeout`));
+            },
+            this.MINUTES_UNTIL_DELETION * 60 * 1000,
+        );
 
-        this.attachmentUnitService.getSplitUnitsData(this.lectureId, formData).subscribe({
-            next: (res: any) => {
-                if (res) {
-                    this.units = res.body.units;
-                    this.numberOfPages = res.body.numberOfPages;
+        this.attachmentUnitService
+            .uploadSlidesForProcessing(this.lectureId, this.file)
+            .pipe(
+                switchMap((res) => {
+                    this.filename = res.body!;
+                    return this.attachmentUnitService.getSplitUnitsData(this.lectureId, this.filename);
+                }),
+            )
+            .subscribe({
+                next: (res) => {
+                    if (res.body) {
+                        this.units = res.body.units;
+                        this.numberOfPages = res.body.numberOfPages;
+                        this.isLoading = false;
+                    }
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (res.error.params === 'file' && res.error.title) {
+                        this.alertService.error(res.error.title);
+                    } else {
+                        onError(this.alertService, res);
+                    }
                     this.isLoading = false;
-                }
-            },
-            error: (res: HttpErrorResponse) => {
-                if (res.error.params === 'file' && res?.error?.title) {
-                    this.alertService.error(res.error.title);
-                } else {
+                },
+            });
+
+        this.search
+            .pipe(
+                debounceTime(1000),
+                switchMap(() => {
+                    return this.attachmentUnitService.getSlidesToRemove(this.lectureId, this.filename, this.keyphrases);
+                }),
+            )
+            .subscribe({
+                next: (res) => {
+                    if (res.body) {
+                        this.removedSlidesNumbers = res.body.map((n) => n + 1);
+                    }
+                },
+                error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                }
-                this.isLoading = false;
-            },
-        });
+                },
+            });
     }
 
     createAttachmentUnits(): void {
         if (this.validUnitInformation()) {
             this.isLoading = true;
-            const lectureUnitInformationDTOObj: LectureUnitInformationDTO = {
+            const lectureUnitInformation: LectureUnitInformationDTO = {
                 units: this.units,
                 numberOfPages: this.numberOfPages,
-                removeSlidesCommaSeparatedKeyPhrases: this.removeSlidesCommaSeparatedKeyPhrases,
+                removeSlidesCommaSeparatedKeyPhrases: this.keyphrases,
             };
-            const formData: FormData = new FormData();
-            formData.append('file', this.file);
-            formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
 
-            this.attachmentUnitService.createUnits(this.lectureId, formData).subscribe({
+            this.attachmentUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
                 next: () => {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     this.isLoading = false;
@@ -119,6 +154,20 @@ export class AttachmentUnitsComponent implements OnInit {
                 },
             });
         }
+    }
+
+    set searchTerm(searchTerm: string) {
+        //only consider non-empty searches for slide removal
+        if (searchTerm.trim() !== '') {
+            this.keyphrases = searchTerm;
+            this.search.next();
+        } else {
+            this.removedSlidesNumbers = [];
+        }
+    }
+
+    get searchTerm(): string {
+        return this.keyphrases;
     }
 
     /**
