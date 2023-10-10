@@ -67,13 +67,13 @@ describe('AthenaService', () => {
         tick();
 
         expect(requestWrapperText.request.method).toBe('GET');
-        expect(textResponse![0].feedback!.type).toEqual(FeedbackType.AUTOMATIC);
+        expect(textResponse![0].feedback!.type).toEqual(FeedbackType.MANUAL);
         expect(textResponse![0].feedback!.text).toBe('FeedbackSuggestion:accepted:Test Text');
         expect(textResponse![0].feedback!.detailText).toBe('Test Text Description');
         expect(textResponse![0].block!.startIndex).toBe(5);
         expect(textResponse![0].block!.id).toEqual(textResponse![0].feedback!.reference);
         expect(requestWrapperProgramming.request.method).toBe('GET');
-        expect(programmingResponse![0].type).toEqual(FeedbackType.AUTOMATIC);
+        expect(programmingResponse![0].type).toEqual(FeedbackType.MANUAL);
         expect(programmingResponse![0].text).toBe('FeedbackSuggestion:Test Programming');
         expect(programmingResponse![0].detailText).toBe('Test Programming Description');
         expect(programmingResponse![0].credits).toBe(-1.0);

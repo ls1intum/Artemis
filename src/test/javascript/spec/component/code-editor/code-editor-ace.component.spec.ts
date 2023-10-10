@@ -341,7 +341,7 @@ describe('CodeEditorAceComponent', () => {
 
     it('should convert an accepted feedback suggestion to a marked manual feedback', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
         comp.feedbackSuggestions = [suggestion];
         await comp.acceptSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
@@ -350,7 +350,7 @@ describe('CodeEditorAceComponent', () => {
 
     it('should remove discarded suggestions', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
         comp.feedbackSuggestions = [suggestion];
         comp.discardSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
