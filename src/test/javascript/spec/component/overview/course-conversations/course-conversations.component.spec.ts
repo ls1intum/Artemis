@@ -114,6 +114,11 @@ examples.forEach((activeConversation) => {
                     return () => {};
                 },
             });
+            Object.defineProperty(metisConversationService, 'acceptCodeOfConduct', {
+                get: () => {
+                    return () => {};
+                },
+            });
             Object.defineProperty(metisService, 'posts', {
                 get: () => postsSubject.asObservable(),
             });
@@ -164,6 +169,13 @@ examples.forEach((activeConversation) => {
                 queryParamsHandling: 'merge',
                 replaceUrl: true,
             });
+        });
+
+        it('should accept code of conduct', () => {
+            const spy = jest.spyOn(component.metisConversationService, 'acceptCodeOfConduct');
+            component.ngOnInit();
+            component.acceptCodeOfConduct();
+            expect(spy).toHaveBeenCalledOnce();
         });
     });
 });
