@@ -33,7 +33,7 @@
 
 <ng-content></ng-content>
 
-<jhi-assessment-note (onAssessmentNoteChange)="setAssessmentNoteForResult($event)"></jhi-assessment-note>
+<jhi-assessment-note [assessmentNote]="result?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)"></jhi-assessment-note>
 
 <jhi-complaints-for-tutor-form
     class="row mt-4"
