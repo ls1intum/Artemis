@@ -51,6 +51,8 @@ public class LocalCIBuildJobManagementService {
 
     private final LocalCIDockerService localCIDockerService;
 
+    private final LocalCISharedBuildJobQueue localCISharedBuildJobQueue;
+
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
@@ -62,13 +64,14 @@ public class LocalCIBuildJobManagementService {
 
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            LocalCIDockerService localCIDockerService) {
+            LocalCIDockerService localCIDockerService, LocalCISharedBuildJobQueue localCISharedBuildJobQueue) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
+        this.localCISharedBuildJobQueue = localCISharedBuildJobQueue;
     }
 
     /**
@@ -96,6 +99,9 @@ public class LocalCIBuildJobManagementService {
 
         // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
         BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);
+
+        localCISharedBuildJobQueue.addBuildJob(containerName);
+        localCISharedBuildJobQueue.processBuildJob();
 
         /*
          * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
