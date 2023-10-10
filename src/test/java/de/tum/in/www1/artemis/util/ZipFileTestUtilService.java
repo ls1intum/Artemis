@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.util;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import static org.assertj.core.api.Assertions.fail;
+
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,52 +23,44 @@ public class ZipFileTestUtilService {
      * Extracts a zip file recursively.
      *
      * @param zipFile The path to the zip file
+     * @return path to the directory containing the exported files
      * @throws IOException if something goes wrong
      */
-    public void extractZipFileRecursively(String zipFile) throws IOException {
-        int BUFFER = 2048;
+    public Path extractZipFileRecursively(String zipFile) throws IOException {
         File file = new File(zipFile);
 
-        ZipFile zip = new ZipFile(file);
-        String newPath = zipFile.substring(0, zipFile.length() - 4);
+        try (ZipFile zip = new ZipFile(file)) {
+            String newPath = zipFile.substring(0, zipFile.length() - 4);
 
-        new File(newPath).mkdir();
-        Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
+            File parentFolder = new File(newPath);
+            parentFolder.mkdir();
 
-        // Process each entry
-        while (zipFileEntries.hasMoreElements()) {
-            // grab a zip file entry
-            ZipEntry entry = zipFileEntries.nextElement();
-            String currentEntry = entry.getName();
-            File destFile = new File(newPath, currentEntry);
-            File destinationParent = destFile.getParentFile();
+            Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
+            // Process each entry
+            while (zipFileEntries.hasMoreElements()) {
+                // grab a zip file entry
+                ZipEntry entry = zipFileEntries.nextElement();
+                String currentEntry = entry.getName();
+                File destFile = new File(parentFolder, currentEntry);
 
-            // create the parent directory structure if needed
-            destinationParent.mkdirs();
-
-            if (!entry.isDirectory()) {
-                BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
-                int currentByte;
-                // establish buffer for writing file
-                byte[] data = new byte[BUFFER];
-
-                // write the current file to disk
-                FileOutputStream fos = new FileOutputStream(destFile);
-                BufferedOutputStream dest = new BufferedOutputStream(fos, BUFFER);
-
-                // read and write until last byte is encountered
-                while ((currentByte = is.read(data, 0, BUFFER)) != -1) {
-                    dest.write(data, 0, currentByte);
+                if (!destFile.getCanonicalPath().startsWith(parentFolder.getCanonicalPath())) {
+                    fail("Bad zip entry");
                 }
-                dest.flush();
-                dest.close();
-                is.close();
-            }
 
-            if (currentEntry.endsWith(".zip")) {
-                // found a zip file, try to open
-                extractZipFileRecursively(destFile.getAbsolutePath());
+                File destinationParent = destFile.getParentFile();
+                // create the parent directory structure if needed
+                destinationParent.mkdirs();
+
+                if (!entry.isDirectory()) {
+                    FileUtils.copyInputStreamToFile(zip.getInputStream(entry), destFile);
+                }
+
+                if (currentEntry.endsWith(".zip")) {
+                    // found a zip file, try to open
+                    extractZipFileRecursively(destFile.getAbsolutePath());
+                }
             }
+            return parentFolder.toPath();
         }
     }
 }
