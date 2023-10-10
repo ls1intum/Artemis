@@ -3,7 +3,7 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
     '@angular/service-worker', '@danielmoncada/angular-datetime-picker', '@flaviosantoro92/ngx-datatable', 'd3-color', 'd3-interpolate', 'd3-transition', 'd3-brush',
-    'd3-drag', 'd3-selection', 'd3-scale', 'd3-array', 'd3-format', 'd3-shape', 'd3-path', 'd3-ease', 'd3-time', 'd3-hierarchy', 'ngx-infinite-scroll', 'internmap', 'ngx-slider-v2'].join('|');
+    'd3-drag', 'd3-selection', 'd3-scale', 'd3-array', 'd3-format', 'd3-shape', 'd3-path', 'd3-ease', 'd3-time', 'd3-hierarchy', 'ngx-infinite-scroll', 'internmap', 'ngx-slider-v2','@swimlane/ngx-graph'].join('|');]
 
 const {
     compilerOptions: { baseUrl = './' },
