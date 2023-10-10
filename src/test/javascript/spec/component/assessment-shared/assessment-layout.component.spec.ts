@@ -60,6 +60,11 @@ describe('AssessmentLayoutComponent', () => {
         expect(assessmentComplaintAlertComponent).toBeTruthy();
     });
 
+    it('should include jhi-assessment-note', () => {
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeTruthy();
+    });
+
     it('should include jhi-complaints-for-tutor-form', () => {
         let complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeFalsy();
