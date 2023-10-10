@@ -10,22 +10,23 @@ import { HttpResponse } from '@angular/common/http';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
-export class CourseResolve implements Resolve<Course> {
+export class CourseResolve implements Resolve<Course | null> {
     constructor(private courseManagementService: CourseManagementService) {}
 
-    resolve(route: ActivatedRouteSnapshot): Observable<Course> {
+    resolve(route: ActivatedRouteSnapshot): Observable<Course | null> {
         const courseId = route.params['courseId'];
 
         if (courseId) {
             return this.courseManagementService.find(courseId).pipe(
-                filter((response) => response.ok),
-                map((response) => response.body!),
+                map((response) => response.body),
+                catchError(() => of(null)),
             );
         }
 
-        return of(new Course());
+        return of(null);
     }
 }
 
