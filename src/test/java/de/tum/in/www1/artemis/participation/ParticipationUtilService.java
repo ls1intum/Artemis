@@ -522,7 +522,7 @@ public class ParticipationUtilService {
         }
         else {
             submission = ParticipationFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
-            saveSubmissionToRepo(submission);
+            submission = saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ParticipationFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
