@@ -1,6 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
+import { LearningPathGraphComponent, LearningPathViewMode } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
 @Component({
     selector: 'jhi-learning-path-progress-modal',
@@ -17,4 +17,6 @@ export class LearningPathProgressModalComponent {
     close() {
         this.activeModal.close();
     }
+
+    protected readonly GRAPH = LearningPathViewMode.GRAPH;
 }
