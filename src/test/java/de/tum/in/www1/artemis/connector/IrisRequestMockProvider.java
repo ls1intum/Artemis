@@ -6,9 +6,9 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Map;
 
+import org.codehaus.jackson.node.ObjectNode;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,9 +24,6 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 
 @Component
@@ -71,28 +68,39 @@ public class IrisRequestMockProvider {
     }
 
     /**
-     * Mocks response call for the pyris call
+     * Mocks a message response from the call to pyris
      */
     public void mockMessageResponse(String responseMessage) throws JsonProcessingException {
         if (responseMessage == null) {
             mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
             return;
         }
-        var irisMessage = new IrisMessage();
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setTextContent(responseMessage);
-        irisMessage.setContent(Collections.singletonList(irisMessageContent));
-        irisMessage.setSender(IrisMessageSender.LLM);
-        irisMessage.setSentAt(ZonedDateTime.now());
-
-        var response = new IrisMessageResponseDTO(null, irisMessage);
+        
+        var content = Map.of("response", responseMessage);
+        mockResponse(content);
+    }
+    
+    /**
+     * Mocks an arbitrary response from the call to pyris
+     * @param content The content of the response
+     * @throws JsonProcessingException If the content cannot be serialized to JSON
+     */
+    public void mockResponse(Map<?, ?> content) throws JsonProcessingException {
+        if (content == null) {
+            mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+            return;
+        }
+        
+        var response = new IrisMessageResponseDTO("gpt-3.5-turbo", ZonedDateTime.now(), mapper.valueToTree(content));
+        
         var json = mapper.writeValueAsString(response);
-
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+        
+        mockCustomJsonResponse(json);
     }
 
-    public void mockCustomJsonResponse(String responseMessage) throws JsonProcessingException {
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST))
+    public void mockCustomJsonResponse(String responseMessage) {
+        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString()))
+                .andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess(responseMessage, MediaType.APPLICATION_JSON));
     }
 

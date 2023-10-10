@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.BadRequestException;
 
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -89,22 +90,34 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
         var irisSettings = irisSettingsService.getCombinedIrisSettings(irisSession.getCodeHint().getExercise(), false);
         try {
-            var irisMessage1 = irisConnectorService
+            var response1 = irisConnectorService
                     .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
-            irisMessageService.saveMessage(irisMessage1.message(), irisSession, IrisMessageSender.LLM);
+            var irisMessage1 = toIrisMessage(response1);
+            irisMessageService.saveMessage(irisMessage1, irisSession, IrisMessageSender.LLM);
             irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
-            var irisMessage2 = irisConnectorService
+            var response2 = irisConnectorService
                     .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
-            irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
+            var irisMessage2 = toIrisMessage(response2);
+            irisMessageService.saveMessage(irisMessage2, irisSession, IrisMessageSender.LLM);
 
-            codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
-            codeHint.setDescription(irisMessage2.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setContent(irisMessage1.getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setDescription(irisMessage2.getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
             return codeHint;
         }
         catch (InterruptedException | ExecutionException e) {
             log.error("Unable to generate description", e);
             throw new InternalServerErrorException("Unable to generate description: " + e.getMessage());
         }
+    }
+    
+    private static IrisMessage toIrisMessage(IrisMessageResponseDTO dto) {
+        var message = new IrisMessage();
+        message.setSentAt(dto.sentAt());
+        message.setSender(IrisMessageSender.LLM);
+        var irisMessageContent = new IrisMessageContent();
+        irisMessageContent.setTextContent(dto.content().get("response").asText());
+        message.setContent(List.of(irisMessageContent));
+        return message;
     }
 
     private IrisMessage generateSystemMessage() {
