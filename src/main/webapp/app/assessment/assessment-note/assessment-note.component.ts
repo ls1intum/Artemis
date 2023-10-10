@@ -29,7 +29,7 @@ export class AssessmentNoteComponent {
      * Return an empty string if the assessment note or its note field is undefined, or otherwise the text of the note.
      */
     getAssessmentNoteText() {
-        if (this._assessmentNote !== undefined && this._assessmentNote.note !== undefined) {
+        if (this._assessmentNote?.note) {
             return this._assessmentNote.note;
         } else {
             return '';
