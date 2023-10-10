@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
+import de.tum.in.www1.artemis.web.rest.iris.IrisSessionResource.IrisHealthDTO;
 
 class IrisChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -70,17 +71,18 @@ class IrisChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
     void isActive() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
         var settings = irisSettingsService.getGlobalSettings();
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_UP");
         irisSettingsService.saveGlobalIrisSettings(settings);
-        irisRequestMockProvider.mockStatusResponse();
-        irisRequestMockProvider.mockStatusResponse();
-        irisRequestMockProvider.mockStatusResponse();
-        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isTrue();
+        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isTrue();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_DOWN");
         irisSettingsService.saveGlobalIrisSettings(settings);
-        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
+        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isFalse();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_NA");
         irisSettingsService.saveGlobalIrisSettings(settings);
-        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
+        assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isFalse();
     }
 }

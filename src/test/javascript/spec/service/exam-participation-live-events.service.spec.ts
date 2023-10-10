@@ -52,32 +52,47 @@ describe('ExamParticipationLiveEventsService', () => {
 
     afterEach(() => {
         httpMock.verify();
+        jest.resetAllMocks();
     });
 
-    it('should correctly react to websocket connection state and refetch events', fakeAsync(() => {
-        // @ts-ignore
-        const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents');
+    it.each([
+        [true, true],
+        [true, false],
+        [false, true],
+        [false, false],
+    ])(
+        'should correctly react to websocket connection state and refetch events for connected=%s, wasEverConnectedBefore=%s',
+        fakeAsync((connected: boolean, wasEverConnectedBefore: boolean) => {
+            // @ts-ignore
+            const fetchPreviousExamEventsSpy = jest.spyOn(service, 'fetchPreviousExamEvents');
 
-        tick(6000);
-        expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
+            tick(6000);
+            expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
 
-        websocketConnectionStateSubject.next({ connected: true } as any as ConnectionState);
+            websocketConnectionStateSubject.next({ connected, wasEverConnectedBefore } as any as ConnectionState);
 
-        const mockEvents: ExamLiveEvent[] = [
-            {
-                id: 1,
-                createdBy: 'user',
-                createdDate: dayjs(),
-                eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-            },
-        ];
-        tick(6000);
-        expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
-        const req = httpMock.expectOne({ method: 'GET', url: `/api/courses/1/exams/1/student-exams/live-events` });
-        req.flush(mockEvents);
-        expect(service['events']).toEqual(mockEvents);
-        expect(service['allEventsSubject'].getValue()).toEqual(mockEvents);
-    }));
+            const mockEvents: ExamLiveEvent[] = [
+                {
+                    id: 1,
+                    createdBy: 'user',
+                    createdDate: dayjs(),
+                    eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
+                },
+            ];
+
+            tick(6000);
+
+            if (connected && wasEverConnectedBefore) {
+                expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
+                const req = httpMock.expectOne({ method: 'GET', url: `/api/courses/1/exams/1/student-exams/live-events` });
+                req.flush(mockEvents);
+                expect(service['events']).toEqual(mockEvents);
+                expect(service['allEventsSubject'].getValue()).toEqual(mockEvents);
+            } else {
+                expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
+            }
+        }),
+    );
 
     it('should correctly react to a student exam change and refetch events and subscribe to ws', fakeAsync(async () => {
         // @ts-ignore

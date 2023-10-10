@@ -10,6 +10,8 @@ import javax.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -279,13 +281,14 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return sourceGradingScale;
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCalculateRawBonusWithGradesContinuousBonusStrategy() throws Exception {
+    @EnumSource(value = BonusStrategy.class, names = { "GRADES_DISCRETE" }, mode = EnumSource.Mode.EXCLUDE)
+    void testCalculateRawBonus(BonusStrategy bonusStrategy) throws Exception {
         // Calculation results should be consistent with bonus.service.spec.ts
 
-        BonusStrategy bonusStrategy = BonusStrategy.GRADES_CONTINUOUS;
-        double weight = -1;
+        boolean isContinuous = bonusStrategy == BonusStrategy.GRADES_CONTINUOUS;
+        double weight = isContinuous ? -1 : 1;
 
         Exam bonusToExam = bonusToExamGradingScale.getExam();
         Course sourceCourse = courseGradingScale.getCourse();
@@ -295,7 +298,14 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         bonusToExamGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(bonusToExam.getId()).orElseThrow();
         gradingScaleRepository.deleteAll(List.of(bonusToExamGradingScale, courseGradingScale));
 
-        GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(sourceCourse);
+        GradingScale sourceGradingScale;
+        if (isContinuous) {
+            sourceGradingScale = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(sourceCourse);
+        }
+        else {
+            sourceGradingScale = createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(sourceCourse);
+        }
+
         GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
         gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
 
@@ -313,10 +323,9 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         bonusToPoints = 120;
         sourcePoints = 75;
         expectedExamGrade = "3.0";
-        expectedBonusGrade = 0.1;
-        expectedFinalPoints = null;
-        expectedFinalGrade = "2.9";
-        expectedExceedsMax = false;
+        expectedBonusGrade = isContinuous ? 0.1 : 10.0;
+        expectedFinalPoints = isContinuous ? null : 130.0;
+        expectedFinalGrade = isContinuous ? "2.9" : "3.0";
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
                 expectedExceedsMax, sourceGradingScale.getId());
@@ -324,14 +333,13 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         bonusToPoints = 200;
         sourcePoints = 200;
         expectedExamGrade = "1.0";
-        expectedBonusGrade = 0.2;
-        expectedFinalPoints = null;
+        expectedBonusGrade = isContinuous ? 0.2 : 20.0;
+        expectedFinalPoints = isContinuous ? null : 200.0;
         expectedFinalGrade = "1.0";
         expectedExceedsMax = true;
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
                 expectedExceedsMax, sourceGradingScale.getId());
-
     }
 
     @Test
@@ -411,61 +419,6 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         sourceGradingScale.setGradeType(GradeType.BONUS);
         sourceGradingScale.setCourse(sourceCourse);
         return sourceGradingScale;
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCalculateRawBonusWithPointsBonusStrategy() throws Exception {
-        // Calculation results should be consistent with bonus.service.spec.ts
-
-        BonusStrategy bonusStrategy = BonusStrategy.POINTS;
-        double weight = 1;
-
-        Exam bonusToExam = bonusToExamGradingScale.getExam();
-        Course sourceCourse = courseGradingScale.getCourse();
-
-        bonusRepository.delete(courseBonus);
-        // Line below is needed to prevent EntityNotFoundException for the Bonus instance deleted above.
-        bonusToExamGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(bonusToExam.getId()).orElseThrow();
-        gradingScaleRepository.deleteAll(List.of(bonusToExamGradingScale, courseGradingScale));
-
-        GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(sourceCourse);
-        GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
-        gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
-
-        double bonusToPoints = 50;
-        double sourcePoints = 100;
-        String expectedExamGrade = "5.0";
-        double expectedBonusGrade = 0.0;
-        double expectedFinalPoints = 50.0;
-        String expectedFinalGrade = "5.0";
-        boolean expectedExceedsMax = false;
-
-        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, sourceGradingScale.getId());
-
-        bonusToPoints = 120;
-        sourcePoints = 75;
-        expectedExamGrade = "3.0";
-        expectedBonusGrade = 10.0;
-        expectedFinalPoints = 130.0;
-        expectedFinalGrade = "3.0";
-        expectedExceedsMax = false;
-
-        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, sourceGradingScale.getId());
-
-        bonusToPoints = 200;
-        sourcePoints = 200;
-        expectedExamGrade = "1.0";
-        expectedBonusGrade = 20.0;
-        expectedFinalPoints = 200.0;
-        expectedFinalGrade = "1.0";
-        expectedExceedsMax = true;
-
-        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, sourceGradingScale.getId());
-
     }
 
     @Test

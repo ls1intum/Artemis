@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -107,6 +110,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
