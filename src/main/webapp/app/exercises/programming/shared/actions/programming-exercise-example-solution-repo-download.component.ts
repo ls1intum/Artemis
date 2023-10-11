@@ -18,7 +18,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input() includeTests?: boolean;
 
-    @Input() displayedOnExamSummary?: boolean = false;
+    @Input() displayedOnExamSummary: boolean = false;
 
     exportRepository() {
         if (this.exerciseId) {

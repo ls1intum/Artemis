@@ -342,7 +342,6 @@ export class ExamResultSummaryComponent implements OnInit {
             if (exercise.id === undefined) {
                 this.alertService.error('artemisApp.exam.error.cannotDisplayExerciseDetails', { exerciseGroupTitle: exercise.exerciseGroup?.title });
                 const errorMessage = 'Cannot getExerciseInfos as exerciseId is undefined';
-                console.error(errorMessage, exercise);
                 captureException(new Error(errorMessage), {
                     extra: {
                         exercise,
@@ -405,7 +404,6 @@ export class ExamResultSummaryComponent implements OnInit {
         if (exerciseId === undefined) {
             this.alertService.error('artemisApp.exam.error.cannotShowExampleSolution');
             const errorMessage = 'Cannot show sample solution because exercise id is undefined';
-            console.error(errorMessage, exerciseId);
             captureException(new Error(errorMessage), {
                 extra: {
                     exerciseId,

@@ -29,7 +29,7 @@ describe('FeedbackUtils', () => {
         const templateStatus = ResultTemplateStatus.MISSING;
         const latestDueDate = dayjs().subtract(4, 'hours');
 
-        it('should determine automatic feedback information with latestDueDate set', () => {
+        it('should determine automatic feedback information with latestDueDate being passed', () => {
             const preparedParameters = prepareFeedbackComponentParameters(exercise, result, participation, templateStatus, latestDueDate, exerciseService);
 
             expect(preparedParameters.showScoreChart).toBeTrue();
@@ -37,16 +37,16 @@ describe('FeedbackUtils', () => {
             expect(preparedParameters.showMissingAutomaticFeedbackInformation).toBeFalse();
         });
 
-        it('should determine automatic feedback information if latestDueDate is NOT set', () => {
-            const latestDueDate = dayjs().add(4, 'hours');
-            const getLatestDueDateSpy = jest.spyOn(exerciseService, 'getLatestDueDate').mockReturnValue(of(latestDueDate));
+        it('should determine automatic feedback information if latestDueDate is passed as undefined', () => {
+            const exerciseServiceLatestDueDate = dayjs().add(4, 'hours');
+            const getLatestDueDateSpy = jest.spyOn(exerciseService, 'getLatestDueDate').mockReturnValue(of(exerciseServiceLatestDueDate));
 
             const preparedParameters = prepareFeedbackComponentParameters(exercise, result, participation, ResultTemplateStatus.HAS_RESULT, undefined, exerciseService);
 
             expect(getLatestDueDateSpy).toHaveBeenCalledOnce();
             expect(preparedParameters.showScoreChart).toBeTrue();
             expect(preparedParameters.messageKey).not.toBeTruthy();
-            expect(preparedParameters.latestDueDate).toEqual(latestDueDate);
+            expect(preparedParameters.latestDueDate).toEqual(exerciseServiceLatestDueDate);
             expect(preparedParameters.showMissingAutomaticFeedbackInformation).toBeTrue();
         });
     });
