@@ -476,10 +476,14 @@ export class MetisService implements OnDestroy {
             });
 
             if (
-                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) ||
-                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) ||
-                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.exerciseIds?.includes(postDTO.post.exercise.id)) ||
-                (postDTO.post.conversation?.id !== undefined && postDTO.post.conversation.id === this.currentPostContextFilter.conversationId)
+                (postDTO.post.conversation?.id !== undefined && postDTO.post.conversation.id === this.currentPostContextFilter.conversationId) || // is message in active conversation
+                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) || // is course-wide post matching current filter
+                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) || // is lecture post in current filter
+                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.exerciseIds?.includes(postDTO.post.exercise.id)) || // is exercise post matching current filter
+                (!postDTO.post.conversation &&
+                    this.currentPostContextFilter.courseWideContexts === undefined &&
+                    this.currentPostContextFilter.lectureIds === undefined &&
+                    this.currentPostContextFilter.exerciseIds === undefined) // is any kind of Q&A post and no filter is set
             )
                 switch (postDTO.action) {
                     case MetisPostAction.CREATE:
@@ -509,7 +513,7 @@ export class MetisService implements OnDestroy {
                 }
             // emit updated version of cachedPosts to subscribing components
             if (PageType.OVERVIEW === this.pageType) {
-                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. refetch currently displayed posts from server
+                // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server, unless the postContextFilter changed
                 const oldPage = this.currentPostContextFilter.page;
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
