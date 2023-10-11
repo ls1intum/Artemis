@@ -353,11 +353,11 @@ describe('MetisConversationService', () => {
         });
         expect(checkStub).toHaveBeenCalledOnce();
 
-        const conversationServiceStub = jest.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
+        const acceptStub = jest.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
         metisConversationService.acceptCodeOfConduct(course);
         metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
             expect(isCodeOfConductAccepted).toBeTrue();
         });
-        expect(conversationServiceStub).toHaveBeenCalledOnce();
+        expect(acceptStub).toHaveBeenCalledOnce();
     });
 });

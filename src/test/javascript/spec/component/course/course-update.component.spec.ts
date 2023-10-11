@@ -691,6 +691,7 @@ describe('Course Management Update Component', () => {
 });
 
 describe('Course Management Update Component Create', () => {
+    const validTimeZone = 'Europe/Berlin';
     let component: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let httpMock: HttpTestingController;
@@ -729,6 +730,7 @@ describe('Course Management Update Component Create', () => {
         })
             .compileComponents()
             .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 component = fixture.componentInstance;
                 httpMock = TestBed.inject(HttpTestingController);
@@ -737,6 +739,7 @@ describe('Course Management Update Component Create', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
     });
 
     it('should get code of conduct template if a new course is created', () => {
