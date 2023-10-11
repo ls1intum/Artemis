@@ -521,6 +521,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void testNotifyPush_studentCommitUpdatesSubmissionCount() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
         Commit mockCommit = mock(Commit.class);
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
         doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
