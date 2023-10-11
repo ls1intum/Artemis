@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-lti-exercise-launch',
@@ -14,7 +14,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private http: HttpClient,
-        private loginService: LoginService,
+        private alertService: AlertService,
         private accountService: AccountService,
     ) {
         this.isLaunching = true;
@@ -72,9 +72,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                         if (this.accountService.isAuthenticated() && this.accountService.userIdentity?.login === auth) {
                             this.sendRequest();
                         } else {
-                            this.loginService.logout(false);
                             // Subscribe to the authentication state to know when the user logs in
                             this.accountService.getAuthenticationState().subscribe((user) => {
+                                const username = this.route.snapshot.queryParamMap.get('authenticatedUser');
+                                if (username) {
+                                    this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: username });
+                                    this.accountService.setPrefilledUsername(username);
+                                }
+                                window.location.replace('');
                                 if (user) {
                                     // resend request when user logs in again
                                     this.sendRequest();
