@@ -30,21 +30,9 @@ public abstract class IrisMessageResource {
 
     protected IrisSessionRepository irisSessionRepository;
 
-    public IrisSessionService getIrisSessionService() {
-        return irisSessionService;
-    }
-
-    public IrisMessageService getIrisMessageService() {
-        return irisMessageService;
-    }
-
     protected IrisSessionService irisSessionService;
 
     protected IrisMessageService irisMessageService;
-
-    public IrisMessageRepository getIrisMessageRepository() {
-        return irisMessageRepository;
-    }
 
     protected IrisMessageRepository irisMessageRepository;
 
