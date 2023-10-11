@@ -113,7 +113,6 @@ export class ExamResultSummaryComponent implements OnInit {
      * the review dates are set and the review start date has passed.
      */
     isAfterStudentReviewStart = false;
-    resultsArePublished = false;
 
     exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
 
@@ -173,7 +172,22 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
         this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
-        this.resultsArePublished = this.getResultsArePublished();
+    }
+
+    get resultsArePublished(): boolean | any {
+        if (this.isTestRun || this.isTestExam) {
+            return true;
+        }
+
+        if (this.testRunConduction || this.testExamConduction) {
+            return false;
+        }
+
+        if (this.studentExam?.exam?.publishResultsDate) {
+            return dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
+        }
+
+        return false;
     }
 
     private tryLoadPlagiarismCaseInfosForStudent() {
@@ -314,22 +328,6 @@ export class ExamResultSummaryComponent implements OnInit {
         if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
             return this.serverDateService.now().isBefore(this.studentExam.exam.examStudentReviewEnd);
         }
-        return false;
-    }
-
-    private getResultsArePublished(): boolean | any {
-        if (this.isTestRun || this.isTestExam) {
-            return true;
-        }
-
-        if (this.testRunConduction || this.testExamConduction) {
-            return false;
-        }
-
-        if (this.studentExam?.exam?.publishResultsDate) {
-            return dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
-        }
-
         return false;
     }
 

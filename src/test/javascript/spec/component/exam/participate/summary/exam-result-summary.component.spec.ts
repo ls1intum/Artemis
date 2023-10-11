@@ -349,26 +349,26 @@ describe('ExamResultSummaryComponent', () => {
     it('should correctly determine if the results are published', () => {
         component.studentExam = studentExam;
         component.testRunConduction = true;
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsArePublished).toBeFalse();
 
         component.testExamConduction = true;
         component.testRunConduction = false;
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsArePublished).toBeFalse();
 
         component.isTestRun = true;
         component.testExamConduction = false;
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsArePublished).toBeTrue();
 
         component.isTestExam = true;
         component.isTestRun = false;
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsArePublished).toBeTrue();
 
         component.isTestExam = false;
         // const publishResultsDate is in the past
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsArePublished).toBeTrue();
 
         component.studentExam.exam!.publishResultsDate = dayjs().add(2, 'hours');
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsArePublished).toBeFalse();
     });
 
     it('should correctly determine if it is after student review start', () => {
