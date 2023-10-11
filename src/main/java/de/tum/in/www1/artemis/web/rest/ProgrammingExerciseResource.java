@@ -361,19 +361,28 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().body(exercises);
     }
 
+    private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        if (includePlagiarismDetectionConfig) {
+            var programmingExercise = programmingExerciseRepository
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
+            return programmingExercise;
+        }
+        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
+    }
+
     /**
      * GET /programming-exercises/:exerciseId : get the "exerciseId" programmingExercise.
      *
-     * @param exerciseId the id of the programmingExercise to retrieve
+     * @param exerciseId                    the id of the programmingExercise to retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(PROGRAMMING_EXERCISE)
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
+    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository
-                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(programmingExercise, programmingExerciseRepository);
+        var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);

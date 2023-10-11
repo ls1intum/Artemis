@@ -14,10 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
@@ -245,19 +242,28 @@ public class ModelingExerciseResource {
         return ResponseEntity.ok().body(exercises);
     }
 
+    private ModelingExercise findModelingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        if (includePlagiarismDetectionConfig) {
+            var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(exerciseId);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(modelingExercise, modelingExerciseRepository);
+            return modelingExercise;
+        }
+        return modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
+    }
+
     /**
      * GET modeling-exercises/:exerciseId : get the "id" modelingExercise.
      *
-     * @param exerciseId the id of the modelingExercise to retrieve
+     * @param exerciseId                    the id of the modelingExercise to retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(exerciseId);
+        var modelingExercise = findModelingExercise(exerciseId, withPlagiarismDetectionConfig);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(modelingExercise, modelingExerciseRepository);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
 

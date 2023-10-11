@@ -245,21 +245,28 @@ public class TextExerciseResource {
         return ResponseEntity.ok().body(exercises);
     }
 
+    private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        if (includePlagiarismDetectionConfig) {
+            var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
+            textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(it, textExerciseRepository));
+            return textExercise;
+        }
+        return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId);
+    }
+
     /**
      * GET /text-exercises/:id : get the "id" textExercise.
      *
-     * @param exerciseId the id of the textExercise to retrieve
+     * @param exerciseId                    the id of the textExercise to retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
      *         status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
-
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(textExercise, textExerciseRepository);
+        var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
