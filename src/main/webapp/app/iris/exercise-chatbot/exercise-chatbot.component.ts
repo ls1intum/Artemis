@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
-import { IrisWebsocketService } from 'app/iris/websocket.service';
+import { IrisChatWebsocketService } from 'app/iris/chat-websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
@@ -16,7 +16,7 @@ import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
     selector: 'jhi-exercise-chatbot',
     templateUrl: './exercise-chatbot.component.html',
     styleUrls: ['./exercise-chatbot.component.scss'],
-    providers: [IrisStateStore, IrisWebsocketService, IrisSessionService, IrisHeartbeatService],
+    providers: [IrisStateStore, IrisChatWebsocketService, IrisSessionService, IrisHeartbeatService],
 })
 export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
@@ -38,7 +38,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         private readonly sessionService: IrisSessionService,
         private readonly stateStore: IrisStateStore,
         // Note: These 2 unused services are injected to ensure that they are instantiated
-        private readonly websocketService: IrisWebsocketService,
+        private readonly websocketService: IrisChatWebsocketService,
         private readonly heartbeatService: IrisHeartbeatService,
         private route: ActivatedRoute,
         private sharedService: SharedService,
