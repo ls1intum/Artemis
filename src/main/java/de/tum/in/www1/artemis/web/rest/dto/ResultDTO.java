@@ -21,12 +21,12 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         Integer codeIssueCount) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record FeedbackDTO(String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
+    public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
             Visibility visibility) {
 
         public static FeedbackDTO of(Feedback feedback) {
-            return new FeedbackDTO(feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(), feedback.getCredits(),
-                    feedback.isPositive(), feedback.getType(), feedback.getVisibility());
+            return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
+                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility());
 
         }
     }
