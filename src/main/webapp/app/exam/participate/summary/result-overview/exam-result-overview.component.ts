@@ -146,6 +146,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
             });
         } else {
             const errorMessage = 'Cannot scroll to exercise, could not find exercise with corresponding id';
+            console.error(errorMessage);
             captureException(new Error(errorMessage), {
                 extra: {
                     exerciseId,
