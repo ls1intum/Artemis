@@ -82,6 +82,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.export.DataExportUtil;
+import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
@@ -222,6 +223,9 @@ public class CourseTestService {
 
     @Autowired
     private ParticipantScoreScheduleService participantScoreScheduleService;
+
+    @Autowired
+    private IrisSettingsService irisSettingsService;
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
@@ -610,10 +614,27 @@ public class CourseTestService {
 
         request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
-        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(course.getId());
+        Course updatedCourse = courseRepo.findByIdForUpdateElseThrow(course.getId());
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
         assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(competencies);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
+    }
+
+    // Test
+    public void testEditCourseShouldPreserveIrisSettings() throws Exception {
+        Course course = courseUtilService.createCourseWithOrganizations();
+        course = courseRepo.save(course);
+
+        var courseWithSettings = courseRepo.findByIdElseThrow(course.getId());
+        courseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(courseWithSettings);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
+        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(null);
+        courseRepo.save(courseWithSettings);
+
+        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+
+        Course updatedCourse = courseRepo.findByIdForUpdateElseThrow(course.getId());
+        assertThat(updatedCourse.getIrisSettings()).isEqualTo(courseWithSettings.getIrisSettings());
     }
 
     // Test
@@ -1986,10 +2007,9 @@ public class CourseTestService {
     }
 
     private void extractAndAssertMissingContent(Path courseArchivePath, QuizSubmission quizSubmission, Predicate<Path> missingPathPredicate) throws IOException {
-        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        Path courseArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         var exercise = quizSubmission.getParticipation().getExercise();
         StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
-        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
         assertThat(courseArchiveDir).exists();
 
         try (var files = Files.walk(courseArchiveDir)) {
@@ -2001,13 +2021,15 @@ public class CourseTestService {
                             file -> ("participation-" + studentParticipation.getId() + "-" + studentParticipation.getParticipantIdentifier()).equals(file.getFileName().toString()))
                     .noneMatch(missingPathPredicate);
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
     private void extractAndAssertContent(Path courseArchivePath, QuizSubmission quizSubmission) throws IOException {
-        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        Path courseArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         var exercise = quizSubmission.getParticipation().getExercise();
         StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
-        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
         assertThat(courseArchiveDir).exists();
         try (var files = Files.walk(courseArchiveDir)) {
             assertThat(files.filter(file -> Files.isDirectory(file) || Files.isRegularFile(file)))
@@ -2025,6 +2047,9 @@ public class CourseTestService {
                     // short answer submission txt file
                     .anyMatch(file -> file.getFileName().toString().contains("short_answer_questions_answers") && file.getFileName().toString().endsWith(".txt"));
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
     /**
@@ -2210,11 +2235,14 @@ public class CourseTestService {
 
         // Extract the archive
         Path archivePath = exportedCourse.get();
-        zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
-        String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
 
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             return files.filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip")).toList();
+        }
+        finally {
+            org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+            org.apache.commons.io.FileUtils.delete(archivePath.toFile());
         }
     }
 
@@ -2306,13 +2334,12 @@ public class CourseTestService {
         assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
 
         // Extract the archive
-        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
-        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
 
         // We test for the filenames of the submissions since it's the easiest way.
         // We don't test the directory structure
         List<Path> filenames;
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
         }
 
@@ -2333,6 +2360,9 @@ public class CourseTestService {
                 }
             }
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(archive);
     }
 
     // Test
@@ -3228,5 +3258,4 @@ public class CourseTestService {
         final var learningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPath).as("enable learning paths triggers generation").isPresent();
     }
-
 }
