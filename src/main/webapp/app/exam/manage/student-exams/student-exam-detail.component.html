@@ -155,10 +155,9 @@
 
             <button
                 class="btn btn-danger"
-                *ngIf="course?.isAtLeastInstructor && isExamOver()"
                 type="button"
                 (click)="openConfirmationModal(toggleSubmitPopUp)"
-                [disabled]="busy"
+                [disabled]="!(course?.isAtLeastInstructor && isExamOver()) || isSaving"
                 id="adjust-submitted-state-button"
             >
                 <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
@@ -250,7 +249,7 @@
             </table>
         </div>
         <ng-template #noSession>
-            <div jhiTranslate="artemisApp.studentExamDetail.noSessions">No sessions</div>
+            <div jhiTranslate="artemisApp.studentExamDetail.noSessions" class="ms-4">No sessions</div>
         </ng-template>
     </div>
 
@@ -296,7 +295,7 @@
                             [course]="course"
                             [examId]="examId"
                             [exercise]="exercise"
-                            [busy]="busy"
+                            [busy]="isSaving"
                             [isTestRun]="isTestRun"
                             [studentExam]="studentExam"
                             [achievedPointsPerExercise]="achievedPointsPerExercise"

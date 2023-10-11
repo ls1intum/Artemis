@@ -41,7 +41,7 @@ export class StudentExamDetailComponent implements OnInit {
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
-    busy = false;
+    isSaving = false;
 
     examId: number;
 
@@ -288,7 +288,7 @@ export class StudentExamDetailComponent implements OnInit {
      * switch the 'submitted' state of the studentExam.
      */
     toggle() {
-        this.busy = true;
+        this.isSaving = true;
         if (this.studentExam.exam && this.studentExam.exam.id) {
             this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam.id, this.studentExam.id!, this.studentExam.submitted!).subscribe({
                 next: (res) => {
@@ -297,11 +297,11 @@ export class StudentExamDetailComponent implements OnInit {
                         this.studentExam.submitted = res.body.submitted;
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
-                    this.busy = false;
+                    this.isSaving = false;
                 },
                 error: () => {
                     this.alertService.error('artemisApp.studentExamDetail.togglefailed');
-                    this.busy = false;
+                    this.isSaving = false;
                 },
             });
         }
