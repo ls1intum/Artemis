@@ -475,42 +475,33 @@ export class MetisService implements OnDestroy {
                 answer.creationDate = dayjs(answer.creationDate);
             });
 
-            if (
-                (postDTO.post.conversation?.id !== undefined && postDTO.post.conversation.id === this.currentPostContextFilter.conversationId) || // is message in active conversation
-                (!postDTO.post.conversation &&
-                    this.currentPostContextFilter.courseWideContexts === undefined &&
-                    this.currentPostContextFilter.lectureIds === undefined &&
-                    this.currentPostContextFilter.exerciseIds === undefined) || // is any kind of Q&A post and no filter is set
-                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) || // is course-wide post matching current filter
-                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) || // is lecture post in current filter
-                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.exerciseIds?.includes(postDTO.post.exercise.id)) // is exercise post matching current filter
-            )
-                switch (postDTO.action) {
-                    case MetisPostAction.CREATE:
+            switch (postDTO.action) {
+                case MetisPostAction.CREATE:
+                    if (
+                        postDTO.post.conversation?.id !== undefined &&
+                        postDTO.post.conversation.id === this.currentPostContextFilter.conversationId // is message in active conversation
+                    ) {
                         // we can add the sent post to the cached posts without violating the current context filter setting
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
-                        this.addTags(postDTO.post.tags);
-                        break;
-                    case MetisPostAction.UPDATE:
-                        const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                        if (indexToUpdate > -1) {
-                            this.cachedPosts[indexToUpdate] = postDTO.post;
-                        } else {
-                            console.error(`Post with id ${postDTO.post.id} could not be updated`);
-                        }
-                        this.addTags(postDTO.post.tags);
-                        break;
-                    case MetisPostAction.DELETE:
-                        const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                        if (indexToDelete > -1) {
-                            this.cachedPosts.splice(indexToDelete, 1);
-                        } else {
-                            console.error(`Post with id ${postDTO.post.id} could not be deleted`);
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                    }
+                    this.addTags(postDTO.post.tags);
+                    break;
+                case MetisPostAction.UPDATE:
+                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                    if (indexToUpdate > -1) {
+                        this.cachedPosts[indexToUpdate] = postDTO.post;
+                    }
+                    this.addTags(postDTO.post.tags);
+                    break;
+                case MetisPostAction.DELETE:
+                    const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                    if (indexToDelete > -1) {
+                        this.cachedPosts.splice(indexToDelete, 1);
+                    }
+                    break;
+                default:
+                    break;
+            }
             // emit updated version of cachedPosts to subscribing components
             if (PageType.OVERVIEW === this.pageType) {
                 // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server, unless the postContextFilter changed
@@ -518,7 +509,8 @@ export class MetisService implements OnDestroy {
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
                 this.currentPostContextFilter.page = 0;
-                this.getFilteredPosts(this.currentPostContextFilter, false, this.currentConversation);
+                // force update only when receiving a new Q&A post
+                this.getFilteredPosts(this.currentPostContextFilter, !postDTO.post.conversation && postDTO.action === MetisPostAction.CREATE, this.currentConversation);
                 this.currentPostContextFilter.pageSize = oldPageSize;
                 this.currentPostContextFilter.page = oldPage;
             } else {
