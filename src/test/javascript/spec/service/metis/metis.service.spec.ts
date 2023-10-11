@@ -23,7 +23,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import {
     metisCourse,
     metisCoursePostsWithCourseWideContext,
@@ -549,5 +549,31 @@ describe('Metis Service', () => {
                 isCourseWide: false,
             } as ChannelDTO);
         }));
+
+        it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
+            'should not call postService.getPosts() if postContextFilter does not change and forceUpdate is false',
+            (action: MetisPostAction) => {
+                // Setup
+                const channel = 'someChannel';
+                const mockPostDTO = {
+                    post: metisPostInChannel,
+                    action,
+                };
+                const mockReceiveObservable = new Subject();
+                websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
+                const getPostsSpy = jest.spyOn(postService, 'getPosts');
+                metisService.setPageType(PageType.OVERVIEW);
+                metisService.createWebsocketSubscription(channel);
+
+                // Ensure subscribe to websocket was called
+                expect(websocketService.subscribe).toHaveBeenCalled();
+
+                // Emulate receiving a message
+                mockReceiveObservable.next(mockPostDTO);
+
+                // Ensure getPosts() was not called
+                expect(getPostsSpy).not.toHaveBeenCalled();
+            },
+        );
     });
 });

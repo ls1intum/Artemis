@@ -484,7 +484,7 @@ export class MetisService implements OnDestroy {
                 switch (postDTO.action) {
                     case MetisPostAction.CREATE:
                         // we can add the sent post to the cached posts without violating the current context filter setting
-                        this.cachedPosts.push(postDTO.post);
+                        this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                         this.addTags(postDTO.post.tags);
                         break;
                     case MetisPostAction.UPDATE:
@@ -514,7 +514,7 @@ export class MetisService implements OnDestroy {
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
                 this.currentPostContextFilter.page = 0;
-                this.getFilteredPosts(this.currentPostContextFilter, true, this.currentConversation);
+                this.getFilteredPosts(this.currentPostContextFilter, false, this.currentConversation);
                 this.currentPostContextFilter.pageSize = oldPageSize;
                 this.currentPostContextFilter.page = oldPage;
             } else {
