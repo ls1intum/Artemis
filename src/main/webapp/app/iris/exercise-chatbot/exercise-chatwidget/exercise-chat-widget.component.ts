@@ -26,7 +26,7 @@ import {
     RateMessageSuccessAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 import {
     IrisArtemisClientMessage,
     IrisClientMessage,
@@ -40,7 +40,7 @@ import {
 import { IrisMessageContent, IrisMessageTextContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
-import { IrisSessionService } from 'app/iris/session.service';
+import { IrisChatSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs/esm';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
@@ -113,7 +113,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     shouldLoadGreetingMessage = true;
     fadeState = '';
     exerciseId: number;
-    sessionService: IrisSessionService;
+    sessionService: IrisChatSessionService;
     shouldShowEmptyMessageError = false;
     currentMessageCount: number;
     rateLimit: number;
@@ -135,7 +135,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     constructor(
         private dialog: MatDialog,
         @Inject(MAT_DIALOG_DATA) public data: any,
-        private httpMessageService: IrisHttpMessageService,
+        private httpMessageService: IrisHttpChatMessageService,
         private userService: UserService,
         private router: Router,
         private sharedService: SharedService,

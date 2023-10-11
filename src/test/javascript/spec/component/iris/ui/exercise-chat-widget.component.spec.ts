@@ -11,7 +11,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
@@ -30,15 +30,15 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { IrisSessionService } from 'app/iris/session.service';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { UserService } from 'app/core/user/user.service';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
     let fixture: ComponentFixture<ExerciseChatWidgetComponent>;
     let stateStore: IrisStateStore;
-    let mockHttpMessageService: IrisHttpMessageService;
-    let mockSessionService: IrisSessionService;
+    let mockHttpMessageService: IrisHttpChatMessageService;
+    let mockSessionService: IrisChatSessionService;
     let mockDialog: MatDialog;
     let mockModalService: NgbModal;
     let mockUserService: UserService;
@@ -79,7 +79,7 @@ describe('ExerciseChatWidgetComponent', () => {
             declarations: [ExerciseChatWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, sessionService: mockSessionService } },
-                { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
+                { provide: IrisHttpChatMessageService, useValue: mockHttpMessageService },
                 { provide: NgbModal, useValue: mockModalService },
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: ActivatedRoute, useValue: {} },
