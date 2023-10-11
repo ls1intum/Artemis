@@ -29,6 +29,8 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -225,14 +227,14 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-results/test/TEST-*.xml.
-        // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
-        String testResultsPath = "/repositories/test-repository/build/test-results/test";
+        List<String> testResultsPaths = getTestResultPath(participation.getProgrammingExercise());
 
         // Get an input stream of the test result files.
-        TarArchiveInputStream testResultsTarInputStream;
+        List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
         try {
-            testResultsTarInputStream = localCIContainerService.getArchiveFromContainer(containerId, testResultsPath);
+            for (String testResultsPath : testResultsPaths) {
+                testResultsTarInputStreams.add(localCIContainerService.getArchiveFromContainer(containerId, testResultsPath));
+            }
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
@@ -250,7 +252,7 @@ public class LocalCIBuildJobExecutionService {
 
         LocalCIBuildResult buildResult;
         try {
-            buildResult = parseTestResults(testResultsTarInputStream, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+            buildResult = parseTestResults(testResultsTarInputStreams, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);
@@ -267,24 +269,56 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
+    private List<String> getTestResultPath(ProgrammingExercise programmingExercise) {
+        List<String> testResultPaths = new ArrayList<>();
+        switch (programmingExercise.getProgrammingLanguage()) {
+            case JAVA, KOTLIN -> {
+                if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
+                    if (programmingExercise.hasSequentialTestRuns()) {
+                        testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
+                        testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
+                    }
+                    else {
+                        testResultPaths.add("/repositories/test-repository/target/surefire-reports");
+                    }
+                }
+                else {
+                    if (programmingExercise.hasSequentialTestRuns()) {
+                        testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
+                        testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
+                    }
+                    else {
+                        testResultPaths.add("/repositories/test-repository/build/test-results/test");
+                    }
+                }
+                return testResultPaths;
+            }
+            default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
+        }
+    }
+
+    private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
-        while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
-
-            // Go through all tar entries that are test result files.
-            if (!isValidTestResultFile(tarEntry)) {
+        for (TarArchiveInputStream testResultsTarInputStream : testResultsTarInputStreams) {
+            if (testResultsTarInputStream == null) {
                 continue;
             }
+            while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
+                // Go through all tar entries that are test result files.
+                if (!isValidTestResultFile(tarEntry)) {
+                    continue;
+                }
 
-            // Read the contents of the tar entry as a string.
-            String xmlString = readTarEntryContent(testResultsTarInputStream);
+                // Read the contents of the tar entry as a string.
+                String xmlString = readTarEntryContent(testResultsTarInputStream);
 
-            processTestResultFile(xmlString, failedTests, successfulTests);
+                processTestResultFile(xmlString, failedTests, successfulTests);
+            }
         }
 
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
@@ -292,8 +326,11 @@ public class LocalCIBuildJobExecutionService {
     }
 
     private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
-        return !tarArchiveEntry.isDirectory() && tarArchiveEntry.getName().endsWith(".xml") && tarArchiveEntry.getName().startsWith("test/TEST-")
-                && tarArchiveEntry.getName().endsWith(".xml");
+        String name = tarArchiveEntry.getName();
+        int lastIndexOfSlash = name.lastIndexOf('/');
+        String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
+
+        return !tarArchiveEntry.isDirectory() && result.endsWith(".xml") && result.startsWith("TEST-");
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
