@@ -50,7 +50,6 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     private String getRepoName(ProgrammingExercise exercise, String userLogin) {
         return (exercise.getProjectKey() + "-" + userLogin).toUpperCase();
-
     }
 
     private String getFolderName(ProgrammingExercise exercise, String repoName) {
@@ -64,7 +63,6 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var loginName = TEST_PREFIX + "student1";
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var repoName = getRepoName(exercise, loginName);
-        // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(getFolderName(exercise, repoName), repoName, null, exercise.getProgrammingLanguage(), false,
                 List.of("test1"), List.of(), new ArrayList<>(), new ArrayList<>(), null);
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
