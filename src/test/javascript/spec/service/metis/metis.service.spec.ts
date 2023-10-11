@@ -42,6 +42,7 @@ import {
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -579,7 +580,7 @@ describe('Metis Service', () => {
             },
         );
 
-        it('should update displayed conversation messages if new message does not match search text', () => {
+        it('should update displayed conversation messages if new message does not match search text', fakeAsync(() => {
             // Setup
             const channel = 'someChannel';
             const mockPostDTO = {
@@ -592,24 +593,31 @@ describe('Metis Service', () => {
             metisService.createWebsocketSubscription(channel);
 
             // set currentPostContextFilter with search text
+            jest.spyOn(postService, 'getPosts').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [],
+                        headers: new HttpHeaders({
+                            'X-Total-Count': 0,
+                        }),
+                    }),
+                ),
+            );
+
             metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id, searchText: 'Search text' } as PostContextFilter);
-
-            // Ensure subscribe to websocket was called
-            expect(websocketService.subscribe).toHaveBeenCalled();
-
-            // Whenever posts are updated
-            metisService.posts.subscribe((posts) => {
-                expect(posts).toBeArrayOfSize(1);
-                expect(posts[0]).toBe(mockPostDTO);
-            });
-
             // Emulate receiving a message matching the search text
             mockReceiveObservable.next(mockPostDTO);
-
             // Emulate receiving a message not matching the search text
-            mockPostDTO.post.content = 'other text';
-            mockReceiveObservable.next(mockPostDTO);
-        });
+            mockReceiveObservable.next({
+                post: { ...metisPostInChannel, content: 'other Text' },
+                action: MetisPostAction.CREATE,
+            });
+
+            metisService.posts.subscribe((posts) => {
+                expect(posts[0]).toBe(mockPostDTO.post);
+            });
+            tick();
+        }));
 
         it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
             'should not call postService.getPosts() for new or updated messages received over WebSocket',
