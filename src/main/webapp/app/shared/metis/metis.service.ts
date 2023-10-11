@@ -479,9 +479,10 @@ export class MetisService implements OnDestroy {
                 case MetisPostAction.CREATE:
                     if (
                         postDTO.post.conversation?.id !== undefined &&
-                        postDTO.post.conversation.id === this.currentPostContextFilter.conversationId // is message in active conversation
+                        postDTO.post.conversation.id === this.currentPostContextFilter.conversationId &&
+                        (!this.currentPostContextFilter.searchText || postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase()))
                     ) {
-                        // we can add the sent post to the cached posts without violating the current context filter setting
+                        // we can add the received conversation message to the cached messages without violating the current context filter setting
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                     }
                     this.addTags(postDTO.post.tags);

@@ -579,6 +579,38 @@ describe('Metis Service', () => {
             },
         );
 
+        it('should update displayed conversation messages if new message does not match search text', () => {
+            // Setup
+            const channel = 'someChannel';
+            const mockPostDTO = {
+                post: { ...metisPostInChannel, content: 'search Text' },
+                action: MetisPostAction.CREATE,
+            };
+            const mockReceiveObservable = new Subject();
+            websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
+            metisService.setPageType(PageType.OVERVIEW);
+            metisService.createWebsocketSubscription(channel);
+
+            // set currentPostContextFilter with search text
+            metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id, searchText: 'Search text' } as PostContextFilter);
+
+            // Ensure subscribe to websocket was called
+            expect(websocketService.subscribe).toHaveBeenCalled();
+
+            // Whenever posts are updated
+            metisService.posts.subscribe((posts) => {
+                expect(posts).toBeArrayOfSize(1);
+                expect(posts[0]).toBe(mockPostDTO);
+            });
+
+            // Emulate receiving a message matching the search text
+            mockReceiveObservable.next(mockPostDTO);
+
+            // Emulate receiving a message not matching the search text
+            mockPostDTO.post.content = 'other text';
+            mockReceiveObservable.next(mockPostDTO);
+        });
+
         it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
             'should not call postService.getPosts() for new or updated messages received over WebSocket',
             (action: MetisPostAction) => {
