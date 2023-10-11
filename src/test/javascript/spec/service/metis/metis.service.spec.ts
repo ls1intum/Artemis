@@ -13,7 +13,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix, PageType } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -561,14 +561,17 @@ describe('Metis Service', () => {
                 };
                 const mockReceiveObservable = new Subject();
                 websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
-                const getPostsSpy = jest.spyOn(postService, 'getPosts');
                 metisService.setPageType(PageType.OVERVIEW);
                 metisService.createWebsocketSubscription(channel);
+
+                // set currentPostContextFilter appropriately
+                metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
 
                 // Ensure subscribe to websocket was called
                 expect(websocketService.subscribe).toHaveBeenCalled();
 
                 // Emulate receiving a message
+                const getPostsSpy = jest.spyOn(postService, 'getPosts');
                 mockReceiveObservable.next(mockPostDTO);
 
                 // Ensure getPosts() was not called
