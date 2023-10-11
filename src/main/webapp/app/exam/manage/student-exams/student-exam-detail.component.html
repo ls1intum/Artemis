@@ -156,8 +156,11 @@
             <button
                 class="btn btn-danger"
                 type="button"
+                *ngIf="course?.isAtLeastInstructor"
                 (click)="openConfirmationModal(toggleSubmitPopUp)"
-                [disabled]="!(course?.isAtLeastInstructor && isExamOver()) || isSaving"
+                [disabled]="!isExamOver() || isSaving"
+                [ngbTooltip]="!isExamOver() || isSaving ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
+                placement="right"
                 id="adjust-submitted-state-button"
             >
                 <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
