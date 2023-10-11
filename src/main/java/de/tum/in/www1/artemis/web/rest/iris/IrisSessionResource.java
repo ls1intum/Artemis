@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
+import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 
@@ -44,9 +45,11 @@ public class IrisSessionResource {
 
     private final IrisHealthIndicator irisHealthIndicator;
 
+    private final IrisRateLimitService irisRateLimitService;
+
     public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            IrisHealthIndicator irisHealthIndicator) {
+            IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisChatSessionRepository = irisChatSessionRepository;
@@ -54,6 +57,7 @@ public class IrisSessionResource {
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
         this.irisHealthIndicator = irisHealthIndicator;
+        this.irisRateLimitService = irisRateLimitService;
     }
 
     /**
@@ -125,7 +129,7 @@ public class IrisSessionResource {
      */
     @GetMapping("/sessions/{sessionId}/active")
     @EnforceAtLeastStudent
-    public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
+    public ResponseEntity<IrisHealthDTO> isIrisActive(@PathVariable Long sessionId) {
         var session = irisChatSessionRepository.findByIdElseThrow(sessionId);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
@@ -138,6 +142,12 @@ public class IrisSessionResource {
             specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
                     .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
         }
-        return ResponseEntity.ok(specificModelStatus);
+
+        var rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
+
+        return ResponseEntity.ok(new IrisHealthDTO(specificModelStatus, rateLimitInfo.currentMessageCount(), rateLimitInfo.rateLimit()));
+    }
+
+    public record IrisHealthDTO(boolean active, int currentMessageCount, int rateLimit) {
     }
 }
