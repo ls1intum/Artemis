@@ -252,6 +252,7 @@ jobs:
   deploy:
     needs: [ process-matrix ]
     runs-on: ubuntu-latest
+    concurrency: test-servers-deploy
     strategy:
       fail-fast: false
       matrix:
@@ -355,7 +356,6 @@ jobs:
         run: |
           for host in $DEPLOYMENT_HOSTS; do
             ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $GITHUB_HEAD_REF -d $DEPLOYMENT_FOLDER -y
-            sleep 20
           done
 
       - name: Add "lock:${{ matrix.environment }}" label
@@ -378,7 +378,7 @@ jobs:
             NAME: ${{ matrix.label-identifier }}
             LABEL: ${{ matrix.environment }}
             STATUS: ${{ github.event.pull_request.head.ref }}
-            COLOR: green
+            COLOR: red
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Check that the build job has run successfully before deploying
