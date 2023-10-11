@@ -379,24 +379,28 @@ describe('StudentExamDetailComponent', () => {
             setupComponentToDisplayExamSubmittedButton();
         });
 
-        it('should be displayed when individual working time is over', () => {
+        const ADJUST_SUBMITTED_STATE_BUTTON_ID = '#adjust-submitted-state-button';
+
+        it('should NOT be disabled when individual working time is over', () => {
             const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(true);
 
             studentExamDetailComponentFixture.detectChanges();
 
-            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector('#adjust-submitted-state-button');
+            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);
             expect(buttonElement).toBeTruthy();
             expect(examIsOverSpy).toHaveBeenCalled();
+            expect(buttonElement.disabled).toBeFalse();
         });
 
-        it('should NOT be displayed when individual working time is NOT over', () => {
+        it('should be disabled when individual working time is NOT over', () => {
             const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(false);
 
             studentExamDetailComponentFixture.detectChanges();
 
-            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector('#adjust-submitted-state-button');
+            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);
+            expect(buttonElement).toBeTruthy();
             expect(examIsOverSpy).toHaveBeenCalled();
-            expect(buttonElement).not.toBeTruthy();
+            expect(buttonElement.disabled).toBeTrue();
         });
     });
 
