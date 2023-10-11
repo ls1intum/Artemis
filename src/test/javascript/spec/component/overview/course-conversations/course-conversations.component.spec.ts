@@ -172,10 +172,10 @@ examples.forEach((activeConversation) => {
         });
 
         it('should accept code of conduct', () => {
-            const spy = jest.spyOn(component.metisConversationService, 'acceptCodeOfConduct');
-            component.ngOnInit();
+            const metisSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
+            fixture.detectChanges();
             component.acceptCodeOfConduct();
-            expect(spy).toHaveBeenCalledOnce();
+            expect(metisSpy).toHaveBeenCalledOnce();
         });
     });
 });

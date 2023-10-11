@@ -290,7 +290,7 @@ examples.forEach((activeConversation) => {
             }));
 
             it('should open code of conduct', () => {
-                const metisSpy = jest.spyOn(component.metisConversationService, 'setCodeOfConduct');
+                const metisSpy = jest.spyOn(metisConversationService, 'setCodeOfConduct');
                 component.openCodeOfConduct();
                 expect(metisSpy).toHaveBeenCalledOnce();
             });
