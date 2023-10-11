@@ -176,17 +176,13 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testProjectTypeIsNull() {
-        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(null);
         programmingExerciseRepository.save(programmingExercise);
 
-        // Should throw an exception
-        assertThatExceptionOfType(LocalCIException.class)
-                .isThrownBy(() -> localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()))
-                .withMessageContaining("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
-
+        localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
     }
 
     @Test
