@@ -55,13 +55,7 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockExercisePlanComponent, instructions: 'I will add a QuickSort algorithm task.' };
             const expected = returnedFromService;
             service
-                .updateComponentPlan(
-                    mockPlanConversation.id,
-                    mockServerPlanMessage.id,
-                    mockMessagePlanContent.id!,
-                    mockExercisePlanComponent.id!,
-                    'I will add a QuickSort algorithm task.',
-                )
+                .updateComponentPlan(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!, mockExercisePlanComponent.id!, returnedFromService)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });

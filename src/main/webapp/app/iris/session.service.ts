@@ -12,17 +12,17 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
  */
 @Injectable()
-export class IrisSessionService {
+export abstract class IrisSessionService {
     /**
      * Creates an instance of IrisSessionService.
      * @param stateStore The IrisStateStore for managing the state of the application.
      * @param httpSessionService The IrisHttpSessionService for HTTP operations related to sessions.
      * @param httpMessageService The IrisHttpMessageService for HTTP operations related to messages.
      */
-    constructor(
-        private readonly stateStore: IrisStateStore,
-        private httpSessionService: IrisHttpSessionService,
-        private httpMessageService: IrisHttpMessageService,
+    protected constructor(
+        protected readonly stateStore: IrisStateStore,
+        protected httpSessionService: IrisHttpSessionService,
+        protected httpMessageService: IrisHttpMessageService,
     ) {}
 
     /**

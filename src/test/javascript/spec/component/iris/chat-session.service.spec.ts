@@ -3,30 +3,30 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { IrisHttpSessionService } from 'app/iris/http-session.service';
-import { IrisSessionService } from 'app/iris/session.service';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { of, throwError } from 'rxjs';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { mockClientMessage, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
+import { IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
+import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 
-describe('IrisSessionService', () => {
-    let irisSessionService: IrisSessionService;
+describe('IrisChatSessionService', () => {
+    let irisSessionService: IrisChatSessionService;
     let stateStore: IrisStateStore;
-    let mockHttpSessionService: IrisHttpSessionService;
-    let mockHttpMessageService: IrisHttpMessageService;
+    let mockHttpSessionService: IrisHttpChatSessionService;
+    let mockHttpMessageService: IrisHttpChatMessageService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [IrisStateStore, IrisHttpSessionService, IrisHttpMessageService, IrisSessionService],
+            providers: [IrisStateStore, IrisHttpChatSessionService, IrisHttpChatMessageService, IrisChatSessionService],
         });
         stateStore = TestBed.inject(IrisStateStore);
-        irisSessionService = TestBed.inject(IrisSessionService);
-        mockHttpSessionService = TestBed.inject(IrisHttpSessionService);
-        mockHttpMessageService = TestBed.inject(IrisHttpMessageService);
+        irisSessionService = TestBed.inject(IrisChatSessionService);
+        mockHttpSessionService = TestBed.inject(IrisHttpChatSessionService);
+        mockHttpMessageService = TestBed.inject(IrisHttpChatMessageService);
     });
 
     afterEach(() => {
