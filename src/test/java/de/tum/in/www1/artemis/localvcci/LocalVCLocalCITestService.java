@@ -117,8 +117,8 @@ public class LocalVCLocalCITestService {
      * @param dockerClient    the DockerClient to mock.
      * @param testResultsPath the path to the directory containing the test results in the resources folder.
      */
-    public void mockTestResults(DockerClient dockerClient, Path testResultsPath) throws IOException {
-        mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", createMapFromTestResultsFolder(testResultsPath));
+    public void mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromTestResultsFolder(mockedTestResultsPath));
     }
 
     /**
