@@ -30,7 +30,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     sendRequest(): void {
         const state = this.route.snapshot.queryParamMap.get('state');
         const idToken = this.route.snapshot.queryParamMap.get('id_token');
-        const auth = this.route.snapshot.queryParamMap.get('authenticatedUser');
+        const username = this.route.snapshot.queryParamMap.get('authenticatedUser');
 
         if (!state || !idToken) {
             console.error('Required parameter for LTI launch missing');
@@ -49,7 +49,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         }
 
         let requestBody = new HttpParams().set('state', state).set('id_token', idToken);
-        if (auth) requestBody = requestBody.set('authenticatedUser', auth);
+        if (username) requestBody = requestBody.set('authenticatedUser', username);
 
         this.http
             .post('api/public/lti13/auth-login', requestBody.toString(), {
@@ -69,7 +69,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                 },
                 error: (error) => {
                     if (error.status === 401) {
-                        if (this.accountService.isAuthenticated() && this.accountService.userIdentity?.login === auth) {
+                        if (this.accountService.isAuthenticated() && this.accountService.userIdentity?.login === username) {
                             this.sendRequest();
                         } else {
                             // Subscribe to the authentication state to know when the user logs in
