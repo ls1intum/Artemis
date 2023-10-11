@@ -16,7 +16,7 @@ export class LearningPathComponent implements OnInit {
     @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
 
     isLoading = false;
-    path?: NgxLearningPathNode[];
+    path: NgxLearningPathNode[] = [];
     highlightedNode?: NgxLearningPathNode;
 
     // Icons
@@ -39,7 +39,6 @@ export class LearningPathComponent implements OnInit {
         }
         this.isLoading = true;
         this.learningPathService.getLearningPathNgxPath(this.learningPathId).subscribe((ngxLearningPathResponse) => {
-            this.path = [];
             const body = ngxLearningPathResponse.body!;
             this.learningPathStorageService.getRecommendations(this.learningPathId)?.forEach((entry) => {
                 let node;
