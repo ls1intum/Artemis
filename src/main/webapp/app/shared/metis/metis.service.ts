@@ -502,19 +502,18 @@ export class MetisService implements OnDestroy {
                 default:
                     break;
             }
-            // emit updated version of cachedPosts to subscribing components
+            // emit updated version of cachedPosts to subscribing components...
             if (PageType.OVERVIEW === this.pageType) {
-                // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server, unless the postContextFilter changed
                 const oldPage = this.currentPostContextFilter.page;
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
                 this.currentPostContextFilter.page = 0;
-                // force update only when receiving a new Q&A post
+                // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
                 this.getFilteredPosts(this.currentPostContextFilter, !postDTO.post.conversation && postDTO.action === MetisPostAction.CREATE, this.currentConversation);
                 this.currentPostContextFilter.pageSize = oldPageSize;
                 this.currentPostContextFilter.page = oldPage;
             } else {
-                // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
+                // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
                 this.getFilteredPosts(this.currentPostContextFilter, false);
             }
         });
