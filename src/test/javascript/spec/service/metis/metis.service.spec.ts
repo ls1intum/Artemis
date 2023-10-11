@@ -551,7 +551,7 @@ describe('Metis Service', () => {
         }));
 
         it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
-            'should not call postService.getPosts() if postContextFilter does not change and forceUpdate is false',
+            'should not call postService.getPosts() for new or updated messages received over WebSocket',
             (action: MetisPostAction) => {
                 // Setup
                 const channel = 'someChannel';
