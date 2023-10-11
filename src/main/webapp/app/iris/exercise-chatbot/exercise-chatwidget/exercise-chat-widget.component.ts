@@ -40,7 +40,7 @@ import {
 import { IrisMessageContent, IrisMessageTextContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
-import { IrisChatSessionService } from 'app/iris/session.service';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs/esm';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
