@@ -309,8 +309,14 @@ public class Lti13Service {
     public void authenticateUserFromRequestParam(HttpServletRequest request) {
         var username = request.getParameter("authenticatedUser");
         if (username != null) {
-            var user = userRepository.findOneByLogin(username).orElseThrow();
-            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
+            var user = userRepository.findOneByLogin(username);
+            if (user.isEmpty()) {
+                log.error("Cannot find the user for username {}", username);
+            }
+            else {
+                SecurityContextHolder.getContext()
+                        .setAuthentication(new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), SIMPLE_USER_LIST_AUTHORITY));
+            }
         }
     }
 }
