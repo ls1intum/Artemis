@@ -37,6 +37,21 @@ class ConductAgreementServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
+    void fetchConductAgreementIfCodeOfConductIsNullOrEmpty() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setCourseInformationSharingMessagingCodeOfConduct(null);
+        courseRepository.save(course);
+        var resultIfCodeOfConductIsNull = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
+        assertThat(resultIfCodeOfConductIsNull).isTrue();
+
+        course.setCourseInformationSharingMessagingCodeOfConduct("");
+        courseRepository.save(course);
+        var resultIfCodeOfConductIsEmpty = conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(user, course);
+        assertThat(resultIfCodeOfConductIsEmpty).isTrue();
+    }
+
+    @Test
     void fetchAndAgreeAndResetConductAgreement() {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "student", "tutor", "editor", "instructor");

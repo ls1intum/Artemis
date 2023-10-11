@@ -289,6 +289,12 @@ examples.forEach((activeConversation) => {
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
             }));
 
+            it('should open code of conduct', () => {
+                const metisSpy = jest.spyOn(component.metisConversationService, 'setCodeOfConduct');
+                component.openCodeOfConduct();
+                expect(metisSpy).toHaveBeenCalledOnce();
+            });
+
             function createConversationDialogTest(modalReturnValue: any, dialog: Type<AbstractDialogComponent>, buttonId: string) {
                 fixture.detectChanges();
                 tick(301);

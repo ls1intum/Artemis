@@ -688,3 +688,51 @@ describe('Course Management Update Component', () => {
         });
     });
 });
+
+describe('Course Management Update Component Create', () => {
+    let component: CourseUpdateComponent;
+    let fixture: ComponentFixture<CourseUpdateComponent>;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(TranslateService),
+                MockProvider(LoadImageService),
+            ],
+            declarations: [
+                CourseUpdateComponent,
+                MarkdownEditorStubComponent,
+                MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(FeatureToggleHideDirective),
+                MockDirective(HasAnyAuthorityDirective),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveKeysPipe),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CourseUpdateComponent);
+                component = fixture.componentInstance;
+            });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should get code of conduct template if a new course is created', () => {
+        const codeOfConduct = 'Code of Conduct';
+        const httpStub = jest.spyOn(component.fileService.http, 'get').mockReturnValue(of(new HttpResponse({ body: codeOfConduct })));
+        fixture.detectChanges();
+        expect(httpStub).toHaveBeenCalledOnce();
+        expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
+    });
+});
