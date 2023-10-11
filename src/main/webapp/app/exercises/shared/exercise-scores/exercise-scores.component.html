@@ -348,7 +348,7 @@
                                                 !value.results[correctionRound].completionDate &&
                                                 value.results[correctionRound].assessmentType !== AssessmentType.AUTOMATIC
                                             "
-                                            (click)="cancelAssessment(value.results[correctionRound])"
+                                            (click)="cancelAssessment(value.results[correctionRound], value)"
                                             [disabled]="isLoading"
                                             class="btn btn-danger btn-sm mb-1"
                                         >

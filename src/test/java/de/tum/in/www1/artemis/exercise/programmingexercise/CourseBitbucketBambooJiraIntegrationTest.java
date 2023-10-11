@@ -173,6 +173,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEditCourseShouldPreserveIrisSettings() throws Exception {
+        courseTestService.testEditCourseShouldPreserveIrisSettings();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseGroups() throws Exception {
         bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("instructor");
@@ -689,7 +695,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         courseTestService.testArchiveCourseWithQuizExerciseCannotExportExerciseDetails();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("provideFileNameAndErrorMsg")
     void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String dynamicFilenamePart, String dynamicErrorMsgPart) throws Exception {
