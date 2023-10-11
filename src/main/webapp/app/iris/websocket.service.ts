@@ -13,32 +13,6 @@ import { IrisMessage, isServerSentMessage, isStudentSentMessage } from 'app/enti
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
- * The IrisWebsocketMessageType defines the type of message sent over the websocket.
- */
-export enum IrisWebsocketMessageType {
-    MESSAGE = 'MESSAGE',
-    ERROR = 'ERROR',
-    CHANGES = 'CHANGES',
-}
-
-export class IrisRateLimitInformation {
-    currentMessageCount: number;
-    rateLimit: number;
-}
-
-/**
- * The IrisWebsocketDTO is the data transfer object for messages sent over the websocket.
- * It either contains an IrisMessage or an error message.
- */
-export class IrisWebsocketDTO {
-    type: IrisWebsocketMessageType;
-    message?: IrisMessage;
-    errorTranslationKey?: IrisErrorMessageKey;
-    translationParams?: Map<string, any>;
-    rateLimitInfo?: IrisRateLimitInformation;
-}
-
-/**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
  */
 @Injectable()
@@ -97,26 +71,12 @@ export abstract class IrisWebsocketService implements OnDestroy {
 
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleResponse);
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleWebsocketResponse);
     }
 
-    private handleResponse(websocketResponse: IrisWebsocketDTO) {
-        if (websocketResponse.rateLimitInfo) {
-            this.handleRateLimitInfo(websocketResponse.rateLimitInfo);
-        }
-        switch (websocketResponse.type) {
-            case IrisWebsocketMessageType.MESSAGE: this.handleMessage(websocketResponse); break;
-            case IrisWebsocketMessageType.CHANGES: this.handleChanges(websocketResponse); break;
-            case IrisWebsocketMessageType.ERROR: this.handleError(websocketResponse); break;
-        }
-    }
+    protected abstract handleWebsocketResponse(response: any): void;
 
-    protected handleRateLimitInfo(_rateLimitInfo: IrisRateLimitInformation) {
-
-    }
-
-    protected handleMessage(websocketResponse: IrisWebsocketDTO) {
-        const message = websocketResponse.message;
+    protected handleMessage(message?: IrisMessage) {
         if (!message) return;
         if (isStudentSentMessage(message)) {
             this.stateStore.dispatch(
@@ -133,16 +93,11 @@ export abstract class IrisWebsocketService implements OnDestroy {
         }
     }
 
-    protected handleChanges(_websocketResponse: IrisWebsocketDTO) {
-        // Do nothing
-    }
-
-    protected handleError(websocketResponse: IrisWebsocketDTO) {
-        if (!websocketResponse.errorTranslationKey) {
+    protected handleError(errorTranslationKey?: IrisErrorMessageKey, translationParams?: Map<string, any>) {
+        if (!errorTranslationKey) {
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
         } else {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(websocketResponse.errorTranslationKey, websocketResponse.translationParams));
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(errorTranslationKey, translationParams));
         }
     }
-
 }

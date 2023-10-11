@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IrisArtemisClientMessage, IrisClientMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
-import { IrisWebsocketDTO, IrisWebsocketMessageType } from 'app/iris/websocket.service';
+import { IrisChatWebsocketDTO, IrisChatWebsocketMessageType } from 'app/iris/chat-websocket.service';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 const map = new Map<string, any>();
@@ -31,9 +31,9 @@ export const mockArtemisClientMessage = {
 } as IrisArtemisClientMessage;
 
 export const mockWebsocketMessage = {
-    type: IrisWebsocketMessageType.MESSAGE,
+    type: IrisChatWebsocketMessageType.MESSAGE,
     message: mockServerMessage,
-} as IrisWebsocketDTO;
+} as IrisChatWebsocketDTO;
 
 export const mockClientMessage = {
     sender: IrisSender.USER,
@@ -42,24 +42,24 @@ export const mockClientMessage = {
 } as IrisClientMessage;
 
 export const mockWebsocketServerMessage = {
-    type: IrisWebsocketMessageType.MESSAGE,
+    type: IrisChatWebsocketMessageType.MESSAGE,
     message: mockServerMessage,
-} as IrisWebsocketDTO;
+} as IrisChatWebsocketDTO;
 
 export const mockWebsocketClientMessage = {
-    type: IrisWebsocketMessageType.MESSAGE,
+    type: IrisChatWebsocketMessageType.MESSAGE,
     message: mockClientMessage,
-} as IrisWebsocketDTO;
+} as IrisChatWebsocketDTO;
 
 export const mockWebsocketKnownError = {
-    type: IrisWebsocketMessageType.ERROR,
+    type: IrisChatWebsocketMessageType.ERROR,
     errorTranslationKey: IrisErrorMessageKey.NO_MODEL_AVAILABLE,
     translationParams: map,
-} as IrisWebsocketDTO;
+} as IrisChatWebsocketDTO;
 
 export const mockWebsocketUnknownError = {
-    type: IrisWebsocketMessageType.ERROR,
-} as IrisWebsocketDTO;
+    type: IrisChatWebsocketMessageType.ERROR,
+} as IrisChatWebsocketDTO;
 
 export const mockConversation = {
     id: 1,
