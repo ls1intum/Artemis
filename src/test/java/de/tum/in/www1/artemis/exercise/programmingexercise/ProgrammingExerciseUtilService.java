@@ -104,6 +104,7 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
+    // TODO
 
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
