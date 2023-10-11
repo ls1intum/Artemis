@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, getConfidence, getIcon, getIconTooltip, getMastery, getProgress } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
@@ -18,6 +18,9 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     @Output() competencyProgressChange = new EventEmitter<CompetencyProgress>();
 
     isLoading = false;
+
+    protected readonly getIcon = getIcon;
+    protected readonly getIconTooltip = getIconTooltip;
 
     constructor(
         private competencyService: CompetencyService,
@@ -48,18 +51,14 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     }
 
     get progress(): number {
-        return Math.round(this.competencyProgress?.progress ?? 0);
+        return getProgress(this.competencyProgress!);
     }
 
     get confidence(): number {
-        return Math.min(Math.round(((this.competencyProgress?.confidence ?? 0) / (this.competency?.masteryThreshold ?? 100)) * 100), 100);
+        return getConfidence(this.competency!, this.competencyProgress!);
     }
 
     get mastery(): number {
-        const weight = 2 / 3;
-        return Math.round((1 - weight) * this.progress + weight * this.confidence);
+        return getMastery(this.competency!, this.competencyProgress!);
     }
-
-    protected readonly getIcon = getIcon;
-    protected readonly getIconTooltip = getIconTooltip;
 }

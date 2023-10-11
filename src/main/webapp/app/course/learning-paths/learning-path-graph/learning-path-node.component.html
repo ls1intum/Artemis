@@ -9,13 +9,21 @@
 </div>
 <ng-template #noTask>
     <div
-        class="node-s node-icon-container"
+        class="node-icon-container"
+        [class.node-s]="node.type === NodeType.COMPETENCY_END"
         *ngIf="node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END; else noCompetency"
         [jhiStickyPopover]="popContentCompetency"
         placement="right"
         triggers="manual"
     >
-        <fa-icon id="competency" [icon]="getIcon(node)"></fa-icon>
+        <jhi-competency-rings
+            class="m-1"
+            *ngIf="node.type === NodeType.COMPETENCY_START"
+            [progress]="progress"
+            [confidence]="confidence"
+            [mastery]="mastery"
+        ></jhi-competency-rings>
+        <fa-icon *ngIf="node.type === NodeType.COMPETENCY_END" id="competency" [icon]="getIcon(node)"></fa-icon>
     </div>
 </ng-template>
 

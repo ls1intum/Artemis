@@ -4,7 +4,7 @@ import { Layout } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/competency/learning-path.model';
+import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 
 @Component({
     selector: 'jhi-learning-path-graph',
@@ -89,12 +89,23 @@ export class LearningPathGraphComponent implements OnInit {
     loadGraphRepresentation(render: boolean) {
         this.isLoading = true;
         this.learningPathService.getLearningPathNgxGraph(this.learningPathId).subscribe((ngxLearningPathResponse) => {
+            ngxLearningPathResponse.body!.nodes.forEach((node) => {
+                this.defineNodeDimensions(node);
+            });
             this.ngxLearningPath = ngxLearningPathResponse.body!;
             if (render) {
                 this.update$.next(true);
             }
             this.isLoading = false;
         });
+    }
+
+    defineNodeDimensions(node: NgxLearningPathNode) {
+        if (node.type === NodeType.COMPETENCY_START) {
+            node.dimension = { width: 75, height: 75 };
+        } else {
+            node.dimension = { width: 50, height: 50 };
+        }
     }
 
     onResize() {
