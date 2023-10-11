@@ -477,13 +477,13 @@ export class MetisService implements OnDestroy {
 
             if (
                 (postDTO.post.conversation?.id !== undefined && postDTO.post.conversation.id === this.currentPostContextFilter.conversationId) || // is message in active conversation
-                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) || // is course-wide post matching current filter
-                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) || // is lecture post in current filter
-                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.exerciseIds?.includes(postDTO.post.exercise.id)) || // is exercise post matching current filter
                 (!postDTO.post.conversation &&
                     this.currentPostContextFilter.courseWideContexts === undefined &&
                     this.currentPostContextFilter.lectureIds === undefined &&
-                    this.currentPostContextFilter.exerciseIds === undefined) // is any kind of Q&A post and no filter is set
+                    this.currentPostContextFilter.exerciseIds === undefined) || // is any kind of Q&A post and no filter is set
+                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) || // is course-wide post matching current filter
+                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) || // is lecture post in current filter
+                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.exerciseIds?.includes(postDTO.post.exercise.id)) // is exercise post matching current filter
             )
                 switch (postDTO.action) {
                     case MetisPostAction.CREATE:
