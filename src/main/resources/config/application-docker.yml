@@ -7,6 +7,14 @@ artemis:
     submission-export-path: /opt/artemis/data/exports
     legal-path: /opt/artemis/data/legal
 
+    version-control:
+        local-vcs-repo-path: /opt/artemis/data/local-vcs-repos
+
+    continuous-integration:
+        local-cis-build-scripts-path: /opt/artemis/data/local-ci-scripts
+        # The Docker connection URI to be used by docker-java to connect to the system's Docker installation. Use unix:///var/run/docker.sock for Linux and tcp://host.docker.internal:2375 for Windows.
+        docker-connection-uri: unix:///var/run/docker.sock
+
 spring:
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
