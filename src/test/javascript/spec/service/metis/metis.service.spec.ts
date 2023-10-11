@@ -592,7 +592,6 @@ describe('Metis Service', () => {
             metisService.setPageType(PageType.OVERVIEW);
             metisService.createWebsocketSubscription(channel);
 
-            // set currentPostContextFilter with search text
             jest.spyOn(postService, 'getPosts').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -604,7 +603,9 @@ describe('Metis Service', () => {
                 ),
             );
 
+            // set currentPostContextFilter with search text
             metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id, searchText: 'Search text' } as PostContextFilter);
+
             // Emulate receiving a message matching the search text
             mockReceiveObservable.next(mockPostDTO);
             // Emulate receiving a message not matching the search text
