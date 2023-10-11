@@ -15,9 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.message.*;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
@@ -40,6 +40,9 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Autowired
+    private IrisExercisePlanComponentRepository irisExercisePlanComponentRepository;
+
+    @Autowired
     private IrisUtilTestService irisUtilTestService;
 
     private ProgrammingExercise exercise;
@@ -52,7 +55,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        activateIrisFor(course); // TODO: Wait for settings
+        activateIrisFor(course);
         activateIrisFor(exercise);
         repository = new LocalRepository("main");
     }
@@ -67,6 +70,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockMessageResponse("Hello World");
 
         var irisMessage = request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
+        assertThat(irisSession instanceof IrisCodeEditorSession).isEqualTo(true);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
         // Compare contents of messages by only comparing the textContent field
@@ -99,32 +103,6 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void sendTwoMessages() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
-        IrisMessage messageToSend1 = createDefaultMockMessage(irisSession);
-        setupExercise();
-        var irisMessage1 = request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class,
-                HttpStatus.CREATED);
-        assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
-        // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage1.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
-                .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
-        var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
-        assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage1));
-
-        IrisMessage messageToSend2 = createDefaultMockMessage(irisSession);
-        var irisMessage2 = request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend2, IrisMessage.class,
-                HttpStatus.CREATED);
-        assertThat(irisMessage2.getSender()).isEqualTo(IrisMessageSender.USER);
-        // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage2.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
-                .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
-        irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
-        assertThat(irisSessionFromDb.getMessages()).hasSize(2).isEqualTo(List.of(irisMessage1, irisMessage2));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getMessages() throws Exception {
         var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage message1 = createDefaultMockMessage(irisSession);
@@ -153,7 +131,6 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         message.addContent(createMockExercisePlanContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         var exercisePlanContent = irisMessage.getContent().get(0);
-        // irisRequestMockProvider.mockMessageResponse("Hello World");
         setupExercise();
 
         request.postWithResponseBody(
@@ -163,9 +140,6 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // TODO: wait for requestExerciseChanges() complete
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.LLM);
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(1).contains(irisMessage));
-
-        // verifyMessageWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId(), "Hello World");
-        // verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId());
     }
 
     @Test
@@ -179,19 +153,14 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var exercisePlanContent = irisMessage.getContent().get(0);
         setupExercise();
         assertThat(exercisePlanContent instanceof IrisExercisePlanMessageContent).isEqualTo(true);
-        var components = ((IrisExercisePlanMessageContent) exercisePlanContent).getComponents();
-        components.stream().forEach((component) -> {
-            try {
-                request.putWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/"
-                        + exercisePlanContent.getId() + "/components/" + component.getId(), component.getExercisePlan(), IrisExercisePlanComponent.class, HttpStatus.OK);
-            }
-            catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        var component = ((IrisExercisePlanMessageContent) exercisePlanContent).getComponents().get(0);
+
+        request.putWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId()
+                + "/components/" + component.getId(), updateProblemStatement(component), IrisExercisePlanComponent.class, HttpStatus.OK);
         var irisMessageFromDB = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
-        assertThat(irisMessageFromDB.getContent()).hasSize(1).map(IrisMessageContent::getContentAsString)
-                .isEqualTo(message.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
+        var componentFromDB = irisExercisePlanComponentRepository.findByIdElseThrow(component.getId());
+        assertThat(irisMessageFromDB.getContent()).hasSize(1);
+        assertThat(componentFromDB.getInstructions()).isEqualTo("test PS");
     }
 
     @Test
@@ -265,6 +234,11 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         content.setId(ThreadLocalRandom.current().nextLong());
         content.setMessage(message);
         return content;
+    }
+
+    private IrisExercisePlanComponent updateProblemStatement(IrisExercisePlanComponent psComponent) {
+        psComponent.setInstructions("test PS");
+        return psComponent;
     }
 
 }

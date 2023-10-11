@@ -129,18 +129,18 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
     /**
      * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}: Set the component instruction of the ExercisePlanComponent
      *
-     * @param sessionId   of the session
-     * @param messageId   of the message
-     * @param contentId   of the content
-     * @param componentId of the exercisePlanComponent
-     * @param plan        to set for the corresponding component, if cancel the plan of the component, the value would be null
+     * @param sessionId           of the session
+     * @param messageId           of the message
+     * @param contentId           of the content
+     * @param componentId         of the exercisePlanComponent
+     * @param updatePlanComponent to set for the corresponding component
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with status {@code 404 (Not Found)} if the component could not
      *         be found.
      */
     @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}" })
     @EnforceAtLeastEditor
     public ResponseEntity<IrisExercisePlanComponent> updateComponentPlan(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
-            @PathVariable Long componentId, @RequestBody String plan) {
+            @PathVariable Long componentId, @RequestBody IrisExercisePlanComponent updatePlanComponent) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
         var content = irisMessageContentRepository.findByIdElseThrow(contentId);
@@ -156,9 +156,12 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
         if (content instanceof IrisExercisePlanMessageContent) {
             var exercisePlanId = component.getExercisePlan().getId();
             if (!Objects.equals(exercisePlanId, contentId)) {
-                throw new ConflictException("The component plan does not belong to the exercise plan", "ExercisePlanComponent", "irisComponentPlanExercisePlanConflict");
+                throw new ConflictException("The component plan does not belong to the exercise plan", "IrisExercisePlanComponent", "irisComponentPlanExercisePlanConflict");
             }
-            component.setInstructions(plan);
+            if (!Objects.equals(component.getId(), updatePlanComponent.getId())) {
+                throw new ConflictException("The component is inconsistency", "ExerciseComponent", "irisExerciseComponentConflict");
+            }
+            component.setInstructions(updatePlanComponent.getInstructions());
             var savedExercisePlanComponent = irisExercisePlanComponentRepository.save(component);
             return ResponseEntity.ok(savedExercisePlanComponent);
         }

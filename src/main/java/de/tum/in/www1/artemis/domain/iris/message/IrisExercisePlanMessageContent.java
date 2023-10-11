@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisExercisePlanMessageContent extends IrisMessageContent implements Iterator<IrisExercisePlanComponent> {
 
-    @OneToMany(mappedBy = "exercisePlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "exercisePlan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<IrisExercisePlanComponent> components;
 
     @Column(name = "current_component_index")
