@@ -108,7 +108,7 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Adds grading instructions from three different grading criteria to an exercise. One criterion is empty.
+     * Adds grading instructions from three different grading criteria to an exercise. One criterion does not have a title.
      *
      * @param exercise The exercise to which the grading instructions should be added.
      * @return The list of grading criteria.
