@@ -37,6 +37,7 @@ import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -692,10 +693,19 @@ describe('Course Management Update Component', () => {
 describe('Course Management Update Component Create', () => {
     let component: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [
+                ArtemisTestModule,
+                HttpClientTestingModule,
+                MockModule(ReactiveFormsModule),
+                MockModule(FormsModule),
+                ImageCropperModule,
+                MockDirective(NgbTypeahead),
+                MockModule(NgbTooltipModule),
+            ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -721,6 +731,7 @@ describe('Course Management Update Component Create', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 component = fixture.componentInstance;
+                httpMock = TestBed.inject(HttpTestingController);
             });
     });
 
@@ -729,10 +740,10 @@ describe('Course Management Update Component Create', () => {
     });
 
     it('should get code of conduct template if a new course is created', () => {
-        const codeOfConduct = 'Code of Conduct';
-        const httpStub = jest.spyOn(component.fileService.http, 'get').mockReturnValue(of(new HttpResponse({ body: codeOfConduct })));
         fixture.detectChanges();
-        expect(httpStub).toHaveBeenCalledOnce();
+        const req = httpMock.expectOne({ method: 'GET' });
+        const codeOfConduct = 'Code of Conduct';
+        req.flush(codeOfConduct);
         expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
     });
 });

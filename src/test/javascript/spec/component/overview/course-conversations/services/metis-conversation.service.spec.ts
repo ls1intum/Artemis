@@ -346,14 +346,14 @@ describe('MetisConversationService', () => {
     });
 
     it('should check and accept code of conduct', () => {
-        const checkStub = jest.spyOn(metisConversationService.conversationService, 'checkIsCodeOfConductAccepted').mockReturnValue(of(new HttpResponse<boolean>({ body: false })));
+        const checkStub = jest.spyOn(conversationService, 'checkIsCodeOfConductAccepted').mockReturnValue(of(new HttpResponse<boolean>({ body: false })));
         metisConversationService.checkIsCodeOfConductAccepted(course);
         metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
             expect(isCodeOfConductAccepted).toBeFalse();
         });
         expect(checkStub).toHaveBeenCalledOnce();
 
-        const conversationServiceStub = jest.spyOn(metisConversationService.conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
+        const conversationServiceStub = jest.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
         metisConversationService.acceptCodeOfConduct(course);
         metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
             expect(isCodeOfConductAccepted).toBeTrue();
