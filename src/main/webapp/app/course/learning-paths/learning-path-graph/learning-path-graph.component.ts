@@ -25,6 +25,7 @@ export class LearningPathGraphComponent implements OnInit {
     private _panningEnabled = false;
     private _zoomEnabled = false;
     private _panOnZoom = false;
+    private _showMiniMap = false;
 
     update$: Subject<boolean> = new Subject<boolean>();
     center$: Subject<boolean> = new Subject<boolean>();
@@ -71,6 +72,14 @@ export class LearningPathGraphComponent implements OnInit {
 
     get panOnZoom() {
         return this._panOnZoom;
+    }
+
+    @Input() set showMiniMap(value) {
+        this._showMiniMap = value;
+    }
+
+    get showMiniMap() {
+        return this._showMiniMap;
     }
 
     refreshData() {
