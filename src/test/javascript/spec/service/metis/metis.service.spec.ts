@@ -575,5 +575,35 @@ describe('Metis Service', () => {
                 expect(getPostsSpy).not.toHaveBeenCalled();
             },
         );
+
+        it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
+            'should not call postService.getPosts() for new or updated messages received over WebSocket',
+            (action: MetisPostAction) => {
+                // Setup
+                const channel = 'someChannel';
+                const mockPostDTO = {
+                    post: metisLecturePosts[0],
+                    action,
+                };
+                const mockReceiveObservable = new Subject();
+                websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
+                const getPostsSpy = jest.spyOn(postService, 'getPosts');
+                metisService.setPageType(PageType.OVERVIEW);
+                metisService.createWebsocketSubscription(channel);
+
+                // Ensure subscribe to websocket was called
+                expect(websocketService.subscribe).toHaveBeenCalled();
+
+                // Emulate receiving a post
+                mockReceiveObservable.next(mockPostDTO);
+
+                // Ensure getPosts() was not called
+                if (action === MetisPostAction.CREATE) {
+                    expect(getPostsSpy).toHaveBeenCalledOnce();
+                } else {
+                    expect(getPostsSpy).not.toHaveBeenCalled();
+                }
+            },
+        );
     });
 });
