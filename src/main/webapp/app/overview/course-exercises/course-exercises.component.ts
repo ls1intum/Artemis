@@ -253,12 +253,15 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         return !latestResult || !latestResult.score || latestResult.score < 100;
     }
 
+    filteredExercises: Exercise[] | undefined;
+
     /**
      * Applies all selected activeFilters and orders and groups the user's exercises
      */
     private applyFiltersAndOrder() {
         let filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
         filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
+        this.filteredExercises = filtered;
         this.groupExercises(filtered);
     }
 

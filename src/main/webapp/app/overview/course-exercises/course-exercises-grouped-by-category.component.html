@@ -1,0 +1,6 @@
+<div *ngIf="!filteredExercises?.length; else exercisesArePresent">
+    <!--    TODO exchange with translation -->
+    Bisher gibt es noch keine Aufgaben
+</div>
+
+<ng-template #exercisesArePresent> TODO </ng-template>
