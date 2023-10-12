@@ -106,15 +106,17 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        String username = createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration);
-        if (!onlineCourseConfiguration.isRequireExistingUser() && !artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail()).isPresent()) {
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
+
+        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
             SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
                     createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
+
         }
 
+        String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
         User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
         ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
-
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
         createOrUpdateResourceLaunch(launchRequest, user, targetExercise.get());
