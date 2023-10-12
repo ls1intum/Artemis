@@ -222,7 +222,7 @@ public class ProgrammingExerciseImportBasicService {
     private Map<Long, Long> importTasks(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
         targetExercise.setTasks(templateExercise.getTasks().stream().map(task -> {
-            final var copy = new ProgrammingExerciseTask();
+            ProgrammingExerciseTask copy = new ProgrammingExerciseTask();
 
             // copy everything except for the referenced exercise
             copy.setTaskName(task.getTaskName());
@@ -233,7 +233,7 @@ public class ProgrammingExerciseImportBasicService {
                 return targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst().orElseThrow();
             }).collect(Collectors.toSet()));
             copy.setExercise(targetExercise);
-            programmingExerciseTaskRepository.save(copy);
+            copy = programmingExerciseTaskRepository.save(copy);
             newIdByOldId.put(task.getId(), copy.getId());
             return copy;
         }).collect(Collectors.toCollection(ArrayList::new)));
