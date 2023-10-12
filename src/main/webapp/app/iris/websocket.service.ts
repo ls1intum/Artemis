@@ -71,7 +71,7 @@ export abstract class IrisWebsocketService implements OnDestroy {
 
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleWebsocketResponse);
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((response: any) => this.handleWebsocketResponse(response));
     }
 
     protected abstract handleWebsocketResponse(response: any): void;
