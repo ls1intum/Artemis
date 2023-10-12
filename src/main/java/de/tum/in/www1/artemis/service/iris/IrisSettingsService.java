@@ -379,6 +379,16 @@ public class IrisSettingsService {
         }
     }
 
+    /**
+     * Update the Iris settings for a programming exercise.
+     *
+     * @param programmingExerciseBeforeUpdate the programming exercise before the update
+     * @param updatedProgrammingExercise      the programming exercise after the update
+     */
+    public void updateIrisSettings(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        irisSettingsRepository.findByProgrammingExerciseId(programmingExerciseBeforeUpdate.getId()).ifPresent(updatedProgrammingExercise::setIrisSettings);
+    }
+
     private IrisSubSettings copyIrisSubSettings(IrisSubSettings target, IrisSubSettings source) {
         if (target == null || source == null) {
             return source;

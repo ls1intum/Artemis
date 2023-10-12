@@ -45,7 +45,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final LtiNewResultService ltiNewResultService;
+    private final Optional<LtiNewResultService> ltiNewResultService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -53,7 +53,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
-            ResultWebsocketService resultWebsocketService, LtiNewResultService ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
+            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, resultWebsocketService,
@@ -202,7 +202,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             newManualResult.getParticipation().filterSensitiveInformation();
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
-        ltiNewResultService.onNewResult((StudentParticipation) newManualResult.getParticipation());
+        if (ltiNewResultService.isPresent()) {
+            ltiNewResultService.get().onNewResult((StudentParticipation) newManualResult.getParticipation());
+        }
         if (submit && ExerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
             resultWebsocketService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }

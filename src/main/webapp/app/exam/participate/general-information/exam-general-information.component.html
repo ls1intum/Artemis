@@ -6,9 +6,9 @@
         <table class="table table-borderless mx-auto d-block">
             <tbody>
                 <tr *ngIf="isTestExam">
-                    <th class="text-end text-right">{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
+                    <th>{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
                     <td>
-                        <span class="mx-2 badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
+                        <span class="badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
                     </td>
                 </tr>
                 <tr *ngIf="exam?.moduleNumber">
@@ -22,6 +22,10 @@
                 <tr *ngIf="exam?.examiner">
                     <th>{{ 'artemisApp.examManagement.examiner' | artemisTranslate }}:</th>
                     <td>{{ exam.examiner }}</td>
+                </tr>
+                <tr *ngIf="exam?.title" id="exam-title">
+                    <th>{{ 'artemisApp.examManagement.examTitle' | artemisTranslate }}:</th>
+                    <td>{{ exam.title }}</td>
                 </tr>
                 <ng-container *ngIf="exam && !isTestExam && exam.startDate">
                     <tr *ngIf="isExamOverMultipleDays; else examSingleDay">
