@@ -106,8 +106,7 @@
             </div>
 
             <p *ngIf="this.workingTimeFormValues.percent">
-                {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }}
-                -
+                {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }} -
                 {{ individualEndDate | artemisDate: 'time' : true }}
             </p>
 
