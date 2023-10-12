@@ -29,7 +29,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     sendRequest(): void {
         const state = this.route.snapshot.queryParamMap.get('state');
         const idToken = this.route.snapshot.queryParamMap.get('id_token');
-        const username = this.route.snapshot.queryParamMap.get('authenticatedUser');
 
         if (!state || !idToken) {
             console.error('Required parameter for LTI launch missing');
@@ -47,8 +46,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             return;
         }
 
-        let requestBody = new HttpParams().set('state', state).set('id_token', idToken);
-        if (username) requestBody = requestBody.set('authenticatedUser', username);
+        const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
             .post('api/public/lti13/auth-login', requestBody.toString(), {

@@ -61,8 +61,6 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
 
             targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
-            // get username from client to set authentication
-            lti13Service.authenticateUserFromRequestParam(request);
 
             lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
 

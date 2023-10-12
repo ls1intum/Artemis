@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import static de.tum.in.www1.artemis.service.connectors.lti.LtiService.SIMPLE_USER_LIST_AUTHORITY;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
@@ -9,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
@@ -20,7 +17,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -310,24 +306,5 @@ public class Lti13Service {
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
-    }
-
-    /**
-     * Authenticates the user based on the provided request parameter if the user was previously authenticated in the same browser session.
-     *
-     * @param request the HTTP request containing the user authentication parameter
-     */
-    public void authenticateUserFromRequestParam(HttpServletRequest request) {
-        var username = request.getParameter("authenticatedUser");
-        if (username != null) {
-            var user = userRepository.findOneByLogin(username);
-            if (user.isEmpty()) {
-                log.error("Cannot find the user for username {}", username);
-            }
-            else {
-                SecurityContextHolder.getContext()
-                        .setAuthentication(new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), SIMPLE_USER_LIST_AUTHORITY));
-            }
-        }
     }
 }
