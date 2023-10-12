@@ -68,19 +68,24 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                 },
                 error: (error) => {
                     if (error.status === 401) {
-                        if (this.accountService.isAuthenticated() && this.accountService.userIdentity?.login !== username) {
-                            this.sendRequest();
-                        } else {
-                            // Redirect the user to the login page
-                            this.router.navigate(['/']).then(() => {
-                                // After navigating to the login page, set up a listener for when the user logs in
-                                this.accountService.getAuthenticationState().subscribe((user) => {
-                                    if (user) {
-                                        window.location.replace(error.headers.get('TargetLinkUri').toString());
-                                    }
+                        this.accountService.identity().then((user) => {
+                            if (user) {
+                                if (user) {
+                                    // resend request since user is already logged in
+                                    window.location.replace(error.headers.get('TargetLinkUri').toString());
+                                }
+                            } else {
+                                // Redirect the user to the login page
+                                this.router.navigate(['/']).then(() => {
+                                    // After navigating to the login page, set up a listener for when the user logs in
+                                    this.accountService.getAuthenticationState().subscribe((user) => {
+                                        if (user) {
+                                            window.location.replace(error.headers.get('TargetLinkUri').toString());
+                                        }
+                                    });
                                 });
-                            });
-                        }
+                            }
+                        });
                     } else {
                         window.sessionStorage.removeItem('state');
                         this.isLaunching = false;
