@@ -21,6 +21,10 @@ public interface ProgrammingExerciseTestRepository extends JpaRepository<Program
             left join fetch p.templateParticipation
             left join fetch p.solutionParticipation
             left join fetch p.exampleSubmissions
+            left join fetch p.competencies
+            left join fetch p.teams
+            left join fetch p.plagiarismCases
+            left join fetch p.gradingCriteria
             left join fetch p.exerciseHints eh
             left join fetch eh.solutionEntries
             left join fetch p.tutorParticipations

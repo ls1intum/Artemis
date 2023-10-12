@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,16 +20,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -42,6 +40,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     private static final String TEST_PREFIX = "progexserviceintegration";
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -160,6 +161,33 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(imported.getSubmissionPolicy()).isNotNull();
         assertThat(imported.getSubmissionPolicy()).isInstanceOf(SubmissionPolicy.class);
         assertThat(imported.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExerciseGradingInstructionsCloned() {
+        ProgrammingExercise toBeImported = createToBeImported();
+        exerciseUtilService.addGradingInstructionsToExercise(toBeImported);
+        toBeImported = programmingExerciseRepository.save(toBeImported);
+        toBeImported = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(toBeImported);
+        final Map<String, Long> previousCriterionIds = mapGradingInstructionTitleToId(toBeImported.getGradingCriteria());
+
+        final ProgrammingExercise importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
+
+        final List<GradingCriterion> newGradingCriteria = gradingCriterionRepository.findByExerciseId(importedExercise.getId());
+        final Map<String, Long> newCriterionIds = mapGradingInstructionTitleToId(newGradingCriteria);
+
+        assertThat(previousCriterionIds.keySet()).containsExactlyElementsOf(newCriterionIds.keySet());
+        for (final GradingCriterion newCriterion : newGradingCriteria) {
+            assertThat(newCriterion.getExercise()).isEqualTo(importedExercise);
+            // the criteria should be hard copies, i.e. fresh objects that are independently saved in the database
+            final long oldId = previousCriterionIds.get(Optional.ofNullable(newCriterion.getTitle()).orElse(""));
+            assertThat(newCriterion.getId()).isNotNull().isNotEqualTo(oldId);
+        }
+    }
+
+    private Map<String, Long> mapGradingInstructionTitleToId(final List<GradingCriterion> instructions) {
+        return instructions.stream().collect(Collectors.toUnmodifiableMap(criterion -> Optional.ofNullable(criterion.getTitle()).orElse(""), DomainObject::getId));
     }
 
     @Test

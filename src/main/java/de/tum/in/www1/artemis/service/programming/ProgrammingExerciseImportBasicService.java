@@ -107,6 +107,9 @@ public class ProgrammingExerciseImportBasicService {
         setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 
+        // copy the grading instructions to avoid issues with references to the original exercise
+        newExercise.setGradingCriteria(templateExercise.copyGradingCriteria(new HashMap<>()));
+
         // Hints, tasks, test cases and static code analysis categories
         final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
 
@@ -279,9 +282,6 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setTotalNumberOfAssessments(null);
 
         newExercise.disconnectRelatedEntities();
-
-        // copy the grading instructions to avoid issues with references to the original exercise
-        newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
 
         // only copy the config for team programming exercise in courses
         if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
