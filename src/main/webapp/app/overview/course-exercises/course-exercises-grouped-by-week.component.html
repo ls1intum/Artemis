@@ -20,33 +20,33 @@
 <div class="guided-tour exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
     <div
         class="control-label"
-        [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey] ? weeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
-        (click)="toggleCollapsed(weekKey)"
+        [ngClass]="{ 'text-primary': immutableWeeklyExercisesGrouped[weekKey] ? immutableWeeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
+        (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
     >
-        <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
-        <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
-            {{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'short-date' }} -
-            {{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'short-date' }}
+        <fa-icon class="pe-3" [icon]="immutableWeeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+        <span *ngIf="immutableWeeklyExercisesGrouped[weekKey].start && immutableWeeklyExercisesGrouped[weekKey].end">
+            {{ immutableWeeklyExercisesGrouped[weekKey].start | artemisDate: 'short-date' }} -
+            {{ immutableWeeklyExercisesGrouped[weekKey].end | artemisDate: 'short-date' }}
         </span>
-        <span *ngIf="!weeklyExercisesGrouped[weekKey].start || !weeklyExercisesGrouped[weekKey].end">
+        <span *ngIf="!immutableWeeklyExercisesGrouped[weekKey].start || !immutableWeeklyExercisesGrouped[weekKey].end">
             {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
         </span>
         <span
             class="ms-2"
             style="font-weight: 300"
             jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseGroupHeader"
-            [translateValues]="{ total: weeklyExercisesGrouped[weekKey].exercises.length }"
+            [translateValues]="{ total: immutableWeeklyExercisesGrouped[weekKey].exercises.length }"
         >
-            (Exercises: {{ weeklyExercisesGrouped[weekKey].exercises.length }})
+            (Exercises: {{ immutableWeeklyExercisesGrouped[weekKey].exercises.length }})
         </span>
     </div>
-    <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
+    <div *ngIf="!immutableWeeklyExercisesGrouped[weekKey].isCollapsed">
         <jhi-course-exercise-row
             class="pb-1"
             [exercise]="exercise"
             [course]="course"
             [hasGuidedTour]="exercise === exerciseForGuidedTour"
-            *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"
+            *ngFor="let exercise of immutableWeeklyExercisesGrouped[weekKey].exercises"
         ></jhi-course-exercise-row>
     </div>
     <div class="collapsed"></div>
