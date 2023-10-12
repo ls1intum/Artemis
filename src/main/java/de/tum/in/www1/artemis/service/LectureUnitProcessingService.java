@@ -116,12 +116,13 @@ public class LectureUnitProcessingService {
             PDFTextStripper pdfTextStripper = new PDFTextStripper();
             Splitter pdfSplitter = new Splitter();
             List<PDDocument> pages = pdfSplitter.split(document);
+            List<String> keyphrasesList = Arrays.stream(commaSeparatedKeyPhrases.split(",")).filter(s -> !s.trim().isEmpty()).toList();
 
             for (int index = 0; index <= pages.size() - 1; index++) {
                 PDDocument currentPage = pages.get(index);
                 String slideText = pdfTextStripper.getText(currentPage);
 
-                if (slideContainsKeyphrase(slideText, commaSeparatedKeyPhrases)) {
+                if (slideContainsKeyphrase(slideText, keyphrasesList)) {
                     slidesToRemove.add(index);
                 }
                 currentPage.close(); // make sure to close the document
@@ -137,10 +138,10 @@ public class LectureUnitProcessingService {
     /**
      * Removes the slides containing any of the key phrases from the given document.
      *
-     * @param document                             document to remove slides from
-     * @param removeSlidesCommaSeparatedKeyPhrases key phrases that identify slides about to be removed
+     * @param document                 document to remove slides from
+     * @param commaSeparatedKeyPhrases key phrases that identify slides about to be removed
      */
-    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String removeSlidesCommaSeparatedKeyPhrases) {
+    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String commaSeparatedKeyPhrases) {
         try {
             PDFTextStripper pdfTextStripper = new PDFTextStripper();
             Splitter pdfSplitter = new Splitter();
@@ -148,11 +149,12 @@ public class LectureUnitProcessingService {
 
             // Uses a decrementing loop (starting from the last index) to ensure that the
             // index values are adjusted correctly when removing pages.
+            List<String> keyphrasesList = Arrays.stream(commaSeparatedKeyPhrases.split(",")).filter(s -> !s.trim().isEmpty()).toList();
             for (int index = pages.size() - 1; index >= 0; index--) {
                 PDDocument currentPage = pages.get(index);
                 String slideText = pdfTextStripper.getText(currentPage);
 
-                if (slideContainsKeyphrase(slideText, removeSlidesCommaSeparatedKeyPhrases)) {
+                if (slideContainsKeyphrase(slideText, keyphrasesList)) {
                     document.removePage(index);
                 }
                 currentPage.close(); // make sure to close the document
@@ -164,9 +166,9 @@ public class LectureUnitProcessingService {
         }
     }
 
-    private boolean slideContainsKeyphrase(String slideText, String removeSlidesCommaSeparatedKeyPhrases) {
+    private boolean slideContainsKeyphrase(String slideText, List<String> keyphrasesList) {
         String lowerCaseSlideText = slideText.toLowerCase();
-        return Arrays.stream(removeSlidesCommaSeparatedKeyPhrases.split(",")).anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase()));
+        return keyphrasesList.stream().anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase()));
     }
 
     /**

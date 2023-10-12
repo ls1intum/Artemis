@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,9 +28,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 
 @RestController
 @RequestMapping("api/")
@@ -38,7 +38,7 @@ public class AttachmentUnitResource {
 
     private static final String ENTITY_NAME = "attachmentUnit";
 
-    private static final Gson gson = new Gson();
+    private static final Gson GSON = new Gson();
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -178,20 +178,19 @@ public class AttachmentUnitResource {
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-units.component.ts
         // TODO: increase to 30 after testing
-        int MINUTES_UNTIL_DELETION = 3;
+        int minutesUntilDeletion = 3;
         log.debug("REST request to upload file: {}", file.getOriginalFilename());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
-        if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+        checkLecture(lectureId);
+        if (!Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+            throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         URI fileURI = fileService.handleSaveFile(file, false, false);
-        fileService.schedulePathForDeletion(filePathService.actualPathForPublicPath(fileURI), MINUTES_UNTIL_DELETION);
+        fileService.schedulePathForDeletion(filePathService.actualPathForPublicPath(fileURI), minutesUntilDeletion);
         String fileName = filePathService.actualPathForPublicPath(fileURI).getFileName().toString();
 
-        return ResponseEntity.ok().body(gson.toJson(fileName));
+        return ResponseEntity.ok().body(GSON.toJson(fileName));
     }
 
     /**
@@ -202,21 +201,18 @@ public class AttachmentUnitResource {
      * @param filename                  the name of the lecture file, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
-    @PostMapping("lectures/{lectureId}/process-units/split")
+    @PostMapping("lectures/{lectureId}/process-units/split/{filename}")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart LectureUnitInformationDTO lectureUnitInformationDTO,
-            @RequestPart String filename) {
-        log.debug("REST request to create AttachmentUnits {} with lectureId {}", lectureUnitInformationDTO, lectureId);
-
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
-        if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
-        }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+    public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestBody LectureUnitInformationDTO lectureUnitInformationDTO,
+            @PathVariable String filename) {
+        log.debug("REST request to create AttachmentUnits {} with lectureId {} for file {}", lectureUnitInformationDTO, lectureId, filename);
+        checkLecture(lectureId);
+        checkFile(filename);
 
         try {
             byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
-            List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes, lecture);
+            List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes,
+                    lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
             savedAttachmentUnits.forEach(competencyProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
@@ -234,16 +230,13 @@ public class AttachmentUnitResource {
      * @param filename  the name of the lecture file to be split, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
      */
-    @GetMapping("lectures/{lectureId}/process-units")
+    @GetMapping("lectures/{lectureId}/process-units/{filename}")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @RequestParam("filename") String filename) {
+    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
-        if (lecture.getCourse() == null) {
-            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
-        }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+        checkLecture(lectureId);
+        checkFile(filename);
 
         try {
             byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
@@ -264,11 +257,13 @@ public class AttachmentUnitResource {
      * @param commaSeparatedKeyPhrases the comma seperated keyphrases to be removed
      * @return the ResponseEntity with status 200 (OK) and with body the list of slides to be removed
      */
-    @GetMapping("lectures/{lectureId}/process-units/slides-to-remove")
+    @GetMapping("lectures/{lectureId}/process-units/slides-to-remove/{filename}")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @RequestParam String filename, @RequestParam String commaSeparatedKeyPhrases) {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+    public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
+        log.debug("REST request to get slides to remove for lecture file : {} and keywords : {}", filename, commaSeparatedKeyPhrases);
+        checkLecture(lectureId);
+        checkFile(filename);
+
         try {
             byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
             List<Integer> slidesToRemove = this.lectureUnitProcessingService.getSlidesToRemoveByKeyphrase(fileBytes, commaSeparatedKeyPhrases);
@@ -292,6 +287,34 @@ public class AttachmentUnitResource {
         }
         if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
             throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
+        }
+    }
+
+    /**
+     * Checks that the lecture exists and is part of a course, and that the user is at least editor in the course
+     *
+     * @param lectureId The id of the lecture
+     */
+    public void checkLecture(Long lectureId) {
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+    }
+
+    /**
+     * Checks the file exists on the server and is a .pdf
+     *
+     * @param filename the name of the file
+     */
+    public void checkFile(String filename) {
+        Path filePath = FilePathService.getTempFilePath().resolve(filename);
+        if (!Files.exists(filePath)) {
+            throw new EntityNotFoundException(ENTITY_NAME, filename);
+        }
+        if (!filename.endsWith(".pdf")) {
+            throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
     }
 }

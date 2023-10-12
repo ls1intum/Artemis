@@ -51,7 +51,7 @@ export class AttachmentUnitsComponent implements OnInit {
 
     file: File;
     filename: string;
-    //time until the temporary file gets deleted. Must be less or equal than MINUTES_UNTIL_DELETION in AttachmentUnitResource.java
+    //time until the temporary file gets deleted. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
     //TODO: increase to 30 after testing
     readonly MINUTES_UNTIL_DELETION = 3;
 
@@ -62,7 +62,7 @@ export class AttachmentUnitsComponent implements OnInit {
         private alertService: AlertService,
         private translateService: TranslateService,
     ) {
-        this.file = this.router.getCurrentNavigation()!.extras.state!.file;
+        this.file = this.router.getCurrentNavigation()?.extras?.state?.file;
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {
             this.lectureId = Number(params.get('lectureId'));
@@ -70,11 +70,20 @@ export class AttachmentUnitsComponent implements OnInit {
         });
     }
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {
         this.keyphrases = '';
         this.removedSlidesNumbers = [];
         this.isLoading = true;
         this.isProcessingMode = true;
+
+        if (!this.file) {
+            this.alertService.error(this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.noFile`));
+            this.isLoading = true;
+            return;
+        }
 
         //timeout after given time because the temporary file in the backend gets deleted
         setTimeout(
@@ -95,25 +104,19 @@ export class AttachmentUnitsComponent implements OnInit {
             )
             .subscribe({
                 next: (res) => {
-                    if (res.body) {
-                        this.units = res.body.units;
-                        this.numberOfPages = res.body.numberOfPages;
-                        this.isLoading = false;
-                    }
+                    this.units = res.body!.units;
+                    this.numberOfPages = res.body!.numberOfPages;
+                    this.isLoading = false;
                 },
                 error: (res: HttpErrorResponse) => {
-                    if (res.error.params === 'file' && res.error.title) {
-                        this.alertService.error(res.error.title);
-                    } else {
-                        onError(this.alertService, res);
-                    }
+                    onError(this.alertService, res);
                     this.isLoading = false;
                 },
             });
 
         this.search
             .pipe(
-                debounceTime(1000),
+                debounceTime(500),
                 switchMap(() => {
                     return this.attachmentUnitService.getSlidesToRemove(this.lectureId, this.filename, this.keyphrases);
                 }),
@@ -130,6 +133,9 @@ export class AttachmentUnitsComponent implements OnInit {
             });
     }
 
+    /**
+     * Creates the attachment units with the information given on this page
+     */
     createAttachmentUnits(): void {
         if (this.validUnitInformation()) {
             this.isLoading = true;
@@ -145,12 +151,7 @@ export class AttachmentUnitsComponent implements OnInit {
                     this.isLoading = false;
                 },
                 error: (res: HttpErrorResponse) => {
-                    if (res.error.params === 'file' && res?.error?.title) {
-                        this.alertService.error(res.error.title);
-                    } else {
-                        onError(this.alertService, res);
-                    }
-                    this.isLoading = false;
+                    onError(this.alertService, res);
                 },
             });
         }

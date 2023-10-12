@@ -5,7 +5,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
-import { objectToJsonBlob } from 'app/utils/blob-util';
 
 type EntityResponseType = HttpResponse<AttachmentUnit>;
 
@@ -44,15 +43,11 @@ export class AttachmentUnitService {
     }
 
     getSplitUnitsData(lectureId: number, filename: string) {
-        const params = new HttpParams().set('filename', filename);
-        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/process-units`, { params, observe: 'response' });
+        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/process-units/${filename}`, { observe: 'response' });
     }
 
     createUnits(lectureId: number, filename: string, lectureUnitInformation: LectureUnitInformationDTO) {
-        const formData: FormData = new FormData();
-        formData.append('filename', filename);
-        formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformation));
-        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/process-units/split`, formData, { observe: 'response' });
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/process-units/split/${filename}`, lectureUnitInformation, { observe: 'response' });
     }
 
     uploadSlidesForProcessing(lectureId: number, file: File) {
@@ -62,7 +57,7 @@ export class AttachmentUnitService {
     }
 
     getSlidesToRemove(lectureId: number, filename: string, keyPhrases: string) {
-        const params = new HttpParams().set('filename', filename).set('commaSeparatedKeyPhrases', keyPhrases);
-        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/process-units/slides-to-remove`, { params, observe: 'response' });
+        const params = new HttpParams().set('commaSeparatedKeyPhrases', keyPhrases);
+        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/process-units/slides-to-remove/${filename}`, { params, observe: 'response' });
     }
 }

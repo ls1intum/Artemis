@@ -121,6 +121,7 @@
                     "secondLine": "Artemis expects a repetition of the Outline slide at the start of every unit.",
                     "note": "Note: You will have the option to edit the information before finally submitting the attachment units."
                 },
+                "noFile": "There is no file for the automatic unit processing. Please go back and try again.",
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
                 "pageTitle": "Process units",
                 "addUnit": "Add unit",

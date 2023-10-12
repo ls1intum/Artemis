@@ -120,6 +120,7 @@
                     "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
                     "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die angehängten Einheiten übermittelt werden."
                 },
+                "noFile": "Es gibt keine Datei für die automatische Einheitenverarbeitung. Bitte gehen Sie einen Schritt zurück und versuchen Sie es erneut.",
                 "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jede Einheit hinzu!",
                 "pageTitle": "Einheiten",
                 "addUnit": "Einheit hinzufügen",
