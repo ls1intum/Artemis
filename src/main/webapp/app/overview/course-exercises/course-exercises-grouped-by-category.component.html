@@ -6,23 +6,25 @@
 <!--TODO check if guided tour does still work -->
 <ng-template #exercisesAndCourseArePresent>
     <div class="guided-tour exercise-row-container mb-3" *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)">
-        <div class="control-label d-flex align-items-center">
-            <fa-icon class="pe-3" [class.text-primary]="exerciseGroupKey === 'current'" [icon]="faAngleDown"></fa-icon>
-            <ng-container [ngSwitch]="exerciseGroupKey">
-                <h3 *ngSwitchCase="'current'" class="text-primary">Current</h3>
-                <h3 *ngSwitchCase="'future'">Future</h3>
-                <h3 *ngSwitchCase="'previous'">Previous</h3>
-                <h3 *ngSwitchCase="'noDueDate'">No Due Date</h3>
-            </ng-container>
-        </div>
+        <ng-container *ngIf="exerciseGroups[exerciseGroupKey].length">
+            <div class="control-label d-flex align-items-center">
+                <fa-icon class="pe-3" [class.text-primary]="exerciseGroupKey === 'current'" [icon]="faAngleDown"></fa-icon>
+                <ng-container [ngSwitch]="exerciseGroupKey">
+                    <h3 *ngSwitchCase="'current'" class="text-primary">Current</h3>
+                    <h3 *ngSwitchCase="'future'">Future</h3>
+                    <h3 *ngSwitchCase="'previous'">Previous</h3>
+                    <h3 *ngSwitchCase="'noDueDate'">No Due Date</h3>
+                </ng-container>
+            </div>
 
-        <jhi-course-exercise-row
-            class="pb-1"
-            [exercise]="exercise"
-            [course]="course!"
-            [hasGuidedTour]="exercise === exerciseForGuidedTour"
-            *ngFor="let exercise of exerciseGroups[exerciseGroupKey]"
-        />
-        <div class="collapsed"></div>
+            <jhi-course-exercise-row
+                class="pb-1"
+                [exercise]="exercise"
+                [course]="course!"
+                [hasGuidedTour]="exercise === exerciseForGuidedTour"
+                *ngFor="let exercise of exerciseGroups[exerciseGroupKey]"
+            />
+            <div class="collapsed"></div>
+        </ng-container>
     </div>
 </ng-template>
