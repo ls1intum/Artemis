@@ -13,7 +13,7 @@
         [exercise]="nextRelevantExercise!.exercise"
         [course]="course"
         [hasGuidedTour]="nextRelevantExercise!.exercise === exerciseForGuidedTour"
-    ></jhi-course-exercise-row>
+    />
     <div class="collapsed"></div>
 </div>
 
@@ -47,7 +47,7 @@
             [course]="course"
             [hasGuidedTour]="exercise === exerciseForGuidedTour"
             *ngFor="let exercise of immutableWeeklyExercisesGrouped[weekKey].exercises"
-        ></jhi-course-exercise-row>
+        />
     </div>
     <div class="collapsed"></div>
 </div>

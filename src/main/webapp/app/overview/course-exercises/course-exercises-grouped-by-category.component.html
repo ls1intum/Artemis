@@ -1,6 +1,26 @@
-<div *ngIf="!filteredExercises?.length; else exercisesArePresent">
+<div *ngIf="!filteredExercises?.length && course; else exercisesAndCourseArePresent">
     <!--    TODO exchange with translation -->
     Bisher gibt es noch keine Aufgaben
 </div>
 
-<ng-template #exercisesArePresent> TODO </ng-template>
+<!--TODO check if guided tour does still work -->
+<ng-template #exercisesAndCourseArePresent>
+    <div *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)">
+        <div class="control-label">
+            <ng-container [ngSwitch]="exerciseGroupKey">
+                <span *ngSwitchCase="'current'">Current</span>
+                <span *ngSwitchCase="'future'">Future</span>
+                <span *ngSwitchCase="'previous'">Previous</span>
+                <span *ngSwitchCase="'noDueDate'">No Due Date</span>
+            </ng-container>
+        </div>
+
+        <jhi-course-exercise-row
+            class="pb-1"
+            [exercise]="exercise"
+            [course]="course!"
+            [hasGuidedTour]="exercise === exerciseForGuidedTour"
+            *ngFor="let exercise of exerciseGroups[exerciseGroupKey]"
+        />
+    </div>
+</ng-template>

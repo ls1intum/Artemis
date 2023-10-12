@@ -102,7 +102,7 @@
                 </div>
             </div>
 
-            <jhi-course-exercises-grouped-by-category [filteredExercises]="filteredExercises" />
+            <jhi-course-exercises-grouped-by-category [filteredExercises]="filteredExercises" [course]="course" [exerciseForGuidedTour]="exerciseForGuidedTour" />
             <!--            TODO add toggle-->
             <jhi-course-exercises-grouped-by-week
                 *ngIf="false"
