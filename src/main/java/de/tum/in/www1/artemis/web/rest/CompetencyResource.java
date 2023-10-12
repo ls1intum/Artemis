@@ -72,7 +72,7 @@ public class CompetencyResource {
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            CompetencyProgressService competencyProgressService, LearningPathService learningPathService) {
+            CompetencyProgressService competencyProgressService, LearningPathService learningPathService, LearningPathRepository learningPathRepository) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;

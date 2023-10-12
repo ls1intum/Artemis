@@ -22,6 +22,7 @@
             [progress]="progress"
             [confidence]="confidence"
             [mastery]="mastery"
+            [hideTooltip]="true"
         ></jhi-competency-rings>
         <fa-icon *ngIf="node.type === NodeType.COMPETENCY_END" id="competency" [icon]="getIcon(node)"></fa-icon>
     </div>
@@ -54,6 +55,6 @@
         [courseId]="courseId"
         [competencyId]="node.linkedResource!"
         [(competency)]="nodeDetailsData.competency"
-        [(competencyProgress)]="nodeDetailsData.competencyProgress"
+        [competencyProgress]="nodeDetailsData.competencyProgress!"
     ></jhi-competency-node-details>
 </ng-template>

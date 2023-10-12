@@ -74,3 +74,10 @@ export enum NodeType {
     EXERCISE = 'EXERCISE',
     LECTURE_UNIT = 'LECTURE_UNIT',
 }
+
+export class CompetencyProgressForLearningPathDTO {
+    public competencyId?: number;
+    public masteryThreshold?: number;
+    public progress?: number;
+    public confidence?: number;
+}

@@ -14,8 +14,7 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     @Input() competencyId: number;
     @Input() competency?: Competency;
     @Output() competencyChange = new EventEmitter<Competency>();
-    @Input() competencyProgress?: CompetencyProgress;
-    @Output() competencyProgressChange = new EventEmitter<CompetencyProgress>();
+    @Input() competencyProgress: CompetencyProgress;
 
     isLoading = false;
 
@@ -28,7 +27,7 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        if (!this.competency || !this.competencyProgress) {
+        if (!this.competency) {
             this.loadData();
         }
     }
@@ -37,14 +36,8 @@ export class CompetencyNodeDetailsComponent implements OnInit {
         this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
             next: (resp) => {
                 this.competency = resp.body!;
-                if (this.competency.userProgress?.length) {
-                    this.competencyProgress = this.competency.userProgress.first()!;
-                } else {
-                    this.competencyProgress = { progress: 0, confidence: 0 } as CompetencyProgress;
-                }
                 this.isLoading = false;
                 this.competencyChange.emit(this.competency);
-                this.competencyProgressChange.emit(this.competencyProgress);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
@@ -55,10 +48,10 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     }
 
     get confidence(): number {
-        return getConfidence(this.competency!, this.competencyProgress!);
+        return getConfidence(this.competencyProgress!, this.competency!.masteryThreshold!);
     }
 
     get mastery(): number {
-        return getMastery(this.competency!, this.competencyProgress!);
+        return getMastery(this.competencyProgress!, this.competency!.masteryThreshold!);
     }
 }

@@ -30,6 +30,9 @@
                         class="node"
                         [courseId]="courseId"
                         [node]="node"
+                        [competencyProgressDTO]="
+                            node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END ? competencyProgress.get(node.linkedResource) : undefined
+                        "
                         (click)="nodeClicked.emit(node)"
                     ></jhi-learning-path-graph-node>
                 </svg:foreignObject>

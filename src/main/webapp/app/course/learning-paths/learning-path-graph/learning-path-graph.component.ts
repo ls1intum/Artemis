@@ -4,7 +4,7 @@ import { Layout } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { CompetencyProgressForLearningPathDTO, NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 
 @Component({
     selector: 'jhi-learning-path-graph',
@@ -17,6 +17,7 @@ export class LearningPathGraphComponent implements OnInit {
     @Input() courseId: number;
     @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
     ngxLearningPath: NgxLearningPathDTO;
+    competencyProgress: Map<number, CompetencyProgressForLearningPathDTO> = new Map();
 
     layout: string | Layout = 'dagreCluster';
     curve = shape.curveBundle;
@@ -31,6 +32,8 @@ export class LearningPathGraphComponent implements OnInit {
     center$: Subject<boolean> = new Subject<boolean>();
     zoomToFit$: Subject<boolean> = new Subject<boolean>();
 
+    protected readonly NodeType = NodeType;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private learningPathService: LearningPathService,
@@ -38,7 +41,7 @@ export class LearningPathGraphComponent implements OnInit {
 
     ngOnInit() {
         if (this.learningPathId) {
-            this.loadGraphRepresentation(true);
+            this.loadDataAndRender();
         }
     }
 
@@ -83,7 +86,20 @@ export class LearningPathGraphComponent implements OnInit {
     }
 
     refreshData() {
-        this.loadGraphRepresentation(true);
+        this.loadDataAndRender();
+    }
+
+    loadDataAndRender() {
+        this.learningPathService.getCompetencyProgressForLearningPath(this.learningPathId).subscribe({
+            next: (response) => {
+                response.body!.forEach((progress) => {
+                    this.competencyProgress.set(progress.competencyId!, progress);
+                });
+            },
+            complete: () => {
+                this.loadGraphRepresentation(true);
+            },
+        });
     }
 
     loadGraphRepresentation(render: boolean) {
