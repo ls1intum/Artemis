@@ -28,6 +28,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -76,7 +77,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         // Submit from the online editor with the wrong project type set on the programming exercise.
         // This tests that an internal error is caught properly in the processNewPush() method and the "/commit" endpoint returns 500 in that case.
-        programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
         programmingExerciseRepository.save(programmingExercise);
         request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
     }
@@ -176,18 +178,20 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testProjectTypeIsNull() {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(null);
         programmingExerciseRepository.save(programmingExercise);
 
         // Should throw an exception
         assertThatExceptionOfType(LocalCIException.class)
                 .isThrownBy(() -> localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()))
-                .withMessageContaining("Project type must be Gradle");
+                .withMessageContaining("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
 
     }
 
     @Test
     void testProjectTypeIsNullForTestsRepository() throws Exception {
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(null);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -198,7 +202,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should throw an exception.
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIConnectorService.processNewPush(testsCommitHash, testsRepository.originGit.getRepository()))
-                .withMessageContaining("Project type must be Gradle");
+                .withMessageContaining("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
 
         testsRepository.resetLocalRepo();
     }

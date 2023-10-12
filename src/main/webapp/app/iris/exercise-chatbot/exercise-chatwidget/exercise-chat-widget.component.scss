@@ -10,6 +10,8 @@
 .button-container {
     display: flex;
     align-items: center;
+    color: var(--secondary);
+    font-size: 16px;
 }
 
 .chat-widget {
@@ -45,6 +47,14 @@
     background: transparent;
     color: var(--secondary);
     font-size: 16px;
+}
+
+.rate-limit {
+    padding-right: 6px;
+    margin-right: 3px;
+    border-right-color: var(--secondary);
+    border-right-style: solid;
+    border-right-width: 2px;
 }
 
 .info-button {

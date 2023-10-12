@@ -10,11 +10,9 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
@@ -127,17 +125,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private modelingSubmissionService: ModelingSubmissionService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private textSubmissionService: TextSubmissionService,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
         private serverDateService: ArtemisServerDateService,
         private translateService: TranslateService,
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
-        private artemisDatePipe: ArtemisDatePipe,
         private liveEventsService: ExamParticipationLiveEventsService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
-            this.alertService.error('artemisApp.exam.examParticipation.saveSubmissionError');
+            this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
         });
     }
 

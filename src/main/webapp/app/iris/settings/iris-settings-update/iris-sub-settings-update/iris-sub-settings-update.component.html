@@ -3,7 +3,7 @@
     <label class="form-check-label" for="flexSwitchCheckDefault" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
 </div>
 <span><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.preferredModel">Preferred Model</span>: </span>
-<div *ngIf="true" ngbDropdown class="d-inline-block me-2">
+<div ngbDropdown class="d-inline-block me-2">
     <button class="btn btn-outline-primary w-100" id="dropdownBasic1" [disabled]="!isAdmin" ngbDropdownToggle>
         {{ getSelectedModelName() }}
     </button>
@@ -16,6 +16,7 @@
         </button>
     </div>
 </div>
+
 <div class="mb-3">
     <label class="form-label fs-4 fw-bold" for="template-editor" jhiTranslate="artemisApp.iris.settings.subSettings.template.title"> Template </label>
     <div *ngIf="templateOptional" class="form-check form-switch">

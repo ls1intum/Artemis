@@ -9,7 +9,16 @@
             "feedbackHint": "This feedback is associated with an assessment instruction. You can provide additional feedback for this submission element. The student will see the combined feedback during the review.",
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
-            "automaticGenerated": "Automatically generated feedback",
+            "suggestion": {
+                "suggested": "Suggestion (not accepted)",
+                "accepted": "Accepted Suggestion",
+                "adapted": "Adapted Suggestion"
+            },
+            "suggestionTitle": {
+                "suggested": "This automatically generated feedback suggestion is not included in the final assessment unless you explicitly accept it.",
+                "accepted": "Automatically generated feedback",
+                "adapted": "Automatically generated feedback, manually adapted"
+            },
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."
@@ -44,6 +53,9 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
                 "tutorComment": "Tutor Comment:",
+                "feedbackSuggestion": "Feedback Suggestion:",
+                "accept": "Accept",
+                "discard": "Discard",
                 "points": {
                     "one": "{{points}} Point",
                     "many": "{{points}} Points"

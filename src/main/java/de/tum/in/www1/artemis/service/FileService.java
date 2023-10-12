@@ -79,6 +79,10 @@ public class FileService implements DisposableBean {
 
     public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
 
+    public static final String BACKGROUND_FILE_SUBPATH = "/api/files/drag-and-drop/backgrounds/";
+
+    public static final String PICTURE_FILE_SUBPATH = "/api/files/drag-and-drop/drag-items/";
+
     /**
      * Filenames for which the template filename differs from the filename it should have in the repository.
      */
@@ -177,7 +181,7 @@ public class FileService implements DisposableBean {
             filePath = generateFilePath(filenamePrefix, fileExtension, path);
         }
         try {
-            FileUtils.copyToFile(file.getInputStream(), filePath.toFile());
+            FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
 
             return generateResponsePath(filePath, markdown);
         }
@@ -246,6 +250,25 @@ public class FileService implements DisposableBean {
             }
         }
         return null;
+    }
+
+    /**
+     * Checks whether the path starts with the provided sub-path.
+     *
+     * @param path    URI to check if it starts with the sub-pat
+     * @param subPath sub-path URI to search for
+     * @throws IllegalArgumentException if the provided path does not start with the provided sub-path or the provided legacy-sub-path
+     */
+    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NotNull URI path, @NotNull URI subPath) {
+        // Removes redundant elements (e.g. ../ or ./) from the path and sub-path
+        URI normalisedPath = path.normalize();
+        URI normalisedSubPath = subPath.normalize();
+        // Indicates whether the path starts with the subPath
+        boolean normalisedPathStartsWithNormalisedSubPath = normalisedPath.getPath().startsWith(normalisedSubPath.getPath());
+        // Throws a IllegalArgumentException in case the normalisedPath does not start with the normalisedSubPath
+        if (!normalisedPathStartsWithNormalisedSubPath) {
+            throw new IllegalArgumentException("Path is not valid!");
+        }
     }
 
     /**
@@ -321,7 +344,7 @@ public class FileService implements DisposableBean {
             return;
         }
 
-        FileUtils.copyToFile(resource.getInputStream(), targetPath.toFile());
+        FileUtils.copyInputStreamToFile(resource.getInputStream(), targetPath.toFile());
 
         if (targetPath.endsWith("gradlew")) {
             targetPath.toFile().setExecutable(true);
@@ -768,6 +791,10 @@ public class FileService implements DisposableBean {
                     log.info("Delete file {}", path);
                     Files.delete(path);
                 }
+                else {
+                    log.error("Deleting the file {} did not work because it does not exist", path);
+                }
+
                 futures.remove(path);
             }
             catch (IOException e) {
