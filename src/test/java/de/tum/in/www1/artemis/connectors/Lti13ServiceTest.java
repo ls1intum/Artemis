@@ -127,8 +127,8 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
 
-        User user = new User();
-        doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
+        Optional<User> user = Optional.of(new User());
+        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
@@ -155,8 +155,8 @@ class Lti13ServiceTest {
         when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
 
-        User user = new User();
-        doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
+        Optional<User> user = Optional.of(new User());
+        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
