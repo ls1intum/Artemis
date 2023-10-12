@@ -89,7 +89,7 @@
                 "examExerciseUpdates": {
                     "title": "Exercise Update during an Exam",
                     "shortDescription": "Update exercises in an exam and notify the students about the changes.",
-                    "descriptionTextOne": "When you have to update the problem statement of an exercise during the exam, you can notify the students about it and they will be able to see the updated problem statement."
+                    "descriptionTextOne": "When you have to update the problem statement of an exercise during the exam, you can do this on the exercise edit page and notify the students about it and they will be able to see the updated problem statement."
                 }
             }
         },

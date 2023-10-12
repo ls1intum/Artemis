@@ -89,7 +89,7 @@
                 "examExerciseUpdates": {
                     "title": "Aufgabenänderungen während einer Klausur",
                     "shortDescription": "Wenn Änderungen an der Aufgabenstellung während einer Klausur notwendig sind, können die Studierenden darüber benachrichtigt werden",
-                    "descriptionTextOne": "Während einer Klausur kann es vorkommen, dass Änderungen an der Aufgabenstellung vorgenommen werden müssen. Artemis bietet die Möglichkeit, die Aufgabenstellung während der Klausur zu aktualisieren und die Studierenden darüber zu benachrichtigen. Die Studierenden werden über die Änderungen informiert und können die aktualisierte Aufgabenstellung einsehen."
+                    "descriptionTextOne": "Während einer Klausur kann es vorkommen, dass Änderungen an der Aufgabenstellung vorgenommen werden müssen. Artemis bietet die Möglichkeit, die Aufgabenstellung während der Klausur auf der Bearbeitungsseite der Aufgabe zu aktualisieren und die Studierenden darüber zu benachrichtigen. Die Studierenden werden über die Änderungen informiert und können die aktualisierte Aufgabenstellung einsehen."
                 }
             }
         },

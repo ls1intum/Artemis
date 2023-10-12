@@ -388,8 +388,6 @@ export class FeatureOverviewComponent implements OnInit {
             undefined,
             '/content/images/feature-overview/instructors/exam_exercise_update_notification.png',
         );
-        featureExamExerciseUpdates.centerTextAndImageOne();
-
         this.features = [
             featureCreateConductAssess,
             featureConfiguration,
