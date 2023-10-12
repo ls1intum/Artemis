@@ -154,8 +154,9 @@
             </ol>
 
             <div
-                [ngbTooltip]="!isExamOver() || isSaving ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
+                [ngbTooltip]="!isExamOver() ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
                 placement="right"
+                class="d-inline"
             >
                 <button
                     class="btn btn-danger"
