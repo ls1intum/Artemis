@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -64,11 +65,13 @@ public class Lti13Service {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
             LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate) {
+            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -78,6 +81,7 @@ public class Lti13Service {
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -106,14 +110,21 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        String username = createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration);
+        if (!onlineCourseConfiguration.isRequireExistingUser() && !artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail()).isPresent()) {
+            SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
+                    createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
+        }
+
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
         ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
 
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
         createOrUpdateResourceLaunch(launchRequest, user, targetExercise.get());
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
     }
 
     /**

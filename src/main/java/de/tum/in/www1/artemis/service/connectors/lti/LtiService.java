@@ -114,7 +114,7 @@ public class LtiService {
     }
 
     @NotNull
-    private Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
+    protected Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();

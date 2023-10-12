@@ -54,12 +54,13 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-
+        String targetLink = "";
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
 
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
 
+            targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
             // get username from client to set authentication
             lti13Service.authenticateUserFromRequestParam(request);
 
@@ -72,6 +73,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
         }
         catch (LtiEmailAlreadyInUseException ex) {
+            response.setHeader("TargetLinkUri", targetLink);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
         }
     }

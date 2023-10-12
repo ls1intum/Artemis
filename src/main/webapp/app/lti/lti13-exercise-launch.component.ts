@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-lti-exercise-launch',
@@ -14,8 +13,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private http: HttpClient,
-        private alertService: AlertService,
         private accountService: AccountService,
+        private router: Router,
     ) {
         this.isLaunching = true;
     }
@@ -69,21 +68,17 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                 },
                 error: (error) => {
                     if (error.status === 401) {
-                        if (this.accountService.isAuthenticated() && this.accountService.userIdentity?.login === username) {
+                        if (this.accountService.isAuthenticated() && this.accountService.userIdentity?.login !== username) {
                             this.sendRequest();
                         } else {
-                            // Subscribe to the authentication state to know when the user logs in
-                            this.accountService.getAuthenticationState().subscribe((user) => {
-                                const username = this.route.snapshot.queryParamMap.get('authenticatedUser');
-                                if (username) {
-                                    this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: username });
-                                    this.accountService.setPrefilledUsername(username);
-                                }
-                                window.location.replace('');
-                                if (user) {
-                                    // resend request when user logs in again
-                                    this.sendRequest();
-                                }
+                            // Redirect the user to the login page
+                            this.router.navigate(['/']).then(() => {
+                                // After navigating to the login page, set up a listener for when the user logs in
+                                this.accountService.getAuthenticationState().subscribe((user) => {
+                                    if (user) {
+                                        window.location.replace(error.headers.get('TargetLinkUri').toString());
+                                    }
+                                });
                             });
                         }
                     } else {

@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
@@ -73,6 +74,9 @@ class Lti13ServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -85,7 +89,7 @@ class Lti13ServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate);
+                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
