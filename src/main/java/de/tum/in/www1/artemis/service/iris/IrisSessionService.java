@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service for managing Iris sessions.
@@ -59,7 +60,7 @@ public class IrisSessionService {
      */
     public IrisSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         if (exercise.isExamExercise()) {
-            throw new BadRequestException("Iris is not supported for exam exercises");
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         var irisSession = new IrisChatSession();
         irisSession.setExercise(exercise);

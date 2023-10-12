@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service for managing {@link IrisSettings}.
@@ -362,7 +362,7 @@ public class IrisSettingsService {
      */
     public IrisSettings saveIrisSettings(ProgrammingExercise exercise, IrisSettings settings) {
         if (exercise.isExamExercise()) {
-            throw new BadRequestException("Iris is not supported for exam exercises");
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         var existingSettingsOptional = getIrisSettings(exercise);
         if (existingSettingsOptional.isPresent()) {
