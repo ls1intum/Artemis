@@ -83,6 +83,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     searchExercisesInput: string;
     exerciseFilter: ExerciseFilterModel;
 
+    filteredExercises: Exercise[] | undefined;
+
+    showExercisesGroupedByDueDateCategory: boolean = true;
+
     // Icons
     faPlayCircle = faPlayCircle;
     faFilter = faFilter;
@@ -252,8 +256,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         const latestResult = maxBy(flatten(exercise.studentParticipations?.map((participation) => participation.results)), 'completionDate');
         return !latestResult || !latestResult.score || latestResult.score < 100;
     }
-
-    filteredExercises: Exercise[] | undefined;
 
     /**
      * Applies all selected activeFilters and orders and groups the user's exercises

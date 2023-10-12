@@ -5,13 +5,14 @@
 
 <!--TODO check if guided tour does still work -->
 <ng-template #exercisesAndCourseArePresent>
-    <div *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)">
-        <div class="control-label">
+    <div class="guided-tour exercise-row-container mb-3" *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)">
+        <div class="control-label d-flex align-items-center">
+            <fa-icon class="pe-3" [class.text-primary]="exerciseGroupKey === 'current'" [icon]="faAngleDown"></fa-icon>
             <ng-container [ngSwitch]="exerciseGroupKey">
-                <span *ngSwitchCase="'current'">Current</span>
-                <span *ngSwitchCase="'future'">Future</span>
-                <span *ngSwitchCase="'previous'">Previous</span>
-                <span *ngSwitchCase="'noDueDate'">No Due Date</span>
+                <h3 *ngSwitchCase="'current'" class="text-primary">Current</h3>
+                <h3 *ngSwitchCase="'future'">Future</h3>
+                <h3 *ngSwitchCase="'previous'">Previous</h3>
+                <h3 *ngSwitchCase="'noDueDate'">No Due Date</h3>
             </ng-container>
         </div>
 
@@ -22,5 +23,6 @@
             [hasGuidedTour]="exercise === exerciseForGuidedTour"
             *ngFor="let exercise of exerciseGroups[exerciseGroupKey]"
         />
+        <div class="collapsed"></div>
     </div>
 </ng-template>

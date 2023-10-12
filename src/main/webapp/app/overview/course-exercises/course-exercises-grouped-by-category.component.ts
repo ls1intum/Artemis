@@ -2,6 +2,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm/';
+import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 
 type ExerciseGroup = 'current' | 'future' | 'previous' | 'noDueDate';
 
@@ -18,6 +19,9 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     @Input() exerciseForGuidedTour?: Exercise;
 
     exerciseGroups: ExerciseGroups;
+
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     ngOnChanges() {
         this.exerciseGroups = this.groupExercisesByDueDate();

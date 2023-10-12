@@ -102,17 +102,23 @@
                 </div>
             </div>
 
-            <jhi-course-exercises-grouped-by-category [filteredExercises]="filteredExercises" [course]="course" [exerciseForGuidedTour]="exerciseForGuidedTour" />
-            <!--            TODO add toggle-->
-            <jhi-course-exercises-grouped-by-week
-                *ngIf="false"
-                [nextRelevantExercise]="nextRelevantExercise"
-                [course]="course!"
+            <jhi-course-exercises-grouped-by-category
+                *ngIf="showExercisesGroupedByDueDateCategory; else exercisesGroupedByWeek"
+                [filteredExercises]="filteredExercises"
+                [course]="course"
                 [exerciseForGuidedTour]="exerciseForGuidedTour"
-                [weeklyIndexKeys]="weeklyIndexKeys"
-                [immutableWeeklyExercisesGrouped]="weeklyExercisesGrouped"
-                [activeFilters]="activeFilters"
             />
+            <!--            TODO add toggle-->
+            <ng-template #exercisesGroupedByWeek>
+                <jhi-course-exercises-grouped-by-week
+                    [nextRelevantExercise]="nextRelevantExercise"
+                    [course]="course!"
+                    [exerciseForGuidedTour]="exerciseForGuidedTour"
+                    [weeklyIndexKeys]="weeklyIndexKeys"
+                    [immutableWeeklyExercisesGrouped]="weeklyExercisesGrouped"
+                    [activeFilters]="activeFilters"
+                />
+            </ng-template>
 
             <div *ngIf="course?.exercises && course!.exercises!.length === 0">
                 <div class="row">
