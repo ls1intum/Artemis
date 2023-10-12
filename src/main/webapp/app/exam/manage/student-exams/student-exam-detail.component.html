@@ -106,7 +106,8 @@
             </div>
 
             <p *ngIf="this.workingTimeFormValues.percent">
-                {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }} -
+                {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }}
+                -
                 {{ individualEndDate | artemisDate: 'time' : true }}
             </p>
 
@@ -153,21 +154,24 @@
                 </li>
             </ol>
 
-            <button
-                class="btn btn-danger"
-                type="button"
-                *ngIf="course?.isAtLeastInstructor"
-                (click)="openConfirmationModal(toggleSubmitPopUp)"
-                [disabled]="!isExamOver() || isSaving"
+            <div
                 [ngbTooltip]="!isExamOver() || isSaving ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
                 placement="right"
-                id="adjust-submitted-state-button"
             >
-                <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
-                <ng-template #toggleNotSubmitted>
-                    <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
-                </ng-template>
-            </button>
+                <button
+                    class="btn btn-danger"
+                    type="button"
+                    *ngIf="course?.isAtLeastInstructor"
+                    (click)="openConfirmationModal(toggleSubmitPopUp)"
+                    [disabled]="!isExamOver() || isSaving"
+                    id="adjust-submitted-state-button"
+                >
+                    <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
+                    <ng-template #toggleNotSubmitted>
+                        <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
+                    </ng-template>
+                </button>
+            </div>
         </div>
     </div>
     <ng-template #toggleSubmitPopUp let-modal>
