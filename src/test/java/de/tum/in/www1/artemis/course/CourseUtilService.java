@@ -156,11 +156,6 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithCustomStudentGroupName(String studentGroupName) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor");
-        return courseRepo.save(course);
-    }
-
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
@@ -559,7 +554,7 @@ public class CourseUtilService {
             course = courseRepo.save(course);
 
             var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-            ProgrammingExerciseFactory.populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
+            ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
             programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
             programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -835,16 +830,6 @@ public class CourseUtilService {
         User user = userUtilService.createAndSaveUser(login);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepo.save(user);
-        return course;
-    }
-
-    public Course createCourseWithInstructorAndTextExercise(String userPrefix) {
-        Course course = this.createCourse();
-        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
-        studentParticipationRepo.save(participation);
-        course.addExercises(textExercise);
-        userUtilService.addUsers(userPrefix, 0, 0, 0, 1);
         return course;
     }
 
