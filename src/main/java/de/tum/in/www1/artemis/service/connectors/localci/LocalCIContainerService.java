@@ -68,15 +68,15 @@ public class LocalCIContainerService {
      * @param commitHash    the commit hash to checkout. If it is null, the latest commit of the branch will be checked out.
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash) {
-        return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
+    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
     }
@@ -346,6 +346,7 @@ public class LocalCIContainerService {
 
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+            case PYTHON -> scriptForPython(buildScript, hasSequentialTestRuns);
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
         }
 
@@ -395,6 +396,37 @@ public class LocalCIContainerService {
                         chmod +x gradlew
                         ./gradlew clean test""");
             }
+        }
+    }
+
+    private void scriptForPython(StringBuilder buildScript, boolean hasSequentialTestRuns) {
+        if (hasSequentialTestRuns) {
+            buildScript.append("""
+                    python3 -m compileall . -q || error=true
+                    if [ ! $error ]
+                    then
+                        pytest structural/* --junitxml=test-reports/structural-results.xml || error=true
+                        if [ ! $error ]
+                        then
+                            pytest behavior/* --junitxml=test-reports/behavior-results.xml
+                        else
+                            exit 1
+                        fi
+                    else
+                        exit 1
+                    fi
+                    """);
+        }
+        else {
+            buildScript.append("""
+                    python3 -m compileall . -q || error=true
+                    if [ ! $error ]
+                    then
+                        pytest --junitxml=test-reports/results.xml
+                    else
+                        exit 1
+                    fi
+                    """);
         }
     }
 
