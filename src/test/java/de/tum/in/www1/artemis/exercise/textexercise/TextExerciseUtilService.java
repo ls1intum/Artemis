@@ -344,4 +344,19 @@ public class TextExerciseUtilService {
         textExerciseRepository.save(textExercise);
         return textExercise;
     }
+
+    /**
+     * Creates a submission with a result and an assessor of the passed text exercise.
+     *
+     * @param textExercise exercise of the submission.
+     * @param studentLogin login of a student who created the submission.
+     * @param tutorLogin   login of the tutor assessing the exercise.
+     * @return the created text submission.
+     */
+    public TextSubmission createTextSubmissionWithResultAndAssessor(TextExercise textExercise, String studentLogin, String tutorLogin) {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, studentLogin, tutorLogin);
+
+        return textSubmission;
+    }
 }

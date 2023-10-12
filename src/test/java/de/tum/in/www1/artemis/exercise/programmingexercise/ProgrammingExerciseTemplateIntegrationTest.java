@@ -84,8 +84,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         String m2Home = System.getenv("M2_HOME");
         String mavenHome = System.getProperty("maven.home");
 
-        if (m2Home != null || mavenHome != null)
+        if (m2Home != null || mavenHome != null) {
             return;
+        }
 
         try {
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
