@@ -47,7 +47,7 @@ export enum SortingAttribute {
     RELEASE_DATE = 1,
 }
 
-interface ExerciseWithDueDate {
+export interface ExerciseWithDueDate {
     exercise: Exercise;
     dueDate?: dayjs.Dayjs;
 }
