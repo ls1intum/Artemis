@@ -2,11 +2,11 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm/';
-import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
-type ExerciseGroup = 'current' | 'future' | 'previous' | 'noDueDate';
+type ExerciseGroupCategory = 'current' | 'future' | 'previous' | 'noDueDate';
 
-type ExerciseGroups = Record<ExerciseGroup, Exercise[]>;
+type ExerciseGroups = Record<ExerciseGroupCategory, { exercises: Exercise[]; isCollapsed: boolean }>;
 
 @Component({
     selector: 'jhi-course-exercises-grouped-by-category',
@@ -22,17 +22,22 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
 
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
+    faChevronRight = faChevronRight;
 
     ngOnChanges() {
         this.exerciseGroups = this.groupExercisesByDueDate();
     }
 
+    toggleGroupCategoryCollapse(exerciseGroupCategoryKey: string) {
+        this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed = !this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed;
+    }
+
     private groupExercisesByDueDate(): ExerciseGroups {
         const updatedExerciseGroups: ExerciseGroups = {
-            current: [],
-            future: [],
-            previous: [],
-            noDueDate: [],
+            current: { exercises: [], isCollapsed: false },
+            future: { exercises: [], isCollapsed: true },
+            previous: { exercises: [], isCollapsed: true },
+            noDueDate: { exercises: [], isCollapsed: true },
         };
 
         if (!this.filteredExercises) {
@@ -41,13 +46,13 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
 
         for (const exercise of this.filteredExercises) {
             const exerciseGroup = this.getExerciseGroup(exercise);
-            updatedExerciseGroups[exerciseGroup].push(exercise);
+            updatedExerciseGroups[exerciseGroup].exercises.push(exercise);
         }
 
         return updatedExerciseGroups;
     }
 
-    private getExerciseGroup(exercise: Exercise): ExerciseGroup {
+    private getExerciseGroup(exercise: Exercise): ExerciseGroupCategory {
         if (!exercise.dueDate) {
             return 'noDueDate';
         }
