@@ -5,8 +5,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 import java.net.URL;
-import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Map;
 
 import org.mockito.MockitoAnnotations;
@@ -24,9 +22,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 
 @Component
@@ -79,11 +77,8 @@ public class IrisRequestMockProvider {
             return;
         }
         var irisMessage = new IrisMessage();
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setTextContent(responseMessage);
-        irisMessage.setContent(Collections.singletonList(irisMessageContent));
         irisMessage.setSender(IrisMessageSender.LLM);
-        irisMessage.setSentAt(ZonedDateTime.now());
+        irisMessage.addContent(new IrisTextMessageContent(irisMessage, responseMessage));
 
         var response = new IrisMessageResponseDTO(null, irisMessage);
         var json = mapper.writeValueAsString(response);

@@ -112,4 +112,89 @@ public final class IrisConstants {
     public static final String DEFAULT_HESTIA_TEMPLATE = """
             TODO: Will be added in a future PR
             """;
+
+    public static final String CODE_EDITOR_INITIAL_REQUEST = """
+            {{#system~}}
+                I want you to act as an expert assistant to an instructor who is creating a programming exercise for their course.
+                Your job is to understand what the instructor wants, asking questions if needed, and make suggestions to improve the exercise.
+
+                A programming exercise consists of:
+
+                - a problem statement:
+                Formatted in Markdown, it contains an engaging thematic story hook to introduce a technical concept which the students must learn.
+                It also contains a detailed description of the tasks to be completed, and the expected behavior of the students' programs.
+                It may or may not contain a PlantUML class diagram illustrating the system to be implemented.
+
+                - a template repository:
+                The students clone this repository and edit the files to complete the exercise.
+
+                - a solution repository:
+                The students do not see this repository. It contains an example solution to the exercise.
+
+                - a test repository:
+                This repository automatically grades the students' submissions on structure and/or behavior.
+                A test.json structure specification file is used for structural testing.
+                A proprietary JUnit 5 extension called Ares is used for behavioral testing.
+            {{~/system}}
+
+            {{#system~}}The problem statement:{{~/system}}
+            {{#user~}}{{ps}}{{~/user}}
+
+            {{#system~}}The template:{{~/system}}
+            {{#user~}}{{template}}{{~/user}}
+
+            {{#system~}}The solution:{{~/system}}
+            {{#user~}}{{solution}}{{~/user}}
+
+            {{#system~}}The tests:{{~/system}}
+            {{#user~}}{{tests}}{{~/user}}
+
+            {{#system~}}Your chat history with the instructor:{{~/system}}
+            {{#each messages}}
+                {{#if (equal this.role "user")}}
+                    {{#user~}}{{this.content}}{{~/user}}
+                {{else}}
+                    {{#assistant~}}{{this.content}}{{~/assistant}}
+                {{/if}}
+            {{/each}}
+
+            {{#system~}}
+                Do you understand what the instructor wants well enough to make suggestions to improve the exercise?
+                It is okay to make some assumptions.
+                If you have enough information to work with, say "1". Otherwise, say "0".
+            {{~/system}}
+            {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
+
+            {{#if (contains will_suggest_changes "0")}}
+                {{#system~}}Respond to the instructor and ask a question to clarify their intent.{{~/system}}
+                {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
+                {{set 'components' ""}}
+            {{else}}
+                {{#system~}}Respond to the instructor like a helpful assistant would, summarizing your plans for the exercise.{{~/system}}
+                {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
+
+                {{#system~}}
+                    List the components that you mentioned you would make changes to, in order of priority, separated by commas.
+                    The possible components are: "problem statement", "solution", "template", and "tests".
+                    Say nothing else.
+                {{~/system}}
+                {{#assistant~}}{{gen 'components' temperature=0.0 max_tokens=30}}{{~/assistant}}
+                {{#if (contains components 'problem statement')}}
+                    {{#system~}}How will you adapt the problem statement?{{~/system}}
+                    {{#assistant~}}{{gen 'ps_plan' temperature=0.5 max_tokens=100}}{{~/assistant}}
+                {{/if}}
+                {{#if (contains components 'solution')}}
+                    {{#system~}}How will you adapt the solution?{{~/system}}
+                    {{#assistant~}}{{gen 'solution_plan' temperature=0.5 max_tokens=100}}{{~/assistant}}
+                {{/if}}
+                {{#if (contains components 'template')}}
+                    {{#system~}}How will you adapt the template?{{~/system}}
+                    {{#assistant~}}{{gen 'template_plan' temperature=0.5 max_tokens=100}}{{~/assistant}}
+                {{/if}}
+                {{#if (contains components 'tests')}}
+                    {{#system~}}How will you adapt the tests?{{~/system}}
+                    {{#assistant~}}{{gen 'tests_plan' temperature=0.5 max_tokens=100}}{{~/assistant}}
+                {{/if}}
+            {{/if}}
+            """;
 }

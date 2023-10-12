@@ -69,14 +69,14 @@
                                 <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
                             </button>
                         </div>
-                        <div style="display: flex">
-                            <pre><span [innerHTML]="content.textContent! | htmlForMarkdown" class="bubble-right"></span></pre>
+                        <div *ngIf="isTextContent(content)" style="display: flex">
+                            <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown" class="bubble-right"></span></pre>
                         </div>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
-                        <div class="bubble-left">
-                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="content.textContent! | artemisTranslate"></span>
-                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="content.textContent! | htmlForMarkdown"></span>
+                        <div class="bubble-left" *ngIf="isTextContent(content)">
+                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate"></span>
+                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
                         </div>
                         <div class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
@@ -93,8 +93,8 @@
                         </div>
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
-                        <div class="bubble-left">
-                            <span [innerHTML]="content.textContent! | artemisTranslate"></span>
+                        <div class="bubble-left" *ngIf="isTextContent(content)">
+                            <span [innerHTML]="getTextContent(content)! | artemisTranslate"></span>
                         </div>
                     </div>
                 </div>

@@ -26,7 +26,7 @@ import {
     RateMessageSuccessAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 import {
     IrisArtemisClientMessage,
     IrisClientMessage,
@@ -37,12 +37,12 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageContent, IrisMessageTextContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
-import { IrisSessionService } from 'app/iris/session.service';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
@@ -113,7 +113,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     shouldLoadGreetingMessage = true;
     fadeState = '';
     exerciseId: number;
-    sessionService: IrisSessionService;
+    sessionService: IrisChatSessionService;
     shouldShowEmptyMessageError = false;
     currentMessageCount: number;
     rateLimit: number;
@@ -135,7 +135,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     constructor(
         private dialog: MatDialog,
         @Inject(MAT_DIALOG_DATA) public data: any,
-        private httpMessageService: IrisHttpMessageService,
+        private httpMessageService: IrisHttpChatMessageService,
         private userService: UserService,
         private router: Router,
         private sharedService: SharedService,
@@ -311,8 +311,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     loadFirstMessage(): void {
         const firstMessageContent = {
             textContent: 'artemisApp.exerciseChatbot.firstMessage',
-            type: IrisMessageContentType.TEXT,
-        } as IrisMessageContent;
+        } as IrisMessageTextContent;
 
         const firstMessage = {
             sender: IrisSender.ARTEMIS_CLIENT,
@@ -591,8 +590,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A new IrisClientMessage object representing the user message.
      */
     newUserMessage(message: string): IrisClientMessage {
-        const content: IrisMessageContent = {
-            type: IrisMessageContentType.TEXT,
+        const content: IrisMessageTextContent = {
             textContent: message,
         };
         return {
@@ -681,5 +679,13 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
+    }
+
+    isTextContent(content: IrisMessageContent) {
+        return isTextContent(content);
+    }
+
+    getTextContent(content: IrisMessageContent) {
+        return getTextContent(content);
     }
 }

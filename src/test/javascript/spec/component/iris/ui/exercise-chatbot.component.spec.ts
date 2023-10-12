@@ -8,8 +8,8 @@ import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
-import { IrisSessionService } from 'app/iris/session.service';
-import { IrisHttpSessionService } from 'app/iris/http-session.service';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
+import { IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
@@ -20,7 +20,7 @@ import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
 describe('ExerciseChatbotComponent', () => {
     let component: ExerciseChatbotComponent;
     let fixture: ComponentFixture<ExerciseChatbotComponent>;
-    let sessionService: IrisSessionService;
+    let sessionService: IrisChatSessionService;
     let stateStore: IrisStateStore;
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
@@ -56,7 +56,7 @@ describe('ExerciseChatbotComponent', () => {
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
             declarations: [ExerciseChatbotComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
-                IrisHttpSessionService,
+                IrisHttpChatSessionService,
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: AccountService, useClass: MockAccountService },
@@ -68,7 +68,7 @@ describe('ExerciseChatbotComponent', () => {
                 fixture = TestBed.createComponent(ExerciseChatbotComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
-                sessionService = fixture.debugElement.injector.get(IrisSessionService);
+                sessionService = fixture.debugElement.injector.get(IrisChatSessionService);
                 stateStore = fixture.debugElement.injector.get(IrisStateStore);
             });
     });

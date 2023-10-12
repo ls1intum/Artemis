@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -29,8 +29,8 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
-import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -49,7 +49,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final IrisWebsocketService irisWebsocketService;
+    private final IrisChatWebsocketService irisChatWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -66,13 +66,13 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     public IrisChatSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
-            IrisWebsocketService irisWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, GitService gitService,
+            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, GitService gitService,
             RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
-        this.irisWebsocketService = irisWebsocketService;
+        this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
         this.gitService = gitService;
@@ -150,15 +150,15 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 .handleAsync((irisMessage, throwable) -> {
                     if (throwable != null) {
                         log.error("Error while getting response from Iris model", throwable);
-                        irisWebsocketService.sendException(fullSession, throwable.getCause());
+                        irisChatWebsocketService.sendException(fullSession, throwable.getCause());
                     }
                     else if (irisMessage != null) {
                         var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), fullSession, IrisMessageSender.LLM);
-                        irisWebsocketService.sendMessage(irisMessageSaved);
+                        irisChatWebsocketService.sendMessage(irisMessageSaved);
                     }
                     else {
                         log.error("No response from Iris model");
-                        irisWebsocketService.sendException(fullSession, new IrisNoResponseException());
+                        irisChatWebsocketService.sendException(fullSession, new IrisNoResponseException());
                     }
                     return null;
                 });
