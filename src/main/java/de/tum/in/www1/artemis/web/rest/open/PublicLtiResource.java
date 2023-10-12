@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,7 +24,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -155,11 +153,6 @@ public class PublicLtiResource {
         if (!isValidJwtIgnoreSignature(idToken)) {
             errorOnIllegalParameter(response, "id_token");
             return;
-        }
-
-        String userName = "";
-        if (SecurityUtils.isAuthenticated()) {
-            userName = SecurityContextHolder.getContext().getAuthentication().getName();
         }
 
         UriComponentsBuilder uriBuilder = buildRedirect(request);
