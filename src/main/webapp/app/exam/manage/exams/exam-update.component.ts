@@ -152,7 +152,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
      */
     handleSubmit() {
-        const datesChanged = this.exam.startDate?.diff(this.originalStartDate) !== 0 || this.exam.endDate?.diff(this.originalEndDate) !== 0;
+        const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
+
         if (datesChanged && this.isOngoingExam) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
