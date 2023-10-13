@@ -4,6 +4,7 @@ import { ExerciseFilter, ExerciseWithDueDate } from 'app/overview/course-exercis
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { getAsMutableObject } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-course-exercises-grouped-by-week',
@@ -24,11 +25,11 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
     faAngleDown = faAngleDown;
 
     ngOnInit() {
-        this.weeklyExercisesGrouped = this.getAsMutableObject(this.immutableWeeklyExercisesGrouped);
+        this.weeklyExercisesGrouped = getAsMutableObject(this.immutableWeeklyExercisesGrouped);
     }
 
     ngOnChanges() {
-        this.weeklyExercisesGrouped = this.getAsMutableObject(this.immutableWeeklyExercisesGrouped);
+        this.weeklyExercisesGrouped = getAsMutableObject(this.immutableWeeklyExercisesGrouped);
     }
 
     /**
@@ -37,9 +38,5 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
      */
     isVisibleToStudents(exercise: Exercise): boolean | undefined {
         return !this.activeFilters.has(ExerciseFilter.UNRELEASED) || (exercise as QuizExercise)?.visibleToStudents;
-    }
-
-    private getAsMutableObject(object: any) {
-        return { ...object };
     }
 }
