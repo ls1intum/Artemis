@@ -436,16 +436,11 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
         programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
 
-        doAnswer(invocation -> {
-            // only one feedback should be visible, the others are not active / only visible after due date
-            assertThat(((ResultDTO) invocation.getArguments()[2]).feedbacks()).hasSize(1).allMatch(feedback -> feedback.testCase().testName() == null);
-            return null;
-        }).when(websocketMessagingService).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), any());
-
         postResult(resultNotification);
 
-        // ensure that the method got called and the assertion above was executed
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), any());
+        // ensure that the test case is set but the name does not get send to the student
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC),
+                argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().get(0).testCase().testName() == null));
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {
