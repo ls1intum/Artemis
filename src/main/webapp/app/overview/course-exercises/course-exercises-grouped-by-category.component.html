@@ -1,10 +1,8 @@
 <div *ngIf="!filteredExercises?.length && course; else exercisesAndCourseArePresent">
     {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
 </div>
-
-<!--TODO check if guided tour does still work -->
 <ng-template #exercisesAndCourseArePresent>
-    <div class="guided-tour exercise-row-container mb-3" *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)" (click)="toggleGroupCategoryCollapse(exerciseGroupKey)">
+    <div class="exercise-row-container mb-3" *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)" (click)="toggleGroupCategoryCollapse(exerciseGroupKey)">
         <ng-container *ngIf="exerciseGroups[exerciseGroupKey].exercises.length">
             <div class="control-label d-flex align-items-center">
                 <div class="icon-container pe-3">
