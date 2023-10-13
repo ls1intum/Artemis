@@ -6,7 +6,6 @@ import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
     MessageStoreAction,
-    RateLimitUpdatedAction,
     StudentMessageSentAction,
     isSessionReceivedAction,
 } from 'app/iris/state-store.model';
@@ -14,52 +13,31 @@ import { IrisMessage, isServerSentMessage, isStudentSentMessage } from 'app/enti
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
 /**
- * The IrisWebsocketMessageType defines the type of message sent over the websocket.
- */
-export enum IrisWebsocketMessageType {
-    MESSAGE = 'MESSAGE',
-    ERROR = 'ERROR',
-}
-
-class IrisRateLimitInformation {
-    currentMessageCount: number;
-    rateLimit: number;
-}
-
-/**
- * The IrisWebsocketDTO is the data transfer object for messages sent over the websocket.
- * It either contains an IrisMessage or an error message.
- */
-export class IrisWebsocketDTO {
-    type: IrisWebsocketMessageType;
-    message?: IrisMessage;
-    errorTranslationKey?: IrisErrorMessageKey;
-    translationParams?: Map<string, any>;
-    rateLimitInfo?: IrisRateLimitInformation;
-}
-
-/**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
  */
 @Injectable()
-export class IrisWebsocketService implements OnDestroy {
+export abstract class IrisWebsocketService implements OnDestroy {
     private subscriptionChannel?: string;
     private sessionIdChangedSub: Subscription;
+    protected sessionType: string;
 
     /**
      * Creates an instance of IrisWebsocketService.
      * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
      * @param stateStore The IrisStateStore for managing the state of the application.
+     * @param sessionType The session type of the websocket subscription channel
      */
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private stateStore: IrisStateStore,
+    protected constructor(
+        protected jhiWebsocketService: JhiWebsocketService,
+        protected stateStore: IrisStateStore,
+        sessionType: string,
     ) {
         // Subscribe to changes in the session ID
         this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
             if (!isSessionReceivedAction(newAction)) return;
             this.changeWebsocketSubscription(newAction.sessionId);
         });
+        this.sessionType = sessionType;
     }
 
     /**
@@ -79,7 +57,7 @@ export class IrisWebsocketService implements OnDestroy {
      * @param sessionId The session ID to subscribe to.
      */
     private changeWebsocketSubscription(sessionId: number | null): void {
-        const channel = '/user/topic/iris/sessions/' + sessionId;
+        const channel = '/user/topic/iris/' + this.sessionType + '/' + sessionId;
 
         if (sessionId != null && this.subscriptionChannel === channel) {
             return;
@@ -93,34 +71,33 @@ export class IrisWebsocketService implements OnDestroy {
 
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((websocketResponse: IrisWebsocketDTO) => {
-            if (websocketResponse.rateLimitInfo) {
-                this.stateStore.dispatch(new RateLimitUpdatedAction(websocketResponse.rateLimitInfo.currentMessageCount, websocketResponse.rateLimitInfo.rateLimit));
-            }
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((response: any) => this.handleWebsocketResponse(response));
+    }
 
-            if (websocketResponse.type === IrisWebsocketMessageType.ERROR) {
-                if (!websocketResponse.errorTranslationKey) {
-                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
-                } else {
-                    this.stateStore.dispatch(new ConversationErrorOccurredAction(websocketResponse.errorTranslationKey, websocketResponse.translationParams));
-                }
-            } else if (websocketResponse.type === IrisWebsocketMessageType.MESSAGE) {
-                const message = websocketResponse.message;
-                if (!message) return;
-                if (isStudentSentMessage(message)) {
-                    this.stateStore.dispatch(
-                        new StudentMessageSentAction(
-                            message,
-                            setTimeout(() => {
-                                // will be cleared by the store automatically
-                                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
-                            }, 20000),
-                        ),
-                    );
-                } else if (isServerSentMessage(message)) {
-                    this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(message));
-                }
-            }
-        });
+    protected abstract handleWebsocketResponse(response: any): void;
+
+    protected handleMessage(message?: IrisMessage) {
+        if (!message) return;
+        if (isStudentSentMessage(message)) {
+            this.stateStore.dispatch(
+                new StudentMessageSentAction(
+                    message,
+                    setTimeout(() => {
+                        // will be cleared by the store automatically
+                        this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+                    }, 20000),
+                ),
+            );
+        } else if (isServerSentMessage(message)) {
+            this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(message));
+        }
+    }
+
+    protected handleError(errorTranslationKey?: IrisErrorMessageKey, translationParams?: Map<string, any>) {
+        if (!errorTranslationKey) {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
+        } else {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(errorTranslationKey, translationParams));
+        }
     }
 }

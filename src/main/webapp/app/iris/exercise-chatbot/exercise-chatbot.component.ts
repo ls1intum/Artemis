@@ -3,22 +3,16 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
-import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { NumNewMessagesResetAction } from 'app/iris/state-store.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
-import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
-import { IrisChatSessionService } from 'app/iris/chat-session.service';
+import { IrisSessionService } from 'app/iris/session.service';
+import { IrisWebsocketService } from 'app/iris/websocket.service';
 
-@Component({
-    selector: 'jhi-exercise-chatbot',
-    templateUrl: './exercise-chatbot.component.html',
-    styleUrls: ['./exercise-chatbot.component.scss'],
-    providers: [IrisStateStore, IrisWebsocketService, IrisChatSessionService, IrisHeartbeatService],
-})
-export class ExerciseChatbotComponent implements OnInit, OnDestroy {
+@Component({ template: '' })
+export abstract class ExerciseChatbotComponent implements OnInit, OnDestroy {
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
     chatOpen = false;
     closed = true;
@@ -32,14 +26,13 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     faCommentDots = faCommentDots;
     faChevronDown = faChevronDown;
 
-    constructor(
+    protected constructor(
         public dialog: MatDialog,
         private overlay: Overlay,
-        private readonly sessionService: IrisChatSessionService,
+        private readonly sessionService: IrisSessionService,
         private readonly stateStore: IrisStateStore,
         // Note: These 2 unused services are injected to ensure that they are instantiated
         private readonly websocketService: IrisWebsocketService,
-        private readonly heartbeatService: IrisHeartbeatService,
         private route: ActivatedRoute,
         private sharedService: SharedService,
     ) {}
