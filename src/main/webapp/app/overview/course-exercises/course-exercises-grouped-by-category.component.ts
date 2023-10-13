@@ -49,6 +49,8 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
             updatedExerciseGroups[exerciseGroup].exercises.push(exercise);
         }
 
+        this.adjustExpandedOrCollapsedStateOfExerciseGroups(updatedExerciseGroups);
+
         return updatedExerciseGroups;
     }
 
