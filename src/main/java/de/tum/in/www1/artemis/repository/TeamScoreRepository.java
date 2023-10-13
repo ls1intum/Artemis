@@ -65,7 +65,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
             WHERE s.exercise IN :exercises
                 AND :user MEMBER OF s.team.students
             """)
-    List<TeamScore> findAllByExercisesAndUser(@Param("exercises") List<Exercise> exercises, @Param("user") User user);
+    List<TeamScore> findAllByExercisesAndUser(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
     @Transactional // ok because of delete
     @Modifying
