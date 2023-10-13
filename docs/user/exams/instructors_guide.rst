@@ -650,8 +650,11 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |analyze_sessions| image:: instructor/buttons/analyze_sessions.png
 .. |view_cases| image:: instructor/buttons/view_cases.png
 .. |view_plagiarism_results| image:: instructor/buttons/view_plagiarism_results.png
+    :height: 40
 .. |suspicious_behavior| image:: instructor/buttons/suspicious_behavior.png
+      :height: 40
 .. |view_sessions| image:: instructor/buttons/view_sessions.png
+      :height: 40
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png
 .. |add_grade_step| image:: instructor/buttons/add_grade_step.png
