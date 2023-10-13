@@ -42,6 +42,7 @@ For example, instead of
 
 .. code-block:: java
 
+    assertThat(submissions.size()).isEqualTo(1);
     assertThat(submissionInDb.isPresent()).isTrue();
     assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
 
@@ -49,6 +50,7 @@ use the built-in assertions directly:
 
 .. code-block:: java
 
+    assertThat(submissions).hasSize(1);
     assertThat(submissionInDb).isPresent();
     assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
 
@@ -69,6 +71,7 @@ Here is a simple ArchUnit test using an ArchRule to forbid JUnit assertions (in 
 
 .. code-block:: java
 
+    @Test
     void testNoJunitJupiterAssertions() {
         ArchRule noJunitJupiterAssertions = noClasses().should().dependOnClassesThat().haveNameMatching("org.junit.jupiter.api.Assertions");
 
