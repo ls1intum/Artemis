@@ -636,7 +636,8 @@ public class ExamUtilService {
     }
 
     /**
-     * Creates and saves a StudentExam with a registered User. Also creates and saves an empty course and an Exam that started 1 hour ago and ends in 1 hour.
+     * Creates and saves a StudentExam with a registered User. Creates and saves an empty Course first. Then, given the new Course and User, creates and saves an Exam that
+     * started 1 hour ago and ends in 1 hour. The Exam is then used to create the StudentExam.
      *
      * @param userLogin The login of the User for which the StudentExam should be created
      * @return The newly created StudentExam
