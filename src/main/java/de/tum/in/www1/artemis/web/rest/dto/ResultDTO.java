@@ -22,7 +22,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         Integer codeIssueCount) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record FeedbackDTO(long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
+    public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
             Visibility visibility, TestCaseDTO testCase) {
 
         public static FeedbackDTO of(Feedback feedback) {

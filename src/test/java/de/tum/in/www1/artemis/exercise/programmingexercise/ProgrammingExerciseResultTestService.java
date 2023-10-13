@@ -406,6 +406,30 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
+    public void shouldCorrectlyNotifyStudentsAboutNewResults(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
+            throws Exception {
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+
+        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        // ensure that hidden feedback got filtered out (test2 is not active, test3 is hidden -> only 1 feedback visible)
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), argThat(arg -> {
+            if (!(arg instanceof ResultDTO resultDTO)) {
+                return false;
+            }
+            if (resultDTO.feedbacks().size() != 1) {
+                return false;
+            }
+            var feedback = resultDTO.feedbacks().get(0);
+            return feedback.id() != null && feedback.positive();
+        }));
+    }
+
+    // Test
     public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
             throws Exception {
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
