@@ -139,7 +139,8 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Accesses the first exercise of a course with the passed type.
+     * Accesses the first found exercise of a course with the passed type. The course stores exercises in a set, therefore any
+     * exercise with the corresponding type could be accessed.
      *
      * @param course The course which should be searched for the exercise.
      * @param clazz  The class (type) of the exercise to look for.
@@ -151,7 +152,8 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Accesses the first exercise of an exam with the passed type.
+     * Accesses the first found exercise of an exam with the passed type. The course stores exercises in a set, therefore any
+     * exercise with the corresponding type could be accessed.
      *
      * @param exam  The exam which should be searched for the exercise.
      * @param clazz The class (type) of the exercise to look for.
