@@ -69,8 +69,8 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    @Value("${artemis.repo-clone-path}")
+    private String repoClonePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
             LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory) {
@@ -146,7 +146,7 @@ public class LocalCIBuildJobExecutionService {
 
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
                     auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
-                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getRepoClonePath(repoClonePath).toAbsolutePath();
                     auxiliaryRepositoryNames[i] = auxiliaryRepositories.get(i).getName();
                 }
             }
@@ -159,8 +159,8 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
         }
 
-        Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-        Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+        Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
+        Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
 
         String branch;
         try {
@@ -295,6 +295,10 @@ public class LocalCIBuildJobExecutionService {
                 }
                 return testResultPaths;
             }
+            case PYTHON -> {
+                testResultPaths.add("/repositories/test-repository/test-reports");
+                return testResultPaths;
+            }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
         }
     }
@@ -332,7 +336,7 @@ public class LocalCIBuildJobExecutionService {
         int lastIndexOfSlash = name.lastIndexOf('/');
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
-        return !tarArchiveEntry.isDirectory() && result.endsWith(".xml") && result.startsWith("TEST-");
+        return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && result.startsWith("TEST-")) || result.endsWith("results.xml"));
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
@@ -355,6 +359,10 @@ public class LocalCIBuildJobExecutionService {
 
         // Move to the first start element.
         while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
+            xmlStreamReader.next();
+        }
+
+        if ("testsuites".equals(xmlStreamReader.getLocalName())) {
             xmlStreamReader.next();
         }
 

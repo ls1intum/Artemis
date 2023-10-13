@@ -307,43 +307,64 @@ public class LocalCIContainerService {
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
                 mkdir /repositories
-                cd /repositories
+                """);
+
+        // If git is installed, clone the repositories. Otherwise, just copy them.
+        // For some reason, simply copying the repositories messes with gradle and causing it to fail when running tests
+        buildScript.append("""
+                if [ -x "$(command -v git)" ]; then
+                    echo "Git is installed"
                 """);
 
         // Checkout tasks
         buildScript.append("""
-                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
-                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
+                    cd /repositories
+                    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
+                    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
                 """);
 
         if (hasAuxiliaryRepositories) {
             for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-                buildScript.append("git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
+                buildScript.append("    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
             }
         }
 
         buildScript.append("""
-                cd assignment-repository
-                if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
-                    git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
-                    git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
-                fi
-                mkdir /repositories/test-repository/assignment
-                cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
+                    cd assignment-repository
+                    if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
+                        git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                        git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                    fi
+                    mkdir /repositories/test-repository/assignment
+                    cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
                 """);
 
         // Copy auxiliary repositories to checkout directories
         if (hasAuxiliaryRepositories) {
             for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-                buildScript.append("cp -a /repositories/").append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
+                buildScript.append("    cp -a /repositories/").append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
                         .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
             }
         }
 
-        buildScript.append("cd /repositories/test-repository\n");
+        // If git is not installed, copy the repositories
+
+        buildScript.append("""
+                else
+                    echo "Git is not installed"
+                    mkdir /repositories/test-repository
+                    mkdir /repositories/assignment-repository
+                    cp -a /test-repository/. /repositories/test-repository/
+                    cp -a /assignment-repository/. /repositories/assignment-repository/
+                    cp -a /assignment-repository/. /repositories/test-repository/assignment/
+                fi
+                """);
+
+        buildScript.append("""
+                cd /repositories/test-repository
+                """);
 
         // programming language specific tasks
-
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
             case PYTHON -> scriptForPython(buildScript, hasSequentialTestRuns);
