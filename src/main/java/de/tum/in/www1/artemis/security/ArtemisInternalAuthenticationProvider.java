@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -37,24 +36,6 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
         return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
-    }
-
-    @Override
-    public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
-        final var password = authentication.getCredentials().toString();
-        final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
-        final User user;
-        if (optionalUser.isEmpty()) {
-            user = userCreationService.createUser(authentication.getName(), password, null, firstName, lastName, email, null, null, "en", true);
-        }
-        else {
-            user = optionalUser.get();
-            if (!skipPasswordCheck && !passwordService.checkPasswordMatch(password, user.getPassword())) {
-                throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
-            }
-        }
-
-        return user;
     }
 
     @Override

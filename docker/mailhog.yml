@@ -8,7 +8,7 @@ services:
     mailhog:
         container_name: artemis-mailhog
         image: docker.io/mailhog/mailhog
-        pull_policy: always
+        pull_policy: if_not_present
         ports:
             - "1025:1025"
             - "8025:8025"
