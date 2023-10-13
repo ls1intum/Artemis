@@ -495,16 +495,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testGetCompetencyProgressForLearningPathByOwner() throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
-        assertThat(result).hasSize(5);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
@@ -514,8 +504,18 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetCompetencyProgressForLearningPathByOwner() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetCompetencyProgressForLearningPathByInstructor() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    void testGetCompetencyProgressForLearningPath() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
