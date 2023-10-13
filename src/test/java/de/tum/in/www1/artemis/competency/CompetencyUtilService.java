@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.competency;
 
 import java.time.ZonedDateTime;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -152,5 +154,17 @@ public class CompetencyUtilService {
         relation.setHeadCompetency(head);
         relation.setType(type);
         competencyRelationRepository.save(relation);
+    }
+
+    /**
+     * Sets the given mastery threshold for the competency.
+     *
+     * @param competency       the competency for which the threshold should be changed
+     * @param masteryThreshold the new mastery threshold
+     * @return the persisted competency
+     */
+    public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
+        competency.setMasteryThreshold(masteryThreshold);
+        return competencyRepo.save(competency);
     }
 }

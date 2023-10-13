@@ -19,12 +19,13 @@
         <jhi-competency-rings
             class="m-1"
             *ngIf="node.type === NodeType.COMPETENCY_START"
+            id="competency-start"
             [progress]="progress"
             [confidence]="confidence"
             [mastery]="mastery"
             [hideTooltip]="true"
         ></jhi-competency-rings>
-        <fa-icon *ngIf="node.type === NodeType.COMPETENCY_END" id="competency" [icon]="getIcon(node)"></fa-icon>
+        <fa-icon *ngIf="node.type === NodeType.COMPETENCY_END" id="competency-end" [icon]="getIcon(node)"></fa-icon>
     </div>
 </ng-template>
 

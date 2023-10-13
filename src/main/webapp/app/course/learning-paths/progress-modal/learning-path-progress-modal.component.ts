@@ -30,7 +30,7 @@ export class LearningPathProgressModalComponent {
     }
 
     navigateToCompetency(node: NgxLearningPathNode) {
-        this.router.navigate(['/courses', this.courseId, 'competencies', node.linkedResource]);
+        this.router.navigate(['courses', this.courseId, 'competencies', node.linkedResource]);
         this.close();
     }
 }
