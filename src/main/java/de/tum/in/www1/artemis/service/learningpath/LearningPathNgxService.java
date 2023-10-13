@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.learningpath;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,219 +9,30 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import org.jgrapht.alg.util.UnionFind;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
-import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
- * Service Implementation for managing Learning Paths.
- * <p>
- * This includes
- * <ul>
- * <li>the generation of learning paths in courses,</li>
- * <li>and performing pageable searches for learning paths.</li>
- * </ul>
+ * Service Implementation for the generation of ngx representations of learning paths.
  */
 @Service
-public class LearningPathService {
-
-    private final Logger log = LoggerFactory.getLogger(LearningPathService.class);
-
-    private final UserRepository userRepository;
-
-    private final LearningPathRepository learningPathRepository;
-
-    private final CompetencyProgressRepository competencyProgressRepository;
-
-    private final CourseRepository courseRepository;
-
-    private final CompetencyRepository competencyRepository;
+public class LearningPathNgxService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
-    public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
-            CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository) {
-        this.userRepository = userRepository;
-        this.learningPathRepository = learningPathRepository;
-        this.competencyProgressRepository = competencyProgressRepository;
-        this.courseRepository = courseRepository;
-        this.competencyRepository = competencyRepository;
+    private final LearningPathRecommendationService learningPathRecommendationService;
+
+    protected LearningPathNgxService(CompetencyRelationRepository competencyRelationRepository, LearningPathRecommendationService learningPathRecommendationService) {
         this.competencyRelationRepository = competencyRelationRepository;
-    }
-
-    /**
-     * Generate learning paths for all students enrolled in the course
-     *
-     * @param course course the learning paths are created for
-     */
-    public void generateLearningPaths(@NotNull Course course) {
-        var students = userRepository.getStudents(course);
-        students.forEach(student -> generateLearningPathForUser(course, student));
-        log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
-    }
-
-    /**
-     * Generate learning path for the user in the course if the learning path is not present
-     *
-     * @param course course that defines the learning path
-     * @param user   student for which the learning path is generated
-     * @return the learning path of the user
-     */
-    public LearningPath generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
-        var existingLearningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
-        // the learning path has not to be generated if it already exits
-        if (existingLearningPath.isPresent()) {
-            return existingLearningPath.get();
-        }
-        LearningPath lpToCreate = new LearningPath();
-        lpToCreate.setUser(user);
-        lpToCreate.setCourse(course);
-        lpToCreate.getCompetencies().addAll(course.getCompetencies());
-        var persistedLearningPath = learningPathRepository.save(lpToCreate);
-        log.debug("Created LearningPath (id={}) for user (id={}) in course (id={})", persistedLearningPath.getId(), user.getId(), course.getId());
-        updateLearningPathProgress(persistedLearningPath);
-        return persistedLearningPath;
-    }
-
-    /**
-     * Search for all learning paths fitting a {@link PageableSearchDTO search query}. The result is paged.
-     *
-     * @param search the search query defining the search term and the size of the returned page
-     * @param course the course the learning paths are linked to
-     * @return A wrapper object containing a list of all found learning paths and the total number of pages
-     */
-    public SearchResultPageDTO<LearningPathPageableSearchDTO> getAllOfCourseOnPageWithSize(@NotNull PageableSearchDTO<String> search, @NotNull Course course) {
-        final var pageable = PageUtil.createLearningPathPageRequest(search);
-        final var searchTerm = search.getSearchTerm();
-        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, course.getId(), pageable);
-        final List<LearningPathPageableSearchDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathPageableSearchDTO::new).toList();
-        return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
-    }
-
-    /**
-     * Links given competency to all learning paths of the course.
-     *
-     * @param competency Competency that should be added to each learning path
-     * @param courseId   course id that the learning paths belong to
-     */
-    public void linkCompetencyToLearningPathsOfCourse(@NotNull Competency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Linked competency (id={}) to learning paths", competency.getId());
-    }
-
-    /**
-     * Remove linked competency from all learning paths of the course.
-     *
-     * @param competency Competency that should be removed from each learning path
-     * @param courseId   course id that the learning paths belong to
-     */
-    public void removeLinkedCompetencyFromLearningPathsOfCourse(@NotNull Competency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsAndCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.removeCompetency(competency));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Removed linked competency (id={}) from learning paths", competency.getId());
-    }
-
-    /**
-     * Updates progress of the learning path specified by course and user id.
-     *
-     * @param courseId id of the course the learning path is linked to
-     * @param userId   id of the user the learning path is linked to
-     */
-    public void updateLearningPathProgress(long courseId, long userId) {
-        final var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId);
-        learningPath.ifPresent(this::updateLearningPathProgress);
-    }
-
-    /**
-     * Updates progress of the given learning path. Competencies of the learning path must be loaded eagerly.
-     *
-     * @param learningPath learning path that is updated
-     */
-    private void updateLearningPathProgress(@NotNull LearningPath learningPath) {
-        final var userId = learningPath.getUser().getId();
-        final var competencyIds = learningPath.getCompetencies().stream().map(Competency::getId).collect(Collectors.toSet());
-        final var competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
-
-        final float completed = competencyProgresses.stream().filter(CompetencyProgressService::isMastered).count();
-        final var numberOfCompetencies = learningPath.getCompetencies().size();
-        if (numberOfCompetencies == 0) {
-            learningPath.setProgress(0);
-        }
-        else {
-            learningPath.setProgress(Math.round(completed * 100 / numberOfCompetencies));
-        }
-        learningPathRepository.save(learningPath);
-        log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
-    }
-
-    /**
-     * Gets the health status of learning paths for the given course.
-     *
-     * @param course the course for which the health status should be generated
-     * @return dto containing the health status and additional information (missing learning paths) if needed
-     */
-    public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
-        if (!course.getLearningPathsEnabled()) {
-            return new LearningPathHealthDTO(Set.of(LearningPathHealthDTO.HealthStatus.DISABLED));
-        }
-
-        Set<LearningPathHealthDTO.HealthStatus> status = new HashSet<>();
-        Long numberOfMissingLearningPaths = checkMissingLearningPaths(course, status);
-        checkNoCompetencies(course, status);
-        checkNoRelations(course, status);
-
-        // if no issues where found, add OK status
-        if (status.isEmpty()) {
-            status.add(LearningPathHealthDTO.HealthStatus.OK);
-        }
-
-        return new LearningPathHealthDTO(status, numberOfMissingLearningPaths);
-    }
-
-    private Long checkMissingLearningPaths(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
-        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
-        long numberOfLearningPaths = learningPathRepository.countLearningPathsOfEnrolledStudentsInCourse(course.getId());
-        Long numberOfMissingLearningPaths = numberOfStudents - numberOfLearningPaths;
-
-        if (numberOfMissingLearningPaths != 0) {
-            status.add(LearningPathHealthDTO.HealthStatus.MISSING);
-        }
-        else {
-            numberOfMissingLearningPaths = null;
-        }
-
-        return numberOfMissingLearningPaths;
-    }
-
-    private void checkNoCompetencies(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
-        if (competencyRepository.countByCourse(course) == 0) {
-            status.add(LearningPathHealthDTO.HealthStatus.NO_COMPETENCIES);
-        }
-    }
-
-    private void checkNoRelations(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
-        if (competencyRelationRepository.countByCourseId(course.getId()) == 0) {
-            status.add(LearningPathHealthDTO.HealthStatus.NO_RELATIONS);
-        }
+        this.learningPathRecommendationService = learningPathRecommendationService;
     }
 
     /**
@@ -380,13 +191,122 @@ public class LearningPathService {
         else {
             targetNodeId = getCompetencyStartNodeId(targetId);
         }
-        final String relationEdgeId = getRelationEdgeId(sourceNodeId, targetNodeId);
+        final String relationEdgeId = getEdgeFromToId(sourceNodeId, targetNodeId);
         // skip if relation has already been created (possible for edges linked to matching cluster start/end nodes)
         if (!createdRelations.contains(relationEdgeId)) {
             final var edge = new NgxLearningPathDTO.Edge(relationEdgeId, sourceNodeId, targetNodeId);
             edges.add(edge);
             createdRelations.add(relationEdgeId);
         }
+    }
+
+    /**
+     * Generates Ngx path representation of the learning path.
+     *
+     * @param learningPath the learning path for which the Ngx representation should be created
+     * @return Ngx path representation of the learning path
+     * @see NgxLearningPathDTO
+     */
+    public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
+        Set<NgxLearningPathDTO.Node> nodes = new HashSet<>();
+        Set<NgxLearningPathDTO.Edge> edges = new HashSet<>();
+
+        var recommendationState = learningPathRecommendationService.getRecommendedOrderOfCompetencies(learningPath);
+        var recommendedOrderOfCompetencies = recommendationState.recommendedOrderOfCompetencies().stream()
+                .map(id -> learningPath.getCompetencies().stream().filter(competency -> competency.getId().equals(id)).findFirst().get()).toList();
+
+        // generate ngx representation of recommended competencies
+        recommendedOrderOfCompetencies.forEach(competency -> generateNgxPathRepresentationForCompetency(learningPath, competency, nodes, edges, recommendationState));
+        // generate edges between competencies
+        for (int i = 0; i < recommendedOrderOfCompetencies.size() - 1; i++) {
+            var sourceNodeId = getCompetencyEndNodeId(recommendationState.recommendedOrderOfCompetencies().get(i));
+            var targetNodeId = getCompetencyStartNodeId(recommendationState.recommendedOrderOfCompetencies().get(i + 1));
+            edges.add(new NgxLearningPathDTO.Edge(getEdgeFromToId(sourceNodeId, targetNodeId), sourceNodeId, targetNodeId));
+        }
+
+        return new NgxLearningPathDTO(nodes, edges);
+    }
+
+    /**
+     * Generates Ngx graph representation for competency.
+     * <p>
+     * A competency's representation consists of
+     * <ul>
+     * <li>start node</li>
+     * <li>end node</li>
+     * <li>a node for each learning unit (exercises or lecture unit)</li>
+     * <li>edges from start node to each learning unit</li>
+     * <li>edges from each learning unit to end node</li>
+     * </ul>
+     *
+     * @param learningPath the learning path for which the representation should be created
+     * @param competency   the competency for which the representation will be created
+     * @param nodes        set of nodes to store the new nodes
+     * @param edges        set of edges to store the new edges
+     */
+    private void generateNgxPathRepresentationForCompetency(LearningPath learningPath, Competency competency, Set<NgxLearningPathDTO.Node> nodes,
+            Set<NgxLearningPathDTO.Edge> edges, LearningPathRecommendationService.RecommendationState state) {
+        Set<NgxLearningPathDTO.Node> currentCluster = new HashSet<>();
+        // generates start and end node
+        final var startNodeId = getCompetencyStartNodeId(competency.getId());
+        final var endNodeId = getCompetencyEndNodeId(competency.getId());
+        currentCluster.add(new NgxLearningPathDTO.Node(startNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_START, competency.getId()));
+        currentCluster.add(new NgxLearningPathDTO.Node(endNodeId, NgxLearningPathDTO.NodeType.COMPETENCY_END, competency.getId()));
+
+        final var recommendedLearningObjects = learningPathRecommendationService.getRecommendedOrderOfLearningObjects(learningPath, competency, state);
+        for (int i = 0; i < recommendedLearningObjects.size(); i++) {
+
+            // add node for learning object
+            addNodeForLearningObject(competency, recommendedLearningObjects.get(i), currentCluster);
+
+            // add edges between learning objects
+            if (i != 0) {
+                addEdgeBetweenLearningObjects(competency, recommendedLearningObjects.get(i - 1), recommendedLearningObjects.get(i), edges);
+            }
+        }
+
+        // if no linked learning units exist directly link start to end (can't happen for valid recommendations)
+        if (currentCluster.size() == 2) {
+            edges.add(new NgxLearningPathDTO.Edge(getDirectEdgeId(competency.getId()), startNodeId, endNodeId));
+        }
+        else {
+            // add edge from competency start to first learning object
+            addEdgeFromCompetencyStartToLearningObject(competency, recommendedLearningObjects.get(0), edges);
+
+            // add edge from last learning object to competency end
+            addEdgeFromLearningObjectToCompetencyEnd(competency, recommendedLearningObjects.get(recommendedLearningObjects.size() - 1), edges);
+        }
+
+        nodes.addAll(currentCluster);
+    }
+
+    private static void addNodeForLearningObject(Competency competency, LearningObject learningObject, Set<NgxLearningPathDTO.Node> nodes) {
+        if (learningObject instanceof LectureUnit lectureUnit) {
+            nodes.add(new NgxLearningPathDTO.Node(getLectureUnitNodeId(competency.getId(), lectureUnit.getId()), NgxLearningPathDTO.NodeType.LECTURE_UNIT, lectureUnit.getId(),
+                    lectureUnit.getLecture().getId(), false, lectureUnit.getName()));
+        }
+        else if (learningObject instanceof Exercise exercise) {
+            nodes.add(new NgxLearningPathDTO.Node(getExerciseNodeId(competency.getId(), exercise.getId()), NgxLearningPathDTO.NodeType.EXERCISE, exercise.getId(), false,
+                    exercise.getTitle()));
+        }
+    }
+
+    private static void addEdgeBetweenLearningObjects(Competency competency, LearningObject source, LearningObject target, Set<NgxLearningPathDTO.Edge> edges) {
+        final var sourceId = getLearningObjectNodeId(competency.getId(), source);
+        final var targetId = getLearningObjectNodeId(competency.getId(), target);
+        edges.add(new NgxLearningPathDTO.Edge(getEdgeFromToId(sourceId, targetId), sourceId, targetId));
+    }
+
+    private static void addEdgeFromCompetencyStartToLearningObject(Competency competency, LearningObject learningObject, Set<NgxLearningPathDTO.Edge> edges) {
+        addEdgeFromSourceToTarget(getCompetencyStartNodeId(competency.getId()), getLearningObjectNodeId(competency.getId(), learningObject), edges);
+    }
+
+    private static void addEdgeFromLearningObjectToCompetencyEnd(Competency competency, LearningObject learningObject, Set<NgxLearningPathDTO.Edge> edges) {
+        addEdgeFromSourceToTarget(getLearningObjectNodeId(competency.getId(), learningObject), getCompetencyEndNodeId(competency.getId()), edges);
+    }
+
+    private static void addEdgeFromSourceToTarget(String sourceId, String targetId, Set<NgxLearningPathDTO.Edge> edges) {
+        edges.add(new NgxLearningPathDTO.Edge(getEdgeFromToId(sourceId, targetId), sourceId, targetId));
     }
 
     public static String getCompetencyStartNodeId(long competencyId) {
@@ -437,11 +357,28 @@ public class LearningPathService {
         return "edge-" + id + "-out";
     }
 
-    public static String getRelationEdgeId(String sourceNodeId, String targetNodeId) {
-        return "edge-relation-" + sourceNodeId + "-" + targetNodeId;
+    public static String getEdgeFromToId(String sourceNodeId, String targetNodeId) {
+        return "edge-" + sourceNodeId + "-" + targetNodeId;
     }
 
     public static String getDirectEdgeId(long competencyId) {
         return "edge-" + competencyId + "-direct";
+    }
+
+    /**
+     * Gets the node id of the given lecture unit or exercise.
+     *
+     * @param competencyId   the id of the competency that the learning object is linked to
+     * @param learningObject the lecture unit or exercise
+     * @return the ngx node id of the given lecture unit or exercise
+     */
+    public static String getLearningObjectNodeId(long competencyId, LearningObject learningObject) {
+        if (learningObject instanceof LectureUnit) {
+            return getLectureUnitNodeId(competencyId, learningObject.getId());
+        }
+        else if (learningObject instanceof Exercise) {
+            return getExerciseNodeId(competencyId, learningObject.getId());
+        }
+        return null;
     }
 }

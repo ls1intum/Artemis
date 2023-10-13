@@ -154,6 +154,9 @@ class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
+    @Autowired
+    private ZipFileTestUtilService zipFileTestUtilService;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -170,11 +173,15 @@ class ProgrammingExerciseIntegrationTestService {
 
     private Git localGit;
 
+    private File remoteRepoFile;
+
     private Git remoteGit;
 
     private File localRepoFile2;
 
     private Git localGit2;
+
+    private File remoteRepo2File;
 
     private Git remoteGit2;
 
@@ -204,18 +211,18 @@ class ProgrammingExerciseIntegrationTestService {
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
         localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
-        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
+        remoteRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit = LocalRepository.initialize(remoteRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
-        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
+        config.setString("remote", "origin", "url", remoteRepoFile.getAbsolutePath());
         config.save();
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
         localGit2 = LocalRepository.initialize(localRepoFile2, defaultBranch);
-        File originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit2 = LocalRepository.initialize(originRepoFile2, defaultBranch);
+        remoteRepo2File = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit2 = LocalRepository.initialize(remoteRepo2File, defaultBranch);
         StoredConfig config2 = localGit2.getRepository().getConfig();
-        config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
+        config2.setString("remote", "origin", "url", remoteRepo2File.getAbsolutePath());
         config2.save();
 
         // TODO use createProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
@@ -230,30 +237,36 @@ class ProgrammingExerciseIntegrationTestService {
 
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        doReturn(new GitUtilService.MockFileRepositoryUrl(remoteRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
     }
 
     void tearDown() throws IOException {
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
-        if (localRepoFile != null && localRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepoFile);
-        }
-        if (repoDownloadClonePath != null && Files.exists(Path.of(repoDownloadClonePath))) {
-            FileUtils.deleteDirectory(new File(repoDownloadClonePath));
-        }
         if (localGit != null) {
             localGit.close();
         }
-        if (remoteGit != null) {
-            remoteGit.close();
+        if (localRepoFile != null && localRepoFile.exists()) {
+            FileUtils.deleteDirectory(localRepoFile);
         }
         if (localGit2 != null) {
             localGit2.close();
         }
+        if (localRepoFile2 != null && localRepoFile2.exists()) {
+            FileUtils.deleteDirectory(localRepoFile2);
+        }
+        if (remoteGit != null) {
+            remoteGit.close();
+        }
+        if (remoteRepoFile != null && remoteRepoFile.exists()) {
+            FileUtils.deleteDirectory(remoteRepoFile);
+        }
         if (remoteGit2 != null) {
             remoteGit2.close();
+        }
+        if (remoteRepo2File != null && remoteRepo2File.exists()) {
+            FileUtils.deleteDirectory(remoteRepo2File);
         }
     }
 
@@ -477,7 +490,7 @@ class ProgrammingExerciseIntegrationTestService {
         // Checks
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
         Optional<Path> extractedRepo1 = entries.stream()
-                .filter(entry -> entry.toString().endsWith(Path.of("-" + String.valueOf(participation1.getId()) + "-student-submission.git", ".git").toString())).findFirst();
+                .filter(entry -> entry.toString().endsWith(Path.of("-" + participation1.getId() + "-student-submission.git", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
@@ -492,8 +505,7 @@ class ProgrammingExerciseIntegrationTestService {
      * @return the list of files that the {@code downloadedFile} contained.
      */
     private List<Path> unzipExportedFile() throws Exception {
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Path.of(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(downloadedFile.getAbsolutePath());
         try (var files = Files.walk(extractedZipDir)) {
             return files.toList();
         }
@@ -1707,8 +1719,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
-            assertThat(zipFile.getEntry("files/Submission-1.java/Submission-1.java")).isNotNull();
-            assertThat(zipFile.getEntry("files/Submission-2.java/Submission-2.java")).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/Submission-1.java/Submission-1.java").toString())).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/Submission-2.java/Submission-2.java").toString())).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
             var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");

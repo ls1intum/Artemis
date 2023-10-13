@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
@@ -151,7 +152,7 @@ public class CourseResource {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(courseUpdate.getId());
+        var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseUpdate.getId());
 
         if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -208,6 +209,7 @@ public class CourseResource {
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+        courseUpdate.setIrisSettings(existingCourse.getIrisSettings());
 
         courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();

@@ -41,10 +41,7 @@ import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MultiGauge;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 
 @Component
 public class MetricsBean {
@@ -56,6 +53,8 @@ public class MetricsBean {
     private static final String ARTEMIS_HEALTH_DESCRIPTION = "Artemis Health Indicator";
 
     private static final String ARTEMIS_HEALTH_TAG = "healthindicator";
+
+    private static final String NO_SEMESTER_TAG = "No semester";
 
     private static final int LOGGING_DELAY_SECONDS = 10;
 
@@ -331,7 +330,7 @@ public class MetricsBean {
          * - the current date
          * - an end date (which is the current date + one of the values of MINUTE_RANGES_LOOKAHEAD), and
          * - a list of active users (that is, users that created a submission within the last 14 days).
-         *
+         * <p>
          * The implementing method may decide to ignore certain arguments.
          * The method returns a list of ExerciseTypeMetricsEntries, that each correspond to an exercise type and a value.
          *
@@ -350,7 +349,7 @@ public class MetricsBean {
          * This interface is used to calculate and expose metrics that are based on
          * - the current date, and
          * - an end date (which is the current date + one of the values of MINUTE_RANGES_LOOKAHEAD).
-         *
+         * <p>
          * The implementing method may decide to ignore certain arguments.
          * The method returns an integer, representing the corresponding value.
          *
@@ -471,32 +470,57 @@ public class MetricsBean {
     }
 
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
-        var activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
-        activeUserMultiGauge.register(Stream.of(activeUserPeriodsInDays)
-                .map(periodInDays -> MultiGauge.Row.of(Tags.of("period", periodInDays.toString()), statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now)))
-                // A mutable list is required here because otherwise the values can not be updated correctly
-                .collect(Collectors.toCollection(ArrayList::new)), true);
+        final Integer[] activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
+
+        // A mutable list is required here because otherwise the values can not be updated correctly
+        final List<MultiGauge.Row<?>> gauges = Stream.of(activeUserPeriodsInDays).map(periodInDays -> {
+            final Tags tags = Tags.of("period", periodInDays.toString());
+            final long activeUsers = statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now);
+            return MultiGauge.Row.of(tags, activeUsers);
+        }).collect(Collectors.toCollection(ArrayList::new));
+
+        activeUserMultiGauge.register(gauges, true);
     }
 
     private void updateStudentsCourseMultiGauge(List<Course> activeCourses) {
-        studentsCourseGauge.register(
-                activeCourses.stream().map(course -> MultiGauge.Row.of(Tags.of("courseName", course.getTitle(), "semester", course.getSemester()), course.getNumberOfStudents()))
-                        // A mutable list is required here because otherwise the values can not be updated correctly
-                        .collect(Collectors.toCollection(ArrayList::new)),
-                true);
+        // A mutable list is required here because otherwise the values can not be updated correctly
+        final List<MultiGauge.Row<?>> gauges = activeCourses.stream().map(course -> {
+            final Tags tags = Tags.of("courseId", Long.toString(course.getId()), "courseName", course.getTitle(), "semester", course.getSemester());
+            final long studentCount = course.getNumberOfStudents();
+            return MultiGauge.Row.of(tags, studentCount);
+        }).collect(Collectors.toCollection(ArrayList::new));
+
+        studentsCourseGauge.register(gauges, true);
     }
 
     private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
-        studentsExamGauge.register(examsInActiveCourses.stream()
-                .map(exam -> MultiGauge.Row.of(Tags.of("examName", exam.getTitle(), "semester", getExamSemester(courses, exam)),
-                        studentExamRepository.findByExamId(exam.getId()).size()))
-                // A mutable list is required here because otherwise the values can not be updated correctly
-                .collect(Collectors.toCollection(ArrayList::new)), true);
+        // A mutable list is required here because otherwise the values can not be updated correctly
+        final List<MultiGauge.Row<?>> gauges = examsInActiveCourses.stream().map(exam -> {
+            final Tags tags = getExamMetricTags(courses, exam);
+            final long studentCount = studentExamRepository.countByExamId(exam.getId());
+            return MultiGauge.Row.of(tags, studentCount);
+        }).collect(Collectors.toCollection(ArrayList::new));
+
+        studentsExamGauge.register(gauges, true);
     }
 
-    private String getExamSemester(final List<Course> courses, final Exam exam) {
-        // The exam.getCourse() is not populated (the semester property is not set) -> Use course from the courses list, which contains the semester
-        return courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny().map(Course::getSemester).orElse("No semester");
+    private Tags getExamMetricTags(final List<Course> courses, final Exam exam) {
+        final Optional<Course> examCourse = findExamCourse(courses, exam);
+
+        final List<Tag> tags = new ArrayList<>();
+        examCourse.ifPresent(course -> {
+            tags.add(Tag.of("courseId", Long.toString(course.getId())));
+            tags.add(Tag.of("courseName", course.getTitle()));
+        });
+        tags.add(Tag.of("examId", Long.toString(exam.getId())));
+        tags.add(Tag.of("examName", exam.getTitle()));
+        tags.add(Tag.of("semester", examCourse.map(Course::getSemester).orElse(NO_SEMESTER_TAG)));
+
+        return Tags.of(tags);
+    }
+
+    private Optional<Course> findExamCourse(final List<Course> courses, final Exam exam) {
+        return courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny();
     }
 
     private void updateActiveExerciseMultiGauge() {
@@ -530,7 +554,7 @@ public class MetricsBean {
     private void ensureCourseInformationIsSet(List<Course> courses) {
         courses.forEach(course -> {
             if (course.getSemester() == null) {
-                course.setSemester("No semester");
+                course.setSemester(NO_SEMESTER_TAG);
             }
             if (course.getTitle() == null) {
                 if (course.getShortName() != null) {
