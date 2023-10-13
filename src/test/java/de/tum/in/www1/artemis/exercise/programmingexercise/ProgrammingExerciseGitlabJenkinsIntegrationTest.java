@@ -19,10 +19,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
-import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -543,14 +541,8 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    // the @SuppressWarnings annotation allows the use of a captor for a parameterized type, without having to create a
-    // class variable with the @Captor annotation
-    @SuppressWarnings("unchecked")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBuildPlanURL() throws Exception {
-        ArgumentCaptor<HttpEntity<String>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         programmingExerciseTestService.updateBuildPlanURL();
-        // verify(restTemplate).exchange(any(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
-        // List<String> jobs = captor.getAllValues().stream().map(HttpEntity::getBody).toList();
     }
 }

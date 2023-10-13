@@ -37,6 +37,8 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +80,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
+import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
@@ -750,10 +753,16 @@ public class ProgrammingExerciseTestService {
     }
 
     void updateBuildPlanURL() throws Exception {
+        MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class);
+        ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> replacementCaptor = ArgumentCaptor.forClass(String.class);
+        mockedUtils.when(() -> JenkinsBuildPlanUtils.replaceScriptParameters(any(), toBeReplacedCaptor.capture(), replacementCaptor.capture())).thenCallRealMethod();
+
         boolean staticCodeAnalysisEnabled = true;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(JAVA);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        sourceExercise.generateAndSetBuildPlanAccessSecret();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         programmingExerciseUtilService.addHintsToExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
@@ -774,6 +783,16 @@ public class ProgrammingExerciseTestService {
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
+
+        // entries 0 through 3 are calls made for repository URL replacement, 4 and 5 are for build plan URL replacement
+        List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(4, 6);
+        List<String> replacementURLs = replacementCaptor.getAllValues().subList(4, 6);
+
+        assertThat(sourceExercise.getBuildPlanAccessSecret()).isNotEqualTo(importedExercise.getBuildPlanAccessSecret());
+        assertThat(toBeReplacedURLs.get(0)).contains(sourceExercise.getBuildPlanAccessSecret());
+        assertThat(toBeReplacedURLs.get(1)).contains(sourceExercise.getBuildPlanAccessSecret());
+        assertThat(replacementURLs.get(0)).contains(importedExercise.getBuildPlanAccessSecret());
+        assertThat(replacementURLs.get(1)).contains(importedExercise.getBuildPlanAccessSecret());
     }
 
     // TEST
