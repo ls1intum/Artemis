@@ -3,10 +3,18 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm/';
 import { faAngleDown, faAngleUp, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { cloneDeep } from 'lodash-es';
 
 type ExerciseGroupCategory = 'current' | 'future' | 'previous' | 'noDueDate';
 
 type ExerciseGroups = Record<ExerciseGroupCategory, { exercises: Exercise[]; isCollapsed: boolean }>;
+
+const DEFAULT_EXERCISE_GROUPS = {
+    previous: { exercises: [], isCollapsed: true },
+    current: { exercises: [], isCollapsed: false },
+    future: { exercises: [], isCollapsed: true },
+    noDueDate: { exercises: [], isCollapsed: true },
+};
 
 @Component({
     selector: 'jhi-course-exercises-grouped-by-category',
@@ -17,8 +25,12 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     @Input() filteredExercises?: Exercise[];
     @Input() course?: Course;
     @Input() exerciseForGuidedTour?: Exercise;
+    @Input() lastAppliedSearchString?: string;
 
     exerciseGroups: ExerciseGroups;
+
+    searchWasActive: boolean = false;
+    exerciseGroupsBeforeSearch: ExerciseGroups = cloneDeep(DEFAULT_EXERCISE_GROUPS);
 
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
@@ -33,12 +45,7 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     }
 
     private groupExercisesByDueDate(): ExerciseGroups {
-        const updatedExerciseGroups: ExerciseGroups = {
-            previous: { exercises: [], isCollapsed: true },
-            current: { exercises: [], isCollapsed: false },
-            future: { exercises: [], isCollapsed: true },
-            noDueDate: { exercises: [], isCollapsed: true },
-        };
+        const updatedExerciseGroups: ExerciseGroups = cloneDeep(DEFAULT_EXERCISE_GROUPS);
 
         if (!this.filteredExercises) {
             return updatedExerciseGroups;
@@ -55,11 +62,34 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     }
 
     /**
-     * 1. Keep the expanded or collapsed state of the exercise groups when a filter is applied
-     * 2. Expand all sections with matches on search
+     * 1. Expand all sections with matches on search
+     * 2. Keep the expanded or collapsed state of the exercise groups when a filter is applied
      * 3. Make sure at least one displayed section is expanded by default
+     *
+     * @param exerciseGroups updated and grouped exercises that are to be displayed
      */
     private adjustExpandedOrCollapsedStateOfExerciseGroups(exerciseGroups: ExerciseGroups) {
+        if (this.lastAppliedSearchString) {
+            const isAConsecutiveSearchWithAllGroupsExpanded = this.searchWasActive;
+            if (!isAConsecutiveSearchWithAllGroupsExpanded) {
+                this.exerciseGroupsBeforeSearch = cloneDeep(this.exerciseGroups);
+            }
+            this.searchWasActive = true;
+
+            Object.entries(exerciseGroups).forEach(([, exerciseGroup]) => {
+                exerciseGroup.isCollapsed = false;
+            });
+            return;
+        }
+
+        if (this.searchWasActive) {
+            this.searchWasActive = false;
+            Object.entries(exerciseGroups).forEach(([exerciseGroupKey, exerciseGroup]) => {
+                exerciseGroup.isCollapsed = this.exerciseGroupsBeforeSearch[exerciseGroupKey].isCollapsed;
+            });
+            return;
+        }
+
         const filterIsApplied = this.exerciseGroups;
         if (filterIsApplied) {
             Object.entries(exerciseGroups).forEach(([exerciseGroupKey, exerciseGroup]) => {

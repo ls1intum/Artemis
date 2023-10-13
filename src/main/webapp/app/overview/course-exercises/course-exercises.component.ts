@@ -84,8 +84,8 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     exerciseFilter: ExerciseFilterModel;
 
     filteredExercises: Exercise[] | undefined;
-
     showExercisesGroupedByDueDateCategory: boolean = true;
+    lastAppliedSearchString: string | undefined;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -242,6 +242,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.searchExercisesInput = this.searchExercisesInput.trim();
         this.exerciseFilter = new ExerciseFilterModel(this.searchExercisesInput);
         this.applyFiltersAndOrder();
+        this.lastAppliedSearchString = this.exerciseFilter.exerciseNameSearch;
     }
 
     get canUnenroll(): boolean {
