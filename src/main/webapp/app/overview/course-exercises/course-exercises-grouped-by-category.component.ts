@@ -25,7 +25,7 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     @Input() filteredExercises?: Exercise[];
     @Input() course?: Course;
     @Input() exerciseForGuidedTour?: Exercise;
-    @Input() lastAppliedSearchString?: string;
+    @Input() appliedSearchString?: string;
 
     exerciseGroups: ExerciseGroups;
 
@@ -61,6 +61,42 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
         return updatedExerciseGroups;
     }
 
+    private expandAllExercisesAndSaveStateBeforeSearch(exerciseGroups: ExerciseGroups) {
+        const isAConsecutiveSearchWithAllGroupsExpanded = this.searchWasActive;
+        if (!isAConsecutiveSearchWithAllGroupsExpanded) {
+            this.exerciseGroupsBeforeSearch = cloneDeep(this.exerciseGroups);
+            this.searchWasActive = true;
+        }
+
+        Object.entries(exerciseGroups).forEach(([, exerciseGroup]) => {
+            exerciseGroup.isCollapsed = false;
+        });
+    }
+
+    private restoreStateBeforeSearch(exerciseGroups: ExerciseGroups) {
+        this.searchWasActive = false;
+
+        Object.entries(exerciseGroups).forEach(([exerciseGroupKey, exerciseGroup]) => {
+            exerciseGroup.isCollapsed = this.exerciseGroupsBeforeSearch[exerciseGroupKey].isCollapsed;
+        });
+    }
+
+    private keepCurrentCollapsedOrExpandedStateOfExerciseGroups(exerciseGroups: ExerciseGroups) {
+        Object.entries(exerciseGroups).forEach(([exerciseGroupKey, exerciseGroup]) => {
+            exerciseGroup.isCollapsed = this.exerciseGroups[exerciseGroupKey].isCollapsed;
+        });
+    }
+
+    private makeSureAtLeastOneExerciseIsExpanded(exerciseGroups: ExerciseGroups) {
+        const exerciseGroupsWithExercises = Object.entries(exerciseGroups).filter(([, exerciseGroup]) => exerciseGroup.exercises.length > 0);
+        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([, exerciseGroup]) => !exerciseGroup.isCollapsed);
+
+        const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
+        if (!atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0) {
+            exerciseGroupsWithExercises[0][1].isCollapsed = false;
+        }
+    }
+
     /**
      * 1. Expand all sections with matches on search
      * 2. Keep the expanded or collapsed state of the exercise groups when a filter is applied
@@ -69,41 +105,21 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
      * @param exerciseGroups updated and grouped exercises that are to be displayed
      */
     private adjustExpandedOrCollapsedStateOfExerciseGroups(exerciseGroups: ExerciseGroups) {
-        if (this.lastAppliedSearchString) {
-            const isAConsecutiveSearchWithAllGroupsExpanded = this.searchWasActive;
-            if (!isAConsecutiveSearchWithAllGroupsExpanded) {
-                this.exerciseGroupsBeforeSearch = cloneDeep(this.exerciseGroups);
-            }
-            this.searchWasActive = true;
-
-            Object.entries(exerciseGroups).forEach(([, exerciseGroup]) => {
-                exerciseGroup.isCollapsed = false;
-            });
-            return;
+        const isSearchingExercise = this.appliedSearchString;
+        if (isSearchingExercise) {
+            return this.expandAllExercisesAndSaveStateBeforeSearch(exerciseGroups);
         }
 
         if (this.searchWasActive) {
-            this.searchWasActive = false;
-            Object.entries(exerciseGroups).forEach(([exerciseGroupKey, exerciseGroup]) => {
-                exerciseGroup.isCollapsed = this.exerciseGroupsBeforeSearch[exerciseGroupKey].isCollapsed;
-            });
-            return;
+            return this.restoreStateBeforeSearch(exerciseGroups);
         }
 
         const filterIsApplied = this.exerciseGroups;
         if (filterIsApplied) {
-            Object.entries(exerciseGroups).forEach(([exerciseGroupKey, exerciseGroup]) => {
-                exerciseGroup.isCollapsed = this.exerciseGroups[exerciseGroupKey].isCollapsed;
-            });
+            this.keepCurrentCollapsedOrExpandedStateOfExerciseGroups(exerciseGroups);
         }
 
-        const exerciseGroupsWithExercises = Object.entries(exerciseGroups).filter(([, exerciseGroup]) => exerciseGroup.exercises.length > 0);
-        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([, exerciseGroup]) => !exerciseGroup.isCollapsed);
-
-        const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
-        if (!atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0) {
-            exerciseGroupsWithExercises[0][1].isCollapsed = false;
-        }
+        this.makeSureAtLeastOneExerciseIsExpanded(exerciseGroups);
     }
 
     private getExerciseGroup(exercise: Exercise): ExerciseGroupCategory {
