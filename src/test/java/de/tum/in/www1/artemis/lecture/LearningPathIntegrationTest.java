@@ -130,7 +130,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
-        competencies = competencyUtilService.createCompetencies(course, 3);
+        competencies = competencyUtilService.createCompetencies(course, 5);
 
         // set threshold to 60, 70, and 80 respectively
         for (int i = 0; i < competencies.length; i++) {
@@ -501,7 +501,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
-        assertThat(result).hasSize(3);
+        assertThat(result).hasSize(5);
     }
 
     @Test
@@ -520,7 +520,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
-        assertThat(result).hasSize(3);
+        assertThat(result).hasSize(5);
     }
 
 }
