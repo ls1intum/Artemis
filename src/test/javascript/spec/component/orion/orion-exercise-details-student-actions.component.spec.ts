@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { Exercise } from 'app/entities/exercise.model';
@@ -59,6 +59,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('ngOnInit should subscribe to state', () => {
+        orionConnectorService.triggerAction = new Subject<void>().asObservable();
         comp.ngOnInit();
 
         expect(orionStateStub).toHaveBeenCalledOnce();
@@ -96,6 +97,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
     it('should submit if stated in route', () => {
         const submitChangesSpy = jest.spyOn(comp, 'submitChanges');
+        orionConnectorService.triggerAction = new Subject<void>().asObservable();
 
         comp.ngOnInit();
 

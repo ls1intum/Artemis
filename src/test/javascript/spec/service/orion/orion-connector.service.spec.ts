@@ -44,6 +44,7 @@ describe('OrionConnectorService', () => {
             initializeAssessment: jest.fn(),
             importParticipation: jest.fn(),
             initializeFeedback: jest.fn(),
+            initializeTestRepository: jest.fn(),
         } as OrionExerciseConnector;
         (window as any).orionVCSConnector = { selectRepository: jest.fn(), submit: jest.fn() } as OrionVCSConnector;
         (window as any).orionBuildConnector = {
@@ -236,6 +237,18 @@ describe('OrionConnectorService', () => {
             '5',
             '[{"id":2,"positive":false,"detailText":"abc"},{"id":3,"positive":true,"detailText":"cde"}]',
         );
+    });
+
+    it('should forward initializeTestRepository', () => {
+        serviceUnderTest.initializeTestRepository(exercise);
+
+        expect((window as any).orionExerciseConnector.initializeTestRepository).not.toHaveBeenCalled();
+
+        const advancedExercise = { id: 42, releaseTestsWithExampleSolution: true, testRepositoryUrl: 'testurl.de' } as ProgrammingExercise;
+        serviceUnderTest.initializeTestRepository(advancedExercise);
+
+        expect((window as any).orionExerciseConnector.initializeTestRepository).toHaveBeenCalledOnce();
+        expect((window as any).orionExerciseConnector.initializeTestRepository).toHaveBeenCalledWith('testurl.de');
     });
 
     it('should forward initializeFeedbackArray', () => {

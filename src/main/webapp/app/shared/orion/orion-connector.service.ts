@@ -36,15 +36,18 @@ function theWindow(): any {
 export class OrionConnectorService {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
-    private feedbackTriggerActionSubject: Subject<void> = new Subject<void>();
-    triggerAction$: Observable<void> = this.feedbackTriggerActionSubject.asObservable();
+    private feedbackTriggerActionSubject: Subject<void>;
+    triggerAction: Observable<void>;
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
     constructor(
         private injector: Injector,
         private alertService: AlertService,
-    ) {}
+    ) {
+        this.feedbackTriggerActionSubject = new Subject<void>();
+        this.triggerAction = this.feedbackTriggerActionSubject.asObservable();
+    }
 
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;
@@ -116,6 +119,7 @@ export class OrionConnectorService {
      * @param viewString ExerciseView which is currently open in the IDE as string
      */
     onExerciseOpened(opened: number, viewString: string): void {
+        this.feedbackTriggerActionSubject.next();
         const view = ExerciseView[viewString];
         this.setIDEStateParameter({ view });
         this.setIDEStateParameter({ opened });
@@ -283,10 +287,14 @@ export class OrionConnectorService {
     }
 
     /**
-     * Triggers artemis to generate feedback
+     * Initializes the test repository
+     *
+     * @param exercise the current programming exercise
      */
-    initializeFeedback(): void {
-        this.feedbackTriggerActionSubject.next();
+    initializeTestRepository(exercise: ProgrammingExercise) {
+        if (exercise.releaseTestsWithExampleSolution && exercise.testRepositoryUrl !== undefined) {
+            theWindow().orionExerciseConnector.initializeTestRepository(exercise.testRepositoryUrl);
+        }
     }
 
     /**

@@ -76,6 +76,13 @@ export interface OrionExerciseConnector {
      * @param feedbacks a string containing an array of {@link Feedback}
      */
     initializeFeedback(feedbacks: string): void;
+
+    /**
+     * Initialize test repository
+     *
+     * @param testRepository repository url as a link
+     */
+    initializeTestRepository(testRepository: string): void;
 }
 
 export interface OrionVCSConnector {

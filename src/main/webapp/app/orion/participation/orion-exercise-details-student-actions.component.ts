@@ -36,7 +36,7 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.orionConnectorService.state().subscribe((orionState: OrionState) => (this.orionState = orionState));
-        this.orionConnectorService.triggerAction$.subscribe(() => {
+        this.orionConnectorService.triggerAction.subscribe(() => {
             this.initializeFeedback();
         });
         this.route.queryParams.subscribe((params) => {
@@ -67,6 +67,13 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
+     * Initializes a test repository
+     */
+    initializeTestRepository() {
+        this.orionConnectorService.initializeTestRepository(this.exercise as ProgrammingExercise);
+    }
+
+    /**
      * returns feedback for an exercise.
      * Orion will handle the feedback and processes the last graded result
      * this ensures feedback changes won't break the plugin and the endpoint stays extensible
@@ -84,5 +91,15 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
                 }
             });
         });
+    }
+
+    /**
+     * Returns if the dude date has passed
+     */
+    isDueDatePassed() {
+        if (this.exercise.dueDate === undefined) {
+            return false;
+        }
+        return this.exercise.dueDate.date() > Date.now();
     }
 }
