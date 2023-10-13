@@ -66,6 +66,14 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
             exerciseGroups.future.isCollapsed = this.exerciseGroups.future.isCollapsed;
             exerciseGroups.noDueDate.isCollapsed = this.exerciseGroups.noDueDate.isCollapsed;
         }
+
+        const exerciseGroupsWithExercises = Object.entries(exerciseGroups).filter(([, exerciseGroup]) => exerciseGroup.exercises.length > 0);
+        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([, exerciseGroup]) => !exerciseGroup.isCollapsed);
+
+        const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
+        if (!atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0) {
+            exerciseGroupsWithExercises[0][1].isCollapsed = false;
+        }
     }
 
     private getExerciseGroup(exercise: Exercise): ExerciseGroupCategory {
