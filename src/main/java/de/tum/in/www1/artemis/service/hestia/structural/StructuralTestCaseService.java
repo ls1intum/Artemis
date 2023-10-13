@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,11 +9,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.util.StreamUtils;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -196,13 +192,13 @@ public class StructuralTestCaseService {
      * @throws StructuralSolutionEntryGenerationException If the test.json does not exist or could not be read
      */
     private StructuralClassElements[] readStructureOracleFile(Path testRepoPath) throws StructuralSolutionEntryGenerationException {
-        try (Stream<File> files = StreamUtils.createStreamFromIterator(FileUtils.iterateFiles(testRepoPath.toFile(), new String[] { "json" }, true))) {
-            var testJsonFile = files.filter(File::isFile).filter(file -> "test.json".equals(file.getName().toString())).findFirst();
+        try (Stream<Path> files = Files.walk(testRepoPath)) {
+            var testJsonFile = files.filter(Files::isRegularFile).filter(path -> "test.json".equals(path.getFileName().toString())).findFirst();
             if (testJsonFile.isEmpty()) {
                 throw new StructuralSolutionEntryGenerationException("Unable to locate test.json");
             }
             else {
-                String jsonContent = FileUtils.readFileToString(testJsonFile.get(), StandardCharsets.UTF_8);
+                String jsonContent = Files.readString(testJsonFile.get());
                 var objectMapper = new ObjectMapper();
                 return objectMapper.readValue(jsonContent, StructuralClassElements[].class);
             }
