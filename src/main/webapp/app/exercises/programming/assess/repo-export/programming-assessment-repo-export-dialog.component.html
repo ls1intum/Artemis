@@ -125,20 +125,9 @@
         </button>
         <button
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [overwriteDisabled]="!this.participationIdList && !this.participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !this.exportInProgress"
             type="submit"
-            [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
-            *ngIf="!isRepoExportForMultipleExercises"
-        >
-            <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
-            <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
-        </button>
-        <button
-            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            type="submit"
-            [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
-            class="btn btn-default"
-            *ngIf="isRepoExportForMultipleExercises"
         >
             <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>

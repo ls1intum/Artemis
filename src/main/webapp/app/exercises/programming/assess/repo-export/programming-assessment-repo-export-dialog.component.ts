@@ -42,7 +42,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.isLoading = true;
         this.exportInProgress = false;
         this.repositoryExportOptions = {
-            exportAllParticipants: this.isAtLeastInstructor,
+            exportAllParticipants: false,
             filterLateSubmissions: false,
             excludePracticeSubmissions: false,
             addParticipantName: true,
