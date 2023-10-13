@@ -6,9 +6,6 @@ import java.util.*;
 
 import javax.ws.rs.BadRequestException;
 
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -156,7 +153,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                         irisWebsocketService.sendException(fullSession, throwable.getCause());
                     }
                     else if (response != null) {
-                        var irisMessageSaved = irisMessageService.saveMessage(toIrisMessage(response), fullSession, IrisMessageSender.LLM);
+                        var irisMessageSaved = irisMessageService.saveMessage(response.message(), fullSession, IrisMessageSender.LLM);
                         irisWebsocketService.sendMessage(irisMessageSaved);
                     }
                     else {
@@ -165,16 +162,6 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                     }
                     return null;
                 });
-    }
-    
-    private static IrisMessage toIrisMessage(IrisMessageResponseDTO dto) {
-        var message = new IrisMessage();
-        message.setSentAt(dto.sentAt());
-        message.setSender(IrisMessageSender.LLM);
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setTextContent(dto.content().get("response").asText());
-        message.setContent(List.of(irisMessageContent));
-        return message;
     }
 
     private void addDiffAndTemplatesForStudentAndExerciseIfPossible(User student, ProgrammingExercise exercise, Map<String, Object> parameters) {
