@@ -283,8 +283,6 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.sessionMonitoring.shortDescription',
             'featureOverview.instructor.feature.sessionMonitoring.descriptionTextOne',
             faHdd,
-            undefined,
-            '/content/images/feature-overview/instructors/session_monitoring.png',
         );
 
         const featurePlagiarismDetection = new Feature(

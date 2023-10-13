@@ -433,48 +433,19 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
     :alt: Submissions
     :align: center
 
-3.3 Suspicious Behavior Detection
+3.2 Suspicious Behavior Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-You can check for specific suspicious behavior in the suspicious behavior dashboard. You find the suspicious behavior as the first step in the exam correction on the exam checklist page.
-To open the suspicious behavior dashboard click on the |suspicious_behavior| button.
-
-.. figure:: instructor/suspicious_behavior_exam_checklist.png
-    :alt: Suspicious Behavior Exam Checklist
-    :align: center
-
-    Suspicious Behavior Exam Checklist
-
-The dashboard allows to detect exam sessions that fulfill certain criteria and gives an overview of the plagiarism detection.
+You can check for specific suspicious behavior in the suspicious behavior dashboard. The dashboard allows to detect exam sessions that fulfill certain criteria and gives an overview of the plagiarism detection.
 An exam session is a unique combination of IP address, user agent, instance id, a session token and the browser fingerprint. It is created whenever a student enters their exam.
-You can see the available analysis options in the first screenshot below. To start the analysis, click the |analyze_sessions| button. When the analysis detects at least one suspicious case, the instructor can click the |view_sessions| button to see the details of the suspicious exam sessions.
-The second screenshot shows an example of analysis results.
-
-.. figure:: instructor/analysis_options.png
-    :alt: Suspicious Behavior Analysis Options
-    :align: center
-
-    Suspicious Behavior Analysis Options
-
-.. figure:: instructor/suspicious_behavior_analysis_results.png
-    :alt: Suspicious Behavior Analysis Results Example
-    :align: center
-
-    Suspicious Behavior Analysis Results Example
-
-
+You can see the available analysis options in the first screenshot below. To start the analysis, click the |analyze_sessions| button. When the analysis detects at least one suspicious case, the instructor can click the |view_cases| button to see the details of the suspicious exam sessions.
+The second screenshot shows the details of a suspicious exam session.
 
 In the lower half of the dashboard the instructor can view the plagiarism detection overview. It only lists exercises that support plagiarism detection. The number of potential plagiarism results are the results returned when running the detection. The number of plagiarism results are the cases a instructor has classified and confirmed as plagiarism.
 To view the current detection results or run a detection click on the |view_plagiarism_results| button. This navigates to the plagiarism detection page of the exercise.
 Once the instructor has confirmed at least one case, the |view_cases| button is visible at the bottom left of the table that navigates to all confirmed plagiarism cases of the exam.
 
-.. figure:: instructor/plagiarism_case_overview.png
-    :alt: Plagiarism Cases Overview
-    :align: center
 
-    Plagiarism Cases Overview
-
-
-3.4 Plagiarism detection
+3.3 Plagiarism detection
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Artemis also allows you to detect plagiarism attempts.
@@ -492,7 +463,7 @@ Once the instructor has confirmed at least one case, the |view_cases| button is 
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
-3.5 Exam Timeline
+3.4 Exam Timeline
 ^^^^^^^^^^^^^^^^^
 - Artemis stores the current state of a submission for text, modeling, and quiz exercises every 30s or whenever the student clicks the save button.
 - As instructor, you have the possibility to view all those states as well as the submissions for file-upload or programming exercises using the exam timeline.
@@ -508,7 +479,7 @@ Once the instructor has confirmed at least one case, the |view_cases| button is 
 
 .. _exam_grading_key:
 
-3.6 Grading Key
+3.5 Grading Key
 ^^^^^^^^^^^^^^^
 - Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
 - Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
@@ -647,14 +618,6 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |verify_attendance| image:: instructor/buttons/verify_attendance.png
     :height: 40
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
-.. |analyze_sessions| image:: instructor/buttons/analyze_sessions.png
-.. |view_cases| image:: instructor/buttons/view_cases.png
-.. |view_plagiarism_results| image:: instructor/buttons/view_plagiarism_results.png
-    :height: 40
-.. |suspicious_behavior| image:: instructor/buttons/suspicious_behavior.png
-      :height: 40
-.. |view_sessions| image:: instructor/buttons/view_sessions.png
-      :height: 40
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png
 .. |add_grade_step| image:: instructor/buttons/add_grade_step.png
