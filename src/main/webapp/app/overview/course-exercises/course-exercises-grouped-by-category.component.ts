@@ -40,6 +40,13 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
             noDueDate: { exercises: [], isCollapsed: true },
         };
 
+        if (this.exerciseGroups) {
+            updatedExerciseGroups.previous.isCollapsed = this.exerciseGroups.previous.isCollapsed;
+            updatedExerciseGroups.current.isCollapsed = this.exerciseGroups.current.isCollapsed;
+            updatedExerciseGroups.future.isCollapsed = this.exerciseGroups.future.isCollapsed;
+            updatedExerciseGroups.noDueDate.isCollapsed = this.exerciseGroups.noDueDate.isCollapsed;
+        }
+
         if (!this.filteredExercises) {
             return updatedExerciseGroups;
         }
