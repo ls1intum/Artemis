@@ -23,9 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -550,7 +548,6 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @SuppressWarnings("unchecked")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBuildPlanURL() throws Exception {
-        doReturn(new ResponseEntity<String>(HttpStatus.CREATED)).when(restTemplate).exchange(any(), eq(HttpMethod.POST), any(), eq(String.class));
         ArgumentCaptor<HttpEntity<String>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         programmingExerciseTestService.updateBuildPlanURL();
         // verify(restTemplate).exchange(any(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
