@@ -1,6 +1,16 @@
 <ng-template #controls>
     <div class="course-overview-controls" *ngIf="course && course!.exercises && course!.exercises.length > 0">
         <div class="d-flex align-items-center">
+            <div>
+                <span>
+                    <fa-icon [icon]="faPlayCircle"></fa-icon>
+                    {{ 'artemisApp.theme.sync' | artemisTranslate }}
+                </span>
+                <div class="form-switch">
+                    <input class="form-check-input" type="checkbox" [checked]="showExercisesGroupedByDueDateCategory" (click)="toggleExerciseView()" />
+                </div>
+            </div>
+
             <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
                 <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
                     <fa-icon [icon]="faFilter"></fa-icon>

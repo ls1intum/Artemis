@@ -208,6 +208,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.applyFiltersAndOrder();
     }
 
+    toggleExerciseView() {
+        this.showExercisesGroupedByDueDateCategory = !this.showExercisesGroupedByDueDateCategory;
+    }
+
     /**
      * Filters all displayed exercises by applying the selected activeFilters
      * @param filters The filters which should be applied
