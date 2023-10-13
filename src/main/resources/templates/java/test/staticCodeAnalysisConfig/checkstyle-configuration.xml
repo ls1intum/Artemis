@@ -54,8 +54,6 @@
         <property name="max" value="120"/>
         <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
     </module>
-    <module name="MethodLength"/>
-    <module name="ParameterNumber"/>
 
     <!-- Miscellaneous other checks.                   -->
     <!-- See https://checkstyle.org/checks/misc/index.html -->
@@ -110,6 +108,10 @@
             <property name="processJavadoc" value="false"/>
         </module>
 
+        <!-- Checks for Size Violations.                    -->
+        <!-- See https://checkstyle.org/checks/sizes/index.html -->
+        <module name="MethodLength"/>
+        <module name="ParameterNumber"/>
 
         <!-- Checks for whitespace                               -->
         <!-- See https://checkstyle.org/checks/whitespace/index.html -->
