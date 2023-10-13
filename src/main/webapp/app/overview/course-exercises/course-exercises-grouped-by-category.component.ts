@@ -12,7 +12,7 @@ type ExerciseGroups = Record<ExerciseGroupCategory, { exercises: Exercise[]; isC
 const DEFAULT_EXERCISE_GROUPS = {
     previous: { exercises: [], isCollapsed: true },
     current: { exercises: [], isCollapsed: false },
-    future: { exercises: [], isCollapsed: true },
+    future: { exercises: [], isCollapsed: false },
     noDueDate: { exercises: [], isCollapsed: true },
 };
 
