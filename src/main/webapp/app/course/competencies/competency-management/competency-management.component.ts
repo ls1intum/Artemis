@@ -299,7 +299,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     removeRelation(edge: Edge) {
         this.competencyService.removeCompetencyRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
             next: () => {
-                const index = this.edges.indexOf(edge);
+                const index = this.edges.findIndex((e) => e.id === edge.id);
                 this.edges.splice(index, 1);
                 this.update$.next(true);
             },
