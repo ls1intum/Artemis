@@ -7,10 +7,10 @@
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu>
                     <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
-                        {{ 'artemisApp.courseOverview.exerciseList.byDueDate' | artemisTranslate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.proximityToDueDate' | artemisTranslate }}
                     </a>
                     <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
-                        {{ 'artemisApp.courseOverview.exerciseList.byWeek' | artemisTranslate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.weekOfDueDate' | artemisTranslate }}
                     </a>
                 </div>
             </div>
