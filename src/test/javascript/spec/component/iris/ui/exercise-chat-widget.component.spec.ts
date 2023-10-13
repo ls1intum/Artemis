@@ -32,6 +32,7 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisSessionService } from 'app/iris/session.service';
 import { UserService } from 'app/core/user/user.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -145,11 +146,7 @@ describe('ExerciseChatWidgetComponent', () => {
             new StudentMessageSentAction(
                 {
                     sender: IrisSender.USER,
-                    content: [
-                        {
-                            textContent: 'Hello',
-                        },
-                    ],
+                    content: [new IrisMessageTextContent('Hello')],
                 },
                 null,
             ),
@@ -169,11 +166,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const error = 'Something went wrong. Please try again later!';
         const mockMessage = {
             sender: component.SENDER_USER,
-            content: [
-                {
-                    textContent: 'Hello',
-                },
-            ],
+            content: [new IrisMessageTextContent('Hello')],
         };
         jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValueOnce(
             throwError({
@@ -390,11 +383,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const testMessage = 'Test message';
         const expectedResult: IrisClientMessage = {
             sender: IrisSender.USER,
-            content: [
-                {
-                    textContent: testMessage,
-                },
-            ],
+            content: [new IrisMessageTextContent(testMessage)],
         };
 
         const result = component.newUserMessage(testMessage);

@@ -362,8 +362,12 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
+                .then(() => console.log('dispatch'))
                 // .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
-                .then(() => this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
+                .then(() => {
+                    this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
+                    console.log(message);
+                })
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
@@ -594,9 +598,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A new IrisClientMessage object representing the user message.
      */
     newUserMessage(message: string): IrisClientMessage {
-        const content: IrisMessageTextContent = {
-            textContent: message,
-        };
+        const content = new IrisMessageTextContent(message);
         return {
             sender: this.SENDER_USER,
             content: [content],

@@ -2,7 +2,7 @@ import { IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-
 
 export enum IrisMessageContentType {
     TEXT = 'text',
-    PLAN = 'plan',
+    PLAN = 'exercise-plan',
 }
 
 export abstract class IrisMessageContent {
@@ -15,16 +15,19 @@ export abstract class IrisMessageContent {
 
 export class IrisMessageTextContent extends IrisMessageContent {
     textContent: string;
-    constructor() {
+    constructor(textContent: string) {
         super(IrisMessageContentType.TEXT);
+        this.textContent = textContent;
     }
 }
 
 export class IrisMessagePlanContent extends IrisMessageContent {
     components: IrisExercisePlanComponent[];
     currentComponentIndex: number;
-    constructor() {
+    constructor(components: IrisExercisePlanComponent[], currentComponentIndex: number) {
         super(IrisMessageContentType.PLAN);
+        this.components = components;
+        this.currentComponentIndex = currentComponentIndex;
     }
 }
 
