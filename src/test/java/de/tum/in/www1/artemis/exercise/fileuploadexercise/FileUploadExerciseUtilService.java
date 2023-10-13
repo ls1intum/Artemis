@@ -116,19 +116,12 @@ public class FileUploadExerciseUtilService {
     }
 
     /**
-     * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise. The course has custom user groups. Does not save the
-     * exercises.
+     * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise.
      *
-     * @param studentGroupName           The name of the student group.
-     * @param teachingAssistantGroupName The name of the teaching assistant group.
-     * @param editorGroupName            The name of the editor group.
-     * @param instructorGroupName        The name of the instructor group.
-     * @return A List containing the created FileUploadExercises.
+     * @return The created Course.
      */
-    public List<FileUploadExercise> createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment(String studentGroupName, String teachingAssistantGroupName,
-            String editorGroupName, String instructorGroupName) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, teachingAssistantGroupName, editorGroupName,
-                instructorGroupName);
+    public Course addCourseWithFourFileUploadExercise() {
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf",
@@ -147,35 +140,9 @@ public class FileUploadExerciseUtilService {
         fileUploadExercises.add(finishedFileUploadExercise);
         fileUploadExercises.add(assessedFileUploadExercise);
         fileUploadExercises.add(noDueDateFileUploadExercise);
-        return fileUploadExercises;
-    }
-
-    /**
-     * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise. The course has custom user groups.
-     *
-     * @return The created Course.
-     */
-    public Course addCourseWithFourFileUploadExercise() {
-        var fileUploadExercises = createFourFileUploadExercisesWithCourseWithCustomUserGroupAssignment("tumuser", "tutor", "editor", "instructor");
-        return addFileUploadExercisesToCourse(fileUploadExercises);
-    }
-
-    /**
-     * Saves the given FileUploadExercises. The given List must contain exactly four FileUploadExercises belonging to the same Course. The course must not contain more than four
-     * exercises.
-     *
-     * @param fileUploadExercises The List of FileUploadExercises to save. Must contain exactly four FileUploadExercises belonging to the same Course.
-     * @return The Course the FileUploadExercises belong to.
-     */
-    private Course addFileUploadExercisesToCourse(List<FileUploadExercise> fileUploadExercises) {
-        assertThat(fileUploadExercises).as("created four exercises").hasSize(4);
         exerciseRepo.saveAll(fileUploadExercises);
-        long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
-        Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
-        List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
-        assertThat(exercises).as("four exercises got stored").hasSize(4);
-        assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
-        return course;
+
+        return courseRepo.findByIdWithEagerExercisesElseThrow(course.getId());
     }
 
     /**
