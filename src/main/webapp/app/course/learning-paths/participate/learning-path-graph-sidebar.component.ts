@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faGripLinesVertical, faNetworkWired } from '@fortawesome/free-solid-svg-icons';
-import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
+import { LearningPathGraphComponent, LearningPathViewMode } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 import { NgxLearningPathNode } from 'app/entities/competency/learning-path.model';
 
 @Component({
@@ -51,4 +51,6 @@ export class LearningPathGraphSidebarComponent implements AfterViewInit {
                 target.style.width = event.rect.width + 'px';
             });
     }
+
+    protected readonly PATH = LearningPathViewMode.PATH;
 }
