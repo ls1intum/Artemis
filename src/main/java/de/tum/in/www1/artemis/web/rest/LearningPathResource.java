@@ -257,17 +257,15 @@ public class LearningPathResource {
         final var learningPath = learningPathRepository.findWithEagerCourseAndCompetenciesByIdElseThrow(learningPathId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Set<CompetencyProgressForLearningPathDTO> progressDTOs;
-        if (user.getId().equals(learningPath.getUser().getId()) || authorizationCheckService.isAtLeastInstructorInCourse(learningPath.getCourse(), user)) {
-            // update progress and construct DTOs
-            progressDTOs = learningPath.getCompetencies().stream().map(competency -> {
-                var progress = competencyProgressService.updateCompetencyProgress(competency.getId(), learningPath.getUser());
-                return new CompetencyProgressForLearningPathDTO(competency.getId(), competency.getMasteryThreshold(), progress.getProgress(), progress.getConfidence());
-            }).collect(Collectors.toSet());
-        }
-        else {
+        if (!user.getId().equals(learningPath.getUser().getId()) && !authorizationCheckService.isAtLeastInstructorInCourse(learningPath.getCourse(), user)) {
             throw new AccessForbiddenException("You are not authorized to access other students competency progress.");
         }
+
+        // update progress and construct DTOs
+        final var progressDTOs = learningPath.getCompetencies().stream().map(competency -> {
+            var progress = competencyProgressService.updateCompetencyProgress(competency.getId(), learningPath.getUser());
+            return new CompetencyProgressForLearningPathDTO(competency.getId(), competency.getMasteryThreshold(), progress.getProgress(), progress.getConfidence());
+        }).collect(Collectors.toSet());
         return ResponseEntity.ok(progressDTOs);
     }
 
