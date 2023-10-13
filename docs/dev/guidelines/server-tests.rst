@@ -7,9 +7,11 @@ This section covers recommended practices for writing Artemis server tests. If y
 0. General testing tips
 ========================
 Use appropriate and descriptive names for test cases so developers can easily understand what you test without looking deeper into it.
-To increase readability, prefix variable names with ``actual`` and ``expected`` instead of naming them ``int a``, ``double b``, ``String c``.
+Instead of naming your variables ``int a``, ``double b``, ``String c``, you should use meaningful names that elucidate their purpose.
+To increase readability, prefix variable names with ``actual`` and ``expected``.
 
-For example, if you want to test the method borrow in the class Book, ``testBorrowInBook()`` would be an appropriate name for the test case.
+For example, if you want to test the method ``borrow`` in the class ``Book``, ``testBorrowInBook()`` would be an appropriate name for the test case.
+When comparing two books in the test, use meaningful names such as ``actualBook `` and ``expectedBook``.
 
 .. code-block:: java
 
@@ -84,7 +86,7 @@ We first define the ArchRule prohibiting the JUnit assertion package and then en
 3. Counting database query calls within tests
 ==============================================
 
-It's possible to write tests checking how many database accesses a REST call performs. These tests ensure that code changes don't lead to more database calls or remind developers they do, which is especially important for commonly used endpoints.
+It's possible to write tests checking how many database accesses a REST call performs. These tests ensure that code changes don't lead to more database calls or remind developers if they do, which is especially important for commonly used endpoints.
 However, we should carefully consider before adding such assertions as it makes the test more tedious to maintain.
 
 The test below tracks how many database accesses a REST call performs. The custom assert ``assertThatDb`` uses the ``HibernateQueryInterceptor`` to count the number of queries. The assertion checks the number of database accesses and returns the original result of the REST call, which you can continue to use throughout the test.
