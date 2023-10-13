@@ -52,7 +52,7 @@ export class LearningPathComponent implements OnInit {
                     });
                 }
                 if (node) {
-                    this.path?.push(node);
+                    this.path.push(node);
                 }
             });
             this.isLoading = false;
@@ -61,11 +61,11 @@ export class LearningPathComponent implements OnInit {
 
     highlightNode(learningObject: LectureUnitEntry | ExerciseEntry) {
         if (learningObject instanceof LectureUnitEntry) {
-            this.highlightedNode = this.path?.find((node) => {
+            this.highlightedNode = this.path.find((node) => {
                 return node.linkedResource === learningObject.lectureUnitId && node.linkedResourceParent === learningObject.lectureId;
             });
         } else {
-            this.highlightedNode = this.path?.find((node) => {
+            this.highlightedNode = this.path.find((node) => {
                 return node.linkedResource === learningObject.exerciseId && !node.linkedResourceParent;
             });
         }
