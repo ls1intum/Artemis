@@ -32,6 +32,25 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
         this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed = !this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed;
     }
 
+    private sortExercisesWithinExerciseGroups(exerciseGroups: ExerciseGroups) {
+        for (const exerciseGroupsKey in exerciseGroups) {
+            exerciseGroups[exerciseGroupsKey].exercises.sort((exerciseA: Exercise, exerciseB: Exercise) => {
+                if (exerciseA.dueDate && exerciseB.dueDate) {
+                    if (exerciseA.dueDate.isBefore(exerciseB.dueDate)) {
+                        return -1;
+                    } else if (exerciseA.dueDate.isAfter(exerciseB.dueDate)) {
+                        return 1;
+                    }
+                }
+
+                // If due dates are equal or not defined, sort by name
+                return (exerciseA.title || '').localeCompare(exerciseB.title || '');
+            });
+        }
+
+        return exerciseGroups;
+    }
+
     private groupExercisesByDueDate(): ExerciseGroups {
         const updatedExerciseGroups: ExerciseGroups = {
             previous: { exercises: [], isCollapsed: true },
