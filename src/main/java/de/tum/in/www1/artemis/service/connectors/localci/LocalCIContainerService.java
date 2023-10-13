@@ -367,7 +367,7 @@ public class LocalCIContainerService {
         // programming language specific tasks
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
-            case PYTHON -> scriptForPython(buildScript, hasSequentialTestRuns);
+            case PYTHON -> scriptForPython(buildScript);
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
         }
 
@@ -420,35 +420,16 @@ public class LocalCIContainerService {
         }
     }
 
-    private void scriptForPython(StringBuilder buildScript, boolean hasSequentialTestRuns) {
-        if (hasSequentialTestRuns) {
-            buildScript.append("""
-                    python3 -m compileall . -q || error=true
-                    if [ ! $error ]
-                    then
-                        pytest structural/* --junitxml=test-reports/structural-results.xml || error=true
-                        if [ ! $error ]
-                        then
-                            pytest behavior/* --junitxml=test-reports/behavior-results.xml
-                        else
-                            exit 1
-                        fi
-                    else
-                        exit 1
-                    fi
-                    """);
-        }
-        else {
-            buildScript.append("""
-                    python3 -m compileall . -q || error=true
-                    if [ ! $error ]
-                    then
-                        pytest --junitxml=test-reports/results.xml
-                    else
-                        exit 1
-                    fi
-                    """);
-        }
+    private void scriptForPython(StringBuilder buildScript) {
+        buildScript.append("""
+                python3 -m compileall . -q || error=true
+                if [ ! $error ]
+                then
+                    pytest --junitxml=test-reports/results.xml
+                else
+                    exit 1
+                fi
+                """);
     }
 
     /**

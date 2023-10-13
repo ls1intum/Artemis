@@ -23,7 +23,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         // TODO LOCALVC_CI: Local CI is not supporting EMPTY at the moment.
         programmingLanguageFeatures.put(JAVA,
                 new ProgrammingLanguageFeature(JAVA, true, false, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN), false, false, true));
-        programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, true, false, true, false, false, List.of(), false, false, true));
+        programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, false, true, false, false, List.of(), false, false, true));
         // TODO LOCALVC_CI: Local CI is not supporting C at the moment.
         // TODO LOCALVC_CI: Local CI is not supporting Haskell at the moment.
         // TODO LOCALVC_CI: Local CI is not supporting Kotlin at the moment.
