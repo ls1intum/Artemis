@@ -7,18 +7,21 @@ import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
 
+import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.*;
+import de.tum.in.www1.artemis.service.iris.IrisMessageService;
+import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -37,19 +40,20 @@ public class IrisMessageResource {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    private final IrisWebsocketService irisWebsocketService;
+    private final IrisChatWebsocketService irisChatWebsocketService;
 
     private final IrisRateLimitService rateLimitService;
 
     private final UserRepository userRepository;
 
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisWebsocketService irisWebsocketService, IrisRateLimitService rateLimitService, UserRepository userRepository) {
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService,
+            IrisRateLimitService rateLimitService, UserRepository userRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
-        this.irisWebsocketService = irisWebsocketService;
+        this.irisChatWebsocketService = irisChatWebsocketService;
         this.rateLimitService = rateLimitService;
         this.userRepository = userRepository;
     }
@@ -89,7 +93,7 @@ public class IrisMessageResource {
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.requestMessageFromIris(session);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
-        irisWebsocketService.sendMessage(savedMessage);
+        irisChatWebsocketService.sendMessage(savedMessage);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
@@ -146,7 +150,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         if (message.getSender() != IrisMessageSender.LLM) {
-            throw new BadRequestException("You can only rate messages send by Iris");
+            throw new BadRequestException("You can only rate messages sent by Iris");
         }
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);

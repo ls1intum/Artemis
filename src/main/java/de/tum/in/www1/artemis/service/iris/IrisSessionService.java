@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.time.ZonedDateTime;
-
 import javax.ws.rs.BadRequestException;
 
+import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
+import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
+import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,24 +31,25 @@ public class IrisSessionService {
     private final IrisChatSessionService irisChatSessionService;
 
     private final IrisHestiaSessionService irisHestiaSessionService;
+    
+    private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
     private final IrisChatSessionRepository irisChatSessionRepository;
+    
+    private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
-    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisChatSessionRepository irisChatSessionRepository) {
+    public IrisSessionService(UserRepository userRepository,
+                              IrisChatSessionService irisChatSessionService,
+                              IrisHestiaSessionService irisHestiaSessionService,
+                              IrisCodeEditorSessionService irisCodeEditorSessionService,
+                              IrisChatSessionRepository irisChatSessionRepository,
+                              IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
+        this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
-    }
-
-    /**
-     * Checks if the exercise connected to the session has Iris activated
-     *
-     * @param session the session to check for
-     */
-    public void checkIsIrisActivated(IrisSession session) {
-        getIrisSessionSubService(session).checkIsIrisActivated(session);
+        this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
     }
 
     /**
@@ -57,13 +59,21 @@ public class IrisSessionService {
      * @param user     The user the session belongs to
      * @return The created session
      */
-    public IrisSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        var irisSession = new IrisChatSession();
-        irisSession.setExercise(exercise);
-        irisSession.setUser(user);
-        irisSession.setCreationDate(ZonedDateTime.now());
-
-        return irisChatSessionRepository.save(irisSession);
+    public IrisChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+        return irisChatSessionRepository.save(new IrisChatSession(exercise, user));
+    }
+    
+    public IrisCodeEditorSession createCodeEditorSession(ProgrammingExercise exercise, User user) {
+        return irisCodeEditorSessionRepository.save(new IrisCodeEditorSession(exercise, user));
+    }
+    
+    /**
+     * Checks if the exercise connected to the session has Iris activated
+     *
+     * @param session the session to check for
+     */
+    public void checkIsIrisActivated(IrisSession session) {
+        getIrisSessionSubService(session).checkIsIrisActivated(session);
     }
 
     /**
@@ -95,11 +105,12 @@ public class IrisSessionService {
         if (session instanceof IrisChatSession) {
             return irisChatSessionService;
         }
-        else if (session instanceof IrisHestiaSession) {
+        if (session instanceof IrisHestiaSession) {
             return irisHestiaSessionService;
         }
-        else {
-            throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+        if (session instanceof IrisCodeEditorSession) {
+            return irisCodeEditorSessionService;
         }
+        throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
     }
 }

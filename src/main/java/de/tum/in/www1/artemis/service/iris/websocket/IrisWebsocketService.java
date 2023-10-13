@@ -1,51 +1,64 @@
-package de.tum.in.www1.artemis.service.iris;
+package de.tum.in.www1.artemis.service.iris.websocket;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import de.tum.in.www1.artemis.domain.User;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 
 /**
  * A service to send a message over the websocket to a specific user
  */
-@Service
-@Profile("iris")
-public class IrisWebsocketService {
+public abstract class IrisWebsocketService {
 
     private static final String IRIS_WEBSOCKET_TOPIC_PREFIX = "/topic/iris";
 
     private final WebsocketMessagingService websocketMessagingService;
-
+    
     private final IrisRateLimitService rateLimitService;
+    
+    private final String topic;
 
-    public IrisWebsocketService(WebsocketMessagingService websocketMessagingService, IrisRateLimitService rateLimitService) {
+    public IrisWebsocketService(WebsocketMessagingService websocketMessagingService,
+                                IrisRateLimitService rateLimitService,
+                                String topic) {
         this.websocketMessagingService = websocketMessagingService;
         this.rateLimitService = rateLimitService;
+        this.topic = topic;
     }
-
+    
+    /**
+     * Checks if the session is of the correct type
+     * @param irisSession to check
+     */
+    protected abstract void checkSessionType(IrisSession irisSession);
+    
+    /**
+     * Gets the user login of the user to which the message should be sent
+     * @param irisSession with the user to which the message should be sent
+     * @return the user login of the user to which the message should be sent
+     */
+    protected abstract User getUser(IrisSession irisSession);
+    
     /**
      * Sends a message over the websocket to a specific user
      *
-     * @param irisMessage that should be send over the websocket
+     * @param irisMessage that should be sent over the websocket
      */
     public void sendMessage(IrisMessage irisMessage) {
-        if (!(irisMessage.getSession() instanceof IrisChatSession)) {
-            throw new UnsupportedOperationException("Only IrisChatSession is supported");
-        }
-        Long irisSessionId = irisMessage.getSession().getId();
-        var user = ((IrisChatSession) irisMessage.getSession()).getUser();
+        var session = irisMessage.getSession();
+        checkSessionType(session);
+        var user = getUser(session);
         String userLogin = user.getLogin();
-        String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
+        String irisWebsocketTopic = String.format("%s/%s/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, topic, session.getId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage, rateLimitInfo));
     }
@@ -54,16 +67,13 @@ public class IrisWebsocketService {
      * Sends an exception over the websocket to a specific user
      *
      * @param irisSession to which the exception belongs
-     * @param throwable   that should be send over the websocket
+     * @param throwable   that should be sent over the websocket
      */
     public void sendException(IrisSession irisSession, Throwable throwable) {
-        if (!(irisSession instanceof IrisChatSession)) {
-            throw new UnsupportedOperationException("Only IrisChatSession is supported");
-        }
-        Long irisSessionId = irisSession.getId();
-        var user = ((IrisChatSession) irisSession).getUser();
+        checkSessionType(irisSession);
+        var user = getUser(irisSession);
         String userLogin = user.getLogin();
-        String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
+        String irisWebsocketTopic = String.format("%s/%s/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, topic, irisSession.getId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(throwable, rateLimitInfo));
     }

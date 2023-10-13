@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -52,7 +53,7 @@ public class IrisConnectorService {
      *                           not reachable)
      * @param parameters     A map of parameters to be included in the template through handlebars (if they are specified
      *                           in the template)
-     * @return The message response to the request which includes the {@link de.tum.in.www1.artemis.domain.iris.IrisMessage} and the used IrisModel
+     * @return The message response to the request which includes the {@link IrisMessage} and the used IrisModel
      */
     @Async
     public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
@@ -98,7 +99,7 @@ public class IrisConnectorService {
                     }
                     case NOT_FOUND -> {
                         var notFoundDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
-                        return CompletableFuture.failedFuture(new IrisModelNotAvailableException(request.preferredModel().toString(), notFoundDTO.errorMessage()));
+                        return CompletableFuture.failedFuture(new IrisModelNotAvailableException(request.preferredModel(), notFoundDTO.errorMessage()));
                     }
                     case INTERNAL_SERVER_ERROR -> {
                         var internalErrorDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
