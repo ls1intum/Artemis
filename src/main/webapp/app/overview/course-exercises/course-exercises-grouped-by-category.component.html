@@ -1,6 +1,5 @@
 <div *ngIf="!filteredExercises?.length && course; else exercisesAndCourseArePresent">
-    <!--    TODO exchange with translation -->
-    Bisher gibt es noch keine Aufgaben
+    {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
 </div>
 
 <!--TODO check if guided tour does still work -->
@@ -18,11 +17,10 @@
                 </div>
 
                 <ng-container [ngSwitch]="exerciseGroupKey">
-                    <!--                    TODO translations anpassen -->
-                    <h3 *ngSwitchCase="'current'" class="text-primary mb-0">Current</h3>
-                    <h3 *ngSwitchCase="'future'" class="mb-0">Future</h3>
-                    <h3 *ngSwitchCase="'previous'" class="mb-0">Previous</h3>
-                    <h3 *ngSwitchCase="'noDueDate'" class="mb-0">No Due Date</h3>
+                    <h3 *ngSwitchCase="'previous'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.previous' | artemisTranslate }}</h3>
+                    <h3 *ngSwitchCase="'current'" class="text-primary mb-0">{{ 'artemisApp.courseOverview.exerciseList.current' | artemisTranslate }}</h3>
+                    <h3 *ngSwitchCase="'future'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.future' | artemisTranslate }}</h3>
+                    <h3 *ngSwitchCase="'noDueDate'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</h3>
                 </ng-container>
             </div>
 

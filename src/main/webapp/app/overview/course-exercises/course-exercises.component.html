@@ -1,13 +1,17 @@
 <ng-template #controls>
     <div class="course-overview-controls" *ngIf="course && course!.exercises && course!.exercises.length > 0">
         <div class="d-flex align-items-center">
-            <div>
-                <span>
-                    <fa-icon [icon]="faPlayCircle"></fa-icon>
-                    {{ 'artemisApp.theme.sync' | artemisTranslate }}
-                </span>
-                <div class="form-switch">
-                    <input class="form-check-input" type="checkbox" [checked]="showExercisesGroupedByDueDateCategory" (click)="toggleExerciseView()" />
+            <div class="btn-group me-2" ngbDropdown role="group">
+                <button class="btn btn-light dropdown-toggle" ngbDropdownToggle type="button">
+                    {{ 'artemisApp.courseOverview.exerciseList.groupExercises' | artemisTranslate }}
+                </button>
+                <div class="dropdown-menu" ngbDropdownMenu>
+                    <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
+                        {{ 'artemisApp.courseOverview.exerciseList.byDueDate' | artemisTranslate }}
+                    </a>
+                    <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
+                        {{ 'artemisApp.courseOverview.exerciseList.byWeek' | artemisTranslate }}
+                    </a>
                 </div>
             </div>
 

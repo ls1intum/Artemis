@@ -231,6 +231,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         return !this.activeFilters.has(ExerciseFilter.UNRELEASED) || (exercise as QuizExercise)?.visibleToStudents;
     }
 
+    setShowExercisesGroupedByDueDateCategory(updatedShowExercisesGroupedByDueDateCategory: boolean) {
+        this.showExercisesGroupedByDueDateCategory = updatedShowExercisesGroupedByDueDateCategory;
+    }
+
     /**
      * Method is called when enter key is pressed on search input or search button is clicked
      */
