@@ -42,7 +42,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.isLoading = true;
         this.exportInProgress = false;
         this.repositoryExportOptions = {
-            exportAllParticipants: false,
+            exportAllParticipants: this.isAtLeastInstructor,
             filterLateSubmissions: false,
             excludePracticeSubmissions: false,
             addParticipantName: true,
@@ -60,7 +60,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     exportRepos() {
-        this.repositoryExportOptions.exportAllParticipants = true;
         this.programmingExercises.forEach((exercise) => {
             if (!exercise.id) {
                 return;
