@@ -39,3 +39,22 @@
         fill: var(--primary);
     }
 }
+
+#arrow {
+    stroke: var(--body-color);
+    fill: var(--body-color);
+}
+
+.edge {
+    stroke: var(--body-color) !important;
+    marker-end: url(#arrow);
+}
+
+.text-path {
+    fill: var(--body-color);
+}
+
+::ng-deep .accordion-body {
+    overflow: hidden;
+    max-height: 60vh;
+}
