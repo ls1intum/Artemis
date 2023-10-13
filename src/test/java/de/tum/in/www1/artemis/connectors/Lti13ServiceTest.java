@@ -118,19 +118,13 @@ class Lti13ServiceTest {
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 
-        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
-
-        Optional<User> user = Optional.of(new User());
-        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+        prepareForPerformLaunch(courseId, exerciseId);
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
@@ -151,14 +145,7 @@ class Lti13ServiceTest {
         exercise.setCourse(course);
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-
-        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
-
-        Optional<User> user = Optional.of(new User());
-        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+        prepareForPerformLaunch(courseId, exerciseId);
 
         assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
@@ -516,5 +503,15 @@ class Lti13ServiceTest {
      */
     private record State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
             ClientRegistration clientRegistration) {
+    }
+
+    private void prepareForPerformLaunch(long courseId, long exerciseId) {
+        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+
+        Optional<User> user = Optional.of(new User());
+        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
     }
 }
