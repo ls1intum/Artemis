@@ -696,9 +696,6 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
-        // only needed for some CI systems, other more specific tests assert relevant parameters the mock is called with
-        doNothing().when(continuousIntegrationService).updateBuildPlanURL(any(), any(), any());
-
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
@@ -750,6 +747,33 @@ public class ProgrammingExerciseTestService {
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
+    }
+
+    void updateBuildPlanURL() throws Exception {
+        boolean staticCodeAnalysisEnabled = true;
+        // Setup exercises for import
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(JAVA);
+        sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
+                courseUtilService.addEmptyCourse());
+        exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+
+        // Mock requests
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+        setupMocksForConsistencyChecksOnImport(sourceExercise);
+
+        // Create request parameters
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", String.valueOf(false));
+
+        // Import the exercise and load all referenced entities
+        var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, params, HttpStatus.OK);
     }
 
     // TEST

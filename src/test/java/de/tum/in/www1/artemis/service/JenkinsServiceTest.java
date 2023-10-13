@@ -15,15 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
-import org.springframework.web.client.RestTemplate;
 
 import com.offbytwo.jenkins.model.JobWithDetails;
 
@@ -34,7 +30,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ContinuousIntegrationTestService;
-import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
@@ -65,9 +60,6 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
-
-    @SpyBean
-    private RestTemplate restTemplate;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -296,31 +288,5 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
         BuildPlan targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(targetExercise.getId());
         assertThat(sourceBuildPlan).isEqualTo(targetBuildPlan);
-    }
-
-    @Test
-    // the @SuppressWarnings annotation allows the use of a captor for a parameterized type, without having to create a
-    // class variable with the @Captor annotation
-    @SuppressWarnings("unchecked")
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
-    void testUpdateBuildPlanURL() throws Exception {
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        sourceExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
-        programmingExerciseUtilService.addHintsToExercise(sourceExercise);
-        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
-        exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
-
-        mockConnectorRequestsForSetup(exerciseToBeImported, false);
-        mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
-
-        ArgumentCaptor<HttpEntity<String>> captor = ArgumentCaptor.forClass(HttpEntity.class);
-        programmingExerciseImportService.importProgrammingExercise(sourceExercise, exerciseToBeImported, false, false);
-        // verify(restTemplate).exchange(any(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
-        // List<String> jobs = captor.getAllValues().stream().map(HttpEntity::getBody).toList();
     }
 }

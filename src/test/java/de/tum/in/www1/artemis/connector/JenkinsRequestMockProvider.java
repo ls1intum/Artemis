@@ -232,7 +232,9 @@ public class JenkinsRequestMockProvider {
         mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+
+        // build plan URL is updated after the repository URLs, so in this case, the URI is used twice
+        mockServer.expect(ExpectedCount.between(1, 2), requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.CREATED));
 
         mockTriggerBuild(projectKey, planName, false);
         mockTriggerBuild(projectKey, planName, false);
