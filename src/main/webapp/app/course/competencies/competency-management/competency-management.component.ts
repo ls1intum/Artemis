@@ -26,7 +26,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
 
-    showRelations = false;
     tailCompetency?: number;
     headCompetency?: number;
     relationType?: string;
@@ -63,7 +62,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.showRelations = this.accountService.isAdmin(); // beta feature
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = params['courseId'];
             if (this.courseId) {

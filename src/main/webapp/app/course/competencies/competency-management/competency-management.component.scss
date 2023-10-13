@@ -29,3 +29,13 @@
 .border-danger {
     border-color: var(--danger);
 }
+
+.node {
+    text {
+        fill: var(--body-color);
+    }
+
+    rect {
+        fill: var(--primary);
+    }
+}
