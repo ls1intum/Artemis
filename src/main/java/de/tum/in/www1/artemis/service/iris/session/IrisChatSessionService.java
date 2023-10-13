@@ -147,13 +147,13 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
         var irisSettings = irisSettingsService.getCombinedIrisSettings(exercise, false);
         irisConnectorService.sendRequest(irisSettings.getIrisChatSettings().getTemplate(), irisSettings.getIrisChatSettings().getPreferredModel(), parameters)
-                .handleAsync((response, throwable) -> {
+                .handleAsync((irisMessage, throwable) -> {
                     if (throwable != null) {
                         log.error("Error while getting response from Iris model", throwable);
                         irisWebsocketService.sendException(fullSession, throwable.getCause());
                     }
-                    else if (response != null) {
-                        var irisMessageSaved = irisMessageService.saveMessage(response.message(), fullSession, IrisMessageSender.LLM);
+                    else if (irisMessage != null) {
+                        var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), fullSession, IrisMessageSender.LLM);
                         irisWebsocketService.sendMessage(irisMessageSaved);
                     }
                     else {

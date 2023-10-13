@@ -89,16 +89,16 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
         var irisSettings = irisSettingsService.getCombinedIrisSettings(irisSession.getCodeHint().getExercise(), false);
         try {
-            var response1 = irisConnectorService
+            var irisMessage1 = irisConnectorService
                     .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
-            irisMessageService.saveMessage(response1.message(), irisSession, IrisMessageSender.LLM);
+            irisMessageService.saveMessage(irisMessage1.message(), irisSession, IrisMessageSender.LLM);
             irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
-            var response2 = irisConnectorService
+            var irisMessage2 = irisConnectorService
                     .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
-            irisMessageService.saveMessage(response2.message(), irisSession, IrisMessageSender.LLM);
+            irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
 
-            codeHint.setContent(response1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
-            codeHint.setDescription(response2.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setDescription(irisMessage2.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
             return codeHint;
         }
         catch (InterruptedException | ExecutionException e) {
