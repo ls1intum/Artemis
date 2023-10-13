@@ -517,6 +517,37 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testNotifyPush_studentCommitUpdatesSubmissionCount() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
+        Commit mockCommit = mock(Commit.class);
+        doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
+        doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
+
+        doReturn("hash1").when(mockCommit).getCommitHash();
+        doReturn("default-branch").when(mockCommit).getBranch();
+        doReturn("Student 1").when(mockCommit).getAuthorName();
+        doReturn("student@tum.de").when(mockCommit).getAuthorEmail();
+        doReturn("my nice little solution").when(mockCommit).getMessage();
+
+        String url = "/api/public/programming-submissions/" + participation.getId();
+        // no request body needed since the commit information are mocked above
+        request.postWithoutLocation(url, "test", HttpStatus.OK, null);
+
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq(NEW_SUBMISSION_TOPIC),
+                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.participation().submissionCount() == 1));
+
+        // second push
+        doReturn("hash2").when(mockCommit).getCommitHash();
+        request.postWithoutLocation(url, "test", HttpStatus.OK, null);
+
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq(NEW_SUBMISSION_TOPIC),
+                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.participation().submissionCount() == 2));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
         final var submissions = new ArrayList<ProgrammingSubmission>();
