@@ -55,7 +55,7 @@ public class IrisConnectorService {
     @Async
     public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
         var request = new IrisRequestDTO(template, preferredModel, parameters);
-        return sendRequest(request, IrisMessageResponseDTO.class);
+        return sendRequest(request, irisUrl + "/api/v1/messages", IrisMessageResponseDTO.class);
     }
 
     /**
@@ -71,7 +71,7 @@ public class IrisConnectorService {
     @Async
     public CompletableFuture<IrisMessageResponseV2DTO> sendRequestV2(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
         var request = new IrisRequestDTO(template, preferredModel, parameters);
-        return sendRequest(request, IrisMessageResponseV2DTO.class);
+        return sendRequest(request, irisUrl + "/api/v2/messages", IrisMessageResponseV2DTO.class);
     }
 
     /**
@@ -92,10 +92,10 @@ public class IrisConnectorService {
         }
     }
 
-    private <T> CompletableFuture<T> sendRequest(IrisRequestDTO request, Class<T> responseType) {
+    private <T> CompletableFuture<T> sendRequest(IrisRequestDTO request, String url, Class<T> responseType) {
         try {
             try {
-                var response = restTemplate.postForEntity(irisUrl + "/api/v2/messages", objectMapper.valueToTree(request), JsonNode.class);
+                var response = restTemplate.postForEntity(url, objectMapper.valueToTree(request), JsonNode.class);
                 if (!response.hasBody()) {
                     return CompletableFuture.failedFuture(new IrisNoResponseException());
                 }
