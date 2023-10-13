@@ -92,7 +92,7 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         // test
-        await fixture.componentInstance.apollonEditor.nextRender;
+        await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.saveDiagram();
         expect(updateStub).toHaveBeenCalledOnce();
         // clear the set time interval
