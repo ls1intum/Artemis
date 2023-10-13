@@ -74,10 +74,11 @@
                         </div>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
-                        <div class="bubble-left">
-                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate">test</span>
+                        <div class="bubble-left" *ngIf="isTextContent(content)">
                             <span *ngIf="isFirstMessage && i === 0" [innerHTML]="content.toString()! | artemisTranslate"></span>
+                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate">t</span>
                             <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="content.toString()! | htmlForMarkdown"></span>
+                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="getTextContent(content)! | htmlForMarkdown">t</span>
                         </div>
                         <div *ngIf="isRateMessage()" class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">

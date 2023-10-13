@@ -32,7 +32,7 @@ export class IrisMessagePlanContent extends IrisMessageContent {
 }
 
 export function isTextContent(content: IrisMessageContent) {
-    return content instanceof IrisMessageTextContent;
+    return content.type === IrisMessageContentType.TEXT;
 }
 
 export function getTextContent(content: IrisMessageContent) {
@@ -43,7 +43,7 @@ export function getTextContent(content: IrisMessageContent) {
 }
 
 export function isPlanContent(content: IrisMessageContent) {
-    return content instanceof IrisMessagePlanContent;
+    return content.type === IrisMessageContentType.PLAN;
 }
 
 export function getPlanComponent(content: IrisMessageContent) {

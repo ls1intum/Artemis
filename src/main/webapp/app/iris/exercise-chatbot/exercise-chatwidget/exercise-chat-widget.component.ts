@@ -38,6 +38,7 @@ import {
 } from 'app/entities/iris/iris-message.model';
 import {
     IrisMessageContent,
+    IrisMessageContentType,
     IrisMessageTextContent,
     getComponentInstruction,
     getPlanComponent,
@@ -56,6 +57,7 @@ import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
+import { IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-component.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -318,6 +320,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      */
     loadFirstMessage(): void {
         const firstMessageContent = {
+            type: IrisMessageContentType.TEXT,
             textContent: 'artemisApp.exerciseChatbot.firstMessage',
         } as IrisMessageTextContent;
 
@@ -710,9 +713,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         return getPlanComponent(content);
     }
 
+    getComponentInstruction(component: IrisExercisePlanComponent) {
+        return getComponentInstruction(component);
+    }
+
     isRateMessage() {
         return this.sessionService.httpMessageService instanceof IrisHttpChatMessageService;
     }
-
-    protected readonly getComponentInstruction = getComponentInstruction;
 }
