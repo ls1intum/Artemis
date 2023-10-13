@@ -41,3 +41,18 @@ export function getTextContent(content: IrisMessageContent) {
         return irisMessageTextContent.textContent;
     }
 }
+
+export function isPlanContent(content: IrisMessageContent) {
+    return content instanceof IrisMessagePlanContent;
+}
+
+export function getPlanComponent(content: IrisMessageContent) {
+    if (content instanceof IrisMessagePlanContent) {
+        const irisMessagePlanContent = content;
+        return irisMessagePlanContent.components;
+    }
+}
+
+export function getComponentInstruction(component: IrisExercisePlanComponent) {
+    return component.instructions;
+}

@@ -74,9 +74,10 @@
                         </div>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
-                        <div class="bubble-left" *ngIf="isTextContent(content)">
-                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate"></span>
-                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
+                        <div class="bubble-left">
+                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate">test</span>
+                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="content.toString()! | artemisTranslate"></span>
+                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="content.toString()! | htmlForMarkdown"></span>
                         </div>
                         <div *ngIf="isRateMessage()" class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
@@ -90,6 +91,12 @@
                             <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="message.helpful === false">
                                 <fa-icon [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'" [icon]="faThumbsDown" size="sm" />
                             </button>
+                        </div>
+                        <div class="bubble-left" *ngIf="isPlanContent(content)">
+                            <div *ngFor="let component of getPlanComponents(content); let i = index">
+                                <span [innerHTML]="component.instructions! | htmlForMarkdown"></span>
+                                <span [innerHTML]="getComponentInstruction(component)! | htmlForMarkdown"></span>
+                            </div>
                         </div>
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">

@@ -36,7 +36,15 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import { IrisMessageContent, IrisMessageTextContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
+import {
+    IrisMessageContent,
+    IrisMessageTextContent,
+    getComponentInstruction,
+    getPlanComponent,
+    getTextContent,
+    isPlanContent,
+    isTextContent,
+} from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
@@ -354,7 +362,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         }
         if (this.newMessageTextContent) {
             const message = this.newUserMessage(this.newMessageTextContent);
-            console.log(message);
             const timeoutId = setTimeout(() => {
                 // will be cleared by the store automatically
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
@@ -362,11 +369,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => console.log('dispatch'))
                 // .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
                 .then(() => {
                     this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
-                    console.log(message);
                 })
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
@@ -571,6 +576,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A boolean indicating if the message is a student-sent message.
      */
     isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+        console.log(message);
         return isStudentSentMessage(message);
     }
 
@@ -580,6 +586,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A boolean indicating if the message is a server-sent message.
      */
     isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
+        console.log(message);
         return isServerSentMessage(message);
     }
 
@@ -695,7 +702,17 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         return getTextContent(content);
     }
 
+    isPlanContent(content: IrisMessageContent) {
+        return isPlanContent(content);
+    }
+
+    getPlanComponents(content: IrisMessageContent) {
+        return getPlanComponent(content);
+    }
+
     isRateMessage() {
         return this.sessionService.httpMessageService instanceof IrisHttpChatMessageService;
     }
+
+    protected readonly getComponentInstruction = getComponentInstruction;
 }
