@@ -34,9 +34,9 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
 
     private groupExercisesByDueDate(): ExerciseGroups {
         const updatedExerciseGroups: ExerciseGroups = {
+            previous: { exercises: [], isCollapsed: true },
             current: { exercises: [], isCollapsed: false },
             future: { exercises: [], isCollapsed: true },
-            previous: { exercises: [], isCollapsed: true },
             noDueDate: { exercises: [], isCollapsed: true },
         };
 
