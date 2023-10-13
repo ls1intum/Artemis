@@ -19,10 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisErrorResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;
-import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisRequestDTO;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 import de.tum.in.www1.artemis.service.iris.exception.*;
 
 /**
@@ -46,7 +43,7 @@ public class IrisConnectorService {
     }
 
     /**
-     * Requests a response from an LLM
+     * Requests a response from an LLM using the V1 API
      *
      * @param template       The template that should be used with the respective parameters (e.g., for initial system message)
      * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the preferred model (e.g., if an error occurs or the preferredModel is
@@ -58,7 +55,23 @@ public class IrisConnectorService {
     @Async
     public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
         var request = new IrisRequestDTO(template, preferredModel, parameters);
-        return sendRequest(request);
+        return sendRequest(request, IrisMessageResponseDTO.class);
+    }
+
+    /**
+     * Requests a response from an LLM using the V2 API
+     *
+     * @param template       The template that should be used with the respective parameters (e.g., for initial system message)
+     * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the preferred model (e.g., if an error occurs or the preferredModel is
+     *                           not reachable)
+     * @param parameters     A map of parameters to be included in the template through handlebars (if they are specified
+     *                           in the template)
+     * @return The message response to the request which includes the {@link IrisMessage} and the used IrisModel
+     */
+    @Async
+    public CompletableFuture<IrisMessageResponseV2DTO> sendRequestV2(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
+        var request = new IrisRequestDTO(template, preferredModel, parameters);
+        return sendRequest(request, IrisMessageResponseV2DTO.class);
     }
 
     /**
@@ -79,14 +92,14 @@ public class IrisConnectorService {
         }
     }
 
-    private CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisRequestDTO request) {
+    private <T> CompletableFuture<T> sendRequest(IrisRequestDTO request, Class<T> responseType) {
         try {
             try {
-                var response = restTemplate.postForEntity(irisUrl + "/api/v1/messages", objectMapper.valueToTree(request), JsonNode.class);
+                var response = restTemplate.postForEntity(irisUrl + "/api/v2/messages", objectMapper.valueToTree(request), JsonNode.class);
                 if (!response.hasBody()) {
                     return CompletableFuture.failedFuture(new IrisNoResponseException());
                 }
-                return CompletableFuture.completedFuture(parseResponse(response.getBody(), IrisMessageResponseDTO.class));
+                return CompletableFuture.completedFuture(parseResponse(response.getBody(), responseType));
             }
             catch (HttpStatusCodeException e) {
                 switch (e.getStatusCode()) {

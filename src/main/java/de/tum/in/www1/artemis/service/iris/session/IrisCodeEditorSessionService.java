@@ -127,17 +127,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         // The response handling is duplicated, also exists in IrisChatSessionService
         // However, there is no good reason why every session type should have the same response handling
         // TODO: Consider refactoring this
-        irisConnectorService.sendRequest(new IrisTemplate(IrisConstants.CODE_EDITOR_INITIAL_REQUEST), "gpt-4-32k", params).handleAsync((responseMessage, err) -> {
+        irisConnectorService.sendRequest(new IrisTemplate(IrisConstants.CODE_EDITOR_INITIAL_REQUEST), "gpt-4-32k", params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
             }
-            else if (responseMessage == null) {
+            else if (response == null) {
                 log.error("No response from Iris model");
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
             }
             else {
-                var irisMessageSaved = irisMessageService.saveMessage(responseMessage.message(), session, IrisMessageSender.LLM);
+                var irisMessageSaved = irisMessageService.saveMessage(response.message(), session, IrisMessageSender.LLM);
                 irisCodeEditorWebsocketService.sendMessage(irisMessageSaved);
             }
             return null;
@@ -162,17 +162,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
         params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
         params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
-        irisConnectorService.sendRequest(new IrisTemplate(prompt), "gpt-4-32k", params).handleAsync((responseMessage, err) -> {
+        irisConnectorService.sendRequestV2(new IrisTemplate(prompt), "gpt-4-32k", params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
             }
-            else if (responseMessage == null) {
+            else if (response == null) {
                 log.error("No response from Iris model");
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
             }
             else {
-                // TODO: Apply changes to exercise
+                // TODO: Send changes over websocket
             }
             return null;
         });
