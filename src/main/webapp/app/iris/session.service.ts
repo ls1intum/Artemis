@@ -22,7 +22,7 @@ export abstract class IrisSessionService {
     protected constructor(
         protected readonly stateStore: IrisStateStore,
         protected httpSessionService: IrisHttpSessionService,
-        protected httpMessageService: IrisHttpMessageService,
+        public httpMessageService: IrisHttpMessageService,
     ) {}
 
     /**

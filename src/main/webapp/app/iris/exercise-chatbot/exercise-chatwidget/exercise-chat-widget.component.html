@@ -78,7 +78,7 @@
                             <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate"></span>
                             <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
                         </div>
-                        <div class="rate-message-buttons">
+                        <div *ngIf="isRateMessage()" class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
                                 <fa-icon
                                     [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"

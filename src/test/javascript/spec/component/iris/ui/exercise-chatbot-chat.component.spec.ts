@@ -7,7 +7,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
-import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -16,10 +15,11 @@ import { ActivatedRoute } from '@angular/router';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
 import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
+import { ExerciseChatbotChatComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-chat.component';
 
-describe('ExerciseChatbotComponent', () => {
-    let component: ExerciseChatbotComponent;
-    let fixture: ComponentFixture<ExerciseChatbotComponent>;
+describe('ExerciseChatbotChatComponent', () => {
+    let component: ExerciseChatbotChatComponent;
+    let fixture: ComponentFixture<ExerciseChatbotChatComponent>;
     let sessionService: IrisChatSessionService;
     let stateStore: IrisStateStore;
     let mockDialog: MatDialog;
@@ -54,7 +54,7 @@ describe('ExerciseChatbotComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [ExerciseChatbotComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExerciseChatbotChatComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 IrisHttpChatSessionService,
                 { provide: MatDialog, useValue: mockDialog },
@@ -65,7 +65,7 @@ describe('ExerciseChatbotComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ExerciseChatbotComponent);
+                fixture = TestBed.createComponent(ExerciseChatbotChatComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
                 sessionService = fixture.debugElement.injector.get(IrisChatSessionService);
