@@ -1,20 +1,28 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
-import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
+import {
+    mockClientMessage,
+    mockConversation,
+    mockExercisePlanComponent,
+    mockMessagePlanContent,
+    mockPlanConversation,
+    mockServerMessage,
+    mockServerPlanMessage,
+} from '../../helpers/sample/iris-sample-data';
+import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
 import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
 
-describe('Iris Http Chat Message Service', () => {
-    let service: IrisHttpChatMessageService;
+describe('Iris Http Code Editor Message Service', () => {
+    let service: IrisHttpCodeEditorMessageService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [IrisHttpChatMessageService],
+            providers: [IrisHttpCodeEditorMessageService],
         });
-        service = TestBed.inject(IrisHttpChatMessageService);
+        service = TestBed.inject(IrisHttpCodeEditorMessageService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
@@ -43,14 +51,26 @@ describe('Iris Http Chat Message Service', () => {
             tick();
         }));
 
-        it('should update message helpful field', fakeAsync(() => {
-            const returnedFromService = { ...mockServerMessage, helpful: true };
+        it('should update component plan instruction field', fakeAsync(() => {
+            const returnedFromService = { ...mockExercisePlanComponent, instructions: 'I will add a QuickSort algorithm task.' };
             const expected = returnedFromService;
             service
-                .rateMessage(mockConversation.id, mockServerMessage.id, true)
+                .updateComponentPlan(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!, mockExercisePlanComponent.id!, returnedFromService)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should execute the exercise component plans', fakeAsync(() => {
+            const returnedFromService = { ...mockExercisePlanComponent };
+            //const expected = { ...returnedFromService, id: 0 };
+            service
+                .executePlan(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.ok).toBeTrue());
+            const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
             tick();
         }));

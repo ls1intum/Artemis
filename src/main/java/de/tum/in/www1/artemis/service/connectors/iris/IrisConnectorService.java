@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisErrorResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseDTO;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisModelDTO;

@@ -12,12 +12,17 @@ type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
  * Provides a singleton root-level IrisHttpMessageService to perform CRUD operations on messages
  */
 @Injectable({ providedIn: 'root' })
-export class IrisHttpMessageService {
-    public resourceUrl = 'api/iris/sessions';
+export abstract class IrisHttpMessageService {
+    protected resourceUrl: string;
 
-    constructor(private httpClient: HttpClient) {}
+    protected constructor(
+        protected httpClient: HttpClient,
+        resourceUrl: string,
+    ) {
+        this.resourceUrl = resourceUrl;
+    }
 
-    private readonly MAX_INT_JAVA = 2147483647;
+    protected readonly MAX_INT_JAVA = 2147483647;
 
     /**
      * creates a message for a session
@@ -83,16 +88,5 @@ export class IrisHttpMessageService {
                 });
             }),
         );
-    }
-
-    /**
-     * creates a rating for a message
-     * @param {number} sessionId of the session of the message that should be rated
-     * @param {number} messageId of the message that should be rated
-     * @param {boolean} helpful rating of the message
-     * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
-     */
-    rateMessage(sessionId: number, messageId: number, helpful: boolean): Observable<EntityResponseType> {
-        return this.httpClient.put<IrisMessage>(`${this.resourceUrl}/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
     }
 }

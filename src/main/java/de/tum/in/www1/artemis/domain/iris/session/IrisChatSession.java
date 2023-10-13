@@ -24,9 +24,10 @@ public class IrisChatSession extends IrisSession {
     @ManyToOne
     @JsonIgnore
     private User user;
-    
-    public IrisChatSession() {}
-    
+
+    public IrisChatSession() {
+    }
+
     public IrisChatSession(ProgrammingExercise exercise, User user) {
         this.exercise = exercise;
         this.user = user;

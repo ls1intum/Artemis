@@ -2,20 +2,20 @@ package de.tum.in.www1.artemis.service.iris;
 
 import javax.ws.rs.BadRequestException;
 
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
-import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
-import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
 
@@ -31,19 +31,16 @@ public class IrisSessionService {
     private final IrisChatSessionService irisChatSessionService;
 
     private final IrisHestiaSessionService irisHestiaSessionService;
-    
+
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
     private final IrisChatSessionRepository irisChatSessionRepository;
-    
+
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
-    public IrisSessionService(UserRepository userRepository,
-                              IrisChatSessionService irisChatSessionService,
-                              IrisHestiaSessionService irisHestiaSessionService,
-                              IrisCodeEditorSessionService irisCodeEditorSessionService,
-                              IrisChatSessionRepository irisChatSessionRepository,
-                              IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
+    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
+            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisChatSessionRepository irisChatSessionRepository,
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
@@ -62,11 +59,11 @@ public class IrisSessionService {
     public IrisChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         return irisChatSessionRepository.save(new IrisChatSession(exercise, user));
     }
-    
+
     public IrisCodeEditorSession createCodeEditorSession(ProgrammingExercise exercise, User user) {
         return irisCodeEditorSessionRepository.save(new IrisCodeEditorSession(exercise, user));
     }
-    
+
     /**
      * Checks if the exercise connected to the session has Iris activated
      *
