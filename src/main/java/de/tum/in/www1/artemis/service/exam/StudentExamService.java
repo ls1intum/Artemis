@@ -292,14 +292,14 @@ public class StudentExamService {
         }
     }
 
-    public void terminateStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
-        log.debug("Terminate student exam with id {}", studentExamFromClient.getId());
+    public void abandonStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
+        log.debug("Abandon student exam with id {}", studentExamFromClient.getId());
 
         long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
         // 3. DB Call: write
-        terminateStudentExam(studentExamFromClient);
-        log.debug("     Set student exam to terminated in {}", formatDurationFrom(start));
+        abandonStudentExam(studentExamFromClient);
+        log.debug("     Set student exam to abandoned in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
         // NOTE: only for real exams and test exams, the student repositories need to be locked
@@ -317,9 +317,9 @@ public class StudentExamService {
         log.debug("    Lock student repositories in {}", formatDurationFrom(start));
     }
 
-    private void terminateStudentExam(StudentExam studentExam) {
-        studentExam.setTerminated(true);
-        studentExamRepository.terminateStudentExam(studentExam.getId());
+    private void abandonStudentExam(StudentExam studentExam) {
+        studentExam.setAbandoned(true);
+        studentExamRepository.abandonStudentExam(studentExam.getId());
     }
 
     /**
@@ -506,9 +506,9 @@ public class StudentExamService {
      * @param assessor the assessor should be the instructor making the call.
      * @return returns the set of terminated StudentExams, the participations of which were assessed
      */
-    public Set<StudentExam> assessTerminatedStudentExams(final Exam exam, final User assessor) {
-        Set<StudentExam> terminatedStudentExams = studentExamRepository.findAllTerminatedWithExercisesByExamId(exam.getId());
-        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(terminatedStudentExams);
+    public Set<StudentExam> assessAbandonedStudentExams(final Exam exam, final User assessor) {
+        Set<StudentExam> abandonedStudentExams = studentExamRepository.findAllAbandonedWithExercisesByExamId(exam.getId());
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(abandonedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
             // fetch all studentParticipations of a user, with submissions and results eagerly loaded
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
@@ -525,7 +525,7 @@ public class StudentExamService {
                 }
             }
         }
-        return terminatedStudentExams;
+        return abandonedStudentExams;
     }
 
     /**

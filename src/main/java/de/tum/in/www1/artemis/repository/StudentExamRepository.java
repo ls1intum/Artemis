@@ -256,10 +256,10 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises
             WHERE se.exam.id = :examId
-            	AND se.terminated = TRUE
+            	AND se.abandoned = TRUE
             	AND se.testRun = FALSE
             """)
-    Set<StudentExam> findAllTerminatedWithExercisesByExamId(Long examId);
+    Set<StudentExam> findAllAbandonedWithExercisesByExamId(Long examId);
 
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
 
@@ -299,10 +299,10 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE StudentExam s
-            SET s.terminated = true
+            SET s.abandoned = true
             WHERE s.id = :studentExamId
             """)
-    void terminateStudentExam(@Param("studentExamId") Long studentExamId);
+    void abandonStudentExam(@Param("studentExamId") Long studentExamId);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -427,7 +427,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             studentExam.setUser(user);
             studentExam.setSubmitted(false);
             studentExam.setTestRun(false);
-            studentExam.setTerminated(false);
+            studentExam.setAbandoned(false);
 
             // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);

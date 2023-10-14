@@ -25,8 +25,8 @@ public class StudentExam extends AbstractAuditingEntity {
     @Column(name = "submitted")
     private Boolean submitted;
 
-    @Column(name = "terminated")
-    private Boolean terminated;
+    @Column(name = "abandoned")
+    private Boolean abandoned;
 
     /**
      * The individual working time per student in seconds
@@ -70,12 +70,12 @@ public class StudentExam extends AbstractAuditingEntity {
         return submitted;
     }
 
-    public Boolean isTerminated() {
-        return terminated;
+    public Boolean isAbandoned() {
+        return abandoned;
     }
 
-    public void setTerminated(Boolean terminated) {
-        this.terminated = terminated;
+    public void setAbandoned(Boolean abandoned) {
+        this.abandoned = abandoned;
     }
 
     public boolean isTestRun() {

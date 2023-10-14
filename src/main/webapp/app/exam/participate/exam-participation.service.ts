@@ -188,8 +188,8 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      * @param studentExam: the student exam to terminate
      */
-    public terminateStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/terminate';
+    public abandonStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/abandon';
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
 
