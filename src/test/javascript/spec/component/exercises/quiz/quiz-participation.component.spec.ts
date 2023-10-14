@@ -43,7 +43,15 @@ import { NgModel } from '@angular/forms';
 // Store a copy of now to avoid timing issues
 const now = dayjs();
 const question1: QuizQuestion = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true };
-const question2: MultipleChoiceQuestion = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true };
+const question2: MultipleChoiceQuestion = {
+    id: 2,
+    type: QuizQuestionType.MULTIPLE_CHOICE,
+    points: 2,
+    answerOptions: [{ id: 1 } as AnswerOption],
+    invalid: false,
+    exportQuiz: false,
+    randomizeOrder: true,
+};
 const question3: QuizQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true };
 
 const quizExercise: QuizExercise = {
@@ -125,6 +133,7 @@ describe('QuizParticipationComponent', () => {
     let resultForSolutionServiceSpy: jest.SpyInstance;
     let httpMock: HttpTestingController;
     let exerciseService: QuizExerciseService;
+    let participationService: ParticipationService;
 
     describe('live mode', () => {
         beforeEach(() => {
@@ -162,7 +171,7 @@ describe('QuizParticipationComponent', () => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
 
-                    const participationService = fixture.debugElement.injector.get(ParticipationService);
+                    participationService = fixture.debugElement.injector.get(ParticipationService);
                     const participation: StudentParticipation = { exercise: { ...quizExercise } };
                     participationSpy = jest
                         .spyOn(participationService, 'findParticipationForCurrentUser')
@@ -198,15 +207,56 @@ describe('QuizParticipationComponent', () => {
             expect(component.submission).not.toBeNull();
         });
 
-        it('should update in intervals', fakeAsync(() => {
+        it('should update in intervals of individual quiz', fakeAsync(() => {
+            const individualQuizExercise = { ...quizExercise };
+            individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
+            individualQuizExercise.quizStarted = false;
+            individualQuizExercise.quizBatches = [
+                {
+                    startTime: dayjs(now).subtract(2, 'minutes'),
+                    started: false,
+                },
+            ];
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
             const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
+            const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
             tick(5000);
             fixture.detectChanges();
             discardPeriodicTasks();
 
             expect(updateSpy).toHaveBeenCalledTimes(50);
+            expect(refreshSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should update in intervals of not individual quiz', fakeAsync(() => {
+            const notIndividualQuizExercise = { ...quizExercise };
+            notIndividualQuizExercise.quizMode = QuizMode.SYNCHRONIZED;
+            notIndividualQuizExercise.quizStarted = false;
+            notIndividualQuizExercise.quizBatches = [
+                {
+                    startTime: dayjs(now).subtract(2, 'minutes'),
+                    started: false,
+                },
+            ];
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: { exercise: notIndividualQuizExercise } } as HttpResponse<StudentParticipation>));
+            fixture.detectChanges();
+
+            const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
+            const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
+            tick(5000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(updateSpy).toHaveBeenCalledTimes(50);
+            expect(refreshSpy).toHaveBeenCalledTimes(0);
+
+            tick(5000);
         }));
 
         it('should check quiz end in intervals', fakeAsync(() => {
@@ -249,7 +299,14 @@ describe('QuizParticipationComponent', () => {
             component.quizBatch!.startTime = undefined;
 
             // Returns the started exercise
-            const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+            const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(
+                of({
+                    body: {
+                        ...quizExercise,
+                        quizEnded: true,
+                    },
+                } as HttpResponse<QuizExercise>),
+            );
             fixture.detectChanges();
 
             const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
@@ -298,6 +355,11 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should submit quiz', () => {
+            const individualQuizExercise = { ...quizExercise };
+            individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
@@ -317,6 +379,9 @@ describe('QuizParticipationComponent', () => {
 
         it('should return true if student didnt interact with any question', () => {
             component.quizExercise = { ...quizExercise, quizQuestions: undefined };
+            expect(component.areAllQuestionsAnswered()).toBeTrue();
+
+            component.quizExercise = { ...quizExercise, quizQuestions: [] };
             expect(component.areAllQuestionsAnswered()).toBeTrue();
 
             component.quizExercise = quizExercise;

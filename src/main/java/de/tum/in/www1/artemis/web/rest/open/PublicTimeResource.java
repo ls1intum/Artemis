@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 
 @RestController
 @RequestMapping("api/public/")
-public class TimeResource {
+public class PublicTimeResource {
 
     /**
      * {@code GET /time}:

@@ -3,7 +3,7 @@
 Setup Guide
 ===========
 
-In this guide, you learn how to setup the development environment of
+In this guide, you learn how to set up the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
 development on the application server using Java 17, and TypeScript
@@ -12,7 +12,7 @@ development on the application client in the browser using
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
 and other tutorials on the JHipster homepage.
 
-You can find tutorials how to setup JHipster in an IDE (`IntelliJ IDEA
+You can find tutorials how to set up JHipster in an IDE (`IntelliJ IDEA
 Ultimate <https://www.jetbrains.com/idea>`__ is recommended) on
 https://jhipster.github.io/configuring-ide. Note that the Community
 Edition of IntelliJ IDEA does not provide Spring Boot support (see the
