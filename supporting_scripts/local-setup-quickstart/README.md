@@ -4,7 +4,7 @@ Scripts in this folder help to configure and setup your first Artemis course to 
 
 ## Setup
 
-1. Install Python
+1. Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python)
 
 2. Enable Python support in your IntelliJ
 
@@ -17,10 +17,25 @@ _Tested on python 3.11.6, other versions might work as well._
 
 1. Start your local Artemis instance
 2. Configure the values in `config.ini` according to your setup
+3. Install the packages of the python scripts that you want to execute
+4. Either use the play button within IntelliJ _(which should be displayed if Python was configured properly within
+   IntelliJ)_ to run the scripts or follow the following descriptions
 
-### Create course with users
+### Create users
 
-Run the script:
+#### Atlassian
+
+The users have already been created by `atlassian-setup.sh`, but they still need to be logged in order to be added to a
+course _(without a first login Artemis does not know that the users exist)_
+
+```
+python3 authenticate_all_users.py
+```
+
+#### LocalVC & LocalCI
+
+Creates users 1-20 (students, tutors, editors, instructors - 5 for each group) and users needed for Cypress E2E
+testing (100-104, 106)
 
 ```
 python3 create_users.py
@@ -28,7 +43,8 @@ python3 create_users.py
 
 ### Create a course with standard user groups
 
-Run the script:
+Creates a course for which the users from the previous section [Create users](#create-users) are registered as they have the same user
+groups (students, tutors, editors, instructors)
 
 ```
 python3 create_course.py
