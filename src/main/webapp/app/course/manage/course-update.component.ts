@@ -26,6 +26,8 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { FileService } from 'app/shared/http/file.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-course-update',
@@ -78,6 +80,7 @@ export class CourseUpdateComponent implements OnInit {
         private courseManagementService: CourseManagementService,
         private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
+        private fileService: FileService,
         private alertService: AlertService,
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
@@ -108,6 +111,15 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintTextLimit! > 0 &&
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
+            } else {
+                this.fileService.getTemplateCodeOfCondcut().subscribe({
+                    next: (res: HttpResponse<string>) => {
+                        if (res.body) {
+                            this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                        }
+                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                });
             }
         });
 
