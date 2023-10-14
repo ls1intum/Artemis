@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -97,21 +95,18 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds();
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionAnonymizationCombining() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionAnonymizationCombining();
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
@@ -630,7 +625,6 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest();
@@ -751,7 +745,6 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void resetTestCaseWeights_asInstructor() throws Exception {
         programmingExerciseIntegrationTestService.resetTestCaseWeights_asInstructor();
