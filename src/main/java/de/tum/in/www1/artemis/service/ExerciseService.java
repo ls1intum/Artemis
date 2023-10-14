@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -80,13 +82,15 @@ public class ExerciseService {
 
     private final QuizBatchService quizBatchService;
 
+    private final ParticipantScoreService participantScoreService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, ParticipantScoreService participantScoreService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -108,6 +112,7 @@ public class ExerciseService {
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.quizBatchService = quizBatchService;
+        this.participantScoreService = participantScoreService;
     }
 
     /**
@@ -731,5 +736,21 @@ public class ExerciseService {
             feedbackToBeDeleted = feedbackRepository.findFeedbackByGradingInstructionIds(gradingInstructionIdsToBeDeleted);
         }
         return feedbackToBeDeleted;
+    }
+
+    /**
+     * Checks if the user has achieved the minimum score.
+     *
+     * @param exercise the exercise that should be checked
+     * @param user     the user for which to check the score
+     * @param minScore the minimum score that should be achieved
+     * @return true if the user achieved the minimum score, false otherwise
+     */
+    public boolean hasScoredAtLeast(@NotNull Exercise exercise, @NotNull User user, double minScore) {
+        final var score = participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, Set.of(exercise)).max();
+        if (score.isEmpty()) {
+            return false;
+        }
+        return score.getAsDouble() >= minScore;
     }
 }

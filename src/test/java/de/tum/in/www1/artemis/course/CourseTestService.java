@@ -2011,10 +2011,9 @@ public class CourseTestService {
     }
 
     private void extractAndAssertMissingContent(Path courseArchivePath, QuizSubmission quizSubmission, Predicate<Path> missingPathPredicate) throws IOException {
-        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        Path courseArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         var exercise = quizSubmission.getParticipation().getExercise();
         StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
-        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
         assertThat(courseArchiveDir).exists();
 
         try (var files = Files.walk(courseArchiveDir)) {
@@ -2026,13 +2025,15 @@ public class CourseTestService {
                             file -> ("participation-" + studentParticipation.getId() + "-" + studentParticipation.getParticipantIdentifier()).equals(file.getFileName().toString()))
                     .noneMatch(missingPathPredicate);
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
     private void extractAndAssertContent(Path courseArchivePath, QuizSubmission quizSubmission) throws IOException {
-        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        Path courseArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         var exercise = quizSubmission.getParticipation().getExercise();
         StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
-        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
         assertThat(courseArchiveDir).exists();
         try (var files = Files.walk(courseArchiveDir)) {
             assertThat(files.filter(file -> Files.isDirectory(file) || Files.isRegularFile(file)))
@@ -2050,6 +2051,9 @@ public class CourseTestService {
                     // short answer submission txt file
                     .anyMatch(file -> file.getFileName().toString().contains("short_answer_questions_answers") && file.getFileName().toString().endsWith(".txt"));
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
     /**
@@ -2272,11 +2276,14 @@ public class CourseTestService {
 
         // Extract the archive
         Path archivePath = exportedCourse.get();
-        zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
-        String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
 
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             return files.filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip")).toList();
+        }
+        finally {
+            org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+            org.apache.commons.io.FileUtils.delete(archivePath.toFile());
         }
     }
 
@@ -2368,13 +2375,12 @@ public class CourseTestService {
         assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
 
         // Extract the archive
-        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
-        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
 
         // We test for the filenames of the submissions since it's the easiest way.
         // We don't test the directory structure
         List<Path> filenames;
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
         }
 
@@ -2395,6 +2401,9 @@ public class CourseTestService {
                 }
             }
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(archive);
     }
 
     // Test

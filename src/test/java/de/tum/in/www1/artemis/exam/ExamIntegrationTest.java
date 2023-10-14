@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -118,6 +119,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     private Course course1;
 
@@ -743,7 +747,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetStudentExamForStart() throws Exception {
         Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         exam.setVisibleDate(ZonedDateTime.now().minusHours(1).minusMinutes(5));
-        StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
         verify(examAccessService).getExamInCourseElseThrow(course1.getId(), exam.getId());
     }
@@ -1076,12 +1080,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(archive).isNotNull();
 
         // Extract the archive
-        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
-        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
 
         // Check that the dummy files we created exist in the archive.
         List<Path> filenames;
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
         }
 
@@ -1095,6 +1098,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         savedSubmission = submissions.stream().filter(submission -> submission instanceof ModelingSubmission).findFirst().orElseThrow();
         assertSubmissionFilename(filenames, savedSubmission, ".json");
+
+        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        FileUtils.delete(archive);
     }
 
     private void assertSubmissionFilename(List<Path> expectedFilenames, Submission submission, String filenameExtension) {
@@ -1142,6 +1148,46 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void testGetExamTitleForNonExistingExam() throws Exception {
         request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noInformationLeaked() throws Exception {
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        ExamUser examUser = new ExamUser();
+        examUser.setUser(student1);
+        exam.addExamUser(examUser);
+        examUserRepository.save(examUser);
+        StudentExam studentExam = examUtilService.addStudentExam(exam);
+        studentExam.setUser(student1);
+        studentExamRepository.save(studentExam);
+
+        StudentExam receivedStudentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        assertThat(receivedStudentExam.getExercises()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getStudentExams()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExamUsers()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExerciseGroups()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noStudentExam() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var examUser1 = new ExamUser();
+        examUser1.setExam(exam);
+        examUser1.setUser(student1);
+        examUser1 = examUserRepository.save(examUser1);
+        exam.addExamUser(examUser1);
+        examRepository.save(exam);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRetrieveOwnStudentExam_instructor() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
     }
 
     @Test

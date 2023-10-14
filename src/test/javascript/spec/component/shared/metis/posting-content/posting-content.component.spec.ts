@@ -514,7 +514,7 @@ describe('PostingContentComponent', () => {
             ]);
         }));
 
-        it('should set channelID undefined referenced a channel id is not a number', fakeAsync(() => {
+        it('should set channelID undefined if referenced a channel id is not a number', fakeAsync(() => {
             component.content = `This topic belongs to [channel]test(abc)[/channel].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);

@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
@@ -106,6 +107,8 @@ public class CourseResource {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final ConductAgreementService conductAgreementService;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
@@ -116,7 +119,8 @@ public class CourseResource {
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService) {
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
+            ConductAgreementService conductAgreementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -136,6 +140,7 @@ public class CourseResource {
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
+        this.conductAgreementService = conductAgreementService;
     }
 
     /**
@@ -232,6 +237,10 @@ public class CourseResource {
             else {
                 courseUpdate.setOnlineCourseConfiguration(null);
             }
+        }
+
+        if (!Objects.equals(courseUpdate.getCourseInformationSharingMessagingCodeOfConduct(), existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
+            conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
         courseUpdate.setId(courseId); // Don't persist a wrong ID
