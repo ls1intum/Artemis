@@ -189,6 +189,7 @@ public class ExamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
+
         if (updatedExam.getId() == null) {
             return createExam(courseId, updatedExam);
         }
@@ -199,6 +200,7 @@ public class ExamResource {
 
         // Make sure that the original references are preserved.
         Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
+        var originalExamDuration = originalExam.getDuration();
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
         if (updatedExam.isTestExam() != originalExam.isTestExam()) {
@@ -214,21 +216,22 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(updatedExam);
 
+        // NOTE: We have to get exercises and groups as we need them for re-scheduling
+        Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
+
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
-            // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
-        if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
-            // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
-            examService.scheduleModelingExercises(examWithExercises);
+        // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
+        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
+            int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+            updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
 
         if (updatedChannel != null) {
@@ -257,9 +260,7 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
-        var now = now();
-
-        // We have to get exercise groups as `scheduleModelingExercises` needs them
+        // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         var originalExamDuration = exam.getDuration();
 
@@ -268,10 +269,18 @@ public class ExamResource {
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
+        // 2. Re-calculate the working times of all student exams
+        updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    private void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
+        var now = now();
+
         User instructor = userRepository.getUser();
 
-        // 2. Re-calculate the working times of all student exams
-        var studentExams = studentExamRepository.findByExamId(examId);
+        var studentExams = studentExamRepository.findByExamId(exam.getId());
         for (var studentExam : studentExams) {
             Integer originalStudentWorkingTime = studentExam.getWorkingTime();
             int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
@@ -286,7 +295,9 @@ public class ExamResource {
                 int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
+            // TODO: probably batch these updates?
             var savedStudentExam = studentExamRepository.save(studentExam);
+
             // NOTE: if the exam is already visible, notify the student about the working time change
             if (now.isAfter(exam.getVisibleDate())) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, savedStudentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
@@ -298,12 +309,10 @@ public class ExamResource {
             instanceMessageSendService.sendRescheduleAllStudentExams(exam.getId());
         }
 
+        // NOTE: potentially re-schedule clustering of modeling submissions (in case Compass is active)
         if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-            // potentially re-schedule clustering of modeling submissions (in case Compass is active)
             examService.scheduleModelingExercises(exam);
         }
-
-        return ResponseEntity.ok(exam);
     }
 
     /**
