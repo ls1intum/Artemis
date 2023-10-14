@@ -1,0 +1,55 @@
+:host {
+    display: contents;
+}
+
+.event-wrapper {
+    display: block;
+    border: 1px solid;
+    border-radius: 3px;
+    padding: 3px 10px 10px;
+    margin-bottom: 10px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0 3px 9px;
+
+    &.examWideAnnouncement {
+        background-color: var(--artemis-alert-info-background);
+        border-color: var(--artemis-alert-info-border);
+    }
+
+    &.workingTimeUpdate {
+        background-color: var(--artemis-alert-warning-background);
+        border-color: var(--artemis-alert-warning-border);
+
+        .wt-title {
+            font-weight: bold;
+            font-size: 1.5em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    }
+
+    .headline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .type {
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .author {
+            span:first-child {
+                font-size: 0.8em;
+            }
+
+            span:last-child {
+                font-weight: bold;
+            }
+        }
+    }
+
+    .date {
+        margin-bottom: 20px;
+        color: var(--secondary);
+    }
+}

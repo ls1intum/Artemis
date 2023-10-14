@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,10 +28,10 @@ public class ProgrammingMessagingService {
 
     private final ResultWebsocketService resultWebsocketService;
 
-    private final LtiNewResultService ltiNewResultService;
+    private final Optional<LtiNewResultService> ltiNewResultService;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, LtiNewResultService ltiNewResultService) {
+            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
@@ -138,9 +140,9 @@ public class ProgrammingMessagingService {
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && ltiNewResultService.isPresent()) {
             // do not try to report results for template or solution participations
-            ltiNewResultService.onNewResult(studentParticipation);
+            ltiNewResultService.get().onNewResult(studentParticipation);
         }
     }
 }

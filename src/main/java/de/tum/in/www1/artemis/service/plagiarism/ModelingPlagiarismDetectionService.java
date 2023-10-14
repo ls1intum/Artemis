@@ -149,7 +149,7 @@ public class ModelingPlagiarismDetectionService {
                 final double similarity = model1.similarity(model2);
                 log.debug("Compare result {} with {}: {}", i, j, similarity);
 
-                if (similarity < minimumSimilarity) {
+                if (similarity * 100 < minimumSimilarity) {
                     // ignore comparison results with too small similarity
                     continue;
                 }
