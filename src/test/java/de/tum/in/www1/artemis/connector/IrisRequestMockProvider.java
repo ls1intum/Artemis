@@ -76,13 +76,11 @@ public class IrisRequestMockProvider {
             mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
             return;
         }
-
         var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.LLM);
         irisMessage.addContent(new IrisTextMessageContent(irisMessage, responseMessage));
 
         var response = new IrisMessageResponseDTO(null, irisMessage);
-
         var json = mapper.writeValueAsString(response);
 
         mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));

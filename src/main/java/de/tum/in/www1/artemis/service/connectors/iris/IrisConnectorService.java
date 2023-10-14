@@ -58,14 +58,14 @@ public class IrisConnectorService {
     }
 
     /**
-     * Requests a response from an LLM using the V2 API
+     * Requests a response from Pyris using the V2 Messages API
      *
-     * @param template       The template that should be used with the respective parameters (e.g., for initial system message)
+     * @param template       The guidance program to execute
      * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the preferred model (e.g., if an error occurs or the preferredModel is
      *                           not reachable)
-     * @param parameters     A map of parameters to be included in the template through handlebars (if they are specified
+     * @param parameters     A map of argument variables required for the guidance template (if they are specified
      *                           in the template)
-     * @return The message response to the request which includes the {@link de.tum.in.www1.artemis.domain.iris.IrisMessage} and the used IrisModel
+     * @return The response of the type {@link IrisMessageResponseV2DTO}
      */
     @Async
     public CompletableFuture<IrisMessageResponseV2DTO> sendRequestV2(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
