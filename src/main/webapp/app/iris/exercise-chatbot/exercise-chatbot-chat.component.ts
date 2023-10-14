@@ -10,7 +10,7 @@ import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 
 @Component({
-    selector: 'jhi-exercise-chatbot-chat',
+    selector: 'jhi-exercise-chatbot',
     templateUrl: './exercise-chatbot-chat.component.html',
     styleUrls: ['./exercise-chatbot-chat.component.scss'],
     providers: [IrisStateStore, IrisChatWebsocketService, IrisChatSessionService, IrisHeartbeatService],
