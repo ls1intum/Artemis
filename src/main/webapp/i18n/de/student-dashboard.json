@@ -64,6 +64,7 @@
                 "timeframeView": "Zeitliche Ansicht",
                 "weeklyView": "Wochenansicht",
                 "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
+                "noExerciseMatchesSearchAndFilters": "Es wurden keine Aufgaben gefunden die mit den aktuellen Such- und Filtereinstellungen übereinstimmen.",
                 "notReleasedTooltip": "Nicht sichtbar für Studierende. Veröffentlichungsdatum: ",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
