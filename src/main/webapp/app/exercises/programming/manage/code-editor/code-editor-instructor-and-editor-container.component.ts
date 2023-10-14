@@ -15,10 +15,12 @@ import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { FileChange, FileChangeType, IrisCodeEditorWebsocketService, IrisExerciseComponent, IrisExerciseComponentChangeSet } from 'app/iris/code-editor-websocket.service';
 import { CreateFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { IrisStateStore } from 'app/iris/state-store.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
+    providers: [IrisCodeEditorWebsocketService, IrisStateStore],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
