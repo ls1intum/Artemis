@@ -969,7 +969,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK, null);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
-        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(unsubmittedStudentExams);
+        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMapWithoutQuizExercises(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -1004,7 +1004,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK, null);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
-        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(unsubmittedStudentExams);
+        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMapWithoutQuizExercises(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -1047,7 +1047,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(new HashSet<>(studentExams));
+        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMapWithoutQuizExercises(new HashSet<>(studentExams));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -1088,7 +1088,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(new HashSet<>(studentExams));
+        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMapWithoutQuizExercises(new HashSet<>(studentExams));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -2630,7 +2630,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         QuizExercise quizExercise = (QuizExercise) studentExamForConduction.getExercises().get(2);
         assertThat(quizExercise.getQuizQuestions()).hasSize(3);
 
-        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(Set.of(studentExamForConduction));
+        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMapWithoutQuizExercises(Set.of(studentExamForConduction));
         final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
                 exercisesOfUser.get(student1));
         for (StudentParticipation studentParticipation : studentParticipations) {

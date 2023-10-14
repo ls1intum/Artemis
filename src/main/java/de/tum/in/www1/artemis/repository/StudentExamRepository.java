@@ -251,6 +251,16 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(Long examId);
 
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises
+            WHERE se.exam.id = :examId
+            	AND se.terminated = TRUE
+            	AND se.testRun = FALSE
+            """)
+    Set<StudentExam> findAllTerminatedWithExercisesByExamId(Long examId);
+
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
 
     @Query("""

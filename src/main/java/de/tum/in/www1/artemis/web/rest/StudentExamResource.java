@@ -650,6 +650,9 @@ public class StudentExamResource {
         var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
         log.info("Graded {} unsubmitted student exams of exam {}", assessedUnsubmittedStudentExams.size(), examId);
 
+        var assessedTerminatedStudentExams = studentExamService.assessTerminatedStudentExams(exam, instructor);
+        log.info("Graded {} terminated student exams of exam {}", assessedTerminatedStudentExams.size(), examId);
+
         studentExamService.assessEmptySubmissionsOfStudentExams(exam, instructor, assessedUnsubmittedStudentExams);
 
         return ResponseEntity.ok().build();
