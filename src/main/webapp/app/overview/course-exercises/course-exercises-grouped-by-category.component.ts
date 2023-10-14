@@ -7,7 +7,10 @@ import { cloneDeep } from 'lodash-es';
 
 type ExerciseGroupCategory = 'previous' | 'current' | 'future' | 'noDueDate';
 
-const EXERCISE_GROUP_ORDER: ExerciseGroupCategory[] = ['previous', 'current', 'future', 'noDueDate'];
+/**
+ * {@link ExerciseGroupCategory#previous} is always collapsed by default
+ */
+const DEFAULT_EXPAND_ORDER: ExerciseGroupCategory[] = ['current', 'future', 'noDueDate'];
 
 type ExerciseGroups = Record<ExerciseGroupCategory, { exercises: Exercise[]; isCollapsed: boolean }>;
 
@@ -101,9 +104,18 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
         const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([exerciseGroupKey, exerciseGroup]) => !exerciseGroup.isCollapsed && exerciseGroupKey !== 'previous');
 
         const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
-        if (!atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0) {
-            const sortedExpandedExerciseGroups = this.sortExerciseGroups(expandedExerciseGroups);
-            sortedExpandedExerciseGroups[0][1].isCollapsed = false;
+        const expandableGroupsExist = !atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0;
+
+        if (!expandableGroupsExist) {
+            return;
+        }
+
+        for (const exerciseGroupKey of DEFAULT_EXPAND_ORDER) {
+            const groupToExpand = exerciseGroupsWithExercises.find(([key]) => key === exerciseGroupKey);
+            if (groupToExpand) {
+                groupToExpand![1].isCollapsed = false;
+                break;
+            }
         }
     }
 
@@ -151,16 +163,5 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
         }
 
         return 'future';
-    }
-
-    private sortExerciseGroups(exerciseGroups: [string, { exercises: Exercise[]; isCollapsed: boolean }][]) {
-        const sortedExerciseGroups = exerciseGroups.slice().sort((exerciseGroupA, exerciseGroupB) => {
-            const rankA = EXERCISE_GROUP_ORDER.indexOf(exerciseGroupA[0] as ExerciseGroupCategory);
-            const rankB = EXERCISE_GROUP_ORDER.indexOf(exerciseGroupB[0] as ExerciseGroupCategory);
-
-            return rankA - rankB;
-        });
-
-        return sortedExerciseGroups;
     }
 }
