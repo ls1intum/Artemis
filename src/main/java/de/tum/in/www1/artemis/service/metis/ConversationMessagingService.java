@@ -132,11 +132,10 @@ public class ConversationMessagingService extends PostingService {
         User author = message.getAuthor();
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
-        Set<User> mentionedUsers = parseUserMentions(course, message.getContent());
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
         Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
-        broadcastRecipients.addAll(mentionedUsers);
+        broadcastRecipients.addAll(createdConversationMessage.mentionedUsers());
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(message, MetisCrudAction.CREATE), course, broadcastRecipients);
@@ -158,7 +157,7 @@ public class ConversationMessagingService extends PostingService {
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, createdConversationMessage.mentionedUsers());
         conversationNotificationService.notifyAboutNewMessage(message, notificationRecipients, course);
     }
 
