@@ -132,19 +132,23 @@ public class ConversationMessagingService extends PostingService {
         User author = message.getAuthor();
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
-        Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-        Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
+
+        Set<User> mentionedUserLoginsAndIds = createdConversationMessage.mentionedUsers().stream().map(user -> new User(user.getId(), user.getLogin())).collect(Collectors.toSet());
+        Set<ConversationWebSocketRecipientSummary> webSocketRecipientLoginsAndIds = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+        Set<User> broadcastRecipientLoginsAndIds = webSocketRecipientLoginsAndIds.stream().map(summary -> new User(summary.userId(), summary.userLogin()))
+                .collect(Collectors.toSet());
+
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
-        broadcastRecipients.addAll(createdConversationMessage.mentionedUsers());
+        broadcastRecipientLoginsAndIds.addAll(mentionedUserLoginsAndIds);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(message, MetisCrudAction.CREATE), course, broadcastRecipients);
+        broadcastForPost(new PostDTO(message, MetisCrudAction.CREATE), course, broadcastRecipientLoginsAndIds);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
                 // Another websocket notification
-                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, broadcastRecipients);
+                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, broadcastRecipientLoginsAndIds);
             }
         }
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
@@ -153,11 +157,11 @@ public class ConversationMessagingService extends PostingService {
 
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
-        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipients);
+        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipientLoginsAndIds);
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, createdConversationMessage.mentionedUsers());
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipientLoginsAndIds, mentionedUserLoginsAndIds);
         conversationNotificationService.notifyAboutNewMessage(message, notificationRecipients, course);
     }
 
@@ -171,18 +175,19 @@ public class ConversationMessagingService extends PostingService {
      * @param author              the author of the message
      * @param conversation        the conversation the new message has been written in
      * @param webSocketRecipients the list of users that should be filtered
-     * @param mentionedUsers      users mentioend within the message
+     * @param mentionedUsers      users mentioned within the message
      * @return filtered list of users that are supposed to receive a notification
      */
     private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients,
             Set<User> mentionedUsers) {
         // Initialize filter with check for author
-        Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.user().getId(), author.getId());
+        Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.userId(), author.getId());
 
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden() || mentionedUsers.contains(recipientSummary.user()));
+                filter = filter.and(
+                        recipientSummary -> !recipientSummary.isConversationHidden() || mentionedUsers.contains(new User(recipientSummary.userId(), recipientSummary.userLogin())));
             }
 
             // If a channel is not visible to students, filter out participants that are only students
@@ -194,7 +199,7 @@ public class ConversationMessagingService extends PostingService {
             filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
         }
 
-        return webSocketRecipients.stream().filter(filter).map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
+        return webSocketRecipients.stream().filter(filter).map(summary -> new User(summary.userId(), summary.userLogin())).collect(Collectors.toSet());
     }
 
     /**

@@ -200,7 +200,7 @@ public class NotificationSettingsService {
 
         return users.stream().filter(user -> {
             // for those notification types that are not explicitly set by the user, we use the default settings
-            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().equals(user))
+            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
                     .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
             for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {
