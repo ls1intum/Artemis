@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +18,8 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
@@ -64,10 +68,13 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     private Lecture lecture1;
 
+    private Lecture invalidLecture;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
+        this.invalidLecture = lectureUtilService.createLecture(null, null);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
@@ -96,7 +103,37 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         this.testAllPreAuthorize();
     }
 
-    // Tests for uploadSlidesForProcessing()
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAll_LectureWithoutCourse_shouldReturnConflict() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
+
+        request.postWithMultipartFile("/api/lectures/" + invalidLecture.getId() + "/process-units/upload", null, "upload", createLectureFile(true), String.class,
+                HttpStatus.CONFLICT);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/process-units/any-file", HttpStatus.CONFLICT, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/process-units/slides-to-remove/any-file", HttpStatus.CONFLICT, LectureUnitInformationDTO.class, params);
+        request.postListWithResponseBody("/api/lectures/" + invalidLecture.getId() + "/process-units/split/any-file", lectureUnitSplits, AttachmentUnit.class, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAll_IOException_ShouldReturnInternalServerError() throws Exception {
+        var lectureFile = createLectureFile(true);
+        String filename = manualFileUpload(lectureFile);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "");
+
+        try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.readAllBytes(any())).thenThrow(IOException.class);
+            mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
+            request.get("/api/lectures/" + lecture1.getId() + "/process-units/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, LectureUnitInformationDTO.class);
+            request.getList("/api/lectures/" + lecture1.getId() + "/process-units/slides-to-remove/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, Integer.class, params);
+            request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/process-units/split/" + filename, lectureUnitSplits, AttachmentUnit.class,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void uploadSlidesForProcessing_asInstructor_shouldGetFilename() throws Exception {
@@ -113,8 +150,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units/upload", null, "upload", filePartWord, LectureUnitInformationDTO.class,
                 HttpStatus.BAD_REQUEST);
     }
-
-    // Tests for getAttachmentUnitsData
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -138,8 +173,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         request.get("/api/lectures/" + lecture1.getId() + "/process-units/" + filename, HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class);
         request.get("/api/lectures/" + lecture1.getId() + "/process-units/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class);
     }
-
-    // Tests for getSlidesToRemove
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -168,7 +201,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         request.get("/api/lectures/" + lecture1.getId() + "/process-units/slides-to-remove/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class, params);
     }
 
-    // Tests for createAttachmentUnits
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnits_asInstructor_shouldCreateAttachmentUnits() throws Exception {
@@ -252,8 +284,12 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     private void testAllPreAuthorize() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "");
+
         request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units/upload", null, "upload", createLectureFile(true), String.class, HttpStatus.FORBIDDEN);
         request.get("/api/lectures/" + lecture1.getId() + "/process-units/any-file", HttpStatus.FORBIDDEN, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/process-units/slides-to-remove/any-file", HttpStatus.FORBIDDEN, LectureUnitInformationDTO.class, params);
         request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/process-units/split/any-file", lectureUnitSplits, AttachmentUnit.class, HttpStatus.FORBIDDEN);
     }
 
@@ -340,7 +376,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
      * @param file the file to be uploaded
      * @return String filename in the temp folder
      */
-    private String manualFileUpload(MockMultipartFile file) throws IOException {
+    private String manualFileUpload(MockMultipartFile file) {
         URI fileURI = fileService.handleSaveFile(file, false, false);
         return filePathService.actualPathForPublicPath(fileURI).getFileName().toString();
     }

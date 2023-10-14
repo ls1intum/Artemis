@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { debounceTime, switchMap } from 'rxjs/operators';
+import { debounceTime, repeat, switchMap } from 'rxjs/operators';
 
 export type LectureUnitDTOS = {
     unitName: string;
@@ -52,8 +52,7 @@ export class AttachmentUnitsComponent implements OnInit {
     file: File;
     filename: string;
     //time until the temporary file gets deleted. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
-    //TODO: increase to 30 after testing
-    readonly MINUTES_UNTIL_DELETION = 3;
+    readonly MINUTES_UNTIL_DELETION = 29;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -85,21 +84,35 @@ export class AttachmentUnitsComponent implements OnInit {
             return;
         }
 
-        //timeout after given time because the temporary file in the backend gets deleted
+        //regularly re-upload the file when it gets deleted in the backend
         setTimeout(
             () => {
-                this.cancelSplit();
-                this.alertService.info(this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.timeout`));
+                this.attachmentUnitService
+                    .uploadSlidesForProcessing(this.lectureId, this.file)
+                    .pipe(repeat({ delay: 1000 * 60 * this.MINUTES_UNTIL_DELETION }))
+                    .subscribe({
+                        next: (res) => {
+                            this.filename = res.body!;
+                        },
+                        error: (res: HttpErrorResponse) => {
+                            onError(this.alertService, res);
+                            this.isLoading = false;
+                        },
+                    });
             },
-            this.MINUTES_UNTIL_DELETION * 60 * 1000,
+            1000 * 60 * this.MINUTES_UNTIL_DELETION,
         );
 
         this.attachmentUnitService
             .uploadSlidesForProcessing(this.lectureId, this.file)
             .pipe(
                 switchMap((res) => {
-                    this.filename = res.body!;
-                    return this.attachmentUnitService.getSplitUnitsData(this.lectureId, this.filename);
+                    if (res instanceof HttpErrorResponse) {
+                        throw new Error(res.message);
+                    } else {
+                        this.filename = res.body!;
+                        return this.attachmentUnitService.getSplitUnitsData(this.lectureId, this.filename);
+                    }
                 }),
             )
             .subscribe({

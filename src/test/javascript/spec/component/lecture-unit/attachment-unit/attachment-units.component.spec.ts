@@ -3,7 +3,7 @@ import { AttachmentUnitsComponent, LectureUnitInformationDTO } from 'app/lecture
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -245,7 +245,7 @@ describe('AttachmentUnitsComponent', () => {
         expect(attachmentUnitsComponent.removedSlidesNumbers).toBeEmpty();
     }));
 
-    it('should timeout when file is not accessible anymore', fakeAsync(() => {
+    it('should start uploading file again after timeout', fakeAsync(() => {
         const response1: HttpResponse<string> = new HttpResponse({
             body: 'filename-on-server',
             status: 200,
@@ -258,13 +258,15 @@ describe('AttachmentUnitsComponent', () => {
             },
             status: 200,
         });
-        attachmentUnitService.uploadSlidesForProcessing = jest.fn().mockReturnValue(of(response1));
+
+        const uploadSlidesSpy = jest.spyOn(attachmentUnitService, 'uploadSlidesForProcessing').mockReturnValue(of(response1));
         attachmentUnitService.getSplitUnitsData = jest.fn().mockReturnValue(of(response2));
-        const navigateSpy = jest.spyOn(router, 'navigate');
         attachmentUnitsComponent.ngOnInit();
         attachmentUnitsComponentFixture.detectChanges();
-        tick(1000 * 60 * attachmentUnitsComponent.MINUTES_UNTIL_DELETION);
 
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(uploadSlidesSpy).toHaveBeenCalledOnce();
+        tick(1000 * 60 * attachmentUnitsComponent.MINUTES_UNTIL_DELETION);
+        expect(uploadSlidesSpy).toHaveBeenCalledTimes(2);
+        discardPeriodicTasks();
     }));
 });
