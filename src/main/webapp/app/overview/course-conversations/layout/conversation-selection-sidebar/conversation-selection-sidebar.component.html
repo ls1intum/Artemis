@@ -198,6 +198,10 @@
                     </jhi-conversation-sidebar-section>
                 </div>
             </div>
+            <!-- footer -->
+            <button *ngIf="course.courseInformationSharingMessagingCodeOfConduct" class="btn btn-primary" type="button" (click)="openCodeOfConduct()">
+                {{ 'artemisApp.codeOfConduct.title' | artemisTranslate }}
+            </button>
         </div>
         <div class="draggable-right">
             <fa-icon [icon]="faGripLinesVertical"></fa-icon>
