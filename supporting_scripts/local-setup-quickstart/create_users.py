@@ -10,12 +10,11 @@ from utils import print_error
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-backend_url = config.get('Settings', 'backend_url')
+client_url = config.get('Settings', 'client_url')
 
 
 def make_create_user_post_request(session, user_details):
-    # url = f"{backend_url}/api/public/authenticate"
-    url = "http://localhost:9000/api/admin/users"
+    url = f"{client_url}/api/public/authenticate"
     headers = {
         "Content-Type": "application/json"
     }
