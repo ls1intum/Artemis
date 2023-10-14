@@ -421,6 +421,11 @@
             "fullName": "Santiago Berrezueta, PhD.",
             "sortBy": "Berrezueta, PhD.",
             "photoDirectory": "public/images/about/Santiago_Berrezueta.jpg"
+        },
+        {
+            "fullName": "Maximilian Anzinger",
+            "sortBy": "Anzinger",
+            "photoDirectory": "public/images/about/Maximilian_Anzinger.jpg"
         }
     ]
 }
