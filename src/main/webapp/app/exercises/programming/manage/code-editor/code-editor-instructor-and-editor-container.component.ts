@@ -13,6 +13,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { FileChangeType, IrisCodeEditorWebsocketService, IrisExerciseComponent, IrisExerciseComponentChangeSet } from 'app/iris/code-editor-websocket.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -41,13 +42,42 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         translateService: TranslateService,
         route: ActivatedRoute,
         alertService: AlertService,
+        private codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
+        codeEditorWebsocketService.onCodeChanges().subscribe((changes: IrisExerciseComponentChangeSet) => this.applyChanges(changes));
     }
 
     onResizeEditorInstructions() {
         if (this.editableInstructions.markdownEditor && this.editableInstructions.markdownEditor.aceEditorContainer) {
             this.editableInstructions.markdownEditor.aceEditorContainer.getEditor().resize();
+        }
+    }
+
+    private applyChanges(changes: IrisExerciseComponentChangeSet) {
+        switch (changes.component) {
+            case IrisExerciseComponent.PROBLEM_STATEMENT:
+                changes.changes.forEach((change) => {
+                    if (change.type === FileChangeType.MODIFY) {
+                        const psContent = this.editableInstructions.programmingExercise.problemStatement;
+                        psContent?.replace(change.original!, change.updated!);
+                        this.editableInstructions.updateProblemStatement(psContent!);
+                    }
+                });
+                break;
+            case IrisExerciseComponent.SOLUTION_REPOSITORY:
+                changes.changes.forEach((change) => {
+                    if (change.type === FileChangeType.MODIFY) {
+                        const fileContent = this.codeEditorContainer.aceEditor.getFileContent(change.file!);
+                        fileContent.replace(change.original!, change.updated!);
+                        this.codeEditorContainer.aceEditor.updateFileText(change.file!, fileContent);
+                    }
+                });
+                break;
+            case IrisExerciseComponent.TEMPLATE_REPOSITORY:
+                break;
+            case IrisExerciseComponent.TEST_REPOSITORY:
+                break;
         }
     }
 }

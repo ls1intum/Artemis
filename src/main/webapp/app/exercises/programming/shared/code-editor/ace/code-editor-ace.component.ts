@@ -316,6 +316,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
+    async updateFileText(file: string, code: string) {
+        if (file && this.fileSession[file]) {
+            if (this.fileSession[file].code !== code) {
+                this.fileSession[file].code = code;
+                this.onFileContentChange.emit({ file: file, fileContent: code });
+            }
+        }
+    }
+
+    public getFileContent(file: string) {
+        return this.fileSession[file]?.code;
+    }
+
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();

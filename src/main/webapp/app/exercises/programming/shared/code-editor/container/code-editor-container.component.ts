@@ -26,7 +26,6 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { IrisCodeEditorWebsocketService, IrisExerciseComponent, IrisExerciseComponentChangeSet } from 'app/iris/code-editor-websocket.service';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -109,10 +108,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         private translateService: TranslateService,
         private alertService: AlertService,
         private fileService: CodeEditorFileService,
-        private codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         this.initializeProperties();
-        codeEditorWebsocketService.onCodeChanges().subscribe((changes: IrisExerciseComponentChangeSet) => this.applyChanges(changes));
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -145,19 +142,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         } else {
             this.editorState = EditorState.UNSAVED_CHANGES;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
-        }
-    }
-
-    private applyChanges(changes: IrisExerciseComponentChangeSet) {
-        switch (changes.component) {
-            case IrisExerciseComponent.PROBLEM_STATEMENT:
-                break;
-            case IrisExerciseComponent.SOLUTION_REPOSITORY:
-                break;
-            case IrisExerciseComponent.TEMPLATE_REPOSITORY:
-                break;
-            case IrisExerciseComponent.TEST_REPOSITORY:
-                break;
         }
     }
 

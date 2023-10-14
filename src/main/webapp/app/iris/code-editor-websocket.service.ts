@@ -11,29 +11,29 @@ import { Observable, Subject } from 'rxjs';
  */
 enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
-    CODE_CHANGES = 'CODE_CHANGES',
+    CHANGE_SET = 'CHANGE_SET',
     ERROR = 'ERROR',
 }
 
-enum FileChangeType {
+export enum FileChangeType {
     CREATE = 'CREATE',
     DELETE = 'DELETE',
     RENAME = 'RENAME',
     MODIFY = 'MODIFY',
 }
 
-class FileChange {
+export class FileChange {
     type: FileChangeType;
-    file: string;
+    file?: string;
     original?: string;
     updated?: string;
 }
 
 export enum IrisExerciseComponent {
-    PROBLEM_STATEMENT = 'problemStatement',
-    SOLUTION_REPOSITORY = 'solutionRepository',
-    TEMPLATE_REPOSITORY = 'templateRepository',
-    TEST_REPOSITORY = 'testRepository',
+    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
+    SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
+    TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
+    TEST_REPOSITORY = 'TEST_REPOSITORY',
 }
 
 export class IrisExerciseComponentChangeSet {
@@ -74,7 +74,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
             case IrisCodeEditorWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);
                 break;
-            case IrisCodeEditorWebsocketMessageType.CODE_CHANGES:
+            case IrisCodeEditorWebsocketMessageType.CHANGE_SET:
                 this.handleChanges(response.changes);
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
