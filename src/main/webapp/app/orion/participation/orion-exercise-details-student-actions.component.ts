@@ -100,6 +100,6 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
         if (this.exercise.dueDate === undefined) {
             return false;
         }
-        return this.exercise.dueDate.date() > Date.now();
+        return this.exercise.dueDate.date() < Date.now();
     }
 }
