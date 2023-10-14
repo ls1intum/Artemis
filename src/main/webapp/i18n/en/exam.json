@@ -671,14 +671,23 @@
                 "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
                 "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
                 "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessionCriterionDifferentIpAddress": "Sessions for the same student exam, that do not have the same IP address",
+                "suspiciousSessionCriterionDifferentBrowserFingerprint": "Sessions for the same student exam, that do not have the same browser fingerprint",
+                "suspiciousSessionCriterionIpOutsideOfRange": "The IP address of a session is outside of the specified IP range",
+                "subnet": "Subnet in CIDR notation",
+                "subnetHelp": "The subnet in CIDR notation, e.g. 127.0.0.1/24. If you enter a IPv4 subnet, only IPv4 addresses will be compared. If you enter a IPv6 subnet, only IPv6 addresses will be compared.",
+                "analyzeSessions": "Analyze Sessions",
                 "suspiciousSessions": {
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",
-                    "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
+                    "number": "This exam has <span class='bold'> {{ numberOfSuspiciousSessions }} </span> cases.",
                     "reasons": "Suspicious because of:",
                     "case": "Case",
-                    "sameIpAddress": "Same IP address",
-                    "sameBrowserFingerprint": "Same browser fingerprint"
+                    "sameBrowserFingerprintDifferentStudentExams": "Different student exams with the same browser fingerprint",
+                    "sameIpAddressDifferentStudentExams": "Different student exams with the same IP address",
+                    "differentIpAddressesSameStudentExam": "Different IP addresses for the same student exam",
+                    "differentBrowserFingerprintsSameStudentExam": "Different browser fingerprints for the same student exam",
+                    "ipOutsideOfRange": "IP address outside of range <span class=\"text-info\">{{ range }}</span>"
                 }
             },
             "plagiarismCasesOverview": {
@@ -712,6 +721,8 @@
             "cancelAssessment": " Cancel Assessment",
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+            "endOfIndividualWorkingTime": "End of individual working time:",
+            "disabledChangeSubmissionStateButtonExplanation": "Cannot be changed before the end of the working time and the respective grace period.",
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
             "hasComplaint": "Has Complaint",
