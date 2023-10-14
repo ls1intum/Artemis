@@ -26,30 +26,30 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisMessage extends DomainObject {
-    
+
     @ManyToOne
     @JsonIgnore
     private IrisSession session;
-    
+
     @Nullable
     @Column(name = "sent_at")
     private ZonedDateTime sentAt = ZonedDateTime.now();
-    
+
     @Nullable
     @Column(name = "helpful")
     private Boolean helpful;
-    
+
     @Column(name = "sender")
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
-    
+
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
-    
+
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
-    
+
     public IrisSession getSession() {
         return session;
     }
@@ -91,11 +91,11 @@ public class IrisMessage extends DomainObject {
     public void setContent(List<IrisMessageContent> content) {
         this.content = content;
     }
-    
+
     public void addContent(IrisMessageContent content) {
         this.content.add(content);
     }
-    
+
     @JsonProperty
     public Integer getMessageDifferentiator() {
         return messageDifferentiator;

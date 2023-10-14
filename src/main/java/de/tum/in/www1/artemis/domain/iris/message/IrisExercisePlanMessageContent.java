@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import javax.persistence.*;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * An IrisExercisePlanMessageContent represents an Iris-generated plan to make changes to an exercise.
@@ -15,45 +16,45 @@ import java.util.List;
 @DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisExercisePlanMessageContent extends IrisMessageContent implements Iterator<IrisExercisePlanComponent> {
-    
+
     @OneToMany(mappedBy = "exercisePlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisExercisePlanComponent> components;
-    
+
     @Column(name = "current_component_index")
     private short currentComponentIndex = 0;
-    
+
     @Transient
     private boolean executing = false;
-    
+
     public List<IrisExercisePlanComponent> getComponents() {
         return components;
     }
-    
+
     public void setComponents(List<IrisExercisePlanComponent> components) {
         this.components = components;
     }
-    
+
     public short getCurrentComponentIndex() {
         return currentComponentIndex;
     }
-    
+
     public void setCurrentComponentIndex(short currentInstructionIndex) {
         this.currentComponentIndex = currentInstructionIndex;
     }
-    
+
     public boolean isExecuting() {
         return executing;
     }
-    
+
     public void setExecuting(boolean executing) {
         this.executing = executing;
     }
-    
+
     @Override
     public boolean hasNext() {
         return currentComponentIndex < components.size();
     }
-    
+
     @Override
     public IrisExercisePlanComponent next() {
         if (!hasNext()) {
@@ -61,7 +62,7 @@ public class IrisExercisePlanMessageContent extends IrisMessageContent implement
         }
         return components.get(currentComponentIndex++);
     }
-    
+
     @Override
     public String getContentAsString() {
         var sb = new StringBuilder("Exercise plan:\n");
@@ -70,13 +71,10 @@ public class IrisExercisePlanMessageContent extends IrisMessageContent implement
         }
         return sb.toString();
     }
-    
+
     @Override
     public String toString() {
-        return "IrisExercisePlanMessageContent{"
-                + "message=" + (message == null ? "null" : message.getId())
-                + ", components=" + components
-                + ", currentInstructionIndex=" + currentComponentIndex
-                + '}';
+        return "IrisExercisePlanMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", components=" + components + ", currentInstructionIndex="
+                + currentComponentIndex + '}';
     }
 }

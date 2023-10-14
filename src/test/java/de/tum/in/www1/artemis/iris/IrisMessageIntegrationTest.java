@@ -6,7 +6,6 @@ import static org.awaitility.Awaitility.await;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import de.tum.in.www1.artemis.domain.iris.message.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -152,11 +152,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
-            return o1.getContent().size() == o2.getContent().size()
-                    && o1.getContent().stream().map(IrisMessageContent::getContentAsString).toList().equals(
-                            o2.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
-                            ? 0
-                            : -1;
+            return o1.getContent().size() == o2.getContent().size() && o1.getContent().stream().map(IrisMessageContent::getContentAsString).toList()
+                    .equals(o2.getContent().stream().map(IrisMessageContent::getContentAsString).toList()) ? 0 : -1;
         }).isEqualTo(List.of(message2, message3, message4));
     }
 
@@ -316,29 +313,27 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.addContent(createMockTextContent(messageToSend));
         return messageToSend;
     }
-    
+
     private IrisMessageContent createMockTextContent(IrisMessage message) {
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
-        
+
         var rdm = ThreadLocalRandom.current();
         String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
-        
+
         var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
         var content = new IrisTextMessageContent(message, text);
         content.setId(rdm.nextLong());
         return content;
     }
-    
+
     private IrisMessageContent createMockExercisePlanContent(IrisMessage message) {
         var content = new IrisExercisePlanMessageContent();
-        content.setComponents(List.of(
-                new IrisExercisePlanComponent(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
+        content.setComponents(List.of(new IrisExercisePlanComponent(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
                 new IrisExercisePlanComponent(content, ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
                 new IrisExercisePlanComponent(content, ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),
-                new IrisExercisePlanComponent(content, ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")
-        ));
+                new IrisExercisePlanComponent(content, ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")));
         content.setId(ThreadLocalRandom.current().nextLong());
         content.setMessage(message);
         return content;

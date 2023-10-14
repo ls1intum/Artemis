@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +19,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisWebsocketService;
 
 @ActiveProfiles("iris")
@@ -62,12 +62,12 @@ class IrisWebsocketTest extends AbstractIrisIntegrationTest {
     private IrisTextMessageContent createMockContent(IrisMessage message) {
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
-        
+
         var rdm = ThreadLocalRandom.current();
         String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
         var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
-        
+
         var content = new IrisTextMessageContent(message, text);
         content.setId(rdm.nextLong());
         return content;
