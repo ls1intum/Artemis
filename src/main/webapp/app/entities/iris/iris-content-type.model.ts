@@ -36,8 +36,8 @@ export function isTextContent(content: IrisMessageContent) {
 }
 
 export function getTextContent(content: IrisMessageContent) {
-    if (content instanceof IrisMessageTextContent) {
-        const irisMessageTextContent = content;
+    if (isTextContent(content)) {
+        const irisMessageTextContent = content as IrisMessageTextContent;
         return irisMessageTextContent.textContent;
     }
 }
@@ -47,8 +47,8 @@ export function isPlanContent(content: IrisMessageContent) {
 }
 
 export function getPlanComponent(content: IrisMessageContent) {
-    if (content instanceof IrisMessagePlanContent) {
-        const irisMessagePlanContent = content;
+    if (isPlanContent(content)) {
+        const irisMessagePlanContent = content as IrisMessagePlanContent;
         return irisMessagePlanContent.components;
     }
 }

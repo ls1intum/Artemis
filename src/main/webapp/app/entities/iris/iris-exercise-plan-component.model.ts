@@ -1,8 +1,8 @@
 export enum ExerciseComponent {
-    PROBLEM_STATEMENT,
-    SOLUTION_REPOSITORY,
-    TEMPLATE_REPOSITORY,
-    TEST_REPOSITORY,
+    PROBLEM_STATEMENT = 'Problem statement',
+    SOLUTION_REPOSITORY = 'Solution repository',
+    TEMPLATE_REPOSITORY = 'Template repository',
+    TEST_REPOSITORY = 'Test repository',
 }
 export class IrisExercisePlanComponent {
     id?: number;

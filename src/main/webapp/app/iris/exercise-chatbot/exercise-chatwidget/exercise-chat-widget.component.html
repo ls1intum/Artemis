@@ -75,10 +75,8 @@
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="bubble-left" *ngIf="isTextContent(content)">
-                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="content.toString()! | artemisTranslate">tt</span>
-                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate">t</span>
-                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="content.toString()! | htmlForMarkdown">tt</span>
-                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="getTextContent(content)! | htmlForMarkdown">t</span>
+                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate"></span>
+                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
                         </div>
                         <div *ngIf="isRateMessage()" class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
@@ -94,10 +92,17 @@
                             </button>
                         </div>
                         <div class="bubble-left" *ngIf="isPlanContent(content)">
-                            <div *ngFor="let component of getPlanComponents(content); let i = index">
-                                <span [innerHTML]="component.instructions! | htmlForMarkdown"></span>
-                                <span [innerHTML]="getComponentInstruction(component)! | htmlForMarkdown"></span>
+                            <div *ngFor="let planComponent of getPlanComponents(content); let i = index">
+                                <div>
+                                    <span [innerHTML]="planComponent.component | htmlForMarkdown"></span>
+                                    <!--TODO: Add show/hide button-->
+                                </div>
+                                <!--TODO: Make it editable-->
+                                <span [innerHTML]="planComponent.instructions! | htmlForMarkdown"></span>
+                                <span [innerHTML]="getComponentInstruction(planComponent)! | htmlForMarkdown"></span>
+                                <!--TODO: Add cancel, confirm button-->
                             </div>
+                            <button style="all: unset" (click)="executePlan(message.id, content.id)">confirm</button>
                         </div>
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">

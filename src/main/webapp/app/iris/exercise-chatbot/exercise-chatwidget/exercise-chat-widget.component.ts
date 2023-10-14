@@ -58,6 +58,7 @@ import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 import { IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-component.model';
+import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -110,6 +111,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     stateStore: IrisStateStore;
     stateSubscription: Subscription;
     messages: IrisMessage[] = [];
+    content: IrisMessageContent;
     newMessageTextContent = '';
     isLoading: boolean;
     sessionId: number;
@@ -568,6 +570,24 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
                 .catch(() => {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
+                    this.scrollToBottom('smooth');
+                });
+        }
+    }
+
+    /**
+     * execute component plans
+     * @param message_id - The ID of the message.
+     * @param content_id - The ID of the content to execute.
+     */
+    executePlan(message_id: number, content_id: number) {
+        if (this.sessionService.httpMessageService instanceof IrisHttpCodeEditorMessageService) {
+            this.sessionService.httpMessageService
+                .executePlan(<number>this.sessionId, message_id, content_id)
+                .toPromise()
+                // .then(() => this.stateStore.dispatch(new ExecutePlanSuccessAction(content_id)))
+                .catch(() => {
+                    //this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.EXECUTE_PLAN_FAILED));
                     this.scrollToBottom('smooth');
                 });
         }
