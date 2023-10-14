@@ -29,11 +29,13 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
@@ -128,7 +130,13 @@ public class LocalCIContainerService {
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
      */
     public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) {
-        return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
+        try {
+            return new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, path).exec());
+        }
+        catch (NotFoundException e) {
+            return null;
+        }
+
     }
 
     /**
@@ -281,6 +289,7 @@ public class LocalCIContainerService {
     public Path createBuildScript(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> auxiliaryRepositories) {
         Long programmingExerciseId = programmingExercise.getId();
         boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
+        boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -334,10 +343,11 @@ public class LocalCIContainerService {
         buildScript.append("cd /repositories/test-repository\n");
 
         // programming language specific tasks
-        buildScript.append("""
-                chmod +x gradlew
-                sed -i -e 's/\\r$//' gradlew
-                ./gradlew clean test""");
+
+        switch (programmingExercise.getProgrammingLanguage()) {
+            case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+            default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+        }
 
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
@@ -347,6 +357,45 @@ public class LocalCIContainerService {
         }
 
         return buildScriptPath;
+    }
+
+    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
+        boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
+
+        if (hasSequentialTestRuns) {
+            if (isMaven) {
+                buildScript.append("""
+                        cd structural
+                        mvn clean test
+                        if [ $? -eq 0 ]; then
+                            cd ..
+                            cd behavior
+                            mvn clean test
+                        fi
+                        cd ..
+                        """);
+            }
+            else {
+                buildScript.append("""
+                        chmod +x gradlew
+                        ./gradlew clean structuralTests
+                        if [ $? -eq 0 ]; then
+                            ./gradlew behaviorTests
+                        fi
+                        """);
+            }
+        }
+        else {
+            if (isMaven) {
+                buildScript.append("""
+                        mvn clean test""");
+            }
+            else {
+                buildScript.append("""
+                        chmod +x gradlew
+                        ./gradlew clean test""");
+            }
+        }
     }
 
     /**

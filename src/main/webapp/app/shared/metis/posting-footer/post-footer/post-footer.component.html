@@ -30,6 +30,7 @@
         [isCourseMessagesPage]="isCourseMessagesPage"
         [isThreadSidebar]="isThreadSidebar"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
+        (userReferenceClicked)="userReferenceClicked.emit($event)"
     >
     </jhi-answer-post>
 </ng-container>

@@ -10,7 +10,7 @@
                 name="hours"
                 type="number"
                 class="text-center form-control form-number-input"
-                min="0"
+                [min]="allowNegative ? null : 0"
                 step="1"
                 required
             />
@@ -23,7 +23,7 @@
                 name="minutes"
                 type="number"
                 class="text-center form-control form-number-input"
-                min="0"
+                [min]="allowNegative ? -59 : 0"
                 max="59"
                 step="1"
                 required
@@ -37,7 +37,7 @@
                 name="seconds"
                 type="number"
                 class="text-center form-control form-number-input"
-                min="0"
+                [min]="allowNegative ? -59 : 0"
                 max="59"
                 step="1"
                 required
@@ -56,7 +56,7 @@
                 name="percent"
                 type="number"
                 class="text-center form-control form-number-input"
-                min="-100"
+                [min]="allowNegative ? -100 : 0"
                 step=".01"
                 required
             />

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.time.ZonedDateTime;
+
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
@@ -8,16 +10,14 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service for managing Iris sessions.
@@ -32,36 +32,14 @@ public class IrisSessionService {
 
     private final IrisHestiaSessionService irisHestiaSessionService;
 
-    private final IrisCodeEditorSessionService irisCodeEditorSessionService;
-
     private final IrisChatSessionRepository irisChatSessionRepository;
 
-    private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
-
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisChatSessionRepository irisChatSessionRepository,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
+            IrisChatSessionRepository irisChatSessionRepository) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
-        this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
-        this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
-    }
-
-    /**
-     * Creates a new Iris session for the given exercise and user.
-     *
-     * @param exercise The exercise the session belongs to
-     * @param user     The user the session belongs to
-     * @return The created session
-     */
-    public IrisChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        return irisChatSessionRepository.save(new IrisChatSession(exercise, user));
-    }
-
-    public IrisCodeEditorSession createCodeEditorSession(ProgrammingExercise exercise, User user) {
-        return irisCodeEditorSessionRepository.save(new IrisCodeEditorSession(exercise, user));
     }
 
     /**
@@ -71,6 +49,25 @@ public class IrisSessionService {
      */
     public void checkIsIrisActivated(IrisSession session) {
         getIrisSessionSubService(session).checkIsIrisActivated(session);
+    }
+
+    /**
+     * Creates a new Iris session for the given exercise and user.
+     *
+     * @param exercise The exercise the session belongs to
+     * @param user     The user the session belongs to
+     * @return The created session
+     */
+    public IrisSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
+        if (exercise.isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+        }
+        var irisSession = new IrisChatSession();
+        irisSession.setExercise(exercise);
+        irisSession.setUser(user);
+        irisSession.setCreationDate(ZonedDateTime.now());
+
+        return irisChatSessionRepository.save(irisSession);
     }
 
     /**
@@ -102,12 +99,11 @@ public class IrisSessionService {
         if (session instanceof IrisChatSession) {
             return irisChatSessionService;
         }
-        if (session instanceof IrisHestiaSession) {
+        else if (session instanceof IrisHestiaSession) {
             return irisHestiaSessionService;
         }
-        if (session instanceof IrisCodeEditorSession) {
-            return irisCodeEditorSessionService;
+        else {
+            throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
         }
-        throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
     }
 }

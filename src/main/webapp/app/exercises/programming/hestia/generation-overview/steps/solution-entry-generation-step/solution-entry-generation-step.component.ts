@@ -12,7 +12,7 @@ import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/cod
 import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
@@ -70,14 +70,20 @@ export class SolutionEntryGenerationStepComponent implements OnInit, OnDestroy {
     }
 
     openSolutionEntryModal(solutionEntry: ProgrammingExerciseSolutionEntry, isEditable: boolean) {
-        const modalRef: NgbModalRef = this.modalService.open(SolutionEntryDetailsModalComponent as Component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(SolutionEntryDetailsModalComponent as Component, {
+            size: 'lg',
+            backdrop: 'static',
+        });
         modalRef.componentInstance.exerciseId = this.exercise.id;
         modalRef.componentInstance.solutionEntry = solutionEntry;
         modalRef.componentInstance.isEditable = isEditable;
     }
 
     openManualEntryCreationModal() {
-        const modalRef: NgbModalRef = this.modalService.open(ManualSolutionEntryCreationModalComponent as Component, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ManualSolutionEntryCreationModalComponent as Component, {
+            size: 'lg',
+            backdrop: 'static',
+        });
         modalRef.componentInstance.exerciseId = this.exercise.id;
         modalRef.componentInstance.onEntryCreated.subscribe((createdEntry: ProgrammingExerciseSolutionEntry) => {
             this.solutionEntries.push(createdEntry);
