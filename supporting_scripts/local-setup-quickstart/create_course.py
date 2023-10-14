@@ -1,8 +1,8 @@
 import requests
 import configparser
 import json
+import urllib3
 
-from requests_toolbelt.multipart.encoder import MultipartEncoder
 from utils import login_as_admin
 from utils import print_error
 from utils import print_success
@@ -49,12 +49,16 @@ def create_course(session, course_name, course_short_name):
         "enrollmentEnabled": False
     }
 
-    multipart_encoder = MultipartEncoder(
-        fields={"course": ('blob.json', json.dumps(default_course), 'application/json')})
-    headers = {
-        'Content-Type': multipart_encoder.content_type,
+    fields = {
+        "course": ('blob.json', json.dumps(default_course), 'application/json')
     }
-    response = session.post(url, data=multipart_encoder, headers=headers)
+
+    body, content_type = urllib3.filepost.encode_multipart_formdata(fields)
+    headers = {
+        'Content-Type': content_type,
+    }
+
+    response = session.post(url, data=body, headers=headers)
 
     if response.status_code == 201:
         print_success(f"Created course {course_name} with id {course_short_name}")
