@@ -89,7 +89,7 @@
                 "submissionPolicy": {
                     "title": "Specify Submission Policies",
                     "shortDescription": "Discourage trial-and-error approaches with submission penalty and lock repository policies.",
-                    "descriptionTextOne": "Depending on the exercises and your teaching style, it might be useful to specify a submission policy. In general, lock repository and submission penalty policies combat trial-and-error solving approaches. When the student reaches the submission limit, the former prevents further submissions, while the latter penalizes the student. Submission policies are initially specified in the creation process of a programming exercise and can later be adjusted in the grading configuration of the particular programming exercise."
+                    "descriptionTextOne": "Depending on the exercises and your teaching style, it might be useful to specify a submission policy. In general, lock repository and submission penalty policies combat trial-and-error solving approaches. When the student reaches the submission limit, the former prevents further submissions, while the latter results in a point deduction. Submission policies are initially specified in the creation process of a programming exercise and can later be adjusted in the grading configuration of the particular programming exercise."
                 }
             }
         },
