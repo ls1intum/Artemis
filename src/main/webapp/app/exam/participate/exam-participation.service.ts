@@ -182,6 +182,30 @@ export class ExamParticipationService {
         );
     }
 
+    /**
+     * Submits {@link StudentExam} - the exam cannot be updated afterwards anymore
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExam: the student exam to terminate
+     */
+    public terminateStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/terminate';
+        const studentExamCopy = cloneDeep(studentExam);
+        ExamParticipationService.breakCircularDependency(studentExamCopy);
+
+        return this.httpClient.post<void>(url, studentExamCopy).pipe(
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
+                    return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
+                } else if (error.status === 409 && error.headers.get('x-null-error') === 'error.alreadySubmitted') {
+                    return throwError(() => new Error('artemisApp.studentExam.alreadySubmitted'));
+                } else {
+                    return throwError(() => new Error('artemisApp.studentExam.handInFailed'));
+                }
+            }),
+        );
+    }
+
     private static breakCircularDependency(studentExam: StudentExam) {
         studentExam.exercises!.forEach((exercise) => {
             if (exercise.studentParticipations) {

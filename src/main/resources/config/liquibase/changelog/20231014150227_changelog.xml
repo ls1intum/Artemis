@@ -2,9 +2,9 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
-    <changeSet author="valentinboehm" id="20231014125935">
+    <changeSet author="valentinboehm" id="20231014150227">
         <addColumn tableName="student_exam">
-            <column name="terminated" type="boolean">
+            <column name="terminated" type="boolean" valueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

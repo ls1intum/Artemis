@@ -427,6 +427,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             studentExam.setUser(user);
             studentExam.setSubmitted(false);
             studentExam.setTestRun(false);
+            studentExam.setTerminated(false);
 
             // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);

@@ -24,6 +24,7 @@
                 (onPageChanged)="onPageChange($event)"
                 (examAboutToEnd)="examEnded()"
                 (onExamHandInEarly)="toggleHandInEarly()"
+                (onTerminate)="toggleTerminate()"
             ></jhi-exam-navigation-bar>
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">

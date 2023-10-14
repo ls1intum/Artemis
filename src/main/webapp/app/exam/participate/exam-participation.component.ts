@@ -444,6 +444,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
+    toggleTerminate() {
+        this.examParticipationService.terminateStudentExam(this.courseId, this.examId, this.studentExam);
+    }
+
     /**
      * check if exam is over
      */

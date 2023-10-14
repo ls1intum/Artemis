@@ -74,8 +74,8 @@ public class StudentExam extends AbstractAuditingEntity {
         return terminated;
     }
 
-    public void terminate() {
-        terminated = true;
+    public void setTerminated(Boolean terminated) {
+        this.terminated = terminated;
     }
 
     public boolean isTestRun() {

@@ -298,7 +298,7 @@ public class StudentExamService {
         long start = System.nanoTime();
         // most important aspect here: set studentExam to submitted and set submission date
         // 3. DB Call: write
-        submitStudentExam(studentExamFromClient);
+        terminateStudentExam(studentExamFromClient);
         log.debug("     Set student exam to terminated in {}", formatDurationFrom(start));
 
         start = System.nanoTime();
@@ -318,7 +318,7 @@ public class StudentExamService {
     }
 
     private void terminateStudentExam(StudentExam studentExam) {
-        studentExam.terminate();
+        studentExam.setTerminated(true);
         studentExamRepository.terminateStudentExam(studentExam.getId());
     }
 

@@ -30,6 +30,8 @@ export class ExamNavigationBarComponent implements OnInit {
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
+    @Output() onTerminate = new EventEmitter<void>();
+
     static itemsVisiblePerSideDefault = 4;
     itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
 
@@ -220,5 +222,9 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     handInEarly() {
         this.onExamHandInEarly.emit();
+    }
+
+    terminate() {
+        this.onTerminate.emit();
     }
 }
