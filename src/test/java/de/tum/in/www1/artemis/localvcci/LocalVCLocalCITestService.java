@@ -114,11 +114,12 @@ public class LocalVCLocalCITestService {
     /**
      * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
      *
-     * @param dockerClient    the DockerClient to mock.
-     * @param testResultsPath the path to the directory containing the test results in the resources folder.
+     * @param dockerClient          the DockerClient to mock.
+     * @param mockedTestResultsPath the path to the directory containing the test results in the resources folder.
+     * @param testResultsPath       the path to the directory containing the test results inside the container.
      */
-    public void mockTestResults(DockerClient dockerClient, Path testResultsPath) throws IOException {
-        mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", createMapFromTestResultsFolder(testResultsPath));
+    public void mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromTestResultsFolder(mockedTestResultsPath));
     }
 
     /**
