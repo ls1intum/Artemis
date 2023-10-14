@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+
 /**
  * Constants for the Iris subsystem.
  */
@@ -113,7 +115,7 @@ public final class IrisConstants {
             TODO: Will be added in a future PR
             """;
 
-    public static final String CODE_EDITOR_INITIAL_REQUEST = """
+    public static final IrisTemplate CODE_EDITOR_INITIAL_REQUEST = new IrisTemplate("""
             {{#system~}}
                 I want you to act as an expert assistant to an instructor who is creating a programming exercise for their course.
                 Your job is to understand what the instructor wants, asking questions if needed, and make suggestions to improve the exercise.
@@ -196,5 +198,5 @@ public final class IrisConstants {
                     {{#assistant~}}{{gen 'tests_plan' temperature=0.5 max_tokens=100}}{{~/assistant}}
                 {{/if}}
             {{/if}}
-            """;
+            """);
 }
