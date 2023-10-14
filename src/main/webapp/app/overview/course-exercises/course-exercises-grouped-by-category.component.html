@@ -15,7 +15,7 @@
                 </div>
 
                 <ng-container [ngSwitch]="exerciseGroupKey">
-                    <h3 *ngSwitchCase="'previous'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.previous' | artemisTranslate }}</h3>
+                    <h3 *ngSwitchCase="'past'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.past' | artemisTranslate }}</h3>
                     <h3 *ngSwitchCase="'current'" class="text-primary mb-0">{{ 'artemisApp.courseOverview.exerciseList.current' | artemisTranslate }}</h3>
                     <h3 *ngSwitchCase="'future'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.future' | artemisTranslate }}</h3>
                     <h3 *ngSwitchCase="'noDueDate'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</h3>

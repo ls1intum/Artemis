@@ -5,17 +5,17 @@ import dayjs from 'dayjs/esm/';
 import { faAngleDown, faAngleUp, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 
-type ExerciseGroupCategory = 'previous' | 'current' | 'future' | 'noDueDate';
+type ExerciseGroupCategory = 'past' | 'current' | 'future' | 'noDueDate';
 
 /**
- * {@link ExerciseGroupCategory#previous} is always collapsed by default
+ * {@link ExerciseGroupCategory#past} is always collapsed by default
  */
 const DEFAULT_EXPAND_ORDER: ExerciseGroupCategory[] = ['current', 'future', 'noDueDate'];
 
 type ExerciseGroups = Record<ExerciseGroupCategory, { exercises: Exercise[]; isCollapsed: boolean }>;
 
 const DEFAULT_EXERCISE_GROUPS = {
-    previous: { exercises: [], isCollapsed: true },
+    past: { exercises: [], isCollapsed: true },
     current: { exercises: [], isCollapsed: false },
     future: { exercises: [], isCollapsed: false },
     noDueDate: { exercises: [], isCollapsed: true },
@@ -95,13 +95,13 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     }
 
     /**
-     * Expand at least one exercise group, considering that {@link ExerciseGroupCategory#previous} shall never be expanded by default
+     * Expand at least one exercise group, considering that {@link ExerciseGroupCategory#past} shall never be expanded by default
      *
      * Expanded by the order {@link ExerciseGroupCategory#current}, {@link ExerciseGroupCategory#future}, {@link ExerciseGroupCategory#noDueDate}
      */
     private makeSureAtLeastOneExerciseGroupIsExpanded(exerciseGroups: ExerciseGroups) {
         const exerciseGroupsWithExercises = Object.entries(exerciseGroups).filter(([, exerciseGroup]) => exerciseGroup.exercises.length > 0);
-        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([exerciseGroupKey, exerciseGroup]) => !exerciseGroup.isCollapsed && exerciseGroupKey !== 'previous');
+        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([exerciseGroupKey, exerciseGroup]) => !exerciseGroup.isCollapsed && exerciseGroupKey !== 'past');
 
         const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
         const expandableGroupsExist = !atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0;
@@ -154,7 +154,7 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
 
         const dueDateIsInThePast = dueDate.isBefore(now);
         if (dueDateIsInThePast) {
-            return 'previous';
+            return 'past';
         }
 
         const dueDateIsWithinNextWeek = dueDate.isBefore(now.add(1, 'week'));
