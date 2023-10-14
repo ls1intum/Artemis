@@ -56,7 +56,7 @@ export class IrisCodeEditorWebsocketDTO {
 /**
  * The IrisCodeEditorWebsocketService handles the websocket communication for receiving messages in the code editor channels.
  */
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     private subject: Subject<IrisExerciseComponentChangeSet> = new Subject();
 
