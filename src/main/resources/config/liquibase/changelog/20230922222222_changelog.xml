@@ -5,6 +5,7 @@
     <changeSet id="20230922222222" author="morrien">
         <addColumn tableName="iris_sub_settings">
             <column name="rate_limit" type="integer"/>
+            <column name="rate_limit_timeframe_hours" type="integer"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

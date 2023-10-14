@@ -36,12 +36,13 @@ public class IrisRateLimitService {
     public IrisRateLimitInformation getRateLimitInformation(User user) {
         var globalSettings = irisSettingsService.getGlobalSettings();
         var irisChatSettings = globalSettings.getIrisChatSettings();
-        var start = ZonedDateTime.now().minusHours(3);
+        var rateLimitTimeframeHours = Objects.requireNonNullElse(irisChatSettings.getRateLimitTimeframeHours(), 0);
+        var start = ZonedDateTime.now().minusHours(rateLimitTimeframeHours);
         var end = ZonedDateTime.now();
         var currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
         var rateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
 
-        return new IrisRateLimitInformation(currentMessageCount, rateLimit);
+        return new IrisRateLimitInformation(currentMessageCount, rateLimit, rateLimitTimeframeHours);
     }
 
     /**
@@ -65,7 +66,7 @@ public class IrisRateLimitService {
      * @param currentMessageCount the current rate limit
      * @param rateLimit           the max rate limit
      */
-    public record IrisRateLimitInformation(int currentMessageCount, int rateLimit) {
+    public record IrisRateLimitInformation(int currentMessageCount, int rateLimit, int rateLimitTimeframeHours) {
 
         /**
          * Checks if the rate limit is exceeded.

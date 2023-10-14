@@ -28,7 +28,9 @@
                     "preferredModel": "Preferred Model",
                     "inheritModel": "Inherit Model",
                     "rateLimit": "Rate Limit",
-                    "rateLimitTooltip": "The maximum number of answers a user can receive from the LLM in a given time period. The time period is currently 3h.",
+                    "rateLimitTooltip": "The maximum number of answers a user can receive from the LLM in a given time period.",
+                    "rateLimitTimeframeHours": "Rate Limit Timeframe (Hours)",
+                    "rateLimitTimeframeHoursTooltip": "The time period in which the rate limit applies in hours.",
                     "template": {
                         "title": "Template",
                         "inherit": "Inherit Template"
