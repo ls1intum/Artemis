@@ -282,8 +282,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
     }
 
+    // User needs to be Admin to change settings
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "ADMIN")
     void sendMessageRateLimitReached() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         var messageToSend1 = createDefaultMockMessage(irisSession);
@@ -294,7 +295,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         var globalSettings = irisSettingsService.getGlobalSettings();
         globalSettings.getIrisChatSettings().setRateLimit(1);
-        globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(1);
+        globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(10);
         irisSettingsService.saveGlobalIrisSettings(globalSettings);
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
