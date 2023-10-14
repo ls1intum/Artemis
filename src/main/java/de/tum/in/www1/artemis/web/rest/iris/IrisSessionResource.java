@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 /**
  * REST controller for managing {@link IrisSession}.

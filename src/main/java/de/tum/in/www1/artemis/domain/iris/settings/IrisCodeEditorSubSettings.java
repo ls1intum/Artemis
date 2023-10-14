@@ -1,0 +1,83 @@
+package de.tum.in.www1.artemis.domain.iris.settings;
+
+import javax.annotation.Nullable;
+import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+
+/**
+ * An IrisSubSettings object represents the settings for a specific feature of Iris.
+ * {@link IrisSettings} is the parent of this class.
+ */
+@Entity
+@DiscriminatorValue("CODE_EDITOR")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class IrisCodeEditorSubSettings extends IrisSubSettings {
+
+    @Nullable
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private IrisTemplate chatTemplate;
+
+    @Nullable
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private IrisTemplate problemStatementGenerationTemplate;
+
+    @Nullable
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private IrisTemplate templateRepoGenerationTemplate;
+
+    @Nullable
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private IrisTemplate solutionRepoGenerationTemplate;
+
+    @Nullable
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private IrisTemplate testRepoGenerationTemplate;
+
+    @Nullable
+    public IrisTemplate getChatTemplate() {
+        return chatTemplate;
+    }
+
+    public void setChatTemplate(@Nullable IrisTemplate chatTemplate) {
+        this.chatTemplate = chatTemplate;
+    }
+
+    @Nullable
+    public IrisTemplate getProblemStatementGenerationTemplate() {
+        return problemStatementGenerationTemplate;
+    }
+
+    public void setProblemStatementGenerationTemplate(@Nullable IrisTemplate problemStatementGenerationTemplate) {
+        this.problemStatementGenerationTemplate = problemStatementGenerationTemplate;
+    }
+
+    @Nullable
+    public IrisTemplate getTemplateRepoGenerationTemplate() {
+        return templateRepoGenerationTemplate;
+    }
+
+    public void setTemplateRepoGenerationTemplate(@Nullable IrisTemplate templateRepoGenerationTemplate) {
+        this.templateRepoGenerationTemplate = templateRepoGenerationTemplate;
+    }
+
+    @Nullable
+    public IrisTemplate getSolutionRepoGenerationTemplate() {
+        return solutionRepoGenerationTemplate;
+    }
+
+    public void setSolutionRepoGenerationTemplate(@Nullable IrisTemplate solutionRepoGenerationTemplate) {
+        this.solutionRepoGenerationTemplate = solutionRepoGenerationTemplate;
+    }
+
+    @Nullable
+    public IrisTemplate getTestRepoGenerationTemplate() {
+        return testRepoGenerationTemplate;
+    }
+
+    public void setTestRepoGenerationTemplate(@Nullable IrisTemplate testRepoGenerationTemplate) {
+        this.testRepoGenerationTemplate = testRepoGenerationTemplate;
+    }
+}

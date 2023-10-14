@@ -5,9 +5,9 @@ package de.tum.in.www1.artemis.service.iris;
  */
 public final class IrisConstants {
 
-    private IrisConstants() {
-        // Utility class for constants
-    }
+    // The current version of the global settings defaults
+    // Increment this if you change the default settings
+    public static final int GLOBAL_SETTINGS_VERSION = 1;
 
     // The default guidance template for the chat feature
     public static final String DEFAULT_CHAT_TEMPLATE = """
@@ -112,4 +112,24 @@ public final class IrisConstants {
     public static final String DEFAULT_HESTIA_TEMPLATE = """
             TODO: Will be added in a future PR
             """;
+
+    // The default guidance templates for the code editor feature
+    public static final String DEFAULT_CODE_EDITOR_CHAT_TEMPLATE = """
+            """;
+
+    public static final String DEFAULT_CODE_EDITOR_PROBLEM_STATEMENT_GENERATION_TEMPLATE = """
+            """;
+
+    public static final String DEFAULT_CODE_EDITOR_TEMPLATE_REPO_GENERATION_TEMPLATE = """
+            """;
+
+    public static final String DEFAULT_CODE_EDITOR_SOLUTION_REPO_GENERATION_TEMPLATE = """
+            """;
+
+    public static final String DEFAULT_CODE_EDITOR_TEST_REPO_GENERATION_TEMPLATE = """
+            """;
+
+    private IrisConstants() {
+        // Utility class for constants
+    }
 }
