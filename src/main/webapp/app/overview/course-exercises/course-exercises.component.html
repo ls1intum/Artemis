@@ -3,14 +3,14 @@
         <div class="d-flex align-items-center">
             <div class="btn-group me-2" ngbDropdown role="group">
                 <button class="btn btn-light dropdown-toggle" ngbDropdownToggle type="button">
-                    {{ 'artemisApp.courseOverview.exerciseList.groupExercises' | artemisTranslate }}
+                    {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu>
                     <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
-                        {{ 'artemisApp.courseOverview.exerciseList.proximityToDueDate' | artemisTranslate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.timeframeView' | artemisTranslate }}
                     </a>
                     <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
-                        {{ 'artemisApp.courseOverview.exerciseList.weekOfDueDate' | artemisTranslate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.weeklyView' | artemisTranslate }}
                     </a>
                 </div>
             </div>
