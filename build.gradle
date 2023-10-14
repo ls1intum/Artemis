@@ -432,6 +432,11 @@ node {
     npmVersion = "${npm_version}"
 }
 
+// Set the npm cache (used in the Dockerfile)
+task npmSetCacheDockerfile(type: NpmTask) {
+    args = ['set', 'cache', '/opt/artemis/.npm']
+}
+
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion "${checkstyle_version}"
