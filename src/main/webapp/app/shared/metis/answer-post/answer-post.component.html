@@ -15,6 +15,7 @@
         [author]="posting.author"
         [posting]="posting"
         [isReply]="true"
+        (userReferenceClicked)="userReferenceClicked.emit($event)"
     >
     </jhi-posting-content>
     <ng-container #createEditAnswerPostContainer></ng-container>
