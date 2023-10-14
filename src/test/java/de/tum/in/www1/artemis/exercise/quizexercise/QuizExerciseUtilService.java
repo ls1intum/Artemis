@@ -88,11 +88,18 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private QuizScheduleService quizScheduleService;
+    // TODO
 
     public Course addCourseWithOneQuizExercise() {
         return addCourseWithOneQuizExercise("Title");
     }
 
+    /**
+     * Creates and saves a course with one quiz exercise with the given title.
+     *
+     * @param title The title of the quiz exercise.
+     * @return The newly created course with the quiz.
+     */
     public Course addCourseWithOneQuizExercise(String title) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
@@ -107,8 +114,16 @@ public class QuizExerciseUtilService {
         return course;
     }
 
-    public QuizSubmission saveQuizSubmission(QuizExercise exercise, QuizSubmission submission, String login) {
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
+    /**
+     * Adds a student participation to the given quiz submission. The submission is then saved in the reposiotry.
+     *
+     * @param quizExercise The quiz to which
+     * @param submission
+     * @param login
+     * @return
+     */
+    public QuizSubmission saveQuizSubmission(QuizExercise quizExercise, QuizSubmission submission, String login) {
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission = quizSubmissionRepository.save(submission);
@@ -183,7 +198,7 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * sets up a team quiz exercise.
+     * Sets up a team quiz exercise.
      *
      * @param quiz        quiz exercise that should be a team exercise.
      * @param minTeamSize minimum number of members the team is allowed to have
@@ -222,10 +237,10 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * renames the quiz with the passed title, the quiz gets saved in the repository.
+     * Renames and saves the quiz exercise using the passed title.
      *
-     * @param quizExercise quiz to be renamed
-     * @param newTitle     new name of the quiz
+     * @param quizExercise The quiz to be renamed.
+     * @param newTitle     The new name of the quiz.
      */
     public void renameAndSaveQuiz(QuizExercise quizExercise, String newTitle) {
         quizExercise.setTitle(newTitle);
@@ -233,16 +248,24 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * sets the quiz exercise of quiz batch and saves the batch into the repository
+     * Sets the quiz exercise of the quiz batch and saves the batch into the repository.
      *
-     * @param batch        quiz batch that should get saved
-     * @param quizExercise quiz exercise to be added to the batch
+     * @param batch        The quiz batch that should be saved.
+     * @param quizExercise The quiz exercise to be added to the batch.
      */
     public void setQuizBatchExerciseAndSave(QuizBatch batch, QuizExercise quizExercise) {
         batch.setQuizExercise(quizExercise);
         quizBatchRepository.save(batch);
     }
 
+    /**
+     *
+     * @param course
+     * @param login
+     * @param dueDateInTheFuture
+     * @return
+     * @throws IOException
+     */
     public QuizSubmission addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean dueDateInTheFuture) throws IOException {
         QuizExercise quizExercise;
         if (dueDateInTheFuture) {
@@ -351,12 +374,29 @@ public class QuizExerciseUtilService {
         return quizSubmission;
     }
 
+    /**
+     * Generates and saves a quiz exercise using the passed dates and adds it to the given course.
+     *
+     * @param releaseDate       The release date of the quiz.
+     * @param dueDate           The due date of the quiz.
+     * @param assessmentDueDate The assessment due date of the quiz.
+     * @param quizMode          The quiz mode of the quiz.
+     * @param course            The course to which the quiz should be added to.
+     * @return The newly created quiz exercise.
+     */
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
         QuizExerciseFactory.initializeQuizExerciseWithAllQuestionTypes(quizExercise);
         return quizExerciseRepository.save(quizExercise);
     }
 
+    /**
+     * Joins the given quiz batch as the user with the passed username.
+     *
+     * @param quizExercise The quiz of the batch which should be joined.
+     * @param batch        The quiz batch which should be joined.
+     * @param username     The username of the user joining the batch.
+     */
     public void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
         var user = new User();
         user.setLogin(username);
