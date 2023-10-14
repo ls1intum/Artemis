@@ -32,7 +32,9 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
@@ -114,8 +116,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private programmingSubmissionSubscriptions: Subscription[] = [];
 
     loadingExam: boolean;
+    isAtLeastTutor?: boolean;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
+
+    // Icons
+    faGraduationCap = faGraduationCap;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -130,6 +136,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private liveEventsService: ExamParticipationLiveEventsService,
+        private courseService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -167,37 +175,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     error: () => (this.loadingExam = false),
                 });
             } else {
-                this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
+                this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
                     next: (studentExam) => {
-                        this.studentExam = studentExam;
-                        this.exam = studentExam.exam!;
-                        this.testExam = this.exam.testExam!;
-                        if (!this.exam.testExam) {
-                            this.initIndividualEndDates(this.exam.startDate!);
-                        }
-
-                        // only show the summary if the student was able to submit on time.
-                        if (this.isOver() && this.studentExam.submitted) {
-                            this.loadAndDisplaySummary();
-                        } else {
-                            // Directly start the exam when we continue from a failed save
-                            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                                this.examParticipationService
-                                    .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
-                                    .subscribe((localExam: StudentExam) => {
-                                        // Keep the working time from the server
-                                        localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
-
-                                        this.studentExam = localExam;
-                                        this.loadingExam = false;
-                                        this.examStarted(this.studentExam);
-                                    });
-                            } else {
-                                this.loadingExam = false;
-                            }
-                        }
+                        this.handleStudentExam(studentExam);
                     },
-                    error: () => (this.loadingExam = false),
+                    error: () => {
+                        this.handleNoStudentExam();
+                    },
                 });
             }
         });
@@ -245,7 +229,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
         return this.currentPageComponents.find(
-            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise!.id,
+            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
         );
     }
 
@@ -405,7 +389,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 },
                             });
                         } else {
-                            this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
+                            this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
                                 next: (existingExam: StudentExam) => {
                                     this.studentExam = existingExam;
                                 },
@@ -516,6 +500,50 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.liveEventsSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
+    }
+
+    handleStudentExam(studentExam: StudentExam) {
+        this.studentExam = studentExam;
+        this.exam = studentExam.exam!;
+        this.testExam = this.exam.testExam!;
+        if (!this.exam.testExam) {
+            this.initIndividualEndDates(this.exam.startDate!);
+        }
+
+        // only show the summary if the student was able to submit on time.
+        if (this.isOver() && this.studentExam.submitted) {
+            this.loadAndDisplaySummary();
+        } else {
+            // Directly start the exam when we continue from a failed save
+            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
+                    // Keep the working time from the server
+                    localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
+
+                    this.studentExam = localExam;
+                    this.loadingExam = false;
+                    this.examStarted(this.studentExam);
+                });
+            } else {
+                this.loadingExam = false;
+            }
+        }
+    }
+
+    /**
+     * Handles the case when there is no student exam. Here we have to check if the user is at least tutor to show the redirect to the exam management page.
+     * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
+     */
+    handleNoStudentExam() {
+        const course = this.courseStorageService.getCourse(this.courseId);
+        if (!course) {
+            this.courseService.find(this.courseId).subscribe((courseResponse) => {
+                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
+            });
+        } else {
+            this.isAtLeastTutor = course.isAtLeastTutor;
+        }
+        this.loadingExam = false;
     }
 
     /**
@@ -670,11 +698,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // in the case saving is forced, we mark the current exercise as not synced, so it will definitely be saved
         if ((activeComponent && forceSave) || (activeComponent as ExamSubmissionComponent)?.hasUnsavedChanges()) {
             const activeSubmission = (activeComponent as ExamSubmissionComponent)?.getSubmission();
-            const activeExercise = (activeComponent as ExamSubmissionComponent)?.getExercise();
+            const activeExerciseType = (activeComponent as ExamSubmissionComponent)?.exerciseType;
             if (activeSubmission) {
                 // this will lead to a save below, because isSynced will be set to false
                 // it only makes sense to set "isSynced" to false for quiz, text and modeling
-                if (activeExercise?.type !== ExerciseType.PROGRAMMING && activeExercise?.type !== ExerciseType.FILE_UPLOAD) {
+                if (activeExerciseType !== ExerciseType.PROGRAMMING && activeExerciseType !== ExerciseType.FILE_UPLOAD) {
                     activeSubmission.isSynced = false;
                 }
             }
