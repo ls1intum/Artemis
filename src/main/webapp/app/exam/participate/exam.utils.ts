@@ -21,7 +21,8 @@ export const endTime = (exam: Exam, studentExam: StudentExam): dayjs.Dayjs | und
 };
 
 /**
- * Calculates the working time of the exam in seconds
+ * Calculates the working time of the exam in seconds.
+ * If either the exam or the exam dates are not set, undefined is returned.
  *
  * @param exam
  * @return {number | undefined}
@@ -29,7 +30,8 @@ export const endTime = (exam: Exam, studentExam: StudentExam): dayjs.Dayjs | und
 export const examWorkingTime = (exam?: Exam): number | undefined => normalWorkingTime(exam?.startDate, exam?.endDate);
 
 /**
- * Calculates the time between start and end date in seconds
+ * Calculates the time between start and end date in seconds.
+ * If either the start or end date is not set, undefined is returned.
  *
  * @param startDate
  * @param endDate

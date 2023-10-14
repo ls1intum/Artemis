@@ -130,7 +130,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     updateExamWorkingTime() {
         if (this.exam.testExam) return;
 
-        this.exam.workingTime = examWorkingTime(this.exam);
+        this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
     }
 
     /**
