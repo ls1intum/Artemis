@@ -243,7 +243,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageResponse(null);
+        irisRequestMockProvider.mockEmptyResponse();
         setupExercise();
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
