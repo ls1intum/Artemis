@@ -72,21 +72,24 @@ done
 jira_user_url="http://localhost:$jira_external_port/rest/api/latest/user"
 jira_group_add_url="http://localhost:$jira_external_port/rest/api/2/group/user?groupname="
 
-for i in {1..20}; do
-    # User 1-5 are students, 6-10 are tutors, 11-15 are editors and 16-20 are instructors
-    group="students"
-    if ((i > 5)); then
-      group="tutors"
-    fi
-    if ((i > 10)); then
-      group="editors"
-    fi
-    if ((i > 15)); then
-      group="instructors"
-    fi
+create_user_and_add_to_group() {
+  local i="$1"
+  local group="students"
 
-    # Create user
-    curl -u "$jira_uservar":"$jira_passvar" \
+  if ((i > 5)); then
+    group="tutors"
+  fi
+
+  if ((i > 10)); then
+    group="editors"
+  fi
+
+  if ((i > 15)); then
+    group="instructors"
+  fi
+
+  # Create user
+  curl -u "$jira_uservar":"$jira_passvar" \
     -s \
     --header "Content-Type: application/json" \
     --request POST \
@@ -97,12 +100,11 @@ for i in {1..20}; do
                 \"emailAddress\": \"artemis_test_user_$i@artemis.local\",
                 \"displayName\": \"Artemis Test User $i\",
                 \"name\": \"artemis_test_user_$i\"
-
             }" \
-    $jira_user_url
+    "$jira_user_url"
 
-    # Add user to group
-    curl -u "$jira_uservar":"$jira_passvar" \
+  # Add user to group
+  curl -u "$jira_uservar":"$jira_passvar" \
     -s \
     --header "Content-Type: application/json" \
     --request POST \
@@ -112,7 +114,16 @@ for i in {1..20}; do
                 \"name\": \"artemis_test_user_$i\"
             }" \
     "$jira_group_add_url$group"
+}
+
+for i in {1..20}; do
+  create_user_and_add_to_group "$i"
 done
+
+for i in {100..104}; do
+    create_user_and_add_to_group "$i"
+done
+create_user_and_add_to_group "106"
 
 # Application Links
 
