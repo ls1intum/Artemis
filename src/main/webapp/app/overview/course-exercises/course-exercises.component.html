@@ -116,31 +116,32 @@
                 </div>
             </div>
 
-            <jhi-course-exercises-grouped-by-category
-                *ngIf="showExercisesGroupedByDueDateCategory; else exercisesGroupedByWeek"
-                [filteredExercises]="filteredExercises"
-                [course]="course"
-                [exerciseForGuidedTour]="exerciseForGuidedTour"
-                [appliedSearchString]="lastAppliedSearchString"
-            />
-            <ng-template #exercisesGroupedByWeek>
-                <jhi-course-exercises-grouped-by-week
-                    [nextRelevantExercise]="nextRelevantExercise"
-                    [course]="course!"
+            <ng-container *ngIf="course?.exercises?.length !== 0; else noExercisesAvailableForCourse">
+                <jhi-course-exercises-grouped-by-category
+                    *ngIf="showExercisesGroupedByDueDateCategory; else exercisesGroupedByWeek"
+                    [filteredExercises]="filteredExercises"
+                    [course]="course"
                     [exerciseForGuidedTour]="exerciseForGuidedTour"
-                    [weeklyIndexKeys]="weeklyIndexKeys"
-                    [immutableWeeklyExercisesGrouped]="weeklyExercisesGrouped"
-                    [activeFilters]="activeFilters"
+                    [appliedSearchString]="lastAppliedSearchString"
                 />
-            </ng-template>
-
-            <div *ngIf="course?.exercises && course!.exercises!.length === 0">
+                <ng-template #exercisesGroupedByWeek>
+                    <jhi-course-exercises-grouped-by-week
+                        [nextRelevantExercise]="nextRelevantExercise"
+                        [course]="course!"
+                        [exerciseForGuidedTour]="exerciseForGuidedTour"
+                        [weeklyIndexKeys]="weeklyIndexKeys"
+                        [immutableWeeklyExercisesGrouped]="weeklyExercisesGrouped"
+                        [activeFilters]="activeFilters"
+                    />
+                </ng-template>
+            </ng-container>
+            <ng-template #noExercisesAvailableForCourse>
                 <div class="row">
                     <div class="col">
                         {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
                     </div>
                 </div>
-            </div>
+            </ng-template>
         </div>
     </div>
     <div class="col-12 col-md-4 guided-tour course-information">
