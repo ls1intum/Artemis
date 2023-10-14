@@ -87,6 +87,8 @@ public class PostService extends PostingService {
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
 
+        parseUserMentions(course, post.getContent());
+
         // set author to current user
         post.setAuthor(user);
         setAuthorRoleForPosting(post, course);
@@ -137,6 +139,8 @@ public class PostService extends PostingService {
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
+
+        parseUserMentions(course, post.getContent());
 
         boolean contextHasChanged = !existingPost.hasSameContext(post);
         // depending on if there is a context change we need to broadcast different information
@@ -506,5 +510,4 @@ public class PostService extends PostingService {
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
         }
     }
-
 }

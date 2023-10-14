@@ -4,8 +4,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -47,12 +45,24 @@ public interface LearningPathRepository extends JpaRepository<LearningPath, Long
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnits", "competencies.lectureUnits.completedUsers", "competencies.exercises",
-            "competencies.exercises.studentParticipations" })
-    Optional<LearningPath> findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersById(long learningPathId);
+    @Query("""
+            SELECT learningPath
+            FROM LearningPath learningPath
+                LEFT JOIN FETCH learningPath.competencies competencies
+                LEFT JOIN FETCH competencies.userProgress progress
+                LEFT JOIN FETCH competencies.lectureUnits lectureUnits
+                LEFT JOIN FETCH lectureUnits.completedUsers completedUsers
+                LEFT JOIN FETCH competencies.exercises exercises
+                LEFT JOIN FETCH exercises.studentParticipations studentParticipations
+            WHERE learningPath.id = :learningPathId
+                AND (progress IS NULL OR progress.user.id = learningPath.user.id)
+                AND (completedUsers IS NULL OR completedUsers.user.id = learningPath.user.id)
+                AND (studentParticipations IS NULL OR studentParticipations.student.id = learningPath.user.id)
+            """)
+    Optional<LearningPath> findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersById(@Param("learningPathId") long learningPathId);
 
-    @NotNull
-    default LearningPath findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {
-        return findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersById(learningPathId).orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
+    default LearningPath findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(long learningPathId) {
+        return findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersById(learningPathId)
+                .orElseThrow(() -> new EntityNotFoundException("LearningPath", learningPathId));
     }
 }

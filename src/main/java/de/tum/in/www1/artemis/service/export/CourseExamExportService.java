@@ -49,6 +49,8 @@ public class CourseExamExportService {
 
     private final ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService;
 
+    private final QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService;
+
     private final FileService fileService;
 
     private final ExamRepository examRepository;
@@ -58,14 +60,15 @@ public class CourseExamExportService {
     public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
             TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService,
             FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService,
-            ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService,
-            ExamRepository examRepository) {
+            ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService,
+            QuizExerciseWithSubmissionsExportService quizExerciseWithSubmissionsExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
         this.textExerciseWithSubmissionsExportService = textExerciseWithSubmissionsExportService;
         this.fileUploadExerciseWithSubmissionsExportService = fileUploadExerciseWithSubmissionsExportService;
         this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
+        this.quizExerciseWithSubmissionsExportService = quizExerciseWithSubmissionsExportService;
         this.websocketMessagingService = websocketMessagingService;
         this.examRepository = examRepository;
     }
@@ -397,9 +400,9 @@ public class CourseExamExportService {
                     exportedExercises.add(modelingExerciseWithSubmissionsExportService.exportModelingExerciseWithSubmissions(exercise, submissionsExportOptions, exerciseExportDir,
                             exportErrors, reportData));
                 }
-                else if (exercise instanceof QuizExercise) {
-                    // TODO: Quiz submissions aren't supported yet
-                    continue;
+                else if (exercise instanceof QuizExercise quizExercise) {
+                    exportedExercises.add(quizExerciseWithSubmissionsExportService.exportExerciseWithSubmissions(quizExercise, exerciseExportDir, exportErrors, reportData));
+
                 }
                 else {
                     // Exercise is not supported so skip

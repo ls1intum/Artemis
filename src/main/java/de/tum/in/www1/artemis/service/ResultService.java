@@ -34,7 +34,7 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final LtiNewResultService ltiNewResultService;
+    private final Optional<LtiNewResultService> ltiNewResultService;
 
     private final ResultWebsocketService resultWebsocketService;
 
@@ -60,10 +60,11 @@ public class ResultService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, ResultWebsocketService resultWebsocketService,
-            ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
-            ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService,
-            ExerciseDateService exerciseDateService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
+            ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
+            FeedbackRepository feedbackRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
@@ -110,8 +111,8 @@ public class ResultService {
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
-            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
-                ltiNewResultService.onNewResult((StudentParticipation) savedResult.getParticipation());
+            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiNewResultService.isPresent()) {
+                ltiNewResultService.get().onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
             resultWebsocketService.broadcastNewResult(savedResult.getParticipation(), savedResult);

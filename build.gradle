@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.5.1"
+version = "6.6.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -311,7 +311,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.8"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.97.Final"
+    implementation "io.netty:netty-all:4.1.98.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.11"
     implementation "org.springframework:spring-messaging:5.3.29"
     implementation "org.springframework.retry:spring-retry:2.0.3"
@@ -333,7 +333,7 @@ dependencies {
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "mysql:mysql-connector-java:8.0.33"
     implementation "org.postgresql:postgresql:42.6.0"
-    implementation "com.h2database:h2:2.2.222"
+    implementation "com.h2database:h2:2.2.224"
 
     // zalando problem spring web can only be updated when we support Spring 6
     implementation "org.zalando:problem-spring-web:0.27.0"
@@ -347,6 +347,7 @@ dependencies {
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
+    implementation 'com.github.seancfoley:ipaddress:5.4.0'
 
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
@@ -429,6 +430,11 @@ node {
     download = true
     version = "${node_version}"
     npmVersion = "${npm_version}"
+}
+
+// Set the npm cache (used in the Dockerfile)
+task npmSetCacheDockerfile(type: NpmTask) {
+    args = ['set', 'cache', '/opt/artemis/.npm']
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain

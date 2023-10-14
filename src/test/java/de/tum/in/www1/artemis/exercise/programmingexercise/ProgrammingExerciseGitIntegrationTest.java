@@ -63,6 +63,10 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
 
     private Git localGit;
 
+    private File originRepoFile;
+
+    private Git originGit;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -102,11 +106,17 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
 
     @AfterEach
     void tearDown() throws IOException {
+        if (localGit != null) {
+            localGit.close();
+        }
         if (localRepoFile != null && localRepoFile.exists()) {
             FileUtils.deleteDirectory(localRepoFile);
         }
-        if (localGit != null) {
-            localGit.close();
+        if (originGit != null) {
+            originGit.close();
+        }
+        if (originRepoFile != null && originRepoFile.exists()) {
+            FileUtils.deleteDirectory(originRepoFile);
         }
     }
 
@@ -141,19 +151,19 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits() throws Exception {
-        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        Git remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
+        originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        originGit = LocalRepository.initialize(originRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
         localGit.push().call();
         assertThat(getAllCommits(localGit)).hasSize(3);
-        assertThat(getAllCommits(remoteGit)).hasSize(3);
+        assertThat(getAllCommits(originGit)).hasSize(3);
 
         final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.OK);
         assertThat(getAllCommits(localGit)).hasSize(1);
-        assertThat(getAllCommits(remoteGit)).hasSize(1);
+        assertThat(getAllCommits(originGit)).hasSize(1);
     }
 
     @Test

@@ -87,6 +87,8 @@ public class AnswerMessageService extends PostingService {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, author);
         }
 
+        parseUserMentions(course, answerMessage.getContent());
+
         // use post from database rather than user input
         answerMessage.setPost(post);
         // set author to current user
@@ -128,6 +130,7 @@ public class AnswerMessageService extends PostingService {
 
         Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+        parseUserMentions(course, answerMessage.getContent());
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.getContent());
 

@@ -1,8 +1,5 @@
 <div>
-    <span class="badge bg-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
-        <fa-icon [icon]="faRobot"></fa-icon>
-        <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
-    </span>
+    <jhi-feedback-suggestion-badge *ngIf="Feedback.isFeedbackSuggestion(feedback)" [feedback]="feedback"></jhi-feedback-suggestion-badge>
 
     <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
@@ -32,7 +29,7 @@
             <label jhiTranslate="artemisApp.exercise.score" for="'score-{{ textBlock.id }}"></label>
         </div>
         <div class="form-group col-md-1 m-0" *ngIf="feedback.gradingInstruction!">
-            <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
+            <jhi-grading-instruction-link-icon [feedback]="feedback"></jhi-grading-instruction-link-icon>
         </div>
     </div>
     <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">

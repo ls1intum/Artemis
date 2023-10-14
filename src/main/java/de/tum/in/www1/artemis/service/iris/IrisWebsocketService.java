@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,14 +19,18 @@ import de.tum.in.www1.artemis.service.iris.exception.IrisException;
  * A service to send a message over the websocket to a specific user
  */
 @Service
+@Profile("iris")
 public class IrisWebsocketService {
 
     private static final String IRIS_WEBSOCKET_TOPIC_PREFIX = "/topic/iris";
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public IrisWebsocketService(WebsocketMessagingService websocketMessagingService) {
+    private final IrisRateLimitService rateLimitService;
+
+    public IrisWebsocketService(WebsocketMessagingService websocketMessagingService, IrisRateLimitService rateLimitService) {
         this.websocketMessagingService = websocketMessagingService;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -38,9 +43,11 @@ public class IrisWebsocketService {
             throw new UnsupportedOperationException("Only IrisChatSession is supported");
         }
         Long irisSessionId = irisMessage.getSession().getId();
-        String userLogin = ((IrisChatSession) irisMessage.getSession()).getUser().getLogin();
+        var user = ((IrisChatSession) irisMessage.getSession()).getUser();
+        String userLogin = user.getLogin();
         String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage));
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(irisMessage, rateLimitInfo));
     }
 
     /**
@@ -54,9 +61,11 @@ public class IrisWebsocketService {
             throw new UnsupportedOperationException("Only IrisChatSession is supported");
         }
         Long irisSessionId = irisSession.getId();
-        String userLogin = ((IrisChatSession) irisSession).getUser().getLogin();
+        var user = ((IrisChatSession) irisSession).getUser();
+        String userLogin = user.getLogin();
         String irisWebsocketTopic = String.format("%s/sessions/%d", IRIS_WEBSOCKET_TOPIC_PREFIX, irisSessionId);
-        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(throwable));
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        websocketMessagingService.sendMessageToUser(userLogin, irisWebsocketTopic, new IrisWebsocketDTO(throwable, rateLimitInfo));
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -72,7 +81,10 @@ public class IrisWebsocketService {
 
         private final Map<String, Object> translationParams;
 
-        public IrisWebsocketDTO(IrisMessage message) {
+        private final IrisRateLimitService.IrisRateLimitInformation rateLimitInfo;
+
+        public IrisWebsocketDTO(IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+            this.rateLimitInfo = rateLimitInfo;
             this.type = IrisWebsocketMessageType.MESSAGE;
             this.message = message;
             this.errorMessage = null;
@@ -80,7 +92,8 @@ public class IrisWebsocketService {
             this.translationParams = null;
         }
 
-        public IrisWebsocketDTO(Throwable throwable) {
+        public IrisWebsocketDTO(Throwable throwable, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
+            this.rateLimitInfo = rateLimitInfo;
             this.type = IrisWebsocketMessageType.ERROR;
             this.message = null;
             this.errorMessage = throwable.getMessage();
@@ -106,6 +119,10 @@ public class IrisWebsocketService {
 
         public Map<String, Object> getTranslationParams() {
             return translationParams != null ? Collections.unmodifiableMap(translationParams) : null;
+        }
+
+        public IrisRateLimitService.IrisRateLimitInformation getRateLimitInfo() {
+            return rateLimitInfo;
         }
 
         public enum IrisWebsocketMessageType {
