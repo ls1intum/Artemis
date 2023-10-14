@@ -345,9 +345,18 @@ During the exam creation and configuration, you can create your exam and configu
 
 2. **Conduction**
 -----------------
-The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot make any changes anymore to the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`. When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. When a student submits the exam, they cannot make any changes anymore to his exercise submissions. For more information, see :ref:`participating in the online exam <participation_guide>`.
+The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot change the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`. When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. After a student submits the exam, they cannot change their exercise submissions. For more information, see :ref:`participating in the online exam <participation_guide>`.
 
-    .. _exam_assessment:
+Updating an Exercise during the Exam
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In case you have to update the exercise during an exam for programming, modeling, text, or file-upload exercises, you can go to the exercise details page and click on |edit| to edit the exercise. At the bottom of the exercise edit page, you can enter a notification text that is shown to the students in the exam mode. The screenshot below shows an example notification. You can see how the updated problem statement looks for the student in :ref:`Updated Problem Statement during the Exam <updated_problem_statement>`.
+
+.. figure:: instructor/exercise-notification.png
+    :alt: Exercise Notification
+
+    Field to enter a notification text
+
+.. _exam_assessment:
 
 3. **Assessment**
 -----------------
