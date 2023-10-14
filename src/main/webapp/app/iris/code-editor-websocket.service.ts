@@ -4,6 +4,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { Observable, Subject } from 'rxjs';
 
 /**
  * The IrisCodeEditorWebsocketMessageType defines the type of message sent over the code editor websocket.
@@ -28,14 +29,14 @@ class FileChange {
     updated?: string;
 }
 
-enum IrisExerciseComponent {
+export enum IrisExerciseComponent {
     PROBLEM_STATEMENT = 'problemStatement',
     SOLUTION_REPOSITORY = 'solutionRepository',
     TEMPLATE_REPOSITORY = 'templateRepository',
     TEST_REPOSITORY = 'testRepository',
 }
 
-class IrisExerciseComponentChangeSet {
+export class IrisExerciseComponentChangeSet {
     component: IrisExerciseComponent;
     changes: FileChange[]; //
 }
@@ -57,6 +58,8 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
+    private subject: Subject<IrisExerciseComponentChangeSet> = new Subject();
+
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
      * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
@@ -81,7 +84,10 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     protected handleChanges(changes?: IrisExerciseComponentChangeSet) {
-        if (!changes) return;
-        // TODO: Handle changes
+        if (changes) this.subject.next(changes);
+    }
+
+    public onCodeChanges(): Observable<IrisExerciseComponentChangeSet> {
+        return this.subject.asObservable();
     }
 }
