@@ -72,6 +72,23 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
+     * Extract the contents of a repository as a Map<String, String> of file paths to file contents.
+     *
+     * @param vcsRepositoryUrl The URL of the repository to extract
+     * @return The contents of the repository
+     */
+    private Map<String, String> getRepositoryContents(@Nullable VcsRepositoryUrl vcsRepositoryUrl) {
+        return Optional.ofNullable(vcsRepositoryUrl).map(url -> {
+            try {
+                return gitService.getOrCheckoutRepository(url, true);
+            }
+            catch (GitAPIException e) {
+                throw new InternalServerErrorException("Could not get or checkout exercise repository");
+            }
+        }).map(repositoryService::getFilesWithContent).orElse(Map.of());
+    }
+
+    /**
      * Checks if the user has access to the Iris session. A user has access if they have access to the exercise and the
      * session belongs to them. If the user is null, the user is fetched from the database.
      *
@@ -122,9 +139,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
 
         // FIXME: Template and model should be be configurable; await settings update
-        // The response handling is duplicated, also exists in IrisChatSessionService
-        // However, there is no good reason why every session type should have the same response handling
-        // TODO: Consider refactoring this
         irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, "gpt-4-32k", params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
@@ -141,6 +155,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     irisCodeEditorWebsocketService.sendMessage(saved);
                 }
                 catch (IrisParseResponseException e) {
+                    log.error("Error while parsing response from Iris model", e);
                     irisCodeEditorWebsocketService.sendException(session, e);
                 }
             }
@@ -228,12 +243,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         while (exercisePlan.hasNext() && exercisePlan.isExecuting()) {
             var nextPlanComponent = exercisePlan.next();
             var component = nextPlanComponent.getComponent();
-            // TODO: Add prompt for each component
             IrisTemplate prompt = switch (component) {
-                case PROBLEM_STATEMENT -> null;
-                case SOLUTION_REPOSITORY -> null;
-                case TEMPLATE_REPOSITORY -> null;
-                case TEST_REPOSITORY -> null;
+                case PROBLEM_STATEMENT -> IrisConstants.CODE_EDITOR_ADAPT_PROBLEM_STATEMENT;
+                case SOLUTION_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_SOLUTION_REPOSITORY;
+                case TEMPLATE_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEMPLATE_REPOSITORY;
+                case TEST_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEST_REPOSITORY;
             };
             var exercise = session.getExercise();
             var params = new HashMap<String, Object>();
@@ -253,11 +267,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 }
                 else {
                     try {
-                        var changes = extractChanges(response.content());
+                        var changes = extractChangesForComponent(response.content(), component);
                         // In this case we do not save anything, as these changes must first be approved by the user
                         irisCodeEditorWebsocketService.sendChanges(session, component, changes);
                     }
                     catch (IrisParseResponseException e) {
+                        log.error("Error while parsing exercise changes from Iris model", e);
                         irisCodeEditorWebsocketService.sendException(session, e);
                     }
                 }
@@ -268,26 +283,65 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         exercisePlan.setExecuting(false);
     }
 
-    private static List<IrisCodeEditorWebsocketService.FileChange> extractChanges(JsonNode content) throws IrisParseResponseException {
-        // TODO: Implement
-        return null;
-    }
-
     /**
-     * Extract the contents of a repository as a Map<String, String> of file paths to file contents.
+     * Extracts the changes for a specific component from the response of the LLM.
+     * The response must have the following structure:
      *
-     * @param vcsRepositoryUrl The URL of the repository to extract
-     * @return The contents of the repository
+     * <pre>
+     *     {
+     *         "changes": [
+     *             {
+     *                 "type": "modify",
+     *                 "file": "path/to/file",
+     *                 "original": "original file contents",
+     *                 "updated": "updated file contents"
+     *             },
+     *             ...
+     *         ]
+     *     }
+     * </pre>
+     *
+     * @param content   The JsonNode to extract the changes from
+     * @param component The component to extract the changes for
+     * @return The extracted changes
+     * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private Map<String, String> getRepositoryContents(@Nullable VcsRepositoryUrl vcsRepositoryUrl) {
-        return Optional.ofNullable(vcsRepositoryUrl).map(url -> {
-            try {
-                return gitService.getOrCheckoutRepository(url, true);
+    private static List<IrisCodeEditorWebsocketService.FileChange> extractChangesForComponent(JsonNode content, ExerciseComponent component) throws IrisParseResponseException {
+        if (!content.get("changes").isArray()) {
+            throw new IrisParseResponseException(new Throwable("Array of exercise changes was not present in response"));
+        }
+        List<IrisCodeEditorWebsocketService.FileChange> changes = new ArrayList<>();
+        for (JsonNode node : content.get("changes")) {
+            // FIXME: The type of change is not actually generated in the prompts yet. We specify the default value to compensate for this in the meantime.
+            var type = switch (node.get("type").asText("modify")) {
+                case "modify" -> IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
+                case "create" -> IrisCodeEditorWebsocketService.FileChangeType.CREATE;
+                case "delete" -> IrisCodeEditorWebsocketService.FileChangeType.DELETE;
+                case "rename" -> IrisCodeEditorWebsocketService.FileChangeType.RENAME;
+                default -> throw new IrisParseResponseException(new Throwable("Unknown exercise change type"));
+            };
+            var file = node.get("file").asText();
+            if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().isEmpty()) {
+                // This is a special case when the LLM decided to stop generating changes for a component.
+                // Ideally, this should not need to be handled here. The only reason it needs to be is because of
+                // a bug with Guidance geneach that compels us to use a workaround to break from the loop manually
+                // in the guidance program (see https://github.com/guidance-ai/guidance/issues/385).
+                // Anyway, if the file is empty, we can just break from the loop.
+                break;
             }
-            catch (GitAPIException e) {
-                throw new InternalServerErrorException("Could not get or checkout exercise repository");
+            var original = node.get("original").asText();
+            if (component == ExerciseComponent.PROBLEM_STATEMENT && original.trim().equals("!done!")) {
+                // This is kind of hacky, but necessary for the same reason as above.
+                // In the case of the problem statement there is no file generated, so we need another way
+                // for the LLM to tell us that it is done generating changes. In this case, it will send
+                // the string "!done!" as the original value, which indicates that we should break from the loop.
+                // Both of these workarounds should be removed once the bug in Guidance is fixed!
+                break;
             }
-        }).map(repositoryService::getFilesWithContent).orElse(Map.of());
+            var updated = node.get("updated").asText();
+            changes.add(new IrisCodeEditorWebsocketService.FileChange(type, file, original, updated));
+        }
+        return changes;
     }
 
 }
