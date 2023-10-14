@@ -287,6 +287,64 @@ public class StudentExamResource {
     }
 
     /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/submit : Submits the student exam
+     * Updates all submissions and marks student exam as submitted according to given student exam
+     * NOTE: the studentExam has to be sent with all exercises, participations and submissions
+     *
+     * @param courseId              the course to which the student exams belong to
+     * @param examId                the exam to which the student exams belong to
+     * @param studentExamFromClient the student exam with exercises, participations and submissions
+     * @return empty response with status code:
+     *         200 if successful
+     *         400 if student exam was in an illegal state
+     */
+    @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/terminate")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> terminateStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExamFromClient) {
+        long start = System.nanoTime();
+        log.debug("REST request to mark the studentExam as terminated : {}", studentExamFromClient.getId());
+
+        // 1. DB Call: read
+        User currentUser = userRepository.getUser();
+        // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
+        if (!Objects.equals(studentExamFromClient.getUser().getId(), currentUser.getId())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        }
+
+        // 2. DB Call: read
+        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
+        validateExamRequestParametersElseThrow(studentExamFromClient, examId, courseId);
+
+        if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+            log.error("Student exam with id {} for user {} can not be terminated because it is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
+            // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
+            return ResponseEntity.ok().build();
+        }
+
+        if (studentExamFromClient.isTerminated() || existingStudentExam.isTerminated()) {
+            log.error("Student exam with id {} for user {} is already terminated.", studentExamFromClient.getId(), currentUser.getLogin());
+            // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
+            return ResponseEntity.ok().build();
+        }
+
+        // checks if student exam is live (after start date, before end date + grace period)
+        if (!existingStudentExam.isTestRun() && (existingStudentExam.getExam().getStartDate() != null && !now().isAfter(existingStudentExam.getExam().getStartDate())
+                || existingStudentExam.getIndividualEndDate() != null && !now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
+            throw new AccessForbiddenException("You can only terminate between start and end of the exam.");
+        }
+
+        log.debug("Completed input validation for terminateStudentExam in {}", formatDurationFrom(start));
+
+        studentExamService.terminateStudentExam(existingStudentExam, studentExamFromClient, currentUser);
+
+        // TODO: Update
+        websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
+
+        log.info("Completed terminateStudentExam for user {} in a total time of {}", currentUser.getLogin(), formatDurationFrom(start));
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction : Find the specified student exam for the user.
      * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.

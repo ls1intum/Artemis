@@ -292,6 +292,36 @@ public class StudentExamService {
         }
     }
 
+    public void terminateStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
+        log.debug("Terminate student exam with id {}", studentExamFromClient.getId());
+
+        long start = System.nanoTime();
+        // most important aspect here: set studentExam to submitted and set submission date
+        // 3. DB Call: write
+        submitStudentExam(studentExamFromClient);
+        log.debug("     Set student exam to terminated in {}", formatDurationFrom(start));
+
+        start = System.nanoTime();
+        // NOTE: only for real exams and test exams, the student repositories need to be locked
+        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
+        if (!studentExamFromClient.isTestRun()) {
+            try {
+                // lock the programming exercise repository access (important in case of early exam termination), only when the student hands in early (asynchronously)
+                programmingExerciseParticipationService.lockStudentRepositories(currentUser, existingStudentExam);
+            }
+            catch (Exception e) {
+                log.error("lockStudentRepositories threw an exception", e);
+            }
+        }
+
+        log.debug("    Lock student repositories in {}", formatDurationFrom(start));
+    }
+
+    private void terminateStudentExam(StudentExam studentExam) {
+        studentExam.terminate();
+        studentExamRepository.terminateStudentExam(studentExam.getId());
+    }
+
     /**
      * Returns {@code true} if the drag and drop answer submitted answer of a quiz exercise are equal to each other
      * and {@code false} otherwise.

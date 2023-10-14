@@ -25,6 +25,9 @@ public class StudentExam extends AbstractAuditingEntity {
     @Column(name = "submitted")
     private Boolean submitted;
 
+    @Column(name = "terminated")
+    private Boolean terminated;
+
     /**
      * The individual working time per student in seconds
      * The default working time of an exam is stored in exam.workingTime
@@ -65,6 +68,14 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public Boolean isSubmitted() {
         return submitted;
+    }
+
+    public Boolean isTerminated() {
+        return terminated;
+    }
+
+    public void terminate() {
+        terminated = true;
     }
 
     public boolean isTestRun() {

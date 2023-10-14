@@ -289,6 +289,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE StudentExam s
+            SET s.terminated = true
+            WHERE s.id = :studentExamId
+            """)
+    void terminateStudentExam(@Param("studentExamId") Long studentExamId);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentExam s
             SET s.started = true,
                 s.startedDate = :startedDate
             WHERE s.id = :studentExamId
