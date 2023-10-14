@@ -1,5 +1,5 @@
 <div>
-    <h2 id="exam-title">
+    <h2>
         <ng-container>
             {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
         </ng-container>
@@ -121,7 +121,7 @@
                     <!-- Quiz Exercise -->
                     <ng-container *ngIf="exercise.type === QUIZ">
                         <jhi-quiz-exam-summary
-                            [exercise]="exercise"
+                            [quizParticipation]="exercise"
                             [exam]="studentExam.exam!"
                             [submission]="getSubmissionForExercise(exercise)!"
                             [resultsPublished]="!!resultsPublished"

@@ -102,7 +102,7 @@ public class ComplaintResource {
         Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.empty(), principal);
 
         // Remove assessor information from client request
-        savedComplaint.getResult().setAssessor(null);
+        savedComplaint.getResult().filterSensitiveInformation();
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
@@ -138,7 +138,7 @@ public class ComplaintResource {
         Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.of(examId), principal);
 
         // Remove assessor information from client request
-        savedComplaint.getResult().setAssessor(null);
+        savedComplaint.getResult().filterSensitiveInformation();
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);

@@ -33,27 +33,21 @@
                 "maxPoints": "Erreichbare Punkte: {{points}}",
                 "upcoming": "Demnächst stattfindende Klausur",
                 "imminent": "Die Klausur beginnt in",
-                "imminentExplanation": "Du kannst die Klausur durch Klicken auf die Kachel bereits öffnen",
+                "imminentExplanation": "Du kannst diese Klausur bereits öffnen",
                 "conducting": "Laufende Klausur",
-                "conductingExplanation": "Du kannst die Klausur durch Klicken auf die Kachel öffnen",
                 "timeExtension": "Die normale Arbeitszeit ist vorbei",
-                "timeExtensionExplanation": "Wenn du eine Zeitverlängerung hast, kannst du die Klausur durch Klicken auf die Kachel öffnen. Ansonsten kannst du deine Abgabe einsehen",
+                "timeExtensionExplanation": "Wenn du eine noch laufende Zeitverlängerung hast, kannst du die Klausur öffnen",
                 "closed": "Klausur beendet",
-                "closedExplanation": "Du kannst deine Abgabe durch Klicken auf die Kachel einsehen",
                 "review": "Klausureinsicht möglich",
                 "reviewExplanation": "Die Einsicht findet statt bis ",
-                "noMoreAttempts": "Keine weiteren Versuche",
-                "noMoreAttemptsExplanation": "Derzeit sind keine weiteren Versuche verfügbar",
                 "realExamsHeading": "Klausuren",
                 "testExamsHeading": "Testklausuren",
                 "testExam": {
                     "upcoming": "Demnächst stattfindende Testklausur",
                     "imminent": "Die Testklausur beginnt in ",
-                    "imminentExplanation": "Du kannst die Testklausur durch Klicken auf die Kachel bereits öffnen",
+                    "imminentExplanation": "Du kannst diese Testklausur bereits öffnen",
                     "conducting": "Beginne neue Testklausur",
-                    "conductingExplanation": "Du kannst eine neue Klausur durch Klicken auf die Kachel starten",
                     "closed": "Testklausur beendet",
-                    "closedExplanation": "Das Beginnen einer neuen Testklausur ist nicht mehr möglich",
                     "notSubmitted": "Du hast deine Testklausur nicht rechtzeitig eingereicht!",
                     "reviewAttempt": "Versuch #{{attempt}}",
                     "resumeAttempt": "Versuch #{{attempt}} fortführen",
@@ -62,7 +56,9 @@
                     "submissionDate": "Eingereicht am: ",
                     "available": "Verfügbar von {{startDate}} bis {{endDate}}",
                     "showMoreAttempts": "Zeige alle Versuche",
-                    "showLessAttempts": "Zeige aktuellste Versuche"
+                    "showLessAttempts": "Zeige aktuellste Versuche",
+                    "noMoreAttempts": "Keine weiteren Versuche",
+                    "noMoreAttemptsExplanation": "Derzeit sind keine weiteren Versuche verfügbar"
                 }
             },
             "examSummary": {
@@ -164,6 +160,24 @@
             "editWorkingTime": {
                 "absolute": "Absolut",
                 "relative": "Änderung relativ zur normalen Bearbeitungszeit"
+            },
+            "events": {
+                "button": "Benachrichtigungen",
+                "type": {
+                    "examWideAnnouncement": "Klausurweite Ankündigung",
+                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert"
+                },
+                "from": "von",
+                "acknowledge": "Bestätigen",
+                "acknowledgeAll": "Alle bestätigen",
+                "messages": {
+                    "workingTimeUpdate": {
+                        "titleEveryone": "Die Bearbeitungszeit der Klausur wurde geändert.",
+                        "titlePersonal": "Deine persönliche Bearbeitungszeit dieser Klausur wurde geändert.",
+                        "old": "Vorherige Bearbeitungszeit",
+                        "new": "Neue Bearbeitungszeit"
+                    }
+                }
             }
         },
         "examScores": {
@@ -252,6 +266,8 @@
             "exerciseName": "Name",
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgabe zu betrachten, navigiere zur Klausurseite ",
+            "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",
+            "goToExamManagement": "Zur Klausurverwaltung gehen",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
@@ -278,8 +294,6 @@
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
             "namePlaceholder": "Trage deinen vollen Namen hier ein",
-            "workingTimeIncreased": "Das Ende der Arbeitszeit wurde verlängert bis {{ date }}.",
-            "workingTimeDecreased": "Das Ende der Arbeitszeit wurde verkürzt bis {{ date }}.",
             "submissionSuccessful": {
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
@@ -582,6 +596,7 @@
                     "testRun": "Abhalten eines Testdurchlaufs",
                     "exportResults": "Exportieren der Klausurergebnisse",
                     "editWorkingTime": "Bearbeiten der Prüfungsdauer",
+                    "createAnnouncement": "Erstellen einer Ankündigung",
                     "suspiciousBehavior": "Überprüfung von verdächtigem Verhalten"
                 },
                 "descriptionItem": {
@@ -598,6 +613,7 @@
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
                     "editWorkingTime": "Bis 5 Minuten vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
@@ -639,20 +655,38 @@
                 "question": "Die Prüfungszeit wird für alle Studierenden angepasst. Wollen Sie die Prüfungszeit für die Klausur <strong>{{ title }}</strong> wirklich ändern?",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
+            "announcementCreate": {
+                "button": "Ankündigung erstellen",
+                "title": "Klausurweite Ankündigung erstellen",
+                "task": "Gib deine Ankündigung hier ein. Du kannst Markdown verwenden.",
+                "preview": "Vorschau",
+                "sendButton": "Ankündigung senden",
+                "sending": "Sende Ankündigung...",
+                "sent": "Ankündigung gesendet!"
+            },
             "suspiciousBehavior": {
                 "title": "Verdächtiges Verhalten",
                 "examSessionDescription": "Bei jedem Eintritt in eine Klausur wird für den Studierenden eine Sitzung erstellt. Diese Sitzung ist die Kombination aus IP-Adresse, Sitzungsschlüssel, User Agent, Browser-Fingerabdruck, Browserinstanz-ID und einem dazugehörigen Zeitstempel.",
-                "suspiciousSessionDescription": "Eine Sitzung wird als verdächtig eingestuft, wenn sie eine der folgenden Kriterien erfüllt:",
+                "suspiciousSessionDescription": "Wähle mindestens eines der nachfolgenden Kriterien aus, nach dem die Sitzungen dieser Klausur untersucht werden sollen:",
                 "suspiciousSessionCriterionIpAddress": "Es gibt mehrere Sitzungen mit derselben IP-Adresse, die nicht derselben Studierendenklausur zugeordnet sind",
                 "suspiciousSessionCriterionBrowserFingerprint": "Es gibt mehrere Sitzungen mit demselben Browser-Fingerabdruck, die nicht derselben Studierendenklausur zugeordnet sind",
+                "suspiciousSessionCriterionDifferentIpAddress": "Es gibt mehrere Sitzungen für dieselbe Studierendenklausur, die nicht dieselbe IP-Adresse haben",
+                "suspiciousSessionCriterionDifferentBrowserFingerprint": "Es gibt mehrere Sitzungen für dieselbe Studierendenklausur, die nicht denselben Browser-Fingerabdruck haben",
+                "suspiciousSessionCriterionIpOutsideOfRange": "Die IP-Adresse der Sitzung liegt nicht innerhalb des spezifizierten IP-Adressbereichs",
+                "subnet": "Subnetz in CIDR-Notation",
+                "subnetHelp": "IP-Subnetz in CIDR-Notation, z.B. 127.0.0.1/24. Wenn man ein IPv4 Subnetz angibt, werden nur IPv4 Adressen überprüft. Wenn man ein IPv6 Subnetz angibt, werden nur IPv6 Adressen überprüft.",
+                "analyzeSessions": "Analysiere Sitzungen",
                 "suspiciousSessions": {
                     "title": "Verdächtige Sitzungen",
                     "view": "Verdächtige Sitzungen anzeigen",
-                    "number": "Diese Klausur hat {{ numberOfSuspiciousSessions }} verdächtige Fälle.",
+                    "number": "Diese Klausur hat <span class='bold'> {{ numberOfSuspiciousSessions }} </span> verdächtige Fälle.",
                     "reasons": "Verdächtig aufgrund von:",
                     "case": "Fall",
-                    "sameIpAddress": "Gleiche IP-Adresse",
-                    "sameBrowserFingerprint": "Gleicher Browser-Fingerabdruck"
+                    "sameBrowserFingerprintDifferentStudentExams": "Verschiedene Studierendenklausuren mit demselben Browser-Fingerabdruck",
+                    "sameIpAddressDifferentStudentExams": "Verschiedene Studierendenklausuren mit derselben IP-Adresse",
+                    "differentIpAddressesSameStudentExam": "Verschiedene IP-Adressen für dieselbe Studierendenklausur",
+                    "differentBrowserFingerprintsSameStudentExam": "Verschiedene Browser-Fingerabdrücke für dieselbe Studierendenklausur",
+                    "ipOutsideOfRange": "IP-Adresse außerhalb des spezifizierten Bereichs <span class=\"text-info\">{{ range }}</span>"
                 }
             },
             "plagiarismCasesOverview": {
@@ -686,6 +720,8 @@
             "cancelAssessment": " Bewertung abbrechen",
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
+            "endOfIndividualWorkingTime": "Ende der individuellen Bearbeitungszeit:",
+            "disabledChangeSubmissionStateButtonExplanation": "Der Abgabestatus kann erst nach Ende der Bearbeitungszeit und Ablauf der Karenzzeit geändert werden.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
             "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
             "hasComplaint": "Beschwerde existiert",

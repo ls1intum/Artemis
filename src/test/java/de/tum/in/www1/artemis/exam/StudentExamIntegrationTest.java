@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -20,6 +21,7 @@ import org.json.JSONException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +71,9 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -461,7 +466,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final var repoName = projectKey.toLowerCase() + "-" + student1.getLogin().toLowerCase();
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repoName);
 
-        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
 
         final HttpHeaders headers = getHttpHeadersForExamSession();
         var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
@@ -750,6 +755,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateWorkingTimeLate() throws Exception {
         int newWorkingTime = 180 * 60;
+        int oldWorkingTime = studentExam1.getWorkingTime();
         exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
         exam1 = examRepository.save(exam1);
         StudentExam result = request.patchWithResponseBody(
@@ -757,7 +763,54 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK);
         assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
-        verify(websocketMessagingService, timeout(2000)).sendMessage("/topic/studentExams/" + studentExam1.getId() + "/working-time-change-during-conduction", 10800);
+
+        var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExam1.getId(), false);
+
+        assertThat(capturedEvent.getNewWorkingTime()).isEqualTo(newWorkingTime);
+        assertThat(capturedEvent.getOldWorkingTime()).isEqualTo(oldWorkingTime);
+    }
+
+    private ExamLiveEventDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
+        // Create an ArgumentCaptor for the WebSocket message
+        ArgumentCaptor<ExamLiveEventDTO> websocketEventCaptor = ArgumentCaptor.forClass(ExamLiveEventDTO.class);
+
+        // Verify that the sendMessage method was called with the expected WebSocket event
+        var expectedTopic = examWide ? "/topic/exam-participation/exam/" + studentExamOrExamId + "/events"
+                : "/topic/exam-participation/studentExam/" + studentExamOrExamId + "/events";
+        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(expectedTopic), websocketEventCaptor.capture());
+
+        // Get the captured WebSocket event
+        return websocketEventCaptor.getValue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamAnnouncementSent() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var testMessage = "Test message";
+        var result = request.postWithPlainStringResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", testMessage,
+                ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
+
+        assertThat(result.getId()).isGreaterThan(0L);
+        assertThat(result.getText()).isEqualTo(testMessage);
+        assertThat(result.getCreatedBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getName());
+        assertThat(result.getCreatedDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
+
+        var event = captureExamLiveEventForId(exam1.getId(), true);
+        assertThat(event).isEqualTo(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamsCanNotBeSentBeforeVisibleDate() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var testMessage = "Test message";
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", testMessage, ExamWideAnnouncementEventDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -870,7 +923,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingExerciseParticipationService).lockStudentRepository(programmingExercise, participation);
+        verify(programmingExerciseParticipationService, timeout(1000)).lockStudentRepository(programmingExercise, participation);
         verify(programmingTriggerService, timeout(4000)).triggerBuildForParticipations(List.of(participation));
     }
 
@@ -2548,7 +2601,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         testExamWithExercises = examRepository.save(testExamWithExercises);
 
         // Step 1: Call /start
-        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
 
         assertThat(studentExamForStart.getUser()).isEqualTo(student1);
         assertThat(studentExamForStart.getExam().getId()).isEqualTo(testExamWithExercises.getId());

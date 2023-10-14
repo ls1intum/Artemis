@@ -191,7 +191,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris') && !this.programmingExercise.exerciseGroup;
                     }
                 });
 

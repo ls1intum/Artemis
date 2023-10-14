@@ -1,5 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 
@@ -15,12 +16,20 @@ export class FileService {
      * @param {ProjectType} projectType (if available)
      * @returns json test file
      */
-    getTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType) {
+    getTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType): Observable<string> {
         const urlParts: string[] = [language];
         if (projectType) {
             urlParts.push(projectType);
         }
         return this.http.get<string>(`${this.resourceUrl}/templates/` + urlParts.join('/'), { responseType: 'text' as 'json' });
+    }
+
+    /**
+     * Fetches the template code of conduct
+     * @returns markdown file
+     */
+    getTemplateCodeOfCondcut(): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 
     /**

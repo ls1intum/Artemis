@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service for managing {@link IrisSettings}.
@@ -360,6 +361,9 @@ public class IrisSettingsService {
      * @return the saved Iris settings
      */
     public IrisSettings saveIrisSettings(ProgrammingExercise exercise, IrisSettings settings) {
+        if (exercise.isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+        }
         var existingSettingsOptional = getIrisSettings(exercise);
         if (existingSettingsOptional.isPresent()) {
             var existingSettings = existingSettingsOptional.get();
@@ -373,6 +377,16 @@ public class IrisSettingsService {
             var updatedExercise = programmingExerciseRepository.save(exercise);
             return updatedExercise.getIrisSettings();
         }
+    }
+
+    /**
+     * Update the Iris settings for a programming exercise.
+     *
+     * @param programmingExerciseBeforeUpdate the programming exercise before the update
+     * @param updatedProgrammingExercise      the programming exercise after the update
+     */
+    public void updateIrisSettings(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        irisSettingsRepository.findByProgrammingExerciseId(programmingExerciseBeforeUpdate.getId()).ifPresent(updatedProgrammingExercise::setIrisSettings);
     }
 
     private IrisSubSettings copyIrisSubSettings(IrisSubSettings target, IrisSubSettings source) {
