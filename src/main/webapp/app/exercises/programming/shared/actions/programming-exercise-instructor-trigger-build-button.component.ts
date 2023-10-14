@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionType } from 'app/entities/submission.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

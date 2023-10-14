@@ -697,6 +697,11 @@
                 "actions": "Aktionen",
                 "viewResultsOrRunDetection": "Ergebnisse anzeigen oder Plagiatsprüfung starten",
                 "viewCases": "Fälle anzeigen"
+            },
+            "dateChange": {
+                "title": "Bestätige Änderung der Prüfungszeit",
+                "message": "Die Prüfung wird gerade abgehalten. Wenn du die Zeiten einer aktiven Prüfung änderst, werden alle aktiven Studenten über die Änderung der Dauer informiert!",
+                "label": "Die Prüfung wird gerade abgehalten"
             }
         },
         "studentExamDetail": {
