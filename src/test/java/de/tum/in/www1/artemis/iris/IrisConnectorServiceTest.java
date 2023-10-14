@@ -49,6 +49,8 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockCustomJsonResponse("{\"message\": \"invalid\"}");
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
+            assertThat(response).isNull();
+            assertThat(throwable).isNotNull();
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(IrisParseResponseException.class);
             return null;
         }).get();
