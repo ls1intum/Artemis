@@ -5,7 +5,9 @@ import dayjs from 'dayjs/esm/';
 import { faAngleDown, faAngleUp, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 
-type ExerciseGroupCategory = 'current' | 'future' | 'previous' | 'noDueDate';
+type ExerciseGroupCategory = 'previous' | 'current' | 'future' | 'noDueDate';
+
+const EXERCISE_GROUP_ORDER: ExerciseGroupCategory[] = ['previous', 'current', 'future', 'noDueDate'];
 
 type ExerciseGroups = Record<ExerciseGroupCategory, { exercises: Exercise[]; isCollapsed: boolean }>;
 
@@ -22,6 +24,8 @@ const DEFAULT_EXERCISE_GROUPS = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
+    protected readonly Object = Object;
+
     @Input() filteredExercises?: Exercise[];
     @Input() course?: Course;
     @Input() exerciseForGuidedTour?: Exercise;
@@ -87,13 +91,19 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
         });
     }
 
-    private makeSureAtLeastOneExerciseIsExpanded(exerciseGroups: ExerciseGroups) {
+    /**
+     * Expand at least one exercise group, considering that {@link ExerciseGroupCategory#previous} shall never be expanded by default
+     *
+     * Expanded by the order {@link ExerciseGroupCategory#current}, {@link ExerciseGroupCategory#future}, {@link ExerciseGroupCategory#noDueDate}
+     */
+    private makeSureAtLeastOneExerciseGroupIsExpanded(exerciseGroups: ExerciseGroups) {
         const exerciseGroupsWithExercises = Object.entries(exerciseGroups).filter(([, exerciseGroup]) => exerciseGroup.exercises.length > 0);
-        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([, exerciseGroup]) => !exerciseGroup.isCollapsed);
+        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([exerciseGroupKey, exerciseGroup]) => !exerciseGroup.isCollapsed && exerciseGroupKey !== 'previous');
 
         const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
         if (!atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0) {
-            exerciseGroupsWithExercises[0][1].isCollapsed = false;
+            const sortedExpandedExerciseGroups = this.sortExerciseGroups(expandedExerciseGroups);
+            sortedExpandedExerciseGroups[0][1].isCollapsed = false;
         }
     }
 
@@ -119,7 +129,7 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
             this.keepCurrentCollapsedOrExpandedStateOfExerciseGroups(exerciseGroups);
         }
 
-        this.makeSureAtLeastOneExerciseIsExpanded(exerciseGroups);
+        this.makeSureAtLeastOneExerciseGroupIsExpanded(exerciseGroups);
     }
 
     private getExerciseGroup(exercise: Exercise): ExerciseGroupCategory {
@@ -143,5 +153,14 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
         return 'future';
     }
 
-    protected readonly Object = Object;
+    private sortExerciseGroups(exerciseGroups: [string, { exercises: Exercise[]; isCollapsed: boolean }][]) {
+        const sortedExerciseGroups = exerciseGroups.slice().sort((exerciseGroupA, exerciseGroupB) => {
+            const rankA = EXERCISE_GROUP_ORDER.indexOf(exerciseGroupA[0] as ExerciseGroupCategory);
+            const rankB = EXERCISE_GROUP_ORDER.indexOf(exerciseGroupB[0] as ExerciseGroupCategory);
+
+            return rankA - rankB;
+        });
+
+        return sortedExerciseGroups;
+    }
 }
