@@ -121,7 +121,7 @@
                     <!-- Quiz Exercise -->
                     <ng-container *ngIf="exercise.type === QUIZ">
                         <jhi-quiz-exam-summary
-                            [exercise]="exercise"
+                            [quizParticipation]="exercise"
                             [exam]="studentExam.exam!"
                             [submission]="getSubmissionForExercise(exercise)!"
                             [resultsPublished]="!!resultsPublished"
