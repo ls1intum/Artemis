@@ -25,6 +25,12 @@ export class IrisRateLimitInformation {
     currentMessageCount: number;
     rateLimit: number;
     rateLimitTimeframeHours: number;
+
+    constructor(currentMessageCount: number, rateLimit: number, rateLimitTimeframeHours: number) {
+        this.currentMessageCount = currentMessageCount;
+        this.rateLimit = rateLimit;
+        this.rateLimitTimeframeHours = rateLimitTimeframeHours;
+    }
 }
 
 /**
