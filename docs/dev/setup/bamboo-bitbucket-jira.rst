@@ -318,6 +318,8 @@ Please read :ref:`Server Setup` for more details.
 How to verify the connection works?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+To create a course with registered users you can use the scripts from ``supporting_scripts/local-setup-quickstart``.
+
 Artemis → Jira
 """"""""""""""
 
