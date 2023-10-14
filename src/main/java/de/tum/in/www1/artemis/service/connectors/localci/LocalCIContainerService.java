@@ -66,6 +66,7 @@ public class LocalCIContainerService {
      * @param containerName the name of the container to be created
      * @param branch        the branch to checkout
      * @param commitHash    the commit hash to checkout. If it is null, the latest commit of the branch will be checked out.
+     * @param image         the Docker image to use for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
