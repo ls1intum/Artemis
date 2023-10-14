@@ -7,7 +7,6 @@ import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
 
-import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +19,9 @@ import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.*;
+import de.tum.in.www1.artemis.service.iris.IrisMessageService;
+import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -45,8 +47,7 @@ public class IrisMessageResource {
     private final UserRepository userRepository;
 
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService) {
-            IrisRateLimitService rateLimitService, UserRepository userRepository) {
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, IrisRateLimitService rateLimitService, UserRepository userRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
