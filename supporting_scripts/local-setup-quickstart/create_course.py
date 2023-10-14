@@ -70,8 +70,8 @@ def create_course(session, course_name, course_short_name):
 def main():
     session = requests.session()
 
-    course_name = 'Local Course (Atlassian)'
-    course_short_name = "localCourseAtlassian"
+    course_name = 'Local Course'
+    course_short_name = "localCourse"
 
     login_as_admin(session)
     create_course(session, course_name, course_short_name)
