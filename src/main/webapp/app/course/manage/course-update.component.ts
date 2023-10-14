@@ -8,7 +8,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, PROFILE_LOCALVC } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, PROFILE_LTI } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
@@ -133,7 +133,7 @@ export class CourseUpdateComponent implements OnInit {
                         this.course.instructorGroupName = 'artemis-dev';
                     }
                 }
-                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
             }
         });
 
