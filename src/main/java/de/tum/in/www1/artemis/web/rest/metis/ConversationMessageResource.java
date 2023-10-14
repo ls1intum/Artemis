@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
@@ -51,8 +52,10 @@ public class ConversationMessageResource {
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        Post createdMessage = conversationMessagingService.createMessage(courseId, post);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
+        CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
+        conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
+                .body(createdMessageData.messageWithHiddenDetails());
     }
 
     /**

@@ -12,25 +12,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -75,9 +72,9 @@ public class ConversationMessagingService extends PostingService {
      *
      * @param courseId   the id where the conversation is located
      * @param newMessage the message to be created includes the conversation id
-     * @return the created message
+     * @return the created message and associated data
      */
-    public Post createMessage(Long courseId, Post newMessage) {
+    public CreatedConversationMessage createMessage(Long courseId, Post newMessage) {
         if (newMessage.getId() != null) {
             throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
@@ -114,26 +111,35 @@ public class ConversationMessagingService extends PostingService {
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         // set the conversation again, because it might have been lost during save
-        createdMessage.setConversation(conversation);
+        createdMessage.setConversation(savedConversation);
         // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
         if (createdMessage.getConversation() != null) {
             createdMessage.getConversation().hideDetails();
         }
 
-        // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
-        notifyAboutMessageCreation(author, savedConversation, course, createdMessage, mentionedUsers);
-
-        return createdMessage;
+        return new CreatedConversationMessage(createdMessage, savedConversation, mentionedUsers);
     }
 
-    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
+    /**
+     * Notifies conversation members and mentioned users about a new message in a conversation
+     *
+     * @param createdConversationMessage the new message and associated data
+     */
+    @Async
+    public void notifyAboutMessageCreation(CreatedConversationMessage createdConversationMessage) {
+        SecurityUtils.setAuthorizationObject(); // required for async
+        Post message = createdConversationMessage.messageWithHiddenDetails();
+        User author = message.getAuthor();
+        Conversation conversation = createdConversationMessage.completeConversation();
+        Course course = conversation.getCourse();
+        Set<User> mentionedUsers = parseUserMentions(course, message.getContent());
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
         Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         broadcastRecipients.addAll(mentionedUsers);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
+        broadcastForPost(new PostDTO(message, MetisCrudAction.CREATE), course, broadcastRecipients);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
@@ -153,7 +159,7 @@ public class ConversationMessagingService extends PostingService {
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
+        conversationNotificationService.notifyAboutNewMessage(message, notificationRecipients, course);
     }
 
     /**
