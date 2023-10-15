@@ -4,7 +4,7 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -27,6 +27,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    public saveRepoChanges = new Map<IrisExerciseComponent, FileChange[]>();
+    public selectedRepositoryComponent = new Map<REPOSITORY, IrisExerciseComponent>([
+        [REPOSITORY.SOLUTION, IrisExerciseComponent.SOLUTION_REPOSITORY],
+        [REPOSITORY.TEMPLATE, IrisExerciseComponent.TEMPLATE_REPOSITORY],
+        [REPOSITORY.TEST, IrisExerciseComponent.TEST_REPOSITORY],
+    ]);
+    private readonly currentRepoComponent = this.selectedRepositoryComponent.get(this.selectedRepository);
+    private readonly fileChange = this.saveRepoChanges.get(this.currentRepoComponent);
 
     // Icons
     faPlus = faPlus;
@@ -57,29 +65,35 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /*
+     *  In parent class CodeEditorInstructorBaseContainerComponent, ngOnInit() will analyze
+     *  the url and load exercise of current url
+     *  ideally can do the following operations there
+     *  After switch the repo, do
+     *  if(!isRepoChangeApplied()) {
+     *  applyRepoChange()
+     *  }
+     */
+
     private applyChanges(componentChanges: IrisExerciseComponentChangeSet) {
-        switch (componentChanges.component) {
-            case IrisExerciseComponent.PROBLEM_STATEMENT:
-                componentChanges.changes.forEach((change) => {
-                    if (change.type === FileChangeType.MODIFY) {
-                        const psContent = this.editableInstructions.programmingExercise.problemStatement;
-                        psContent?.replace(change.original!, change.updated!);
-                        this.editableInstructions.updateProblemStatement(psContent!);
-                    }
-                });
-                break;
-            case IrisExerciseComponent.SOLUTION_REPOSITORY:
-                //this.selectedRepository = REPOSITORY.SOLUTION;
-                this.applyCodeChange(componentChanges.changes);
-                break;
-            case IrisExerciseComponent.TEMPLATE_REPOSITORY:
-                //this.selectedRepository = REPOSITORY.TEMPLATE;
-                this.applyCodeChange(componentChanges.changes);
-                break;
-            case IrisExerciseComponent.TEST_REPOSITORY:
-                //this.selectedRepository = REPOSITORY.TEST;
-                this.applyCodeChange(componentChanges.changes);
-                break;
+        if (componentChanges.component === IrisExerciseComponent.PROBLEM_STATEMENT) {
+            componentChanges.changes.forEach((change: FileChange) => {
+                if (change.type === FileChangeType.MODIFY) {
+                    const psContent = this.editableInstructions.programmingExercise.problemStatement;
+                    psContent?.replace(change.original!, change.updated!);
+                    this.editableInstructions.updateProblemStatement(psContent!);
+                }
+            });
+        } else {
+            this.saveRepoChanges.set(componentChanges.component, componentChanges.changes);
+            this.applyRepoChange();
+        }
+    }
+
+    private applyRepoChange() {
+        if (!this.isRepoChangeApplied()) {
+            this.applyCodeChange(this.fileChange!);
+            this.saveRepoChanges.set(this.currentRepoComponent, []);
         }
     }
 
@@ -96,5 +110,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 //aceEditor needs this.selectedFile === fileChange.fileName
             }
         });
+    }
+
+    public isRepoChangeApplied() {
+        if (this.fileChange == undefined || this.fileChange.length === 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
