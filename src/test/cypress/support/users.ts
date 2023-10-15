@@ -7,12 +7,12 @@ export enum UserRole {
 }
 
 export const USER_ID = {
-    studentOne: 100,
-    studentTwo: 102,
-    studentThree: 104,
-    studentFour: 106,
-    instructor: 103,
-    tutor: 101,
+    studentOne: 1,
+    studentTwo: 2,
+    studentThree: 3,
+    studentFour: 4,
+    instructor: 16,
+    tutor: 6,
 };
 
 export const USER_ROLE = {

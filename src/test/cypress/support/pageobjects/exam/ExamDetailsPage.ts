@@ -9,7 +9,7 @@ export class ExamDetailsPage {
     deleteExam(examTitle: string) {
         cy.get('#exam-delete').click();
         cy.get('#delete').should('be.disabled');
-        cy.get('#confirm-exercise-name').type(examTitle);
+        cy.get('#confirm-entity-name').type(examTitle);
         cy.get('#delete').should('not.be.disabled').click();
     }
 }
