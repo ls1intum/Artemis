@@ -52,7 +52,7 @@
                 relativeLabelText="artemisApp.studentExams.setWorkingTimeRelative"
             />
 
-            <p *ngIf="this.workingTimeFormValues.percent">
+            <p *ngIf="workingTimeSeconds !== studentExam.workingTime">
                 {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }}
                 -
                 {{ individualEndDate | artemisDate: 'time' : true }}
@@ -88,7 +88,7 @@
                     {{ studentExam.submissionDate | artemisDate: 'long' : true }}
                 </li>
                 <li *ngIf="gradingScaleExists">
-                    <strong>{{ getGradeExplanation() | artemisTranslate }}:</strong>
+                    <strong>{{ gradeExplanation | artemisTranslate }}:</strong>
                     {{ grade }}
                 </li>
                 <li *ngIf="gradeAfterBonus !== undefined">
@@ -102,7 +102,7 @@
             </ol>
 
             <div
-                [ngbTooltip]="!isExamOver() ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
+                [ngbTooltip]="!isExamOver ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
                 placement="right"
                 class="d-inline"
             >
@@ -111,7 +111,7 @@
                     type="button"
                     *ngIf="course?.isAtLeastInstructor"
                     (click)="openConfirmationModal(toggleSubmitPopUp)"
-                    [disabled]="!isExamOver() || isSaving"
+                    [disabled]="!isExamOver || isSaving"
                     id="adjust-submitted-state-button"
                 >
                     <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
@@ -153,7 +153,7 @@
             </button>
         </div>
     </ng-template>
-    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && examIsOver()" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="isSaving">
+    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && isExamOver" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="isSaving">
         <span *ngIf="!studentExam.submitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
         <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
     </button>

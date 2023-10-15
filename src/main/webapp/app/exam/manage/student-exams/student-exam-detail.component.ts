@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -12,13 +12,15 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { combineLatest, takeWhile } from 'rxjs';
 
 @Component({
     selector: 'jhi-student-exam-detail',
     templateUrl: './student-exam-detail.component.html',
     styleUrls: ['./student-exam-detail.component.scss'],
 })
-export class StudentExamDetailComponent implements OnInit {
+export class StudentExamDetailComponent implements OnInit, OnDestroy {
+    examId: number;
     courseId: number;
     studentExam: StudentExam;
     achievedPointsPerExercise: { [exerciseId: number]: number };
@@ -32,8 +34,6 @@ export class StudentExamDetailComponent implements OnInit {
     bonusTotalPoints = 0;
     isSaving = false;
 
-    examId: number;
-
     gradingScaleExists = false;
     grade?: string;
     gradeAfterBonus?: string;
@@ -44,7 +44,8 @@ export class StudentExamDetailComponent implements OnInit {
     faSave = faSave;
 
     workingTimeSeconds = 0;
-    lastSavedWorkingTimeSeconds = 0;
+
+    private componentActive = true;
 
     constructor(
         private route: ActivatedRoute,
@@ -57,31 +58,19 @@ export class StudentExamDetailComponent implements OnInit {
      * Initialize the courseId and studentExam
      */
     ngOnInit(): void {
-        this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-        this.loadStudentExam();
+        combineLatest([this.route.data, this.route.params, this.route.url])
+            .pipe(takeWhile(() => this.componentActive))
+            .subscribe(([data, params, url]) => {
+                this.examId = params.examId;
+                this.courseId = params.courseId;
+                this.setStudentExamWithGrade(data.studentExam);
+                this.isTestExam = data.studentExam.exam.testExam;
+                this.isTestRun = url[1]?.toString() === 'test-runs';
+            });
     }
 
-    /**
-     * Load the course and the student exam
-     */
-    loadStudentExam() {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.route.data.subscribe(({ studentExam }) => this.setStudentExamWithGrade(studentExam));
-        this.isTestExam = this.studentExam.exam!.testExam!;
-    }
-
-    /**
-     * Sets grade related information if a grading scale exists for the exam
-     */
-    setExamGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
-        if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
-            this.gradingScaleExists = true;
-            this.grade = studentExamWithGrade.studentResult.overallGrade;
-            this.gradeAfterBonus = studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade?.toString();
-            this.passed = !!studentExamWithGrade.studentResult.hasPassed;
-            this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
-        }
+    ngOnDestroy(): void {
+        this.componentActive = false;
     }
 
     /**
@@ -114,24 +103,35 @@ export class StudentExamDetailComponent implements OnInit {
             throw new Error('studentExamWithGrade.studentExam is undefined');
         }
 
-        this.studentExam = studentExamWithGrade.studentExam;
-        if (this.studentExam.examSessions) {
-            // show the oldest session first (sessions are created sequentially so we can sort after id)
-            this.studentExam.examSessions.sort((s1, s2) => s1.id! - s2.id!);
-        }
-        this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
+        const studentExam = studentExamWithGrade.studentExam;
 
-        this.initWorkingTimeForm();
+        if (studentExam.examSessions) {
+            // show the oldest session first (sessions are created sequentially so we can sort after id)
+            studentExam.examSessions.sort((s1, s2) => s1.id! - s2.id!);
+        }
+
+        this.setStudentExam(studentExam);
+
+        this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
 
         this.maxTotalPoints = studentExamWithGrade.maxPoints ?? 0;
         this.achievedTotalPoints = studentExamWithGrade.studentResult.overallPointsAchieved ?? 0;
         this.bonusTotalPoints = studentExamWithGrade.maxBonusPoints ?? 0;
 
-        this.student = studentExamWithGrade.studentExam.user!;
-        this.course = studentExamWithGrade.studentExam.exam!.course!;
-
-        studentExamWithGrade.studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
         this.setExamGrade(studentExamWithGrade);
+    }
+
+    /**
+     * Sets grade related information if a grading scale exists for the exam
+     */
+    setExamGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
+        if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
+            this.gradingScaleExists = true;
+            this.grade = studentExamWithGrade.studentResult.overallGrade;
+            this.gradeAfterBonus = studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade?.toString();
+            this.passed = !!studentExamWithGrade.studentResult.hasPassed;
+            this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
+        }
     }
 
     /**
@@ -141,18 +141,18 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
 
-        this.initWorkingTimeForm();
+        this.student = studentExam.user!;
+        this.course = studentExam.exam!.course!;
 
-        this.student = this.studentExam.user!;
-        this.course = this.studentExam.exam!.course!;
+        this.workingTimeSeconds = studentExam.workingTime ?? 0;
 
-        studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
+        studentExam.exercises?.forEach((exercise) => this.initExercise(exercise));
     }
 
     /**
      * Gets the correct explanation label for the grade depending on whether it is a bonus or it has bonus.
      */
-    getGradeExplanation() {
+    get gradeExplanation() {
         if (this.isBonus) {
             return 'artemisApp.studentExams.bonus';
         } else if (this.gradeAfterBonus != undefined) {
@@ -175,11 +175,6 @@ export class StudentExamDetailComponent implements OnInit {
         }
     }
 
-    private initWorkingTimeForm() {
-        this.workingTimeSeconds = this.studentExam.workingTime ?? 0;
-        this.lastSavedWorkingTimeSeconds = this.studentExam.workingTime ?? 0;
-    }
-
     /**
      * Checks if the user should be able to edit the inputs.
      */
@@ -194,7 +189,7 @@ export class StudentExamDetailComponent implements OnInit {
     /**
      * Checks if the exam is over considering the individual working time of the student and the grace period
      */
-    isExamOver(): boolean {
+    get isExamOver(): boolean {
         if (this.studentExam.exam) {
             const individualExamEndDate = dayjs(this.studentExam.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.studentExam.exam.gracePeriod!, 'seconds');
 
