@@ -5,7 +5,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CommitState, DomainType, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
@@ -33,6 +33,8 @@ import {
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
+    exerciseType = ExerciseType.PROGRAMMING;
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
@@ -60,8 +62,8 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return undefined;
     }
 
-    getExercise(): Exercise {
-        return this.exercise;
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
     }
 
     isSaving: boolean;
