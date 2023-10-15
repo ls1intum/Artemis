@@ -135,7 +135,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         let smallestDiff = Infinity;
         let correspondingSubmission: ProgrammingSubmission | undefined;
         for (const programmingSubmission of this.programmingSubmissions) {
-            console.log(programmingSubmission);
             const diff = Math.abs(programmingSubmission.submissionDate!.diff(comparisonTimestamp));
             if (
                 programmingSubmission.submissionDate!.isBefore(comparisonTimestamp) &&
@@ -182,6 +181,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             return false;
         }
         const submissionVersion = object as SubmissionVersion;
+        // submissionVersion.content is intentionally not checked because it can be undefined if the content is empty
         return submissionVersion.id && submissionVersion.createdDate && submissionVersion.submission;
     }
 
