@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/entities/exam.model';
-import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime, getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { round } from 'app/shared/util/utils';
 
@@ -22,6 +22,7 @@ import { round } from 'app/shared/util/utils';
 export class WorkingTimeControlComponent implements ControlValueAccessor {
     // Control disabled state
     @Input() disabled = false;
+    @Input() allowNegative = false;
     @Input() showRelative = false;
 
     @Input() durationLabelText?: string;
@@ -88,7 +89,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      */
     private initWorkingTimeFromCurrentExam() {
         if (this.exam) {
-            this.setWorkingTimeDuration(normalWorkingTime(this.exam)!);
+            this.setWorkingTimeDuration(examWorkingTime(this.exam)!);
             this.updateWorkingTimePercentFromDuration();
             this.onChange(this.getWorkingTimeSeconds());
         }
@@ -130,7 +131,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
         if (this.exam) {
             const regularWorkingTime = this.exam.workingTime!;
             const absoluteWorkingTimeSeconds = round(regularWorkingTime * (1.0 + this.workingTime.percent / 100), 0);
-            console.log(regularWorkingTime, absoluteWorkingTimeSeconds);
             this.setWorkingTimeDuration(absoluteWorkingTimeSeconds);
         }
     }
