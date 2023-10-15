@@ -27,14 +27,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    public saveRepoChanges = new Map<IrisExerciseComponent, FileChange[]>();
-    public selectedRepositoryComponent = new Map<REPOSITORY, IrisExerciseComponent>([
-        [REPOSITORY.SOLUTION, IrisExerciseComponent.SOLUTION_REPOSITORY],
-        [REPOSITORY.TEMPLATE, IrisExerciseComponent.TEMPLATE_REPOSITORY],
-        [REPOSITORY.TEST, IrisExerciseComponent.TEST_REPOSITORY],
-    ]);
-    private readonly currentRepoComponent = this.selectedRepositoryComponent.get(this.selectedRepository);
-    private readonly fileChange = this.saveRepoChanges.get(this.currentRepoComponent);
+    // Buffer for changes to repositories that are not currently open in the UI
+    private bufferedRepositoryChanges = new Map<REPOSITORY, FileChange[]>();
 
     // Icons
     faPlus = faPlus;
@@ -56,7 +50,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         private codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
-        codeEditorWebsocketService.onCodeChanges().subscribe((changes: IrisExerciseComponentChangeSet) => this.applyChanges(changes));
+        codeEditorWebsocketService.onCodeChanges().subscribe((changes: IrisExerciseComponentChangeSet) => this.handleIrisChangeSet(changes));
     }
 
     onResizeEditorInstructions() {
@@ -75,28 +69,67 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *  }
      */
 
-    private applyChanges(componentChanges: IrisExerciseComponentChangeSet) {
-        if (componentChanges.component === IrisExerciseComponent.PROBLEM_STATEMENT) {
-            componentChanges.changes.forEach((change: FileChange) => {
+    /**
+     * Accept the changes suggested by Iris.
+     * Changes to the problem statement or to the repository currently open in the UI are applied immediately.
+     * Changes to other repositories are buffered and applied when the user switches to the corresponding repository.
+     * @param changeSet
+     * @private
+     */
+    private handleIrisChangeSet(changeSet: IrisExerciseComponentChangeSet) {
+        if (changeSet.component === IrisExerciseComponent.PROBLEM_STATEMENT) {
+            changeSet.changes.forEach((change: FileChange) => {
                 if (change.type === FileChangeType.MODIFY) {
                     const psContent = this.editableInstructions.programmingExercise.problemStatement;
                     psContent?.replace(change.original!, change.updated!);
                     this.editableInstructions.updateProblemStatement(psContent!);
                 }
             });
+            return;
+        }
+        const targetRepo = this.toRepository(changeSet.component);
+        if (targetRepo === this.selectedRepository) {
+            this.applyCodeChange(changeSet.changes); // Apply changes immediately
         } else {
-            this.saveRepoChanges.set(componentChanges.component, componentChanges.changes);
-            this.applyRepoChange();
+            const alreadyBufferedChanges = this.bufferedRepositoryChanges.get(targetRepo) || [];
+            alreadyBufferedChanges.push(...changeSet.changes);
+            this.bufferedRepositoryChanges.set(targetRepo, alreadyBufferedChanges);
         }
     }
 
-    private applyRepoChange() {
-        if (!this.isRepoChangeApplied()) {
-            this.applyCodeChange(this.fileChange!);
-            this.saveRepoChanges.set(this.currentRepoComponent, []);
+    /**
+     * Convert the given component to the corresponding repository.
+     * Throws an error if the component is the problem statement.
+     * @param component The component to convert
+     */
+    private toRepository(component: IrisExerciseComponent) {
+        switch (component) {
+            case IrisExerciseComponent.SOLUTION_REPOSITORY:
+                return REPOSITORY.SOLUTION;
+            case IrisExerciseComponent.TEMPLATE_REPOSITORY:
+                return REPOSITORY.TEMPLATE;
+            case IrisExerciseComponent.TEST_REPOSITORY:
+                return REPOSITORY.TEST;
+            default:
+                throw new Error('Invalid component');
         }
     }
 
+    /**
+     * Apply any changes to this repository that have been buffered while the user was working on another repository.
+     * Does nothing if there are no buffered changes.
+     */
+    private applyBufferedChangesToCurrentRepo() {
+        const changesToApply = this.bufferedRepositoryChanges.get(this.selectedRepository);
+        if (!changesToApply) return;
+        this.bufferedRepositoryChanges.delete(this.selectedRepository);
+        this.applyCodeChange(changesToApply);
+    }
+
+    /**
+     * Apply the given changes to the current repository (i.e. the one that is currently selected in the Ace Editor).
+     * @param changes The changes to apply
+     */
     private applyCodeChange(changes: FileChange[]) {
         changes.forEach((change) => {
             if (change.type === FileChangeType.MODIFY) {
@@ -110,13 +143,5 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 //aceEditor needs this.selectedFile === fileChange.fileName
             }
         });
-    }
-
-    public isRepoChangeApplied() {
-        if (this.fileChange == undefined || this.fileChange.length === 0) {
-            return true;
-        } else {
-            return false;
-        }
     }
 }
