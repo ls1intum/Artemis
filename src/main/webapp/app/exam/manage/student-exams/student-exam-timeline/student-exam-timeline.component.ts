@@ -182,7 +182,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             return false;
         }
         const submissionVersion = object as SubmissionVersion;
-        return submissionVersion.id && submissionVersion.createdDate && submissionVersion.content && submissionVersion.submission;
+        return submissionVersion.id && submissionVersion.createdDate && submissionVersion.submission;
     }
 
     /**

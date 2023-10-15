@@ -108,6 +108,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     private updateViewFromSubmissionVersion() {
         if (this.submissionVersion?.content) {
             this.answer = this.submissionVersion.content;
+        } else {
+            // the content of the submission version can be undefined if an empty submission was saved
+            this.answer = '';
         }
     }
 
