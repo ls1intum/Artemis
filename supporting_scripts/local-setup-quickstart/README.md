@@ -12,6 +12,9 @@ Scripts in this folder help to configure and setup your first Artemis course to 
    make sure that you have configured the python interpreter)
 
    `File > Project Structure > Modules > Add - Python`
+3. Configure the `Artemis.main` module for the run configuration of the run configuration `Artemis (Server, LocalVC & LocalCI)`
+
+   `Run > Edit Configurations > Spring Boot > Artemis (Server, LocalVC & LocalCI) > -cp Artemis.main`
 
 _Tested on python 3.11.6, other versions might work as well._
 
