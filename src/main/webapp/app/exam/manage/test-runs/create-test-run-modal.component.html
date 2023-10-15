@@ -9,9 +9,9 @@
             <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
             <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime">Set the working time:</p>
             <form class="d-flex gap-1 align-items-center" [formGroup]="workingTimeForm">
-                <input formControlName="minutes" id="minutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
+                <input formControlName="minutes" id="workingTimeMinutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
                 :
-                <input formControlName="seconds" id="seconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
+                <input formControlName="seconds" id="workingTimeSeconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
             </form>
         </div>
 
