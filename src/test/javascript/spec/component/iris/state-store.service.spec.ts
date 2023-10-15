@@ -16,6 +16,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { mockClientMessage, mockServerMessage, mockState } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey, errorMessages } from 'app/entities/iris/iris-errors.model';
+import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 describe('IrisStateStore', () => {
     let stateStore: IrisStateStore;
@@ -371,7 +372,7 @@ describe('IrisStateStore', () => {
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
 
-        stateStore.dispatch(new RateLimitUpdatedAction(1, 2));
+        stateStore.dispatch(new RateLimitUpdatedAction(new IrisRateLimitInformation(1, 2, 3)));
 
         const state = (await promise) as MessageStoreState;
 
@@ -380,6 +381,7 @@ describe('IrisStateStore', () => {
             error: null,
             currentMessageCount: 1,
             rateLimit: 2,
+            rateLimitTimeframeHours: 3,
         });
     });
 
@@ -388,7 +390,7 @@ describe('IrisStateStore', () => {
 
         const promise = obs.pipe(skip(1), take(1)).toPromise();
 
-        stateStore.dispatch(new RateLimitUpdatedAction(2, 2));
+        stateStore.dispatch(new RateLimitUpdatedAction(new IrisRateLimitInformation(2, 2, 3)));
 
         const state = (await promise) as MessageStoreState;
 
@@ -397,6 +399,7 @@ describe('IrisStateStore', () => {
             error: errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED],
             currentMessageCount: 2,
             rateLimit: 2,
+            rateLimitTimeframeHours: 3,
         });
     });
 });
