@@ -4,7 +4,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Exam } from 'app/entities/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { examWorkingTime, getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
+import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 
 @Component({
     selector: 'jhi-working-time-control',
@@ -110,7 +110,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      */
     private initWorkingTimeFromCurrentExam() {
         if (this.exam) {
-            this.setWorkingTimeDuration(examWorkingTime(this.exam)!);
+            // this.setWorkingTimeDuration(examWorkingTime(this.exam)!);
             this.updateWorkingTimePercentFromDuration();
             this.emitWorkingTimeChange();
         }
