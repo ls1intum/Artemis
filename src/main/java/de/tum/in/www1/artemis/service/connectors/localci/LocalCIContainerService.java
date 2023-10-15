@@ -325,9 +325,7 @@ public class LocalCIContainerService {
                 """);
 
         if (hasAuxiliaryRepositories) {
-            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-                buildScript.append("    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
-            }
+            buildScript.append(cloneAuxiliaryRepositories(auxiliaryRepositories));
         }
 
         buildScript.append("""
@@ -342,14 +340,10 @@ public class LocalCIContainerService {
 
         // Copy auxiliary repositories to checkout directories
         if (hasAuxiliaryRepositories) {
-            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-                buildScript.append("    cp -a /repositories/").append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
-                        .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
-            }
+            buildScript.append(copyAuxiliaryRepositories(auxiliaryRepositories, "/repositories/"));
         }
 
         // If git is not installed, copy the repositories
-
         buildScript.append("""
                 else
                     echo "Git is not installed"
@@ -358,10 +352,13 @@ public class LocalCIContainerService {
                     cp -a /test-repository/. /repositories/test-repository/
                     cp -a /assignment-repository/. /repositories/assignment-repository/
                     cp -a /assignment-repository/. /repositories/test-repository/assignment/
-                fi
                 """);
+        if (hasAuxiliaryRepositories) {
+            buildScript.append(copyAuxiliaryRepositories(auxiliaryRepositories, "/"));
+        }
 
         buildScript.append("""
+                fi
                 cd /repositories/test-repository
                 """);
 
@@ -380,6 +377,23 @@ public class LocalCIContainerService {
         }
 
         return buildScriptPath;
+    }
+
+    private StringBuilder cloneAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+        StringBuilder buildScript = new StringBuilder();
+        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
+            buildScript.append("    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
+        }
+        return buildScript;
+    }
+
+    private StringBuilder copyAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories, String source) {
+        StringBuilder buildScript = new StringBuilder();
+        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
+            buildScript.append("    cp -a ").append(source).append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
+                    .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
+        }
+        return buildScript;
     }
 
     private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
