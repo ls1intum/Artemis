@@ -26,6 +26,8 @@ import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { SimpleChange } from '@angular/core';
+import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
@@ -273,7 +275,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(comp.getCommitHash()).toBe('123456789ab');
-        expect(comp.getCommitUrl()).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
+        expect(comp.commitUrl).toBe('https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
@@ -407,5 +409,37 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(createSpy).toHaveBeenCalledWith(feedbacks, true);
+    });
+
+    it('should expand feedback when being printed', () => {
+        // @ts-ignore method is private
+        const expandFeedbackItemGroupsSpy = jest.spyOn(comp, 'expandFeedbackItemGroups');
+
+        const feedbackItem = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
+        const feedbackItem1 = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
+
+        const feedbackGroup: FeedbackGroup = { ...feedbackItem, members: [feedbackItem1], open: false } as unknown as FeedbackGroup;
+        comp.feedbackItemNodes = [feedbackGroup];
+
+        // start printing => expand feedback
+        const previousValue = undefined;
+        const currentValue = true;
+        const firstChange = false;
+        const startPrinting = new SimpleChange(previousValue, currentValue, firstChange);
+        comp.ngOnChanges({ isPrinting: startPrinting });
+
+        expect(expandFeedbackItemGroupsSpy).toHaveBeenCalledOnce();
+        expect(feedbackGroup.open).toBeTrue();
+
+        // stop printing => collapse feedback (as it was collapsed before)
+        const stopPrinting = new SimpleChange(true, false, false);
+        comp.ngOnChanges({ isPrinting: stopPrinting });
+
+        expect(expandFeedbackItemGroupsSpy).toHaveBeenCalledOnce(); // should not have been called again
+
+        /**
+         * references were removed during saving old state => cannot use {@link feedbackGroup} for comparison anymore
+         */
+        expect((comp.feedbackItemNodes[0] as unknown as FeedbackGroup).open).toBeFalse();
     });
 });
