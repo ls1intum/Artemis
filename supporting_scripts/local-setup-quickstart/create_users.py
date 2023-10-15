@@ -34,12 +34,9 @@ def create_course_users(session):
 
 
 def create_cypress_users(session):
-    for userIndex in range(100, 104):
+    for userIndex in range(100, 107):
         user_details = get_user_details_by_index(userIndex)
         make_create_user_post_request(session, user_details)
-
-    user_details = get_user_details_by_index(106)
-    make_create_user_post_request(session, user_details)
 
 
 def create_users(session):
