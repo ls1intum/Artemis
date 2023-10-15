@@ -59,6 +59,40 @@ describe('Import exercises', () => {
         });
     });
 
+    /**
+     * Needs to be executed first as the exercise has no due date => would be collapsed in overview if exercises with current due date are displayed
+     *
+     * FIXME
+     * a) fix the setDueDate method
+     * b) switch to the week view to display the exercise
+     */
+    it('Imports programming exercise', () => {
+        cy.login(instructor, `/course-management/${secondCourse.id}/exercises`);
+        courseManagementExercises.importProgrammingExercise();
+        courseManagementExercises.clickImportExercise(programmingExercise.id!);
+
+        checkField('#field_points', programmingExercise.maxPoints!);
+
+        programmingExerciseCreation.setTitle('Import Test');
+        programmingExerciseCreation.setShortName('importtest' + generateUUID());
+        programmingExerciseCreation.setDueDate(dayjs().add(3, 'days')); // TODO does not work yet
+
+        programmingExerciseCreation.import().then((request: Interception) => {
+            const exercise = request.response!.body;
+            cy.login(studentOne, `/courses/${secondCourse.id}`);
+            courseOverview.startExercise(exercise.id!);
+            courseOverview.openRunningExercise(exercise.id!);
+            programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, () => {
+                programmingExerciseEditor.getResultScore().contains(javaPartiallySuccessfulSubmission.expectedResult).and('be.visible');
+            });
+        });
+    });
+
+    after('Delete Courses', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(secondCourse, admin);
+    });
+
     it('Imports text exercise', () => {
         cy.login(instructor, `/course-management/${secondCourse.id}/exercises`);
         courseManagementExercises.importTextExercise();
