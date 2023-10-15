@@ -16,12 +16,9 @@ def authenticate_all_generated_users():
         authenticate_user(user_details['login'], user_details['password'])
 
     # login cypress users
-    for user_index in range(100, 104):
+    for user_index in range(100, 107):
         user_details = get_user_details_by_index(user_index)
         authenticate_user(user_details['login'], user_details['password'])
-
-    user_details = get_user_details_by_index(106)
-    authenticate_user(user_details['login'], user_details['password'])
 
 
 def main():
