@@ -48,6 +48,16 @@ def main():
     session = requests.session()
     login_as_admin(session)
 
+    try:
+        create_users(session)
+    except Exception as exception:
+        error_message = str(exception)
+
+        if "Login name already used!" in error_message:
+            print("Users already created. Continuing ...")
+        else:
+            raise
+
     create_users(session)
     authenticate_all_generated_users()
 
