@@ -4,7 +4,6 @@ import json
 import urllib3
 
 from utils import login_as_admin
-from utils import print_error
 from utils import print_success
 
 config = configparser.ConfigParser()
@@ -63,8 +62,8 @@ def create_course(session, course_name, course_short_name):
     if response.status_code == 201:
         print_success(f"Created course {course_name} with id {course_short_name}")
     else:
-        print_error(f"Could not create course {course_name}; Status code: {response.status_code}")
-        print_error("Double check whether the courseId is not already used for another course!")
+        raise Exception(
+            f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseId is not already used for another course!")
 
 
 def main():

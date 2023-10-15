@@ -13,11 +13,6 @@ class Colors:
     # See https://stackoverflow.com/a/287944/16540383 if you want to
     # extend the colors and styling options for explanation
     SUCCESS = '\033[92m'
-    ERROR = '\033[91m'
-
-
-def print_error(error_message):
-    print(f"{Colors.ERROR}{error_message}{Colors.ERROR}")
 
 
 def print_success(success_message):
@@ -45,8 +40,8 @@ def authenticate_user(username, password, session=requests.Session()):
     if response.status_code == 200:
         print_success(f"Authentication successful for user {username}")
     else:
-        print_error(f"Authentication failed for user {username}. Status code: {response.status_code}")
-        print_error(f"Response content: {response.text}")
+        raise Exception(
+            f"Authentication failed for user {username}. Status code: {response.status_code}\n Response content: {response.text}")
 
     return response
 
