@@ -1,7 +1,7 @@
 <jhi-test-run-ribbon id="testRunRibbon" *ngIf="!!testRunId"></jhi-test-run-ribbon>
 <ng-container *ngIf="exam">
     <jhi-exam-participation-cover
-        *ngIf="isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed"
+        *ngIf="isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !this.studentExam?.abandoned && !examStartConfirmed"
         [startView]="true"
         [exam]="exam"
         [studentExam]="studentExam"
@@ -120,7 +120,7 @@
             </div>
         </ng-container>
         <jhi-exam-participation-cover
-            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())"
+            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver()) && !abandon"
             [startView]="false"
             [exam]="exam"
             [studentExam]="studentExam"
@@ -130,6 +130,14 @@
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>
+        <jhi-exam-termination-confirmation
+            *ngIf="!studentExam.abandoned && ((isOver() && examStartConfirmed) || isGracePeriodOver()) && abandon"
+            [exam]="exam"
+            [studentExam]="studentExam"
+            [abandonInProgress]="abandonInProgress"
+            (onExamAbandoned)="onExamAbandonConfirmed()"
+            (onExamContinue)="toggleAbandon()"
+        ></jhi-exam-termination-confirmation>
         <div class="submissionSuccessfulHint" *ngIf="this.studentExam?.submitted && !showExamSummary && !loadingExam">
             <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
             <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
@@ -148,6 +156,7 @@
             </button>
         </div>
         <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam"></jhi-exam-participation-summary>
+        <span *ngIf="this.studentExam.abandoned">TERMINATED</span>
     </ng-container>
 </ng-container>
 <ng-container *ngIf="!loadingExam && !exam">

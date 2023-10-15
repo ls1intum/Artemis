@@ -13,6 +13,7 @@ export class StudentExam implements BaseEntity {
      */
     public workingTime?: number;
     public submitted?: boolean;
+    public abandoned: boolean;
     public started?: boolean;
     public testRun?: boolean;
     public submissionDate?: dayjs.Dayjs;

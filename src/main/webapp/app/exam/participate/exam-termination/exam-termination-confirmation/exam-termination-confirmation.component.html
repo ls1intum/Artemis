@@ -1,0 +1,27 @@
+<div class="w-100 d-flex">
+    <div class="col-md-3">
+        <jhi-exam-live-events-button />
+    </div>
+    <h2 class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
+        <span> Abandon exam </span>
+        <br />
+    </h2>
+</div>
+<div class="container d-flex flex-column align-items-center justify-content-center">
+    <div style="text-align: center">
+        <ng-container #terminationButton>
+            <button id="abandon-exam" type="submit" (click)="abandonExam()" class="btn btn-primary">
+                <span>Abandon Exam</span>
+            </button>
+        </ng-container>
+        <div class="mt-5">
+            <div class="mb-2 font-weight-bold">
+                {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
+            </div>
+            <button [disabled]="abandonInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continue()">
+                <fa-icon [icon]="faArrowLeft"></fa-icon>
+                Back
+            </button>
+        </div>
+    </div>
+</div>

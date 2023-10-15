@@ -80,6 +80,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     handInPossible = true;
     submitInProgress = false;
 
+    abandon = false;
+    abandonInProgress = false;
+
     examSummaryButtonSecondsLeft = 10;
     examSummaryButtonTimer: ReturnType<typeof setInterval>;
     showExamSummary = false;
@@ -445,7 +448,31 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     toggleAbandon() {
-        this.examParticipationService.abandonStudentExam(this.courseId, this.examId, this.studentExam).subscribe();
+        this.abandon = !this.abandon;
+        if (this.abandon) {
+            // update local studentExam for later sync with server if the student wants to hand in early
+            this.updateLocalStudentExam();
+            try {
+                this.triggerSave(false);
+            } catch (error) {
+                captureException(error);
+            }
+        } else if (this.studentExam?.exercises && this.activeExamPage) {
+            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
+            this.exerciseIndex = index ? index : 0;
+
+            // Reset the visited pages array so ngOnInit will be called for only the active page
+            this.resetPageComponentVisited(this.exerciseIndex);
+        }
+    }
+
+    onExamAbandonConfirmed() {
+        this.abandonInProgress = true;
+        this.examParticipationService.abandonStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => {
+            this.studentExam.abandoned = true;
+            this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
+            this.abandonInProgress = false;
+        });
     }
 
     /**
@@ -456,8 +483,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // if this was calculated to true by the server, we can be sure the student exam has finished
             return true;
         }
-        if (this.handInEarly || this.studentExam?.submitted) {
-            // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
+        if (this.handInEarly || this.abandon || this.studentExam?.submitted || this.studentExam?.abandoned) {
+            // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted or abandoned
             return true;
         }
         return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());

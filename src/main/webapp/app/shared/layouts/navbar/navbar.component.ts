@@ -789,7 +789,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             !this.studentExam.testRun &&
             this.studentExam.exam.startDate &&
             this.studentExam.exam.endDate &&
-            !this.studentExam.submitted
+            !this.studentExam.submitted &&
+            !this.studentExam.abandoned
         ) {
             const serverTime = this.serverDateService.now();
             // As end date, we use the working time of this student plus the grace period
