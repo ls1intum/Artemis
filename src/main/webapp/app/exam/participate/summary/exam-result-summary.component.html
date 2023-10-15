@@ -104,7 +104,7 @@
 
                             <jhi-modeling-exam-summary
                                 *ngSwitchCase="MODELING"
-                                [quizParticipation]="exercise"
+                                [exercise]="exercise"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [isPrinting]="isPrinting"
                                 [expandProblemStatement]="expandProblemStatement"
@@ -113,7 +113,7 @@
 
                             <jhi-quiz-exam-summary
                                 *ngSwitchCase="QUIZ"
-                                [exercise]="exercise"
+                                [quizParticipation]="exercise"
                                 [exam]="studentExam.exam!"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [resultsPublished]="resultsArePublished"
