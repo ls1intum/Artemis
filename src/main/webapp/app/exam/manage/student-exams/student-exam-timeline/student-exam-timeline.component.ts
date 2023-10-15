@@ -164,7 +164,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         this.selectedTimestamp = this.submissionTimeStamps[0]?.toDate().getTime() ?? 0;
         // we need to create a new options object and assign it in the end to the old because otherwise, the new options are not properly recognized.
         const newOptions: Options = Object.assign({}, this.options);
-        newOptions.stepsArray = this.submissionTimeStamps.map((date) => ({ value: date.toDate().getTime() }));
+        newOptions.stepsArray = this.submissionTimeStamps.map((date) => ({ value: date?.toDate().getTime() }));
         newOptions.ticksTooltip = (value: number): string => {
             return this.datePipe.transform(this.options.stepsArray?.at(value)?.value, 'time', true);
         };
