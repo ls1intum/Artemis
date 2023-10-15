@@ -407,6 +407,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             (submission: ProgrammingSubmission | FileUploadSubmission) => submission.participation?.exercise?.id === exercise.id,
         ).length;
         for (const submission of submissions) {
+            console.log(submission);
             if (
                 submission.submissionDate!.diff(comparisonObject) < smallestDiff &&
                 submission.participation?.exercise?.id === exercise.id &&
