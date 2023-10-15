@@ -33,6 +33,8 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
+import { CourseExercisesGroupedByCategoryComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-category.component';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -59,6 +61,8 @@ describe('CourseExercisesComponent', () => {
                 MockDirective(OrionFilterDirective),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
+                MockComponent(CourseExercisesGroupedByWeekComponent),
+                MockComponent(CourseExercisesGroupedByCategoryComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(SortByDirective),
                 TranslatePipeMock,
