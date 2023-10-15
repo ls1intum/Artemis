@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, map, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -210,7 +210,18 @@ export class MetisService implements OnDestroy {
      * @return {Observable<Post>} created post
      */
     createPost(post: Post): Observable<Post> {
-        return this.postService.create(this.courseId, post).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.postService.create(this.courseId, post).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((createdPost: Post) => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === createdPost.id);
+                // Update the cached posts after successfully creating a new post if it is not already cached (can happen if the WebSocket message arrives before the HTTP response)
+                if (indexToUpdate === -1) {
+                    this.cachedPosts = [createdPost, ...this.cachedPosts];
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                }
+            }),
+        );
     }
 
     /**
@@ -219,7 +230,21 @@ export class MetisService implements OnDestroy {
      * @return {Observable<AnswerPost>} created answer post
      */
     createAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
-        return this.answerPostService.create(this.courseId, answerPost).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.answerPostService.create(this.courseId, answerPost).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((createdAnswerPost: Post) => {
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                if (indexOfCachedPost > -1) {
+                    // Update the answers of the cached post, if the answer is not already included in the list of answers
+                    const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === createdAnswerPost.id) ?? -1;
+                    if (indexOfAnswer === -1) {
+                        this.cachedPosts[indexOfCachedPost].answers = [...(this.cachedPosts[indexOfCachedPost].answers ?? []), createdAnswerPost];
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }
+            }),
+        );
     }
 
     /**
@@ -228,7 +253,17 @@ export class MetisService implements OnDestroy {
      * @return {Observable<Post>} updated post
      */
     updatePost(post: Post): Observable<Post> {
-        return this.postService.update(this.courseId, post).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.postService.update(this.courseId, post).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((updatedPost: Post) => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
+                if (indexToUpdate > -1) {
+                    this.cachedPosts[indexToUpdate] = updatedPost;
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                }
+            }),
+        );
     }
 
     /**
@@ -237,7 +272,20 @@ export class MetisService implements OnDestroy {
      * @return {Observable<AnswerPost>} updated answer post
      */
     updateAnswerPost(answerPost: AnswerPost): Observable<AnswerPost> {
-        return this.answerPostService.update(this.courseId, answerPost).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.answerPostService.update(this.courseId, answerPost).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((updatedAnswerPost: Post) => {
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                if (indexOfCachedPost > -1) {
+                    const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === updatedAnswerPost.id) ?? -1;
+                    if (indexOfAnswer > -1) {
+                        this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }
+            }),
+        );
     }
 
     /**
@@ -255,7 +303,20 @@ export class MetisService implements OnDestroy {
      * @param {Post} post to be deleted
      */
     deletePost(post: Post): void {
-        this.postService.delete(this.courseId, post).subscribe();
+        this.postService
+            .delete(this.courseId, post)
+            .pipe(
+                tap(() => {
+                    const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
+                    // Delete the cached post if it still exists (might be already deleted due to WebSocket message)
+                    if (indexToUpdate > -1) {
+                        this.cachedPosts.splice(indexToUpdate, 1);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }),
+            )
+            .subscribe();
     }
 
     /**
@@ -263,7 +324,23 @@ export class MetisService implements OnDestroy {
      * @param {AnswerPost} answerPost to be deleted
      */
     deleteAnswerPost(answerPost: AnswerPost): void {
-        this.answerPostService.delete(this.courseId, answerPost).subscribe();
+        this.answerPostService
+            .delete(this.courseId, answerPost)
+            .pipe(
+                tap(() => {
+                    const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                    if (indexOfCachedPost > -1) {
+                        // Delete the answer if it still exists (might already be deleted due to WebSocket message)
+                        const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
+                        if (indexOfAnswer > -1) {
+                            this.cachedPosts.splice(indexOfAnswer, 1);
+                            this.posts$.next(this.cachedPosts);
+                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                        }
+                    }
+                }),
+            )
+            .subscribe();
     }
 
     /**
@@ -272,7 +349,17 @@ export class MetisService implements OnDestroy {
      * @return {Observable<Reaction>} created reaction
      */
     createReaction(reaction: Reaction): Observable<Reaction> {
-        return this.reactionService.create(this.courseId, reaction).pipe(map((res: HttpResponse<Post>) => res.body!));
+        return this.reactionService.create(this.courseId, reaction).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((updatedPost: Post) => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
+                if (indexToUpdate > -1) {
+                    this.cachedPosts[indexToUpdate] = updatedPost;
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                }
+            }),
+        );
     }
 
     /**
@@ -280,7 +367,21 @@ export class MetisService implements OnDestroy {
      * @param {Reaction} reaction to be deleted
      */
     deleteReaction(reaction: Reaction): Observable<void> {
-        return this.reactionService.delete(this.courseId, reaction).pipe(map((res: HttpResponse<void>) => res.body!));
+        return this.reactionService.delete(this.courseId, reaction).pipe(
+            map((res: HttpResponse<void>) => res.body!),
+            tap(() => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === reaction.post?.id);
+                if (indexToUpdate > -1) {
+                    // Delete the reaction from the post if it is not already deleted (can happen due to WebSocket message)
+                    const indexOfReaction = this.cachedPosts[indexToUpdate].reactions?.findIndex((r) => r.id != reaction.id) ?? -1;
+                    if (indexOfReaction > -1) {
+                        this.cachedPosts[indexToUpdate].reactions!.splice(indexOfReaction, 1);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
+                    }
+                }
+            }),
+        );
     }
 
     /**
@@ -483,7 +584,11 @@ export class MetisService implements OnDestroy {
                         (!this.currentPostContextFilter.searchText || postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase()))
                     ) {
                         // we can add the received conversation message to the cached messages without violating the current context filter setting
-                        this.cachedPosts = [postDTO.post, ...this.cachedPosts];
+                        // prevent adding the same post multiple times
+                        const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                        if (indexToUpdate === -1) {
+                            this.cachedPosts = [postDTO.post, ...this.cachedPosts];
+                        }
                     }
                     this.addTags(postDTO.post.tags);
                     break;
