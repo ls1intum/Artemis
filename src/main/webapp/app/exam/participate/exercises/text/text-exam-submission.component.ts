@@ -3,7 +3,7 @@ import { TextEditorService } from 'app/exercises/text/participate/text-editor.se
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -17,6 +17,8 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
     styleUrls: ['./text-exam-submission.component.scss'],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.TEXT;
+
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -46,8 +48,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmission();
     }
 
-    getExercise(): Exercise {
-        return this.exercise;
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
     }
 
     updateProblemStatement(newProblemStatement: string): void {

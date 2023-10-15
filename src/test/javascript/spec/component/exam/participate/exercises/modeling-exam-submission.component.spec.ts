@@ -158,7 +158,7 @@ describe('ModelingExamSubmissionComponent', () => {
             resetComponent();
         });
         it('should return exercise', () => {
-            expect(comp.getExercise()).toEqual(mockExercise);
+            expect(comp.getExerciseId()).toEqual(mockExercise.id);
         });
     });
 
@@ -169,7 +169,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
             comp.updateProblemStatement(newProblemStatement);
-            expect(comp.getExercise().problemStatement).toEqual(newProblemStatement);
+            expect(comp.exercise.problemStatement).toEqual(newProblemStatement);
         });
     });
 

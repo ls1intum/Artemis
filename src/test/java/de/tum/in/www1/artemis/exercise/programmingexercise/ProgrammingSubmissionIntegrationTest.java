@@ -471,7 +471,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         studentParticipation = studentParticipationRepository.save(studentParticipation);
 
         String url = "/api/public/programming-submissions/" + studentParticipation.getId();
-        request.post(url, "test", HttpStatus.NOT_FOUND);
+        request.post(url, "test", HttpStatus.BAD_REQUEST);
     }
 
     @Test
