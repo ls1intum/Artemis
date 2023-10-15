@@ -14,9 +14,16 @@ export enum IrisChatWebsocketMessageType {
     ERROR = 'ERROR',
 }
 
-class IrisRateLimitInformation {
+export class IrisRateLimitInformation {
     currentMessageCount: number;
     rateLimit: number;
+    rateLimitTimeframeHours: number;
+
+    constructor(currentMessageCount: number, rateLimit: number, rateLimitTimeframeHours: number) {
+        this.currentMessageCount = currentMessageCount;
+        this.rateLimit = rateLimit;
+        this.rateLimitTimeframeHours = rateLimitTimeframeHours;
+    }
 }
 
 /**
@@ -60,6 +67,6 @@ export class IrisChatWebsocketService extends IrisWebsocketService {
     }
 
     private handleRateLimitInfo(rateLimitInfo: IrisRateLimitInformation) {
-        this.stateStore.dispatch(new RateLimitUpdatedAction(rateLimitInfo.currentMessageCount, rateLimitInfo.rateLimit));
+        this.stateStore.dispatch(new RateLimitUpdatedAction(rateLimitInfo.rateLimit));
     }
 }
