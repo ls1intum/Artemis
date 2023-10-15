@@ -54,7 +54,8 @@
                 "irisNotAvailable": "Iris is not available. Please try again later!",
                 "rateLimitExceeded": "You have reached the maximum number of messages you can send to Iris in a 24 hour window. Please try again later!"
             },
-            "firstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me <a href='/about-iris' target='_blank'>here</a>.",
+            "chatFirstMessage": "Hi, I'm Iris! I can help you with your programming exercise. You can learn more about me <a href='/about-iris' target='_blank'>here</a>.",
+            "codeFirstMessage": "Hi, I'm Iris! I can help you adapt the programming exercise with the following requirement: <ul><li>generate exercise from scratch</li><li><a href='/' target='_blank'>generate a new variant</a></li><li>adapt the exercise</li></ul> You can learn more about me <a href='/about-iris' target='_blank'>here</a>.",
             "rateLimitTooltip": "This is the maximum number of messages you can send to Iris in a 24 hour window."
         }
     }

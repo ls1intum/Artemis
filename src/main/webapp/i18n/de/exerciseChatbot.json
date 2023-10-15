@@ -54,7 +54,8 @@
                 "irisNotAvailable": "Iris antwortet nicht. Bitte versuche es später!",
                 "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem 24-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!"
             },
-            "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
+            "chatFirstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
+            "codeFirstMessage": "Hallo, ich bin Iris! Ich kann Ihnen bei der Anpassung der Programmierübung mit der folgenden Anforderung helfen: <ul><li>Erstellen Sie Übungen von Grund auf</li><li><a href='/' target='_blank'>eine neue Variante generieren</a></li><li>Passen Sie die Übung an</li></ul> Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
             "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem 24-Stunden-Zeitfenster an Iris senden kannst."
         }
     }

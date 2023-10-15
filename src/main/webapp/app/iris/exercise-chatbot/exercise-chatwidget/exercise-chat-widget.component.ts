@@ -59,6 +59,7 @@ import { DOCUMENT } from '@angular/common';
 import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 import { IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-component.model';
 import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -321,9 +322,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Loads the first message in the conversation if it's not already loaded.
      */
     loadFirstMessage(): void {
+        const textContent = this.isChatSession() ? 'artemisApp.exerciseChatbot.chatFirstMessage' : 'artemisApp.exerciseChatbot.codeFirstMessage';
         const firstMessageContent = {
             type: IrisMessageContentType.TEXT,
-            textContent: 'artemisApp.exerciseChatbot.firstMessage',
+            textContent: textContent,
         } as IrisMessageTextContent;
 
         const firstMessage = {
@@ -739,5 +741,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     isRateMessage() {
         return this.sessionService.httpMessageService instanceof IrisHttpChatMessageService;
+    }
+
+    isChatSession() {
+        return this.sessionService instanceof IrisChatSessionService;
     }
 }
