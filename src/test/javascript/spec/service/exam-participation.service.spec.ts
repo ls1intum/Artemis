@@ -117,7 +117,7 @@ describe('Exam Participation Service', () => {
             studentExam,
         );
         service
-            .loadStudentExam(1, 1)
+            .getOwnStudentExam(1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 
@@ -144,7 +144,7 @@ describe('Exam Participation Service', () => {
             studentExam,
         );
         service
-            .loadStudentExam(1, 1)
+            .getOwnStudentExam(1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 
