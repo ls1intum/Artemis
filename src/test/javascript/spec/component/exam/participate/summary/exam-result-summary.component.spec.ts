@@ -21,14 +21,13 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { SubmissionType } from 'app/entities/submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
-import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
+import { ExamResultSummaryComponent, ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
@@ -51,6 +50,10 @@ import { NgbCollapseMocksModule } from '../../../../helpers/mocks/directive/ngbC
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
+import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
+import { Course } from 'app/entities/course.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -65,6 +68,8 @@ const publishResultsDate = dayjs().subtract(3, 'hours');
 const examStudentReviewStart = dayjs().subtract(2, 'hours');
 const examStudentReviewEnd = dayjs().add(1, 'hours');
 
+const course = { id: 1, accuracyOfScores: 2 } as Course;
+
 const exam = {
     id: 1,
     title: 'ExamForTesting',
@@ -75,6 +80,7 @@ const exam = {
     examStudentReviewStart,
     examStudentReviewEnd,
     testExam: false,
+    course,
 } as Exam;
 
 const testExam = {
@@ -84,6 +90,7 @@ const testExam = {
     startDate,
     endDate,
     testExam: true,
+    course,
 } as Exam;
 
 const exerciseGroup = {
@@ -120,6 +127,9 @@ const studentExamForTestExam = {
     user,
     exercises,
 } as StudentExam;
+
+const textExerciseResult = { exerciseId: textExercise.id, achievedScore: 60, achievedPoints: 6, maxScore: textExercise.maxPoints } as ExerciseResult;
+
 const gradeInfo: StudentExamWithGradeDTO = {
     maxPoints: 100,
     maxBonusPoints: 10,
@@ -150,10 +160,12 @@ function sharedSetup(url: string[]) {
                 MockComponent(FileUploadExamSummaryComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(FaIconComponent),
+                MockComponent(ExamResultSummaryExerciseCardHeaderComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(IncludedInScoreBadgeComponent),
+                MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
             ],
             providers: [
                 {
@@ -175,6 +187,7 @@ function sharedSetup(url: string[]) {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -195,27 +208,24 @@ describe('ExamResultSummaryComponent', () => {
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
-        const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockReturnValue();
+        const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
-        const toggleCollapseExerciseButtonOne = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-0'));
-        const toggleCollapseExerciseButtonTwo = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-1'));
-        const toggleCollapseExerciseButtonThree = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-2'));
-        const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-3'));
-        expect(exportToPDFButton).not.toBeNull();
-        expect(toggleCollapseExerciseButtonOne).not.toBeNull();
-        expect(toggleCollapseExerciseButtonTwo).not.toBeNull();
-        expect(toggleCollapseExerciseButtonThree).not.toBeNull();
-        expect(toggleCollapseExerciseButtonFour).not.toBeNull();
 
-        toggleCollapseExerciseButtonOne.nativeElement.click();
-        toggleCollapseExerciseButtonTwo.nativeElement.click();
-        toggleCollapseExerciseButtonThree.nativeElement.click();
-        toggleCollapseExerciseButtonFour.nativeElement.click();
-        expect(component.collapsedExerciseIds).toHaveLength(4);
+        expect(exportToPDFButton).not.toBeNull();
+
+        component.exerciseInfos[1].isCollapsed = true;
+        component.exerciseInfos[2].isCollapsed = true;
+        component.exerciseInfos[3].isCollapsed = true;
+        component.exerciseInfos[4].isCollapsed = true;
 
         exportToPDFButton.nativeElement.click();
-        expect(component.collapsedExerciseIds).toBeEmpty();
+
+        expect(component.exerciseInfos[1].isCollapsed).toBeFalse();
+        expect(component.exerciseInfos[2].isCollapsed).toBeFalse();
+        expect(component.exerciseInfos[3].isCollapsed).toBeFalse();
+        expect(component.exerciseInfos[4].isCollapsed).toBeFalse();
+
         tick();
         expect(printStub).toHaveBeenCalledOnce();
         printStub.mockRestore();
@@ -275,27 +285,6 @@ describe('ExamResultSummaryComponent', () => {
     ])('should handle missing/empty fields correctly for %o in getSubmissionForExercise', (exercise, expectedResult) => {
         const submission = component.getSubmissionForExercise(exercise as Exercise);
         expect(submission).toEqual(expectedResult);
-    });
-
-    it.each([
-        [{}, false],
-        [{ studentParticipations: null }, false],
-        [{ studentParticipations: undefined }, false],
-        [{ studentParticipations: [] }, false],
-        [{ studentParticipations: [{}] }, false],
-        [{ studentParticipations: [{ submissions: null }] }, false],
-        [{ studentParticipations: [{ submissions: undefined }] }, false],
-        [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
-        [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
-    ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
-        component.studentExam = { id: 1, exam, user, exercises: [exercise as Exercise], numberOfExamSessions: 0 };
-        fixture.detectChanges();
-        const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
-        if (shouldBeNonNull) {
-            expect(span).not.toBeNull();
-        } else {
-            expect(span).toBeNull();
-        }
     });
 
     it('should update student exam correctly', () => {
@@ -360,26 +349,26 @@ describe('ExamResultSummaryComponent', () => {
     it('should correctly determine if the results are published', () => {
         component.studentExam = studentExam;
         component.testRunConduction = true;
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsArePublished).toBeFalse();
 
         component.testExamConduction = true;
         component.testRunConduction = false;
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsArePublished).toBeFalse();
 
         component.isTestRun = true;
         component.testExamConduction = false;
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsArePublished).toBeTrue();
 
         component.isTestExam = true;
         component.isTestRun = false;
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsArePublished).toBeTrue();
 
         component.isTestExam = false;
         // const publishResultsDate is in the past
-        expect(component.resultsPublished).toBeTrue();
+        expect(component.resultsArePublished).toBeTrue();
 
         component.studentExam.exam!.publishResultsDate = dayjs().add(2, 'hours');
-        expect(component.resultsPublished).toBeFalse();
+        expect(component.resultsArePublished).toBeFalse();
     });
 
     it('should correctly determine if it is after student review start', () => {
@@ -387,21 +376,25 @@ describe('ExamResultSummaryComponent', () => {
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
-        expect(component.isAfterStudentReviewStart()).toBeTrue();
+        component.ngOnInit();
+        expect(component.isAfterStudentReviewStart).toBeTrue();
 
         component.isTestExam = false;
         component.isTestRun = true;
-        expect(component.isAfterStudentReviewStart()).toBeTrue();
+        component.ngOnInit();
+        expect(component.isAfterStudentReviewStart).toBeTrue();
 
         component.isTestRun = false;
         component.studentExam.exam!.examStudentReviewStart = examStudentReviewStart;
         component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
-        expect(component.isAfterStudentReviewStart()).toBeTrue();
+        component.ngOnInit();
+        expect(component.isAfterStudentReviewStart).toBeTrue();
 
         component.studentExam.exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
-        expect(component.isAfterStudentReviewStart()).toBeFalse();
+        component.ngOnInit();
+        expect(component.isAfterStudentReviewStart).toBeFalse();
 
-        expect(dateSpy).toHaveBeenCalledTimes(2);
+        expect(dateSpy).toHaveBeenCalled();
     });
 
     it('should correctly determine if it is before student review end', () => {
@@ -409,25 +402,129 @@ describe('ExamResultSummaryComponent', () => {
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+        component.ngOnInit();
+        expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
         component.isTestExam = false;
         component.isTestRun = true;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+        component.ngOnInit();
+        expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
         component.isTestRun = false;
         component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+        component.ngOnInit();
+        expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
         component.studentExam.exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
-        expect(component.isBeforeStudentReviewEnd()).toBeFalse();
+        component.ngOnInit();
+        expect(component.isBeforeStudentReviewEnd).toBeFalse();
 
-        expect(dateSpy).toHaveBeenCalledTimes(2);
+        expect(dateSpy).toHaveBeenCalled();
     });
 
-    it('should show exercise group title', () => {
-        fixture.detectChanges();
-        const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('.exercise-title');
-        expect(exerciseTitleElement.textContent).toContain('exercise group');
+    describe('getAchievedPercentageByExerciseId', () => {
+        beforeEach(() => {
+            const studentExam = {
+                exam: {
+                    course,
+                },
+            } as StudentExam;
+
+            const studentResult = {
+                exerciseGroupIdToExerciseResult: {
+                    [textExercise.id!]: textExerciseResult,
+                },
+            } as StudentResult;
+
+            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam, studentResult };
+        });
+
+        it('should return undefined if exercise result is undefined', () => {
+            component.studentExamGradeInfoDTO.studentResult.exerciseGroupIdToExerciseResult = {};
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBeUndefined();
+        });
+
+        it('should calculate percentage based on achievedScore considering course settings', () => {
+            textExerciseResult.achievedScore = 60.6666;
+
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBe(60.67);
+        });
+
+        it('should calculate percentage based on maxScore and achievedPoints', () => {
+            textExerciseResult.achievedScore = undefined;
+            textExerciseResult.maxScore = 10;
+            textExerciseResult.achievedPoints = 6.066666;
+            component.studentExamGradeInfoDTO.studentExam!.exam!.course!.accuracyOfScores = 3;
+
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBe(60.667);
+        });
+
+        it('should return undefined if not set and not calculable', () => {
+            textExerciseResult.achievedScore = undefined;
+            textExerciseResult.achievedPoints = undefined;
+
+            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
+
+            expect(scoreAsPercentage).toBeUndefined();
+        });
+    });
+
+    describe('scrollToOverviewOrTop', () => {
+        const BACK_TO_OVERVIEW_BUTTON_ID = 'back-to-overview-button';
+        const EXAM_SUMMARY_RESULT_OVERVIEW_ID = 'exam-summary-result-overview';
+
+        it('should scroll to top when overview is not displayed', () => {
+            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+
+            const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
+            button.click();
+
+            expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
+        });
+
+        it('should scroll to overview when it is displayed', () => {
+            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+            const scrollIntoViewSpy = jest.fn();
+
+            const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
+                scrollIntoView: scrollIntoViewSpy,
+            } as unknown as HTMLElement);
+
+            component.studentExam = studentExam;
+            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
+            button.click();
+
+            expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_SUMMARY_RESULT_OVERVIEW_ID);
+            expect(scrollIntoViewSpy).toHaveBeenCalled();
+            expect(scrollToSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('toggleShowSampleSolution', () => {
+        it('should be called on button click', () => {
+            component.exerciseInfos = {
+                1: { isCollapsed: false, displayExampleSolution: true } as ResultSummaryExerciseInfo,
+            };
+            exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
+            const toggleShowSampleSolutionSpy = jest.spyOn(component, 'toggleShowSampleSolution');
+
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.nativeElement.querySelector(`#show-sample-solution-button-${textExercise.id}`);
+            expect(button).toBeTruthy();
+
+            button.click();
+            expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
+        });
     });
 });

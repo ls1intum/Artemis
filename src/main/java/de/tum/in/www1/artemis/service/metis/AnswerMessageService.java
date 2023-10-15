@@ -88,7 +88,7 @@ public class AnswerMessageService extends PostingService {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, author);
         }
 
-        parseUserMentions(course, answerMessage.getContent());
+        Set<User> mentionedUsers = parseUserMentions(course, answerMessage.getContent());
 
         // use post from database rather than user input
         answerMessage.setPost(post);
@@ -99,12 +99,7 @@ public class AnswerMessageService extends PostingService {
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
-        Set<User> usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
-        // do not notify the author of the post if they are not part of the conversation (e.g. if they left or have been removed from the conversation)
-        if (conversationService.isMember(post.getConversation().getId(), post.getAuthor().getId())) {
-            usersInvolved.add(post.getAuthor());
-        }
-        usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author));
+        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
     }
 

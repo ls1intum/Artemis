@@ -62,15 +62,20 @@
                 }
             },
             "examSummary": {
+                "backToOverview": "Back to overview",
                 "examResults": "Exam Results",
                 "generalInformation": "General Information",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
-                "lastCommitHash": "Last Commit Hash",
+                "submissionLinkedToCommit": "The submission is linked to commit",
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
-                "viewResult": " View Result",
-                "viewExampleSolution": " View Example Solution",
+                "showExampleSolution": "Show Example Solution",
+                "hideExampleSolution": "Hide Example Solution",
+                "yourSubmission": "Your Submission",
+                "problemStatement": "Problem Statement",
+                "assessment": "Assessment",
+                "youAreViewingTheExampleSolution": "You are viewing the example solution",
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
@@ -126,7 +131,6 @@
             "updated": "Exam updated",
             "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
-            "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "notConfirmed": "Please tick the checkbox to continue.",
@@ -151,7 +155,9 @@
                 "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
-                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."
+                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams.",
+                "cannotShowExampleSolution": "Example solution could not be found",
+                "cannotDisplayExerciseDetails": "Exercise {{ exerciseGroupTitle }} cannot be displayed properly"
             },
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",
@@ -651,7 +657,7 @@
             },
             "editWorkingTime": {
                 "title": "Edit Exam Duration",
-                "label": "Exam duration change",
+                "label": "Change exam duration",
                 "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
                 "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
@@ -698,6 +704,11 @@
                 "actions": "Actions",
                 "viewResultsOrRunDetection": "View Results or Run Detection",
                 "viewCases": "View Cases"
+            },
+            "dateChange": {
+                "title": "Confirm working time change",
+                "message": "The exam conduction is currently in progress. Changing the times of an active exam will notify all active students about the duration change!",
+                "label": "The exam conduction is currently in progress"
             }
         },
         "studentExamDetail": {

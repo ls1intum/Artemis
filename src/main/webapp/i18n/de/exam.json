@@ -62,15 +62,20 @@
                 }
             },
             "examSummary": {
+                "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
-                "lastCommitHash": "Hash des letzten Commits",
+                "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
-                "viewResult": " Ergebnis ansehen",
-                "viewExampleSolution": "Beispiellösung anzeigen",
+                "showExampleSolution": "Beispiellösung anzeigen",
+                "hideExampleSolution": "Beispiellösung ausblenden",
+                "yourSubmission": "Deine Abgabe",
+                "problemStatement": "Problemstellung",
+                "assessment": "Bewertung",
+                "youAreViewingTheExampleSolution": "Du betrachtest die Beispiellösung",
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {
                     "exercise": "Aufgabe",
@@ -126,7 +131,6 @@
             "updated": "Klausur bearbeitet",
             "imported": "Klausur importiert",
             "deleted": "Klausur \"{{ param }}\" gelöscht",
-            "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebenen Hilfsmittel bearbeitet habe.",
             "notConfirmed": "Bitte setze einen Haken in das Kästchen, um fortzufahren.",
@@ -151,7 +155,9 @@
                 "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
             },
             "error": {
-                "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
+                "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden.",
+                "cannotShowExampleSolution": "Beispiellösung wurde nicht gefunden",
+                "cannotDisplayExerciseDetails": "Aufgabe {{ exerciseGroupTitle }} kann nicht angezeigt werden"
             },
             "problemStatementUpdate": {
                 "showDiff": "Zeige Unterschiede",
@@ -697,6 +703,11 @@
                 "actions": "Aktionen",
                 "viewResultsOrRunDetection": "Ergebnisse anzeigen oder Plagiatsprüfung starten",
                 "viewCases": "Fälle anzeigen"
+            },
+            "dateChange": {
+                "title": "Bestätige Änderung der Prüfungszeit",
+                "message": "Die Prüfung wird gerade abgehalten. Wenn du die Zeiten einer aktiven Prüfung änderst, werden alle aktiven Studenten über die Änderung der Dauer informiert!",
+                "label": "Die Prüfung wird gerade abgehalten"
             }
         },
         "studentExamDetail": {
