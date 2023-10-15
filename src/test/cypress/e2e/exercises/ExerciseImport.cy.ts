@@ -59,6 +59,11 @@ describe('Import exercises', () => {
         });
     });
 
+    after('Delete Courses', () => {
+        courseManagementAPIRequest.deleteCourse(course, admin);
+        courseManagementAPIRequest.deleteCourse(secondCourse, admin);
+    });
+
     /**
      * Needs to be executed first as the exercise has no due date => would be collapsed in overview if exercises with current due date are displayed
      *
@@ -86,11 +91,6 @@ describe('Import exercises', () => {
                 programmingExerciseEditor.getResultScore().contains(javaPartiallySuccessfulSubmission.expectedResult).and('be.visible');
             });
         });
-    });
-
-    after('Delete Courses', () => {
-        courseManagementAPIRequest.deleteCourse(course, admin);
-        courseManagementAPIRequest.deleteCourse(secondCourse, admin);
     });
 
     it('Imports text exercise', () => {
