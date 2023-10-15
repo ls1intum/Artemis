@@ -116,6 +116,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
+     * Called when the user switches to another repository. Applies any buffered changes to the new repository.
+     */
+    protected onRepositoryChanged() {
+        this.applyBufferedChangesToCurrentRepo();
+    }
+
+    /**
      * Apply any changes to this repository that have been buffered while the user was working on another repository.
      * Does nothing if there are no buffered changes.
      */
