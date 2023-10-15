@@ -59,16 +59,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
-    /*
-     *  In parent class CodeEditorInstructorBaseContainerComponent, ngOnInit() will analyze
-     *  the url and load exercise of current url
-     *  ideally can do the following operations there
-     *  After switch the repo, do
-     *  if(!isRepoChangeApplied()) {
-     *  applyRepoChange()
-     *  }
-     */
-
     /**
      * Accept the changes suggested by Iris.
      * Changes to the problem statement or to the repository currently open in the UI are applied immediately.
