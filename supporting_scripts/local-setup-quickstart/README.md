@@ -27,26 +27,6 @@ _Tested on python 3.11.6, other versions might work as well._
 4. Either use the play button within IntelliJ _(which should be displayed if Python was configured properly within
    IntelliJ)_ to run the scripts or follow the following descriptions
 
-### Create users
-
-#### LocalVC & LocalCI
-
-Creates users 1-20 (students, tutors, editors, instructors - 5 for each group) and users needed for Cypress E2E
-testing (100-104, 106)
-
-```shell
-python3 create_users.py
-```
-
-#### Atlassian
-
-The users have already been created by `atlassian-setup.sh`, but they still need to be logged in order to be added to a
-course _(without a first login Artemis does not know that the users exist)_
-
-```shell
-python3 authenticate_all_users.py
-```
-
 ### Create a course with standard user groups
 
 Creates a course for which the users from the previous section [Create users](#create-users) are registered as they have
@@ -56,3 +36,24 @@ groups (students, tutors, editors, instructors)
 ```shell
 python3 create_course.py
 ```
+
+You can also execute the following scripts on their own (not needed if `create_course.py` was executed)
+
+#### Create users
+
+Creates users 1-20 (students, tutors, editors, instructors - 5 for each group) and users needed for Cypress E2E
+testing (100-104, 106)
+
+```shell
+python3 create_users.py
+```
+
+#### Authenticate users
+
+If the users have already been created they still need to be logged in order to be added to a
+course _(without a first login Artemis does not know that the users exist)_
+
+```shell
+python3 authenticate_all_users.py
+```
+
