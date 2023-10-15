@@ -30,7 +30,7 @@ export class StudentExamDetailComponent implements OnInit {
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
-    busy = false;
+    isSaving = false;
 
     examId: number;
 
@@ -44,6 +44,7 @@ export class StudentExamDetailComponent implements OnInit {
     faSave = faSave;
 
     workingTimeSeconds = 0;
+    lastSavedWorkingTimeSeconds = 0;
 
     constructor(
         private route: ActivatedRoute,
@@ -176,6 +177,7 @@ export class StudentExamDetailComponent implements OnInit {
 
     private initWorkingTimeForm() {
         this.workingTimeSeconds = this.studentExam.workingTime ?? 0;
+        this.lastSavedWorkingTimeSeconds = this.studentExam.workingTime ?? 0;
     }
 
     /**
@@ -185,20 +187,28 @@ export class StudentExamDetailComponent implements OnInit {
         return this.isSavingWorkingTime || (this.isTestRun && !!this.studentExam.submitted) || !this.studentExam.exam;
     }
 
-    examIsOver(): boolean {
+    get individualEndDate(): dayjs.Dayjs | undefined {
+        return dayjs(this.studentExam.exam!.startDate).add(this.workingTimeSeconds, 'seconds');
+    }
+
+    /**
+     * Checks if the exam is over considering the individual working time of the student and the grace period
+     */
+    isExamOver(): boolean {
         if (this.studentExam.exam) {
-            // only show the button when the exam is over
-            return dayjs(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod!, 'seconds').isBefore(dayjs());
-        } else {
-            return false;
+            const individualExamEndDate = dayjs(this.studentExam.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.studentExam.exam.gracePeriod!, 'seconds');
+
+            return individualExamEndDate.isBefore(dayjs());
         }
+
+        return false;
     }
 
     /**
      * switch the 'submitted' state of the studentExam.
      */
     toggle() {
-        this.busy = true;
+        this.isSaving = true;
         if (this.studentExam.exam && this.studentExam.exam.id) {
             this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam.id, this.studentExam.id!, this.studentExam.submitted!).subscribe({
                 next: (res) => {
@@ -207,11 +217,11 @@ export class StudentExamDetailComponent implements OnInit {
                         this.studentExam.submitted = res.body.submitted;
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
-                    this.busy = false;
+                    this.isSaving = false;
                 },
                 error: () => {
                     this.alertService.error('artemisApp.studentExamDetail.togglefailed');
-                    this.busy = false;
+                    this.isSaving = false;
                 },
             });
         }

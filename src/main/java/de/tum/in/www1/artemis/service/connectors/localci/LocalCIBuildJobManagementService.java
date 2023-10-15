@@ -84,7 +84,7 @@ public class LocalCIBuildJobManagementService {
 
         var projectType = programmingExercise.getProjectType();
 
-        if (projectType == null || !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
+        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
             throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
         }
 
