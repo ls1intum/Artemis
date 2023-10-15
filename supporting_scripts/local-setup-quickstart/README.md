@@ -11,6 +11,8 @@ Scripts in this folder help to configure and setup your first Artemis course to 
    `File > Project Structure > Facets > Add - Python` (press the plus and add a Python environment there,
    make sure that you have configured the python interpreter)
 
+   `File > Project Structure > Modules > Add - Python`
+
 _Tested on python 3.11.6, other versions might work as well._
 
 ## Usage
