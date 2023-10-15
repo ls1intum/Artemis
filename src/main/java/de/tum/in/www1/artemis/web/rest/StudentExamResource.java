@@ -656,9 +656,6 @@ public class StudentExamResource {
         var assessedUnsubmittedStudentExams = studentExamService.assessUnsubmittedStudentExams(exam, instructor);
         log.info("Graded {} unsubmitted student exams of exam {}", assessedUnsubmittedStudentExams.size(), examId);
 
-        var assessedAbandonedStudentExams = studentExamService.assessAbandonedStudentExams(exam, instructor);
-        log.info("Graded {} abandoned student exams of exam {}", assessedAbandonedStudentExams.size(), examId);
-
         studentExamService.assessEmptySubmissionsOfStudentExams(exam, instructor, assessedUnsubmittedStudentExams);
 
         return ResponseEntity.ok().build();
@@ -835,7 +832,7 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
-        if (studentExam.isSubmitted()) {
+        if (studentExam.isSubmitted() || studentExam.isAbandoned()) {
             throw new BadRequestException();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
