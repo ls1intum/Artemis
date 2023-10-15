@@ -13,7 +13,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
@@ -191,7 +191,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris') && !this.programmingExercise.exerciseGroup;
                     }
                 });
 

@@ -66,10 +66,11 @@ public class LocalCIContainerService {
      * @param containerName the name of the container to be created
      * @param branch        the branch to checkout
      * @param commitHash    the commit hash to checkout. If it is null, the latest commit of the branch will be checked out.
+     * @param image         the Docker image to use for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash) {
-        return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
+    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -307,45 +308,64 @@ public class LocalCIContainerService {
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
                 mkdir /repositories
-                cd /repositories
+                """);
+
+        // If git is installed, clone the repositories. Otherwise, just copy them.
+        // For some reason, simply copying the repositories messes with gradle and causing it to fail when running tests
+        buildScript.append("""
+                if [ -x "$(command -v git)" ]; then
+                    echo "Git is installed"
                 """);
 
         // Checkout tasks
         buildScript.append("""
-                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
-                git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
+                    cd /repositories
+                    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
+                    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
                 """);
 
         if (hasAuxiliaryRepositories) {
-            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-                buildScript.append("git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
-            }
+            buildScript.append(cloneAuxiliaryRepositories(auxiliaryRepositories));
         }
 
         buildScript.append("""
-                cd assignment-repository
-                if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
-                    git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
-                    git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
-                fi
-                mkdir /repositories/test-repository/assignment
-                cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
+                    cd assignment-repository
+                    if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
+                        git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                        git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+                    fi
+                    mkdir /repositories/test-repository/assignment
+                    cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
                 """);
 
         // Copy auxiliary repositories to checkout directories
         if (hasAuxiliaryRepositories) {
-            for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-                buildScript.append("cp -a /repositories/").append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
-                        .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
-            }
+            buildScript.append(copyAuxiliaryRepositories(auxiliaryRepositories, "/repositories/"));
         }
 
-        buildScript.append("cd /repositories/test-repository\n");
+        // If git is not installed, copy the repositories
+        buildScript.append("""
+                else
+                    echo "Git is not installed"
+                    mkdir /repositories/test-repository
+                    mkdir /repositories/assignment-repository
+                    cp -a /test-repository/. /repositories/test-repository/
+                    cp -a /assignment-repository/. /repositories/assignment-repository/
+                    cp -a /assignment-repository/. /repositories/test-repository/assignment/
+                """);
+        if (hasAuxiliaryRepositories) {
+            buildScript.append(copyAuxiliaryRepositories(auxiliaryRepositories, "/"));
+        }
+
+        buildScript.append("""
+                fi
+                cd /repositories/test-repository
+                """);
 
         // programming language specific tasks
-
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+            case PYTHON -> scriptForPython(buildScript);
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
         }
 
@@ -357,6 +377,23 @@ public class LocalCIContainerService {
         }
 
         return buildScriptPath;
+    }
+
+    private StringBuilder cloneAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+        StringBuilder buildScript = new StringBuilder();
+        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
+            buildScript.append("    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
+        }
+        return buildScript;
+    }
+
+    private StringBuilder copyAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories, String source) {
+        StringBuilder buildScript = new StringBuilder();
+        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
+            buildScript.append("    cp -a ").append(source).append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
+                    .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
+        }
+        return buildScript;
     }
 
     private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
@@ -396,6 +433,18 @@ public class LocalCIContainerService {
                         ./gradlew clean test""");
             }
         }
+    }
+
+    private void scriptForPython(StringBuilder buildScript) {
+        buildScript.append("""
+                python3 -m compileall . -q || error=true
+                if [ ! $error ]
+                then
+                    pytest --junitxml=test-reports/results.xml
+                else
+                    exit 1
+                fi
+                """);
     }
 
     /**
