@@ -275,7 +275,27 @@ Participating in Programming Exercises
 
     If you work in the online code editor and a merge conflict occurs, the file browser will display the conflict state |conflict_state|.
     You can use the |resolve_conflict| button, which is then displayed instead of the submit button, to resolve the conflict within the online code editor.
-    This will reset your changes to the latest commit. Manual merging is not possible with the online code editor.
+    This will reset your changes to the latest commit.
+
+    .. warning::
+       Manual merging is not possible with the online code editor.
+
+.. _updated_problem_statement:
+
+Updated Problem Statement during the Exam
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If your instructor updates the problem statement for an exercise during the exam, you will receive a notification, as seen in the screenshot below, and can switch between a diff view and the new problem statement, as shown in the second and third screenshot.
+
+.. figure:: student/student-notification.png
+   :alt: Problem Statement Update Notification
+
+.. figure:: student/problem-statement-normal-view.png
+   :alt: Updated Problem Statement in the Normal View
+
+.. figure:: student/problem-statement-diff-view.png
+    :alt: Updated Problem Statement in the Diff View
+
+
 
 End Screen
 ^^^^^^^^^^
