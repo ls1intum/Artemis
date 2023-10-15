@@ -498,7 +498,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .getConversationParticipants().stream()
                 .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave.getAuthor().getId())).findAny().orElseThrow()
                 .getUnreadMessagesCount();
-        assertThat(unreadMessages).isEqualTo(1L);
+        await().untilAsserted(() -> assertThat(unreadMessages).isEqualTo(1L));
     }
 
     @Test
