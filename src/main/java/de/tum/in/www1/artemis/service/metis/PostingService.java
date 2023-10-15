@@ -211,7 +211,7 @@ public abstract class PostingService {
         // sets respective author role to display user authority icon on posting headers
         postsInCourse.stream()
                 // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
-                .filter(post -> post.getAuthor() != null).filter(post -> authors.containsKey(post.getAuthor().getId())).forEach(post -> {
+                .filter(post -> post.getAuthor() != null).forEach(post -> {
                     post.setAuthor(authors.get(post.getAuthor().getId()));
                     setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
                     post.getAnswers().forEach(answerPost -> {
