@@ -23,6 +23,8 @@ import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/question
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -202,6 +204,7 @@ describe('QuizExamSubmissionComponent', () => {
         component.studentSubmission = new ModelingSubmission();
         component.exercise = new QuizExercise(new Course(), undefined);
         component.exercise.quizQuestions = [dragAndDropQuestion];
+        component.quizConfiguration = { quizQuestions: [dragAndDropQuestion] };
         component.setSubmissionVersion(submissionVersion);
         fixture.detectChanges();
         expect(component.submissionVersion).toEqual(submissionVersion);

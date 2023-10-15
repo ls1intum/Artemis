@@ -19,6 +19,7 @@
                         <jhi-quiz-submission-exam
                             *ngSwitchCase="ExerciseType.QUIZ"
                             [exercise]="exercise"
+                            [quizConfiguration]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
