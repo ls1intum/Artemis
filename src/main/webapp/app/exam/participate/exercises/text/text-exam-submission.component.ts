@@ -52,6 +52,10 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.exercise.id;
     }
 
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
     updateProblemStatement(newProblemStatement: string): void {
         this.exercise.problemStatement = newProblemStatement;
         this.changeDetectorReference.detectChanges();

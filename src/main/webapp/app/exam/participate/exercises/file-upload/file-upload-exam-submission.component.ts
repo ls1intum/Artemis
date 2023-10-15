@@ -15,7 +15,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
@@ -115,6 +115,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     getExerciseId(): number | undefined {
         return this.exercise.id;
+    }
+    getExercise(): Exercise {
+        return this.exercise;
     }
 
     public hasUnsavedChanges(): boolean {

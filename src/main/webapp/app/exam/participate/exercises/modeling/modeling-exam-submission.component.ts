@@ -6,7 +6,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 
@@ -63,6 +63,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     getExerciseId(): number | undefined {
         return this.exercise.id;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise;
     }
 
     updateViewFromSubmission(): void {

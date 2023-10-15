@@ -20,6 +20,7 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -92,9 +93,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         // randomize order
         // in the exam timeline, we do not want to randomize the order as this makes it difficult to view the changes between submissions.
         if (!this.examTimeline) {
-            this.quizService.randomizeOrder(this.exercise);
+            this.quizService.randomizeOrder(this.quizConfiguration.quizQuestions, this.quizConfiguration.randomizeQuestionOrder);
         }
-        this.quizService.randomizeOrder(this.quizConfiguration.quizQuestions, this.quizConfiguration.randomizeQuestionOrder);
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
