@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
+import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 type EntityResponseType = HttpResponse<IrisSession>;
+
 export class HeartbeatDTO {
     active: boolean;
-    currentMessageCount: number;
-    rateLimit: number;
+    rateLimitInfo: IrisRateLimitInformation;
 }
 
 /**
