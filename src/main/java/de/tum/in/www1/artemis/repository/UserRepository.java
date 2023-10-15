@@ -320,11 +320,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("""
-            SELECT user
+            SELECT DISTINCT user
             FROM User user
             WHERE user.isDeleted = false AND user.login IN :#{#logins}
             """)
-    List<User> findAllByLogins(@Param("logins") Set<String> logins);
+    Set<User> findAllByLogins(@Param("logins") Set<String> logins);
 
     /**
      * Searches for users by their login or full name.

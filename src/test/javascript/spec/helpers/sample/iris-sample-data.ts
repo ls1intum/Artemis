@@ -99,4 +99,5 @@ export const mockState = {
     serverResponseTimeout: null,
     currentMessageCount: -1,
     rateLimit: -1,
+    rateLimitTimeframeHours: -1,
 };
