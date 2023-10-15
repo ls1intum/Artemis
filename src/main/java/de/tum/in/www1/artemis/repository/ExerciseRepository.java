@@ -244,10 +244,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             LEFT JOIN FETCH e.studentParticipations p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results
-            WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :time
-            	AND c.continuousPlagiarismControlEnabled = TRUE
-            ORDER BY e.dueDate ASC
+            WHERE e.dueDate >= :time
+                AND c.continuousPlagiarismControlEnabled = TRUE
             """)
     Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
 
