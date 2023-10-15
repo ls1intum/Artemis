@@ -33,7 +33,7 @@ class PlagiarismDetectionConfigHelperTest {
 
     @Test
     void shouldAddDefaultConfigIfExerciseDoesNotHavePlagiarismDetectionConfig() {
-        // given: exercise with PlagiarismDetectionConfig
+        // given: exercise without PlagiarismDetectionConfig
         var exercise = new ModelingExercise();
 
         // and
@@ -49,7 +49,7 @@ class PlagiarismDetectionConfigHelperTest {
 
     @Test
     void shouldReplaceConfigWithGivenValues() {
-        // given: exercise with PlagiarismDetectionConfig
+        // given: exercise without PlagiarismDetectionConfig
         var exercise = new ModelingExercise();
         var config = PlagiarismDetectionConfig.createDefault();
         exercise.setPlagiarismDetectionConfig(config);
