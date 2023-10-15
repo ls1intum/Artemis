@@ -75,7 +75,7 @@ describe('Import exercises', () => {
 
         programmingExerciseCreation.setTitle('Import Test');
         programmingExerciseCreation.setShortName('importtest' + generateUUID());
-        programmingExerciseCreation.setDueDate(dayjs().add(3, 'days')); // TODO does not work yet
+        // programmingExerciseCreation.setDueDate(dayjs().add(3, 'days')); // FIXME does not work yet
 
         programmingExerciseCreation.import().then((request: Interception) => {
             const exercise = request.response!.body;
