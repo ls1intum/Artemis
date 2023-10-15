@@ -10,12 +10,20 @@ Scripts in this folder help to configure and setup your first Artemis course to 
 
    `File > Project Structure > Facets > Add - Python` (press the plus and add a Python environment there,
    make sure that you have configured the python interpreter)
-
+   
+   ![IntelliJ Python Facet Configuration](./images/facets-config.png)
+   
+   If not added automatically by IntelliJ add a Module:
    `File > Project Structure > Modules > Add - Python`
+
+   ![IntelliJ Module Configuration](./images/module-config.png)
+   
 3. Configure the `Artemis.main` module for the run configuration of the run
    configuration `Artemis (Server, LocalVC & LocalCI)`
 
    `Run > Edit Configurations > Spring Boot > Artemis (Server, LocalVC & LocalCI) > -cp Artemis.main`
+
+   ![IntelliJ Module Configuration](./images/localVC-localCI-classpathConfiguration.png)
 
 _Tested on python 3.11.6, other versions might work as well._
 
@@ -42,7 +50,7 @@ You can also execute the following scripts on their own (not needed if `create_c
 #### Create users
 
 Creates users 1-20 (students, tutors, editors, instructors - 5 for each group) and users needed for Cypress E2E
-testing (100-104, 106)
+testing (100-106)
 
 ```shell
 python3 create_users.py

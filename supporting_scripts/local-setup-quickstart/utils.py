@@ -52,7 +52,7 @@ def get_user_details_by_index(user_index):
     authorities = []
     groups = []
 
-    if 1 <= user_index <= 5 or user_index in {100, 102, 104, 106}:
+    if 1 <= user_index <= 5 or user_index in {100, 102, 104, 105, 106}:
         authorities = ["ROLE_USER"]
         groups = ["students"]
     elif 6 <= user_index <= 10 or user_index == 101:
