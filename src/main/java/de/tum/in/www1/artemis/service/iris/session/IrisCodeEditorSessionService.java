@@ -125,7 +125,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         // The response handling is duplicated, also exists in IrisChatSessionService
         // However, there is no good reason why every session type should have the same response handling
         // TODO: Consider refactoring this
-        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, "gpt-4-32k", params).handleAsync((response, err) -> {
+        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, "gpt-3.5-turbo-16k", params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
