@@ -44,8 +44,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
  * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
- * submitted to the
- * executor service.
+ * submitted to the executor service.
  */
 @Service
 @Profile("localci")
@@ -229,7 +228,7 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        List<String> testResultsPaths = getTestResultPath(participation.getProgrammingExercise());
+        List<String> testResultsPaths = getTestResultPaths(participation.getProgrammingExercise());
 
         // Get an input stream of the test result files.
         List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
@@ -271,36 +270,45 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private List<String> getTestResultPath(ProgrammingExercise programmingExercise) {
-        List<String> testResultPaths = new ArrayList<>();
+    private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA, KOTLIN -> {
-                if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
-                    if (programmingExercise.hasSequentialTestRuns()) {
-                        testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
-                        testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
-                    }
-                    else {
-                        testResultPaths.add("/repositories/test-repository/target/surefire-reports");
-                    }
-                }
-                else {
-                    if (programmingExercise.hasSequentialTestRuns()) {
-                        testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
-                        testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
-                    }
-                    else {
-                        testResultPaths.add("/repositories/test-repository/build/test-results/test");
-                    }
-                }
-                return testResultPaths;
+                return getJavaKotlinTestResultPaths(programmingExercise);
             }
             case PYTHON -> {
-                testResultPaths.add("/repositories/test-repository/test-reports");
-                return testResultPaths;
+                return getPythonTestResultPaths();
             }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
         }
+    }
+
+    private List<String> getJavaKotlinTestResultPaths(ProgrammingExercise programmingExercise) {
+        List<String> testResultPaths = new ArrayList<>();
+        if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
+            if (programmingExercise.hasSequentialTestRuns()) {
+                testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
+                testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
+            }
+            else {
+                testResultPaths.add("/repositories/test-repository/target/surefire-reports");
+            }
+        }
+        else {
+            if (programmingExercise.hasSequentialTestRuns()) {
+                testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
+                testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
+            }
+            else {
+                testResultPaths.add("/repositories/test-repository/build/test-results/test");
+            }
+        }
+        return testResultPaths;
+    }
+
+    private List<String> getPythonTestResultPaths() {
+        List<String> testResultPaths = new ArrayList<>();
+        testResultPaths.add("/repositories/test-repository/test-reports");
+        return testResultPaths;
     }
 
     private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
@@ -336,6 +344,7 @@ public class LocalCIBuildJobExecutionService {
         int lastIndexOfSlash = name.lastIndexOf('/');
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
+        // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
         return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && result.startsWith("TEST-")) || result.endsWith("results.xml"));
     }
 
