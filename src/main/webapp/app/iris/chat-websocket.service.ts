@@ -67,6 +67,6 @@ export class IrisChatWebsocketService extends IrisWebsocketService {
     }
 
     private handleRateLimitInfo(rateLimitInfo: IrisRateLimitInformation) {
-        this.stateStore.dispatch(new RateLimitUpdatedAction(rateLimitInfo.rateLimit));
+        this.stateStore.dispatch(new RateLimitUpdatedAction(rateLimitInfo));
     }
 }
