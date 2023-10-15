@@ -35,27 +35,15 @@ jira_group_add_url="http://localhost:$jira_external_port/rest/api/2/group/user?g
 
 create_user_and_add_to_group() {
     # User 1-5 are students, 6-10 are tutors, 11-15 are editors and 16-20 are instructors
+    # For the cypress tests students: 100,102,104,(105),106; tutors: 101; instructors: 103
     group="students"
-    if ((i > 5)); then
+    if ((i > 15)) && ((i < 100 || i == 103)); then
+      group="instructors"
+    elif ((i > 10)) && ((i < 100)); then
+      group="editors"
+    elif ((i > 5)) && ((i < 100 || i == 101)); then
       group="tutors"
     fi
-    if ((i > 10)); then
-      group="editors"
-    fi
-    if ((i > 15)); then
-      group="instructors"
-    fi
-
-    if ((i == 100)) || ((i == 102)) || ((i == 104)) || ((i == 105)) || ((i == 106)); then
-       group="students"
-    fi
-    if ((i == 101)); then
-       group="tutors"
-    fi
-    if ((i == 103)); then
-       group="instructors"
-    fi
-
 
     # Create user
     curl -u "$jira_uservar":"$jira_passvar" \
@@ -86,10 +74,9 @@ create_user_and_add_to_group() {
     "$jira_group_add_url$group"
 }
 
-#for i in {1..20}; do
-#    create_user_and_add_to_group "$i"
-#done
-#
+for i in {1..20}; do
+    create_user_and_add_to_group "$i"
+done
 for i in {100..106}; do
     create_user_and_add_to_group "$i"
 done
