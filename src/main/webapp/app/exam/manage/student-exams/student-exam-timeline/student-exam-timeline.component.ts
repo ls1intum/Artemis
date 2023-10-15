@@ -135,6 +135,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         let smallestDiff = Infinity;
         let correspondingSubmission: ProgrammingSubmission | undefined;
         for (const programmingSubmission of this.programmingSubmissions) {
+            console.log(programmingSubmission);
             const diff = Math.abs(programmingSubmission.submissionDate!.diff(comparisonTimestamp));
             if (
                 programmingSubmission.submissionDate!.isBefore(comparisonTimestamp) &&
@@ -407,7 +408,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             (submission: ProgrammingSubmission | FileUploadSubmission) => submission.participation?.exercise?.id === exercise.id,
         ).length;
         for (const submission of submissions) {
-            console.log(submission);
             if (
                 submission.submissionDate!.diff(comparisonObject) < smallestDiff &&
                 submission.participation?.exercise?.id === exercise.id &&
