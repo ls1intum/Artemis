@@ -26,7 +26,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
 
-    showRelations = false;
     tailCompetency?: number;
     headCompetency?: number;
     relationType?: string;
@@ -40,6 +39,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     documentationType = DocumentationType.Competencies;
+
+    update$: Subject<boolean> = new Subject<boolean>();
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -63,7 +64,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.showRelations = this.accountService.isAdmin(); // beta feature
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = params['courseId'];
             if (this.courseId) {
@@ -278,8 +278,19 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 map((res: HttpResponse<CompetencyRelation>) => res.body),
             )
             .subscribe({
-                next: () => {
-                    this.loadData();
+                next: (relation) => {
+                    if (relation) {
+                        this.edges.push({
+                            id: `edge${relation.id}`,
+                            source: `${relation.tailCompetency?.id}`,
+                            target: `${relation.headCompetency?.id}`,
+                            label: relation.type,
+                            data: {
+                                id: relation.id,
+                            },
+                        });
+                        this.update$.next(true);
+                    }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -288,7 +299,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     removeRelation(edge: Edge) {
         this.competencyService.removeCompetencyRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
             next: () => {
-                this.loadData();
+                const index = this.edges.findIndex((e) => e.id === edge.id);
+                this.edges.splice(index, 1);
+                this.update$.next(true);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

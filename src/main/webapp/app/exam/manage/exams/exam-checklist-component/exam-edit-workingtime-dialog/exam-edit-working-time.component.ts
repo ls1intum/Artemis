@@ -5,8 +5,8 @@ import dayjs from 'dayjs/esm';
 import { Subscription, from } from 'rxjs';
 
 import { Exam } from 'app/entities/exam.model';
-import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dialog.component';
 
 @Component({
     selector: 'jhi-exam-edit-working-time',
