@@ -13,7 +13,7 @@ client_url = config.get('Settings', 'client_url')
 
 
 def make_create_user_post_request(session, user_details):
-    url = f"http://localhost:9000/api/public/authenticate"
+    url = f"{client_url}/api/admin/users"
     headers = {
         "Content-Type": "application/json"
     }
