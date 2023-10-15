@@ -4,7 +4,7 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-backend_url = config.get('Settings', 'backend_url')
+server_url = config.get('Settings', 'server_url')
 admin_user = config.get('Settings', 'admin_user')
 admin_password = config.get('Settings', 'admin_password')
 
@@ -24,7 +24,7 @@ def login_as_admin(session):
 
 
 def authenticate_user(username, password, session=requests.Session()):
-    url = f"{backend_url}/api/public/authenticate"
+    url = f"{server_url}/api/public/authenticate"
     headers = {
         "Content-Type": "application/json"
     }

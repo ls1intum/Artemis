@@ -9,11 +9,11 @@ from utils import print_success
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-backend_url = config.get('Settings', 'backend_url')
+server_url = config.get('Settings', 'server_url')
 
 
 def create_course(session, course_name, course_short_name):
-    url = f"{backend_url}/api/admin/courses"
+    url = f"{server_url}/api/admin/courses"
 
     default_course = {
         "id": None,
