@@ -138,6 +138,10 @@
                     <strong>{{ 'artemisApp.studentExams.passed' | artemisTranslate }}:</strong>
                     {{ (passed ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                 </li>
+                <li>
+                    <strong>Abandoned:</strong>
+                    {{ (studentExam.abandoned ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                </li>
             </ol>
         </div>
     </div>

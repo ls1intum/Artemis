@@ -205,6 +205,18 @@
                 </ng-template>
             </ngx-datatable-column>
 
+            <ngx-datatable-column prop="abandoned" [minWidth]="80" [width]="80">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('abandoned')">
+                        <span class="datatable-header-cell-label bold sortable"> Abandoned </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('abandoned')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>{{ (value ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                </ng-template>
+            </ngx-datatable-column>
+
             <ngx-datatable-column prop="numberOfExamSessions" [minWidth]="100" [width]="100">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfExamSessions')">
