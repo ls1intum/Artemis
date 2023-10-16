@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20231002131313" author="michael_dyer">
+        <!-- Add a discriminator column to the existing iris_message_content table, set all rows to 'TEXT' -->
+        <addColumn tableName="iris_message_content">
+            <column name="discriminator" type="VARCHAR(20)" defaultValue="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Immediately drop again the default value on the new discriminator column, we don't want it to stay -->
+        <dropDefaultValue tableName="iris_message_content" columnName="discriminator"/>
+
+        <!-- Create the iris_text_message_content table to store all the existing rows in iris_message_content -->
+        <createTable tableName="iris_text_message_content">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true"
+                             primaryKeyName="pk_iris_text_message_content"
+                             referencedTableName="iris_message_content"
+                             referencedColumnNames="id"
+                             nullable="false"/>
+            </column>
+            <column name="text_content" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Insert IDs and text_content from iris_message_content into iris_text_message_content -->
+        <sql>
+            <!-- Insert data into iris_text_message_content -->
+            INSERT INTO iris_text_message_content (id, text_content)
+            SELECT mc.id, mc.text_content
+            FROM iris_message_content mc;
+        </sql>
+
+        <!-- Drop column text_content from iris_message_content, as it is no longer needed here -->
+        <dropColumn tableName="iris_message_content" columnName="text_content"/>
+
+        <!-- Create the iris_exercise_plan_message_content table -->
+        <createTable tableName="iris_exercise_plan_message_content">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true"
+                             primaryKeyName="pk_iris_exercise_plan_message_content"
+                             referencedTableName="iris_message_content"
+                             referencedColumnNames="id"
+                             nullable="false"/>
+            </column>
+            <column name="current_component_index" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create the iris_exercise_plan_component table -->
+        <createTable tableName="iris_exercise_plan_component">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true"
+                             primaryKeyName="pk_iris_exercise_plan_component"
+                             nullable="false"/>
+            </column>
+            <column name="exercise_plan_id" type="BIGINT">
+                <constraints nullable="false"
+                             referencedTableName="iris_exercise_plan_message_content"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="exercise_component" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instructions" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

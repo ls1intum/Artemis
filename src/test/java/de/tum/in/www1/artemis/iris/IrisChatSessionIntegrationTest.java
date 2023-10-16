@@ -15,9 +15,9 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
 import de.tum.in.www1.artemis.web.rest.iris.IrisSessionResource.IrisHealthDTO;
 
-class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
+class IrisChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
 
-    private static final String TEST_PREFIX = "irissessionintegration";
+    private static final String TEST_PREFIX = "irischatsessionintegration";
 
     @Autowired
     private IrisChatSessionRepository irisChatSessionRepository;

@@ -1,0 +1,89 @@
+package de.tum.in.www1.artemis.service.iris.websocket;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.message.ExerciseComponent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.iris.exception.IrisException;
+
+@Service
+public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
+
+    private static final String WEBSOCKET_TOPIC_SESSION_TYPE = "code-editor-sessions";
+
+    public IrisCodeEditorWebsocketService(WebsocketMessagingService websocketMessagingService) {
+        super(websocketMessagingService);
+    }
+
+    private User checkSessionTypeAndGetUser(IrisSession session) {
+        if (!(session instanceof IrisCodeEditorSession codeEditorSession)) {
+            throw new UnsupportedOperationException("Only IrisCodeEditorSession is supported");
+        }
+        return codeEditorSession.getUser();
+    }
+
+    /**
+     * Sends a message over the websocket to a specific user
+     *
+     * @param message that should be sent over the websocket
+     */
+    public void sendMessage(IrisMessage message) {
+        var session = message.getSession();
+        var user = checkSessionTypeAndGetUser(session);
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message));
+    }
+
+    public void sendChanges(IrisCodeEditorSession session, ExerciseComponent component, List<FileChange> changes) {
+        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.changes(component, changes));
+    }
+
+    /**
+     * Sends an exception over the websocket to a specific user
+     *
+     * @param session   to which the exception belongs
+     * @param throwable that should be sent over the websocket
+     */
+    public void sendException(IrisCodeEditorSession session, Throwable throwable) {
+        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.error(throwable));
+    }
+
+    public enum IrisWebsocketMessageType {
+        MESSAGE, CHANGE_SET, EXCEPTION
+    }
+
+    public enum FileChangeType {
+        CREATE, DELETE, RENAME, MODIFY
+    }
+
+    public record FileChange(FileChangeType type, String file, String original, String updated) {
+    }
+
+    public record IrisCodeEditorChangeSet(ExerciseComponent component, List<FileChange> changes) {
+    }
+
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisCodeEditorChangeSet changes, String errorMessage, String errorTranslationKey,
+            Map<String, Object> translationParams) {
+
+        private static IrisWebsocketDTO message(IrisMessage message) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null, null);
+        }
+
+        private static IrisWebsocketDTO changes(ExerciseComponent component, List<FileChange> changes) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.CHANGE_SET, null, new IrisCodeEditorChangeSet(component, changes), null, null, null);
+        }
+
+        private static IrisWebsocketDTO error(Throwable throwable) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
+                    throwable instanceof IrisException i ? i.getTranslationParams() : null);
+        }
+
+    }
+
+}

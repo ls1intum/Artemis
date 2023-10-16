@@ -63,12 +63,11 @@ public class IrisSettingsService {
         if (settingsOptional.size() == 1) {
             return;
         }
-        else if (settingsOptional.size() > 1) {
+        if (settingsOptional.size() > 1) {
             var maxIdSettings = settingsOptional.stream().max(Comparator.comparingLong(IrisSettings::getId)).orElseThrow();
             settingsOptional.stream().filter(settings -> !Objects.equals(settings.getId(), maxIdSettings.getId())).forEach(irisSettingsRepository::delete);
             return;
         }
-
         if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of("iris"))) {
             var settings = createDefaultIrisSettings(true);
             settings.setGlobal(true);
