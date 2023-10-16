@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ExamTerminationConfirmationComponent } from './exam-termination-confirmation.component';
+import { ExamTerminationConfirmationComponent } from 'app/exam/participate/exam-termination/exam-termination-confirmation/exam-termination-confirmation.component';
 
 describe('ExamTerminationConfirmationComponent', () => {
     let component: ExamTerminationConfirmationComponent;
