@@ -75,5 +75,5 @@ jobs:
           proxy_key: ${{ secrets.PROXY_KEY }}
           proxy_port: ${{ secrets.PROXY_PORT }}
           script: |
-              sudo rm -rf ${{ secrets.DOCS_WWW }}/*
-              sudo mv -f public/* ${{ secrets.DOCS_WWW }}/
+              rm -rf ${{ secrets.DOCS_WWW }}/*
+              mv -f public/* ${{ secrets.DOCS_WWW }}/
