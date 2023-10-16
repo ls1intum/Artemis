@@ -172,7 +172,7 @@ export class CourseExercisesGroupedByCategoryComponent implements OnInit, OnChan
     /**
      * This is a workaround to make {@link DEFAULT_EXERCISE_GROUPS} accessible for tests without exporting it
      */
-    private getDefaultExerciseGroups() {
+    getDefaultExerciseGroups() {
         return DEFAULT_EXERCISE_GROUPS;
     }
 }
