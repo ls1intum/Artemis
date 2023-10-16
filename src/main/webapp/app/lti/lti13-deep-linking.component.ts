@@ -1,44 +1,38 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 
 @Component({
-    selector: 'jhi-dynamic-registration',
-    templateUrl: './lti13-dynamic-registration.component.html',
+    selector: 'jhi-deep-linking',
+    templateUrl: './lti13-deep-linking.component.html',
 })
 export class Lti13DeepLinkingComponent implements OnInit {
     courseId: number;
-    isRegistering = true;
     registeredSuccessfully: boolean;
+    jwt: string;
+    id: string;
+    actionLink: string;
+    response: string;
 
-    constructor(
-        private route: ActivatedRoute,
-        private http: HttpClient,
-    ) {}
+    constructor(private route: ActivatedRoute) {}
 
     /**
      * perform LTI 13 deep linking
      */
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
+        this.route.params.subscribe(() => {
+            this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
+            this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
+            this.actionLink = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
+            this.autoSubmitForm();
         });
+    }
 
-        this.http.post('api/public/lti13/deep-linking', null);
-
-        // this.http
-        //     .post(`api/lti13/dynamic-registration/`, null, { observe: 'response', params: httpParams })
-        //     .subscribe({
-        //         next: () => {
-        //             this.registeredSuccessfully = true;
-        //         },
-        //         error: () => {
-        //             this.registeredSuccessfully = false;
-        //         },
-        //     })
-        //     .add(() => {
-        //         this.isRegistering = false;
-        //         (window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, '*');
-        //     });
+    autoSubmitForm(): void {
+        const form = document.getElementById('deepLinkingForm') as HTMLFormElement;
+        form.action = this.actionLink;
+        console.log(this.actionLink);
+        (<HTMLInputElement>document.getElementById('JWT'))!.value = this.jwt;
+        (<HTMLInputElement>document.getElementById('id'))!.value = this.id;
+        form.submit();
     }
 }

@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
+import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,6 +74,9 @@ class Lti13ServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private LtiDeepLinkingService ltiDeepLinkingService;
+
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -85,7 +89,7 @@ class Lti13ServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate);
+                onlineCourseConfigurationService, restTemplate, ltiDeepLinkingService);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");

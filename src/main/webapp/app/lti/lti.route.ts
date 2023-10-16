@@ -19,7 +19,7 @@ export const ltiLaunchRoutes: Routes = [
         },
     },
     {
-        path: 'deep-linking/:courseId',
+        path: 'deep-linking',
         component: Lti13DeepLinkingComponent,
         data: {
             pageTitle: 'artemisApp.lti13.deepLinking.title',

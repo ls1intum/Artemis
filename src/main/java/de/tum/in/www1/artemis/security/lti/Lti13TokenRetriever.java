@@ -87,6 +87,37 @@ public class Lti13TokenRetriever {
         }
     }
 
+    public String createDeepLinkingJWT(String clientRegistrationId, Map<String, Object> customClaims) {
+        JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);
+
+        if (jwk == null) {
+            throw new IllegalArgumentException("Failed to get JWK for client registration: " + clientRegistrationId);
+        }
+
+        try {
+            KeyPair keyPair = jwk.toRSAKey().toKeyPair();
+            RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
+
+            var claimSetBuilder = new JWTClaimsSet.Builder();
+            for (Map.Entry<String, Object> entry : customClaims.entrySet()) {
+                claimSetBuilder.claim(entry.getKey(), entry.getValue());
+            }
+
+            JWTClaimsSet claimsSet = claimSetBuilder.issueTime(Date.from(Instant.now())).expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+
+            JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
+            SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);
+            signedJWT.sign(signer);
+
+            log.debug("Created signed token: {}", signedJWT.serialize());
+            return signedJWT.serialize();
+        }
+        catch (JOSEException e) {
+            log.error("Could not create keypair for clientRegistrationId {}", clientRegistrationId);
+            return null;
+        }
+    }
+
     private SignedJWT createJWT(ClientRegistration clientRegistration) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistration.getRegistrationId());
 

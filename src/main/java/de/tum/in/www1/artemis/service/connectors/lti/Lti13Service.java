@@ -2,14 +2,13 @@ package de.tum.in.www1.artemis.service.connectors.lti;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
+import org.glassfish.jersey.uri.UriComponent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import net.minidev.json.JSONObject;
+
+import static de.tum.in.www1.artemis.service.connectors.lti.LtiService.SIMPLE_USER_LIST_AUTHORITY;
 
 @Service
 @Profile("lti")
@@ -59,11 +62,13 @@ public class Lti13Service {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
+    private final LtiDeepLinkingService ltiDeepLinkingService;
+
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
             LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate) {
+            RestTemplate restTemplate, LtiDeepLinkingService ltiDeepLinkingService) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -73,6 +78,7 @@ public class Lti13Service {
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
+        this.ltiDeepLinkingService = ltiDeepLinkingService;
     }
 
     /**
@@ -294,5 +300,27 @@ public class Lti13Service {
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
+    }
+
+    public void buildLtiDeepLinkResponse(OidcIdToken ltiIdToken, UriComponentsBuilder uriComponentsBuilder, String clientRegistrationId){
+
+        ltiDeepLinkingService.buildLtiDeepLinkingResponse(ltiIdToken);
+        ltiDeepLinkingService.setupDeepLinkingSettings(ltiIdToken);
+        var deepLinkResponse = ltiDeepLinkingService.getDeepLinkingResponse();
+
+        Map<String, Object> claims = new HashMap<String,Object>();
+        for (var entry : deepLinkResponse.entrySet()) {
+            claims.put(entry.getKey(), entry.getValue().getAsString());
+        }
+        String jwt = tokenRetriever.createDeepLinkingJWT(clientRegistrationId, claims);
+        uriComponentsBuilder.queryParam("jwt", jwt);
+        uriComponentsBuilder.queryParam("id", ltiIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID).toString());
+        uriComponentsBuilder.queryParam("deepLinkUri",  UriComponent.encode(ltiDeepLinkingService.getDeepLinkingSettings().get("deep_link_return_url").toString(), UriComponent.Type.QUERY_PARAM) );
+
+    }
+
+    public void authenticateLtiUser(OidcIdToken ltiIdToken){
+        var user = userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).orElseThrow();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
     }
 }

@@ -19,6 +19,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nimbusds.jose.JOSEException;
+
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import net.minidev.json.JSONObject;
@@ -60,10 +62,10 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
 
             // here we need to check if this is a deep-linking request or a launch request
-            if (ltiIdToken.getClaim(Claims.MESSAGE_TYPE) == "LtiDeepLinkingRequest") {
+            if (ltiIdToken.getClaim(Claims.MESSAGE_TYPE).equals("LtiDeepLinkingRequest")) {
 
-                writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
-                // ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS) -- needed
+                lti13DeepLinking(ltiIdToken, response, authToken.getAuthorizedClientRegistrationId());
+
             }
             else {
                 lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
@@ -75,6 +77,9 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
+        }
+        catch (JOSEException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -107,5 +112,27 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("UTF-8");
         writer.print(json);
         writer.flush();
+    }
+
+    private void lti13DeepLinking(OidcIdToken ltiIdToken, HttpServletResponse response, String clientRegistrationId) throws IOException, JOSEException {
+
+        lti13Service.authenticateLtiUser(ltiIdToken);
+
+        PrintWriter writer = response.getWriter();
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString("http://localhost:9000/lti/deep-linking");
+        lti13Service.buildLtiDeepLinkResponse(ltiIdToken, uriBuilder, clientRegistrationId);
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        JSONObject json = new JSONObject();
+        json.put("targetLinkUri", uriBuilder.build().toUriString());
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        writer.print(json);
+        writer.flush();
+
     }
 }
