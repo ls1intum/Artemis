@@ -230,6 +230,7 @@ public class ExamResource {
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
         if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
+            // if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
             int workingTimeChange = savedExam.getDuration() - originalExamDuration;
             updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
