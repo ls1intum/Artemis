@@ -23,10 +23,10 @@ const DEFAULT_EXERCISE_GROUPS = {
 
 @Component({
     selector: 'jhi-course-exercises-grouped-by-category',
-    templateUrl: './course-exercises-grouped-by-category.component.html',
+    templateUrl: './course-exercises-grouped-by-timeframe.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
+export class CourseExercisesGroupedByTimeframeComponent implements OnChanges {
     protected readonly Object = Object;
 
     @Input() filteredExercises?: Exercise[];

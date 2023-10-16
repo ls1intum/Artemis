@@ -3,7 +3,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { CourseExercisesGroupedByCategoryComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-category.component';
+import { CourseExercisesGroupedByTimeframeComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-timeframe.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
@@ -53,18 +53,18 @@ const filteredExercises: Exercise[] = [
     noDueDateExercise_2,
 ];
 
-describe('CourseExercisesGroupedByCategoryComponent', () => {
-    let fixture: ComponentFixture<CourseExercisesGroupedByCategoryComponent>;
-    let component: CourseExercisesGroupedByCategoryComponent;
+describe('CourseExercisesGroupedByTimeframeComponent', () => {
+    let fixture: ComponentFixture<CourseExercisesGroupedByTimeframeComponent>;
+    let component: CourseExercisesGroupedByTimeframeComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CourseExercisesGroupedByCategoryComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseExercisesGroupedByTimeframeComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseExercisesGroupedByCategoryComponent);
+                fixture = TestBed.createComponent(CourseExercisesGroupedByTimeframeComponent);
                 component = fixture.componentInstance;
 
                 fixture.detectChanges();
