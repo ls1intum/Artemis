@@ -79,7 +79,7 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    describe('groupExercisesByDueDate', () => {
+    describe('groupExercisesByTimeframe', () => {
         it('should assign default groups if no exercises are present', () => {
             component.filteredExercises = undefined;
             const defaultExerciseGroups = component.getDefaultExerciseGroups();
@@ -92,7 +92,7 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
         it('should assign exercises to correct groups with correct collapsed state', () => {
             const ngOnChangesSpy = jest.spyOn(component, 'ngOnChanges');
             //@ts-ignore spying on private method
-            const groupExerciseByDueDateSpy = jest.spyOn(component, 'groupExercisesByDueDate');
+            const groupExerciseByDueDateSpy = jest.spyOn(component, 'groupExercisesByTimeframe');
             //@ts-ignore spying on private method
             const adjustExpandedOrCollapsedStateOfExerciseGroupsSpy = jest.spyOn(component, 'adjustExpandedOrCollapsedStateOfExerciseGroups');
 

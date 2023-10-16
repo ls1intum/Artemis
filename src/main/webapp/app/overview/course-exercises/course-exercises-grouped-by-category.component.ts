@@ -44,14 +44,14 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     faChevronRight = faChevronRight;
 
     ngOnChanges() {
-        this.exerciseGroups = this.groupExercisesByDueDate();
+        this.exerciseGroups = this.groupExercisesByTimeframe();
     }
 
     toggleGroupCategoryCollapse(exerciseGroupCategoryKey: string) {
         this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed = !this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed;
     }
 
-    private groupExercisesByDueDate(): ExerciseGroups {
+    private groupExercisesByTimeframe(): ExerciseGroups {
         const updatedExerciseGroups: ExerciseGroups = cloneDeep(DEFAULT_EXERCISE_GROUPS);
 
         if (!this.filteredExercises) {
