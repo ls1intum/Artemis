@@ -164,6 +164,21 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
             expect(component.exerciseGroups.noDueDate.isCollapsed).toBeTrue();
         });
 
+        it('should keep past expanded if it was expanded before', () => {
+            component.filteredExercises = [pastExercise_1, currentExercise_1, futureExercise_1, noDueDateExercise_1];
+            component.ngOnChanges();
+            component.exerciseGroups.past.isCollapsed = false;
+            component.exerciseGroups.current.isCollapsed = true;
+            component.exerciseGroups.future.isCollapsed = true;
+            component.exerciseGroups.noDueDate.isCollapsed = true;
+            component.ngOnChanges();
+
+            expect(component.exerciseGroups.past.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.current.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.future.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.noDueDate.isCollapsed).toBeTrue();
+        });
+
         describe('should handle search', () => {
             it('by expanding all exerciseGroups', () => {
                 //@ts-ignore spying on private method
@@ -222,7 +237,7 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
             component.filteredExercises = exercisesWithNewAppliedFilter;
 
             component.ngOnChanges();
-            expect(keepCurrentCollapsedOrExpandedStateOfExerciseGroupsSpy).toHaveBeenCalledTimes(2);
+            expect(keepCurrentCollapsedOrExpandedStateOfExerciseGroupsSpy).toHaveBeenCalledOnce();
             expect(component.exerciseGroups.past.isCollapsed).toBeFalse();
             expect(component.exerciseGroups.current.isCollapsed).toBeTrue();
             expect(component.exerciseGroups.future.isCollapsed).toBeTrue();

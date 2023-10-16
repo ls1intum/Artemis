@@ -101,12 +101,12 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
      */
     private makeSureAtLeastOneExerciseGroupIsExpanded(exerciseGroups: ExerciseGroups) {
         const exerciseGroupsWithExercises = Object.entries(exerciseGroups).filter(([, exerciseGroup]) => exerciseGroup.exercises.length > 0);
-        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([exerciseGroupKey, exerciseGroup]) => !exerciseGroup.isCollapsed && exerciseGroupKey !== 'past');
+        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([, exerciseGroup]) => !exerciseGroup.isCollapsed);
 
         const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
         const expandableGroupsExist = !atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0;
 
-        if (!expandableGroupsExist) {
+        if (!expandableGroupsExist || atLeastOneExerciseIsExpanded) {
             return;
         }
 
