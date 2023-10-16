@@ -6,9 +6,10 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
 import * as utils from 'app/shared/util/utils';
-import { ExerciseFilter, ExerciseWithDueDate } from 'app/overview/course-exercises/course-exercises.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExerciseFilter, ExerciseWithDueDate } from 'app/overview/course-exercises/course-exercises.component';
 
 const currentExercise_1 = {
     id: 3,
@@ -57,6 +58,46 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
             fixture.detectChanges();
 
             expect(isVisibleToStudentsSpy).toHaveBeenCalled();
+        });
+
+        it('should return true if filter is not UNRELEASED', () => {
+            const exercise = currentExercise_1;
+            component.activeFilters = new Set<ExerciseFilter>([]);
+            const isVisibleToStudentsResult = component.isVisibleToStudents(exercise);
+
+            expect(isVisibleToStudentsResult).toBeTrue();
+        });
+
+        it('should return false if filter is UNRELEASED', () => {
+            const exercise = currentExercise_1;
+            component.activeFilters = new Set<ExerciseFilter>([ExerciseFilter.UNRELEASED]);
+            const isVisibleToStudentsResult = component.isVisibleToStudents(exercise);
+
+            expect(isVisibleToStudentsResult).toBeFalsy();
+        });
+
+        it('should return true for a QuizExercise with visibleToStudents=true', () => {
+            const quizExercise = {
+                id: 9,
+                dueDate: dayjs().add(3, 'days'),
+                visibleToStudents: true,
+            } as QuizExercise;
+            component.activeFilters = new Set<ExerciseFilter>([ExerciseFilter.UNRELEASED]);
+            const isVisibleToStudentsResult = component.isVisibleToStudents(quizExercise);
+
+            expect(isVisibleToStudentsResult).toBeTrue();
+        });
+
+        it('should return false for a QuizExercise with visibleToStudents=false', () => {
+            const quizExercise = {
+                id: 10,
+                dueDate: dayjs().add(3, 'days'),
+                visibleToStudents: false,
+            } as QuizExercise;
+            component.activeFilters = new Set<ExerciseFilter>([ExerciseFilter.UNRELEASED]);
+            const isVisibleToStudentsResult = component.isVisibleToStudents(quizExercise);
+
+            expect(isVisibleToStudentsResult).toBeFalse();
         });
     });
 });
