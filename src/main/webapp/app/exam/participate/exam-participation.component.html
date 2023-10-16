@@ -156,7 +156,11 @@
             </button>
         </div>
         <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam"></jhi-exam-participation-summary>
-        <span *ngIf="this.studentExam.abandoned">TERMINATED</span>
+        <ng-container *ngIf="this.studentExam.abandoned">
+            <div class="container d-flex flex-column align-items-center justify-content-center">
+                <span>You abandoned this exam. It will be evaluated with 0 points.</span>
+            </div>
+        </ng-container>
     </ng-container>
 </ng-container>
 <ng-container *ngIf="!loadingExam && !exam">

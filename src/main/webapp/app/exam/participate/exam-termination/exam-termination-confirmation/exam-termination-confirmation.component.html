@@ -8,20 +8,72 @@
     </h2>
 </div>
 <div class="container d-flex flex-column align-items-center justify-content-center">
+    <div class="form-check mt-1 ps-0">
+        <input [(ngModel)]="confirmed" type="checkbox" id="confirmBox" class="form-check-input" [required]="inserted" [class.ms-0]="!this.exam.confirmationEndText" />
+        <label for="confirmBox" id="formatted-confirmation-text" class="form-check-label"></label>
+    </div>
     <div style="text-align: center">
-        <ng-container #terminationButton>
-            <button id="abandon-exam" type="submit" (click)="abandonExam()" class="btn btn-primary">
-                <span>Abandon Exam</span>
-            </button>
-        </ng-container>
-        <div class="mt-5">
-            <div class="mb-2 font-weight-bold">
-                {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
+        <div class="login-form">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <label class="font-weight-bold" for="fullname">
+                        I hereby confirm with my full name representing my signature that I want to abandon this exam. I understand that all exercises will be evaluated with 0
+                        Points and I will fail the exam.
+                    </label>
+                </div>
             </div>
-            <button [disabled]="abandonInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continue()">
-                <fa-icon [icon]="faArrowLeft"></fa-icon>
-                Back
-            </button>
+            <div class="row justify-content-center" style="padding-bottom: 0; margin-bottom: 0">
+                <div class="form-group" style="padding-bottom: 0; margin-bottom: 0; width: unset">
+                    <input
+                        size="50"
+                        type="text"
+                        class="form-control"
+                        name="fullname"
+                        id="fullname"
+                        [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
+                        [(ngModel)]="enteredName"
+                        [ngModelOptions]="{ updateOn: 'change' }"
+                    />
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div id="your-name" class="col-md-6" style="font-weight: lighter">
+                    <span> ({{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }}) </span>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="form-group" style="width: 60%">
+                    <div class="alert alert-danger mt-1" *ngIf="!confirmed && inserted">
+                        <span [innerHTML]="'artemisApp.exam.notConfirmed' | artemisTranslate"></span>
+                    </div>
+                    <div class="alert alert-danger mt-1" *ngIf="!nameIsCorrect && inserted">
+                        <span [innerHTML]="'artemisApp.exam.falseName' | artemisTranslate"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container d-flex flex-column align-items-center justify-content-center">
+            <div style="text-align: center">
+                <ng-container #terminationButton>
+                    <div class="mb-2 font-weight-bold text-danger">
+                        <span>You are about to abandon your exam without submitting.</span>
+                        <br />
+                        <span>All exercises will be evaluated with 0 points and you will fail the exam.</span>
+                        <br />
+                        <span>This step can not be undone.</span>
+                    </div>
+                    <button id="abandon-exam" type="submit" (click)="abandonExam()" class="btn btn-primary" [disabled]="!nameIsCorrect || !confirmed">
+                        <span>Abandon Exam</span>
+                    </button>
+                </ng-container>
+                <div class="mt-5">
+                    <div class="mb-2 font-weight-bold">You don't want to abandon?</div>
+                    <button [disabled]="abandonInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continue()">
+                        <fa-icon [icon]="faArrowLeft"></fa-icon>
+                        Back
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
