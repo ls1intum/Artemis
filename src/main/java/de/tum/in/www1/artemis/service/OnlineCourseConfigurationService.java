@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  * Service Implementation for OnlineCourseConfiguration.
  */
 @Service
+@Profile("lti")
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
     private final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
@@ -112,8 +114,8 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         catch (IllegalArgumentException e) {
             // Log a warning for rare scenarios i.e. ClientId is empty. This can occur when online courses lack an external LMS connection or use LTI v1.0.
             log.warn("Could not build Client Registration from onlineCourseConfiguration for course with ID: {} and title: {}. Reason: {}",
-                    Optional.ofNullable(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getId).orElse(null),
-                    Optional.ofNullable(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getTitle).orElse(""), e.getMessage());
+                    Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getId).orElse(null),
+                    Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getTitle).orElse(""), e.getMessage());
             return null;
         }
     }
