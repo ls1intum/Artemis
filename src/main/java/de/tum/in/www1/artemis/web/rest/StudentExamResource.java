@@ -834,11 +834,12 @@ public class StudentExamResource {
         if (studentExam.isSubmitted() || studentExam.isAbandoned()) {
             throw new BadRequestException();
         }
-        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
-            throw new AccessForbiddenException("Exam", examId);
+        ZonedDateTime submissionTime = now();
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(submissionTime)) {
+            throw new AccessForbiddenException("FORBIDDEN: You tried to toggle a student exam " + studentExamId + " to submitted before the individual end date "
+                    + studentExam.getIndividualEndDateWithGracePeriod());
         }
 
-        ZonedDateTime submissionTime = now();
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
 
@@ -872,7 +873,8 @@ public class StudentExamResource {
             throw new BadRequestException();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
-            throw new AccessForbiddenException("Exam", examId);
+            throw new AccessForbiddenException("FORBIDDEN: You tried to toggle a student exam " + studentExamId + " to unsubmitted before the individual end date "
+                    + studentExam.getIndividualEndDateWithGracePeriod());
         }
 
         studentExam.setSubmissionDate(null);
