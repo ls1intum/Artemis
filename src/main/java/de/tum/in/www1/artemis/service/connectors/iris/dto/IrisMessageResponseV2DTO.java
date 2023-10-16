@@ -15,7 +15,7 @@ public record IrisMessageResponseV2DTO(String usedModel, ZonedDateTime sentAt, J
      * Not sure if this is a bug in Jackson or if it is intended behavior, either way this is a workaround.
      */
     @JsonCreator
-    public IrisMessageResponseV2DTO(@JsonProperty(value = "used_model", required = true) String usedModel, @JsonProperty(value = "sent_at", required = true) ZonedDateTime sentAt,
+    public IrisMessageResponseV2DTO(@JsonProperty(value = "usedModel", required = true) String usedModel, @JsonProperty(value = "sentAt", required = true) ZonedDateTime sentAt,
             @JsonProperty(value = "content", required = true) JsonNode content) {
         this.usedModel = usedModel;
         this.sentAt = sentAt;

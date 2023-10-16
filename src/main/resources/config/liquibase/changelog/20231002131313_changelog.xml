@@ -68,7 +68,7 @@
             <column name="exercise_component" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
-            <column name="instructions" type="VARCHAR(500)">
+            <column name="instructions" type="TEXT">
                 <constraints nullable="false"/>
             </column>
         </createTable>

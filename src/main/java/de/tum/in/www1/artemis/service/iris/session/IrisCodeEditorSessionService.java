@@ -85,7 +85,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             catch (GitAPIException e) {
                 throw new InternalServerErrorException("Could not get or checkout exercise repository");
             }
-        }).map(repositoryService::getFilesWithContent).orElse(Map.of());
+        }).map(repositoryService::getFilesWithContent).map(HashMap::new).orElseGet(HashMap::new);
         // There are a few files that we do not want to send to Iris
         contents.remove("readme.md");
         contents.remove(".gitignore");
@@ -230,9 +230,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 case "problem statement" -> ExerciseComponent.PROBLEM_STATEMENT;
                 case "solution" -> ExerciseComponent.SOLUTION_REPOSITORY;
                 case "template" -> ExerciseComponent.TEMPLATE_REPOSITORY;
-                case "test" -> ExerciseComponent.TEST_REPOSITORY;
-                default -> throw new IrisParseResponseException(new Throwable("Unknown exercise plan component"));
+                case "tests" -> ExerciseComponent.TEST_REPOSITORY;
+                default -> null;
             };
+            if (component == null) {
+                continue;
+            }
             components.add(new IrisExercisePlanComponent(exercisePlan, component, plan));
         }
         if (components.isEmpty()) {
