@@ -392,4 +392,19 @@ describe('CourseExercisesComponent', () => {
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(CourseUnenrollmentModalComponent, { size: 'xl' });
     });
+
+    it('should display timeframe view as default', () => {
+        const exercisesList = fixture.debugElement.query(By.directive(CourseExercisesGroupedByTimeframeComponent)).componentInstance;
+        expect(exercisesList).toBeTruthy();
+    });
+
+    describe('should change view', () => {
+        it('to timeframe view', () => {
+            // id="timeframe-view-selection">
+            // id="weekly-view-selection">
+            // TODO adjust me
+            // const timeframeViewSelectionElement = fixture.debugElement.query(By.css('#timeframe-view-selection'));
+            // timeframeViewSelectionElement.
+        });
+    });
 });

@@ -22,7 +22,7 @@ const DEFAULT_EXERCISE_GROUPS = {
 };
 
 @Component({
-    selector: 'jhi-course-exercises-grouped-by-category',
+    selector: 'jhi-course-exercises-grouped-by-timeframe',
     templateUrl: './course-exercises-grouped-by-timeframe.component.html',
     styleUrls: ['../course-overview.scss'],
 })

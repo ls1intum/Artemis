@@ -6,10 +6,18 @@
                     {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu>
-                    <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
+                    <a
+                        (click)="setShowExercisesGroupedByDueDateCategory(true)"
+                        class="dropdown-item {{ showExercisesGroupedByDueDateCategory ? 'active' : '' }}"
+                        id="timeframe-view-selection"
+                    >
                         {{ 'artemisApp.courseOverview.exerciseList.timeframeView' | artemisTranslate }}
                     </a>
-                    <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
+                    <a
+                        (click)="setShowExercisesGroupedByDueDateCategory(false)"
+                        class="dropdown-item {{ !showExercisesGroupedByDueDateCategory ? 'active' : '' }}"
+                        id="weekly-view-selection"
+                    >
                         {{ 'artemisApp.courseOverview.exerciseList.weeklyView' | artemisTranslate }}
                     </a>
                 </div>
@@ -117,7 +125,7 @@
             </div>
 
             <ng-container *ngIf="course?.exercises?.length !== 0; else noExercisesAvailableForCourse">
-                <jhi-course-exercises-grouped-by-category
+                <jhi-course-exercises-grouped-by-timeframe
                     *ngIf="showExercisesGroupedByDueDateCategory; else exercisesGroupedByWeek"
                     [filteredExercises]="filteredExercises"
                     [course]="course"
