@@ -6,17 +6,19 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
     selector: 'jhi-programming-exercise-example-solution-repo-download',
     template: `<jhi-button
         [disabled]="!exerciseId"
-        [btnType]="ButtonType.INFO"
+        [btnType]="displayedOnExamSummary ? ButtonType.PRIMARY_OUTLINE : ButtonType.INFO"
         [btnSize]="ButtonSize.MEDIUM"
         [shouldSubmit]="false"
         [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
         [icon]="faDownload"
         [title]="title"
         (onClick)="exportRepository()"
-    ></jhi-button>`,
+    />`,
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input() includeTests?: boolean;
+
+    @Input() displayedOnExamSummary: boolean = false;
 
     exportRepository() {
         if (this.exerciseId) {
