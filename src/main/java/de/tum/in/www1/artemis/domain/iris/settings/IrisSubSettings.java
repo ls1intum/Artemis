@@ -32,6 +32,14 @@ public class IrisSubSettings extends DomainObject {
     @Column(name = "preferredModel")
     private String preferredModel;
 
+    @Nullable
+    @Column(name = "rateLimit")
+    private Integer rateLimit;
+
+    @Nullable
+    @Column(name = "rateLimitTimeframeHours")
+    private Integer rateLimitTimeframeHours;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -56,5 +64,23 @@ public class IrisSubSettings extends DomainObject {
 
     public void setPreferredModel(@Nullable String preferredModel) {
         this.preferredModel = preferredModel;
+    }
+
+    @Nullable
+    public Integer getRateLimit() {
+        return rateLimit;
+    }
+
+    public void setRateLimit(@Nullable Integer rateLimit) {
+        this.rateLimit = rateLimit;
+    }
+
+    @Nullable
+    public Integer getRateLimitTimeframeHours() {
+        return rateLimitTimeframeHours;
+    }
+
+    public void setRateLimitTimeframeHours(@Nullable Integer rateLimitTimeframeHours) {
+        this.rateLimitTimeframeHours = rateLimitTimeframeHours;
     }
 }

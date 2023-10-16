@@ -17,9 +17,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
@@ -126,6 +128,26 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateConversationAnswerPostWithUserMentionOfUserNotInConversation() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        answerPostToSave.setContent("[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user]");
+
+        var countBefore = answerPostRepository.count();
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
+
+        // mentioned user is not a member of the conversation and should not be notified
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + mentionedUser.getId() + "/notifications"), any(SingleUserNotification.class));
     }
 
     @Test

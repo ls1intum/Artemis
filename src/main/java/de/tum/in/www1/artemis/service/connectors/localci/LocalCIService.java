@@ -5,12 +5,12 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -38,20 +38,22 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final LocalCIDockerService localCIDockerService;
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    String dockerImage;
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCIDockerService localCIDockerService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCIDockerService localCIDockerService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.localCIDockerService = localCIDockerService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         // Only check whether the docker image needed for the build plan exists.
-        localCIDockerService.pullDockerImage(dockerImage);
+        localCIDockerService.pullDockerImage(
+                programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType())));
     }
 
     @Override
