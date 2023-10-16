@@ -314,7 +314,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.addContent(createMockTextContent(messageToSend));
-        messageToSend.addContent(createMockExercisePlanContent(messageToSend));
+        messageToSend.addContent(createMockTextContent(messageToSend));
         messageToSend.addContent(createMockTextContent(messageToSend));
         return messageToSend;
     }
@@ -333,14 +333,4 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         return content;
     }
 
-    private IrisMessageContent createMockExercisePlanContent(IrisMessage message) {
-        var content = new IrisExercisePlanMessageContent();
-        content.setComponents(List.of(new IrisExercisePlanComponent(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
-                new IrisExercisePlanComponent(content, ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
-                new IrisExercisePlanComponent(content, ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),
-                new IrisExercisePlanComponent(content, ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")));
-        content.setId(ThreadLocalRandom.current().nextLong());
-        content.setMessage(message);
-        return content;
-    }
 }

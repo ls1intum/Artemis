@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository.iris;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
@@ -64,23 +63,6 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
     }
 
     /**
-     * Finds the newest code editor session for a given exercise and user ID, if one exists.
-     *
-     * @param exerciseId The ID of the exercise.
-     * @param userId     The ID of the user.
-     * @return The newest code editor session for the given exercise and user ID.
-     */
-    @Query("""
-            SELECT s
-            FROM IrisCodeEditorSession s
-            WHERE s.exercise.id = :exerciseId
-                AND s.user.id = :userId
-            ORDER BY s.creationDate DESC
-            LIMIT 1
-            """)
-    Optional<IrisCodeEditorSession> findNewestByExerciseIdAndUserId(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
-
-    /**
      * Finds the newest code editor session for a given exercise and user ID or throws an exception if none is found.
      *
      * @param exerciseId The ID of the exercise.
@@ -89,6 +71,10 @@ public interface IrisCodeEditorSessionRepository extends JpaRepository<IrisCodeE
      * @throws EntityNotFoundException if no session is found.
      */
     default IrisCodeEditorSession findNewestByExerciseIdAndUserIdElseThrow(long exerciseId, long userId) throws EntityNotFoundException {
-        return findNewestByExerciseIdAndUserId(exerciseId, userId).orElseThrow(() -> new EntityNotFoundException("Iris Code Editor Session"));
+        var result = findByExerciseIdAndUserId(exerciseId, userId);
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("Iris Code Editor Session");
+        }
+        return result.get(0);
     }
 }
