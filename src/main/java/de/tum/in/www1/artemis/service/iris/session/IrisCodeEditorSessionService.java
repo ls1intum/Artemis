@@ -139,7 +139,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
 
         // FIXME: Template and model should be be configurable; await settings update
-        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, "gpt-4-32k", params).handleAsync((response, err) -> {
+        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, "GPT3.5-turbo", params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
@@ -256,7 +256,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
             params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
             params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
-            irisConnectorService.sendRequestV2(prompt, "gpt-4-32k", params).handleAsync((response, err) -> {
+            irisConnectorService.sendRequestV2(prompt, "GPT3.5-turbo", params).handleAsync((response, err) -> {
                 if (err != null) {
                     log.error("Error while getting response from Iris model", err);
                     irisCodeEditorWebsocketService.sendException(session, err.getCause());

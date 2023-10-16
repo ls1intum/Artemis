@@ -150,22 +150,21 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         addDiffAndTemplatesForStudentAndExerciseIfPossible(chatSession.getUser(), exercise, parameters);
 
         var irisSettings = irisSettingsService.getCombinedIrisSettings(exercise, false);
-        irisConnectorService.sendRequest(irisSettings.getIrisChatSettings().getTemplate(), irisSettings.getIrisChatSettings().getPreferredModel(), parameters)
-                .handleAsync((irisMessage, throwable) -> {
-                    if (throwable != null) {
-                        log.error("Error while getting response from Iris model", throwable);
-                        irisChatWebsocketService.sendException(fullSession, throwable.getCause());
-                    }
-                    else if (irisMessage != null) {
-                        var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), fullSession, IrisMessageSender.LLM);
-                        irisChatWebsocketService.sendMessage(irisMessageSaved);
-                    }
-                    else {
-                        log.error("No response from Iris model");
-                        irisChatWebsocketService.sendException(fullSession, new IrisNoResponseException());
-                    }
-                    return null;
-                });
+        irisConnectorService.sendRequest(irisSettings.getIrisChatSettings().getTemplate(), "GPT3.5-turbo", parameters).handleAsync((irisMessage, throwable) -> {
+            if (throwable != null) {
+                log.error("Error while getting response from Iris model", throwable);
+                irisChatWebsocketService.sendException(fullSession, throwable.getCause());
+            }
+            else if (irisMessage != null) {
+                var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), fullSession, IrisMessageSender.LLM);
+                irisChatWebsocketService.sendMessage(irisMessageSaved);
+            }
+            else {
+                log.error("No response from Iris model");
+                irisChatWebsocketService.sendException(fullSession, new IrisNoResponseException());
+            }
+            return null;
+        });
     }
 
     private void addDiffAndTemplatesForStudentAndExerciseIfPossible(User student, ProgrammingExercise exercise, Map<String, Object> parameters) {
