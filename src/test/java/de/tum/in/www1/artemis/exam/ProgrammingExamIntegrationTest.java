@@ -2,18 +2,12 @@ package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,10 +34,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFa
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
@@ -123,7 +114,37 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleProgramming_visibleAndStartDateChanged() throws Exception {
+    void testUpdateExam_rescheduleProgramming_titleChanged_shouldNotReschedule() throws Exception {
+        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx.setTitle("New title");
+
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_rescheduleProgramming_changeDateSubSecondPrecision_shouldNotReschedule() throws Exception {
+        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+
+        ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
+        ZonedDateTime startDate = examWithProgrammingEx.getStartDate();
+        ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
+        examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate.plusNanos(1), startDate.plusNanos(1), endDate.plusNanos(1));
+
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_rescheduleProgramming_visibleAndStartDateChanged_shouldReschedule() throws Exception {
         // Add a programming exercise to the exam and change the dates in order to invoke a rescheduling
         var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
@@ -134,22 +155,27 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate.plusSeconds(1), startDate.plusSeconds(1), endDate);
 
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleProgramming_visibleDateChanged() throws Exception {
+    void testUpdateExam_rescheduleProgramming_visibleDateChanged_shouldReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
+
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleProgramming_startDateChanged() throws Exception {
+    void testUpdateExam_rescheduleProgramming_startDateChanged_shouldReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
@@ -159,12 +185,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate.plusSeconds(1), endDate);
 
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleProgramming_endDateChanged() throws Exception {
+    void testUpdateExam_rescheduleProgramming_endDateChanged_shouldReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
@@ -174,24 +202,23 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
         examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate, endDate.plusMinutes(1));
 
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
         verify(instanceMessageSendService).sendRescheduleAllStudentExams(examWithProgrammingEx.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExamWorkingTime_rescheduleProgramming_endDateChanged() throws Exception {
+    void testUpdateExamWorkingTime_rescheduleProgramming_endDateChanged_shouldReschedule() throws Exception {
         var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
         var workingTimeExtensionSeconds = 60;
 
-        ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
-        ZonedDateTime startDate = examWithProgrammingEx.getStartDate();
-        ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
-        examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate, endDate);
-
         request.patch("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId() + "/working-time", workingTimeExtensionSeconds,
                 HttpStatus.OK);
+
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
         verify(instanceMessageSendService).sendRescheduleAllStudentExams(examWithProgrammingEx.getId());
     }
 

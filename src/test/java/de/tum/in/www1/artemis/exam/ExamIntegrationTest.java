@@ -501,10 +501,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
         verify(examLiveEventsService, never()).createAndSendWorkingTimeUpdateEvent(any(), anyInt(), anyInt(), anyBoolean(), any());
-
-        // TODO: move this to `ProgrammingExamIntegrationTest`
-        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
-        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
@@ -516,9 +512,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
         verify(examLiveEventsService, never()).createAndSendWorkingTimeUpdateEvent(any(), anyInt(), anyInt(), anyBoolean(), any());
-
-        // TODO: move this to `ProgrammingExamIntegrationTest`
-        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
@@ -530,10 +523,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
         verify(examLiveEventsService, atLeastOnce()).createAndSendWorkingTimeUpdateEvent(any(), anyInt(), anyInt(), anyBoolean(), any());
-
-        // TODO: move this to `ProgrammingExamIntegrationTest`
-        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
-        verify(instanceMessageSendService, atLeastOnce()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
