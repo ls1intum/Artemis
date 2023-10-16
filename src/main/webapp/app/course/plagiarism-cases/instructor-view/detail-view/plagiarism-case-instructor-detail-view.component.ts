@@ -210,7 +210,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             inCourseOrExam: this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse')),
             courseOrExam: courseOrExamTitle,
             cocLink: 'https://artemis.in.tum.de/content/documents/student-code-of-conduct.pdf',
-            aspoLink: 'https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/apso/Lesb-F-APSO-vom-18-03-2011-mit-3-AeS-vom-27-04-18-ohne-Markierungen.pdf',
+            aspoLink: 'https://artemis.in.tum.de/content/documents/apso.pdf',
             dueDate: dayjs().add(7, 'day').format('DD.MM.YYYY'),
         });
     }
