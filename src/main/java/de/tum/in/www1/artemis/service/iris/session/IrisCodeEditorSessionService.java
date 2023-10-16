@@ -78,14 +78,21 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The contents of the repository
      */
     private Map<String, String> getRepositoryContents(@Nullable VcsRepositoryUrl vcsRepositoryUrl) {
-        return Optional.ofNullable(vcsRepositoryUrl).map(url -> {
+        var contents = Optional.ofNullable(vcsRepositoryUrl).map(url -> {
             try {
                 return gitService.getOrCheckoutRepository(url, true);
             }
             catch (GitAPIException e) {
                 throw new InternalServerErrorException("Could not get or checkout exercise repository");
             }
-        }).map(repositoryService::getFilesWithContent).orElse(Map.of());
+        }).map(repositoryService::getFilesWithContent).map(HashMap::new).orElseGet(HashMap::new);
+        contents.remove("readme.md");
+        contents.remove(".gitignore");
+        contents.remove(".gitattributes");
+        contents.remove("gradlew");
+        contents.remove("gradlew.bat");
+        contents.entrySet().removeIf(entry -> entry.getKey().startsWith("gradle/wrapper"));
+        return contents;
     }
 
     /**
