@@ -337,4 +337,27 @@ describe('MetisConversationService', () => {
 
         expect(numberOfSubscriptions).toBe(unreadMessages ? 1 : 0);
     });
+
+    it('should set code of conduct', () => {
+        metisConversationService.setCodeOfConduct();
+        metisConversationService.isCodeOfConductPresented$.subscribe((isCodeOfConductPresented: boolean) => {
+            expect(isCodeOfConductPresented).toBeTrue();
+        });
+    });
+
+    it('should check and accept code of conduct', () => {
+        const checkStub = jest.spyOn(conversationService, 'checkIsCodeOfConductAccepted').mockReturnValue(of(new HttpResponse<boolean>({ body: false })));
+        metisConversationService.checkIsCodeOfConductAccepted(course);
+        metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+            expect(isCodeOfConductAccepted).toBeFalse();
+        });
+        expect(checkStub).toHaveBeenCalledOnce();
+
+        const acceptStub = jest.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
+        metisConversationService.acceptCodeOfConduct(course);
+        metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+            expect(isCodeOfConductAccepted).toBeTrue();
+        });
+        expect(acceptStub).toHaveBeenCalledOnce();
+    });
 });
