@@ -603,7 +603,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A boolean indicating if the message is a student-sent message.
      */
     isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
-        console.log(message);
         return isStudentSentMessage(message);
     }
 
@@ -613,7 +612,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A boolean indicating if the message is a server-sent message.
      */
     isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
-        console.log(message);
         return isServerSentMessage(message);
     }
 

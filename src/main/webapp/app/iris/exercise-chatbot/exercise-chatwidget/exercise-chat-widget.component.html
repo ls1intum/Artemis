@@ -102,10 +102,9 @@
                                 </div>
                                 <!--TODO: Make it editable-->
                                 <span [innerHTML]="planComponent.instructions! | htmlForMarkdown"></span>
-                                <span [innerHTML]="getComponentInstruction(planComponent)! | htmlForMarkdown"></span>
                                 <!--TODO: Add cancel, confirm button-->
                             </div>
-                            <button style="all: unset" (click)="executePlan(message.id!, content.id!)">confirm</button>
+                            <button (click)="executePlan(message.id!, content.id!)" class="btn btn-primary">confirm</button>
                         </div>
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">

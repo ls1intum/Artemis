@@ -136,8 +136,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             }
             if (change.type === FileChangeType.CREATE) {
                 const fileChange = new CreateFileChange(FileType.FILE, change.file!);
-                this.codeEditorContainer.onFileChange([[change.updated!], fileChange]);
                 //aceEditor needs this.selectedFile === fileChange.fileName
+                this.codeEditorContainer.selectedFile = fileChange.fileName;
+                this.codeEditorContainer.onFileChange([[change.updated!], fileChange]);
             }
         });
     }
