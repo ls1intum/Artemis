@@ -6,8 +6,8 @@
             "archiveCourseSuccess": "The course has been archived!",
             "archiveExamSuccess": "The exam has been archived!",
             "archiveSuccessWithWarnings": "The archival process has completed with the following warnings:",
-            "archiveCourseError": "Failed to archive the course",
-            "archiveExamError": "Failed to archive the exam",
+            "archiveCourseError": "Failed to archive the course: {{ message }}",
+            "archiveExamError": "Failed to archive the exam: {{ message }}",
             "archiveDownloadError": "There was a problem downloading the archive",
             "downloadArchive": "Download Archive",
             "popup": {

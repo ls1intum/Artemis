@@ -6,8 +6,8 @@
             "archiveCourseSuccess": "Der Kurs wurde archiviert!",
             "archiveExamSuccess": "Die Prüfung wurde archiviert!",
             "archiveSuccessWithWarnings": "Der Archivierungsprozess wurde mit den folgenden Warnungen abgeschlossen:",
-            "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
-            "archiveExamError": "Die Prüfung konnte nicht archiviert werden",
+            "archiveCourseError": "Der Kurs konnte nicht archiviert werden: {{ message }}",
+            "archiveExamError": "Die Prüfung konnte nicht archiviert werden: {{ message }}",
             "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
             "downloadArchive": "Kursarchiv herunterladen",
             "popup": {

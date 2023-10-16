@@ -98,14 +98,18 @@ public class CourseExamExportService {
             Files.createDirectories(tmpCourseDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.", exportErrors, e);
+            String message = "Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.";
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message));
+            logMessageAndAppendToList(message, exportErrors, e);
             return Optional.empty();
         }
 
         // Export course exercises and exams
         List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors, reportData);
         if (exportedFiles.isEmpty()) {
-            exportErrors.add("Did not export course " + course.getId() + " because there are no exercises/exams to export.");
+            String message = "Did not export course " + course.getId() + " because there are no exercises/exams to export.";
+            exportErrors.add(message);
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message));
             return Optional.empty();
         }
 
@@ -163,7 +167,9 @@ public class CourseExamExportService {
             Files.createDirectories(tempExamsDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export exam " + exam.getId() + " because the temporary directory: " + tempExamsDir + " cannot be created.", exportErrors, e);
+            String message = "Failed to export exam " + exam.getId() + " because the temporary directory: " + tempExamsDir + " cannot be created.";
+            logMessageAndAppendToList(message, exportErrors, e);
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message));
             return Optional.empty();
         }
 
