@@ -35,12 +35,11 @@ jobs:
         build-command: make html dirhtml
     - uses: actions/upload-artifact@v3
       with:
-        name: Documentation
+        name: documentation
         path: docs/_build/html/
 
   # Deployment job
   deploy:
-    if: github.ref == 'refs/heads/develop'
     environment:
       name: documentation
       url: "https://docs.artemis.cit.tum.de"
@@ -50,7 +49,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: www
+          name: documentation
           path: public
       - name: Copy site to server
         uses: appleboy/scp-action@master
