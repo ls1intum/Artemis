@@ -139,28 +139,30 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
 
         // FIXME: Template and model should be be configurable; await settings update
-        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, "GPT3.5-turbo", params).handleAsync((response, err) -> {
-            if (err != null) {
-                log.error("Error while getting response from Iris model", err);
-                irisCodeEditorWebsocketService.sendException(session, err.getCause());
-            }
-            else if (response == null) {
-                log.error("No response from Iris model");
-                irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
-            }
-            else {
-                try {
-                    var irisMessage = toIrisMessage(response.content());
-                    var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
-                    irisCodeEditorWebsocketService.sendMessage(saved);
-                }
-                catch (IrisParseResponseException e) {
-                    log.error("Error while parsing response from Iris model", e);
-                    irisCodeEditorWebsocketService.sendException(session, e);
-                }
-            }
-            return null;
-        });
+        var irisSettings = irisSettingsService.getCombinedIrisSettings(exercise, false);
+        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, irisSettings.getIrisChatSettings().getPreferredModel(), params)
+                .handleAsync((response, err) -> {
+                    if (err != null) {
+                        log.error("Error while getting response from Iris model", err);
+                        irisCodeEditorWebsocketService.sendException(session, err.getCause());
+                    }
+                    else if (response == null) {
+                        log.error("No response from Iris model");
+                        irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
+                    }
+                    else {
+                        try {
+                            var irisMessage = toIrisMessage(response.content());
+                            var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
+                            irisCodeEditorWebsocketService.sendMessage(saved);
+                        }
+                        catch (IrisParseResponseException e) {
+                            log.error("Error while parsing response from Iris model", e);
+                            irisCodeEditorWebsocketService.sendException(session, e);
+                        }
+                    }
+                    return null;
+                });
     }
 
     private static IrisMessage toIrisMessage(JsonNode content) throws IrisParseResponseException {
