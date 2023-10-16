@@ -158,7 +158,13 @@
             </ol>
 
             <div
-                [ngbTooltip]="!isExamOver() ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
+                [ngbTooltip]="
+                    !isExamOver()
+                        ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate)
+                        : studentExam.abandoned
+                        ? 'The student abandoned his/ her exam. It can not be submitted.'
+                        : ''
+                "
                 placement="right"
                 class="d-inline"
             >
@@ -167,7 +173,7 @@
                     type="button"
                     *ngIf="course?.isAtLeastInstructor"
                     (click)="openConfirmationModal(toggleSubmitPopUp)"
-                    [disabled]="!isExamOver() || isSaving"
+                    [disabled]="!isExamOver() || isSaving || studentExam.abandoned"
                     id="adjust-submitted-state-button"
                 >
                     <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
