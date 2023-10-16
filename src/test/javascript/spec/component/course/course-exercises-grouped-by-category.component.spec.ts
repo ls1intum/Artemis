@@ -89,7 +89,7 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
             expect(component.exerciseGroups).toEqual(defaultExerciseGroups);
         });
 
-        it('should assign exercises to correct groups', () => {
+        it('should assign exercises to correct groups with correct collapsed state', () => {
             const ngOnChangesSpy = jest.spyOn(component, 'ngOnChanges');
             //@ts-ignore spying on private method
             const groupExerciseByDueDateSpy = jest.spyOn(component, 'groupExercisesByDueDate');
@@ -107,14 +107,61 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
             expect(component.exerciseGroups.current.exercises).toEqual([currentExercise_1, currentExercise_2]);
             expect(component.exerciseGroups.future.exercises).toEqual([futureExercise_1, futureExercise_2]);
             expect(component.exerciseGroups.noDueDate.exercises).toEqual([noDueDateExercise_1, noDueDateExercise_2]);
+
+            expect(component.exerciseGroups.past.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.current.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.future.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.noDueDate.isCollapsed).toBeTrue();
+        });
+    });
+
+    describe('adjustExpandedOrCollapsedStateOfExerciseGroups', () => {
+        it('should never expand past section by default', () => {
+            component.filteredExercises = [pastExercise_1];
+
+            component.ngOnChanges();
+
+            expect(component.exerciseGroups.past.isCollapsed).toBeTrue();
         });
 
-        describe('should ensure that at least one exerciseGroup is expanded', () => {
-            it('but never expand past section by default', () => {
-                component.filteredExercises = [pastExercise_1, pastExercise_2];
+        it('should expand noDueDate section', () => {
+            component.filteredExercises = [pastExercise_1, noDueDateExercise_1];
 
-                component.ngOnChanges();
-            });
+            component.ngOnChanges();
+
+            expect(component.exerciseGroups.past.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.noDueDate.isCollapsed).toBeFalse();
+        });
+
+        it('should expand future section', () => {
+            component.filteredExercises = [pastExercise_1, futureExercise_1, noDueDateExercise_1];
+
+            component.ngOnChanges();
+
+            expect(component.exerciseGroups.past.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.future.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.noDueDate.isCollapsed).toBeTrue();
+        });
+
+        it('should expand current section', () => {
+            component.filteredExercises = [pastExercise_1, currentExercise_1, noDueDateExercise_1];
+
+            component.ngOnChanges();
+
+            expect(component.exerciseGroups.past.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.current.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.noDueDate.isCollapsed).toBeTrue();
+        });
+
+        it('should expand current and future section', () => {
+            component.filteredExercises = [pastExercise_1, currentExercise_1, futureExercise_1, noDueDateExercise_1];
+
+            component.ngOnChanges();
+
+            expect(component.exerciseGroups.past.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.current.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.future.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.noDueDate.isCollapsed).toBeTrue();
         });
     });
 });
