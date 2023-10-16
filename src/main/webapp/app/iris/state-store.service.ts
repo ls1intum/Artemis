@@ -7,6 +7,7 @@ import {
     HistoryMessageLoadedAction,
     MessageStoreAction,
     MessageStoreState,
+    RateLimitUpdatedAction,
     RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
@@ -14,6 +15,7 @@ import {
     isConversationErrorOccurredAction,
     isHistoryMessageLoadedAction,
     isNumNewMessagesResetAction,
+    isRateLimitUpdatedAction,
     isRateMessageSuccessAction,
     isSessionReceivedAction,
     isStudentMessageSentAction,
@@ -35,6 +37,9 @@ export class IrisStateStore implements OnDestroy {
         numNewMessages: 0,
         error: null,
         serverResponseTimeout: null,
+        currentMessageCount: -1,
+        rateLimit: -1,
+        rateLimitTimeframeHours: -1,
     };
 
     private readonly action = new Subject<ResolvableAction>();
@@ -151,6 +156,9 @@ export class IrisStateStore implements OnDestroy {
                 numNewMessages: state.numNewMessages + 1,
                 error: defaultError,
                 serverResponseTimeout: null,
+                currentMessageCount: state.currentMessageCount,
+                rateLimit: state.rateLimit,
+                rateLimitTimeframeHours: state.rateLimitTimeframeHours,
             };
         }
         if (isConversationErrorOccurredAction(action)) {
@@ -218,6 +226,23 @@ export class IrisStateStore implements OnDestroy {
             }
 
             return state;
+        }
+        if (isRateLimitUpdatedAction(action)) {
+            const castedAction = action as RateLimitUpdatedAction;
+            const rateLimitInfo = castedAction.rateLimitInfo;
+            let errorMessage: IrisErrorType | null = null;
+            if (rateLimitInfo.rateLimit >= 0 && rateLimitInfo.currentMessageCount >= rateLimitInfo.rateLimit) {
+                errorMessage = errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED];
+                errorMessage.paramsMap = new Map<string, any>();
+                errorMessage.paramsMap.set('hours', rateLimitInfo.rateLimitTimeframeHours);
+            }
+            return {
+                ...state,
+                error: errorMessage,
+                currentMessageCount: rateLimitInfo.currentMessageCount,
+                rateLimit: rateLimitInfo.rateLimit,
+                rateLimitTimeframeHours: rateLimitInfo.rateLimitTimeframeHours,
+            };
         }
 
         IrisStateStore.exhaustiveCheck(action);

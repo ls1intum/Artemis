@@ -17,8 +17,8 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
     @Query("""
             SELECT irisSettings
             FROM IrisSettings irisSettings
-            LEFT JOIN FETCH irisSettings.irisChatSettings ics
-            LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
+                LEFT JOIN FETCH irisSettings.irisChatSettings ics
+                LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
             WHERE type(irisSettings) = IrisGlobalSettings
             """)
     Set<IrisGlobalSettings> findAllGlobalSettings();

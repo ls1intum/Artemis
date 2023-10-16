@@ -172,6 +172,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEditCourseShouldPreserveIrisSettings() throws Exception {
+        courseTestService.testEditCourseShouldPreserveIrisSettings();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseGroups() throws Exception {
         courseTestService.testUpdateCourseGroups();
@@ -686,6 +692,24 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
         courseTestService.searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchMembersForUserMentionsSearchTermFilteringCorrect() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsSearchTermFilteringCorrect();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchMembersForUserMentionsSearchResultLimit() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsSearchResultLimit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void tearchMembersForUserMentionsNoSearchTerm() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsNoSearchTerm();
     }
 
     @Test

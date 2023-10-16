@@ -642,8 +642,16 @@ public class StudentExamResource {
         AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
         auditEventRepository.add(auditEvent);
 
-        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
-                numberOfGeneratedParticipations, formatDurationFrom(start), examId));
+        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> {
+            log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
+            if (ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(exam))) {
+                // This is a special case if "prepare exercise start" was pressed shortly before the exam start
+                // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
+                // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
+                // Since this gets never executed here, we need to manually schedule the locking.
+                instanceMessageSendService.sendRescheduleAllStudentExams(examId);
+            }
+        });
         return ResponseEntity.ok().build();
     }
 
@@ -763,11 +771,12 @@ public class StudentExamResource {
         if (studentExam.isSubmitted()) {
             throw new BadRequestException();
         }
-        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
-            throw new AccessForbiddenException("Exam", examId);
+        ZonedDateTime submissionTime = now();
+        if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(submissionTime)) {
+            throw new AccessForbiddenException("FORBIDDEN: You tried to toggle a student exam " + studentExamId + " to submitted before the individual end date "
+                    + studentExam.getIndividualEndDateWithGracePeriod());
         }
 
-        ZonedDateTime submissionTime = now();
         studentExam.setSubmissionDate(submissionTime);
         studentExam.setSubmitted(true);
 
@@ -801,7 +810,8 @@ public class StudentExamResource {
             throw new BadRequestException();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(now())) {
-            throw new AccessForbiddenException("Exam", examId);
+            throw new AccessForbiddenException("FORBIDDEN: You tried to toggle a student exam " + studentExamId + " to unsubmitted before the individual end date "
+                    + studentExam.getIndividualEndDateWithGracePeriod());
         }
 
         studentExam.setSubmissionDate(null);
