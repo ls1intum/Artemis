@@ -269,7 +269,7 @@ public class StudentExamResource {
             return ResponseEntity.ok().build();
         }
 
-        if (studentExamFromClient.isAbandoned() || existingStudentExam.isAbandoned()) {
+        if (Boolean.TRUE.equals(studentExamFromClient.isAbandoned()) || Boolean.TRUE.equals(existingStudentExam.isAbandoned())) {
             log.error("Student exam with id {} for user {} is abandoned.", studentExamFromClient.getId(), currentUser.getLogin());
             // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
             return ResponseEntity.ok().build();
