@@ -426,6 +426,11 @@
             "fullName": "Maximilian Anzinger",
             "sortBy": "Anzinger",
             "photoDirectory": "public/images/about/Maximilian_Anzinger.jpg"
+        },
+        {
+            "fullName": "Valentin Böhm",
+            "sortBy": "Böhm",
+            "photoDirectory": "public/images/about/Valentin_Boehm.jpg"
         }
     ]
 }
