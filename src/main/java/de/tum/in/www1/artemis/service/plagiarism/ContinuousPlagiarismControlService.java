@@ -126,6 +126,7 @@ public class ContinuousPlagiarismControlService {
         var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
                 plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
 
+        log.info("CPC - 07 - {}", plagiarismCases.size());
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null).map(ContinuousPlagiarismControlService::buildCpcPost)
                 .forEach(postService::createContinuousPlagiarismControlPlagiarismCasePost);
     }

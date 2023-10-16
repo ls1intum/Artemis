@@ -8,6 +8,8 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +37,8 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 
 @Service
 public class SingleUserNotificationService {
+
+    private final Logger log = LoggerFactory.getLogger(SingleUserNotificationService.class);
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
@@ -469,7 +473,9 @@ public class SingleUserNotificationService {
         boolean skipSend = type == CONVERSATION_NEW_REPLY_MESSAGE && Objects.equals(notification.getRecipient().getId(), author.getId());
 
         // checks if this notification type has email support
+        log.info("CPC - 01 - {} {}", type, skipSend);
         if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type) && !skipSend) {
+            log.info("CPC - 02");
             notificationService.sendNotification(notification, notification.getRecipient(), notificationSubject);
         }
     }

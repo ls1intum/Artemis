@@ -7,6 +7,8 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,8 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
     private final MailService mailService;
 
     private final NotificationSettingsService notificationSettingsService;
+
+    private static final Logger log = LoggerFactory.getLogger(GeneralInstantNotificationService.class);
 
     /**
      * Constructor to create a GeneralInstantNotificationService
@@ -59,7 +63,9 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
         boolean allowsPush = notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, user, PUSH);
 
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
+        log.info("CPC - 03 - {} {}", allowsEmail, type);
         if (allowsEmail && notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
+            log.info("CPC - 04");
             mailService.sendNotification(notification, user, notificationSubject);
         }
 

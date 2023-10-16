@@ -115,7 +115,8 @@ public class MailService implements InstantNotificationService {
      */
     @Async
     public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
+        log.info("CPC - 06");
+        log.info("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
@@ -279,6 +280,7 @@ public class MailService implements InstantNotificationService {
             checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, exercise, user);
         }
         if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
+            log.info("CPC - 05");
             subject = setPlagiarismContextAndSubject(context, notificationType, notification, plagiarismCase);
         }
 
