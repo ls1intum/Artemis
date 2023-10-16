@@ -1,10 +1,24 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
-import { faBan, faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+
+import {
+    faAt,
+    faBan,
+    faChalkboardUser,
+    faCheckDouble,
+    faFile,
+    faFileUpload,
+    faFont,
+    faKeyboard,
+    faMessage,
+    faPaperclip,
+    faProjectDiagram,
+} from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
 import { MatDialog } from '@angular/material/dialog';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
@@ -13,6 +27,7 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;
+    @Output() userReferenceClicked = new EventEmitter<string>();
 
     imageNotFound = false;
 
@@ -21,12 +36,16 @@ export class PostingContentPartComponent {
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
-    faFile = faFile;
-    faBan = faBan;
+    protected readonly faFile = faFile;
+    protected readonly faBan = faBan;
+    protected readonly faAt = faAt;
+
+    protected readonly ReferenceType = ReferenceType;
 
     constructor(
         private fileService: FileService,
         private dialog: MatDialog,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -77,6 +96,17 @@ export class PostingContentPartComponent {
                 return faFile;
             default:
                 return faPaperclip;
+        }
+    }
+
+    /**
+     * Emit an event if the clicked user reference is different from the current user
+     *
+     * @param referenceUserLogin login of the referenced user
+     */
+    onClickUserReference(referenceUserLogin: string | undefined) {
+        if (referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
+            this.userReferenceClicked.emit(referenceUserLogin);
         }
     }
 }
