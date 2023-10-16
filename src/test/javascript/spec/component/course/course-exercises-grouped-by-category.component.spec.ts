@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ArtemisTestModule } from '../../test.module';
 import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
@@ -7,6 +6,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { CourseExercisesGroupedByCategoryComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-category.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
+import { cloneDeep } from 'lodash-es';
 
 const pastExercise_1 = {
     id: 1,
@@ -163,5 +163,54 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
             expect(component.exerciseGroups.future.isCollapsed).toBeFalse();
             expect(component.exerciseGroups.noDueDate.isCollapsed).toBeTrue();
         });
+
+        describe('should handle search', () => {
+            it('by expanding all exerciseGroups', () => {
+                //@ts-ignore spying on private method
+                const expandAllExercisesAndSaveStateBeforeSearchSpy = jest.spyOn(component, 'expandAllExercisesAndSaveStateBeforeSearch');
+
+                component.filteredExercises = filteredExercises;
+                component.appliedSearchString = 'Text Exercise Title';
+
+                component.ngOnChanges();
+
+                expect(expandAllExercisesAndSaveStateBeforeSearchSpy).toHaveBeenCalledOnce();
+
+                expectAllExerciseGroupsAreExpanded();
+            });
+
+            it('by saving collapsed states from before search', () => {
+                //@ts-ignore spying on private method
+                const expandAllExercisesAndSaveStateBeforeSearchSpy = jest.spyOn(component, 'expandAllExercisesAndSaveStateBeforeSearch');
+
+                component.filteredExercises = filteredExercises;
+                component.ngOnChanges();
+                component.exerciseGroups.past.isCollapsed = false;
+                component.exerciseGroups.current.isCollapsed = true;
+                component.exerciseGroups.future.isCollapsed = true;
+                component.exerciseGroups.noDueDate.isCollapsed = true;
+
+                const exerciseGroupsBeforeSearch = cloneDeep(component.exerciseGroups);
+                component.appliedSearchString = 'Text Exercise Title';
+
+                component.ngOnChanges();
+
+                expect(expandAllExercisesAndSaveStateBeforeSearchSpy).toHaveBeenCalledOnce();
+                expect(component.exerciseGroupsBeforeSearch).toEqual(exerciseGroupsBeforeSearch);
+                expectAllExerciseGroupsAreExpanded();
+
+                // properly resetting after search is over
+                component.appliedSearchString = '';
+                component.ngOnChanges();
+                expect(component.exerciseGroups).toEqual(exerciseGroupsBeforeSearch);
+            });
+        });
     });
+
+    function expectAllExerciseGroupsAreExpanded() {
+        expect(component.exerciseGroups.past.isCollapsed).toBeFalse();
+        expect(component.exerciseGroups.current.isCollapsed).toBeFalse();
+        expect(component.exerciseGroups.future.isCollapsed).toBeFalse();
+        expect(component.exerciseGroups.noDueDate.isCollapsed).toBeFalse();
+    }
 });
