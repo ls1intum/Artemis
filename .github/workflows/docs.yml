@@ -40,6 +40,7 @@ jobs:
 
   # Deployment job
   deploy:
+    if: github.ref == 'refs/heads/develop'
     environment:
       name: documentation
       url: "https://docs.artemis.cit.tum.de"
@@ -62,7 +63,7 @@ jobs:
           proxy_key: ${{ secrets.PROXY_KEY }}
           proxy_port: ${{ secrets.PROXY_PORT }}
           source: "public"
-          target: ${{ secrets.DOCS_HOME }}}
+          target: ${{ secrets.DOCS_HOME }}
       - name: Move site to www
         uses: appleboy/ssh-action@master
         with:
@@ -75,4 +76,4 @@ jobs:
           proxy_port: ${{ secrets.PROXY_PORT }}
           script: |
               sudo rm -rf ${{ secrets.DOCS_WWW }}/*
-              sudo mv -f public/* ${{ secrets.DOCS_WWW }}}/
+              sudo mv -f public/* ${{ secrets.DOCS_WWW }}/
