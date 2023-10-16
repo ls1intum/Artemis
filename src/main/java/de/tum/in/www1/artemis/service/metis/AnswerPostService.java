@@ -66,6 +66,9 @@ public class AnswerPostService extends PostingService {
         }
 
         final Course course = preCheckUserAndCourseForCommunication(user, courseId);
+
+        parseUserMentions(course, answerPost.getContent());
+
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
         // increase answerCount of post needed for sorting
@@ -106,6 +109,8 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = preCheckUserAndCourseForCommunication(user, courseId);
+
+        parseUserMentions(course, answerPost.getContent());
 
         AnswerPost updatedAnswerPost;
 

@@ -14,14 +14,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
@@ -95,6 +101,8 @@ public class ConversationMessagingService extends PostingService {
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
 
+        Set<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
+
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
@@ -113,14 +121,16 @@ public class ConversationMessagingService extends PostingService {
         }
 
         // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
-        notifyAboutMessageCreation(author, savedConversation, course, createdMessage);
+        notifyAboutMessageCreation(author, savedConversation, course, createdMessage, mentionedUsers);
 
         return createdMessage;
     }
 
-    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage) {
+    private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
         Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
+        // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
+        broadcastRecipients.addAll(mentionedUsers);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
@@ -142,7 +152,7 @@ public class ConversationMessagingService extends PostingService {
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        var notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients);
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
     }
 
@@ -156,16 +166,18 @@ public class ConversationMessagingService extends PostingService {
      * @param author              the author of the message
      * @param conversation        the conversation the new message has been written in
      * @param webSocketRecipients the list of users that should be filtered
+     * @param mentionedUsers      users mentioend within the message
      * @return filtered list of users that are supposed to receive a notification
      */
-    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients) {
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients,
+            Set<User> mentionedUsers) {
         // Initialize filter with check for author
         Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.user().getId(), author.getId());
 
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden() || mentionedUsers.contains(recipientSummary.user()));
             }
 
             // If a channel is not visible to students, filter out participants that are only students
@@ -242,6 +254,9 @@ public class ConversationMessagingService extends PostingService {
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+
+        parseUserMentions(course, messagePost.getContent());
+
         // update: allow overwriting of values only for depicted fields
         existingMessage.setContent(messagePost.getContent());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
