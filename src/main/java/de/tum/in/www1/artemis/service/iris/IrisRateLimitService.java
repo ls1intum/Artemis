@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.service.iris.exception.IrisRateLimitExceededException;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 /**
  * Service for the rate limit of the iris chatbot.

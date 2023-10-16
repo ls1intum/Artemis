@@ -25,6 +25,10 @@ public class IrisChatSubSettings extends IrisSubSettings {
     private Integer rateLimit;
 
     @Nullable
+    @Column(name = "rate_limit_timeframe_hours")
+    private Integer rateLimitTimeframeHours;
+
+    @Nullable
     public IrisTemplate getTemplate() {
         return template;
     }
@@ -40,5 +44,14 @@ public class IrisChatSubSettings extends IrisSubSettings {
 
     public void setRateLimit(@Nullable Integer rateLimit) {
         this.rateLimit = rateLimit;
+    }
+
+    @Nullable
+    public Integer getRateLimitTimeframeHours() {
+        return rateLimitTimeframeHours;
+    }
+
+    public void setRateLimitTimeframeHours(@Nullable Integer rateLimitTimeframeHours) {
+        this.rateLimitTimeframeHours = rateLimitTimeframeHours;
     }
 }
