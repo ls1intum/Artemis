@@ -419,7 +419,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.3"
+    gradleVersion = "8.4"
 }
 
 tasks.register("stage") {
