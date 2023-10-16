@@ -75,13 +75,6 @@ public class ConversationMessagingService extends PostingService {
      * @return the created message and associated data
      */
     public CreatedConversationMessage createMessage(Long courseId, Post newMessage) {
-        if (newMessage.getId() != null) {
-            throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
-        }
-        if (newMessage.getConversation() == null || newMessage.getConversation().getId() == null) {
-            throw new BadRequestAlertException("A new message post must have a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
-        }
-
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
@@ -95,11 +88,13 @@ public class ConversationMessagingService extends PostingService {
 
         // extra checks for channels
         if (conversation instanceof Channel channel) {
+            // TODO: this basically does the same SQL check as "conversationService.isMemberElseThrow" above
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
 
         Set<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
 
+        // TODO: this update could theoretically be done async as it is not relevant for the returned data on the client
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
+import static de.tum.in.www1.artemis.service.metis.PostingService.METIS_POST_ENTITY_NAME;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -23,6 +25,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -52,8 +55,16 @@ public class ConversationMessageResource {
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
+        long start = System.nanoTime();
+        if (post.getId() != null) {
+            throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+        }
+        if (post.getConversation() == null || post.getConversation().getId() == null) {
+            throw new BadRequestAlertException("A new message post must have a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
+        }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
+        log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
                 .body(createdMessageData.messageWithHiddenDetails());
     }
@@ -106,7 +117,9 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
+        long start = System.nanoTime();
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
+        log.info("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
     }
 
@@ -121,8 +134,10 @@ public class ConversationMessageResource {
     @DeleteMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
+        long start = System.nanoTime();
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
+        log.info("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
     }
 }

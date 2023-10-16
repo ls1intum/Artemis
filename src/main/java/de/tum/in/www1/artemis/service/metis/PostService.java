@@ -41,8 +41,6 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 @Service
 public class PostService extends PostingService {
 
-    private static final String METIS_POST_ENTITY_NAME = "metis.post";
-
     public static final int TOP_K_SIMILARITY_RESULTS = 5;
 
     private final PostRepository postRepository;
@@ -287,7 +285,7 @@ public class PostService extends PostingService {
 
             // protect sample solution, grading instructions, etc.
             plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-            plagiarismCasePosts.stream().forEach(post -> post.setCourse(course));
+            plagiarismCasePosts.forEach(post -> post.setCourse(course));
 
             return plagiarismCasePosts;
         }
@@ -370,10 +368,10 @@ public class PostService extends PostingService {
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toCollection(ArrayList::new));
+        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream()
+                .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).collect(Collectors.toList());
 
         // sort course posts by calculated similarity scores
-        coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
         setAuthorRoleOfPostings(coursePosts);
         return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
     }
