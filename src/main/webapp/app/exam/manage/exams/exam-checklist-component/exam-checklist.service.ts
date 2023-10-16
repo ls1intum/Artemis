@@ -169,4 +169,8 @@ export class ExamChecklistService {
     getStartedTopic(exam: Exam) {
         return `/topic/exam/${exam.id}/started`;
     }
+
+    getAbandonedTopic(exam: Exam) {
+        return `/topic/exam/${exam.id}/abandoned`;
+    }
 }

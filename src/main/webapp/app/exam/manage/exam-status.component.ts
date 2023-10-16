@@ -59,6 +59,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
+    numberOfAbandoned = 0;
 
     // Icons
     faTimes = faTimes;
@@ -80,6 +81,9 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.subscribe(startedTopic);
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        const abandonedTopic = this.examChecklistService.getAbandonedTopic(this.exam);
+        this.websocketService.subscribe(abandonedTopic);
+        this.websocketService.receive(abandonedTopic).subscribe(() => (this.numberOfAbandoned += 1));
     }
 
     ngOnChanges(): void {
@@ -104,6 +108,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
+            this.numberOfAbandoned = this.examChecklist.numberOfExamsAbandoned;
         });
     }
 
@@ -112,6 +117,8 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
         this.websocketService.unsubscribe(submittedTopic);
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
         this.websocketService.unsubscribe(startedTopic);
+        const abandonedTopic = this.examChecklistService.getAbandonedTopic(this.exam);
+        this.websocketService.unsubscribe(abandonedTopic);
     }
 
     /**

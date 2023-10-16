@@ -7,6 +7,8 @@ export class ExamChecklist {
 
     public numberOfExamsStarted: number;
 
+    public numberOfExamsAbandoned: number;
+
     public numberOfTotalParticipationsForAssessment: number;
 
     public numberOfTotalExamAssessmentsFinishedByCorrectionRound?: number[]; // all exercises summed up

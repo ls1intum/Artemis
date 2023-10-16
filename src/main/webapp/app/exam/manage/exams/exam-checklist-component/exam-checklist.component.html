@@ -317,6 +317,9 @@
                         <div *ngIf="examChecklist && numberOfSubmitted! === 0">
                             <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
                         </div>
+                        <!-- Display abandoned exams-->
+                        <span>Abandoned Exams : {{ numberOfAbandoned }}</span>
+                        <br />
                     </td>
                     <td>
                         <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">

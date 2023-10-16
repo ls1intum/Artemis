@@ -106,6 +106,14 @@
                         %)
                     </span>
                 </li>
+                <li>
+                    <span>
+                        Abandoned Exams :
+                        {{ numberOfAbandoned }}
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((numberOfAbandoned * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}
+                        %)
+                    </span>
+                </li>
             </ol>
         </div>
     </div>

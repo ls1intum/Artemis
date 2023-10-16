@@ -1047,9 +1047,14 @@ public class ExamService {
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
             }
+            long numberOfStudentExamsAbandoned = studentExamRepository.countStudentExamsAbandonedByExamIdIgnoreTestRuns(exam.getId());
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of student exams abandoned done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
 
             examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
             examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
+            examChecklistDTO.setNumberOfExamsAbandoned(numberOfStudentExamsAbandoned);
         }
         examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
         return examChecklistDTO;

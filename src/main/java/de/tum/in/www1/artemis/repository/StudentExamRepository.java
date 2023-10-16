@@ -144,6 +144,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @Query("""
+            SELECT count(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+            	AND se.abandoned = TRUE
+            	AND se.testRun = FALSE
+            """)
+    long countStudentExamsAbandonedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+
+    @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e

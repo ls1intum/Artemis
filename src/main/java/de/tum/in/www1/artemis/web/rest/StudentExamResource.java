@@ -343,8 +343,7 @@ public class StudentExamResource {
 
         studentExamService.abandonStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
-        // TODO: Update
-        websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
+        websocketMessagingService.sendMessage("/topic/exam/" + examId + "/abandoned", "");
 
         log.info("Completed abandonStudentExam for user {} in a total time of {}", currentUser.getLogin(), formatDurationFrom(start));
         return ResponseEntity.ok().build();

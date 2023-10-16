@@ -20,6 +20,8 @@ public class ExamChecklistDTO {
 
     private Long numberOfExamsStarted;
 
+    private Long numberOfExamsAbandoned;
+
     private Long numberOfAllComplaints;
 
     private Long numberOfAllComplaintsDone;
@@ -48,6 +50,14 @@ public class ExamChecklistDTO {
 
     public void setNumberOfExamsSubmitted(Long numberOfExamsSubmitted) {
         this.numberOfExamsSubmitted = numberOfExamsSubmitted;
+    }
+
+    public Long getNumberOfExamsAbandoned() {
+        return numberOfExamsAbandoned;
+    }
+
+    public void setNumberOfExamsAbandoned(Long numberOfExamsAbandoned) {
+        this.numberOfExamsAbandoned = numberOfExamsAbandoned;
     }
 
     public Long[] getNumberOfTotalExamAssessmentsFinishedByCorrectionRound() {
