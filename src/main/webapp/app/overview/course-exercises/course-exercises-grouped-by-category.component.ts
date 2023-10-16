@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm/';
@@ -26,7 +26,7 @@ const DEFAULT_EXERCISE_GROUPS = {
     templateUrl: './course-exercises-grouped-by-category.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExercisesGroupedByCategoryComponent implements OnInit, OnChanges {
+export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     protected readonly Object = Object;
 
     @Input() filteredExercises?: Exercise[];
@@ -42,10 +42,6 @@ export class CourseExercisesGroupedByCategoryComponent implements OnInit, OnChan
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
     faChevronRight = faChevronRight;
-
-    ngOnInit() {
-        this.exerciseGroups = this.groupExercisesByDueDate();
-    }
 
     ngOnChanges() {
         this.exerciseGroups = this.groupExercisesByDueDate();

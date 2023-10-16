@@ -84,7 +84,7 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
             component.filteredExercises = undefined;
             const defaultExerciseGroups = component.getDefaultExerciseGroups();
 
-            fixture.detectChanges();
+            component.ngOnChanges();
 
             expect(component.exerciseGroups).toEqual(defaultExerciseGroups);
         });
@@ -204,6 +204,29 @@ describe('CourseExercisesGroupedByCategoryComponent', () => {
                 component.ngOnChanges();
                 expect(component.exerciseGroups).toEqual(exerciseGroupsBeforeSearch);
             });
+        });
+
+        it('should keep current collapsed states if filter is applied', () => {
+            //@ts-ignore spying on private method
+            const keepCurrentCollapsedOrExpandedStateOfExerciseGroupsSpy = jest.spyOn(component, 'keepCurrentCollapsedOrExpandedStateOfExerciseGroups');
+
+            component.filteredExercises = [pastExercise_1, pastExercise_2, currentExercise_1, currentExercise_2, futureExercise_1, noDueDateExercise_1];
+            component.appliedSearchString = '';
+            component.ngOnChanges();
+            component.exerciseGroups.past.isCollapsed = false;
+            component.exerciseGroups.current.isCollapsed = true;
+            component.exerciseGroups.future.isCollapsed = true;
+            component.exerciseGroups.noDueDate.isCollapsed = false;
+
+            const exercisesWithNewAppliedFilter = [pastExercise_1, currentExercise_2, futureExercise_1];
+            component.filteredExercises = exercisesWithNewAppliedFilter;
+
+            component.ngOnChanges();
+            expect(keepCurrentCollapsedOrExpandedStateOfExerciseGroupsSpy).toHaveBeenCalledTimes(2);
+            expect(component.exerciseGroups.past.isCollapsed).toBeFalse();
+            expect(component.exerciseGroups.current.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.future.isCollapsed).toBeTrue();
+            expect(component.exerciseGroups.noDueDate.isCollapsed).toBeFalse();
         });
     });
 
