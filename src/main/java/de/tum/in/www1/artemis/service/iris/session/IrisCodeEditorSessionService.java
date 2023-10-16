@@ -224,7 +224,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 case "problem statement" -> ExerciseComponent.PROBLEM_STATEMENT;
                 case "solution" -> ExerciseComponent.SOLUTION_REPOSITORY;
                 case "template" -> ExerciseComponent.TEMPLATE_REPOSITORY;
-                case "test" -> ExerciseComponent.TEST_REPOSITORY;
+                case "tests" -> ExerciseComponent.TEST_REPOSITORY;
                 default -> throw new IrisParseResponseException(new Throwable("Unknown exercise plan component"));
             };
             components.add(new IrisExercisePlanComponent(exercisePlan, component, plan));

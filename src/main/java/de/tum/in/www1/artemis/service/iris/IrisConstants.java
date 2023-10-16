@@ -141,33 +141,33 @@ public final class IrisConstants {
                         {{~/system}}
 
                         {{#system~}}The problem statement:{{~/system}}
-                        {{#user~}}{{ps}}{{~/user}}
+                        {{#user~}}{{problemStatement}}{{~/user}}
                         {{#system~}}End of problem statement.{{~/system}}
 
                         {{#system~}}The template repository:{{~/system}}
-                        {{#each template_repository}}
+                        {{#each templateRepository}}
                             {{#system~}}"{{@key}}":{{~/system}}
                             {{#user~}}{{this}}{{~/user}}
                         {{/each}}
                         {{#system~}}End of template repository.{{~/system}}
 
                         {{#system~}}The solution repository:{{~/system}}
-                        {{#each solution_repository}}
+                        {{#each solutionRepository}}
                             {{#system~}}"{{@key}}":{{~/system}}
                             {{#user~}}{{this}}{{~/user}}
                         {{/each}}
                         {{#system~}}End of solution repository.{{~/system}}
 
                         {{#system~}}The test repository:{{~/system}}
-                        {{#each test_repository}}
+                        {{#each testRepository}}
                             {{#system~}}"{{@key}}":{{~/system}}
                             {{#user~}}{{this}}{{~/user}}
                         {{/each}}
                         {{#system~}}End of test repository.{{~/system}}
 
                         {{#system~}}Your chat history with the instructor:{{~/system}}
-                        {{#each messages}}
-                            {{#if (equal this.role "user")}}
+                        {{#each chatHistory}}
+                            {{#if (equal this.sender "user")}}
                                 {{#user~}}{{this.content}}{{~/user}}
                             {{else}}
                                 {{#assistant~}}{{this.content}}{{~/assistant}}
@@ -293,18 +293,18 @@ public final class IrisConstants {
                 {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
 
                 {{#system~}}The problem statement:{{~/system}}
-                {{#user~}}{{ps}}{{~/user}}
+                {{#user~}}{{problemStatement}}{{~/user}}
                 {{#system~}}End of problem statement.{{~/system}}
 
                 {{#system~}}The solution repository:{{~/system}}
-                {{#each solution_repository}}
+                {{#each solutionRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
                 {{#system~}}End of solution repository.{{~/system}}
 
                 {{#system~}}The test repository:{{~/system}}
-                {{#each test_repository}}
+                {{#each testRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
@@ -319,7 +319,7 @@ public final class IrisConstants {
                 {{~/system}}
 
                 {{#system~}}The template repository:{{~/system}}
-                {{#each template_repository}}
+                {{#each templateRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
@@ -341,7 +341,7 @@ public final class IrisConstants {
                     {{#if (equal this.file " ")}}
                         {{break}}
                     {{/if}}
-                    {{#if (contains template_repository this.file)}}
+                    {{#if (contains templateRepository this.file)}}
                         {{#system~}}
                             You will now identify a part of the file '{{this.file}}' to replace.
                             It is very important that you respond with an exact quote from the file, without quotation marks, and say nothing else.
@@ -350,7 +350,7 @@ public final class IrisConstants {
                             Here is the current state of the file from which you may select a part to replace:
                         {{~/system}}
                         {{#user~}}
-                            {{#each template_repository}}
+                            {{#each templateRepository}}
                                 {{#if (equal @key this.file)}}
                                     {{this}}
                                 {{/if}}
@@ -371,18 +371,18 @@ public final class IrisConstants {
                 {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
 
                 {{#system~}}The problem statement:{{~/system}}
-                {{#user~}}{{ps}}{{~/user}}
+                {{#user~}}{{problemStatement}}{{~/user}}
                 {{#system~}}End of problem statement.{{~/system}}
 
                 {{#system~}}The template repository:{{~/system}}
-                {{#each template_repository}}
+                {{#each templateRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
                 {{#system~}}End of template repository.{{~/system}}
 
                 {{#system~}}The test repository:{{~/system}}
-                {{#each test_repository}}
+                {{#each testRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
@@ -395,7 +395,7 @@ public final class IrisConstants {
                 {{~/system}}
 
                 {{#system~}}The solution repository:{{~/system}}
-                {{#each solution_repository}}
+                {{#each solutionRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
@@ -417,7 +417,7 @@ public final class IrisConstants {
                     {{#if (equal this.file " ")}}
                         {{break}}
                     {{/if}}
-                    {{#if (contains solution_repository this.file)}}
+                    {{#if (contains solutionRepository this.file)}}
                         {{#system~}}
                             You will now identify a part of the file '{{this.file}}' to replace.
                             It is very important that you respond with an exact quote from the file, without quotation marks, and say nothing else.
@@ -426,7 +426,7 @@ public final class IrisConstants {
                             Here is the current state of the file from which you may select a part to replace:
                         {{~/system}}
                         {{#user~}}
-                            {{#each solution_repository}}
+                            {{#each solutionRepository}}
                                 {{#if (equal @key this.file)}}
                                     {{this}}
                                 {{/if}}
@@ -447,18 +447,18 @@ public final class IrisConstants {
                 {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
 
                 {{#system~}}The problem statement:{{~/system}}
-                {{#user~}}{{ps}}{{~/user}}
+                {{#user~}}{{problemStatement}}{{~/user}}
                 {{#system~}}End of problem statement.{{~/system}}
 
                 {{#system~}}The template repository:{{~/system}}
-                {{#each template_repository}}
+                {{#each templateRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
                 {{#system~}}End of template repository.{{~/system}}
 
                 {{#system~}}The solution repository:{{~/system}}
-                {{#each solution_repository}}
+                {{#each solutionRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
@@ -473,7 +473,7 @@ public final class IrisConstants {
                 {{~/system}}
 
                 {{#system~}}The test repository:{{~/system}}
-                {{#each test_repository}}
+                {{#each testRepository}}
                     {{#system~}}"{{@key}}":{{~/system}}
                     {{#user~}}{{this}}{{~/user}}
                 {{/each}}
@@ -495,7 +495,7 @@ public final class IrisConstants {
                     {{#if (equal this.file " ")}}
                         {{break}}
                     {{/if}}
-                    {{#if (contains test_repository this.file)}}
+                    {{#if (contains testRepository this.file)}}
                         {{#system~}}
                             You will now identify a part of the file '{{this.file}}' to replace.
                             It is very important that you respond with an exact quote from the file, without quotation marks, and say nothing else.
@@ -504,7 +504,7 @@ public final class IrisConstants {
                             Here is the current state of the file from which you may select a part to replace:
                         {{~/system}}
                         {{#user~}}
-                            {{#each test_repository}}
+                            {{#each testRepository}}
                                 {{#if (equal @key this.file)}}
                                     {{this}}
                                 {{/if}}
