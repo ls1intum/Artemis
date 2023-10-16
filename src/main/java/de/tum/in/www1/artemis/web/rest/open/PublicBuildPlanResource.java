@@ -16,13 +16,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile("gitlabci | jenkins")
 @RestController
 @RequestMapping("api/public/")
-public class OpenBuildPlanResource {
+public class PublicBuildPlanResource {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final BuildPlanRepository buildPlanRepository;
 
-    public OpenBuildPlanResource(BuildPlanRepository buildPlanRepository) {
+    public PublicBuildPlanResource(BuildPlanRepository buildPlanRepository) {
         this.buildPlanRepository = buildPlanRepository;
     }
 
