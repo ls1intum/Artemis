@@ -32,7 +32,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("/api")
 public class ConversationMessageResource {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final ConversationMessagingService conversationMessagingService;
 
@@ -106,7 +106,10 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
+        log.info("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
+        long start = System.nanoTime();
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
+        log.info("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
     }
 
@@ -121,8 +124,11 @@ public class ConversationMessageResource {
     @DeleteMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
+        log.info("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
+        long start = System.nanoTime();
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
+        log.info("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
     }
 }
