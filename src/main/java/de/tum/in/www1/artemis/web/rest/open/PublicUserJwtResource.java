@@ -35,9 +35,9 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
  */
 @RestController
 @RequestMapping("api/public/")
-public class UserJwtResource {
+public class PublicUserJwtResource {
 
-    private final Logger log = LoggerFactory.getLogger(UserJwtResource.class);
+    private final Logger log = LoggerFactory.getLogger(PublicUserJwtResource.class);
 
     private final JWTCookieService jwtCookieService;
 
@@ -45,7 +45,7 @@ public class UserJwtResource {
 
     private final Optional<SAML2Service> saml2Service;
 
-    public UserJwtResource(JWTCookieService jwtCookieService, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.saml2Service = saml2Service;
