@@ -57,7 +57,7 @@ public class PostResource {
     @PostMapping("courses/{courseId}/posts")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        log.info("POST createPost invoked for course {} with post {}", courseId, post.getContent());
+        log.debug("POST createPost invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
         Post createdPost = postService.createPost(courseId, post);
         log.info("createPost took {}", TimeLogUtil.formatDurationFrom(start));
@@ -76,7 +76,7 @@ public class PostResource {
     @PutMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
-        log.info("PUT updatePost invoked for course {} with post {}", courseId, post.getContent());
+        log.debug("PUT updatePost invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
         Post updatedPost = postService.updatePost(courseId, postId, post);
         log.info("updatePost took {}", TimeLogUtil.formatDurationFrom(start));
@@ -144,7 +144,7 @@ public class PostResource {
     @DeleteMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
-        log.info("DELETE deletePost invoked for course {} on post {}", courseId, postId);
+        log.debug("DELETE deletePost invoked for course {} on post {}", courseId, postId);
         long start = System.nanoTime();
         postService.deletePostById(courseId, postId);
         log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));

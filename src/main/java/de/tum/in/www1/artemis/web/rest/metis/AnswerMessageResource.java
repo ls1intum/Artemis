@@ -37,7 +37,7 @@ public class AnswerMessageResource {
     @PostMapping("courses/{courseId}/answer-messages")
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> createAnswerMessage(@PathVariable Long courseId, @RequestBody AnswerPost answerMessage) throws URISyntaxException {
-        log.info("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
+        log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
         long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
         // creation of answerMessage should not trigger alert
@@ -57,7 +57,7 @@ public class AnswerMessageResource {
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody AnswerPost answerMessage) {
-        log.info("PUT updateAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
+        log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
         long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, answerMessage);
         log.info("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
@@ -75,7 +75,7 @@ public class AnswerMessageResource {
     @DeleteMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId) {
-        log.info("PUT deleteAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
+        log.debug("PUT deleteAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
         long start = System.nanoTime();
         answerMessageService.deleteAnswerMessageById(courseId, answerMessageId);
         log.info("deleteAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));

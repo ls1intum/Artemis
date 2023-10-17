@@ -51,7 +51,7 @@ public class ConversationMessageResource {
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        log.info("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
+        log.debug("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
         Post createdMessage = conversationMessagingService.createMessage(courseId, post);
         log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
@@ -106,7 +106,7 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
-        log.info("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
+        log.debug("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
         long start = System.nanoTime();
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
         log.info("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
@@ -124,7 +124,7 @@ public class ConversationMessageResource {
     @DeleteMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
-        log.info("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
+        log.debug("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
         long start = System.nanoTime();
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
