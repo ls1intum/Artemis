@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +71,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithValidUsers() throws InvocationTargetException, IllegalAccessException {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user] [user]Test User 2(test_user_2)[/user]";
-        List<User> users = List.of(this.createUser("Test User 1", "test_user_1"), this.createUser("Test User 2", "test_user_2"));
+        Set<User> users = Set.of(this.createUser("Test User 1", "test_user_1"), this.createUser("Test User 2", "test_user_2"));
 
         setupUserRepository(Set.of("test_user_1", "test_user_2"), users);
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
@@ -87,7 +86,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithNonExistentUser() {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user] [user]Test User 2(test_user_2)[/user]";
-        List<User> users = List.of(this.createUser("Test User 1", "test_user_1")); // Return only one user from database
+        Set<User> users = Set.of(this.createUser("Test User 1", "test_user_1")); // Return only one user from database
 
         setupUserRepository(Set.of("test_user_1", "test_user_2"), users);
 
@@ -100,7 +99,7 @@ class PostingServiceUnitTest {
         String content = "[user]Test User 2(test_user_1)[/user]";
         User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
 
-        setupUserRepository(Set.of("test_user_1"), List.of(user));
+        setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
 
         actAndAssertInvalidUserMention(course, content);
@@ -112,7 +111,7 @@ class PostingServiceUnitTest {
         String content = "[user]Test User 1(test_user_1)[/user]";
         User user = this.createUser("Test User 1", "test_user_1");
 
-        setupUserRepository(Set.of("test_user_1"), List.of(user));
+        setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(false);
 
         actAndAssertInvalidUserMention(course, content);
@@ -131,7 +130,7 @@ class PostingServiceUnitTest {
         Course course = new Course();
         String content = "[user] Test User 2 (test_user_1) [/user]";
 
-        setupUserRepository(Set.of(), List.of());
+        setupUserRepository(Set.of(), Set.of());
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
@@ -142,7 +141,7 @@ class PostingServiceUnitTest {
         Course course = new Course();
         String content = "Test User 2(test_user_1)[/user]";
 
-        setupUserRepository(Set.of(), List.of());
+        setupUserRepository(Set.of(), Set.of());
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
@@ -153,7 +152,7 @@ class PostingServiceUnitTest {
         Course course = new Course();
         String content = "[user]Test User 2(test_user_1)";
 
-        setupUserRepository(Set.of(), List.of());
+        setupUserRepository(Set.of(), Set.of());
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
@@ -180,7 +179,7 @@ class PostingServiceUnitTest {
      * @param expectedUserLogins expected set of user logins found in the message content
      * @param usersInDatabase    the mocked return value of UserRepository.findAllByLogins
      */
-    private void setupUserRepository(Set<String> expectedUserLogins, List<User> usersInDatabase) {
+    private void setupUserRepository(Set<String> expectedUserLogins, Set<User> usersInDatabase) {
         when(userRepository.findAllByLogins(anySet())).thenAnswer(invocation -> {
             Set<String> logins = invocation.getArgument(0);
             assertThat(logins).isEqualTo(expectedUserLogins);

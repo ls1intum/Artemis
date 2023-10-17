@@ -243,8 +243,9 @@ public abstract class PostingService {
      *
      * @param course         course of the posting
      * @param postingContent content of the posting
+     * @return set of mentioned users
      */
-    protected void parseUserMentions(@NotNull Course course, String postingContent) {
+    protected Set<User> parseUserMentions(@NotNull Course course, String postingContent) {
         // Define a regular expression to match text enclosed in [user]...[/user] tags, along with login inside parentheses () within those tags.
         // It makes use of the possessive quantifier "*+" to avoid backtracking and increase performance.
         // Explanation:
@@ -269,7 +270,7 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        List<User> mentionedUsers = userRepository.findAllByLogins(matches.keySet());
+        Set<User> mentionedUsers = userRepository.findAllByLogins(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
@@ -285,5 +286,7 @@ public abstract class PostingService {
                 throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", METIS_POST_ENTITY_NAME, "invalidUserMention");
             }
         });
+
+        return mentionedUsers;
     }
 }

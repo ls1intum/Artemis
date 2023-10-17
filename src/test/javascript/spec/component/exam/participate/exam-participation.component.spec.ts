@@ -651,13 +651,13 @@ describe('ExamParticipationComponent', () => {
         httpError.message = 'artemisApp.studentExam.alreadySubmitted';
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const studentExam = new StudentExam();
-        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+        const getOwnStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.exam = new Exam();
         comp.testRunId = 0;
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(getOwnStudentExamSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).not.toHaveBeenCalled();
         expect(comp.studentExam).toEqual(studentExam);
     });
@@ -666,13 +666,13 @@ describe('ExamParticipationComponent', () => {
         const httpError = new Error();
         httpError.message = 'artemisApp.studentExam.alreadySubmitted';
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
-        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(throwError(() => new Error()));
+        const getOwnStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(throwError(() => new Error()));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.exam = new Exam();
         comp.testRunId = 0;
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalledOnce();
-        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(getOwnStudentExamSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
