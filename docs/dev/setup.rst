@@ -58,7 +58,7 @@ following dependencies/tools on your machine:
 
 .. note::
 
-    Artemis allows extension with several additional services, e.g., for mobile notifications ('Hermes',
+    Artemis allows extension with several additional services, e.g., for mobile notifications ('Hermes'),
     automatic feedback generation using large language models ('Iris/Pyris'), …
     Their setup is described as part of the :ref:`extension service setup <extensions_setup>`.
 
