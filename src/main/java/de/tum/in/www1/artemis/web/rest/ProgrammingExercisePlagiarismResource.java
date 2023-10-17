@@ -92,7 +92,7 @@ public class ProgrammingExercisePlagiarismResource {
     @GetMapping(CHECK_PLAGIARISM)
     @EnforceAtLeastEditor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException, IOException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
@@ -125,7 +125,7 @@ public class ProgrammingExercisePlagiarismResource {
     @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);

@@ -100,7 +100,7 @@ export abstract class Exercise implements BaseEntity {
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = {
         continuousPlagiarismControlEnabled: false,
         continuousPlagiarismControlPostDueDateChecksEnabled: true,
-        similarityThreshold: 0.9,
+        similarityThreshold: 90,
         minimumSize: 50,
         minimumScore: 0,
     }; // default value

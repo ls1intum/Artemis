@@ -29,7 +29,7 @@ public class PlagiarismDetectionConfig extends DomainObject {
     private boolean continuousPlagiarismControlPostDueDateChecksEnabled = false;
 
     @Column(name = "similarity_threshold")
-    private float similarityThreshold;
+    private int similarityThreshold;
 
     @Column(name = "minimum_score")
     private int minimumScore;
@@ -65,7 +65,7 @@ public class PlagiarismDetectionConfig extends DomainObject {
         return minimumSize;
     }
 
-    public void setSimilarityThreshold(float similarityThreshold) {
+    public void setSimilarityThreshold(int similarityThreshold) {
         this.similarityThreshold = similarityThreshold;
     }
 
@@ -86,7 +86,7 @@ public class PlagiarismDetectionConfig extends DomainObject {
         var config = new PlagiarismDetectionConfig();
         config.setContinuousPlagiarismControlEnabled(false);
         config.setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
-        config.setSimilarityThreshold(0.9f);
+        config.setSimilarityThreshold(90);
         config.setMinimumScore(0);
         config.setMinimumSize(50);
         return config;
