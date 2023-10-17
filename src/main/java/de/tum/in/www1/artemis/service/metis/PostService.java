@@ -229,7 +229,7 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void removeReaction(Post post, Reaction reaction, Long courseId) {
-        final Course course = preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
+        preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
 
         post.removeReaction(reaction);
         postRepository.save(post);
