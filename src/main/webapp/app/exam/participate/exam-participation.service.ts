@@ -162,7 +162,7 @@ export class ExamParticipationService {
      * Submits {@link StudentExam} - the exam cannot be updated afterwards anymore
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
-     * @param studentExam: the student exam to submit
+     * @param studentExam the student exam to submit
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
@@ -183,10 +183,10 @@ export class ExamParticipationService {
     }
 
     /**
-     * Submits {@link StudentExam} - the exam cannot be updated afterwards anymore
+     * Abandons {@link StudentExam} - the exam cannot be updated afterwards anymore
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
-     * @param studentExam: the student exam to terminate
+     * @param studentExam the student exam to abandon
      */
     public abandonStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/abandon';

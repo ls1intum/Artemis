@@ -292,34 +292,18 @@ public class StudentExamService {
         }
     }
 
-    public void abandonStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
-        log.debug("Abandon student exam with id {}", studentExamFromClient.getId());
+    /**
+     * Abandon StudentExam
+     *
+     * @param studentExam the student exam object which will be abandoned
+     */
+    public void abandonStudentExam(StudentExam studentExam) {
+        log.debug("Abandon student exam with id {}", studentExam.getId());
 
         long start = System.nanoTime();
-        // most important aspect here: set studentExam to submitted and set submission date
-        // 3. DB Call: write
-        abandonStudentExam(studentExamFromClient);
-        log.debug("     Set student exam to abandoned in {}", formatDurationFrom(start));
-
-        start = System.nanoTime();
-        // NOTE: only for real exams and test exams, the student repositories need to be locked
-        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
-        if (!studentExamFromClient.isTestRun()) {
-            try {
-                // lock the programming exercise repository access (important in case of early exam termination), only when the student hands in early (asynchronously)
-                programmingExerciseParticipationService.lockStudentRepositories(currentUser, existingStudentExam);
-            }
-            catch (Exception e) {
-                log.error("lockStudentRepositories threw an exception", e);
-            }
-        }
-
-        log.debug("    Lock student repositories in {}", formatDurationFrom(start));
-    }
-
-    private void abandonStudentExam(StudentExam studentExam) {
         studentExam.setAbandoned(true);
         studentExamRepository.abandonStudentExam(studentExam.getId());
+        log.debug("     Set student exam to abandoned in {}", formatDurationFrom(start));
     }
 
     /**

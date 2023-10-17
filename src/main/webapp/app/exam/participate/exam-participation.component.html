@@ -120,7 +120,7 @@
             </div>
         </ng-container>
         <jhi-exam-participation-cover
-            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver()) && !abandon"
+            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver()) && !abandon && !studentExam.abandoned"
             [startView]="false"
             [exam]="exam"
             [studentExam]="studentExam"
@@ -158,7 +158,7 @@
         <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam" />
         <ng-container *ngIf="this.studentExam.abandoned">
             <div class="container d-flex flex-column align-items-center justify-content-center">
-                <span>You abandoned this exam. It will be evaluated with 0 points.</span>
+                <span class="mb-2 font-weight-bold text-danger">You abandoned this exam. It will not be graded!</span>
             </div>
         </ng-container>
     </ng-container>

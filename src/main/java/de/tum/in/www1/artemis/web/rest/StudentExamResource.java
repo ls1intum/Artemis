@@ -293,13 +293,11 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/submit : Submits the student exam
-     * Updates all submissions and marks student exam as submitted according to given student exam
-     * NOTE: the studentExam has to be sent with all exercises, participations and submissions
+     * POST /courses/{courseId}/exams/{examId}/student-exams/abandon : Abandons the student exam
      *
      * @param courseId              the course to which the student exams belong to
      * @param examId                the exam to which the student exams belong to
-     * @param studentExamFromClient the student exam with exercises, participations and submissions
+     * @param studentExamFromClient the student exam to abandon
      * @return empty response with status code:
      *         200 if successful
      *         400 if student exam was in an illegal state
@@ -321,16 +319,14 @@ public class StudentExamResource {
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
         validateExamRequestParametersElseThrow(studentExamFromClient, examId, courseId);
 
-        if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+        if (studentExamFromClient.isSubmitted() || existingStudentExam.isSubmitted()) {
             log.error("Student exam with id {} for user {} can not be abandoned because it is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
-            // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
-            return ResponseEntity.ok().build();
+            throw new BadRequestException("Exam is already submitted");
         }
 
         if (studentExamFromClient.isAbandoned() || existingStudentExam.isAbandoned()) {
             log.error("Student exam with id {} for user {} is already abandoned.", studentExamFromClient.getId(), currentUser.getLogin());
-            // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
-            return ResponseEntity.ok().build();
+            throw new BadRequestException("Exam is already abandoned");
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
@@ -341,7 +337,7 @@ public class StudentExamResource {
 
         log.debug("Completed input validation for abandonStudentExam in {}", formatDurationFrom(start));
 
-        studentExamService.abandonStudentExam(existingStudentExam, studentExamFromClient, currentUser);
+        studentExamService.abandonStudentExam(studentExamFromClient);
 
         websocketMessagingService.sendMessage("/topic/exam/" + examId + "/abandoned", "");
 
