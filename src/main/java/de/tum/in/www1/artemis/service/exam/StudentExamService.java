@@ -478,7 +478,7 @@ public class StudentExamService {
      */
     public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam.getId());
-        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMapWithoutQuizExercises(unsubmittedStudentExams);
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
             // fetch all studentParticipations of a user, with submissions and results eagerly loaded
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
@@ -500,35 +500,6 @@ public class StudentExamService {
     }
 
     /**
-     * Assess all exercises of student exams of an exam which are terminated with 0 points.
-     *
-     * @param exam     the exam
-     * @param assessor the assessor should be the instructor making the call.
-     * @return returns the set of terminated StudentExams, the participations of which were assessed
-     */
-    public Set<StudentExam> assessAbandonedStudentExams(final Exam exam, final User assessor) {
-        Set<StudentExam> abandonedStudentExams = studentExamRepository.findAllAbandonedWithExercisesByExamId(exam.getId());
-        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(abandonedStudentExams);
-        for (final var user : exercisesOfUser.keySet()) {
-            // fetch all studentParticipations of a user, with submissions and results eagerly loaded
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
-                    exercisesOfUser.get(user));
-
-            for (final var studentParticipation : studentParticipations) {
-                var latestSubmission = studentParticipation.findLatestSubmission();
-                if (latestSubmission.isPresent()) {
-                    for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
-                        // required so that the submission is counted in the assessment dashboard
-                        latestSubmission.get().submitted(true);
-                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0D, "You did not submit your exam", correctionRound);
-                    }
-                }
-            }
-        }
-        return abandonedStudentExams;
-    }
-
-    /**
      * Assess the modeling-, file upload and text submissions of an exam which are empty.
      * Also create automatic submissions and assessments for programming exercises without submissions.
      * Also sets the state of all participations for all student exams which were submitted to FINISHED
@@ -543,7 +514,7 @@ public class StudentExamService {
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
-        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMapWithoutQuizExercises(studentExams);
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(studentExams);
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -578,19 +549,9 @@ public class StudentExamService {
      * @param studentExams the student exams of the users containing the exercises
      * @return a map of the User as key, and a list of the users exercises as value
      */
-    public Map<User, List<Exercise>> getExercisesOfUserMapWithoutQuizExercises(Set<StudentExam> studentExams) {
+    public Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
         return studentExams.stream().collect(
                 Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream().filter(exercise -> !(exercise instanceof QuizExercise)).toList()));
-    }
-
-    /**
-     * Helper method to return a map for each user to their exercises.
-     *
-     * @param studentExams the student exams of the users containing the exercises
-     * @return a map of the User as key, and a list of the users exercises as value
-     */
-    public Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
-        return studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream().toList()));
     }
 
     /**
