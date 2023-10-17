@@ -58,11 +58,9 @@ public class AttachmentUnitResource {
 
     private final FileService fileService;
 
-    private final FilePathService filePathService;
-
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            CompetencyProgressService competencyProgressService, SlideSplitterService slideSplitterService, FileService fileService, FilePathService filePathService) {
+            CompetencyProgressService competencyProgressService, SlideSplitterService slideSplitterService, FileService fileService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -72,7 +70,6 @@ public class AttachmentUnitResource {
         this.competencyProgressService = competencyProgressService;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
-        this.filePathService = filePathService;
     }
 
     /**
@@ -177,7 +174,7 @@ public class AttachmentUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-units.component.ts
-        int minutesUntilDeletion = 30;
+        int minutesUntilDeletion = 3;
         log.debug("REST request to upload file: {}", file.getOriginalFilename());
         checkLecture(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
@@ -185,8 +182,8 @@ public class AttachmentUnitResource {
         }
 
         URI fileURI = fileService.handleSaveFile(file, false, false);
-        fileService.schedulePathForDeletion(filePathService.actualPathForPublicPath(fileURI), minutesUntilDeletion);
-        String fileName = filePathService.actualPathForPublicPath(fileURI).getFileName().toString();
+        fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(fileURI), minutesUntilDeletion);
+        String fileName = FilePathService.actualPathForPublicPath(fileURI).getFileName().toString();
 
         return ResponseEntity.ok().body(GSON.toJson(fileName));
     }

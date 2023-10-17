@@ -51,8 +51,8 @@ export class AttachmentUnitsComponent implements OnInit {
 
     file: File;
     filename: string;
-    //time until the temporary file gets deleted. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
-    readonly MINUTES_UNTIL_DELETION = 29;
+    //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
+    readonly MINUTES_UNTIL_DELETION = 3;
 
     constructor(
         private activatedRoute: ActivatedRoute,
