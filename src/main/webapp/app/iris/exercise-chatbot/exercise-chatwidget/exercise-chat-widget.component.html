@@ -11,21 +11,29 @@
                         <fa-icon [icon]="faCircleInfo" class="info-button"></fa-icon>
                     </a>
                 </h3>
-                <div class="button-container">
-                    <button *ngIf="isClearChatEnabled()" id="clear-chat-session" (click)="onClearSession(clearConfirmModal)" class="header-icon">
-                        <fa-icon [icon]="faTrash"></fa-icon>
-                    </button>
-                    <button *ngIf="!fullSize; else compressButton" (click)="maximizeScreen()" class="header-icon">
-                        <fa-icon [icon]="faExpand"></fa-icon>
-                    </button>
-                    <ng-template #compressButton>
-                        <button (click)="minimizeScreen()" class="header-icon">
-                            <fa-icon [icon]="faCompress"></fa-icon>
+                <div>
+                    <div class="button-container">
+                        <span
+                            *ngIf="rateLimit >= 0"
+                            class="rate-limit"
+                            [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitTimeframeHours }"
+                            >{{ currentMessageCount }}/{{ rateLimit }}</span
+                        >
+                        <button *ngIf="isClearChatEnabled()" id="clear-chat-session" (click)="onClearSession(clearConfirmModal)" class="header-icon">
+                            <fa-icon [icon]="faTrash"></fa-icon>
                         </button>
-                    </ng-template>
-                    <button (click)="closeChat()" class="header-icon">
-                        <fa-icon [icon]="faXmark"></fa-icon>
-                    </button>
+                        <button *ngIf="!fullSize; else compressButton" (click)="maximizeScreen()" class="header-icon">
+                            <fa-icon [icon]="faExpand"></fa-icon>
+                        </button>
+                        <ng-template #compressButton>
+                            <button (click)="minimizeScreen()" class="header-icon">
+                                <fa-icon [icon]="faCompress"></fa-icon>
+                            </button>
+                        </ng-template>
+                        <button (click)="closeChat()" class="header-icon">
+                            <fa-icon [icon]="faXmark"></fa-icon>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -59,7 +67,7 @@
                                 style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
                                 (click)="resendMessage(message)"
                                 [disabled]="resendAnimationActive"
-                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && !this.isLoading"
+                                *ngIf="i === messages.length - 1 && message.sender === SENDER_USER && !this.isLoading && !(rateLimit >= 0 && currentMessageCount >= rateLimit)"
                             >
                                 <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
                             </button>

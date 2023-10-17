@@ -74,4 +74,7 @@ export const mockState = {
     numNewMessages: 0,
     sessionId: 0,
     serverResponseTimeout: null,
+    currentMessageCount: -1,
+    rateLimit: -1,
+    rateLimitTimeframeHours: -1,
 };

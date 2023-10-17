@@ -471,7 +471,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         studentParticipation = studentParticipationRepository.save(studentParticipation);
 
         String url = "/api/public/programming-submissions/" + studentParticipation.getId();
-        request.post(url, "test", HttpStatus.NOT_FOUND);
+        request.post(url, "test", HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -514,6 +514,37 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String url = "/api/public/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testNotifyPush_studentCommitUpdatesSubmissionCount() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
+        Commit mockCommit = mock(Commit.class);
+        doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
+        doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
+
+        doReturn("hash1").when(mockCommit).getCommitHash();
+        doReturn("default-branch").when(mockCommit).getBranch();
+        doReturn("Student 1").when(mockCommit).getAuthorName();
+        doReturn("student@tum.de").when(mockCommit).getAuthorEmail();
+        doReturn("my nice little solution").when(mockCommit).getMessage();
+
+        String url = "/api/public/programming-submissions/" + participation.getId();
+        // no request body needed since the commit information are mocked above
+        request.postWithoutLocation(url, "test", HttpStatus.OK, null);
+
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq(NEW_SUBMISSION_TOPIC),
+                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.participation().submissionCount() == 1));
+
+        // second push
+        doReturn("hash2").when(mockCommit).getCommitHash();
+        request.postWithoutLocation(url, "test", HttpStatus.OK, null);
+
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq(NEW_SUBMISSION_TOPIC),
+                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.participation().submissionCount() == 2));
     }
 
     @Test

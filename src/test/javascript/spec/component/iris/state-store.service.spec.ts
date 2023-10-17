@@ -6,6 +6,7 @@ import {
     HistoryMessageLoadedAction,
     MessageStoreState,
     NumNewMessagesResetAction,
+    RateLimitUpdatedAction,
     RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
@@ -15,6 +16,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { mockClientMessage, mockServerMessage, mockState } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey, errorMessages } from 'app/entities/iris/iris-errors.model';
+import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 describe('IrisStateStore', () => {
     let stateStore: IrisStateStore;
@@ -363,6 +365,42 @@ describe('IrisStateStore', () => {
         const state2 = (await promise2) as MessageStoreState;
 
         expect(state2.messages).toHaveLength(2);
+    });
+
+    it('should update below rate limit state', async () => {
+        const obs = stateStore.getState();
+
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(new RateLimitUpdatedAction(new IrisRateLimitInformation(1, 2, 3)));
+
+        const state = (await promise) as MessageStoreState;
+
+        expect(state).toStrictEqual({
+            ...mockState,
+            error: null,
+            currentMessageCount: 1,
+            rateLimit: 2,
+            rateLimitTimeframeHours: 3,
+        });
+    });
+
+    it('should update above rate limit state', async () => {
+        const obs = stateStore.getState();
+
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
+
+        stateStore.dispatch(new RateLimitUpdatedAction(new IrisRateLimitInformation(2, 2, 3)));
+
+        const state = (await promise) as MessageStoreState;
+
+        expect(state).toStrictEqual({
+            ...mockState,
+            error: errorMessages[IrisErrorMessageKey.RATE_LIMIT_EXCEEDED],
+            currentMessageCount: 2,
+            rateLimit: 2,
+            rateLimitTimeframeHours: 3,
+        });
     });
 });
 

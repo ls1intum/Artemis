@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 @Service
+@Profile("lti")
 public class LtiNewResultService {
 
     private final Lti10Service lti10Service;

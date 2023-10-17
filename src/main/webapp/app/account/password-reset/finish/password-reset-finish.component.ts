@@ -2,7 +2,6 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angula
 import { ActivatedRoute } from '@angular/router';
 
 import { PasswordResetFinishService } from './password-reset-finish.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 
@@ -28,7 +27,6 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     constructor(
         private passwordResetFinishService: PasswordResetFinishService,
         private route: ActivatedRoute,
-        private profileService: ProfileService,
         private fb: FormBuilder,
     ) {}
 
