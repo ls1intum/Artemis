@@ -128,7 +128,9 @@ public abstract class PostingService {
      */
     protected Stream<ConversationWebSocketRecipientSummary> getWebSocketRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getCourse().getId(), conversation.getId()).stream();
+            Course course = conversation.getCourse();
+            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+                    course.getEditorGroupName(), course.getInstructorGroupName()).stream();
         }
 
         return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
