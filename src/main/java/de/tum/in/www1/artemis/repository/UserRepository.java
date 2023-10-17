@@ -123,7 +123,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("""
             SELECT NEW de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary (
-                user,
+                user.id,
+                user.login,
                 CASE WHEN cp.isHidden = true THEN true ELSE false END,
                 CASE WHEN ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName THEN true ELSE false END
             )
