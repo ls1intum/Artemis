@@ -201,6 +201,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam1.setWorkingTime(7200);
         studentExam1.setUser(student1);
+        studentExam1.setSubmitted(false);
+        studentExam1.setAbandoned(false);
         studentExamRepository.save(studentExam1);
         examUtilService.addStudentExam(exam2);
 
@@ -838,7 +840,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
 
         // Check that submission change is not saved
-        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test1", null);
+        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test1", false);
 
         // if the submitted exam has the submitted flag set to false, and the studentExam is not yet submitted, the request should be accepted ...
         studentExam1.setSubmitted(false);
@@ -866,8 +868,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam_notInTime() throws Exception {
-        studentExam1.setSubmitted(false);
-        studentExamRepository.save(studentExam1);
         // Forbidden because user tried to submit before start
         exam1.setStartDate(ZonedDateTime.now().plusHours(1));
         examRepository.save(exam1);
@@ -881,8 +881,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitStudentExam_differentUser() throws Exception {
-        studentExam1.setSubmitted(false);
-        studentExamRepository.save(studentExam1);
         // Forbidden because user object is wrong
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         studentExam1.setUser(student2);
@@ -944,6 +942,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         userUtilService.changeUser(TEST_PREFIX + "student2");
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
         deleteExamWithInstructor(exam1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSubmitStudentExam_abandoned() throws Exception {
+        studentExam1.setAbandoned(true);
+        studentExamRepository.save(studentExam1);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.BAD_REQUEST);
+        studentExam1 = studentExamRepository.findByIdElseThrow(studentExam1.getId());
+        assertThat(studentExam1.isSubmitted()).isFalse();
+        assertThat(studentExam1.isAbandoned()).isTrue();
     }
 
     @Test
@@ -2098,9 +2107,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         final String noParticipationGrade = "NoParticipation";
 
-        studentExam1.setSubmitted(false);
         studentExam1.setUser(student);
-        studentExamRepository.save(studentExam1);
 
         StudentExam bonusStudentExam = studentExam1;
 
@@ -2389,6 +2396,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExam.isSubmitted()).isTrue();
         assertThat(studentExam.getSubmissionDate()).isNotNull();
 
+        // submitting the exam, although it is abandoned
+        studentExam.setSubmitted(false);
+        studentExam.setAbandoned(true);
+        studentExam = studentExamRepository.save(studentExam);
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.BAD_REQUEST);
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.isAbandoned()).isTrue();
+        assertThat(studentExam.isSubmitted()).isFalse();
+        studentExam.setSubmitted(true);
+        studentExam.setAbandoned(false);
+        studentExam = studentExamRepository.save(studentExam);
+
         // setting the exam to unsubmitted again
         userUtilService.changeUser(TEST_PREFIX + "student1");
         request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.FORBIDDEN);
@@ -2644,6 +2663,62 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             assertThat(studentParticipation.getInitializationDate()).isEqualToIgnoringSeconds(studentExamForConduction.getStartedDate());
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAbandonStudentExam() throws Exception {
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.OK, null);
+        StudentExam abandonedStudentExam = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
+        // Ensure that student exam has been marked as abandoned
+        assertThat(abandonedStudentExam.isAbandoned()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAbandonStudentExam_alreadyAbandoned() throws Exception {
+        studentExam1.setAbandoned(true);
+        studentExamRepository.save(studentExam1);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.BAD_REQUEST);
+        studentExam1 = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
+        // Ensure that student exam is still abandoned
+        assertThat(studentExam1.isAbandoned()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAbandonStudentExam_submitted() throws Exception {
+        studentExam1.setSubmitted(true);
+        studentExamRepository.save(studentExam1);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.BAD_REQUEST);
+        studentExam1 = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
+        // Ensure that student exam is still submitted and not abandoned
+        assertThat(studentExam1.isSubmitted()).isTrue();
+        assertThat(studentExam1.isAbandoned()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAbandonStudentExam_notInTime() throws Exception {
+        // Forbidden because user tried to submit before start
+        exam1.setStartDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.FORBIDDEN);
+        // Forbidden because user tried to submit after end
+        exam1.setStartDate(ZonedDateTime.now().minusHours(5));
+        examRepository.save(exam1);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAbandonStudentExam_differentUser() throws Exception {
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        studentExam1.setUser(student2);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.FORBIDDEN, null);
+        StudentExam abandonedStudentExam = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
+        // Ensure that student exam has not been marked as abandoned
+        assertThat(abandonedStudentExam.isAbandoned()).isFalse();
     }
 
     @Nested
