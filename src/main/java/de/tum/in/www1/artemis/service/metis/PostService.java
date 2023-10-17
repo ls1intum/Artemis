@@ -214,6 +214,11 @@ public class PostService extends PostingService {
      */
     public void addReaction(Post post, Reaction reaction, Long courseId) {
         final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+
+        if (!course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
+        }
+
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
@@ -228,7 +233,12 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void removeReaction(Post post, Reaction reaction, Long courseId) {
-        preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+        final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+
+        if (!course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
+        }
+
         post.removeReaction(reaction);
         postRepository.save(post);
     }
