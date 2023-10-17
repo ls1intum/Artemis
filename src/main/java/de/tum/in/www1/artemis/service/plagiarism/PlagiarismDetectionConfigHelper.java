@@ -44,7 +44,7 @@ public final class PlagiarismDetectionConfigHelper {
      * @param minimumScore        similarityThreshold to set for the given exercise
      * @param minimumSize         similarityThreshold to set for the given exercise
      */
-    public static void updateWithTemporaryParameters(Exercise exercise, float similarityThreshold, int minimumScore, int minimumSize) {
+    public static void updateWithTemporaryParameters(Exercise exercise, int similarityThreshold, int minimumScore, int minimumSize) {
         var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(similarityThreshold);
         config.setMinimumScore(minimumScore);

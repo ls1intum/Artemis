@@ -55,7 +55,7 @@ class PlagiarismDetectionConfigHelperTest {
         exercise.setPlagiarismDetectionConfig(config);
 
         // when
-        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(exercise, 99.0f, 98, 97);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(exercise, 99, 98, 97);
 
         // then
         assertThat(exercise.getPlagiarismDetectionConfig()).isNotSameAs(config);

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
@@ -6,16 +6,10 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
 })
-export class ExerciseUpdatePlagiarismComponent implements OnInit {
+export class ExerciseUpdatePlagiarismComponent {
     @Input() exercise: Exercise;
 
     faQuestionCircle = faQuestionCircle;
-
-    plagiarismChecksSimilarityThresholdPercentage: number;
-
-    ngOnInit(): void {
-        this.plagiarismChecksSimilarityThresholdPercentage = this.exercise!.plagiarismDetectionConfig!.similarityThreshold! * 100;
-    }
 
     /**
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
@@ -32,9 +26,5 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit {
                 return 'artemisApp.plagiarism.minimumSizeTooltipModelingExercise';
             }
         }
-    }
-
-    updateSimilarityThreshold() {
-        this.exercise.plagiarismDetectionConfig!.similarityThreshold = this.plagiarismChecksSimilarityThresholdPercentage / 100;
     }
 }

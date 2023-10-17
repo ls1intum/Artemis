@@ -50,9 +50,8 @@
                         step="5"
                         id="plagiarism-similarity-threshold"
                         name="plagiarismChecksSimilarityThresholdPercentage"
-                        #element.plagiarismChecksSimilarityThresholdPercentage="ngModel"
-                        [(ngModel)]="this.plagiarismChecksSimilarityThresholdPercentage"
-                        (ngModelChange)="updateSimilarityThreshold()"
+                        #exercise.plagiarismDetectionConfig!.similarityThreshol="ngModel"
+                        [(ngModel)]="exercise.plagiarismDetectionConfig!.similarityThreshold"
                     />
                 </div>
             </div>
