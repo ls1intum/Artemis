@@ -27,5 +27,6 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
         ArtemisTeamParticipeModule,
     ],
     declarations: [TextEditorComponent, TextResultComponent],
+    exports: [TextEditorComponent],
 })
 export class ArtemisTextParticipationModule {}

@@ -142,3 +142,7 @@ export class Range {
         return '[' + this.lowerBound + '%, ' + this.upperBound + '%' + (this.upperBound === 100 ? ']' : ')');
     }
 }
+
+export function getAsMutableObject(object: any) {
+    return { ...object };
+}
