@@ -6,6 +6,8 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.f
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -179,8 +181,11 @@ public class NotificationSettingsService {
     public boolean checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(Notification notification, User user,
             NotificationSettingsCommunicationChannel communicationChannel) {
         Set<User> users = filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, Set.of(user), communicationChannel);
+        log.info("CPC - 09 - {}", users.size());
         return !users.isEmpty();
     }
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationSettingsService.class);
 
     /**
      * Filters the given user array based on if the notification (i.e. its type based on title) is allowed by the respective notification settings
@@ -198,6 +203,7 @@ public class NotificationSettingsService {
                 .findAllNotificationSettingsForRecipientsWithId(users.stream().map(DomainObject::getId).toList());
         Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
 
+        log.info("CPC - 08 - {}, {}", type, decidedNotificationSettings);
         return users.stream().filter(user -> {
             // for those notification types that are not explicitly set by the user, we use the default settings
             Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().equals(user))
