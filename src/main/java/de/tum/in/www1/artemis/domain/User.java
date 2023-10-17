@@ -186,11 +186,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     private ZonedDateTime irisAccepted = null;
 
     public User() {
-        super();
     }
 
     public User(Long id, String login) {
-        super();
         this.setId(id);
         this.login = login;
     }
