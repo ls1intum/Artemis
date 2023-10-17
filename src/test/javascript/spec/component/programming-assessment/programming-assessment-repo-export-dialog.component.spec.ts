@@ -119,7 +119,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         tick();
-        expect(comp.repositoryExportOptions.addParticipantName).toBeTrue();
+        expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
         expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledOnce();
     }));
