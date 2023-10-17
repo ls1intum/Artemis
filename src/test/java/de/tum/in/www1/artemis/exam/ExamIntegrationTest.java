@@ -1329,9 +1329,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
     }
 
+    // <editor-fold desc="Get All On Page">
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllExamsOnPage_WithoutExercises_instructor_successful() throws Exception {
+    void testGetAllExamsOnPage_withoutExercises_asInstructor_returnsExams() throws Exception {
         var title = "My fancy search title for the exam which is not used somewhere else";
         var exam = ExamFactory.generateExam(course1);
         exam.setTitle(title);
@@ -1343,7 +1344,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllExamsOnPage_WithExercises_instructor_successful() throws Exception {
+    void testGetAllExamsOnPage_withExercises_asInstructor_returnsExams() throws Exception {
         var newExam = examUtilService.addTestExamWithExerciseGroup(course1, true);
         var searchTerm = "A very distinct title that should only ever exist once in the database";
         newExam.setTitle(searchTerm);
@@ -1356,7 +1357,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_instructor_successful() throws Exception {
+    void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asInstructor_returnsNoExams() throws Exception {
         var title = "Another fancy exam search title for the exam which is not used somewhere else";
         Course course = courseUtilService.addEmptyCourse();
         course.setInstructorGroupName("non-instructors");
@@ -1371,7 +1372,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_admin_successful() throws Exception {
+    void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asAdmin_returnsExams() throws Exception {
         var title = "Yet another 3rd exam search title for the exam which is not used somewhere else";
         Course course = courseUtilService.addEmptyCourse();
         course.setInstructorGroupName("non-instructors");
@@ -1382,46 +1383,49 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).contains(exam);
-
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
-    void testGetAllExamsOnPage_tutor() throws Exception {
+    void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllExamsOnPage_student() throws Exception {
+    void testGetAllExamsOnPage_asStudent_failsWithForbidden() throws Exception {
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
+    // </editor-fold>
 
+    // <editor-fold desc="Import">
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testImportExamWithExercises_student() throws Exception {
+    void testImportExamWithExercises_asStudent_failsWithForbidden() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
-    void testImportExamWithExercises_tutor() throws Exception {
+    void testImportExamWithExercises_asTutor_failsWithForbidden() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_idExists() throws Exception {
+    void testImportExamWithExercises_failsWithIdExists() throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
+
         exam.setId(2L);
+
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_courseMismatch() throws Exception {
+    void testImportExamWithExercises_failsWithCourseMismatch() throws Exception {
         // No Course
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setCourse(null);
@@ -1435,7 +1439,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_dateConflict() throws Exception {
+    void testImportExamWithExercises_failsWithDateConflict() throws Exception {
         // Visible Date after Started Date
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setVisibleDate(ZonedDateTime.now().plusHours(2));
@@ -1459,7 +1463,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_dateConflictTestExam() throws Exception {
+    void testImportExamWithExercises_failsWithDateConflictTestExam() throws Exception {
         // Working Time larger than Working window
         final Exam examA = ExamFactory.generateTestExam(course1);
         examA.setWorkingTime(3 * 60 * 60);
@@ -1473,7 +1477,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_pointConflict() throws Exception {
+    void testImportExamWithExercises_failsWithPointConflict() throws Exception {
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setExamMaxPoints(-5);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
@@ -1481,7 +1485,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_correctionRoundConflict() throws Exception {
+    void testImportExamWithExercises_failsWithCorrectionRoundConflict() throws Exception {
         // Correction round <= 0
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setNumberOfCorrectionRoundsInExam(0);
@@ -1563,7 +1567,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
         }
     }
+    // </editor-fold>
 
+    // <editor-fold desc="Plagiarism">
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExercisesWithPotentialPlagiarismAsTutor_forbidden() throws Exception {
@@ -1880,4 +1886,5 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 .toList();
         assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
+    // </editor-fold>
 }
