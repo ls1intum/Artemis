@@ -82,7 +82,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '### ❌ Unable to deploy to test servers ❌\nThe docker build needs to run through before deploying.'
+              body: '### ⚠️ Unable to deploy to test servers ⚠️\nThe docker build needs to run through before deploying.'
             })
             core.setFailed('The build needs to run through first. Please wait for the build to finish and then try again.')
 
@@ -96,38 +96,38 @@ jobs:
         include:
           # Commented out environments are not yet available and will be enabled in the future
 
-          #- environment: artemis-test1.artemis.cit.tum.de
-          #  label-identifier: artemis-test1
-          #  url: https://artemis-test1.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test1.artemis.cit.tum.de
-          #  folder: /opt/artemis
-          #  host_keys: |
-          #    artemis-test1.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDS+lFrN7hvzFjESxSQkmLbBdra9dWo33izxLRO2x5oTQwcbZA66Y3cQungIV460aQHwH+K0ALQuEc5EA7LegfFXo//t3kqXEALf0xRkO5tLnJEBpwnjpiOj8GFVIR8XOopKHf3zLo7/rmCPmdN0TKKigw9PcowB3Nf9TlpXvVtpkNTqnjwxfsLqvVjTf+8ji48Xe8zOhAH4zyJEc1KFM7XNdYYJPUctQyOoF+9QrTEW2GLYRkb2IqL8RDd09riUrjtsQJdoK21ATPC07j6XqGCgZxZQfmq4NlqEg2euQt45l0ZkVp3sQG70U0NkwKsLLhABWOzKDWvix7mJ/YDXCkk4Q8Badus1vIBAZYuTATfsEwXnQEnKTl8i4l7CE6U4PZLhwOgxcLBU9E3YKLjCsp8wfEV0n/wyoxXKUSH7Lb0jPQ4JMVUgNT5Rkdt0RE3YMWxVLrQNs6u33m2LrXt3lmiZsGpFa08RcjnSdFtHonL/CkwU00kckoMwRPgUniJKmM=
-          #    artemis-test1.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMk4f5/x4grLMOY9jQCp3SfSjF81iWYRCbXJHBMWzG3TbQq9d2zW8bGCak5TGwPCDnjfBPRRSF57LZJlNaf3wPE=
-          #    artemis-test1.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBGzlZUARYQBdq85FtCe4IALac1dSWoNsvQZmeCjPmS/
+          - environment: artemis-test1.artemis.cit.tum.de
+            label-identifier: artemis-test1
+            url: https://artemis-test1.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test1.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+              artemis-test1.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDS+lFrN7hvzFjESxSQkmLbBdra9dWo33izxLRO2x5oTQwcbZA66Y3cQungIV460aQHwH+K0ALQuEc5EA7LegfFXo//t3kqXEALf0xRkO5tLnJEBpwnjpiOj8GFVIR8XOopKHf3zLo7/rmCPmdN0TKKigw9PcowB3Nf9TlpXvVtpkNTqnjwxfsLqvVjTf+8ji48Xe8zOhAH4zyJEc1KFM7XNdYYJPUctQyOoF+9QrTEW2GLYRkb2IqL8RDd09riUrjtsQJdoK21ATPC07j6XqGCgZxZQfmq4NlqEg2euQt45l0ZkVp3sQG70U0NkwKsLLhABWOzKDWvix7mJ/YDXCkk4Q8Badus1vIBAZYuTATfsEwXnQEnKTl8i4l7CE6U4PZLhwOgxcLBU9E3YKLjCsp8wfEV0n/wyoxXKUSH7Lb0jPQ4JMVUgNT5Rkdt0RE3YMWxVLrQNs6u33m2LrXt3lmiZsGpFa08RcjnSdFtHonL/CkwU00kckoMwRPgUniJKmM=
+              artemis-test1.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMk4f5/x4grLMOY9jQCp3SfSjF81iWYRCbXJHBMWzG3TbQq9d2zW8bGCak5TGwPCDnjfBPRRSF57LZJlNaf3wPE=
+              artemis-test1.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBGzlZUARYQBdq85FtCe4IALac1dSWoNsvQZmeCjPmS/
 
-          #- environment: artemis-test2.artemis.cit.tum.de
-          #  label-identifier: artemis-test2
-          #  url: https://artemis-test2.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test2.artemis.cit.tum.de
-          #  folder: /opt/artemis
-          #  host_keys: |
-          #    artemis-test2.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDUqNIPYUJBuItIfGzVu8jtpNWerFoqNq34cPU/+w5biwCrQA/RMIRt0H49ETc4vgc3rN85//FJ9j2x4jGfyS3jxj/ind6PX1QIBjGl09s2TFz53Z8OwcAw9iXJrtKqZGfxr8sbVfboDGa/kyr8E+YUJo+6bPusLQPSAJn8GUGgcNKHQSX7A4sEIeq2uU1RqGKDWJSxyECUxyubfNB6LCZd3ezEP1MPDnvhoF/5cEP4QxeTsVIkwIIAE8oVxNM7Ni8xqkl8sUM//SdzglFsK2gE5eSZ5OpQ5h/Cc3Oo1z7LnwlMwo8fGnhAcoUpDjuKD/2AdIhkyW0B4xUKbKVO94kVSuBUXErYqF4bHByGgjkzR0JTEwk5+shlUjoEA6DBxBO08CudJcTDUhk5+8fRwOzxfSTakr8sOfakgo7W6fBl3P4lHSdsd7VqKINcR3A9QYSXeiEeqliXnTkDSsZw4ux9JyuLle1DHPbTuH8f+vEosdxda+djm3FeijYTe4QS87k=
-          #    artemis-test2.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDRCF0zH3u38zVPNUhJI7zIDsXa3ONiU0GeCv/ybjawkh4alBPnlXtdH0cG1JPtR/Jz/gau92dcqiIFtqdDCDkg=
-          #    artemis-test2.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMV70ACU6GdLtf1MwUklNltC78UoOPsasZruYh0Ord6n
+          - environment: artemis-test2.artemis.cit.tum.de
+            label-identifier: artemis-test2
+            url: https://artemis-test2.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test2.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+              artemis-test2.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDUqNIPYUJBuItIfGzVu8jtpNWerFoqNq34cPU/+w5biwCrQA/RMIRt0H49ETc4vgc3rN85//FJ9j2x4jGfyS3jxj/ind6PX1QIBjGl09s2TFz53Z8OwcAw9iXJrtKqZGfxr8sbVfboDGa/kyr8E+YUJo+6bPusLQPSAJn8GUGgcNKHQSX7A4sEIeq2uU1RqGKDWJSxyECUxyubfNB6LCZd3ezEP1MPDnvhoF/5cEP4QxeTsVIkwIIAE8oVxNM7Ni8xqkl8sUM//SdzglFsK2gE5eSZ5OpQ5h/Cc3Oo1z7LnwlMwo8fGnhAcoUpDjuKD/2AdIhkyW0B4xUKbKVO94kVSuBUXErYqF4bHByGgjkzR0JTEwk5+shlUjoEA6DBxBO08CudJcTDUhk5+8fRwOzxfSTakr8sOfakgo7W6fBl3P4lHSdsd7VqKINcR3A9QYSXeiEeqliXnTkDSsZw4ux9JyuLle1DHPbTuH8f+vEosdxda+djm3FeijYTe4QS87k=
+              artemis-test2.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDRCF0zH3u38zVPNUhJI7zIDsXa3ONiU0GeCv/ybjawkh4alBPnlXtdH0cG1JPtR/Jz/gau92dcqiIFtqdDCDkg=
+              artemis-test2.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMV70ACU6GdLtf1MwUklNltC78UoOPsasZruYh0Ord6n
 
-          #- environment: artemis-test3.artemis.cit.tum.de
-          #  label-identifier: artemis-test3
-          #  url: https://artemis-test3.artemis.cit.tum.de
-          #  user: deployment
-          #  hosts: artemis-test3.artemis.cit.tum.de
-          #  folder: /opt/artemis
-          #  host_keys: |
-          #    artemis-test3.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC3zNbNkbYMUbNKCtVSa1GH7ovysowYQQHQK3owHbfjyKsaS6lTO2o16mMe3pu0+CwMdsJqBqn5Lt6M9HyCW74WwwWbOcUrcSqE/37hx5Ja2YzCwucTpvUCR3WVrmwBEYCoS5ZdQfFmyfVQtqjCCI5DdRk1wgY00eLoc8d6YOb6XnmMTs41WcyXFl8ffjhG3jMGlQILI8zhyZqnYB8HwadRAp8Oa6+DyGhOBAV5d3S0AZqjMKNoBGSAXCfs/nG3jBigxNCV7zeIjuhi2Ize/GY+gMcCrvWhjs/lXERII7RDIlcZogyN9+rGRX8X8okMoS1YONxzWPFb6XQajeDriESQ5txyHXpbFwcSLSU8DzleS9UZMah99knMs0Fyzu0q4rbCS1PtaAJfSOLjVgp67j3DNkXV+P5CZaSYI7hl377u0aTTHB5W3Myn7kXrNL2vjRk/mui+/Ds/+PPCJERWJAhCYp+CGj/itcOKPJqyfLL3ejzpqhRDzDTWCHU2cUnE2PE=
-          #    artemis-test3.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBF3JQ7fPlW+Rua4JXCl4Dska45h4PhClWvmcFQHGA4H0bLEG+lVXuw5yuRk9lDD88pvzStFewk9EbmJ8Sja0zKo=
-          #    artemis-test3.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGE67ADXnCgvbyJfqDAmSvegYwmCzfOyAUKBbJpwh7oU
+          - environment: artemis-test3.artemis.cit.tum.de
+            label-identifier: artemis-test3
+            url: https://artemis-test3.artemis.cit.tum.de
+            user: deployment
+            hosts: artemis-test3.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+              artemis-test3.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC3zNbNkbYMUbNKCtVSa1GH7ovysowYQQHQK3owHbfjyKsaS6lTO2o16mMe3pu0+CwMdsJqBqn5Lt6M9HyCW74WwwWbOcUrcSqE/37hx5Ja2YzCwucTpvUCR3WVrmwBEYCoS5ZdQfFmyfVQtqjCCI5DdRk1wgY00eLoc8d6YOb6XnmMTs41WcyXFl8ffjhG3jMGlQILI8zhyZqnYB8HwadRAp8Oa6+DyGhOBAV5d3S0AZqjMKNoBGSAXCfs/nG3jBigxNCV7zeIjuhi2Ize/GY+gMcCrvWhjs/lXERII7RDIlcZogyN9+rGRX8X8okMoS1YONxzWPFb6XQajeDriESQ5txyHXpbFwcSLSU8DzleS9UZMah99knMs0Fyzu0q4rbCS1PtaAJfSOLjVgp67j3DNkXV+P5CZaSYI7hl377u0aTTHB5W3Myn7kXrNL2vjRk/mui+/Ds/+PPCJERWJAhCYp+CGj/itcOKPJqyfLL3ejzpqhRDzDTWCHU2cUnE2PE=
+              artemis-test3.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBF3JQ7fPlW+Rua4JXCl4Dska45h4PhClWvmcFQHGA4H0bLEG+lVXuw5yuRk9lDD88pvzStFewk9EbmJ8Sja0zKo=
+              artemis-test3.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGE67ADXnCgvbyJfqDAmSvegYwmCzfOyAUKBbJpwh7oU
 
           - environment: artemis-test4.artemis.cit.tum.de
             label-identifier: artemis-test4
@@ -206,9 +206,9 @@ jobs:
           #    artemis-test10.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCICiCLtljuYwnBxGKurZjMuDsYFfSJ/5UD8gaDa1+CWPqmM4cFTniw+ORglDpaySlusPbXwll+K0JPkIm8E6+Y=
           #    artemis-test10.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAF8QXj0d2na/rBaVTIXfGu3HgtFppoE04Oj1Od2O3kD
     outputs:
-      #TS1: ${{ steps.filter.outputs.artemis-test1 || '' }}
-      #TS2: ${{ steps.filter.outputs.artemis-test2 || '' }}
-      #TS3: ${{ steps.filter.outputs.artemis-test3 || '' }}
+      TS1: ${{ steps.filter.outputs.artemis-test1 || '' }}
+      TS2: ${{ steps.filter.outputs.artemis-test2 || '' }}
+      TS3: ${{ steps.filter.outputs.artemis-test3 || '' }}
       TS4: ${{ steps.filter.outputs.artemis-test4 || '' }}
       TS5: ${{ steps.filter.outputs.artemis-test5 || '' }}
       TS6: ${{ steps.filter.outputs.artemis-test6 || '' }}
@@ -252,6 +252,7 @@ jobs:
   deploy:
     needs: [ process-matrix ]
     runs-on: ubuntu-latest
+    concurrency: test-servers-deploy
     strategy:
       fail-fast: false
       matrix:
@@ -293,7 +294,7 @@ jobs:
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `### ❌ Unable to deploy to test servers ❌\nTestserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`
+                body: `#### ⚠️ Unable to deploy to test servers ⚠️\nTestserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`
               })
               core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
             } else if (issues.length > 1) {
@@ -301,16 +302,9 @@ jobs:
                   issue_number: context.issue.number,
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  body: '### ❌ Unable to deploy to test servers ❌\nTestserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!'
+                  body: '#### ⚠️ Unable to deploy to test servers ⚠️\nTestserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!'
                 })
               core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!');
-            } else if (context.issue && context.issue.number) {
-              await github.rest.issues.addLabels({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                labels: ['lock:${{ matrix.label-identifier }}']
-              })
             }
 
       - name: Compute Tag
@@ -362,13 +356,34 @@ jobs:
         run: |
           for host in $DEPLOYMENT_HOSTS; do
             ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $GITHUB_HEAD_REF -d $DEPLOYMENT_FOLDER -y
-            sleep 20
           done
 
+      - name: Add "lock:${{ matrix.environment }}" label
+        uses: actions/github-script@v6
+        with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+                if (context.issue && context.issue.number) {
+                  await github.rest.issues.addLabels({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    labels: ['lock:${{ matrix.label-identifier }}']
+                  })
+                }
+
+      - name: Update badge
+        uses: RubbaBoy/BYOB@v1.3.0
+        with:
+            NAME: ${{ matrix.label-identifier }}
+            LABEL: ${{ matrix.environment }}
+            STATUS: ${{ github.event.pull_request.head.ref }}
+            COLOR: red
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Check that the build job has run successfully before deploying
   add-error-label:
-    needs: [ check-build-status, filter-matrix, process-matrix, deploy ]
+    needs: [ get-labels, check-build-status, filter-matrix, process-matrix, deploy ]
     runs-on: ubuntu-latest
     if: ${{ failure() }}
     steps:
