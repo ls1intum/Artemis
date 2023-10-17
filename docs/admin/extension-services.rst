@@ -3,7 +3,7 @@
 Setup of Extension Services
 ===========================
 
-Additionally, this section describes the required setup for various extension services like 'Athena', 'Hermes', 'Iris',
+This section describes the required setup for various extension services like 'Athena', 'Hermes', 'Iris',
 and 'Apollon' that can be used to activate additional functionality in your Artemis instance.
 
 .. toctree::
