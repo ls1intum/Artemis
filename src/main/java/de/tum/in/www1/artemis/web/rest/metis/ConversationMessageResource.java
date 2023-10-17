@@ -51,7 +51,10 @@ public class ConversationMessageResource {
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
+        log.info("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
+        long start = System.nanoTime();
         Post createdMessage = conversationMessagingService.createMessage(courseId, post);
+        log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
     }
 

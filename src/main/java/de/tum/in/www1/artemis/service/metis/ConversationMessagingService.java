@@ -85,13 +85,15 @@ public class ConversationMessagingService extends PostingService {
             throw new BadRequestAlertException("A new message post must have a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
         }
 
-        var author = this.userRepository.getUserWithGroupsAndAuthorities();
+        var author = userRepository.getUserWithGroupsAndAuthorities();
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
         conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
+        log.info("      createMessage:conversationService.isMemberElseThrow DONE");
 
         var conversation = conversationRepository.findByIdElseThrow(newMessage.getConversation().getId());
+        log.info("      createMessage:conversationRepository.findByIdElseThrow DONE");
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -100,9 +102,9 @@ public class ConversationMessagingService extends PostingService {
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
-
+        log.info("      createMessage:additional authorization DONE");
         Set<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
-
+        log.info("      createMessage:parseUserMentions DONE");
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
@@ -119,10 +121,10 @@ public class ConversationMessagingService extends PostingService {
         if (createdMessage.getConversation() != null) {
             createdMessage.getConversation().hideDetails();
         }
-
+        log.info("      conversationMessageRepository.save DONE");
         // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
         notifyAboutMessageCreation(author, savedConversation, course, createdMessage, mentionedUsers);
-
+        log.info("      notifyAboutMessageCreation DONE");
         return createdMessage;
     }
 
