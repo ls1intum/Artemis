@@ -1,11 +1,10 @@
-import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
 import { flatten, maxBy, sum } from 'lodash-es';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
@@ -13,11 +12,9 @@ import { isOrion } from 'app/shared/orion/orion';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faAngleDown, faAngleUp, faFilter, faMagnifyingGlass, faPlayCircle, faSortNumericDown, faSortNumericUp, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
@@ -57,12 +54,11 @@ export interface ExerciseWithDueDate {
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
+export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     private courseId: number;
     private paramSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
-    private currentUser?: User;
     public course?: Course;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object; // TODO: convert into map
@@ -78,7 +74,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     activeFilters: Set<ExerciseFilter>;
     numberOfExercises: number;
     exerciseForGuidedTour?: Exercise;
-    nextRelevantExercise?: ExerciseWithDueDate;
     sortingAttribute: SortingAttribute;
     searchExercisesInput: string;
     exerciseFilter: ExerciseFilterModel;
@@ -107,8 +102,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     constructor(
         private courseStorageService: CourseStorageService,
         private translateService: TranslateService,
-        private exerciseService: ExerciseService,
-        private accountService: AccountService,
         private route: ActivatedRoute,
         private guidedTourService: GuidedTourService,
         private programmingSubmissionService: ProgrammingSubmissionService,
@@ -147,11 +140,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
-
-        this.accountService.identity().then((user) => {
-            this.currentUser = user;
-            this.updateNextRelevantExercise();
-        });
     }
 
     ngAfterViewInit(): void {
@@ -167,10 +155,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.applyFiltersAndOrder();
     }
 
-    ngOnChanges() {
-        this.updateNextRelevantExercise();
-    }
-
     ngOnDestroy(): void {
         this.translateSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
@@ -184,19 +168,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
 
     private calcNumberOfExercises() {
         this.numberOfExercises = sum(Array.from(this.exerciseCountMap.values()));
-    }
-
-    private updateNextRelevantExercise() {
-        const nextExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this)), 12, this.currentUser);
-        if (nextExercise) {
-            const dueDate = CourseExercisesComponent.exerciseDueDate(nextExercise);
-            this.nextRelevantExercise = {
-                exercise: nextExercise,
-                dueDate,
-            };
-        } else {
-            this.nextRelevantExercise = undefined;
-        }
     }
 
     /**
@@ -216,7 +187,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         filters.forEach((filter) => (this.activeFilters.has(filter) ? this.activeFilters.delete(filter) : this.activeFilters.add(filter)));
         this.localStorage.store(SortFilterStorageKey.FILTER, Array.from(this.activeFilters).join(','));
         this.applyFiltersAndOrder();
-        this.updateNextRelevantExercise();
     }
 
     /**
@@ -257,7 +227,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      * Checks if the given exercise still needs work, i.e. wasn't even started yet or is not graded with 100%
      * @param exercise The exercise which should get checked
      */
-    private needsWork(exercise: Exercise): boolean {
+    private static needsWork(exercise: Exercise): boolean {
         const latestResult = maxBy(flatten(exercise.studentParticipations?.map((participation) => participation.results)), 'completionDate');
         return !latestResult || !latestResult.score || latestResult.score < 100;
     }
@@ -266,7 +236,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      * Applies all selected activeFilters and orders and groups the user's exercises
      */
     private applyFiltersAndOrder() {
-        let filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
+        let filtered = this.course?.exercises?.filter((exercise) => CourseExercisesComponent.fulfillsCurrentFilter(exercise, this.activeFilters));
         filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
         this.filteredExercises = filtered;
         this.groupExercises(filtered);
@@ -277,14 +247,14 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      * @param exercise the exercise to check
      * @return true if the given exercise fulfills the currently selected filters; false otherwise
      */
-    private fulfillsCurrentFilter(exercise: Exercise): boolean {
-        const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
-        const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
-        const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
-        const optionalFilterActive = this.activeFilters.has(ExerciseFilter.OPTIONAL);
+    public static fulfillsCurrentFilter(exercise: Exercise, activeFilters: Set<ExerciseFilter>): boolean {
+        const needsWorkFilterActive = activeFilters.has(ExerciseFilter.NEEDS_WORK);
+        const overdueFilterActive = activeFilters.has(ExerciseFilter.OVERDUE);
+        const unreleasedFilterActive = activeFilters.has(ExerciseFilter.UNRELEASED);
+        const optionalFilterActive = activeFilters.has(ExerciseFilter.OPTIONAL);
         const participation = CourseExercisesComponent.studentParticipation(exercise);
         return !!(
-            (!needsWorkFilterActive || this.needsWork(exercise)) &&
+            (!needsWorkFilterActive || CourseExercisesComponent.needsWork(exercise)) &&
             (!exercise.dueDate || !overdueFilterActive || !hasExerciseDueDatePassed(exercise, participation)) &&
             (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
             (!optionalFilterActive || exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) &&
@@ -331,7 +301,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         }
     }
 
-    private static exerciseDueDate(exercise: Exercise): dayjs.Dayjs | undefined {
+    public static exerciseDueDate(exercise: Exercise): dayjs.Dayjs | undefined {
         return getExerciseDueDate(exercise, CourseExercisesComponent.studentParticipation(exercise));
     }
 
