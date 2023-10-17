@@ -130,12 +130,14 @@ public class ConversationMessagingService extends PostingService {
 
     private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+        log.info("      getWebSocketRecipients DONE");
         Set<User> broadcastRecipients = webSocketRecipients.stream().map(ConversationWebSocketRecipientSummary::user).collect(Collectors.toSet());
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         broadcastRecipients.addAll(mentionedUsers);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
+        log.info("      broadcastForPost DONE");
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
@@ -145,17 +147,20 @@ public class ConversationMessagingService extends PostingService {
             }
         }
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+        log.info("      incrementUnreadMessagesCountOfParticipants DONE");
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
 
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
         conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipients);
+        log.info("      conversationService.notifyAllConversationMembersAboutNewMessage DONE");
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
+        log.info("      conversationNotificationService.notifyAboutNewMessage DONE");
     }
 
     /**
