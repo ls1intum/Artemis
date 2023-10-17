@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -184,6 +185,16 @@ public abstract class PostingService {
 
         if (!courseRepository.isMessagingEnabled(course.getId())) {
             throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
+        }
+        return course;
+    }
+
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Long courseId) {
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
+            throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
         }
         return course;
     }
