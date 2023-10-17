@@ -51,8 +51,8 @@ following dependencies/tools on your machine:
 
 .. note::
 
-    The following documentation describes the core setup for a development Artemis instance including a database
-    and the version control and continuous integrations systems needed for programming exercises up and running.
+    This setup guide describes the core setup for a development Artemis instance and its database.
+    It also contains the setup steps for the version control and continuous integrations systems needed for programming exercises.
     A production setup of those core services might need to be adapted further to be secure.
     Check the :ref:`administration setup <admin_setup>` for that.
 
