@@ -568,8 +568,8 @@ instead of the TUM defaults:
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/logo/favicon.svg``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
-* The Student Code of Conduct -> ``${artemisRunDirectory}/public/documents/student-code-of-conduct.png``
-* The General Examination and Study Regulations -> ``${artemisRunDirectory}/public/documents/apso.png``
+* The Student Code of Conduct -> ``${artemisRunDirectory}/public/documents/student-code-of-conduct.pdf``
+* The General Examination and Study Regulations -> ``${artemisRunDirectory}/public/documents/apso.pdf``
 
 ------------------------------------------------------------------------------------------------------------------------
 
