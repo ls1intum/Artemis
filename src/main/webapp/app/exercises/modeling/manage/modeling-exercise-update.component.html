@@ -235,8 +235,7 @@
                 name="competencies"
             ></jhi-competency-selection>
         </div>
-        <jhi-exercise-update-notification *ngIf="!isExamMode" [exercise]="modelingExercise" [isImport]="isImport" [(notificationText)]="notificationText">
-        </jhi-exercise-update-notification>
+        <jhi-exercise-update-notification [exercise]="modelingExercise" [isImport]="isImport" [(notificationText)]="notificationText"> </jhi-exercise-update-notification>
     </div>
     <div>
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">

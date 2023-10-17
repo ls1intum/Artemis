@@ -200,12 +200,7 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise"></jhi-grading-instructions-details>
         </div>
-        <jhi-exercise-update-notification
-            *ngIf="!isExamMode"
-            [exercise]="textExercise"
-            [isImport]="isImport"
-            [(notificationText)]="notificationText"
-        ></jhi-exercise-update-notification>
+        <jhi-exercise-update-notification [exercise]="textExercise" [isImport]="isImport" [(notificationText)]="notificationText"></jhi-exercise-update-notification>
     </div>
 
     <div>
