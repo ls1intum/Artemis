@@ -209,8 +209,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             exercise: exerciseTitle,
             inCourseOrExam: this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse')),
             courseOrExam: courseOrExamTitle,
-            cocLink: 'https://artemis.in.tum.de/content/documents/student-code-of-conduct.pdf',
-            apsoLink: 'https://artemis.in.tum.de/content/documents/apso.pdf',
+            cocLink: '/public/documents/student-code-of-conduct.pdf',
+            apsoLink: '/public/documents/apso.pdf',
             dueDate: dayjs().add(7, 'day').format('DD.MM.YYYY'),
         });
     }

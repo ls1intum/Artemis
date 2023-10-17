@@ -10,7 +10,7 @@ public class ContinuousPlagiarismControlPostContentProvider {
 
     private static final String POST_CONTENT_DE = "Sehr geehrter %s,<br><br>nach einer automatisierten Auswertung Ihrer letzten Einsendung für die Übung \"%s\" in der Lehrveranstaltung \"%s\" haben wir eine signifikante Übereinstimmung Ihrer Einsendung mit der Einsendung von mindestens einem anderen Studenten festgestellt. Dies ist möglicherweise ein Verstoß gegen die <a href=\"%s\">Student Code of Conduct</a> der School of Computation, Information and Technology, der Sie zugestimmt haben. Sie können diese Warnmeldung beheben, indem Sie eine neue Version Ihrer Lösung vor dem Abgabetermin der Übung einreichen";
 
-    private static final String COC_LINK = "https://artemis.in.tum.de/content/documents/student-code-of-conduct.pdf";
+    private static final String COC_LINK = "/content/documents/student-code-of-conduct.pdf";
 
     private ContinuousPlagiarismControlPostContentProvider() {
     }
