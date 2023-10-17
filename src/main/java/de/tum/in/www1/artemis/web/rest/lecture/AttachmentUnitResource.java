@@ -174,7 +174,7 @@ public class AttachmentUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-units.component.ts
-        int minutesUntilDeletion = 3;
+        int minutesUntilDeletion = 30;
         log.debug("REST request to upload file: {}", file.getOriginalFilename());
         checkLecture(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
