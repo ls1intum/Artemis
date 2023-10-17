@@ -128,8 +128,9 @@ public class TutorialGroupResource {
     public ResponseEntity<Set<String>> getUniqueCampusValues(@PathVariable Long courseId) {
         log.debug("REST request to get unique campus values used for tutorial groups in course : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueCampusValuesInCourse(courseId));
+        return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueCampusValuesInRegisteredCourse(user.getGroups()));
     }
 
     /**
@@ -161,7 +162,7 @@ public class TutorialGroupResource {
     public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user);
