@@ -1,6 +1,6 @@
 import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey, IrisErrorType, errorMessages } from 'app/entities/iris/iris-errors.model';
-import { IrisRateLimitInformation } from 'app/iris/websocket.service';
+import { IrisRateLimitInformation } from 'app/iris/chat-websocket.service';
 
 export enum ActionType {
     NUM_NEW_MESSAGES_RESET = 'num-new-messages-reset',

@@ -11,7 +11,6 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
@@ -28,11 +27,12 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
 import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisSessionService } from 'app/iris/session.service';
 import { UserService } from 'app/core/user/user.service';
+import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
 
 describe('ExerciseChatWidgetComponent', () => {
     let component: ExerciseChatWidgetComponent;
@@ -146,12 +146,7 @@ describe('ExerciseChatWidgetComponent', () => {
             new StudentMessageSentAction(
                 {
                     sender: IrisSender.USER,
-                    content: [
-                        {
-                            type: IrisMessageContentType.TEXT,
-                            textContent: 'Hello',
-                        },
-                    ],
+                    content: [new IrisMessageTextContent('Hello')],
                 },
                 null,
             ),
@@ -171,12 +166,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const error = 'Something went wrong. Please try again later!';
         const mockMessage = {
             sender: component.SENDER_USER,
-            content: [
-                {
-                    type: 'TEXT',
-                    textContent: 'Hello',
-                },
-            ],
+            content: [new IrisMessageTextContent('Hello')],
         };
         jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValueOnce(
             throwError({
@@ -393,12 +383,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const testMessage = 'Test message';
         const expectedResult: IrisClientMessage = {
             sender: IrisSender.USER,
-            content: [
-                {
-                    type: IrisMessageContentType.TEXT,
-                    textContent: testMessage,
-                },
-            ],
+            content: [new IrisMessageTextContent(testMessage)],
         };
 
         const result = component.newUserMessage(testMessage);

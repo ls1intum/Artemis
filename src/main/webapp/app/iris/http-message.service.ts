@@ -9,13 +9,16 @@ type EntityResponseType = HttpResponse<IrisMessage>;
 type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
 
 /**
- * Provides a singleton root-level IrisHttpMessageService to perform CRUD operations on messages
+ * Provides a set of methods to perform CRUD operations on messages
  */
 @Injectable({ providedIn: 'root' })
-export class IrisHttpMessageService {
-    public resourceUrl = 'api/iris/sessions';
+export abstract class IrisHttpMessageService {
+    protected apiPrefix: string = 'api/iris/';
 
-    constructor(private httpClient: HttpClient) {}
+    protected constructor(
+        protected httpClient: HttpClient,
+        protected sessionType: string,
+    ) {}
 
     private readonly MAX_INT_JAVA = 2147483647;
 
@@ -29,7 +32,7 @@ export class IrisHttpMessageService {
         message.messageDifferentiator = Math.floor(Math.random() * this.MAX_INT_JAVA);
         return this.httpClient
             .post<IrisServerMessage>(
-                `${this.resourceUrl}/${sessionId}/messages`,
+                `${this.apiPrefix}/${this.sessionType}/${sessionId}/messages`,
                 Object.assign({}, message, {
                     sentAt: convertDateFromClient(message.sentAt),
                 }),
@@ -52,7 +55,7 @@ export class IrisHttpMessageService {
      */
     resendMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
         message.messageDifferentiator = message.messageDifferentiator ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
-        return this.httpClient.post<IrisServerMessage>(`${this.resourceUrl}/${sessionId}/messages/${message.id}/resend`, undefined, { observe: 'response' }).pipe(
+        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/${this.sessionType}/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
                     message.id = response.body.id;
@@ -67,10 +70,10 @@ export class IrisHttpMessageService {
      * @return {Observable<EntityArrayResponseType>}
      */
     getMessages(sessionId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<IrisMessage[]>(`${this.resourceUrl}/${sessionId}/messages`, { observe: 'response' }).pipe(
+        return this.httpClient.get<IrisMessage[]>(`${this.apiPrefix}/${this.sessionType}/${sessionId}/messages`, { observe: 'response' }).pipe(
             map((response) => {
                 const messages = response.body;
-                if (messages == null) return response;
+                if (!messages) return response;
 
                 const modifiedMessages = messages.map((message) => {
                     return Object.assign({}, message, {
@@ -86,13 +89,13 @@ export class IrisHttpMessageService {
     }
 
     /**
-     * creates a rating for a message
+     * Sets a helpfulness rating for a message
      * @param {number} sessionId of the session of the message that should be rated
      * @param {number} messageId of the message that should be rated
      * @param {boolean} helpful rating of the message
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Observable<EntityResponseType> {
-        return this.httpClient.put<IrisMessage>(`${this.resourceUrl}/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
+        return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/${this.sessionType}/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
     }
 }

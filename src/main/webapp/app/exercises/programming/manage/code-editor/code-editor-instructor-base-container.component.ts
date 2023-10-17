@@ -137,6 +137,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         this.onError(err.message);
                     },
                 });
+            this.onRepositoryChanged(); // Notify subclasses that the selected repository may have changed
         });
     }
 
@@ -267,6 +268,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         this.domainService.setDomain(domain);
     }
+
+    /**
+     * Called when the selected repository changes.
+     * @protected Can be overridden by subclasses to react to changes.
+     */
+    protected onRepositoryChanged() {}
 
     /**
      * Select the template participation repository and navigate to it

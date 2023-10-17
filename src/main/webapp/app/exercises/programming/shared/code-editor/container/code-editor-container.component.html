@@ -7,6 +7,7 @@
         <ng-content select="[editorTitleActions]"></ng-content>
         <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
             <ng-content select="[editorToolbar]"></ng-content>
+            <jhi-code-editor-chatbot></jhi-code-editor-chatbot>
             <jhi-code-editor-actions
                 *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
                 [buildable]="buildable"
@@ -79,4 +80,5 @@
     <div *ngIf="isTutorAssessment" editorBottom>
         <ng-content select="[editorBottom]"></ng-content>
     </div>
+    <jhi-code-editor-chatbot></jhi-code-editor-chatbot>
 </jhi-code-editor-grid>

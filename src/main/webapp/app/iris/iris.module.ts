@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
 import { RouterModule } from '@angular/router';
@@ -16,10 +15,13 @@ import { IrisSubSettingsUpdateComponent } from './settings/iris-settings-update/
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
 import { IrisLogoComponent } from './iris-logo/iris-logo.component';
+import { CodeEditorChatbotComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot.component';
+import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
 
 @NgModule({
     declarations: [
         ExerciseChatWidgetComponent,
+        CodeEditorChatbotComponent,
         ExerciseChatbotComponent,
         AboutIrisComponent,
         IrisSettingsUpdateComponent,
@@ -31,6 +33,6 @@ import { IrisLogoComponent } from './iris-logo/iris-logo.component';
     ],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
     providers: [],
-    exports: [ExerciseChatbotComponent],
+    exports: [CodeEditorChatbotComponent, ExerciseChatbotComponent],
 })
 export class IrisModule {}

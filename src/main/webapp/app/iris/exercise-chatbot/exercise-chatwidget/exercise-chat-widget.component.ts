@@ -26,7 +26,6 @@ import {
     RateMessageSuccessAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
-import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import {
     IrisArtemisClientMessage,
     IrisClientMessage,
@@ -37,17 +36,30 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import { IrisMessageContent, IrisMessageContentType } from 'app/entities/iris/iris-content-type.model';
+import {
+    IrisMessageContent,
+    IrisMessageContentType,
+    IrisMessageTextContent,
+    getComponentInstruction,
+    getPlanComponent,
+    getTextContent,
+    isPlanContent,
+    isTextContent,
+} from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
+import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
+import { IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-component.model';
+import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -100,6 +112,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     stateStore: IrisStateStore;
     stateSubscription: Subscription;
     messages: IrisMessage[] = [];
+    content: IrisMessageContent;
     newMessageTextContent = '';
     isLoading: boolean;
     sessionId: number;
@@ -136,7 +149,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     constructor(
         private dialog: MatDialog,
         @Inject(MAT_DIALOG_DATA) public data: any,
-        private httpMessageService: IrisHttpMessageService,
+        //private httpMessageService: IrisHttpMessageService,
         private userService: UserService,
         private router: Router,
         private sharedService: SharedService,
@@ -311,10 +324,11 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * Loads the first message in the conversation if it's not already loaded.
      */
     loadFirstMessage(): void {
+        const textContent = this.isChatSession() ? 'artemisApp.exerciseChatbot.tutorFirstMessage' : 'artemisApp.exerciseChatbot.codeEditorFirstMessage';
         const firstMessageContent = {
-            textContent: 'artemisApp.exerciseChatbot.firstMessage',
             type: IrisMessageContentType.TEXT,
-        } as IrisMessageContent;
+            textContent: textContent,
+        } as IrisMessageTextContent;
 
         const firstMessage = {
             sender: IrisSender.ARTEMIS_CLIENT,
@@ -364,7 +378,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
+                // .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
+                .then(() => {
+                    this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
+                })
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
@@ -550,14 +567,34 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @param helpful - A boolean indicating if the message is helpful or not.
      */
     rateMessage(message_id: number, index: number, helpful: boolean) {
-        this.httpMessageService
-            .rateMessage(<number>this.sessionId, message_id, helpful)
-            .toPromise()
-            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
-            .catch(() => {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
-                this.scrollToBottom('smooth');
-            });
+        if (this.sessionService.httpMessageService instanceof IrisHttpChatMessageService) {
+            this.sessionService.httpMessageService
+                .rateMessage(<number>this.sessionId, message_id, helpful)
+                .toPromise()
+                .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+                .catch(() => {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
+                    this.scrollToBottom('smooth');
+                });
+        }
+    }
+
+    /**
+     * execute component plans
+     * @param message_id - The ID of the message.
+     * @param content_id - The ID of the content to execute.
+     */
+    executePlan(message_id: number, content_id: number) {
+        if (this.sessionService.httpMessageService instanceof IrisHttpCodeEditorMessageService) {
+            this.sessionService.httpMessageService
+                .executePlan(<number>this.sessionId, message_id, content_id)
+                .toPromise()
+                // .then(() => this.stateStore.dispatch(new ExecutePlanSuccessAction(content_id)))
+                .catch(() => {
+                    //this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.EXECUTE_PLAN_FAILED));
+                    this.scrollToBottom('smooth');
+                });
+        }
     }
 
     /**
@@ -593,10 +630,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A new IrisClientMessage object representing the user message.
      */
     newUserMessage(message: string): IrisClientMessage {
-        const content: IrisMessageContent = {
-            type: IrisMessageContentType.TEXT,
-            textContent: message,
-        };
+        const content = new IrisMessageTextContent(message);
         return {
             sender: this.SENDER_USER,
             content: [content],
@@ -616,9 +650,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
                 if (message.id) {
-                    return this.httpMessageService.resendMessage(<number>this.sessionId, message).toPromise();
+                    return this.sessionService.httpMessageService.resendMessage(<number>this.sessionId, message).toPromise();
                 } else {
-                    return this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
+                    return this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
                 }
             })
             .then(() => {
@@ -685,5 +719,33 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
+    }
+
+    isTextContent(content: IrisMessageContent) {
+        return isTextContent(content);
+    }
+
+    getTextContent(content: IrisMessageContent) {
+        return getTextContent(content);
+    }
+
+    isPlanContent(content: IrisMessageContent) {
+        return isPlanContent(content);
+    }
+
+    getPlanComponents(content: IrisMessageContent) {
+        return getPlanComponent(content);
+    }
+
+    getComponentInstruction(component: IrisExercisePlanComponent) {
+        return getComponentInstruction(component);
+    }
+
+    isRateMessage() {
+        return this.sessionService.httpMessageService instanceof IrisHttpChatMessageService;
+    }
+
+    isChatSession() {
+        return this.sessionService instanceof IrisChatSessionService;
     }
 }

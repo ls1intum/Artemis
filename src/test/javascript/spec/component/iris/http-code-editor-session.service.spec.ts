@@ -2,18 +2,18 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { irisExercise, mockConversation } from '../../helpers/sample/iris-sample-data';
-import { IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
+import { IrisHttpCodeEditorSessionService } from 'app/iris/http-code-editor-session.service';
 
-describe('Iris Http Chat Session Service', () => {
-    let service: IrisHttpChatSessionService;
+describe('Iris Http Code Editor Session Service', () => {
+    let service: IrisHttpCodeEditorSessionService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [IrisHttpChatSessionService],
+            providers: [IrisHttpCodeEditorSessionService],
         });
-        service = TestBed.inject(IrisHttpChatSessionService);
+        service = TestBed.inject(IrisHttpCodeEditorSessionService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
