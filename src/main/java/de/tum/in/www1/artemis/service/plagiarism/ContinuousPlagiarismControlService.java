@@ -70,7 +70,7 @@ public class ContinuousPlagiarismControlService {
     /**
      * Daily triggers plagiarism checks as a part of continuous plagiarism control.
      */
-    @Scheduled(initialDelay = 30_000, fixedDelay = 60_000)
+    @Scheduled(initialDelay = 30_000, fixedDelay = 90_000)
     public void executeChecks() {
         log.info("Starting continuous plagiarism control...");
 
