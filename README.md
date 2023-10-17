@@ -51,13 +51,13 @@
 
 The Artemis development team prioritizes the following issues in the future. We welcome feature requests from students, tutors, instructors, and administrators. We are happy to discuss any suggestions for improvements.
 
-* **Short term**: Further enhance the usability and user experience in different places based on best practices
-* **Short term**: Further improve discussions and provide communication channels
-* **Short term**: Improve the integration of learning analytics for students and instructors
-* **Short term**: Simplify the setup of Artemis
-* **Medium term**: Improve semi-automatic assessment by reusing knowledge from previous exercises and by offering it for the manual assessment of programming exercises
-* **Medium term**: Integrate adaptive learning with different exercise difficulties and the automatic generation of hints
-* **Medium term**: Further improve the security of the involved systems (e.g. when executing code of programming exercises)
+* **Short term**: Further improve the communication features
+* **Short term**: Add learning paths based on adaptive learning with different exercise difficulties and the automatic generation of hints
+* **Short term**: Add more learning analytics features while preserving data privacy
+* **Short term**: Add instructor assistance based on Generative AI
+* **Medium term**: Simplify the setup of Artemis
+* **Medium term**: Add feedback assistance based on Generative AI
+* **Medium term**: Add the possibility to use Iris for questions on all exercise types, lectures, and larning performance aspects
 * **Long term**: Microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
@@ -90,15 +90,13 @@ If needed, you can configure self service [user registration](https://docs.artem
 
 Please read the guide on [how to contribute](CONTRIBUTING.md) to Artemis.
 
-Once the PR is ready to merge, notifiy the responsible feature maintainer:
+Once the PR is ready to merge, notify the responsible feature maintainer:
 
-<details>
-  <summary>Feature Maintainers</summary>
+#### Maintainers
   
-| Feature                        | Maintainer                                                                                      |
-| ------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Programming exercises          | [@mtze](https://github.com/mtze)                                                                |
-| Ares                           | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
+| Feature / Aspect               | Maintainer                                                                                      |
+|--------------------------------| ----------------------------------------------------------------------------------------------- |
+| Programming exercises          | [@krusche](https://github.com/krusche)                                                          |
 | Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                      |
 | Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                          |
 | Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
@@ -106,19 +104,21 @@ Once the PR is ready to merge, notifiy the responsible feature maintainer:
 | Exam mode                      | [@krusche](https://github.com/krusche)                                                          |
 | Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
 | Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Communication                  | [@bassner](https://github.com/bassner)                                                          |
-| Notifications                  | [@mtze](https://github.com/mtze) [@bassner](https://github.com/bassner)                         |
+| Communication                  | [@krusche](https://github.com/krusche)                                                          |
+| Notifications                  | [@krusche](https://github.com/krusche)                                                          |
 | Team Exercises                 | [@krusche](https://github.com/krusche)                                                          |
 | Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
 | Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
 | Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
 | Learning analytics             | [@bassner](https://github.com/bassner)                                                          |
+| Adaptive learning              | [@bassner](https://github.com/bassner)                                                          |
 | Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                      |
+| Iris                           | [@bassner](https://github.com/bassner)                                                          |
+| Scalability                    | [@mtze](https://github.com/mtze)                                                                |
 | Usability + Performance        | [@bassner](https://github.com/bassner)                                                          |
 | Infrastructure                 | [@mtze](https://github.com/mtze)                                                                |
 | Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch) |
-    
-</details>
+
 
 ### Building for production
 
@@ -160,7 +160,7 @@ While Artemis includes generic adapters to these three external systems with a d
 
 ### Server architecture
 
-The following UML component diagram shows more details of the Artemis application server architecture and its REST interfaces to the application client.
+The following simplified UML component diagram exemplary shows more details of the Artemis application server architecture and its REST interfaces to the application client.
 
 ![Server Architecture](docs/dev/system-design/ServerArchitecture.png "Server Architecture")
 
@@ -174,7 +174,7 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ### Data model
 
-The Artemis application server uses the following (simplified) data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
+The Artemis application server uses the following (simplified) data model in the MySQL database (notice that the actual data model is more complex by now). It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
 Then a repository and a build plan for the student (User) will be created and configured. The initialization state helps to track the progress of this complex operation and allows recovering from errors. 
 A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. The continuous integration server automatically tests each submission and notifies the Artemis application server when a new result exists. 
 In addition, teaching assistants can assess student solutions and "manually" create results.
