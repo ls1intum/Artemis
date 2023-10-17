@@ -43,8 +43,8 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
- * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and submitted to the
- * executor service.
+ * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
+ * submitted to the executor service.
  */
 @Service
 @Profile("localci")
@@ -68,8 +68,8 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    @Value("${artemis.repo-clone-path}")
+    private String repoClonePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
             LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory) {
@@ -104,10 +104,11 @@ public class LocalCIBuildJobExecutionService {
      * @param commitHash    The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
      * @param containerName The name of the Docker container that will be used to run the build job.
      *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
+     * @param dockerImage   The Docker image that will be used to run the build job.
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName) {
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName, String dockerImage) {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
@@ -144,7 +145,7 @@ public class LocalCIBuildJobExecutionService {
 
                 for (int i = 0; i < auxiliaryRepositories.size(); i++) {
                     auxiliaryRepositoriesUrls[i] = new LocalVCRepositoryUrl(auxiliaryRepositories.get(i).getRepositoryUrl(), localVCBaseUrl);
-                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+                    auxiliaryRepositoriesPaths[i] = auxiliaryRepositoriesUrls[i].getRepoClonePath(repoClonePath).toAbsolutePath();
                     auxiliaryRepositoryNames[i] = auxiliaryRepositories.get(i).getName();
                 }
             }
@@ -157,8 +158,8 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
         }
 
-        Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-        Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+        Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
+        Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
 
         String branch;
         try {
@@ -171,7 +172,7 @@ public class LocalCIBuildJobExecutionService {
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
         // container information about the branch and commit hash to be used.
         // This does not start the container yet.
-        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, branch, commitHash);
+        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, branch, commitHash, dockerImage);
 
         return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath,
                 auxiliaryRepositoriesPaths, auxiliaryRepositoryNames, buildScriptPath);
@@ -227,7 +228,7 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        List<String> testResultsPaths = getTestResultPath(participation.getProgrammingExercise());
+        List<String> testResultsPaths = getTestResultPaths(participation.getProgrammingExercise());
 
         // Get an input stream of the test result files.
         List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
@@ -269,32 +270,45 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private List<String> getTestResultPath(ProgrammingExercise programmingExercise) {
-        List<String> testResultPaths = new ArrayList<>();
+    private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
         switch (programmingExercise.getProgrammingLanguage()) {
             case JAVA, KOTLIN -> {
-                if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
-                    if (programmingExercise.hasSequentialTestRuns()) {
-                        testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
-                        testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
-                    }
-                    else {
-                        testResultPaths.add("/repositories/test-repository/target/surefire-reports");
-                    }
-                }
-                else {
-                    if (programmingExercise.hasSequentialTestRuns()) {
-                        testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
-                        testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
-                    }
-                    else {
-                        testResultPaths.add("/repositories/test-repository/build/test-results/test");
-                    }
-                }
-                return testResultPaths;
+                return getJavaKotlinTestResultPaths(programmingExercise);
+            }
+            case PYTHON -> {
+                return getPythonTestResultPaths();
             }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
         }
+    }
+
+    private List<String> getJavaKotlinTestResultPaths(ProgrammingExercise programmingExercise) {
+        List<String> testResultPaths = new ArrayList<>();
+        if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
+            if (programmingExercise.hasSequentialTestRuns()) {
+                testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
+                testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
+            }
+            else {
+                testResultPaths.add("/repositories/test-repository/target/surefire-reports");
+            }
+        }
+        else {
+            if (programmingExercise.hasSequentialTestRuns()) {
+                testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
+                testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
+            }
+            else {
+                testResultPaths.add("/repositories/test-repository/build/test-results/test");
+            }
+        }
+        return testResultPaths;
+    }
+
+    private List<String> getPythonTestResultPaths() {
+        List<String> testResultPaths = new ArrayList<>();
+        testResultPaths.add("/repositories/test-repository/test-reports");
+        return testResultPaths;
     }
 
     private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
@@ -330,7 +344,8 @@ public class LocalCIBuildJobExecutionService {
         int lastIndexOfSlash = name.lastIndexOf('/');
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
-        return !tarArchiveEntry.isDirectory() && result.endsWith(".xml") && result.startsWith("TEST-");
+        // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
+        return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && result.startsWith("TEST-")) || result.endsWith("results.xml"));
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
@@ -353,6 +368,10 @@ public class LocalCIBuildJobExecutionService {
 
         // Move to the first start element.
         while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
+            xmlStreamReader.next();
+        }
+
+        if ("testsuites".equals(xmlStreamReader.getLocalName())) {
             xmlStreamReader.next();
         }
 
