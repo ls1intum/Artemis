@@ -19,21 +19,78 @@ jobs:
           tag: pr-${{ github.event.pull_request.number }}
           untagged-older-than: 28
 
-  # If a PR is closed it should no longer lock any testservers
-  remove-testserver-locks:
+  # If a PR is closed the testserver lock should be removed and corresponding badges updated
+  process_labels:
+    name: Process labels
     runs-on: ubuntu-latest
+    outputs:
+      labels: ${{ steps.process.outputs.labels }}
+      badges: ${{ steps.process.outputs.badges }}
     steps:
-      - uses: actions-ecosystem/action-remove-labels@v1
+      - name: Process labels
+        id: process
+        uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: |
-            lock:artemis-test1
-            lock:artemis-test2
-            lock:artemis-test3
-            lock:artemis-test4
-            lock:artemis-test5
-            lock:artemis-test6
-            lock:artemis-test7
-            lock:artemis-test8
-            lock:artemis-test9
-            lock:artemis-test10
+          script: |
+              const labelsToRemove = [];
+              const labelsToProcess = [];
+
+              // Get the PR number
+              const prNumber = context.payload.pull_request.number;
+
+              // Iterate through labels on the PR
+              for (const label of context.payload.pull_request.labels) {
+                const labelName = label.name;
+                const regex = /^lock:artemis-test(\d+)$/;
+
+                if (regex.test(labelName)) {
+                  // Extract the part after "lock:" using capture groups
+                  const extractedLabel = labelName.match(regex)[1];
+                  labelsToProcess.push(extractedLabel);
+                  labelsToRemove.push(labelName);
+                }
+              }
+
+              // Do something with the extracted labels
+              console.log('Badges to process:', labelsToProcess);
+              console.log('Labels to remove:', labelsToRemove);
+
+              // Use the labelsToRemove array to remove the matching labels
+              core.setOutput('badges', JSON.stringify(labelsToProcess));
+              core.setOutput('labels', labelsToRemove.join(', '));
+
+
+  remove_labels:
+    name: Remove labels
+    needs: process_labels
+    runs-on: ubuntu-latest
+    if: ${{ needs.process_labels.outputs.labels != '' }}
+
+    steps:
+      - name: Remove labels
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: ${{ needs.process_labels.outputs.labels }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update_badges:
+    name: Update badges
+    needs: process_labels
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        badge: ${{ fromJson(needs.process_labels.outputs.badges) }}
+    if: ${{ needs.process_labels.outputs.labels != '' }}
+
+    steps:
+      - name: Update badge
+        uses: RubbaBoy/BYOB@v1.3.0
+        with:
+          NAME: "artemis-test${{ matrix.badge }}"
+          LABEL: "artemis-test${{ matrix.badge }}.artemis.cit.tum.de"
+          STATUS: ${{ github.event.pull_request.head.ref }}
+          COLOR: green
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
