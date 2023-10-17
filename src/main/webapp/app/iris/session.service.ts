@@ -20,9 +20,9 @@ export abstract class IrisSessionService {
      * @param httpMessageService The IrisHttpMessageService for HTTP operations related to messages.
      */
     protected constructor(
-        private readonly stateStore: IrisStateStore,
-        private httpSessionService: IrisHttpSessionService,
-        private httpMessageService: IrisHttpMessageService,
+        protected readonly stateStore: IrisStateStore,
+        protected httpSessionService: IrisHttpSessionService,
+        protected httpMessageService: IrisHttpMessageService,
     ) {}
 
     /**
