@@ -394,17 +394,19 @@ describe('CourseExercisesComponent', () => {
     });
 
     it('should display timeframe view as default', () => {
-        const exercisesList = fixture.debugElement.query(By.directive(CourseExercisesGroupedByTimeframeComponent)).componentInstance;
-        expect(exercisesList).toBeTruthy();
+        const exercisesListTimeframeView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByTimeframeComponent))?.componentInstance;
+        const exercisesListWeeklyView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByWeekComponent))?.componentInstance;
+        expect(exercisesListTimeframeView).toBeTruthy();
+        expect(exercisesListWeeklyView).toBeUndefined();
     });
 
-    describe('should change view', () => {
-        it('to timeframe view', () => {
-            // id="timeframe-view-selection">
-            // id="weekly-view-selection">
-            // TODO adjust me
-            // const timeframeViewSelectionElement = fixture.debugElement.query(By.css('#timeframe-view-selection'));
-            // timeframeViewSelectionElement.
-        });
+    it('should display weekly view when selected', () => {
+        component.showExercisesGroupedByTimeframe = false;
+        fixture.detectChanges();
+
+        const exercisesListTimeframeView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByTimeframeComponent))?.componentInstance;
+        const exercisesListWeeklyView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByWeekComponent))?.componentInstance;
+        expect(exercisesListTimeframeView).toBeUndefined();
+        expect(exercisesListWeeklyView).toBeTruthy();
     });
 });

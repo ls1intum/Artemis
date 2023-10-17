@@ -84,7 +84,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     exerciseFilter: ExerciseFilterModel;
 
     filteredExercises: Exercise[] | undefined;
-    showExercisesGroupedByDueDateCategory: boolean = true;
+    showExercisesGroupedByTimeframe: boolean = true;
     lastAppliedSearchString: string | undefined;
 
     // Icons
@@ -208,10 +208,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.applyFiltersAndOrder();
     }
 
-    toggleExerciseView() {
-        this.showExercisesGroupedByDueDateCategory = !this.showExercisesGroupedByDueDateCategory;
-    }
-
     /**
      * Filters all displayed exercises by applying the selected activeFilters
      * @param filters The filters which should be applied
@@ -232,7 +228,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     setShowExercisesGroupedByDueDateCategory(updatedShowExercisesGroupedByDueDateCategory: boolean) {
-        this.showExercisesGroupedByDueDateCategory = updatedShowExercisesGroupedByDueDateCategory;
+        this.showExercisesGroupedByTimeframe = updatedShowExercisesGroupedByDueDateCategory;
     }
 
     /**
