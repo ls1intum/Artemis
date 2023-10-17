@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
-import org.glassfish.jersey.uri.UriComponent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +16,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -31,18 +31,19 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import net.minidev.json.JSONObject;
-
-import static de.tum.in.www1.artemis.service.connectors.lti.LtiService.SIMPLE_USER_LIST_AUTHORITY;
 
 @Service
 @Profile("lti")
 public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
+
+    private static final String COURSE_PATH_PATTERN = "/api/public/lti13/deep-linking/{courseId}";
 
     private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
@@ -275,6 +276,31 @@ public class Lti13Service {
         return exerciseOpt;
     }
 
+    private Course getCourseFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = (new URL(targetLinkUrl)).getPath();
+        }
+        catch (MalformedURLException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return null;
+        }
+
+        if (!matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract courseId from target link: {}", targetLinkUrl);
+            return null;
+        }
+        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath);
+
+        String courseId = pathVariables.get("courseId");
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(Long.valueOf(courseId));
+
+        return course;
+    }
+
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
         Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.getIss(), launchRequest.getSub(),
                 launchRequest.getDeploymentId(), launchRequest.getResourceLinkId());
@@ -302,25 +328,26 @@ public class Lti13Service {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
 
-    public void buildLtiDeepLinkResponse(OidcIdToken ltiIdToken, UriComponentsBuilder uriComponentsBuilder, String clientRegistrationId){
+    public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
 
-        ltiDeepLinkingService.buildLtiDeepLinkingResponse(ltiIdToken);
-        ltiDeepLinkingService.setupDeepLinkingSettings(ltiIdToken);
-        var deepLinkResponse = ltiDeepLinkingService.getDeepLinkingResponse();
+        String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
+        Course targetCourse = getCourseFromTargetLink(targetLinkUrl);
 
-        Map<String, Object> claims = new HashMap<String,Object>();
-        for (var entry : deepLinkResponse.entrySet()) {
-            claims.put(entry.getKey(), entry.getValue().getAsString());
+        OnlineCourseConfiguration onlineCourseConfiguration = targetCourse.getOnlineCourseConfiguration();
+        if (onlineCourseConfiguration == null) {
+            String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
-        String jwt = tokenRetriever.createDeepLinkingJWT(clientRegistrationId, claims);
-        uriComponentsBuilder.queryParam("jwt", jwt);
-        uriComponentsBuilder.queryParam("id", ltiIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID).toString());
-        uriComponentsBuilder.queryParam("deepLinkUri",  UriComponent.encode(ltiDeepLinkingService.getDeepLinkingSettings().get("deep_link_return_url").toString(), UriComponent.Type.QUERY_PARAM) );
 
-    }
+        // ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+        // ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
 
-    public void authenticateLtiUser(OidcIdToken ltiIdToken){
         var user = userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).orElseThrow();
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority()))));
+
+        ltiDeepLinkingService.populateDeepLinkingResponse(ltiIdToken);
+        ltiDeepLinkingService.setupDeepLinkingSettings(ltiIdToken, clientRegistrationId);
     }
 }
