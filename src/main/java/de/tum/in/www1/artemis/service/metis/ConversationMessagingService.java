@@ -130,14 +130,15 @@ public class ConversationMessagingService extends PostingService {
 
         Set<User> mentionedUserLoginsAndIds = createdConversationMessage.mentionedUsers().stream().map(user -> new User(user.getId(), user.getLogin())).collect(Collectors.toSet());
         Set<ConversationWebSocketRecipientSummary> webSocketRecipientLoginsAndIds = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-        Set<User> broadcastRecipientLoginsAndIds = webSocketRecipientLoginsAndIds.stream().map(summary -> new User(summary.userId(), summary.userLogin()))
-                .collect(Collectors.toSet());
 
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
-        broadcastRecipientLoginsAndIds.addAll(mentionedUserLoginsAndIds);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(message, MetisCrudAction.CREATE), course, broadcastRecipientLoginsAndIds);
+        broadcastForPost(new PostDTO(message, MetisCrudAction.CREATE), course, null);
+
+        Set<User> broadcastRecipientLoginsAndIds = webSocketRecipientLoginsAndIds.stream().map(summary -> new User(summary.userId(), summary.userLogin()))
+                .collect(Collectors.toSet());
+        broadcastRecipientLoginsAndIds.addAll(mentionedUserLoginsAndIds);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
