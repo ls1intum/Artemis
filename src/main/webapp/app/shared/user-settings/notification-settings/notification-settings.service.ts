@@ -93,6 +93,8 @@ export class NotificationSettingsService {
 
     private notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
 
+    private conversationWithHiddenNotifications: number | undefined;
+
     constructor(private userSettingsService: UserSettingsService) {
         this.listenForNotificationSettingsChanges();
     }
@@ -167,5 +169,13 @@ export class NotificationSettingsService {
                 this.refreshNotificationSettings();
             }
         });
+    }
+
+    public areNotificationsForConversationHidden(conversationId: number | undefined): boolean {
+        return !!this.conversationWithHiddenNotifications && conversationId === this.conversationWithHiddenNotifications;
+    }
+
+    public hideNotificationsForConversation(conversationId: number | undefined): void {
+        this.conversationWithHiddenNotifications = conversationId;
     }
 }

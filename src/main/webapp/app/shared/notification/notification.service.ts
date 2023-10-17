@@ -371,7 +371,11 @@ export class NotificationService {
                     const target = JSON.parse(notification.target);
                     const targetCourseId = target.course;
                     // Only add notification if it is not from the current user and the user is not already in the messages tab
-                    if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
+                    if (
+                        notification.author?.id !== this.accountService.userIdentity?.id &&
+                        !this.notificationSettingsService.areNotificationsForConversationHidden(target.conversation) &&
+                        !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)
+                    ) {
                         this.addNotification(notification);
                     }
                 }

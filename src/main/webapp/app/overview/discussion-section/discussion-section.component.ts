@@ -17,6 +17,7 @@ import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.di
 import { FormBuilder } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -53,6 +54,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         private courseManagementService: CourseManagementService,
         private router: Router,
         private formBuilder: FormBuilder,
+        private notificationSettingsService: NotificationSettingsService,
     ) {
         super(metisService);
     }
@@ -91,6 +93,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
+        this.notificationSettingsService.hideNotificationsForConversation(undefined);
         super.onDestroy();
         this.postCreateEditModal?.modalRef?.close();
     }
@@ -193,6 +196,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         const contextFilter = { conversationId: this.channel.id };
                         const channelDTO = new ChannelDTO();
                         channelDTO.isCourseWide = true;
+
+                        this.notificationSettingsService.hideNotificationsForConversation(this.channel.id);
                         this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
                     } else {
                         const contextFilter = {
