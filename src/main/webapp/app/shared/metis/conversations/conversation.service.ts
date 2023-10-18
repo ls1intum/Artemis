@@ -122,6 +122,18 @@ export class ConversationService {
         return this.http.get<boolean>(`${this.resourceUrl}${courseId}/unread-messages`, { observe: 'response' });
     }
 
+    acceptCodeOfConduct(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.patch<void>(`${this.resourceUrl}${courseId}/code-of-conduct/agreement`, null, { observe: 'response' });
+    }
+
+    checkIsCodeOfConductAccepted(courseId: number): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}${courseId}/code-of-conduct/agreement`, { observe: 'response' });
+    }
+
+    getResponsibleUsersForCodeOfConduct(courseId: number): Observable<HttpResponse<User[]>> {
+        return this.http.get<User[]>(`${this.resourceUrl}${courseId}/code-of-conduct/responsible-users`, { observe: 'response' });
+    }
+
     public convertDateFromClient = (conversation: Conversation) => ({
         ...conversation,
         creationDate: convertDateFromClient(conversation.creationDate),

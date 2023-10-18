@@ -53,10 +53,11 @@ import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-
 import { isOrion } from 'app/shared/orion/orion';
 import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
-import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
+import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
+import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -73,6 +74,7 @@ export const examManagementRoute: Routes = [
         component: ExamUpdateComponent,
         resolve: {
             exam: ExamResolve,
+            course: CourseResolve,
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -85,6 +87,7 @@ export const examManagementRoute: Routes = [
         component: ExamUpdateComponent,
         resolve: {
             exam: ExamResolve,
+            course: CourseResolve,
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -113,6 +116,7 @@ export const examManagementRoute: Routes = [
         component: ExamUpdateComponent,
         resolve: {
             exam: ExamResolve,
+            course: CourseResolve,
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -434,6 +438,16 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Quiz Pool Configuration
+    {
+        path: ':examId/quiz-pool',
+        component: QuizPoolComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
