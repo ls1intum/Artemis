@@ -334,13 +334,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         List<IrisCodeEditorWebsocketService.FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.get("changes")) {
             // FIXME: The type of change is not actually generated in the prompts yet. We specify the default value to compensate for this in the meantime.
-            var type = switch (node.get("type").asText("modify")) {
-                case "modify" -> IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
-                case "create" -> IrisCodeEditorWebsocketService.FileChangeType.CREATE;
-                case "delete" -> IrisCodeEditorWebsocketService.FileChangeType.DELETE;
-                case "rename" -> IrisCodeEditorWebsocketService.FileChangeType.RENAME;
-                default -> throw new IrisParseResponseException(new Throwable("Unknown exercise change type"));
-            };
+            // var type = switch (node.get("type").asText("modify")) {
+            // case "modify" -> IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
+            // case "create" -> IrisCodeEditorWebsocketService.FileChangeType.CREATE;
+            // case "delete" -> IrisCodeEditorWebsocketService.FileChangeType.DELETE;
+            // case "rename" -> IrisCodeEditorWebsocketService.FileChangeType.RENAME;
+            // default -> throw new IrisParseResponseException(new Throwable("Unknown exercise change type"));
+            // };
+            var type = IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
             var file = node.get("file").asText();
             if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().isEmpty()) {
                 // This is a special case when the LLM decided to stop generating changes for a component.
