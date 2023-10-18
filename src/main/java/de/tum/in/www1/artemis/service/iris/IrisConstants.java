@@ -334,11 +334,11 @@ public final class IrisConstants {
                         State the full path of the file, without justification or any other text.
                         If this file does not exist in the repository, it will be created.
                         {{#if (not @first)}}
-                            Alternatively, if you have no other files you would like to edit, respond with " ".
+                            Alternatively, if you have no other files you would like to edit, respond with the special response "!done!".
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.file' temperature=0.0 max_tokens=50}}{{~/assistant}}
-                    {{#if (equal this.file " ")}}
+                    {{#if (equal this.file "!done!")}}
                         {{break}}
                     {{/if}}
                     {{#if (contains templateRepository this.file)}}
@@ -410,11 +410,11 @@ public final class IrisConstants {
                         State the full path of the file, without justification or any other text.
                         If this file does not exist in the repository, it will be created.
                         {{#if (not @first)}}
-                            Alternatively, if you have no other files you would like to edit, respond with " ".
+                            Alternatively, if you have no other files you would like to edit, respond with the special response "!done!".
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.file' temperature=0.0 max_tokens=50}}{{~/assistant}}
-                    {{#if (equal this.file " ")}}
+                    {{#if (equal this.file "!done!")}}
                         {{break}}
                     {{/if}}
                     {{#if (contains solutionRepository this.file)}}
@@ -488,11 +488,11 @@ public final class IrisConstants {
                         State the full path of the file, without justification or any other text.
                         If this file does not exist in the repository, it will be created.
                         {{#if (not @first)}}
-                            Alternatively, if you have no other files you would like to edit, respond with " ".
+                            Alternatively, if you have no other files you would like to edit, respond with the special response "!done!".
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.file' temperature=0.0 max_tokens=50}}{{~/assistant}}
-                    {{#if (equal this.file " ")}}
+                    {{#if (equal this.file "!done!")}}
                         {{break}}
                     {{/if}}
                     {{#if (contains testRepository this.file)}}

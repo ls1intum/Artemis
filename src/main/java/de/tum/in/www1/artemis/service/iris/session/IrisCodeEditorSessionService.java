@@ -291,8 +291,13 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     log.info("Received response containing changes to exercise " + component + " from Iris model");
                     try {
                         var changes = extractChangesForComponent(response.content(), component);
-                        // In this case we do not save anything, as these changes must first be approved by the user
-                        irisCodeEditorWebsocketService.sendChanges(session, component, changes);
+                        if (!changes.isEmpty()) {
+                            // In this case we do not save anything, as these changes must first be approved by the user
+                            irisCodeEditorWebsocketService.sendChanges(session, component, changes);
+                        }
+                        else {
+                            log.error("No changes for exercise " + component + " in response from Iris model");
+                        }
                     }
                     catch (IrisParseResponseException e) {
                         log.error("Error while parsing exercise changes from Iris model", e);
@@ -335,14 +340,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         }
         List<IrisCodeEditorWebsocketService.FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.get("changes")) {
-            // FIXME: The type of change is not actually generated in the prompts yet. We specify the default value to compensate for this in the meantime.
-            // var type = switch (node.get("type").asText("modify")) {
-            // case "modify" -> IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
-            // case "create" -> IrisCodeEditorWebsocketService.FileChangeType.CREATE;
-            // case "delete" -> IrisCodeEditorWebsocketService.FileChangeType.DELETE;
-            // case "rename" -> IrisCodeEditorWebsocketService.FileChangeType.RENAME;
-            // default -> throw new IrisParseResponseException(new Throwable("Unknown exercise change type"));
-            // };
+            // We will support different file change types in the future. For now, every file change has type MODIFY
             var type = IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
             var file = node.get("file").asText();
             if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().isEmpty()) {
