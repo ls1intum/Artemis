@@ -236,7 +236,7 @@ public class ConversationService {
         var remainingUsers = existingUsers.stream().filter(user -> !usersToBeDeregistered.contains(user)).collect(Collectors.toSet());
         var participantsToRemove = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversation.getId(),
                 usersToBeDeregistered.stream().map(User::getId).collect(Collectors.toSet()));
-        if (participantsToRemove.size() > 0) {
+        if (!participantsToRemove.isEmpty()) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersToBeDeregistered);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingUsers);
