@@ -35,8 +35,8 @@ public class QuizExerciseFactory {
      * @param course      The course the quiz should be added to.
      * @param releaseDate The release date of the quiz.
      * @param dueDate     The due date of the quiz.
-     * @param quizMode    The quiz mode used.
-     * @return The newly created quiz.
+     * @param quizMode    The quiz mode used. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The created quiz.
      */
     @NotNull
     public static QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
@@ -51,7 +51,7 @@ public class QuizExerciseFactory {
      * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
      *
      * @param exerciseGroup Exercise group of an exam to which the quiz should be added.
-     * @return The newly created quiz.
+     * @return The created quiz.
      */
     @NotNull
     public static QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
@@ -79,7 +79,7 @@ public class QuizExerciseFactory {
      * Creates a short answer question with score 2 and 2 different spot-solution mappings.
      * The scoring type of the question is proportional without penalty.
      *
-     * @return The newly created short answer question.
+     * @return The created short answer question.
      */
     @NotNull
     public static ShortAnswerQuestion createShortAnswerQuestion() {
@@ -134,7 +134,7 @@ public class QuizExerciseFactory {
      * Creates a drag and drop question with score 3 and 3 different location-drag item mappings.
      * The scoring type of the question is proportional with penalty.
      *
-     * @return The newly created drag and drop question.
+     * @return The created drag and drop question.
      */
     @NotNull
     public static DragAndDropQuestion createDragAndDropQuestion() {
@@ -203,7 +203,7 @@ public class QuizExerciseFactory {
      * Creates a multiple choice question with score 4 and 2 different answer options. One answer is correct and the other one incorrect.
      * The scoring type of the question is all or nothing.
      *
-     * @return The newly created multiple choice question.
+     * @return The created multiple choice question.
      */
     @NotNull
     public static MultipleChoiceQuestion createMultipleChoiceQuestion() {
@@ -222,7 +222,7 @@ public class QuizExerciseFactory {
      *
      * @param quizExercise The quiz to which a batch should be added.
      * @param startTime    The start time of the batch.
-     * @return The newly created quiz batch.
+     * @return The created quiz batch.
      */
     public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {
         var quizBatch = new QuizBatch();
@@ -236,9 +236,9 @@ public class QuizExerciseFactory {
      *
      * @param releaseDate The release date of the quiz.
      * @param dueDate     The due date of the quiz.
-     * @param quizMode    The quiz mode of the quiz.
+     * @param quizMode    The quiz mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
      * @param course      The course to which the quiz should be added to.
-     * @return The newly created quiz exercise.
+     * @return The created quiz exercise.
      */
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
         return generateQuizExercise(releaseDate, dueDate, null, quizMode, course);
@@ -250,9 +250,9 @@ public class QuizExerciseFactory {
      * @param releaseDate       The release date of the quiz.
      * @param dueDate           The due date of the quiz.
      * @param assessmentDueDate The assessment due date of the quiz.
-     * @param quizMode          The quiz mode of the quiz.
+     * @param quizMode          The quiz mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
      * @param course            The course to which the quiz should be added to.
-     * @return The newly created quiz exercise.
+     * @return The created quiz exercise.
      */
     public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode, Course course) {
         QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, dueDate, assessmentDueDate, course);
@@ -278,7 +278,7 @@ public class QuizExerciseFactory {
      *
      * @param question The quiz question to which a submitted answer should be added.
      * @param correct  True, if the answer should be correct.
-     * @return The newly generated submitted answer.
+     * @return The generated submitted answer.
      */
     public static SubmittedAnswer generateSubmittedAnswerFor(QuizQuestion question, boolean correct) {
         if (question instanceof MultipleChoiceQuestion) {
@@ -355,7 +355,7 @@ public class QuizExerciseFactory {
      * Generates a quiz exercise for an exam with the duration of 10 seconds and randomized question order.
      *
      * @param exerciseGroup The exam exercise group to which the quiz should be added.
-     * @return The newly created exam quiz exercise.
+     * @return The created exam quiz exercise.
      */
     public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
         var quizExercise = (QuizExercise) ExerciseFactory.populateExerciseForExam(new QuizExercise(), exerciseGroup);
@@ -377,7 +377,7 @@ public class QuizExerciseFactory {
      *
      * @param exerciseGroup The exam exercise group to which the quiz exercise should be added.
      * @param title         The title which is used to set the quiz title together with a 3 character random UUID suffix.
-     * @return The newly generated quiz exercise.
+     * @return The generated quiz exercise.
      */
     public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup, String title) {
         var quizExercise = generateQuizExerciseForExam(exerciseGroup);
@@ -401,7 +401,7 @@ public class QuizExerciseFactory {
     /**
      * Creates a short answer question with "This [-spot0] a [-spot 2] answer text" text.
      *
-     * @return The newly created short answer question.
+     * @return The created short answer question.
      */
     private static ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
         var shortAnswerQuestion = createShortAnswerQuestion();
@@ -414,7 +414,7 @@ public class QuizExerciseFactory {
      * Fourth drag item is invalid and fifth one has a picture file.
      * The scoring type of the question is proportional with penalty.
      *
-     * @return The newly created drag and drop question.
+     * @return The created drag and drop question.
      */
     public static DragAndDropQuestion createDragAndDropQuestionWithAllTypesOfMappings() {
         DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
@@ -494,7 +494,7 @@ public class QuizExerciseFactory {
      * One answer option is invalid.
      * The scoring type of the question is all or nothing.
      *
-     * @return The newly created multiple choice question.
+     * @return The created multiple choice question.
      */
     @NotNull
     public static MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
@@ -512,7 +512,7 @@ public class QuizExerciseFactory {
      * Creates a single choice question with 2 answer options.
      * The scoring type of the question is all or nothing.
      *
-     * @return The newly created single choice question.
+     * @return The created single choice question.
      */
     @NotNull
     public static MultipleChoiceQuestion createSingleChoiceQuestion() {
@@ -530,7 +530,7 @@ public class QuizExerciseFactory {
      * @param studentID      The id of the student participating in the quiz.
      * @param submitted      True, if the submission should be submitted.
      * @param submissionDate The submission date.
-     * @return The newly created quiz submission.
+     * @return The created quiz submission.
      */
     public static QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
         QuizSubmission quizSubmission = new QuizSubmission();
@@ -551,7 +551,7 @@ public class QuizExerciseFactory {
      * The answer is only partially correct.
      *
      * @param question The quiz question to which a submitted answer should be added.
-     * @return The newly generated submitted answer.
+     * @return The generated submitted answer.
      */
     public static SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
         if (question instanceof MultipleChoiceQuestion) {
@@ -655,7 +655,7 @@ public class QuizExerciseFactory {
      *
      * @param exerciseGroup The exam exercise group to which the quiz exercise should be added.
      * @param title         The title which is used to set the quiz title together with a 3 character random UUID suffix.
-     * @return The newly created exam quiz exercise.
+     * @return The created exam quiz exercise.
      */
     @NotNull
     public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {

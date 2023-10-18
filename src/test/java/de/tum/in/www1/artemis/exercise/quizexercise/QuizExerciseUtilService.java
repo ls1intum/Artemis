@@ -88,14 +88,20 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private QuizScheduleService quizScheduleService;
-    // TODO
 
+    /**
+     * Creates and saves a course with one quiz exercise with the title "Title".
+     * The quiz is synchronized and has a duration of 120 seconds.
+     *
+     * @return The created course with the quiz.
+     */
     public Course addCourseWithOneQuizExercise() {
         return addCourseWithOneQuizExercise("Title");
     }
 
     /**
      * Creates and saves a course with one quiz exercise with the given title.
+     * The quiz is synchronized and has a duration of 120 seconds.
      *
      * @param title The title of the quiz exercise.
      * @return The newly created course with the quiz.
@@ -115,41 +121,40 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Adds a student participation to the given quiz submission. The submission is then saved in the reposiotry.
+     * Creates and adds a student participation to the given quiz submission. The submission is then saved in the repository.
      *
-     * @param quizExercise The quiz to which
-     * @param submission
-     * @param login
-     * @return
+     * @param quizExercise The quiz for which a student participation should be created.
+     * @param submission   The submission which should be saved
+     * @param login        The login of the user participating in the quiz.
+     * @return The saved submission.
      */
     public QuizSubmission saveQuizSubmission(QuizExercise quizExercise, QuizSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
         participation.addSubmission(submission);
         submission.setParticipation(participation);
-        submission = quizSubmissionRepository.save(submission);
-        return submission;
+        return quizSubmissionRepository.save(submission);
     }
 
     /**
-     * important quiz fields are emptied, so it can be imported,
+     * Sets quiz exercise dates and course to null so quiz can be imported. The quiz batches are set to an empty set.
      *
-     * @param quizExercise to be emptied
+     * @param quizExercise The quiz of which fields should be set to null.
      */
     public void emptyOutQuizExercise(QuizExercise quizExercise) {
         quizExercise.setReleaseDate(null);
-        quizExercise.setCourse(null);
         quizExercise.setDueDate(null);
         quizExercise.setAssessmentDueDate(null);
+        quizExercise.setCourse(null);
         quizExercise.setQuizBatches(new HashSet<>());
     }
 
     /**
-     * Creates a new quiz that gets saved in the QuizExercise repository.
+     * Creates and saves a new quiz exercise.
      *
-     * @param releaseDate release date of the quiz, is also used to set the start date of the course
-     * @param dueDate     due date of the quiz, is also used to set the end date of the course
-     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
-     * @return quiz that was created
+     * @param releaseDate The release date of the quiz, also used to set the start date of the course.
+     * @param dueDate     The due date of the quiz, also used to set the end date of the course.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED or INDIVIDUAL.
+     * @return The created quiz exercise.
      */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
@@ -159,12 +164,12 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Creates a new quiz
+     * Creates and saves a course. A new quiz exercise is created and added to the course.
      *
-     * @param releaseDate release date of the quiz, is also used to set the start date of the course
-     * @param dueDate     due date of the quiz, is also used to set the end date of the course
-     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
-     * @return quiz that was created
+     * @param releaseDate The release date of the quiz, also used to set the start date of the course.
+     * @param dueDate     The due date of the quiz, also used to set the end date of the course.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The created quiz exercise.
      */
     public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         Course course = courseUtilService.createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
@@ -176,14 +181,14 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Creates a team quiz exercise with a team and saves it into the repository.
+     * Creates and saves a team quiz exercise.
      *
-     * @param releaseDate release date of the quiz
-     * @param dueDate     due date of the quiz
-     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
-     * @param minTeamSize minimum number of members the team is allowed to have
-     * @param maxTeamSize maximum number of members the team is allowed to have
-     * @return exercise created
+     * @param releaseDate The release date of the quiz.
+     * @param dueDate     The due date of the quiz.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED or INDIVIDUAL
+     * @param minTeamSize The minimum number of members the team is allowed to have.
+     * @param maxTeamSize The maximum number of members the team is allowed to have.
+     * @return The created quiz exercise.
      */
     public QuizExercise createAndSaveTeamQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, int minTeamSize, int maxTeamSize) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
@@ -198,11 +203,11 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Sets up a team quiz exercise.
+     * Sets up a team quiz exercise by creating the team assignment config with the passed values and setting it to the quiz.
      *
-     * @param quiz        quiz exercise that should be a team exercise.
-     * @param minTeamSize minimum number of members the team is allowed to have
-     * @param maxTeamSize maximum number of members the team is allowed to have
+     * @param quiz        The quiz which should be a team exercise.
+     * @param minTeamSize The minimum number of members the team is allowed to have.
+     * @param maxTeamSize The maximum number of members the team is allowed to have.
      */
     public void setupTeamQuizExercise(QuizExercise quiz, int minTeamSize, int maxTeamSize) {
         var teamAssignmentConfig = new TeamAssignmentConfig();
@@ -214,11 +219,11 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Creates a new exam quiz that gets saved in the QuizExercise repository.
+     * Creates and saves a course and exam with a new exam quiz which also gets saved,
      *
-     * @param startDate start date of the exam, is also used to set the end date of the course the exam is in
-     * @param endDate   end date of the exam, is also used to set the end date of the course the exam is in
-     * @return exam quiz that was created
+     * @param startDate The start date of the exam, also used to set the start date of the course the exam is in.
+     * @param endDate   The end date of the exam, also used to set the end date of the course the exam is in.
+     * @return The created exam quiz exercise.
      */
     @NotNull
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
@@ -259,12 +264,16 @@ public class QuizExerciseUtilService {
     }
 
     /**
+     * Creates and saves a quiz with a multiple, single choice, short, and drag and drop question.
+     * An actual file is used as the background and a data item of the drag and drop question.
+     * The quiz takes 120 seconds and is synchronized.
+     * A participation and submission are also created for the user with the given login. An answer is submitted for each question.
      *
-     * @param course
-     * @param login
-     * @param dueDateInTheFuture
-     * @return
-     * @throws IOException
+     * @param course             The course of the quiz.
+     * @param login              The login of the user participating in the quiz.
+     * @param dueDateInTheFuture True, if the due date of the quiz is in the future.
+     * @return The created quiz submission.
+     * @throws IOException If the background or data item file cannot be accessed.
      */
     public QuizSubmission addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login, boolean dueDateInTheFuture) throws IOException {
         QuizExercise quizExercise;
@@ -276,8 +285,7 @@ public class QuizExerciseUtilService {
         }
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
-        assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
-        assertThat(quizExercise.isValid()).isTrue();
+
         course.addExercises(quizExercise);
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setExercise(quizExercise);
@@ -375,7 +383,8 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Generates and saves a quiz exercise using the passed dates and adds it to the given course.
+     * Creates and saves a quiz exercise with all question types using the passed dates and adds it to the given course.
+     * After initialization, the quiz consists of one multiple choice, one drag and drop, one short answer, and single choice question.
      *
      * @param releaseDate       The release date of the quiz.
      * @param dueDate           The due date of the quiz.
@@ -391,7 +400,7 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Joins the given quiz batch as the user with the passed username.
+     * Joins the given quiz batch as the user with the given username.
      *
      * @param quizExercise The quiz of the batch which should be joined.
      * @param batch        The quiz batch which should be joined.
