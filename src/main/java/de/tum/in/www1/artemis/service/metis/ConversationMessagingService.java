@@ -130,16 +130,31 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
 
-        Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-        log.debug("      getWebSocketRecipients DONE");
-        Set<User> broadcastRecipients = webSocketRecipients.stream().map(summary -> new User(summary.userId(), summary.userLogin())).collect(Collectors.toSet());
+        // Websocket notification 1: this notifies everyone including the author that there is a new message
+        Set<ConversationWebSocketRecipientSummary> webSocketRecipients;
+        Set<User> broadcastRecipients;
+        if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
+            // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
+            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, null);
+            log.debug("      broadcastForPost DONE");
+
+            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getWebSocketRecipients DONE");
+            broadcastRecipients = webSocketRecipients.stream().map(summary -> new User(summary.userId(), summary.userLogin())).collect(Collectors.toSet());
+        }
+        else {
+            // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
+            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getWebSocketRecipients DONE");
+            broadcastRecipients = webSocketRecipients.stream().map(summary -> new User(summary.userId(), summary.userLogin())).collect(Collectors.toSet());
+
+            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
+            log.debug("      broadcastForPost DONE");
+        }
+
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         Set<User> mentionedUsers = createdConversationMessage.mentionedUsers().stream().map(user -> new User(user.getId(), user.getLogin())).collect(Collectors.toSet());
         broadcastRecipients.addAll(mentionedUsers);
-
-        // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
-        log.debug("      broadcastForPost DONE");
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
