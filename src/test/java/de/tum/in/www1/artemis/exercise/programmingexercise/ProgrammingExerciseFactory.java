@@ -316,7 +316,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generate a Bamboo result notification DTO with build logs of various sizes. The successful boolean value is se to true if there are no failed test names.
+     * Generate a Bamboo result notification DTO with build logs of various sizes. The successful boolean value is set to true if there are no failed test names.
      *
      * @param buildPlanKey        The key of the build plan
      * @param repoName            The repository name.

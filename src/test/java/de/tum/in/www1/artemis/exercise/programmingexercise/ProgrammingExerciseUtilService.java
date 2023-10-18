@@ -183,7 +183,8 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds a programming exercise into the exerciseGroupNumber-th exercise group of the passed exam. exerciseGroupNumber should be smaller than
+     * Adds a programming exercise into the exerciseGroupNumber-th exercise group of the passed exam.
+     * exerciseGroupNumber should be smaller than the number of exercise groups!
      *
      * @param exam                The exam to which the exercise should be added.
      * @param exerciseGroupNumber Used as an index into which exercise group of the exam the programming exercise should be added. Has to be smaller than the number of exercise
@@ -206,7 +207,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves am already submitted programming submission done manually.
+     * Creates and saves an already submitted programming submission done manually.
      *
      * @param participation The exercise participation.
      * @param buildFailed   True, if the submission resulted in a build failed.
@@ -223,7 +224,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves am already submitted programming submission done manually. "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d" is used as the commit hash.
+     * Creates and saves an already submitted programming submission done manually. "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d" is used as the commit hash.
      *
      * @param participation The exercise participation.
      * @param buildFailed   True, if the submission resulted in a build failed.
