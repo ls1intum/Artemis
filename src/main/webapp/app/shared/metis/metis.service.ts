@@ -350,11 +350,11 @@ export class MetisService implements OnDestroy {
      */
     createReaction(reaction: Reaction): Observable<Reaction> {
         return this.reactionService.create(this.courseId, reaction).pipe(
-            map((res: HttpResponse<Post>) => res.body!),
-            tap((updatedPost: Post) => {
-                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.id);
+            map((res: HttpResponse<Reaction>) => res.body!),
+            tap((updatedPost: Reaction) => {
+                const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === updatedPost.post?.id);
                 if (indexToUpdate > -1) {
-                    this.cachedPosts[indexToUpdate] = updatedPost;
+                    this.cachedPosts[indexToUpdate] = updatedPost.post!;
                     this.posts$.next(this.cachedPosts);
                     this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPots);
                 }
