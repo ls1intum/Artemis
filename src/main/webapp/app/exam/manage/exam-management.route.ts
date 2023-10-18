@@ -57,6 +57,7 @@ import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } 
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
+import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -437,6 +438,16 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Quiz Pool Configuration
+    {
+        path: ':examId/quiz-pool',
+        component: QuizPoolComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
