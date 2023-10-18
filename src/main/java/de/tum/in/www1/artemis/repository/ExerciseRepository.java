@@ -470,7 +470,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     /**
-     * Finds all exercises where the due date is today or in the future and continuos plagiarism control is enabled
+     * Finds all exercises where the due date is yesterday, today or in the future and continuous plagiarism control is enabled
      * (does not return exercises belonging to test courses).
      *
      * @return set of exercises
