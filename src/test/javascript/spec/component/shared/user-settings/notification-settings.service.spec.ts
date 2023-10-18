@@ -86,4 +86,28 @@ describe('User Settings Service', () => {
         expect(resultMap.get(type2)).toEqual(type2ActivationStatus);
         expect(resultMap.get(type3)).toEqual(type3ActivationStatus);
     });
+
+    describe('active conversation check', () => {
+        it('should always return false if active conversation is not set', () => {
+            notificationSettingsService.setActiveConversationId(undefined);
+
+            const resultWithUndefined = notificationSettingsService.isConversationActive(undefined);
+            const resultWithId = notificationSettingsService.isConversationActive(1);
+
+            expect(resultWithUndefined).toBeFalse();
+            expect(resultWithId).toBeFalse();
+        });
+
+        it('should return true only if conversation id is equal to active conversation', () => {
+            notificationSettingsService.setActiveConversationId(1);
+
+            const resultWithUndefined = notificationSettingsService.isConversationActive(undefined);
+            const resultWithSameId = notificationSettingsService.isConversationActive(1);
+            const resultWithDifferentId = notificationSettingsService.isConversationActive(2);
+
+            expect(resultWithUndefined).toBeFalse();
+            expect(resultWithSameId).toBeTrue();
+            expect(resultWithDifferentId).toBeFalse();
+        });
+    });
 });
