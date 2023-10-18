@@ -84,7 +84,7 @@ public class AnswerPostService extends PostingService {
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
         postRepository.save(post);
 
-        this.preparePostAndBroadcast(savedAnswerPost, course);
+        preparePostAndBroadcast(savedAnswerPost, course);
         sendNotification(post, answerPost, course);
 
         return savedAnswerPost;
