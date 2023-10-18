@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
 /**
- * Constants for the Iris subsystem.
+ * Service that loads default Iris templates from the resources/templates/iris folder.
  */
 @Component
 public final class IrisDefaultTemplateService {
@@ -26,6 +26,13 @@ public final class IrisDefaultTemplateService {
         this.resourceLoaderService = resourceLoaderService;
     }
 
+    /**
+     * Loads the default Iris template with the given file name.
+     * For example, "chat.hbs" will load the template from "resources/templates/iris/chat.hbs".
+     *
+     * @param templateFileName The file name of the template to load.
+     * @return The loaded Iris template, or an empty template if an IO error occurred.
+     */
     public IrisTemplate load(String templateFileName) {
         Path filePath = Path.of("templates", "iris", templateFileName);
         Resource resource = resourceLoaderService.getResource(filePath);
