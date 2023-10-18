@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.validation.*;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +25,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,6 +56,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -86,6 +91,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ConversationUtilService conversationUtilService;
 
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @SpyBean
+    private ConversationNotificationRepository conversationNotificationRepository;
+
     private List<Post> existingPostsAndConversationPosts;
 
     private List<Post> existingConversationPosts;
@@ -109,9 +120,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final int LOWER_PAGE_SIZE = NUMBER_OF_POSTS - 2;
 
     private static final int EQUAL_PAGE_SIZE = NUMBER_OF_POSTS;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
 
     @BeforeEach
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -155,7 +163,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateConversationPost() throws Exception {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
         var requestingUser = userRepository.getUser();
@@ -179,7 +187,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setAuthor(author.getUser());
         postToSave.setConversation(channel);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via one broadcast
@@ -201,10 +209,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
 
         // then
-        // expected are 9 database calls independent of the number of students in the course.
-        // 5 calls are for user authentication checks, 4 calls to update database
+        // expected are 8 database calls independent of the number of students in the course.
+        // 4 calls are for user authentication checks, 4 calls to update database
         // further database calls are made in async code
-        assertThatDb(() -> request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(9);
+        assertThatDb(() -> request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(8);
     }
 
     @ParameterizedTest
@@ -226,7 +234,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             return;
         }
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via one broadcast
@@ -249,7 +257,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String authorMention = "[user]" + author.getUser().getName() + "(" + author.getUser().getLogin() + ")[/user]";
         postToSave.setContent(userMention + authorMention);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // author should not get a notification
@@ -273,7 +281,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setAuthor(author.getUser());
         postToSave.setConversation(channel);
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // participants who hid the conversation should not be notified
@@ -509,7 +517,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIncreaseUnreadMessageCountAfterMessageSend() throws Exception {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
 
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
@@ -638,5 +646,20 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     protected static List<Arguments> userMentionProvider() {
         return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+    }
+
+    /**
+     * Calls the POST /messages endpoint to create a new message and awaits the asynchronously executed code
+     * <p>
+     * This method awaits the asynchronous calls, by checking that the notification for the new message has been stored in the database,
+     * which is a call close to the end of the asynchronously executed code.
+     *
+     * @param postToSave post to save in the database
+     * @return saved post
+     */
+    private Post createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
+        Post savedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        verify(conversationNotificationRepository, timeout(10000).times(1)).save(any());
+        return savedPost;
     }
 }

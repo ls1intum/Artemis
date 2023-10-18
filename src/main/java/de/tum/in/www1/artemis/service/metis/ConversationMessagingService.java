@@ -105,7 +105,7 @@ public class ConversationMessagingService extends PostingService {
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
-        Conversation savedConversation = conversationService.updateConversationAsync(conversation);
+        Conversation savedConversation = conversationService.updateConversation(conversation);
 
         // update last read date and unread message count of author
         // invoke async due to db write access to avoid that the client has to wait
