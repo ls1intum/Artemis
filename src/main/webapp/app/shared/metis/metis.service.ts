@@ -609,7 +609,7 @@ export class MetisService implements OnDestroy {
                     break;
             }
             // emit updated version of cachedPosts to subscribing components...
-            if (PageType.OVERVIEW === this.pageType) {
+            if (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType) {
                 const oldPage = this.currentPostContextFilter.page;
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);

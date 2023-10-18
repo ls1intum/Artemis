@@ -126,20 +126,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
                 user.id,
                 user.login,
                 CASE WHEN cp.isHidden = true THEN true ELSE false END,
-                CASE WHEN atLeastTutors.id IS NOT null THEN true ELSE false END
+                CASE WHEN ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName THEN true ELSE false END
             )
             FROM User user
             JOIN UserGroup ug ON ug.userId = user.id
-            LEFT JOIN Course students ON ug.group = students.studentGroupName
-            LEFT JOIN Course atLeastTutors ON (atLeastTutors.teachingAssistantGroupName = ug.group
-                OR atLeastTutors.editorGroupName = ug.group
-                OR atLeastTutors.instructorGroupName = ug.group
-            )
             LEFT JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
-            WHERE user.isDeleted = false
-            AND (students.id = :courseId OR atLeastTutors.id = :courseId)
+            WHERE user.isDeleted = false AND (ug.group = :studentGroupName OR ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName)
             """)
-    Set<ConversationWebSocketRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("courseId") Long courseId, @Param("conversationId") Long conversationId);
+    Set<ConversationWebSocketRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
+            @Param("studentGroupName") String studentGroupName, @Param("teachingAssistantGroupName") String teachingAssistantGroupName,
+            @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
 
     /**
      * Searches for users in a group by their login or full name.

@@ -80,8 +80,10 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
         conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
+        log.debug("      createMessage:conversationService.isMemberElseThrow DONE");
 
         var conversation = conversationRepository.findByIdElseThrow(newMessage.getConversation().getId());
+        log.debug("      createMessage:conversationRepository.findByIdElseThrow DONE");
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -91,8 +93,9 @@ public class ConversationMessagingService extends PostingService {
             // TODO: this basically does the same SQL check as "conversationService.isMemberElseThrow" above
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
-
+        log.debug("      createMessage:additional authorization DONE");
         Set<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
+        log.debug("      createMessage:parseUserMentions DONE");
 
         // TODO: this update could theoretically be done async as it is not relevant for the returned data on the client
         // update last message date of conversation
@@ -111,6 +114,7 @@ public class ConversationMessagingService extends PostingService {
         if (createdMessage.getConversation() != null) {
             createdMessage.getConversation().hideDetails();
         }
+        log.debug("      conversationMessageRepository.save DONE");
 
         return new CreatedConversationMessage(createdMessage, savedConversation, mentionedUsers);
     }
@@ -123,42 +127,45 @@ public class ConversationMessagingService extends PostingService {
     @Async
     public void notifyAboutMessageCreation(CreatedConversationMessage createdConversationMessage) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        Post message = createdConversationMessage.messageWithHiddenDetails();
-        User author = message.getAuthor();
+        Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
+        User author = createdMessage.getAuthor();
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
 
-        Set<User> mentionedUserLoginsAndIds = createdConversationMessage.mentionedUsers().stream().map(user -> new User(user.getId(), user.getLogin())).collect(Collectors.toSet());
-        Set<ConversationWebSocketRecipientSummary> webSocketRecipientLoginsAndIds = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-
+        Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+        log.debug("      getWebSocketRecipients DONE");
+        Set<User> broadcastRecipients = webSocketRecipients.stream().map(summary -> new User(summary.userId(), summary.userLogin())).collect(Collectors.toSet());
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
+        Set<User> mentionedUsers = createdConversationMessage.mentionedUsers().stream().map(user -> new User(user.getId(), user.getLogin())).collect(Collectors.toSet());
+        broadcastRecipients.addAll(mentionedUsers);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(message, MetisCrudAction.CREATE), course, null);
-
-        Set<User> broadcastRecipientLoginsAndIds = webSocketRecipientLoginsAndIds.stream().map(summary -> new User(summary.userId(), summary.userLogin()))
-                .collect(Collectors.toSet());
-        broadcastRecipientLoginsAndIds.addAll(mentionedUserLoginsAndIds);
+        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
+        log.debug("      broadcastForPost DONE");
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
                 // Another websocket notification
-                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, broadcastRecipientLoginsAndIds);
+                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, broadcastRecipients);
             }
         }
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+        log.debug("      incrementUnreadMessagesCountOfParticipants DONE");
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
 
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
-        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipientLoginsAndIds);
+        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipients);
+        log.debug("      conversationService.notifyAllConversationMembersAboutNewMessage DONE");
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipientLoginsAndIds, mentionedUserLoginsAndIds);
-        conversationNotificationService.notifyAboutNewMessage(message, notificationRecipients, course);
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
+        log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
+        log.debug("      notifyAboutMessageCreation DONE");
     }
 
     /**

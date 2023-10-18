@@ -150,7 +150,7 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
-    // More information on supported notification types can be found here: https://ls1intum.github.io/Artemis/user/notifications/
+    // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
@@ -159,7 +159,7 @@ public class NotificationSettingsService {
             NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED,
             DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE);
 
-    // More information on supported notification types can be found here: https://ls1intum.github.io/Artemis/user/notifications/
+    // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types
     private static final Set<NotificationType> INSTANT_NOTIFICATION_TYPES_WITHOUT_EMAIL_SUPPORT = Set.of(QUIZ_EXERCISE_STARTED, NEW_EXERCISE_POST, NEW_LECTURE_POST,
             NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE);

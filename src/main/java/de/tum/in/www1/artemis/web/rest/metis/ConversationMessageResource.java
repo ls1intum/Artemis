@@ -36,7 +36,7 @@ import tech.jhipster.web.util.PaginationUtil;
 @RequestMapping("/api")
 public class ConversationMessageResource {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final ConversationMessagingService conversationMessagingService;
 
@@ -55,6 +55,7 @@ public class ConversationMessageResource {
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
+        log.debug("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
@@ -117,6 +118,7 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
+        log.debug("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
         long start = System.nanoTime();
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
         log.info("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
@@ -134,6 +136,7 @@ public class ConversationMessageResource {
     @DeleteMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
+        log.debug("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
         long start = System.nanoTime();
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
