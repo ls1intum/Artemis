@@ -47,7 +47,7 @@
                              primaryKeyName="pk_iris_exercise_plan_message_content"
                              referencedTableName="iris_message_content"
                              referencedColumnNames="id"
-                             foreignKeyName="fk_plan_id_to_content_id"
+                             foreignKeyName="fk_exercise_plan_id_to_content_id"
                              nullable="false"/>
             </column>
             <column name="current_component_index" type="TINYINT">
