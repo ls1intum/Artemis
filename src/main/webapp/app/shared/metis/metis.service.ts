@@ -475,50 +475,46 @@ export class MetisService implements OnDestroy {
                 answer.creationDate = dayjs(answer.creationDate);
             });
 
-            if (
-                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) ||
-                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) ||
-                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.exerciseIds?.includes(postDTO.post.exercise.id)) ||
-                (postDTO.post.conversation?.id !== undefined && postDTO.post.conversation.id === this.currentPostContextFilter.conversationId)
-            )
-                switch (postDTO.action) {
-                    case MetisPostAction.CREATE:
-                        // we can add the sent post to the cached posts without violating the current context filter setting
-                        this.cachedPosts.push(postDTO.post);
-                        this.addTags(postDTO.post.tags);
-                        break;
-                    case MetisPostAction.UPDATE:
-                        const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                        if (indexToUpdate > -1) {
-                            this.cachedPosts[indexToUpdate] = postDTO.post;
-                        } else {
-                            console.error(`Post with id ${postDTO.post.id} could not be updated`);
-                        }
-                        this.addTags(postDTO.post.tags);
-                        break;
-                    case MetisPostAction.DELETE:
-                        const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                        if (indexToDelete > -1) {
-                            this.cachedPosts.splice(indexToDelete, 1);
-                        } else {
-                            console.error(`Post with id ${postDTO.post.id} could not be deleted`);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            // emit updated version of cachedPosts to subscribing components
-            if (PageType.OVERVIEW === this.pageType) {
-                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. refetch currently displayed posts from server
+            switch (postDTO.action) {
+                case MetisPostAction.CREATE:
+                    if (
+                        postDTO.post.conversation?.id !== undefined &&
+                        postDTO.post.conversation.id === this.currentPostContextFilter.conversationId &&
+                        (!this.currentPostContextFilter.searchText || postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase()))
+                    ) {
+                        // we can add the received conversation message to the cached messages without violating the current context filter setting
+                        this.cachedPosts = [postDTO.post, ...this.cachedPosts];
+                    }
+                    this.addTags(postDTO.post.tags);
+                    break;
+                case MetisPostAction.UPDATE:
+                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                    if (indexToUpdate > -1) {
+                        this.cachedPosts[indexToUpdate] = postDTO.post;
+                    }
+                    this.addTags(postDTO.post.tags);
+                    break;
+                case MetisPostAction.DELETE:
+                    const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                    if (indexToDelete > -1) {
+                        this.cachedPosts.splice(indexToDelete, 1);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            // emit updated version of cachedPosts to subscribing components...
+            if (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType) {
                 const oldPage = this.currentPostContextFilter.page;
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
                 this.currentPostContextFilter.page = 0;
-                this.getFilteredPosts(this.currentPostContextFilter, true, this.currentConversation);
+                // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
+                this.getFilteredPosts(this.currentPostContextFilter, !postDTO.post.conversation && postDTO.action === MetisPostAction.CREATE, this.currentConversation);
                 this.currentPostContextFilter.pageSize = oldPageSize;
                 this.currentPostContextFilter.page = oldPage;
             } else {
-                // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
+                // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
                 this.getFilteredPosts(this.currentPostContextFilter, false);
             }
         });
