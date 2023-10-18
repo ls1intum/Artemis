@@ -370,7 +370,7 @@ export class NotificationService {
                 if (notification.target) {
                     const target = JSON.parse(notification.target);
                     const targetCourseId = target.course;
-                    // Only add notification if it is not from the current user and the user is not already in the messages tab
+                    // Only add notification if it is not from the current user, the conversation is not opened, and the user is not already in the messages tab
                     if (
                         notification.author?.id !== this.accountService.userIdentity?.id &&
                         !this.notificationSettingsService.isConversationActive(target.conversation) &&

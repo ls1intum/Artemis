@@ -90,7 +90,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     /**
-     * on leaving the page, the modal should be closed
+     * on leaving the page, the active conversation should be unset and the modal should be closed
      */
     ngOnDestroy(): void {
         this.notificationSettingsService.setActiveConversationId(undefined);
