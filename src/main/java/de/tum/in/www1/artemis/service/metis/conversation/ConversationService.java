@@ -9,10 +9,12 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -165,7 +167,8 @@ public class ConversationService {
      * @param conversation the conversation to be updated
      * @return the updated conversation
      */
-    public Conversation updateConversation(Conversation conversation) {
+    @Async
+    public Conversation updateConversationAsync(Conversation conversation) {
         return conversationRepository.save(conversation);
     }
 

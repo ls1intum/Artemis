@@ -97,11 +97,10 @@ public class ConversationMessagingService extends PostingService {
         Set<User> mentionedUsers = parseUserMentions(course, newMessage.getContent());
         log.debug("      createMessage:parseUserMentions DONE");
 
-        // TODO: this update could theoretically be done async as it is not relevant for the returned data on the client
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
-        Conversation savedConversation = conversationService.updateConversation(conversation);
+        conversationService.updateConversationAsync(conversation);
 
         // update last read date and unread message count of author
         // invoke async due to db write access to avoid that the client has to wait
@@ -109,14 +108,13 @@ public class ConversationMessagingService extends PostingService {
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         // set the conversation again, because it might have been lost during save
-        createdMessage.setConversation(savedConversation);
+        createdMessage.setConversation(conversation);
         // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
-        if (createdMessage.getConversation() != null) {
-            createdMessage.getConversation().hideDetails();
-        }
+        Conversation completeConversation = conversation.shallowClone();
+        createdMessage.getConversation().hideDetails();
         log.debug("      conversationMessageRepository.save DONE");
 
-        return new CreatedConversationMessage(createdMessage, savedConversation, mentionedUsers);
+        return new CreatedConversationMessage(createdMessage, completeConversation, mentionedUsers);
     }
 
     /**
