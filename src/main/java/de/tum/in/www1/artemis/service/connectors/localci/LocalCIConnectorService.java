@@ -63,22 +63,18 @@ public class LocalCIConnectorService {
 
     private final LocalCITriggerService localCITriggerService;
 
-    private final LocalCISharedBuildJobQueue localCISharedBuildJobQueue;
-
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     public LocalCIConnectorService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, LocalCITriggerService localCITriggerService,
-            LocalCISharedBuildJobQueue localCISharedBuildJobQueue) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, LocalCITriggerService localCITriggerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.localCITriggerService = localCITriggerService;
-        this.localCISharedBuildJobQueue = localCISharedBuildJobQueue;
     }
 
     /**

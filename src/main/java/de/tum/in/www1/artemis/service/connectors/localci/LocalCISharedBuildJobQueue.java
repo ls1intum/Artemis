@@ -70,13 +70,18 @@ public class LocalCISharedBuildJobQueue {
     }
 
     public void processBuild() {
+
+        if (queue.isEmpty()) {
+            return;
+        }
+
         try {
             LocalCIBuildJobQueueItem buildJob = queue.take();
             log.info("Hazelcast, processing build job: " + buildJob);
 
             String commitHash = buildJob.getCommitHash();
-            Thread.sleep(10000);
-            ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(buildJob.getParticipationId());
+            // participation might not be persisted in the database yet
+            ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
 
             // when trigger build is called regularly
             CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
@@ -97,6 +102,31 @@ public class LocalCISharedBuildJobQueue {
         catch (InterruptedException e) {
             log.error("Error while processing build job: " + e.getMessage());
         }
+
+        // after processing a build job, check if there are more jobs to process
+        processBuild();
+
+    }
+
+    private ProgrammingExerciseParticipation retrieveParticipationWithRetry(Long participationId) {
+        int maxRetries = 5;
+        int retries = 0;
+        while (retries < maxRetries) {
+            try {
+                return (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(participationId);
+            }
+            catch (Exception e) {
+                log.error("Error while retrieving participation with id " + participationId + " from database: " + e.getMessage());
+                retries++;
+                try {
+                    Thread.sleep(1000);
+                }
+                catch (InterruptedException e1) {
+                    log.error("Error while waiting for participation with id " + participationId + " to be persisted in database: " + e1.getMessage());
+                }
+            }
+        }
+        throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries");
     }
 
     // Checks whether the node has at least one thread available for a new build job
