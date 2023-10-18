@@ -643,12 +643,6 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExerciseGradingCriteriaCloned() throws Exception {
-        programmingExerciseIntegrationTestService.importProgrammingExerciseGradingCriteriaCloned();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden();

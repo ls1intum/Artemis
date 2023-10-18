@@ -69,6 +69,7 @@ import de.tum.in.www1.artemis.exam.ExamFactory;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
@@ -202,7 +203,13 @@ public class ProgrammingExerciseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     public Course course;
 
@@ -2195,6 +2202,43 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).orElseThrow();
         assertThat(newProgrammingExerciseFromDatabase.getExampleSolutionPublicationDate())
                 .as("programming example solution publication date was correctly set to null in the database").isNull();
+    }
+
+    // TEST
+    void importProgrammingExerciseGradingCriteriaCloned() throws Exception {
+        final Course course1 = courseUtilService.addEmptyCourse();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false);
+        exerciseUtilService.addGradingInstructionsToExercise(sourceExercise);
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
+
+        final Map<String, Long> previousCriterionIds = mapGradingInstructionTitleToId(gradingCriterionRepository.findByExerciseId(sourceExercise.getId()));
+
+        final ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("New never-before-seen title Criteria",
+                "shortNameCriteria", sourceExercise, course1);
+
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+        setupMocksForConsistencyChecksOnImport(sourceExercise);
+
+        final String oldExerciseId = Long.toString(sourceExercise.getId());
+        final ProgrammingExercise importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", oldExerciseId), exerciseToBeImported,
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        final List<GradingCriterion> newGradingCriteria = gradingCriterionRepository.findByExerciseId(importedExercise.getId());
+        final Map<String, Long> newCriterionIds = mapGradingInstructionTitleToId(newGradingCriteria);
+
+        assertThat(previousCriterionIds.keySet()).containsExactlyElementsOf(newCriterionIds.keySet());
+        for (final GradingCriterion newCriterion : newGradingCriteria) {
+            assertThat(newCriterion.getExercise()).isEqualTo(importedExercise);
+            // the criteria should be hard copies, i.e. fresh objects that are independently saved in the database
+            final long oldId = previousCriterionIds.get(Optional.ofNullable(newCriterion.getTitle()).orElse("EMPTY"));
+            assertThat(newCriterion.getId()).isNotNull().isNotEqualTo(oldId);
+        }
+    }
+
+    private Map<String, Long> mapGradingInstructionTitleToId(final List<GradingCriterion> instructions) {
+        return instructions.stream().collect(Collectors.toUnmodifiableMap(criterion -> Optional.ofNullable(criterion.getTitle()).orElse("EMPTY"), DomainObject::getId));
     }
 
     // TEST

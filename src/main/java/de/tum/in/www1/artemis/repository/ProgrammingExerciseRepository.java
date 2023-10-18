@@ -243,6 +243,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 LEFT JOIN FETCH p.testCases tc
                 LEFT JOIN FETCH p.staticCodeAnalysisCategories
                 LEFT JOIN FETCH p.exerciseHints
+                LEFT JOIN FETCH p.gradingCriteria
                 LEFT JOIN FETCH p.templateParticipation
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories

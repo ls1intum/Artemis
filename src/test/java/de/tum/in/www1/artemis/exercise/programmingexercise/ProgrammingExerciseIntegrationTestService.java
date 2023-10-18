@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
@@ -1391,39 +1390,6 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    void importProgrammingExerciseGradingCriteriaCloned() throws Exception {
-        exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        final Map<String, Long> previousCriterionIds = mapGradingInstructionTitleToId(gradingCriterionRepository.findByExerciseId(programmingExercise.getId()));
-
-        setupMocksForConsistencyChecksOnImport(programmingExercise);
-        // ToDo: figure out relevant mocks
-
-        final long oldExerciseId = programmingExercise.getId();
-        programmingExercise.setId(null);
-        programmingExercise.setTitle("New never-before-seen title Criteria");
-        programmingExercise.setShortName("shortNameCriteria");
-
-        final ProgrammingExercise importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", Long.toString(oldExerciseId)), programmingExercise,
-                ProgrammingExercise.class, HttpStatus.OK);
-
-        final List<GradingCriterion> newGradingCriteria = gradingCriterionRepository.findByExerciseId(importedExercise.getId());
-        final Map<String, Long> newCriterionIds = mapGradingInstructionTitleToId(newGradingCriteria);
-
-        assertThat(previousCriterionIds.keySet()).containsExactlyElementsOf(newCriterionIds.keySet());
-        for (final GradingCriterion newCriterion : newGradingCriteria) {
-            assertThat(newCriterion.getExercise()).isEqualTo(importedExercise);
-            // the criteria should be hard copies, i.e. fresh objects that are independently saved in the database
-            final long oldId = previousCriterionIds.get(Optional.ofNullable(newCriterion.getTitle()).orElse(""));
-            assertThat(newCriterion.getId()).isNotNull().isNotEqualTo(oldId);
-        }
-    }
-
-    private Map<String, Long> mapGradingInstructionTitleToId(final List<GradingCriterion> instructions) {
-        return instructions.stream().collect(Collectors.toUnmodifiableMap(criterion -> Optional.ofNullable(criterion.getTitle()).orElse(""), DomainObject::getId));
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
