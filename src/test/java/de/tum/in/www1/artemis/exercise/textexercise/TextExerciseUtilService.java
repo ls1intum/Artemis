@@ -465,7 +465,7 @@ public class TextExerciseUtilService {
 
     /**
      * Creates and saves a TextSubmission and StudentParticipation for the given TextExercise, and studentLogin. Also creates and saves a Result for the
-     * StudentParticipation given the tutorLogin.
+     * StudentParticipation given the assessorLogin.
      *
      * @param textExercise  The TextExercise the TextSubmission belongs to
      * @param studentLogin  The login of the user the TextSubmission belongs to
