@@ -759,7 +759,8 @@
         "studentExam": {
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
-            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!",
+            "abandonFailed": "Der Abbruch der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
         },
         "examStatus": {
             "columnTitle": "Klausurstatus",
@@ -789,7 +790,8 @@
                     "numberOfStudents": "Anzahl der Studierenden",
                     "startedExams": "Begonnene Testklausuren",
                     "submittedExams": "Abgegebene Testklausuren",
-                    "conductionSuspended": "Studierende können keine Testklausuren starten!"
+                    "conductionSuspended": "Studierende können keine Testklausuren starten!",
+                    "abandonedExams": "Abgebrochene Testklausuren"
                 }
             },
             "correction": {

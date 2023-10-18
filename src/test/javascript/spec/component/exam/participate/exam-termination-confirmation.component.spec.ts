@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ExamTerminationConfirmationComponent } from 'app/exam/participate/exam-termination/exam-termination-confirmation/exam-termination-confirmation.component';
+import { ExamTerminationConfirmationComponent } from 'app/exam/participate/exam-termination-confirmation/exam-termination-confirmation.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

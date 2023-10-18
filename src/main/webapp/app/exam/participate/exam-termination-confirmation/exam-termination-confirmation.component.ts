@@ -8,7 +8,6 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-exam-termination-confirmation',
     templateUrl: './exam-termination-confirmation.component.html',
-    styleUrls: ['./exam-termination-confirmation.component.scss'],
 })
 export class ExamTerminationConfirmationComponent implements OnChanges {
     @Input() exam: Exam;

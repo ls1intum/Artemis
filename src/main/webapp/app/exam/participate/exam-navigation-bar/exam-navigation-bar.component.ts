@@ -29,7 +29,6 @@ export class ExamNavigationBarComponent implements OnInit {
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
-
     @Output() onAbandon = new EventEmitter<void>();
 
     static itemsVisiblePerSideDefault = 4;

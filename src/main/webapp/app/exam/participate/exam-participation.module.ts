@@ -34,7 +34,7 @@ import { ExamExerciseUpdateHighlighterModule } from 'app/exam/participate/exerci
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
-import { ExamTerminationConfirmationComponent } from './exam-termination/exam-termination-confirmation/exam-termination-confirmation.component';
+import { ExamTerminationConfirmationComponent } from 'app/exam/participate/exam-termination-confirmation/exam-termination-confirmation.component';
 
 const ENTITY_STATES = [...examParticipationState];
 

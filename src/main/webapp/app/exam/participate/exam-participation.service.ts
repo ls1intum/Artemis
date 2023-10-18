@@ -194,14 +194,8 @@ export class ExamParticipationService {
         ExamParticipationService.breakCircularDependency(studentExamCopy);
 
         return this.httpClient.post<void>(url, studentExamCopy).pipe(
-            catchError((error: HttpErrorResponse) => {
-                if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
-                    return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
-                } else if (error.status === 409 && error.headers.get('x-null-error') === 'error.alreadySubmitted') {
-                    return throwError(() => new Error('artemisApp.studentExam.alreadySubmitted'));
-                } else {
-                    return throwError(() => new Error('artemisApp.studentExam.handInFailed'));
-                }
+            catchError(() => {
+                return throwError(() => new Error('artemisApp.studentExam.abandonFailed'));
             }),
         );
     }
