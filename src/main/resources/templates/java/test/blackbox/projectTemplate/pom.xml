@@ -22,14 +22,14 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>20</release>
+                    <release>21</release>
                 </configuration>
             </plugin>
             <!--%static-code-analysis-start%-->
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.7.3.0</version>
+                <version>4.7.3.6</version>
                 <configuration>
                     <!-- Do not analyze the files in the test directory -->
                     <includeTests>${analyzeTests}</includeTests>
@@ -49,12 +49,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.3.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.8.0</version>
+                        <version>10.12.4</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -71,7 +71,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.20.0</version>
+                <version>3.21.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>net.sourceforge.pmd</groupId>
