@@ -601,25 +601,7 @@ public class GitService {
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             builder.setGitDir(gitPath.toFile()).setInitialBranch(defaultBranch).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-            // Create the JGit repository object
-            Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
-            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
-            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
-            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-            // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
-            StoredConfig gitRepoConfig = repository.getConfig();
-            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
-
-            // disable symlinks to avoid security issues such as remote code execution
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
-
-            gitRepoConfig.save();
+            Repository repository = createRepository(localPath, remoteRepositoryUrl, defaultBranch, builder);
 
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
@@ -633,6 +615,40 @@ public class GitService {
             log.warn("Cannot get existing checkout out repository by local path: {}", ex.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Creates a new Repository with the given parameters and saves the Repository's StoredConfig.
+     *
+     * @param localPath           The local path of the repository.
+     * @param remoteRepositoryUrl The remote repository url for the git repository.
+     * @param defaultBranch       The default branch of the repository.
+     * @param builder             The FileRepositoryBuilder.
+     * @return The created Repository.
+     * @throws IOException if the configuration file cannot be accessed.
+     */
+    @NotNull
+    private static Repository createRepository(Path localPath, VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
+        // Create the JGit repository object
+        Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
+        // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
+        // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
+        // and https://git-scm.com/docs/git-gc for an explanation of the parameter
+        // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
+        StoredConfig gitRepoConfig = repository.getConfig();
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
+
+        // disable symlinks to avoid security issues such as remote code execution
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+
+        gitRepoConfig.save();
+        return repository;
     }
 
     /**
