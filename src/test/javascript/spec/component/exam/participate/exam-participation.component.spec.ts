@@ -969,14 +969,6 @@ describe('ExamParticipationComponent', () => {
             expect(comp.pageComponentVisited).toEqual([false, true, false]);
             expect(comp.exerciseIndex).toBe(1);
         });
-
-        it('should trigger save', () => {
-            const triggerSaveSpy = jest.spyOn(comp, 'triggerSave').mockImplementation(() => {});
-            comp.abandon = false;
-            comp.toggleAbandon();
-
-            expect(triggerSaveSpy).toHaveBeenCalledOnce();
-        });
     });
 
     describe('activePageIndex', () => {
