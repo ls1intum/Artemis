@@ -71,6 +71,10 @@
                         <span jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
+                    <th class="d-none d-md-table-cell" jhiSortBy="abandoned">
+                        <span jhiTranslate="artemisApp.studentExams.abandoned"> Abandoned </span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -86,6 +90,7 @@
                     <td class="started">{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td class="submitted">{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td>{{ testRun.submissionDate | artemisDate }}</td>
+                    <td class="abandoned">{{ (testRun.abandoned ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td [width]="350">
                         <div class="w-100 text-end">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">

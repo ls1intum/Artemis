@@ -312,13 +312,18 @@
                         >
                             <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }} :</span>
                             <div class="pt-2">
-                                <jhi-progress-bar [denominator]="numberOfStarted" [numerator]="numberOfSubmitted!" [percentage]="(100 * numberOfSubmitted!) / numberOfStarted">
+                                <jhi-progress-bar
+                                    [denominator]="numberOfStarted - numberOfAbandoned"
+                                    [numerator]="numberOfSubmitted!"
+                                    [percentage]="(100 * numberOfSubmitted!) / (numberOfStarted - numberOfAbandoned)"
+                                >
                                 </jhi-progress-bar>
                             </div>
                             <br />
                         </div>
                         <div *ngIf="examChecklist && numberOfSubmitted! === 0">
                             <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
+                            <br />
                         </div>
                         <!-- Display abandoned exams-->
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.abandonedExam' | artemisTranslate }} : {{ numberOfAbandoned }}</span>
