@@ -17,7 +17,7 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     public LocalCIBuildJobQueueItem(Long participationId, String commitHash) {
         this.participationId = participationId;
         this.commitHash = commitHash;
-        this.expirationTime = null;
+        this.expirationTime = 0L;
     }
 
     public Long getParticipationId() {

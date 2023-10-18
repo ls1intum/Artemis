@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Profile("localci")
 public class LocalCISharedBuildJobQueue {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueue.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -48,7 +48,7 @@ public class LocalCISharedBuildJobQueue {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
     private final FencedLock lock;
 
@@ -120,7 +120,7 @@ public class LocalCISharedBuildJobQueue {
         });
 
         // after processing a build job, remove it from the processing jobs
-        processingJobs.remove(commitHash);
+        processingJobs.remove(buildJob.getParticipationId());
         // process next build job
         processBuild();
 
@@ -128,13 +128,14 @@ public class LocalCISharedBuildJobQueue {
 
     @Scheduled(fixedRate = 60000)
     public void requeueTimedOutJobs() {
+
         lock.lock();
         try {
-            for (String commitHash : processingJobs.keySet()) {
-                LocalCIBuildJobQueueItem buildJob = processingJobs.get(commitHash);
+            for (Long participationId : processingJobs.keySet()) {
+                LocalCIBuildJobQueueItem buildJob = processingJobs.get(participationId);
                 if (buildJob != null && buildJob.getExpirationTime() < System.currentTimeMillis()) {
                     log.info("Requeueing timed out build job: " + buildJob);
-                    processingJobs.remove(commitHash);
+                    processingJobs.delete(participationId);
                     queue.add(buildJob);
                 }
             }
@@ -145,12 +146,11 @@ public class LocalCISharedBuildJobQueue {
     }
 
     private LocalCIBuildJobQueueItem addToProcessingJobs() {
-        LocalCIBuildJobQueueItem buildJob = queue.peek();
+        LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
-            String commitHash = buildJob.getCommitHash();
+            Long participationId = buildJob.getParticipationId();
             buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(130));
-            processingJobs.put(commitHash, buildJob);
-            queue.poll();
+            processingJobs.put(participationId, buildJob);
         }
         return buildJob;
     }
