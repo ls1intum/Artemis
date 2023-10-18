@@ -12,9 +12,12 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private String commitHash;
 
+    private Long expirationTime;
+
     public LocalCIBuildJobQueueItem(Long participationId, String commitHash) {
         this.participationId = participationId;
         this.commitHash = commitHash;
+        this.expirationTime = null;
     }
 
     public Long getParticipationId() {
@@ -31,6 +34,14 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     public void setCommitHash(String commitHash) {
         this.commitHash = commitHash;
+    }
+
+    public Long getExpirationTime() {
+        return expirationTime;
+    }
+
+    public void setExpirationTime(Long expirationTime) {
+        this.expirationTime = expirationTime;
     }
 
     @Override

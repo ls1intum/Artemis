@@ -1,20 +1,21 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.cp.lock.FencedLock;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -47,6 +48,10 @@ public class LocalCISharedBuildJobQueue {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+
+    private final FencedLock lock;
+
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
 
@@ -60,6 +65,8 @@ public class LocalCISharedBuildJobQueue {
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
+        this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
+        this.lock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.queue.addItemListener(new BuildJobItemListener(), true);
     }
@@ -74,38 +81,78 @@ public class LocalCISharedBuildJobQueue {
         if (queue.isEmpty()) {
             return;
         }
+        // need to add the build job to processingJobs before taking it from the queue,
+        // so it can be later added back to the queue if the node fails
+        LocalCIBuildJobQueueItem buildJob;
 
+        // lock the queue to prevent multiple nodes from processing the same build job
+        lock.lock();
         try {
-            LocalCIBuildJobQueueItem buildJob = queue.take();
-            log.info("Hazelcast, processing build job: " + buildJob);
-
-            String commitHash = buildJob.getCommitHash();
-            // participation might not be persisted in the database yet
-            ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
-
-            // when trigger build is called regularly
-            CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
-            futureResult.thenAccept(buildResult -> {
-                // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-                // Therefore, a mock auth object has to be created.
-                SecurityUtils.setAuthorizationObject();
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-                if (result != null) {
-                    programmingMessagingService.notifyUserAboutNewResult(result, participation);
-                }
-                else {
-                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                            new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
-                }
-            });
+            buildJob = addToProcessingJobs();
         }
-        catch (InterruptedException e) {
-            log.error("Error while processing build job: " + e.getMessage());
+        finally {
+            lock.unlock();
         }
 
-        // after processing a build job, check if there are more jobs to process
+        if (buildJob == null) {
+            return;
+        }
+
+        log.info("Hazelcast, processing build job: " + buildJob);
+
+        String commitHash = buildJob.getCommitHash();
+        // participation might not be persisted in the database yet
+        ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
+
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
+        futureResult.thenAccept(buildResult -> {
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+            if (result != null) {
+                programmingMessagingService.notifyUserAboutNewResult(result, participation);
+            }
+            else {
+                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                        new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+            }
+        });
+
+        // after processing a build job, remove it from the processing jobs
+        processingJobs.remove(commitHash);
+        // process next build job
         processBuild();
 
+    }
+
+    @Scheduled(fixedRate = 60000)
+    public void requeueTimedOutJobs() {
+        lock.lock();
+        try {
+            for (String commitHash : processingJobs.keySet()) {
+                LocalCIBuildJobQueueItem buildJob = processingJobs.get(commitHash);
+                if (buildJob != null && buildJob.getExpirationTime() < System.currentTimeMillis()) {
+                    log.info("Requeueing timed out build job: " + buildJob);
+                    processingJobs.remove(commitHash);
+                    queue.add(buildJob);
+                }
+            }
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
+    private LocalCIBuildJobQueueItem addToProcessingJobs() {
+        LocalCIBuildJobQueueItem buildJob = queue.peek();
+        if (buildJob != null) {
+            String commitHash = buildJob.getCommitHash();
+            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(130));
+            processingJobs.put(commitHash, buildJob);
+            queue.poll();
+        }
+        return buildJob;
     }
 
     private ProgrammingExerciseParticipation retrieveParticipationWithRetry(Long participationId) {
@@ -116,7 +163,7 @@ public class LocalCISharedBuildJobQueue {
                 return (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(participationId);
             }
             catch (Exception e) {
-                log.error("Error while retrieving participation with id " + participationId + " from database: " + e.getMessage());
+                log.debug("Error while retrieving participation with id " + participationId + " from database: " + e.getMessage());
                 retries++;
                 try {
                     Thread.sleep(1000);
