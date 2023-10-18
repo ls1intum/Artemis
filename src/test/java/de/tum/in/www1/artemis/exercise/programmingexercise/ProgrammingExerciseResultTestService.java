@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 import static java.util.Comparator.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,12 +31,14 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -369,6 +372,30 @@ public class ProgrammingExerciseResultTestService {
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         assertThat(result).isNotNull();
+    }
+
+    // Test
+    public void shouldCorrectlyNotifyStudentsAboutNewResults(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
+            throws Exception {
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+
+        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        // ensure that hidden feedback got filtered out (test2 is not active, test3 is hidden -> only 1 feedback visible)
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), argThat(arg -> {
+            if (!(arg instanceof ResultDTO resultDTO)) {
+                return false;
+            }
+            if (resultDTO.feedbacks().size() != 1) {
+                return false;
+            }
+            var feedback = resultDTO.feedbacks().get(0);
+            return feedback.id() != null && feedback.positive();
+        }));
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

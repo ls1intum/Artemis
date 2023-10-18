@@ -7,6 +7,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -116,6 +119,27 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testCreateAnswerPostCourseWide() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         testAnswerPostCreation(answerPostToSave);
+    }
+
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        answerPostToSave.setContent(userMention);
+
+        if (!isUserMentionValid) {
+            request.postWithResponseBody("/api/courses/" + courseId + "/messages", answerPostToSave, Post.class, HttpStatus.BAD_REQUEST);
+            return;
+        }
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        // should increment answer count
+        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
     }
 
     private void testAnswerPostCreation(AnswerPost answerPostToSave) throws Exception {
@@ -551,6 +575,25 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testEditAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        // update own post (index 0)--> OK
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+        answerPostToUpdate.setContent(userMention);
+
+        if (!isUserMentionValid) {
+            request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class, HttpStatus.BAD_REQUEST);
+            return;
+        }
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
+                HttpStatus.OK);
+        conversationUtilService.assertSensitiveInformationHidden(updatedAnswerPost);
+        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testEditAnswerPost_asStudent2_forbidden() throws Exception {
@@ -753,5 +796,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
         // check if default values are set correctly on creation
         assertThat(createdAnswerPost.getReactions()).isEmpty();
+    }
+
+    protected static List<Arguments> userMentionProvider() {
+        return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
     }
 }

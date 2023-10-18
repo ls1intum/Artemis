@@ -4,23 +4,23 @@ import { Course } from 'app/entities/course.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { MockComponent } from 'ng-mocks';
+import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 
 describe('ModelingExamSummaryComponent', () => {
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
-    let comp: ModelingExamSummaryComponent;
+    let component: ModelingExamSummaryComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [ModelingExamSummaryComponent, MockComponent(ModelingEditorComponent)],
+            declarations: [ModelingExamSummaryComponent, MockComponent(ModelingSubmissionComponent)],
             schemas: [],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingExamSummaryComponent);
-                comp = fixture.componentInstance;
+                component = fixture.componentInstance;
             });
     });
 
@@ -33,24 +33,28 @@ describe('ModelingExamSummaryComponent', () => {
         fixture.detectChanges();
         const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'No submission');
         expect(el).not.toBeNull();
-        const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
+        const modelingEditor = fixture.debugElement.query(By.directive(ModelingSubmissionComponent));
         expect(modelingEditor).toBeNull();
     });
 
-    it('should show modeling editor with correct props when there is submission and exercise', () => {
+    it('should show modeling submission when there is submission and exercise', () => {
         const mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ model: true }) } as ModelingSubmission;
         const course = new Course();
+        const exercise = { course: course, exerciseGroup: undefined, diagramType: UMLDiagramType.ClassDiagram, studentParticipations: [{ id: 1 }] } as ModelingExercise;
         course.isAtLeastInstructor = true;
-        comp.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        comp.submission = mockSubmission;
+        component.exercise = exercise;
+        component.submission = mockSubmission;
+
         fixture.detectChanges();
-        const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
-        expect(modelingEditor).not.toBeNull();
-        const modelingEditorComponent = modelingEditor.componentInstance;
-        expect(modelingEditorComponent.diagramType).toEqual(UMLDiagramType.ClassDiagram);
-        expect(modelingEditorComponent.umlModel).toEqual({ model: true });
-        expect(modelingEditorComponent.readOnly).toBeTrue();
-        expect(modelingEditorComponent.withExplanation).toEqual(!!mockSubmission.explanationText);
-        expect(modelingEditorComponent.explanation).toEqual(mockSubmission.explanationText);
+
+        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(ModelingSubmissionComponent))?.componentInstance;
+        expect(modelingSubmissionComponent).toBeTruthy();
+    });
+
+    it('should not show modeling submission when there is no submission or exercise', () => {
+        fixture.detectChanges();
+
+        const modelingSubmissionComponent = fixture.debugElement.query(By.directive(ModelingSubmissionComponent))?.componentInstance;
+        expect(modelingSubmissionComponent).not.toBeTruthy();
     });
 });
