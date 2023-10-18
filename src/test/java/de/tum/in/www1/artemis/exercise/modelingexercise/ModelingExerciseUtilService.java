@@ -252,7 +252,7 @@ public class ModelingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a StudentParticipation for the given ModelingExercise and ModelingSubmission.
+     * Creates and saves a team StudentParticipation for the given ModelingExercise and a team ModelingSubmission.
      *
      * @param exercise   The ModelingExercise the submission belongs to
      * @param submission The ModelingSubmission that belongs to the StudentParticipation

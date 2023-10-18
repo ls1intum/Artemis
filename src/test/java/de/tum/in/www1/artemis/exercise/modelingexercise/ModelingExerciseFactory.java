@@ -69,7 +69,7 @@ public class ModelingExerciseFactory {
     }
 
     /**
-     * Generates an empty ApollonDiagram with the given DiagramType.
+     * Generates an ApollonDiagram with the given DiagramType. The diagram is empty as its jsonRepresentation is not set.
      *
      * @param diagramType The DiagramType of the ApollonDiagram
      * @param title       The title of the ApollonDiagram
