@@ -4,6 +4,7 @@ import { AssessmentNote } from 'app/entities/assessment-note.model';
 @Component({
     selector: 'jhi-assessment-note',
     templateUrl: './assessment-note.component.html',
+    styleUrls: ['./assessment-note.component.scss'],
 })
 export class AssessmentNoteComponent {
     private _assessmentNote: AssessmentNote;
