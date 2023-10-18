@@ -269,7 +269,7 @@ public class StudentExamResource {
             return ResponseEntity.ok().build();
         }
 
-        if (Boolean.TRUE.equals(studentExamFromClient.isAbandoned()) || Boolean.TRUE.equals(existingStudentExam.isAbandoned())) {
+        if (studentExamFromClient.isAbandoned() || existingStudentExam.isAbandoned()) {
             log.error("Student exam with id {} for user {} is abandoned.", studentExamFromClient.getId(), currentUser.getLogin());
             throw new BadRequestException("Exam is already abandoned");
         }
@@ -323,7 +323,7 @@ public class StudentExamResource {
             throw new BadRequestException("Exam is already submitted");
         }
 
-        if (Boolean.TRUE.equals(studentExamFromClient.isAbandoned()) || Boolean.TRUE.equals(existingStudentExam.isAbandoned())) {
+        if (studentExamFromClient.isAbandoned() || existingStudentExam.isAbandoned()) {
             log.error("Student exam with id {} for user {} is already abandoned.", studentExamFromClient.getId(), currentUser.getLogin());
             throw new BadRequestException("Exam is already abandoned");
         }

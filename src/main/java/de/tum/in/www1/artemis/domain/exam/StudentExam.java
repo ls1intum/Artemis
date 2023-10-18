@@ -26,7 +26,7 @@ public class StudentExam extends AbstractAuditingEntity {
     private Boolean submitted;
 
     @Column(name = "abandoned")
-    private Boolean abandoned;
+    private boolean abandoned = false;
 
     /**
      * The individual working time per student in seconds

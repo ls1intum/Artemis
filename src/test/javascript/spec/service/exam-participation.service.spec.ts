@@ -180,26 +180,7 @@ describe('Exam Participation Service', () => {
     });
 
     it('should load a StudentExam in the version of server', async () => {
-        /*configure exercises of this student Exam*/
-        const exercise = new TextExercise(new Course(), undefined);
-        const studentParticipation = new StudentParticipation();
-        const participationResult = new Result();
-        participationResult.participation = studentParticipation;
-        studentParticipation.results = [participationResult];
-        const submission = new TextSubmission();
-        submission.results = [new Result()];
-        submission.participation = studentParticipation;
-        getLatestSubmissionResult(submission)!.participation = studentParticipation;
-        getLatestSubmissionResult(submission)!.submission = submission;
-        studentParticipation.submissions = [submission];
-        exercise.studentParticipations = [studentParticipation];
-        /*configure the exam of a student exam*/
-        const examToSend = new Exam();
-
-        const returnedFromService = Object.assign(studentExam, {
-            exercises: [exercise],
-            exam: examToSend,
-        });
+        const returnedFromService = studentExamPayload();
         service
             .submitStudentExam(2, 2, returnedFromService)
             .pipe(take(1))
@@ -265,4 +246,33 @@ describe('Exam Participation Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
+
+    it('should call student-exam/abandon', async () => {
+        const objectToSend = studentExamPayload();
+        service.abandonStudentExam(2, 2, objectToSend).subscribe();
+        const url = service.getResourceURL(2, 2) + '/student-exams/abandon';
+
+        httpMock.expectOne({ method: 'POST', url: url });
+    });
+
+    const studentExamPayload = () => {
+        const exercise = new TextExercise(new Course(), undefined);
+        const studentParticipation = new StudentParticipation();
+        const participationResult = new Result();
+        participationResult.participation = studentParticipation;
+        studentParticipation.results = [participationResult];
+        const submission = new TextSubmission();
+        submission.results = [new Result()];
+        submission.participation = studentParticipation;
+        getLatestSubmissionResult(submission)!.participation = studentParticipation;
+        getLatestSubmissionResult(submission)!.submission = submission;
+        studentParticipation.submissions = [submission];
+        exercise.studentParticipations = [studentParticipation];
+        const examToSend = new Exam();
+
+        return Object.assign(studentExam, {
+            exercises: [exercise],
+            exam: examToSend,
+        });
+    };
 });
