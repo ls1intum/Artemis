@@ -118,18 +118,4 @@ public abstract class Conversation extends DomainObject {
         // TODO: this information is still needed in some places, we need to identify those and then set it to null
         // setCourse(null);
     }
-
-    /**
-     * Creates a shallow copy of the
-     *
-     * @return shallow clone of the conversation
-     */
-    public Conversation shallowClone() {
-        try {
-            return (Conversation) super.clone();
-        }
-        catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

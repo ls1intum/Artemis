@@ -100,7 +100,7 @@ public class ConversationMessagingService extends PostingService {
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
-        conversationService.updateConversationAsync(conversation);
+        Conversation savedConversation = conversationService.updateConversationAsync(conversation);
 
         // update last read date and unread message count of author
         // invoke async due to db write access to avoid that the client has to wait
@@ -110,11 +110,10 @@ public class ConversationMessagingService extends PostingService {
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
-        Conversation completeConversation = conversation.shallowClone();
         createdMessage.getConversation().hideDetails();
         log.debug("      conversationMessageRepository.save DONE");
 
-        return new CreatedConversationMessage(createdMessage, completeConversation, mentionedUsers);
+        return new CreatedConversationMessage(createdMessage, savedConversation, mentionedUsers);
     }
 
     /**

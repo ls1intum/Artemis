@@ -9,7 +9,6 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -167,7 +166,6 @@ public class ConversationService {
      * @param conversation the conversation to be updated
      * @return the updated conversation
      */
-    @Async
     public Conversation updateConversationAsync(Conversation conversation) {
         return conversationRepository.save(conversation);
     }
