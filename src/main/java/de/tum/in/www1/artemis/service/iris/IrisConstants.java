@@ -115,7 +115,7 @@ public final class IrisConstants {
             TODO: Will be added in a future PR
             """;
 
-    public static final IrisTemplate CODE_EDITOR_INITIAL_REQUEST = new IrisTemplate(
+    public static final IrisTemplate CODE_EDITOR_CONVERSATION = new IrisTemplate(
             """
                         {{#system~}}
                             I want you to act as an expert assistant to an instructor who is creating a programming exercise for their course.
@@ -168,15 +168,15 @@ public final class IrisConstants {
                         {{#system~}}Your chat history with the instructor:{{~/system}}
                         {{#each chatHistory}}
                             {{#if (equal this.sender "user")}}
-                                {{#user~}}{{this.content}}{{~/user}}
+                                {{#user~}}{{this.content[0].textContent}}{{~/user}}
                             {{else}}
-                                {{#assistant~}}{{this.content}}{{~/assistant}}
+                                {{#assistant~}}{{this.content[0].textContent}}{{~/assistant}}
                             {{/if}}
                         {{/each}}
 
                         {{#system~}}
-                            Do you understand what the instructor wants well enough to make suggestions to improve the exercise?
-                            It is okay to make some assumptions.
+                            Has the instructor given you enough information about their intent for the exercise for you to make suggestions?
+                            It is okay to make some assumptions about the instructor's intent, but you should ask questions if you are unsure.
                             If you have enough information to work with, say "1". Otherwise, say "0".
                         {{~/system}}
                         {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
@@ -190,7 +190,7 @@ public final class IrisConstants {
 
                             {{#geneach 'components' num_iterations=4}}
                                 {{#system~}}
-                                    Which exercise component would you like to adapt to help the instructor (priority {{add @index 1}})?
+                                    In your attempt to meet the instructor's requirements, which exercise component would you like to adapt (priority {{add @index 1}})?
                                     You can respond with "problem statement", "solution", "template", or "tests", or alternatively with " " if you do not wish to adapt any other components.
                                 {{~/system}}
                                 {{#assistant~}}{{gen 'this.component' temperature=0.0 max_tokens=7 stop=","}}{{~/assistant}}

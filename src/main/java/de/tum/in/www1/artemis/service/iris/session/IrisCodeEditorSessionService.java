@@ -150,7 +150,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
 
         // The template and model are hard-coded for now, but will be configurable in the future
-        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_INITIAL_REQUEST, "STRATEGY_GPT4", params).handleAsync((response, err) -> {
+        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_CONVERSATION, "STRATEGY_GPT4", params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
@@ -160,6 +160,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
             }
             else {
+                log.info("Received conversation response from Iris model");
                 try {
                     var irisMessage = toIrisMessage(response.content());
                     var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
@@ -287,6 +288,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
                 }
                 else {
+                    log.info("Received response containing changes to exercise " + component + " from Iris model");
                     try {
                         var changes = extractChangesForComponent(response.content(), component);
                         // In this case we do not save anything, as these changes must first be approved by the user
