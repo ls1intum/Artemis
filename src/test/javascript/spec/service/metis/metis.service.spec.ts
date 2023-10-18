@@ -322,18 +322,29 @@ describe('Metis Service', () => {
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdReactionSub.unsubscribe();
-
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
         }));
 
         it('should delete a reaction', fakeAsync(() => {
             const reactionServiceSpy = jest.spyOn(reactionService, 'delete');
+            post = { ...post, reactions: [reaction] };
+            reaction.post = post;
+            const createdPostSub = metisService.createPost(post).subscribe();
+            const createdReactionSub = metisService.createReaction(reaction).subscribe((createdReaction) => {
+                expect(createdReaction).toEqual(reaction);
+            });
+
             metisService.deleteReaction(reaction).subscribe(() => {
                 expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             });
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [] }]));
+
             tick();
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
+            createdReactionSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
     });
 

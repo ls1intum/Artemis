@@ -373,7 +373,7 @@ export class MetisService implements OnDestroy {
                 const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === reaction.post?.id);
                 if (indexToUpdate > -1) {
                     // Delete the reaction from the post if it is not already deleted (can happen due to WebSocket message)
-                    const indexOfReaction = this.cachedPosts[indexToUpdate].reactions?.findIndex((r) => r.id != reaction.id) ?? -1;
+                    const indexOfReaction = this.cachedPosts[indexToUpdate].reactions?.findIndex((r) => r.id == reaction.id) ?? -1;
                     if (indexOfReaction > -1) {
                         this.cachedPosts[indexToUpdate].reactions!.splice(indexOfReaction, 1);
                         this.posts$.next(this.cachedPosts);
