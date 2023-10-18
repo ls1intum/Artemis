@@ -126,10 +126,10 @@
                 />
                 <ng-template #exercisesGroupedByWeek>
                     <jhi-course-exercises-grouped-by-week
+                        [filteredAndSortedExercises]="filteredExercises"
                         [course]="course!"
                         [exerciseForGuidedTour]="exerciseForGuidedTour"
                         [weeklyIndexKeys]="weeklyIndexKeys"
-                        [immutableWeeklyExercisesGrouped]="weeklyExercisesGrouped"
                         [activeFilters]="activeFilters"
                     />
                 </ng-template>

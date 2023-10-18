@@ -124,13 +124,14 @@ export const hasExerciseDueDatePassed = (exercise: Exercise, participation?: Par
  * @param exercise the participation belongs to.
  * @param participation for which the due date should be found.
  */
-export const getExerciseDueDate = (exercise: Exercise, participation?: Participation): dayjs.Dayjs | undefined => {
+// TODO double check whether it still works as expected when called by other methods
+export function getExerciseDueDate(exercise: Exercise, participation?: Participation): dayjs.Dayjs | undefined {
     if (exercise.dueDate === undefined) {
         return undefined;
     } else {
         return participation?.individualDueDate ?? exercise.dueDate;
     }
-};
+}
 
 /**
  * Determines if the exercise can be started, this is the case if:

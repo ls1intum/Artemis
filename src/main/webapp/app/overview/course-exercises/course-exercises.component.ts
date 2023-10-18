@@ -262,11 +262,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         );
     }
 
-    private getSortingAttributeFromExercise(): (exercise: Exercise) => dayjs.Dayjs | undefined {
-        if (this.sortingAttribute === this.DUE_DATE) {
-            return CourseExercisesComponent.exerciseDueDate;
+    public static getSortingAttributeFromExercise(exercise: Exercise, sortingAttribute?: SortingAttribute): dayjs.Dayjs | undefined {
+        if (sortingAttribute === SortingAttribute.DUE_DATE) {
+            return CourseExercisesComponent.exerciseDueDate(exercise);
         } else {
-            return (exercise) => exercise.releaseDate;
+            return exercise.releaseDate;
         }
     }
 
@@ -290,7 +290,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     private updateUpcomingExercises(upcomingExercises: Exercise[]) {
-        const sortedExercises = (this.sortExercises(CourseExercisesComponent.exerciseDueDate, upcomingExercises, ExerciseSortingOrder.ASC) || []).map((exercise) => {
+        const sortedExercises = (this.sortExercises(upcomingExercises, ExerciseSortingOrder.ASC) || []).map((exercise) => {
             return { exercise, dueDate: CourseExercisesComponent.exerciseDueDate(exercise) };
         });
         if (upcomingExercises.length <= 5) {
@@ -316,11 +316,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
         const indexKeys: string[] = [];
-        const sortedExercises = this.sortExercises(this.getSortingAttributeFromExercise(), exercises) || [];
+        const sortedExercises = this.sortExercises(exercises);
         const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
-        sortedExercises.forEach((exercise) => {
-            const dateValue = this.getSortingAttributeFromExercise()(exercise);
+        sortedExercises?.forEach((exercise) => {
+            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, this.sortingAttribute);
             this.increaseExerciseCounter(exercise);
             if (!dateValue) {
                 notAssociatedExercises.push(exercise);
@@ -361,11 +361,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         this.calcNumberOfExercises();
     }
 
-    private sortExercises(byAttribute: (exercise: Exercise) => dayjs.Dayjs | undefined, exercises?: Exercise[], sortOrder?: ExerciseSortingOrder) {
+    private sortExercises(exercises?: Exercise[], sortOrder?: ExerciseSortingOrder) {
         const sortingOrder = sortOrder ?? this.sortingOrder;
         return exercises?.sort((a, b) => {
-            const sortingAttributeA = byAttribute(a);
-            const sortingAttributeB = byAttribute(b);
+            const sortingAttributeA = CourseExercisesComponent.getSortingAttributeFromExercise(a, this.sortingAttribute);
+            const sortingAttributeB = CourseExercisesComponent.getSortingAttributeFromExercise(b, this.sortingAttribute);
             const aValue = sortingAttributeA ? sortingAttributeA.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const bValue = sortingAttributeB ? sortingAttributeB.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const titleSortValue = a.title && b.title ? a.title.localeCompare(b.title) : 0;
