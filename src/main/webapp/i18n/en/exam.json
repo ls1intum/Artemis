@@ -317,7 +317,10 @@
                     "sentence1": "You are about to abandon your exam without submitting.",
                     "sentence2": "The exam will be evaluated with 0 points.",
                     "sentence3": "This step cannot be undone."
-                }
+                },
+                "button": "Abandon exam",
+                "continueDescription": "You don't want to abandon?",
+                "continueButton": "Back"
             }
         },
         "exerciseGroup": {

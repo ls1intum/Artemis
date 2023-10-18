@@ -62,14 +62,14 @@
                         <span>{{ 'artemisApp.examParticipation.abandonConfirm.warning.sentence3' | artemisTranslate }}</span>
                     </div>
                     <button id="abandon-exam" type="submit" (click)="abandonExam()" class="btn btn-primary" [disabled]="!nameIsCorrect || !confirmed">
-                        <span>Abandon Exam</span>
+                        <span>{{ 'artemisApp.examParticipation.abandonConfirm.button' | artemisTranslate }}</span>
                     </button>
                 </ng-container>
                 <div class="mt-5">
-                    <div class="mb-2 font-weight-bold">You don't want to abandon?</div>
+                    <div class="mb-2 font-weight-bold">{{ 'artemisApp.examParticipation.abandonConfirm.continueDescription' | artemisTranslate }}</div>
                     <button [disabled]="abandonInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continue()">
                         <fa-icon [icon]="faArrowLeft"></fa-icon>
-                        Back
+                        {{ 'artemisApp.examParticipation.abandonConfirm.continueButton' | artemisTranslate }}
                     </button>
                 </div>
             </div>

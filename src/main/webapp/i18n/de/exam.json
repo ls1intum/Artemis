@@ -310,12 +310,15 @@
             "abandoned": "Du hast diese Klausur abgebrochen. Sie wird nicht bewertet!",
             "abandonConfirm": {
                 "title": "Klausur abbrechen",
-                "confirmation": "Hiermit bestätige ich mit meinem vollen Namen als Repräsentation für meine Unterschrift, dass ich die Klausur abbrechen will. I verstehe, dass das zu einer Bewertung meiner Klausur mit 0 Punkten führen wird.",
+                "confirmation": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur abbrechen will. Ich verstehe, dass das zu einer Bewertung meiner Klausur mit 0 Punkten führt.",
                 "warning": {
                     "sentence1": "Du bist dabei die Klausur abzubrechen ohne abzugeben.",
                     "sentence2": "Die Klausur wird mit 0 Punkten bewertet.",
                     "sentence3": "Dieser Schritt kann nicht rückgängig gemacht werden."
-                }
+                },
+                "button": "Klausur abbrechen",
+                "continueDescription": "Du willst nicht abbrechen?",
+                "continueButton": "Zurück"
             }
         },
         "exerciseGroup": {
