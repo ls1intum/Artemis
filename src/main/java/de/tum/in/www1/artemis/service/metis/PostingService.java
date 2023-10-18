@@ -194,6 +194,10 @@ public abstract class PostingService {
 
     protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
+        return preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+    }
+
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
