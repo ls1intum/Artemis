@@ -250,11 +250,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return exercisePlan;
     }
 
+    /**
+     * Requests exercise changes from the Iris model for the given session and exercise plan.
+     * This method sends a request to the Iris model for each component in the exercise plan,
+     * and handles the response to extract the changes and send them to the websocket service.
+     *
+     * @param session      The IrisCodeEditorSession to request exercise changes for
+     * @param exercisePlan The IrisExercisePlanMessageContent that contains the exercise plan
+     */
     public void requestExerciseChanges(IrisCodeEditorSession session, IrisExercisePlanMessageContent exercisePlan) {
-        // TODO: This should be checked in the resource layer and not here
-        if (!exercisePlan.hasNext()) {
-            throw new BadRequestException("Exercise plan does not have any more instructions");
-        }
         exercisePlan.setExecuting(true);
         // Continue to execute the plan until there are no more components or the plan has been paused externally
         while (exercisePlan.hasNext() && exercisePlan.isExecuting()) {
