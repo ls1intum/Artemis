@@ -240,10 +240,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.plagiarismDetectionConfig c
-            LEFT JOIN FETCH e.studentParticipations p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH e.plagiarismDetectionConfig c
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
             WHERE e.dueDate >= :time
                 AND c.continuousPlagiarismControlEnabled = TRUE
             """)
