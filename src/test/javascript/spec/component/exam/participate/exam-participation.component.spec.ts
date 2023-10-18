@@ -686,6 +686,17 @@ describe('ExamParticipationComponent', () => {
         expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
+    it('should abandon exam when confirmed', () => {
+        comp.studentExam = new StudentExam();
+        comp.studentExam.submitted = false;
+        comp.studentExam.abandoned = false;
+        const abandonSpy = jest.spyOn(examParticipationService, 'abandonStudentExam').mockReturnValue(of(undefined));
+        comp.exam = new Exam();
+        comp.onExamAbandonConfirmed();
+        expect(abandonSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam?.abandoned).toBeTrue();
+    });
+
     describe('canDeactivate', () => {
         it('should return true if logout is true', () => {
             comp.loggedOut = true;
@@ -741,6 +752,16 @@ describe('ExamParticipationComponent', () => {
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isOver()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalledOnce();
+        });
+        it('should return true when abandoned', () => {
+            comp.abandon = true;
+            expect(comp.isOver()).toBeTrue();
+        });
+        it('should return true if student exam has been abandoned', () => {
+            const studentExam = new StudentExam();
+            studentExam.abandoned = true;
+            comp.studentExam = studentExam;
+            expect(comp.isOver()).toBeTrue();
         });
     });
 
@@ -905,6 +926,54 @@ describe('ExamParticipationComponent', () => {
             const triggerSaveSpy = jest.spyOn(comp, 'triggerSave').mockImplementation(() => {});
             comp.handInEarly = false;
             comp.toggleHandInEarly();
+
+            expect(triggerSaveSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('toggleAbandon', () => {
+        it('should reset pageComponentVisited after the abandon window is closed', () => {
+            // Create exercises
+            const exercise1 = new ProgrammingExercise(new Course(), undefined);
+            exercise1.id = 15;
+            const exercise2 = new ProgrammingExercise(new Course(), undefined);
+            exercise2.id = 42;
+            exercise2.allowOnlineEditor = true;
+            exercise2.allowOfflineIde = false;
+            const exercise3 = new ProgrammingExercise(new Course(), undefined);
+            exercise3.id = 16;
+            exercise3.allowOnlineEditor = false;
+            exercise3.allowOfflineIde = true;
+
+            // Set initial component state
+            comp.abandon = true;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise1, exercise2, exercise3];
+            comp.activeExamPage = {
+                isOverviewPage: false,
+                exercise: exercise2,
+            };
+            comp.exerciseIndex = 1;
+            comp.pageComponentVisited = [true, true, true];
+
+            // Spy on the private method resetPageComponentVisited
+            const resetPageComponentVisitedSpy = jest.spyOn<any, any>(comp, 'resetPageComponentVisited');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleAbandon();
+
+            // Verify that resetPageComponentVisited has been called with the correct index
+            expect(resetPageComponentVisitedSpy).toHaveBeenCalledExactlyOnceWith(1);
+
+            // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
+            expect(comp.pageComponentVisited).toEqual([false, true, false]);
+            expect(comp.exerciseIndex).toBe(1);
+        });
+
+        it('should trigger save', () => {
+            const triggerSaveSpy = jest.spyOn(comp, 'triggerSave').mockImplementation(() => {});
+            comp.abandon = false;
+            comp.toggleAbandon();
 
             expect(triggerSaveSpy).toHaveBeenCalledOnce();
         });

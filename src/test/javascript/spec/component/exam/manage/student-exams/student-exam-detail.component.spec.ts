@@ -381,7 +381,7 @@ describe('StudentExamDetailComponent', () => {
 
         const ADJUST_SUBMITTED_STATE_BUTTON_ID = '#adjust-submitted-state-button';
 
-        it('should NOT be disabled when individual working time is over', () => {
+        it('should NOT be disabled when individual working time is over and student exam is not abandoned', () => {
             const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(true);
 
             studentExamDetailComponentFixture.detectChanges();
@@ -395,6 +395,17 @@ describe('StudentExamDetailComponent', () => {
         it('should be disabled when individual working time is NOT over', () => {
             const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(false);
 
+            studentExamDetailComponentFixture.detectChanges();
+
+            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);
+            expect(buttonElement).toBeTruthy();
+            expect(examIsOverSpy).toHaveBeenCalled();
+            expect(buttonElement.disabled).toBeTrue();
+        });
+
+        it('should be disabled when student exam is abandoned', () => {
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(true);
+            studentExamDetailComponent.studentExam.abandoned = true;
             studentExamDetailComponentFixture.detectChanges();
 
             const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);

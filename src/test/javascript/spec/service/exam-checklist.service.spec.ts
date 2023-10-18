@@ -293,5 +293,9 @@ describe('ExamChecklistService', () => {
         it('should return the started topic', () => {
             expect(service.getStartedTopic(exam)).toBe(`/topic/exam/${exam.id}/started`);
         });
+
+        it('should return the abandoned topic', () => {
+            expect(service.getAbandonedTopic(exam)).toBe(`/topic/exam/${exam.id}/abandoned`);
+        });
     });
 });

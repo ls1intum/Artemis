@@ -247,4 +247,12 @@ describe('Exam Navigation Bar Component', () => {
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalledOnce();
     });
+
+    it('should abandon the exam', () => {
+        jest.spyOn(comp.onAbandon, 'emit');
+
+        comp.abandon();
+
+        expect(comp.onAbandon.emit).toHaveBeenCalledOnce();
+    });
 });
