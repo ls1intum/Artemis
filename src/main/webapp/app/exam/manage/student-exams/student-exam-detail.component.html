@@ -152,7 +152,7 @@
                     {{ (passed ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                 </li>
                 <li>
-                    <strong>Abandoned:</strong>
+                    <strong>{{ 'artemisApp.studentExams.abandoned' | artemisTranslate }}:</strong>
                     {{ (studentExam.abandoned ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                 </li>
             </ol>
@@ -160,9 +160,9 @@
             <div
                 [ngbTooltip]="
                     !isExamOver()
-                        ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate)
+                        ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanationTime' | artemisTranslate)
                         : studentExam.abandoned
-                        ? 'The student abandoned his/ her exam. It can not be submitted.'
+                        ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanationAbandoned' | artemisTranslate)
                         : ''
                 "
                 placement="right"

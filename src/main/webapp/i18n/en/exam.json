@@ -307,6 +307,17 @@
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
                 "button": "Show exam summary{{countdown}}"
+            },
+            "abandon": "Abandon",
+            "abandoned": "You abandoned this exam. It will not be graded!",
+            "abandonConfirm": {
+                "title": "Abandon exam",
+                "confirmation": "I hereby confirm with my full name representing my signature that I want to abandon this exam. I understand that this will result in my exam being evaluated with 0 points.",
+                "warning": {
+                    "sentence1": "You are about to abandon your exam without submitting.",
+                    "sentence2": "The exam will be evaluated with 0 points.",
+                    "sentence3": "This step cannot be undone."
+                }
             }
         },
         "exerciseGroup": {
@@ -348,6 +359,7 @@
             "gradeAfterBonus": "Grade after bonus",
             "bonus": "Bonus Points",
             "passed": "Passed",
+            "abandoned": "Abandoned",
             "participationStatus": "Participation status",
             "summary": "Student Summary",
             "result": "Result",
@@ -649,6 +661,7 @@
                     "correctionRound": "Correction Round",
                     "startedExam": "Started Exam",
                     "submittedExam": "Submitted Exam",
+                    "abandonedExam": "Abandoned Exam",
                     "exerciseTablePlural": "Exercises",
                     "exerciseTableSingular": "Exercise",
                     "points": "Points",
@@ -734,7 +747,8 @@
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
             "endOfIndividualWorkingTime": "End of individual working time:",
-            "disabledChangeSubmissionStateButtonExplanation": "Cannot be changed before the end of the working time and the respective grace period.",
+            "disabledChangeSubmissionStateButtonExplanationTime": "Cannot be changed before the end of the working time and the respective grace period.",
+            "disabledChangeSubmissionStateButtonExplanationAbandoned": "The student abandoned the exam. It cannot be submitted.",
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
             "hasComplaint": "Has Complaint",
@@ -766,6 +780,7 @@
                 "workingTime": "Working Time",
                 "startedExams": "Started exams",
                 "submittedExams": "Submitted exams",
+                "abandonedExams": "Abandoned exams",
                 "conductionSuspended": "Students cannot start their Exam!",
                 "testExam": {
                     "examConduction": "Test Exam conduction",

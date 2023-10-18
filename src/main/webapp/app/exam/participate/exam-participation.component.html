@@ -158,7 +158,7 @@
         <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam" />
         <ng-container *ngIf="this.studentExam.abandoned">
             <div class="container d-flex flex-column align-items-center justify-content-center">
-                <span class="mb-2 font-weight-bold text-danger">You abandoned this exam. It will not be graded!</span>
+                <span class="mb-2 font-weight-bold text-danger">{{ 'artemisApp.examParticipation.abandoned' | artemisTranslate }}</span>
             </div>
         </ng-container>
     </ng-container>

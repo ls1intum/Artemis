@@ -3,7 +3,7 @@
         <jhi-exam-live-events-button />
     </div>
     <h2 class="col-md-6" style="text-align: center; font-weight: normal" id="exam-finished-title">
-        <span> Abandon exam </span>
+        <span> {{ 'artemisApp.examParticipation.abandonConfirm.title' | artemisTranslate }} </span>
         <br />
     </h2>
 </div>
@@ -17,8 +17,7 @@
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <label class="font-weight-bold" for="fullname">
-                        I hereby confirm with my full name representing my signature that I want to abandon this exam. I understand that all exercises will be evaluated with 0
-                        Points and I will fail the exam.
+                        {{ 'artemisApp.examParticipation.abandonConfirm.confirmation' | artemisTranslate }}
                     </label>
                 </div>
             </div>
@@ -56,11 +55,11 @@
             <div style="text-align: center">
                 <ng-container #terminationButton>
                     <div class="mb-2 font-weight-bold text-danger">
-                        <span>You are about to abandon your exam without submitting.</span>
+                        <span>{{ 'artemisApp.examParticipation.abandonConfirm.warning.sentence1' | artemisTranslate }}</span>
                         <br />
-                        <span>All exercises will be evaluated with 0 points and you will fail the exam.</span>
+                        <span>{{ 'artemisApp.examParticipation.abandonConfirm.warning.sentence2' | artemisTranslate }}</span>
                         <br />
-                        <span>This step can not be undone.</span>
+                        <span>{{ 'artemisApp.examParticipation.abandonConfirm.warning.sentence3' | artemisTranslate }}</span>
                     </div>
                     <button id="abandon-exam" type="submit" (click)="abandonExam()" class="btn btn-primary" [disabled]="!nameIsCorrect || !confirmed">
                         <span>Abandon Exam</span>

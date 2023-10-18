@@ -108,7 +108,8 @@
                 </li>
                 <li>
                     <span>
-                        Abandoned Exams :
+                        {{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'abandonedExams' | artemisTranslate }}
+                        :
                         {{ numberOfAbandoned }}
                         ({{ numberOfGeneratedStudentExams > 0 ? round((numberOfAbandoned * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}
                         %)

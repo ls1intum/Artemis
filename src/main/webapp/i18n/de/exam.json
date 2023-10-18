@@ -305,6 +305,17 @@
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
+            },
+            "abandon": "Abbrechen",
+            "abandoned": "Du hast diese Klausur abgebrochen. Sie wird nicht bewertet!",
+            "abandonConfirm": {
+                "title": "Klausur abbrechen",
+                "confirmation": "Hiermit bestätige ich mit meinem vollen Namen als Repräsentation für meine Unterschrift, dass ich die Klausur abbrechen will. I verstehe, dass das zu einer Bewertung meiner Klausur mit 0 Punkten führen wird.",
+                "warning": {
+                    "sentence1": "Du bist dabei die Klausur abzubrechen ohne abzugeben.",
+                    "sentence2": "Die Klausur wird mit 0 Punkten bewertet.",
+                    "sentence3": "Dieser Schritt kann nicht rückgängig gemacht werden."
+                }
             }
         },
         "exerciseGroup": {
@@ -346,6 +357,7 @@
             "gradeAfterBonus": "Note nach Bonus",
             "bonus": "Bonuspunkte",
             "passed": "Bestanden",
+            "abandoned": "Abgebrochen",
             "participationStatus": "Teilnahmestatus",
             "summary": "Zusammenfassung für Studierende",
             "result": "Ergebnis",
@@ -648,6 +660,7 @@
                     "correctionRound": "Korrektur Runde",
                     "startedExam": "Klausur gestartet",
                     "submittedExam": "Klausur abgegeben",
+                    "abandonedExam": "Klausur abgebrochen",
                     "exerciseTablePlural": "Aufgaben",
                     "exerciseTableSingular": "Aufgabe",
                     "points": "Punkte",
@@ -733,7 +746,8 @@
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
             "endOfIndividualWorkingTime": "Ende der individuellen Bearbeitungszeit:",
-            "disabledChangeSubmissionStateButtonExplanation": "Der Abgabestatus kann erst nach Ende der Bearbeitungszeit und Ablauf der Karenzzeit geändert werden.",
+            "disabledChangeSubmissionStateButtonExplanationTime": "Der Abgabestatus kann erst nach Ende der Bearbeitungszeit und Ablauf der Karenzzeit geändert werden.",
+            "disabledChangeSubmissionStateButtonExplanationAbandoned": "Dieser Student hat seine Klausur abgebrochen. Der Abgabestatus kann nicht geändert werden.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
             "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
             "hasComplaint": "Beschwerde existiert",
@@ -765,6 +779,7 @@
                 "workingTime": "Arbeitszeit",
                 "startedExams": "Begonnene Klausuren",
                 "submittedExams": "Abgegebene Klausuren",
+                "abandonedExams": "Abgebrochene Klausuren",
                 "conductionSuspended": "Studierende können keine Klausur starten!",
                 "testExam": {
                     "examConduction": "Testklausur-Durchführung",
