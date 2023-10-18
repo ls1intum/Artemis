@@ -39,15 +39,18 @@ public class IrisSettingsService {
 
     private final IrisSettingsRepository irisSettingsRepository;
 
+    private final IrisDefaultTemplateService irisDefaultTemplateService;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     public IrisSettingsService(CourseRepository courseRepository, ApplicationContext applicationContext, IrisSettingsRepository irisSettingsRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService) {
+            IrisDefaultTemplateService irisDefaultTemplateService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService) {
         this.courseRepository = courseRepository;
         this.applicationContext = applicationContext;
         this.irisSettingsRepository = irisSettingsRepository;
+        this.irisDefaultTemplateService = irisDefaultTemplateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
     }
@@ -73,9 +76,9 @@ public class IrisSettingsService {
             var settings = createDefaultIrisSettings(true);
             settings.setGlobal(true);
             settings.getIrisChatSettings().setEnabled(true);
-            settings.getIrisChatSettings().setTemplate(new IrisTemplate(IrisConstants.DEFAULT_CHAT_TEMPLATE));
+            settings.getIrisChatSettings().setTemplate(irisDefaultTemplateService.load("chat.hbs"));
             settings.getIrisHestiaSettings().setEnabled(true);
-            settings.getIrisHestiaSettings().setTemplate(new IrisTemplate(IrisConstants.DEFAULT_HESTIA_TEMPLATE));
+            settings.getIrisHestiaSettings().setTemplate(irisDefaultTemplateService.load("hestia.hbs"));
             saveIrisSettings(settings);
         }
     }
