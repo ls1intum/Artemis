@@ -167,7 +167,7 @@ public final class IrisConstants {
 
                         {{#system~}}Your chat history with the instructor:{{~/system}}
                         {{#each chatHistory}}
-                            {{#if (equal this.role "user")}}
+                            {{#if (equal this.sender "user")}}
                                 {{#user~}}{{this.content}}{{~/user}}
                             {{else}}
                                 {{#assistant~}}{{this.content}}{{~/assistant}}

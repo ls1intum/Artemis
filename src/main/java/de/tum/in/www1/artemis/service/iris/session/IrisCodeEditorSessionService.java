@@ -277,7 +277,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
             params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
             params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
-            irisConnectorService.sendRequestV2(prompt, "gpt-4-32k", params).handleAsync((response, err) -> {
+            irisConnectorService.sendRequestV2(prompt, "STRATEGY_GPT4", params).handleAsync((response, err) -> {
                 if (err != null) {
                     log.error("Error while getting response from Iris model", err);
                     irisCodeEditorWebsocketService.sendException(session, err.getCause());
