@@ -38,12 +38,19 @@ public class LectureUnitProcessingService {
 
     private final AttachmentUnitService attachmentUnitService;
 
+    private final PDFTextStripper pdfTextStripper;
+
+    // A pdf splitter that should be used to split a file into single pages
+    private final Splitter pdfSinglePageSplitter;
+
     public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
             AttachmentUnitService attachmentUnitService) {
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.lectureRepository = lectureRepository;
         this.attachmentUnitService = attachmentUnitService;
+        this.pdfTextStripper = new PDFTextStripper();
+        this.pdfSinglePageSplitter = new Splitter();
     }
 
     /**
@@ -58,7 +65,6 @@ public class LectureUnitProcessingService {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(fileBytes)) {
             List<AttachmentUnit> units = new ArrayList<>();
-            Splitter pdfSplitter = new Splitter();
 
             for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
                 // make sure output stream doesn't contain old data
@@ -67,7 +73,7 @@ public class LectureUnitProcessingService {
                 AttachmentUnit attachmentUnit = new AttachmentUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
-
+                Splitter pdfSplitter = new Splitter();
                 pdfSplitter.setStartPage(lectureUnit.startPage());
                 pdfSplitter.setEndPage(lectureUnit.endPage());
                 // split only based on start and end page
@@ -104,28 +110,26 @@ public class LectureUnitProcessingService {
      * Gets the slides that should be removed by the given keyphrase
      *
      * @param fileBytes                The byte content of the file (lecture slides) to be split
-     * @param commaSeparatedKeyPhrases key phrases that identify slides about to be removed
+     * @param commaSeparatedKeyphrases key phrases that identify slides about to be removed
      * @return list of the number of slides that will be removed
      */
-    public List<Integer> getSlidesToRemoveByKeyphrase(byte[] fileBytes, String commaSeparatedKeyPhrases) {
+    public List<Integer> getSlidesToRemoveByKeyphrase(byte[] fileBytes, String commaSeparatedKeyphrases) {
         List<Integer> slidesToRemove = new ArrayList<>();
-        if (commaSeparatedKeyPhrases.isEmpty()) {
+        if (commaSeparatedKeyphrases.isEmpty()) {
             return slidesToRemove;
         }
         try (PDDocument document = Loader.loadPDF(fileBytes)) {
-            PDFTextStripper pdfTextStripper = new PDFTextStripper();
-            Splitter pdfSplitter = new Splitter();
-            List<PDDocument> pages = pdfSplitter.split(document);
-            List<String> keyphrasesList = Arrays.stream(commaSeparatedKeyPhrases.split(",")).filter(s -> !s.trim().isEmpty()).toList();
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
+            List<String> keyphrasesList = getKeyphrasesFromString(commaSeparatedKeyphrases);
 
-            for (int index = 0; index <= pages.size() - 1; index++) {
-                PDDocument currentPage = pages.get(index);
-                String slideText = pdfTextStripper.getText(currentPage);
+            for (int index = 0; index < pages.size(); index++) {
+                try (PDDocument currentPage = pages.get(index)) {
+                    String slideText = pdfTextStripper.getText(currentPage);
 
-                if (slideContainsKeyphrase(slideText, keyphrasesList)) {
-                    slidesToRemove.add(index);
+                    if (slideContainsKeyphrase(slideText, keyphrasesList)) {
+                        slidesToRemove.add(index);
+                    }
                 }
-                currentPage.close(); // make sure to close the document
             }
         }
         catch (IOException e) {
@@ -139,25 +143,23 @@ public class LectureUnitProcessingService {
      * Removes the slides containing any of the key phrases from the given document.
      *
      * @param document                 document to remove slides from
-     * @param commaSeparatedKeyPhrases key phrases that identify slides about to be removed
+     * @param commaSeparatedKeyphrases keyphrases that identify slides about to be removed
      */
-    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String commaSeparatedKeyPhrases) {
+    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String commaSeparatedKeyphrases) {
         try {
-            PDFTextStripper pdfTextStripper = new PDFTextStripper();
-            Splitter pdfSplitter = new Splitter();
-            List<PDDocument> pages = pdfSplitter.split(document);
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
+            List<String> keyphrasesList = getKeyphrasesFromString(commaSeparatedKeyphrases);
 
             // Uses a decrementing loop (starting from the last index) to ensure that the
             // index values are adjusted correctly when removing pages.
-            List<String> keyphrasesList = Arrays.stream(commaSeparatedKeyPhrases.split(",")).filter(s -> !s.trim().isEmpty()).toList();
             for (int index = pages.size() - 1; index >= 0; index--) {
-                PDDocument currentPage = pages.get(index);
-                String slideText = pdfTextStripper.getText(currentPage);
+                try (PDDocument currentPage = pages.get(index)) {
+                    String slideText = pdfTextStripper.getText(currentPage);
 
-                if (slideContainsKeyphrase(slideText, keyphrasesList)) {
-                    document.removePage(index);
+                    if (slideContainsKeyphrase(slideText, keyphrasesList)) {
+                        document.removePage(index);
+                    }
                 }
-                currentPage.close(); // make sure to close the document
             }
         }
         catch (IOException e) {
@@ -208,10 +210,8 @@ public class LectureUnitProcessingService {
     private Outline separateIntoUnits(byte[] fileBytes) throws IOException {
         try (PDDocument document = Loader.loadPDF(fileBytes)) {
             Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
-            Splitter pdfSplitter = new Splitter();
-            PDFTextStripper pdfStripper = new PDFTextStripper();
             // split the document into single pages
-            List<PDDocument> pages = pdfSplitter.split(document);
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
             int numberOfPages = document.getNumberOfPages();
             ListIterator<PDDocument> iterator = pages.listIterator();
 
@@ -219,7 +219,7 @@ public class LectureUnitProcessingService {
             int index = 1;
             while (iterator.hasNext()) {
                 PDDocument currentPage = iterator.next();
-                String slideText = pdfStripper.getText(currentPage);
+                String slideText = pdfTextStripper.getText(currentPage);
 
                 if (isOutlineSlide(slideText)) {
                     outlineCount++;
@@ -266,5 +266,12 @@ public class LectureUnitProcessingService {
      * Map contains unit number as key and unit information as value
      */
     private record Outline(Map<Integer, LectureUnitSplit> splits, int totalPages) {
+    }
+
+    /**
+     * parses a string containing comma-seperated keyphrases into a list of keyphrases.
+     */
+    private List<String> getKeyphrasesFromString(String commaSeparatedKeyphrases) {
+        return Arrays.stream(commaSeparatedKeyphrases.split(",")).filter(s -> !s.isBlank()).toList();
     }
 }
