@@ -447,16 +447,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
+    /**
+     * Called when a user wants to abandon or decides to continue.
+     */
     toggleAbandon() {
         this.abandon = !this.abandon;
         if (this.abandon) {
-            // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
-            try {
-                this.triggerSave(false);
-            } catch (error) {
-                captureException(error);
-            }
         } else if (this.studentExam?.exercises && this.activeExamPage) {
             const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
@@ -466,6 +463,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
+    /**
+     * triggered after student confirmed to abandon, will make final call to abandon exam
+     */
     onExamAbandonConfirmed() {
         this.abandonInProgress = true;
         this.examParticipationService.abandonStudentExam(this.courseId, this.examId, this.studentExam).subscribe(() => {
