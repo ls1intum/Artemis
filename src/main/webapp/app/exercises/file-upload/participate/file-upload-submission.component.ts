@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -28,13 +28,25 @@ import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
+    selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+
+    @Input() participationId?: number;
+    @Input() displayHeader: boolean = true;
+    @Input() expandProblemStatement?: boolean = true;
+    @Input() displayedInExamSummary?: boolean = false;
+
+    @Input() inputExercise?: FileUploadExercise;
+    @Input() inputSubmission?: FileUploadSubmission;
+    @Input() inputParticipation?: StudentParticipation;
+
     submission?: FileUploadSubmission;
     submittedFileName: string;
     submittedFileExtension: string;
@@ -54,6 +66,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     isLate: boolean; // indicates if the submission is late
 
+    faDownload = faDownload;
     readonly ButtonType = ButtonType;
 
     private submissionConfirmationText: string;
@@ -81,55 +94,86 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Initializes data for file upload editor
      */
     ngOnInit() {
-        const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
-        if (Number.isNaN(participationId)) {
-            return this.alertService.error('artemisApp.fileUploadExercise.error');
+        if (this.inputValuesArePresent()) {
+            this.setupComponentWithInputValues();
+        } else {
+            const participationId = this.participationId ?? Number(this.route.snapshot.paramMap.get('participationId'));
+            if (Number.isNaN(participationId)) {
+                return this.alertService.error('artemisApp.fileUploadExercise.error');
+            }
+            this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe({
+                next: (submission: FileUploadSubmission) => {
+                    // reconnect participation <--> result
+                    const tmpResult = getLatestSubmissionResult(submission);
+                    if (tmpResult) {
+                        submission.participation!.results = [tmpResult!];
+                    }
+                    this.participation = <StudentParticipation>submission.participation;
+
+                    // reconnect participation <--> submission
+                    this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
+
+                    this.submission = submission;
+                    this.result = tmpResult!;
+                    this.resultWithComplaint = getFirstResultWithComplaint(submission);
+                    this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+                    this.examMode = !!this.fileUploadExercise.exerciseGroup;
+                    this.fileUploadExercise.studentParticipations = [this.participation];
+                    this.course = getCourseFromExercise(this.fileUploadExercise);
+
+                    // checks if the student started the exercise after the due date
+                    this.isLate =
+                        this.fileUploadExercise &&
+                        !!this.fileUploadExercise.dueDate &&
+                        !!this.participation.initializationDate &&
+                        dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
+
+                    this.acceptedFileExtensions = this.fileUploadExercise
+                        .filePattern!.split(',')
+                        .map((extension) => `.${extension}`)
+                        .join(',');
+                    this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
+
+                    if (this.submission?.submitted) {
+                        this.setSubmittedFile();
+                    }
+                    if (this.submission?.submitted && this.result?.completionDate) {
+                        this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
+                            this.result = assessmentResult;
+                        });
+                    }
+                    this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         }
-        this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe({
-            next: (submission: FileUploadSubmission) => {
-                // reconnect participation <--> result
-                const tmpResult = getLatestSubmissionResult(submission);
-                if (tmpResult) {
-                    submission.participation!.results = [tmpResult!];
-                }
-                this.participation = <StudentParticipation>submission.participation;
+    }
 
-                // reconnect participation <--> submission
-                this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
+    private inputValuesArePresent(): boolean {
+        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+    }
 
-                this.submission = submission;
-                this.result = tmpResult!;
-                this.resultWithComplaint = getFirstResultWithComplaint(submission);
-                this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
-                this.examMode = !!this.fileUploadExercise.exerciseGroup;
-                this.fileUploadExercise.studentParticipations = [this.participation];
-                this.course = getCourseFromExercise(this.fileUploadExercise);
+    /**
+     * Uses values directly passed to this component instead of subscribing to a participation to save resources
+     *
+     * <i>e.g. used within {@link ExamResultSummaryComponent} and the respective {@link ModelingExamSummaryComponent}
+     * as directly after the exam no grading is present and only the student solution shall be displayed </i>
+     * @private
+     */
+    private setupComponentWithInputValues() {
+        if (this.inputExercise) {
+            this.fileUploadExercise = this.inputExercise;
+        }
+        if (this.inputSubmission) {
+            this.submission = this.inputSubmission;
+        }
+        if (this.inputParticipation) {
+            this.participation = this.inputParticipation;
+        }
 
-                // checks if the student started the exercise after the due date
-                this.isLate =
-                    this.fileUploadExercise &&
-                    !!this.fileUploadExercise.dueDate &&
-                    !!this.participation.initializationDate &&
-                    dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
-
-                this.acceptedFileExtensions = this.fileUploadExercise
-                    .filePattern!.split(',')
-                    .map((extension) => `.${extension}`)
-                    .join(',');
-                this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
-
-                if (this.submission?.submitted) {
-                    this.setSubmittedFile();
-                }
-                if (this.submission?.submitted && this.result?.completionDate) {
-                    this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
-                        this.result = assessmentResult;
-                    });
-                }
-                this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        if (this.submission?.submitted) {
+            this.setSubmittedFile();
+        }
     }
 
     /**

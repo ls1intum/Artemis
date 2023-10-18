@@ -61,6 +61,7 @@
             [content]="posting.content"
             [isEdited]="!!posting.updatedDate"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
+            (userReferenceClicked)="onUserReferenceClicked($event)"
         ></jhi-posting-content>
     </div>
 </div>
@@ -76,4 +77,5 @@
     [isThreadSidebar]="isThreadSidebar"
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate"
+    (userReferenceClicked)="onUserReferenceClicked($event)"
 ></jhi-post-footer>

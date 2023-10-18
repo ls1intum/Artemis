@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-iris-sub-settings-update',
@@ -20,7 +21,16 @@ export class IrisSubSettingsUpdateComponent {
     @Input()
     templateOptional = false;
 
+    @Input()
+    rateLimitSettable = false;
+
     previousTemplate?: IrisTemplate;
+
+    isAdmin: boolean;
+
+    constructor(accountService: AccountService) {
+        this.isAdmin = accountService.isAdmin();
+    }
 
     onInheritTemplateChanged() {
         if (this.subSettings.template) {
