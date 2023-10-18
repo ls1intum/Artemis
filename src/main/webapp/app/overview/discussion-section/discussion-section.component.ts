@@ -93,7 +93,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
-        this.notificationSettingsService.hideNotificationsForConversation(undefined);
+        this.notificationSettingsService.setActiveConversationId(undefined);
         super.onDestroy();
         this.postCreateEditModal?.modalRef?.close();
     }
@@ -197,7 +197,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         const channelDTO = new ChannelDTO();
                         channelDTO.isCourseWide = true;
 
-                        this.notificationSettingsService.hideNotificationsForConversation(this.channel.id);
+                        this.notificationSettingsService.setActiveConversationId(this.channel.id);
                         this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
                     } else {
                         const contextFilter = {

@@ -373,7 +373,7 @@ export class NotificationService {
                     // Only add notification if it is not from the current user and the user is not already in the messages tab
                     if (
                         notification.author?.id !== this.accountService.userIdentity?.id &&
-                        !this.notificationSettingsService.areNotificationsForConversationHidden(target.conversation) &&
+                        !this.notificationSettingsService.isConversationActive(target.conversation) &&
                         !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)
                     ) {
                         this.addNotification(notification);

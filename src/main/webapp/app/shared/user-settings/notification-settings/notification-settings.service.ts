@@ -93,7 +93,7 @@ export class NotificationSettingsService {
 
     private notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
 
-    private conversationWithHiddenNotifications: number | undefined;
+    private activeConversationId: number | undefined;
 
     constructor(private userSettingsService: UserSettingsService) {
         this.listenForNotificationSettingsChanges();
@@ -171,11 +171,11 @@ export class NotificationSettingsService {
         });
     }
 
-    public areNotificationsForConversationHidden(conversationId: number | undefined): boolean {
-        return !!this.conversationWithHiddenNotifications && conversationId === this.conversationWithHiddenNotifications;
+    public isConversationActive(conversationId: number | undefined): boolean {
+        return !!this.activeConversationId && conversationId === this.activeConversationId;
     }
 
-    public hideNotificationsForConversation(conversationId: number | undefined): void {
-        this.conversationWithHiddenNotifications = conversationId;
+    public setActiveConversationId(conversationId: number | undefined): void {
+        this.activeConversationId = conversationId;
     }
 }

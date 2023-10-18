@@ -52,6 +52,7 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
@@ -69,6 +70,7 @@ describe('PageDiscussionSectionComponent', () => {
                 FormBuilder,
                 MockProvider(SessionStorageService),
                 MockProvider(ChannelService),
+                MockProvider(NotificationSettingsService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
@@ -337,5 +339,31 @@ describe('PageDiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ lectureIds: [2] } as PostContextFilter);
+    }));
+
+    it('should unset hidden notifications for channel on component destroy', () => {
+        const hideNotificationSpy = jest.spyOn(TestBed.inject(NotificationSettingsService), 'setActiveConversationId');
+
+        component.ngOnDestroy();
+
+        expect(hideNotificationSpy).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should hide notifications for channel on init', fakeAsync(() => {
+        const setActiveConversationSpy = jest.spyOn(TestBed.inject(NotificationSettingsService), 'setActiveConversationId');
+        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: metisLectureChannel as Channel,
+                    status: 200,
+                }),
+            ),
+        );
+        component.lecture = { ...metisLecture, course: metisCourse };
+
+        component.ngOnInit();
+        tick();
+
+        expect(setActiveConversationSpy).toHaveBeenCalledWith(metisLectureChannel.id);
     }));
 });
