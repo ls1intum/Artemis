@@ -946,7 +946,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmitStudentExam_abandoned() throws Exception {
+    void testSubmitStudentExamAbandoned() throws Exception {
         studentExam1.setAbandoned(true);
         studentExamRepository.save(studentExam1);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.BAD_REQUEST);
@@ -2678,7 +2678,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAbandonStudentExam_alreadyAbandoned() throws Exception {
+    void testAbandonStudentExamAlreadyAbandoned() throws Exception {
         studentExam1.setAbandoned(true);
         studentExamRepository.save(studentExam1);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.BAD_REQUEST);
@@ -2689,7 +2689,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAbandonStudentExam_submitted() throws Exception {
+    void testAbandonStudentExamAlreadySubmitted() throws Exception {
         studentExam1.setSubmitted(true);
         studentExamRepository.save(studentExam1);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.BAD_REQUEST);
@@ -2701,7 +2701,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAbandonStudentExam_notInTime() throws Exception {
+    void testAbandonStudentExamNotInTime() throws Exception {
         // Forbidden because user tried to submit before start
         exam1.setStartDate(ZonedDateTime.now().plusHours(1));
         examRepository.save(exam1);
@@ -2714,7 +2714,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAbandonStudentExam_differentUser() throws Exception {
+    void testAbandonStudentExamWithDifferentUser() throws Exception {
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         studentExam1.setUser(student2);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.FORBIDDEN, null);

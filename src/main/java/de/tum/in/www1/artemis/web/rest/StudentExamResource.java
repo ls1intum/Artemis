@@ -318,12 +318,12 @@ public class StudentExamResource {
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
         validateExamRequestParametersElseThrow(studentExamFromClient, examId, courseId);
 
-        if (studentExamFromClient.isSubmitted() || existingStudentExam.isSubmitted()) {
+        if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} can not be abandoned because it is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
             throw new BadRequestException("Exam is already submitted");
         }
 
-        if (studentExamFromClient.isAbandoned() || existingStudentExam.isAbandoned()) {
+        if (Boolean.TRUE.equals(studentExamFromClient.isAbandoned()) || Boolean.TRUE.equals(existingStudentExam.isAbandoned())) {
             log.error("Student exam with id {} for user {} is already abandoned.", studentExamFromClient.getId(), currentUser.getLogin());
             throw new BadRequestException("Exam is already abandoned");
         }
