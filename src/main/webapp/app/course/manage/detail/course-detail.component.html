@@ -60,7 +60,7 @@
             <dd id="course-short-name">
                 <span>{{ course.shortName }}</span>
             </dd>
-            <dt><span>Organizations</span></dt>
+            <dt><span jhiTranslate="artemisApp.course.organizations">Course Organizations</span></dt>
             <dd id="course-organisations">
                 <span *ngFor="let organization of course.organizations" class="badge bg-primary font-weight-normal m-1 ps-3">{{ organization.name }}</span>
             </dd>
@@ -118,7 +118,7 @@
             <dd>
                 <span>{{ course.maxPoints }}</span>
             </dd>
-            <dt><span jhiTranslate="artemisApp.course.accuracyOfScores">Amount of decimal places used for calculating the scores</span></dt>
+            <dt><span jhiTranslate="artemisApp.course.accuracyOfScores">Number of decimal places used for calculating the scores</span></dt>
             <dd>
                 <span>{{ course.accuracyOfScores }}</span>
             </dd>
@@ -192,38 +192,34 @@
                     </div>
                 </dd>
             </ng-container>
-            <ng-container *ngIf="course.maxComplaints !== 0">
+            <ng-container *ngIf="course.complaintsEnabled">
                 <dt><span jhiTranslate="artemisApp.course.maxComplaints.title">Maximum amount of complaints per student</span></dt>
                 <dd id="course-max-complaints">
                     <span>{{ course.maxComplaints }}</span>
                 </dd>
-            </ng-container>
-            <ng-container *ngIf="course.maxTeamComplaints !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxTeamComplaints.title">Maximum amount of complaints per team</span></dt>
                 <dd id="course-max-team-complaints">
                     <span>{{ course.maxTeamComplaints }}</span>
                 </dd>
-            </ng-container>
-            <ng-container *ngIf="course.maxComplaintTimeDays !== 0">
                 <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Due date for complaints in days after result date</span></dt>
                 <dd id="course-max-time-days">
                     <span>{{ course.maxComplaintTimeDays }}</span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.course.maxComplaintTextLimit.title">Maximum number of characters per complaint</span></dt>
+                <dd id="course-max-complaint-text-limit">
+                    <span>{{ course.maxComplaintTextLimit }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.maxComplaintResponseTextLimit.title">Maximum number of characters per complaint response</span></dt>
+                <dd id="course-max-complaint-response-text-limit">
+                    <span>{{ course.maxComplaintResponseTextLimit }}</span>
+                </dd>
             </ng-container>
-            <ng-container *ngIf="course.maxRequestMoreFeedbackTimeDays !== 0">
+            <ng-container *ngIf="course.requestMoreFeedbackEnabled">
                 <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Due date for more feedback requests in days after result date</span></dt>
                 <dd id="course-max-request-more-feedback-days">
                     <span>{{ course.maxRequestMoreFeedbackTimeDays }}</span>
                 </dd>
             </ng-container>
-            <dt><span jhiTranslate="artemisApp.course.maxComplaintTextLimit.title">Maximum number of characters per complaint</span></dt>
-            <dd id="course-max-complaint-text-limit">
-                <span>{{ course.maxComplaintResponseTextLimit }}</span>
-            </dd>
-            <dt><span jhiTranslate="artemisApp.course.maxComplaintResponseTextLimit.title">Maximum number of characters per complaint response</span></dt>
-            <dd id="course-max-complaint-response-text-limit">
-                <span>{{ course.maxComplaintResponseTextLimit }}</span>
-            </dd>
             <dt><span jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label">Communication Enabled</span></dt>
             <dd id="course-communication-enabled">
                 <span *ngIf="this.communicationEnabled">{{ 'global.generic.yes' | artemisTranslate }}</span>

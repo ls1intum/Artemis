@@ -69,7 +69,7 @@
                 "title": "Maximum number of points for course",
                 "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course."
             },
-            "accuracyOfScores": "Amount of decimal places used for calculating the scores",
+            "accuracyOfScores": "Number of decimal places used for calculating the scores",
             "defaultProgrammingLanguage": "Default Programming Language",
             "gradingSystem": "Grading Key",
             "testCourse": {
