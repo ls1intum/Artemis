@@ -431,6 +431,11 @@
             "fullName": "Valentin Böhm",
             "sortBy": "Böhm",
             "photoDirectory": "public/images/about/Valentin_Boehm.jpg"
+        },
+        {
+            "fullName": "Dominik Remo",
+            "sortBy": "Remo",
+            "photoDirectory": "public/images/about/Dominik_Remo.jpg"
         }
     ]
 }
