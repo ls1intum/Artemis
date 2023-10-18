@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -12,7 +13,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -46,18 +49,18 @@ public class LocalCIBuildJobManagementService {
 
     private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    private String dockerImage;
-
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            LocalCIDockerService localCIDockerService, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
+            LocalCIDockerService localCIDockerService, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
@@ -65,6 +68,7 @@ public class LocalCIBuildJobManagementService {
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
         this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     /**
@@ -79,12 +83,15 @@ public class LocalCIBuildJobManagementService {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
-        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage())
-                .projectTypes();
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
-        var projectType = programmingExercise.getProjectType();
+        ProjectType projectType = programmingExercise.getProjectType();
 
-        if (projectType == null || !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
+        String dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, Optional.ofNullable(projectType));
+
+        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
+
+        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
             throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
         }
 
@@ -95,7 +102,7 @@ public class LocalCIBuildJobManagementService {
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, containerName);
+        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, containerName, dockerImage);
 
         // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
         BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);

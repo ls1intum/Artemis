@@ -47,7 +47,7 @@ export enum SortingAttribute {
     RELEASE_DATE = 1,
 }
 
-interface ExerciseWithDueDate {
+export interface ExerciseWithDueDate {
     exercise: Exercise;
     dueDate?: dayjs.Dayjs;
 }
@@ -82,6 +82,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     sortingAttribute: SortingAttribute;
     searchExercisesInput: string;
     exerciseFilter: ExerciseFilterModel;
+
+    filteredExercises: Exercise[] | undefined;
+    showExercisesGroupedByDueDateCategory: boolean = true;
+    lastAppliedSearchString: string | undefined;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -204,6 +208,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.applyFiltersAndOrder();
     }
 
+    toggleExerciseView() {
+        this.showExercisesGroupedByDueDateCategory = !this.showExercisesGroupedByDueDateCategory;
+    }
+
     /**
      * Filters all displayed exercises by applying the selected activeFilters
      * @param filters The filters which should be applied
@@ -223,6 +231,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         return !this.activeFilters.has(ExerciseFilter.UNRELEASED) || (exercise as QuizExercise)?.visibleToStudents;
     }
 
+    setShowExercisesGroupedByDueDateCategory(updatedShowExercisesGroupedByDueDateCategory: boolean) {
+        this.showExercisesGroupedByDueDateCategory = updatedShowExercisesGroupedByDueDateCategory;
+    }
+
     /**
      * Method is called when enter key is pressed on search input or search button is clicked
      */
@@ -230,6 +242,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.searchExercisesInput = this.searchExercisesInput.trim();
         this.exerciseFilter = new ExerciseFilterModel(this.searchExercisesInput);
         this.applyFiltersAndOrder();
+        this.lastAppliedSearchString = this.exerciseFilter.exerciseNameSearch;
     }
 
     get canUnenroll(): boolean {
@@ -259,6 +272,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     private applyFiltersAndOrder() {
         let filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
         filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
+        this.filteredExercises = filtered;
         this.groupExercises(filtered);
     }
 
