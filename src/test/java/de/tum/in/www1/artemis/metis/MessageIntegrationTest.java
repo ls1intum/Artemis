@@ -511,11 +511,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
 
-        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost.getConversation().getId()).orElseThrow()
-                .getConversationParticipants().stream()
-                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave.getAuthor().getId())).findAny().orElseThrow()
-                .getUnreadMessagesCount();
-        await().untilAsserted(() -> assertThat(unreadMessages).isEqualTo(1L));
+        await().untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost.getConversation().getId()).orElseThrow()
+                    .getConversationParticipants().stream()
+                    .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave.getAuthor().getId())).findAny().orElseThrow()
+                    .getUnreadMessagesCount();
+            assertThat(unreadMessages).isEqualTo(1L);
+        });
     }
 
     @Test
