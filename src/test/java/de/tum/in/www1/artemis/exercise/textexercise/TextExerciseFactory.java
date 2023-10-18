@@ -158,4 +158,21 @@ public class TextExerciseFactory {
         textExercise.getStudentParticipations().add(studentParticipation);
         return submission;
     }
+
+    /**
+     * Generates a Set with a given number of TextBlocks.
+     *
+     * @param count The number of TextBlocks to create
+     * @return The generated Set of TextBlocks
+     */
+    public static Set<TextBlock> generateTextBlocks(int count) {
+        Set<TextBlock> textBlocks = new HashSet<>();
+        TextBlock textBlock;
+        for (int i = 0; i < count; i++) {
+            textBlock = new TextBlock();
+            textBlock.setText("TextBlock" + i);
+            textBlocks.add(textBlock);
+        }
+        return textBlocks;
+    }
 }

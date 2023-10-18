@@ -81,23 +81,6 @@ public class TextExerciseUtilService {
     private UserUtilService userUtilService;
 
     /**
-     * Creates a Set with a given number of TextBlocks.
-     *
-     * @param count The number of TextBlocks to create
-     * @return The new Set of dummy TextBlocks
-     */
-    public Set<TextBlock> generateTextBlocks(int count) {
-        Set<TextBlock> textBlocks = new HashSet<>();
-        TextBlock textBlock;
-        for (int i = 0; i < count; i++) {
-            textBlock = new TextBlock();
-            textBlock.setText("TextBlock" + i);
-            textBlocks.add(textBlock);
-        }
-        return textBlocks;
-    }
-
-    /**
      * Creates and saves a TextExercise with feedback suggestions enabled.
      *
      * @param course The Course to which the exercise belongs
@@ -439,7 +422,7 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Creates a TextAssessmentEvent for the given parameters.
+     * Creates a TextAssessmentEvent with the given parameters.
      *
      * @param courseId        The id of the Course the TextAssessmentEvent belongs to
      * @param userId          The id of the User the TextAssessmentEvent belongs to
@@ -484,14 +467,14 @@ public class TextExerciseUtilService {
      * Creates and saves a TextSubmission and StudentParticipation for the given TextExercise, and studentLogin. Also creates and saves a Result for the
      * StudentParticipation given the tutorLogin.
      *
-     * @param textExercise The TextExercise the TextSubmission belongs to
-     * @param studentLogin The login of the user the TextSubmission belongs to
-     * @param tutorLogin   The login of the assessor the Result belongs to
+     * @param textExercise  The TextExercise the TextSubmission belongs to
+     * @param studentLogin  The login of the user the TextSubmission belongs to
+     * @param assessorLogin The login of the assessor the Result belongs to
      * @return The created TextSubmission
      */
-    public TextSubmission createTextSubmissionWithResultAndAssessor(TextExercise textExercise, String studentLogin, String tutorLogin) {
+    public TextSubmission createTextSubmissionWithResultAndAssessor(TextExercise textExercise, String studentLogin, String assessorLogin) {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, studentLogin, tutorLogin);
+        textSubmission = saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, studentLogin, assessorLogin);
 
         return textSubmission;
     }
