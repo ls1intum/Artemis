@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.service.FilePathService;
 public class QuizExerciseFactory {
 
     /**
-     * Creates a quiz exercise with given dates and adds it to the course.
+     * Creates a quiz exercise with the given dates and adds it to the course.
      * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
      *
      * @param course      The course the quiz should be added to.
@@ -47,7 +47,7 @@ public class QuizExerciseFactory {
     }
 
     /**
-     * Creates a quiz exercise for an exam with given dates and adds it to the course.
+     * Creates a quiz exercise for an exam with the given dates and adds it to the course.
      * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
      *
      * @param exerciseGroup Exercise group of an exam to which the quiz should be added.
@@ -191,7 +191,7 @@ public class QuizExerciseFactory {
     }
 
     /**
-     * Generates a temporary id using ThreadLocalRandom for a quiz exercise.
+     * Generates a temporary id for a quiz exercise using ThreadLocalRandom.
      *
      * @return The generated temporary id.
      */
@@ -218,7 +218,7 @@ public class QuizExerciseFactory {
     }
 
     /**
-     * Generates a quiz batch for the given quiz using the given start time.
+     * Generates a quiz batch for a quiz exercise using the given start time.
      *
      * @param quizExercise The quiz to which a batch should be added.
      * @param startTime    The start time of the batch.
@@ -621,7 +621,7 @@ public class QuizExerciseFactory {
      *
      * @param quizExercise     The quiz to which the submission should be added.
      * @param submitted        True, if the submission is submitted.
-     * @param submissionDate   The submission date.
+     * @param submissionDate   The date the submission is submitted.
      * @param selectEverything True, if every answer option should be selected. Otherwise, none are selected.
      */
     public static QuizSubmission generateSpecialSubmissionWithResult(QuizExercise quizExercise, boolean submitted, ZonedDateTime submissionDate, boolean selectEverything) {
@@ -679,7 +679,7 @@ public class QuizExerciseFactory {
     }
 
     /**
-     * Sets the quiz question id associated to the quiz submission answer to null.
+     * Sets quiz questions associated to quiz submission answers to null.
      *
      * @param quizSubmission The quiz submission with answer.
      */
@@ -688,11 +688,78 @@ public class QuizExerciseFactory {
     }
 
     /**
-     * Sets the quiz question id associated to the quiz submission answer to null.
+     * Sets quiz question ids associated to quiz submission answers to null.
      *
      * @param quizSubmission The quiz submission with answer.
      */
     public static void setQuizQuestionsIdToNull(QuizSubmission quizSubmission) {
         quizSubmission.getSubmittedAnswers().forEach(answer -> answer.getQuizQuestion().setId(null));
+    }
+
+    /**
+     * Creates a quiz group with the given name.
+     *
+     * @param name The name of the quiz group.
+     * @return The created quiz group.
+     */
+    @NotNull
+    public static QuizGroup createQuizGroup(String name) {
+        QuizGroup quizGroup = new QuizGroup();
+        quizGroup.setName(name);
+        return quizGroup;
+    }
+
+    /**
+     * Creates a multiple choice question with the given title and quiz group.
+     *
+     * @param title     The title of the quiz question.
+     * @param quizGroup The group of the quiz question.
+     * @return The created multiple choice question.
+     */
+    @NotNull
+    public static MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
+    }
+
+    /**
+     * Creates a drag and drop question with the given title and quiz group.
+     *
+     * @param title     The title of the quiz question.
+     * @param quizGroup The group of the quiz question.
+     * @return The created drag and drop question.
+     */
+    @NotNull
+    public static DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
+    }
+
+    /**
+     * Creates a short answer question with the given title and quiz group.
+     *
+     * @param title     The title of the quiz question.
+     * @param quizGroup The group of the quiz question.
+     * @return The created short answer question.
+     */
+    @NotNull
+    public static ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
+    }
+
+    /**
+     * Sets the title and group of the quiz question.
+     *
+     * @param quizQuestion The quiz question to be updated.
+     * @param title        The new title of the quiz question.
+     * @param quizGroup    The new group of the quiz question.
+     */
+    private static void setQuizQuestionsTitleAndGroup(QuizQuestion quizQuestion, String title, QuizGroup quizGroup) {
+        quizQuestion.setTitle(title);
+        quizQuestion.setQuizGroup(quizGroup);
     }
 }

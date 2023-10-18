@@ -136,7 +136,7 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Sets quiz exercise dates and course to null so quiz can be imported. The quiz batches are set to an empty set.
+     * Sets quiz exercise dates and course to null so the quiz can be imported. The quiz batches are set to an empty set.
      *
      * @param quizExercise The quiz of which fields should be set to null.
      */
@@ -219,7 +219,7 @@ public class QuizExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course and exam with a new exam quiz which also gets saved,
+     * Creates and saves a course and an exam. An exam quiz exercise is created and saved.
      *
      * @param startDate The start date of the exam, also used to set the start date of the course the exam is in.
      * @param endDate   The end date of the exam, also used to set the end date of the course the exam is in.
@@ -255,7 +255,7 @@ public class QuizExerciseUtilService {
     /**
      * Sets the quiz exercise of the quiz batch and saves the batch into the repository.
      *
-     * @param batch        The quiz batch that should be saved.
+     * @param batch        The quiz batch which should be saved.
      * @param quizExercise The quiz exercise to be added to the batch.
      */
     public void setQuizBatchExerciseAndSave(QuizBatch batch, QuizExercise quizExercise) {
@@ -265,7 +265,7 @@ public class QuizExerciseUtilService {
 
     /**
      * Creates and saves a quiz with a multiple, single choice, short, and drag and drop question.
-     * An actual file is used as the background and a data item of the drag and drop question.
+     * An actual picture file is used as the background and a data item of the drag and drop question.
      * The quiz takes 120 seconds and is synchronized.
      * A participation and submission are also created for the user with the given login. An answer is submitted for each question.
      *
@@ -410,38 +410,5 @@ public class QuizExerciseUtilService {
         var user = new User();
         user.setLogin(username);
         quizScheduleService.joinQuizBatch(quizExercise, batch, user);
-    }
-
-    @NotNull
-    public QuizGroup createQuizGroup(String name) {
-        QuizGroup quizGroup = new QuizGroup();
-        quizGroup.setName(name);
-        return quizGroup;
-    }
-
-    @NotNull
-    public MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    @NotNull
-    public DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    @NotNull
-    public ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    private <Q extends QuizQuestion> void setQuizQuestionsTitleAndGroup(Q quizQuestion, String title, QuizGroup quizGroup) {
-        quizQuestion.setTitle(title);
-        quizQuestion.setQuizGroup(quizGroup);
     }
 }
