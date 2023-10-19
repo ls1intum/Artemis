@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest.metis;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,10 +12,13 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.AnswerMessageService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @RestController
 @RequestMapping("/api")
 public class AnswerMessageResource {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final AnswerMessageService answerMessageService;
 
@@ -31,10 +36,12 @@ public class AnswerMessageResource {
      */
     @PostMapping("courses/{courseId}/answer-messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerMessage) throws URISyntaxException {
+    public ResponseEntity<AnswerPost> createAnswerMessage(@PathVariable Long courseId, @RequestBody AnswerPost answerMessage) throws URISyntaxException {
+        log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
+        long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
-
         // creation of answerMessage should not trigger alert
+        log.info("createAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
     }
 
@@ -49,8 +56,11 @@ public class AnswerMessageResource {
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody AnswerPost answerMessage) {
+    public ResponseEntity<AnswerPost> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody AnswerPost answerMessage) {
+        log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
+        long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, answerMessage);
+        log.info("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedAnswerMessage, null, HttpStatus.OK);
     }
 
@@ -64,9 +74,11 @@ public class AnswerMessageResource {
      */
     @DeleteMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerMessageId) {
+    public ResponseEntity<Void> deleteAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId) {
+        log.debug("PUT deleteAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
+        long start = System.nanoTime();
         answerMessageService.deleteAnswerMessageById(courseId, answerMessageId);
-
+        log.info("deleteAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         // deletion of answerMessages should not trigger alert
         return ResponseEntity.ok().build();
     }
