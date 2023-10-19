@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
@@ -10,6 +10,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
 })
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
+    @Input() quizPoolMaxPoints: number;
     @Input() exerciseGroups: ExerciseGroup[];
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
     getIcon = getIcon;
@@ -17,6 +18,7 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
+    totalParticipants: number;
 
     ngOnChanges() {
         this.exerciseGroupVariantColumns = []; // Clear any previously existing entries
@@ -40,6 +42,7 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
 
                     exerciseGroupVariantColumn.noExercises = false;
                     let exerciseVariantIndex = 1;
+                    this.totalParticipants = 0;
                     exerciseGroup.exercises!.forEach((exercise, index) => {
                         // generate columns for each exercise
                         let exerciseVariantColumn;
@@ -58,6 +61,8 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
                         exerciseVariantColumn.exerciseNumberOfParticipations = exercise.numberOfParticipations ? exercise.numberOfParticipations : 0;
                         exerciseVariantColumn.exerciseMaxPoints = exercise.maxPoints;
 
+                        this.totalParticipants += exerciseVariantColumn.exerciseNumberOfParticipations;
+
                         this.exerciseGroupVariantColumns.push(exerciseVariantColumn);
                         exerciseVariantIndex++;
                     });
@@ -66,4 +71,6 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
             });
         }
     }
+
+    protected readonly ExerciseType = ExerciseType;
 }
