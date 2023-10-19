@@ -22,6 +22,9 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import net.minidev.json.JSONObject;
 
+/**
+ * Service for handling LTI deep linking functionality.
+ */
 @Service
 @Profile("lti")
 public class LtiDeepLinkingService {
@@ -43,6 +46,14 @@ public class LtiDeepLinkingService {
 
     private String clientRegistrationId;
 
+    private final String DEEP_LINKING_TARGET_URL = "/lti/deep-linking/";
+
+    /**
+     * Constructor for LtiDeepLinkingService.
+     *
+     * @param exerciseRepository The repository for exercises.
+     * @param tokenRetriever     The LTI 1.3 token retriever.
+     */
     public LtiDeepLinkingService(ExerciseRepository exerciseRepository, Lti13TokenRetriever tokenRetriever) {
         this.exerciseRepository = exerciseRepository;
         this.tokenRetriever = tokenRetriever;
@@ -50,6 +61,11 @@ public class LtiDeepLinkingService {
         this.deepLinkingSettings = new JSONObject();
     }
 
+    /**
+     * Build an LTI deep linking response URL.
+     *
+     * @return The LTI deep link response URL.
+     */
     public String buildLtiDeepLinkResponse() {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(this.artemisServerUrl + "/lti/select-content");
         Map<String, Object> claims = new HashMap<String, Object>();
@@ -64,13 +80,24 @@ public class LtiDeepLinkingService {
         return uriComponentsBuilder.build().toUriString();
     }
 
+    /**
+     * Set up deep linking settings.
+     *
+     * @param ltiIdToken           The LTI 1.3 ID token.
+     * @param clientRegistrationId The client registration ID.
+     */
     public void setupDeepLinkingSettings(OidcIdToken ltiIdToken, String clientRegistrationId) {
         this.deepLinkingSettings = new JSONObject(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS));
         this.deploymentId = ltiIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID).toString();
         this.clientRegistrationId = clientRegistrationId;
     }
 
-    public void populateDeepLinkingResponse(OidcIdToken ltiIdToken) {
+    /**
+     * Initialize the deep linking response with information from OidcIdToken.
+     *
+     * @param ltiIdToken The LTI 1.3 ID token.
+     */
+    public void initializeDeepLinkingResponse(OidcIdToken ltiIdToken) {
         this.deepLinkingResponse.addProperty("aud", ltiIdToken.getClaim("iss").toString());
         this.deepLinkingResponse.addProperty("iss", ltiIdToken.getClaim("aud").toString().replace("[", "").replace("]", "")); // "http://localhost:9000/"
         this.deepLinkingResponse.addProperty("exp", ltiIdToken.getClaim("exp").toString());
@@ -82,12 +109,28 @@ public class LtiDeepLinkingService {
         this.deepLinkingResponse.addProperty(Claims.LTI_VERSION, "1.3.0");
     }
 
+    /**
+     * Populate content items for deep linking response.
+     *
+     * @param courseId   The course ID.
+     * @param exerciseId The exercise ID.
+     */
     public void populateContentItems(String courseId, String exerciseId) {
         JsonObject item = setContentItem(courseId, exerciseId);
 
         JsonArray contentItems = new JsonArray();
         contentItems.add(item);
         this.deepLinkingResponse.addProperty(Claims.CONTENT_ITEMS, contentItems.toString());
+    }
+
+    /**
+     * Build the deep linking target link URI.
+     *
+     * @param courseId The course ID.
+     * @return The deep linking target link URI.
+     */
+    public String buildDeepLinkingTargetLinkUri(String courseId) {
+        return artemisServerUrl + DEEP_LINKING_TARGET_URL + courseId;
     }
 
     private JsonObject setContentItem(String courseId, String exerciseId) {

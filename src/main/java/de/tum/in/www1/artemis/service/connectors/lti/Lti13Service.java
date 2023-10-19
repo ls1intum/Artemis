@@ -347,7 +347,17 @@ public class Lti13Service {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(),
                 Collections.singletonList(new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority()))));
 
-        ltiDeepLinkingService.populateDeepLinkingResponse(ltiIdToken);
+        ltiDeepLinkingService.initializeDeepLinkingResponse(ltiIdToken);
         ltiDeepLinkingService.setupDeepLinkingSettings(ltiIdToken, clientRegistrationId);
     }
+
+    public String parseTargetLinkUri(String targetLinkUri) {
+        if (getCourseFromTargetLink(targetLinkUri) == null) {
+            return targetLinkUri;
+        }
+        else {
+            return ltiDeepLinkingService.buildDeepLinkingTargetLinkUri(getCourseFromTargetLink(targetLinkUri).getId().toString());
+        }
+    }
+
 }
