@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -35,7 +35,7 @@ public abstract class IrisSubSettings extends DomainObject {
 
     @Column(name = "allowed_models")
     @Convert(converter = IrisModelListConverter.class)
-    private Set<String> allowedModels = new HashSet<>();
+    private Set<String> allowedModels = new TreeSet<>();
 
     @Nullable
     @Column(name = "preferred_model")

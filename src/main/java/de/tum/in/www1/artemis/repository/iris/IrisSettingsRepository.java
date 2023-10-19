@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.iris;
 
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,45 +17,32 @@ public interface IrisSettingsRepository extends JpaRepository<IrisSettings, Long
 
     @Query("""
             SELECT irisSettings
-            FROM IrisSettings irisSettings
+            FROM IrisGlobalSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings ics
                 LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
-            WHERE type(irisSettings) = IrisGlobalSettings
+                LEFT JOIN FETCH irisSettings.irisCodeEditorSettings ices
             """)
     Set<IrisGlobalSettings> findAllGlobalSettings();
 
-    @Query("""
-            SELECT irisSettings
-            FROM IrisSettings irisSettings
-                LEFT JOIN FETCH irisSettings.irisChatSettings ics
-                LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
-            WHERE type(irisSettings) = IrisGlobalSettings
-            ORDER BY irisSettings.id DESC
-            LIMIT 1
-            """)
-    Optional<IrisGlobalSettings> findGlobalSettings();
-
     default IrisGlobalSettings findGlobalSettingsElseThrow() {
-        return findGlobalSettings().orElseThrow(() -> new EntityNotFoundException("Iris Global Settings"));
+        return findAllGlobalSettings().stream().max(Comparator.comparingLong(IrisGlobalSettings::getId)).orElseThrow(() -> new EntityNotFoundException("Iris Global Settings"));
     }
 
     @Query("""
             SELECT irisSettings
-            FROM IrisSettings irisSettings
+            FROM IrisCourseSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings ics
                 LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
-            WHERE type(irisSettings) = IrisCourseSettings
-                AND irisSettings.course.id = :courseId
+                LEFT JOIN FETCH irisSettings.irisCodeEditorSettings ices
+            WHERE irisSettings.course.id = :courseId
             """)
     Optional<IrisCourseSettings> findCourseSettings(Long courseId);
 
     @Query("""
             SELECT irisSettings
-            FROM IrisSettings irisSettings
+            FROM IrisExerciseSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings ics
-                LEFT JOIN FETCH irisSettings.irisHestiaSettings ihs
-            WHERE type(irisSettings) = IrisExerciseSettings
-                AND irisSettings.exercise.id = :exerciseId
+            WHERE irisSettings.exercise.id = :exerciseId
             """)
     Optional<IrisExerciseSettings> findExerciseSettings(Long exerciseId);
 

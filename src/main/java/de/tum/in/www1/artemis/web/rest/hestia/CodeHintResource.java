@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
@@ -109,7 +110,7 @@ public class CodeHintResource {
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        irisSettingsService.checkIsIrisHestiaSessionEnabledElseThrow(exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.HESTIA, exercise);
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {

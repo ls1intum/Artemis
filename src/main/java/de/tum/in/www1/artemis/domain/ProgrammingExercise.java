@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -142,10 +141,6 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
-    private IrisSettings irisSettings;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -855,10 +850,6 @@ public class ProgrammingExercise extends Exercise {
         buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 
-    public IrisSettings getIrisSettings() {
-        return irisSettings;
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -867,9 +858,5 @@ public class ProgrammingExercise extends Exercise {
         Stream.of(exerciseHints, testCases, staticCodeAnalysisCategories).filter(Objects::nonNull).forEach(Collection::clear);
 
         super.disconnectRelatedEntities();
-    }
-
-    public void setIrisSettings(IrisSettings irisSettings) {
-        this.irisSettings = irisSettings;
     }
 }

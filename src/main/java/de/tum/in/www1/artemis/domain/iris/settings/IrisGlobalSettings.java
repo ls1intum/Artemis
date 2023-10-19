@@ -97,10 +97,12 @@ public class IrisGlobalSettings extends IrisSettings {
         this.irisHestiaSettings = irisHestiaSettings;
     }
 
+    @Override
     public IrisCodeEditorSubSettings getIrisCodeEditorSettings() {
         return irisCodeEditorSettings;
     }
 
+    @Override
     public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
         this.irisCodeEditorSettings = irisCodeEditorSettings;
     }

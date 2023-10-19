@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.iris.settings;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 import org.springframework.stereotype.Service;
@@ -27,11 +25,20 @@ public class IrisSubSettingsService {
     }
 
     public IrisChatSubSettings update(IrisChatSubSettings currentSettings, IrisChatSubSettings newSettings, IrisCombinedChatSubSettingsDTO parentSettings) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the chat settings");
+            }
+            return null;
+        }
         if (currentSettings == null) {
             currentSettings = new IrisChatSubSettings();
         }
         currentSettings.setEnabled(newSettings.isEnabled());
-        currentSettings.setRateLimit(newSettings.getRateLimit());
+        if (authCheckService.isAdmin()) {
+            currentSettings.setRateLimit(newSettings.getRateLimit());
+            currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+        }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
                 parentSettings != null ? parentSettings.getAllowedModels() : null));
@@ -40,6 +47,12 @@ public class IrisSubSettingsService {
     }
 
     public IrisHestiaSubSettings update(IrisHestiaSubSettings currentSettings, IrisHestiaSubSettings newSettings, IrisCombinedHestiaSubSettingsDTO parentSettings) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the Hestia settings");
+            }
+            return null;
+        }
         if (currentSettings == null) {
             currentSettings = new IrisHestiaSubSettings();
         }
@@ -52,6 +65,12 @@ public class IrisSubSettingsService {
     }
 
     public IrisCodeEditorSubSettings update(IrisCodeEditorSubSettings currentSettings, IrisCodeEditorSubSettings newSettings, IrisCombinedCodeEditorSubSettingsDTO parentSettings) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the Code Editor settings");
+            }
+            return null;
+        }
         if (currentSettings == null) {
             currentSettings = new IrisCodeEditorSubSettings();
         }
@@ -123,8 +142,9 @@ public class IrisSubSettingsService {
         combinedChatSettings.setEnabled(getCombinedEnabled(settingsList, IrisSettings::getIrisChatSettings));
         combinedChatSettings.setRateLimit(getCombinedRateLimit(settingsList));
         if (!minimal) {
+            combinedChatSettings.setAllowedModels(getCombinedAllowedModels(settingsList, IrisSettings::getIrisChatSettings));
             combinedChatSettings.setPreferredModel(getCombinedPreferredModel(settingsList, IrisSettings::getIrisChatSettings));
-            combinedChatSettings.setTemplate(getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings));
+            combinedChatSettings.setTemplate(getCombinedTemplate(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::getTemplate));
         }
         return combinedChatSettings;
     }
@@ -139,13 +159,46 @@ public class IrisSubSettingsService {
      * @return Combined Hestia settings.
      */
     public IrisCombinedHestiaSubSettingsDTO combineHestiaSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
         var combinedHestiaSettings = new IrisCombinedHestiaSubSettingsDTO();
-        combinedHestiaSettings.setEnabled(getCombinedEnabled(settingsList, IrisSettings::getIrisHestiaSettings));
-        combinedHestiaSettings.setPreferredModel(getCombinedPreferredModel(settingsList, IrisSettings::getIrisHestiaSettings));
+        combinedHestiaSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisHestiaSettings));
         if (!minimal) {
-            combinedHestiaSettings.setTemplate(getCombinedTemplate(settingsList, IrisSettings::getIrisHestiaSettings));
+            combinedHestiaSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisHestiaSettings));
+            combinedHestiaSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisHestiaSettings));
+            combinedHestiaSettings.setTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisHestiaSettings, IrisHestiaSubSettings::getTemplate));
         }
         return combinedHestiaSettings;
+    }
+
+    /**
+     * Combines the Code Editor settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled field.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined Code Editor settings.
+     */
+    public IrisCombinedCodeEditorSubSettingsDTO combineCodeEditorSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
+        var combinedCodeEditorSettings = new IrisCombinedCodeEditorSubSettingsDTO();
+        combinedCodeEditorSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisHestiaSettings));
+        if (!minimal) {
+            combinedCodeEditorSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisHestiaSettings));
+            combinedCodeEditorSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisHestiaSettings));
+
+            combinedCodeEditorSettings
+                    .setChatTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getChatTemplate));
+            combinedCodeEditorSettings.setProblemStatementGenerationTemplate(
+                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getProblemStatementGenerationTemplate));
+            combinedCodeEditorSettings.setTemplateRepoGenerationTemplate(
+                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getTemplateRepoGenerationTemplate));
+            combinedCodeEditorSettings.setSolutionRepoGenerationTemplate(
+                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getSolutionRepoGenerationTemplate));
+            combinedCodeEditorSettings.setTestRepoGenerationTemplate(
+                    getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getTestRepoGenerationTemplate));
+        }
+        return combinedCodeEditorSettings;
     }
 
     /**
@@ -156,8 +209,17 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined enabled field.
      */
-    private boolean getCombinedEnabled(ArrayList<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
-        return settingsList.stream().map(subSettingsFunction).allMatch(IrisSubSettings::isEnabled);
+    private boolean getCombinedEnabled(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+        for (var irisSettings : settingsList) {
+            if (irisSettings == null) {
+                return false;
+            }
+            var settings = subSettingsFunction.apply(irisSettings);
+            if (settings == null || !settings.isEnabled()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -167,9 +229,14 @@ public class IrisSubSettingsService {
      * @param settingsList List of {@link IrisSettings} objects to combine.
      * @return Combined rateLimit field.
      */
-    private Integer getCombinedRateLimit(ArrayList<IrisSettings> settingsList) {
-        return settingsList.stream().map(IrisSettings::getIrisChatSettings).map(IrisChatSubSettings::getRateLimit).filter(rateLimit -> rateLimit != null && rateLimit >= 0)
-                .min(Comparator.comparingInt(Integer::intValue)).orElse(null);
+    private Integer getCombinedRateLimit(List<IrisSettings> settingsList) {
+        return settingsList.stream().filter(Objects::nonNull).map(IrisSettings::getIrisChatSettings).filter(Objects::nonNull).map(IrisChatSubSettings::getRateLimit)
+                .filter(rateLimit -> rateLimit != null && rateLimit >= 0).min(Comparator.comparingInt(Integer::intValue)).orElse(null);
+    }
+
+    private Set<String> getCombinedAllowedModels(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getAllowedModels).filter(Objects::nonNull)
+                .reduce((first, second) -> second).orElse(new TreeSet<>());
     }
 
     /**
@@ -181,21 +248,22 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined preferredModel field.
      */
-    private String getCombinedPreferredModel(ArrayList<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
-        return settingsList.stream().map(subSettingsFunction).map(IrisSubSettings::getPreferredModel).filter(model -> model != null && !model.isBlank())
-                .reduce((first, second) -> second).orElseThrow();
+    private String getCombinedPreferredModel(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getPreferredModel)
+                .filter(model -> model != null && !model.isBlank()).reduce((first, second) -> second).orElse(null);
     }
 
     /**
      * Combines the template field of multiple {@link IrisSettings} objects.
      * Simply takes the last template.
      *
-     * @param settingsList        List of {@link IrisSettings} objects to combine.
-     * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
+     * @param settingsList     List of {@link IrisSettings} objects to combine.
+     * @param templateFunction Function to get the template from the sub settings from an IrisSettings object.
      * @return Combined template field.
      */
-    private IrisTemplate getCombinedTemplate(ArrayList<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
-        return settingsList.stream().map(subSettingsFunction).map(IrisSubSettings::getTemplate).filter(template -> template != null && !template.getContent().isBlank())
-                .reduce((first, second) -> second).orElseThrow();
+    private <S extends IrisSubSettings> IrisTemplate getCombinedTemplate(List<IrisSettings> settingsList, Function<IrisSettings, S> subSettingsFunction,
+            Function<S, IrisTemplate> templateFunction) {
+        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(templateFunction)
+                .filter(template -> template != null && !template.getContent().isBlank()).reduce((first, second) -> second).orElse(null);
     }
 }

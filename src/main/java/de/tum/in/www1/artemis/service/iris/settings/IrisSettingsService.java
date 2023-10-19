@@ -78,9 +78,9 @@ public class IrisSettingsService {
         hestiaSettings.setTemplate(new IrisTemplate(IrisConstants.DEFAULT_HESTIA_TEMPLATE));
         settings.setIrisHestiaSettings(hestiaSettings);
 
-        updateIrisCourseEditorSettings(settings);
+        updateIrisCodeEditorSettings(settings);
 
-        saveIrisSettings(settings);
+        irisSettingsRepository.save(settings);
     }
 
     /**
@@ -97,14 +97,14 @@ public class IrisSettingsService {
                 settings.getIrisHestiaSettings().setTemplate(new IrisTemplate(IrisConstants.DEFAULT_HESTIA_TEMPLATE));
             }
             if (settings.isEnableAutoUpdateCodeEditor()) {
-                updateIrisCourseEditorSettings(settings);
+                updateIrisCodeEditorSettings(settings);
             }
             settings.setCurrentVersion(IrisConstants.GLOBAL_SETTINGS_VERSION);
             saveIrisSettings(settings);
         }
     }
 
-    private static void updateIrisCourseEditorSettings(IrisGlobalSettings settings) {
+    private static void updateIrisCodeEditorSettings(IrisGlobalSettings settings) {
         var irisCodeEditorSettings = settings.getIrisCodeEditorSettings();
         if (irisCodeEditorSettings == null) {
             irisCodeEditorSettings = new IrisCodeEditorSubSettings();
@@ -145,15 +145,18 @@ public class IrisSettingsService {
      * @param settings The Iris settings to save
      * @return The saved Iris settings
      */
-    public <T extends IrisSettings> T saveNewIrisSettings(T settings) {
-        if (settings.getId() != null) {
-            throw new BadRequestAlertException("New Iris settings cannot already have an ID", "IrisSettings", "notNew");
-        }
+    private <T extends IrisSettings> T saveNewIrisSettings(T settings) {
         if (settings instanceof IrisGlobalSettings) {
             throw new BadRequestAlertException("You can not create new global settings", "IrisSettings", "notGlobal");
         }
         if (!settings.isValid()) {
             throw new BadRequestAlertException("New Iris settings are not valid", "IrisSettings", "notValid");
+        }
+        if (settings instanceof IrisCourseSettings courseSettings && irisSettingsRepository.findCourseSettings(courseSettings.getCourse().getId()).isPresent()) {
+            throw new ConflictException("Iris settings for this course already exist", "IrisSettings", "alreadyExists");
+        }
+        if (settings instanceof IrisExerciseSettings exerciseSettings && irisSettingsRepository.findExerciseSettings(exerciseSettings.getExercise().getId()).isPresent()) {
+            throw new ConflictException("Iris settings for this exercise already exist", "IrisSettings", "alreadyExists");
         }
         return irisSettingsRepository.save(settings);
     }
@@ -186,16 +189,25 @@ public class IrisSettingsService {
     private IrisGlobalSettings updateGlobalSettings(IrisGlobalSettings existingSettings, IrisGlobalSettings settingsUpdate) {
         existingSettings.setIrisChatSettings(irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), null));
         existingSettings.setIrisHestiaSettings(irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), null));
+        existingSettings.setIrisCodeEditorSettings(irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(), null));
         return irisSettingsRepository.save(existingSettings);
     }
 
     private IrisCourseSettings updateCourseSettings(IrisCourseSettings existingSettings, IrisCourseSettings settingsUpdate) {
-        var parentSettings = getGlobalSettings();
+        var parentSettings = getCombinedIrisGlobalSettings();
+        existingSettings.setIrisChatSettings(
+                irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings()));
+        existingSettings.setIrisHestiaSettings(
+                irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), parentSettings.irisHestiaSettings()));
+        existingSettings.setIrisCodeEditorSettings(
+                irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(), parentSettings.irisCodeEditorSettings()));
         return irisSettingsRepository.save(existingSettings);
     }
 
     private IrisExerciseSettings updateExerciseSettings(IrisExerciseSettings existingSettings, IrisExerciseSettings settingsUpdate) {
-
+        var parentSettings = getCombinedIrisSettingsFor(existingSettings.getExercise().getCourseViaExerciseGroupOrCourseMember(), false);
+        existingSettings.setIrisChatSettings(
+                irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings()));
         return irisSettingsRepository.save(existingSettings);
     }
 
@@ -224,7 +236,8 @@ public class IrisSettingsService {
      */
     public void isEnabledForElseThrow(IrisSubSettingsType type, Exercise exercise) {
         if (!isEnabledFor(type, exercise)) {
-            throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this exercise.", "Iris", "iris.chatDisabled");
+            throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this exercise.", "Iris",
+                    "iris." + type.name().toLowerCase() + "Disabled");
         }
     }
 
@@ -232,23 +245,50 @@ public class IrisSettingsService {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
 
-        return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, false), irisSubSettingsService.combineHestiaSettings(settingsList, false));
+        return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, false), irisSubSettingsService.combineHestiaSettings(settingsList, false),
+                irisSubSettingsService.combineCodeEditorSettings(settingsList, false));
     }
 
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Course course, boolean minimal) {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
-        irisSettingsRepository.findCourseSettings(course.getId()).ifPresent(settingsList::add);
+        settingsList.add(irisSettingsRepository.findCourseSettings(course.getId()).orElse(null));
 
-        return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal));
+        return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
+                irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal));
     }
 
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Exercise exercise, boolean minimal) {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
-        irisSettingsRepository.findCourseSettings(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).ifPresent(settingsList::add);
-        irisSettingsRepository.findExerciseSettings(exercise.getId()).ifPresent(settingsList::add);
+        settingsList.add(irisSettingsRepository.findCourseSettings(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).orElse(null));
+        settingsList.add(irisSettingsRepository.findExerciseSettings(exercise.getId()).orElse(null));
 
-        return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal));
+        return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
+                irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal));
+    }
+
+    public IrisCourseSettings getDefaultSettingsFor(Course course) {
+        var settings = new IrisCourseSettings();
+        settings.setCourse(course);
+        settings.setIrisChatSettings(new IrisChatSubSettings());
+        settings.setIrisHestiaSettings(new IrisHestiaSubSettings());
+        settings.setIrisCodeEditorSettings(new IrisCodeEditorSubSettings());
+        return settings;
+    }
+
+    public IrisExerciseSettings getDefaultSettingsFor(Exercise exercise) {
+        var settings = new IrisExerciseSettings();
+        settings.setExercise(exercise);
+        settings.setIrisChatSettings(new IrisChatSubSettings());
+        return settings;
+    }
+
+    public IrisCourseSettings getRawIrisSettingsFor(Course course) {
+        return irisSettingsRepository.findCourseSettings(course.getId()).orElse(getDefaultSettingsFor(course));
+    }
+
+    public IrisExerciseSettings getRawIrisSettingsFor(Exercise exercise) {
+        return irisSettingsRepository.findExerciseSettings(exercise.getId()).orElse(getDefaultSettingsFor(exercise));
     }
 }

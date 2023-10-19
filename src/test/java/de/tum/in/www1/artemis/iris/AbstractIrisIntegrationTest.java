@@ -75,26 +75,33 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         globalSettings.getIrisChatSettings().setPreferredModel(null);
         globalSettings.getIrisHestiaSettings().setEnabled(true);
         globalSettings.getIrisHestiaSettings().setPreferredModel(null);
-        irisSettingsService.saveGlobalIrisSettings(globalSettings);
+        irisSettingsService.saveIrisSettings(globalSettings);
     }
 
     protected void activateIrisFor(Course course) {
-        var courseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(course);
-        courseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
-        courseWithSettings.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(null);
-        courseWithSettings.getIrisSettings().getIrisHestiaSettings().setEnabled(true);
-        courseWithSettings.getIrisSettings().getIrisHestiaSettings().setTemplate(createDummyTemplate());
-        courseWithSettings.getIrisSettings().getIrisHestiaSettings().setPreferredModel(null);
-        courseRepository.save(courseWithSettings);
+        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
+        courseSettings.getIrisChatSettings().setEnabled(true);
+        courseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
+        courseSettings.getIrisChatSettings().setPreferredModel(null);
+        courseSettings.getIrisHestiaSettings().setEnabled(true);
+        courseSettings.getIrisHestiaSettings().setTemplate(createDummyTemplate());
+        courseSettings.getIrisHestiaSettings().setPreferredModel(null);
+        courseSettings.getIrisCodeEditorSettings().setEnabled(true);
+        courseSettings.getIrisCodeEditorSettings().setChatTemplate(createDummyTemplate());
+        courseSettings.getIrisCodeEditorSettings().setProblemStatementGenerationTemplate(createDummyTemplate());
+        courseSettings.getIrisCodeEditorSettings().setTemplateRepoGenerationTemplate(null);
+        courseSettings.getIrisCodeEditorSettings().setSolutionRepoGenerationTemplate(null);
+        courseSettings.getIrisCodeEditorSettings().setTestRepoGenerationTemplate(null);
+        courseSettings.getIrisCodeEditorSettings().setPreferredModel(null);
+        irisSettingsService.saveIrisSettings(courseSettings);
     }
 
     protected void activateIrisFor(ProgrammingExercise exercise) {
-        var exerciseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(exercise);
-        exerciseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
-        exerciseWithSettings.getIrisSettings().getIrisChatSettings().setTemplate(createDummyTemplate());
-        exerciseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(null);
-        programmingExerciseRepository.save(exerciseWithSettings);
+        var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
+        exerciseSettings.getIrisChatSettings().setEnabled(true);
+        exerciseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
+        exerciseSettings.getIrisChatSettings().setPreferredModel(null);
+        irisSettingsService.saveIrisSettings(exerciseSettings);
     }
 
     protected IrisTemplate createDummyTemplate() {

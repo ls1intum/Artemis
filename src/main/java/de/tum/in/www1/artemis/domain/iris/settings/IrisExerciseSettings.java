@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisExerciseSettings extends IrisSettings {
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(optional = false)
     @JoinColumn(name = "exercise_id", unique = true, nullable = false)
     private Exercise exercise;
 
@@ -52,6 +52,16 @@ public class IrisExerciseSettings extends IrisSettings {
 
     @Override
     public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
+
+    }
+
+    @Override
+    public IrisCodeEditorSubSettings getIrisCodeEditorSettings() {
+        return null;
+    }
+
+    @Override
+    public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
 
     }
 }

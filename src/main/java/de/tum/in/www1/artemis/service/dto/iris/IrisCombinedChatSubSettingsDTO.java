@@ -10,6 +10,8 @@ public class IrisCombinedChatSubSettingsDTO {
 
     private Integer rateLimit;
 
+    private Integer rateLimitTimeframeHours;
+
     private Set<String> allowedModels;
 
     private String preferredModel;
@@ -30,6 +32,14 @@ public class IrisCombinedChatSubSettingsDTO {
 
     public void setRateLimit(Integer rateLimit) {
         this.rateLimit = rateLimit;
+    }
+
+    public Integer getRateLimitTimeframeHours() {
+        return rateLimitTimeframeHours;
+    }
+
+    public void setRateLimitTimeframeHours(Integer rateLimitTimeframeHours) {
+        this.rateLimitTimeframeHours = rateLimitTimeframeHours;
     }
 
     public Set<String> getAllowedModels() {

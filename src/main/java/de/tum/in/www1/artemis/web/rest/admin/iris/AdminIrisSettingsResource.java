@@ -32,7 +32,7 @@ public class AdminIrisSettingsResource {
     @PutMapping("iris/global-iris-settings")
     @EnforceAdmin
     public ResponseEntity<IrisSettings> updateGlobalSettings(@RequestBody IrisSettings settings) {
-        var updatedSettings = irisSettingsService.saveGlobalIrisSettings(settings);
+        var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);
     }
 }

@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisCourseSettings extends IrisSettings {
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(optional = false)
     @JoinColumn(name = "course_id", unique = true, nullable = false)
     private Course course;
 
@@ -61,10 +61,12 @@ public class IrisCourseSettings extends IrisSettings {
         this.irisHestiaSettings = irisHestiaSettings;
     }
 
+    @Override
     public IrisCodeEditorSubSettings getIrisCodeEditorSettings() {
         return irisCodeEditorSettings;
     }
 
+    @Override
     public void setIrisCodeEditorSettings(IrisCodeEditorSubSettings irisCodeEditorSettings) {
         this.irisCodeEditorSettings = irisCodeEditorSettings;
     }
