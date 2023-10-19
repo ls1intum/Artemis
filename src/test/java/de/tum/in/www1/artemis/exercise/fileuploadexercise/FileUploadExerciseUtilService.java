@@ -65,7 +65,7 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise.
      *
-     * @return The created FileUploadExercise.
+     * @return The created FileUploadExercise
      */
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
@@ -76,7 +76,7 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise. Does not save the exercises.
      *
-     * @return A List containing the created FileUploadExercises.
+     * @return A List containing the created FileUploadExercises
      */
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -101,7 +101,7 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise.
      *
-     * @return The created Course.
+     * @return The created Course
      */
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
@@ -118,7 +118,7 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise.
      *
-     * @return The created Course.
+     * @return The created Course
      */
     public Course addCourseWithFourFileUploadExercise() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -148,7 +148,7 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a new Course with one assessed FileUploadExercise.
      *
-     * @return The created Course.
+     * @return The created Course
      */
     public Course addCourseWithFileUploadExercise() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -163,10 +163,10 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login.
      *
-     * @param fileUploadExercise   The FileUploadExercise the StudentParticipation should belong to.
-     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to.
-     * @param login                The login of the user the StudentParticipation should belong to.
-     * @return The updated FileUploadSubmission.
+     * @param fileUploadExercise   The FileUploadExercise the StudentParticipation should belong to
+     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login                The login of the user the StudentParticipation should belong to
+     * @return The updated FileUploadSubmission
      */
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, login);
@@ -181,12 +181,12 @@ public class FileUploadExerciseUtilService {
      * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login. Also creates and saves a Result for the
      * StudentParticipation given the assessorLogin and List of Feedbacks.
      *
-     * @param exercise             The FileUploadExercise the StudentParticipation should belong to.
-     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to.
-     * @param login                The login of the user the StudentParticipation should belong to.
-     * @param assessorLogin        The login of the assessor the Result should belong to.
-     * @param feedbacks            The List of Feedbacks the Result should contain.
-     * @return The updated FileUploadSubmission.
+     * @param exercise             The FileUploadExercise the StudentParticipation should belong to
+     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login                The login of the user the StudentParticipation should belong to
+     * @param assessorLogin        The login of the assessor the Result should belong to
+     * @param feedbacks            The List of Feedbacks the Result should contain
+     * @return The updated FileUploadSubmission
      */
     public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessorFeedback(FileUploadExercise exercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin, List<Feedback> feedbacks) {
@@ -224,11 +224,11 @@ public class FileUploadExerciseUtilService {
      * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login. Also creates and saves a Result for the
      * StudentParticipation given the assessorLogin.
      *
-     * @param fileUploadExercise   The FileUploadExercise the StudentParticipation should belong to.
-     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to.
-     * @param login                The login of the user the StudentParticipation should belong to.
-     * @param assessorLogin        The login of the assessor the Result should belong to.
-     * @return The updated FileUploadSubmission.
+     * @param fileUploadExercise   The FileUploadExercise the StudentParticipation should belong to
+     * @param fileUploadSubmission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login                The login of the user the StudentParticipation should belong to
+     * @param assessorLogin        The login of the assessor the Result should belong to
+     * @return The updated FileUploadSubmission
      */
     public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin) {
@@ -238,10 +238,10 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a StudentParticipation for the given FileUploadExercise, the FileUploadSubmission, and login.
      *
-     * @param exercise   The FileUploadExercise the StudentParticipation should belong to.
-     * @param submission The FileUploadSubmission the StudentParticipation should belong to.
-     * @param login      The login of the user the StudentParticipation should belong to.
-     * @return The updated FileUploadSubmission.
+     * @param exercise   The FileUploadExercise the StudentParticipation should belong to
+     * @param submission The FileUploadSubmission the StudentParticipation should belong to
+     * @param login      The login of the user the StudentParticipation should belong to
+     * @return The updated FileUploadSubmission
      */
     public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
@@ -254,10 +254,10 @@ public class FileUploadExerciseUtilService {
     /**
      * Creates and saves a FileUploadSubmission for the given FileUploadExercise and loginPrefix. Also creates an empty file for the submission.
      *
-     * @param loginPrefix        The loginPrefix of the user the FileUploadSubmission should belong to. The loginPrefix will be suffixed with "student1".
-     * @param fileUploadExercise The FileUploadExercise the FileUploadSubmission should belong to.
-     * @param filename           The name of the file to create.
-     * @throws IOException If creating the file fails.
+     * @param loginPrefix        The loginPrefix of the user the FileUploadSubmission should belong to (the loginPrefix will be suffixed with "student1")
+     * @param fileUploadExercise The FileUploadExercise the FileUploadSubmission should belong to
+     * @param filename           The name of the file to create
+     * @throws IOException If creating the file fails
      */
     public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
         var fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
