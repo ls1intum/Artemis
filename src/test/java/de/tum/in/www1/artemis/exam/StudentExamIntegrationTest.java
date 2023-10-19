@@ -466,7 +466,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final var repoName = projectKey.toLowerCase() + "-" + student1.getLogin().toLowerCase();
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repoName);
 
-        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
 
         final HttpHeaders headers = getHttpHeadersForExamSession();
         var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
@@ -923,7 +923,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingExerciseParticipationService).lockStudentRepository(programmingExercise, participation);
+        verify(programmingExerciseParticipationService, timeout(1000)).lockStudentRepository(programmingExercise, participation);
         verify(programmingTriggerService, timeout(4000)).triggerBuildForParticipations(List.of(participation));
     }
 
@@ -2601,7 +2601,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         testExamWithExercises = examRepository.save(testExamWithExercises);
 
         // Step 1: Call /start
-        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
 
         assertThat(studentExamForStart.getUser()).isEqualTo(student1);
         assertThat(studentExamForStart.getExam().getId()).isEqualTo(testExamWithExercises.getId());

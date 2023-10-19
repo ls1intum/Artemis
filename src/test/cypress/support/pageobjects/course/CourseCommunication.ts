@@ -2,7 +2,7 @@ import { BASE_API, CourseWideContext, POST, PUT } from '../../constants';
 import { titleCaseWord } from '../../utils';
 
 /**
- * A class which encapsulates UI selectors and actions for the course creation page.
+ * A class which encapsulates UI selectors and actions for the course communication page.
  */
 export class CourseCommunicationPage {
     newPost() {

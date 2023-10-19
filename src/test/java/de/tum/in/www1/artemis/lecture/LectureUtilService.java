@@ -71,6 +71,9 @@ public class LectureUtilService {
     @Autowired
     private ConversationRepository conversationRepository;
 
+    @Autowired
+    private LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
     public Lecture createCourseWithLecture(boolean saveLecture) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
@@ -196,5 +199,21 @@ public class LectureUtilService {
         onlineUnit.setDescription("Lorem Ipsum");
         onlineUnit.setSource("http://video.fake");
         return onlineUnitRepository.save(onlineUnit);
+    }
+
+    /**
+     * Creates lecture unit completion entry for the user and the specified lecture unit
+     *
+     * @param lectureUnit the lecture unit that should be completed by the user
+     * @param user        the user that has completed the lecture unit
+     * @return the updated lecture unit
+     */
+    public LectureUnit completeLectureUnitForUser(LectureUnit lectureUnit, User user) {
+        var lectureUnitCompletion = new LectureUnitCompletion();
+        lectureUnitCompletion.setLectureUnit(lectureUnit);
+        lectureUnitCompletion.setUser(user);
+        lectureUnitCompletion.setCompletedAt(ZonedDateTime.now());
+        lectureUnitCompletion = lectureUnitCompletionRepository.save(lectureUnitCompletion);
+        return lectureUnitCompletion.getLectureUnit();
     }
 }

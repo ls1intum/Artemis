@@ -201,7 +201,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final Path filePath = dirPath.resolve(filename);
         final File savedFile = filePath.toFile();
 
-        FileUtils.copyToFile(file.getInputStream(), savedFile);
+        FileUtils.copyInputStreamToFile(file.getInputStream(), savedFile);
 
         return filePath;
     }

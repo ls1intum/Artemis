@@ -74,7 +74,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            this.posts = posts;
+            this.posts = posts.slice();
             this.isLoading = false;
         });
         this.totalItemsSubscription = this.metisService.totalNumberOfPosts.pipe().subscribe((totalItems: number) => {

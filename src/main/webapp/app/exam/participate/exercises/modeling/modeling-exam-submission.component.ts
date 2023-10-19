@@ -6,7 +6,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
@@ -18,6 +18,8 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.MODELING;
+
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
 
@@ -58,8 +60,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         return this.studentSubmission;
     }
 
-    getExercise(): Exercise {
-        return this.exercise;
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
     }
 
     updateViewFromSubmission(): void {
