@@ -209,10 +209,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (this.apollonEditor != undefined) {
             await this.apollonEditor.nextRender;
             const model: UMLModel = this.apollonEditor!.model;
-            for (const element of model!.elements) {
+            for (const element of Object.values(model!.elements)) {
                 element.highlight = newElements.get(element.id);
             }
-            for (const relationship of model!.relationships) {
+            for (const relationship of Object.values(model!.relationships)) {
                 relationship.highlight = newElements.get(relationship.id);
             }
             this.apollonEditor!.model = model!;
@@ -236,10 +236,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (this.apollonEditor != undefined) {
             await this.apollonEditor.nextRender;
             const model: UMLModel = this.apollonEditor.model;
-            for (const element of model.elements) {
+            for (const element of Object.values(model.elements)) {
                 element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
             }
-            for (const relationship of model.relationships) {
+            for (const relationship of Object.values(model.relationships)) {
                 relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
             }
             this.apollonEditor.model = model;

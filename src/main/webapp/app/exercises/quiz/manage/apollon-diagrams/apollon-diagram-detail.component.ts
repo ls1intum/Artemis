@@ -33,12 +33,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     /** Whether some elements are interactive in the apollon editor. */
     get hasInteractive(): boolean {
-        return !!this.apollonEditor && !![...this.apollonEditor.model.interactive.elements, ...this.apollonEditor.model.interactive.relationships].length;
+        return (
+            !!this.apollonEditor && !![...Object.values(this.apollonEditor.model.interactive.elements), ...Object.values(this.apollonEditor.model.interactive.relationships)].length
+        );
     }
 
     /** Whether some elements are selected in the apollon editor. */
     get hasSelection(): boolean {
-        return !!this.apollonEditor && !![...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships].length;
+        return !!this.apollonEditor && !![...Object.values(this.apollonEditor.selection.elements), ...Object.values(this.apollonEditor.selection.relationships)].length;
     }
 
     // Icons
@@ -185,7 +187,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const selection = [...this.apollonEditor!.selection.elements, ...this.apollonEditor!.selection.relationships];
+        const selection = [...Object.values(this.apollonEditor!.selection.elements), ...Object.values(this.apollonEditor!.selection.relationships)];
         const svg = await this.apollonEditor!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,

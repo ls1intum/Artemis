@@ -65,7 +65,7 @@ describe('ModelingEditorComponent', () => {
         expect(editor).toBeDefined();
         await addDelay(500).then(() => {
             // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
-            expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
+            expect(Object.values(editor.model.elements).map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
         });
     });
 
@@ -87,9 +87,9 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         const changedModel = cloneDeep(model) as any;
-        changedModel.elements = [];
-        changedModel.relationships = [];
-        changedModel.interactive = { elements: [], relationships: [] };
+        changedModel.elements = {};
+        changedModel.relationships = {};
+        changedModel.interactive = { elements: {}, relationships: {} };
         changedModel.size = { height: 0, width: 0 };
         // note: using cloneDeep a default value exists, which would prevent the comparison below to pass, therefore we need to remove it here
         changedModel.default = undefined;

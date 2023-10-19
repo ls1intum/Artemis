@@ -21,12 +21,13 @@ describe('ModelingAssessmentComponent', () => {
 
     const generateMockModel = (elementId: string, elementId2: string, relationshipId: string) => {
         return {
-            version: '2.0.0',
+            version: '3.0.0',
             type: 'ClassDiagram',
             size: { width: 740, height: 660 },
-            interactive: { elements: [], relationships: [] },
-            elements: [
-                {
+            interactive: { elements: {}, relationships: {} },
+
+            elements: {
+                [elementId]: {
                     id: elementId,
                     name: 'Package',
                     type: 'Package',
@@ -34,7 +35,7 @@ describe('ModelingAssessmentComponent', () => {
                     bounds: { x: 160, y: 40, width: 200, height: 100 },
                     highlight: undefined,
                 },
-                {
+                [elementId2]: {
                     id: elementId2,
                     name: 'Class',
                     type: 'Class',
@@ -44,9 +45,9 @@ describe('ModelingAssessmentComponent', () => {
                     methods: [],
                     highlight: undefined,
                 },
-            ],
-            relationships: [
-                {
+            },
+            relationships: {
+                [relationshipId]: {
                     id: relationshipId,
                     name: '',
                     type: 'ClassBidirectional',
@@ -69,8 +70,8 @@ describe('ModelingAssessmentComponent', () => {
                         element: elementId,
                     },
                 } as UMLRelationship,
-            ],
-            assessments: [],
+            },
+            assessments: {},
         } as UMLModel;
     };
 
@@ -214,9 +215,9 @@ describe('ModelingAssessmentComponent', () => {
     it('should update element counts', async () => {
         function getElementCounts(model: UMLModel): ModelElementCount[] {
             // Not sure whether this is the correct logic to build OtherModelElementCounts.
-            return model.elements.map((el) => ({
+            return Object.values(model.elements).map((el) => ({
                 elementId: el.id,
-                numberOfOtherElements: model.elements.length - 1,
+                numberOfOtherElements: Object.values(model.elements).length - 1,
             }));
         }
 
@@ -257,9 +258,9 @@ describe('ModelingAssessmentComponent', () => {
 
         const apollonModel = comp.apollonEditor!.model;
         const elements = apollonModel.elements;
-        const highlightedElement = elements!.find((el) => el.id === 'elementId1');
-        const notHighlightedElement = elements!.find((el) => el.id === 'elementId2');
-        const relationship = apollonModel!.relationships[0];
+        const highlightedElement = elements!['elementId1'];
+        const notHighlightedElement = elements!['elementId2'];
+        const relationship = (Object.values(apollonModel!.relationships) as UMLRelationship[])[0];
         expect(highlightedElement).not.toBeNull();
         expect(highlightedElement!.highlight).toBe('red');
         expect(notHighlightedElement).not.toBeNull();
@@ -294,9 +295,9 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
         const elements = apollonModel!.elements;
-        const highlightedElement = elements!.find((el) => el.id === 'elementId2');
-        const notHighlightedElement = elements!.find((el) => el.id === 'elementId1');
-        const relationship = apollonModel!.relationships[0];
+        const highlightedElement = elements!['elementId2'];
+        const notHighlightedElement = elements!['elementId1'];
+        const relationship = (Object.values(apollonModel!.relationships) as UMLRelationship[])[0];
 
         expect(highlightedElement).not.toBeNull();
         expect(highlightedElement!.highlight).toBe('green');
@@ -323,7 +324,7 @@ describe('ModelingAssessmentComponent', () => {
         await comp.apollonEditor!.nextRender;
 
         const apollonModel = comp.apollonEditor!.model;
-        const assessments: any = apollonModel.assessments;
+        const assessments: any = Object.values(apollonModel.assessments);
         expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
         expect(assessments[0].label).toBe('Second correction round');
         expect(assessments[0].score).toBe(30);
@@ -346,7 +347,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.apollonEditor).not.toBeNull();
 
         const apollonModel = comp.apollonEditor!.model;
-        const assessments: any = apollonModel.assessments;
+        const assessments: any = Object.values(apollonModel.assessments);
         expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
         expect(assessments[0].label).toBe('First correction round');
         expect(assessments[0].score).toBe(35);

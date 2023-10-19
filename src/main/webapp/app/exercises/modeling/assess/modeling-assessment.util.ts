@@ -12,7 +12,7 @@ export function getNamesForAssessments(result: Result, model: UMLModel): Map<str
         const referencedModelType = feedback.referenceType! as UMLElementType;
         const referencedModelId = feedback.referenceId!;
         if (referencedModelType in UMLElementType) {
-            const element = model.elements.find((elem) => elem.id === referencedModelId);
+            const element = model.elements[referencedModelId];
             if (!element) {
                 // prevent errors when element could not be found, should never happen
                 assessmentsNames[referencedModelId] = { name: '', type: '' };
@@ -67,9 +67,9 @@ export function getNamesForAssessments(result: Result, model: UMLModel): Map<str
             }
             assessmentsNames[referencedModelId] = { type, name };
         } else if (referencedModelType in UMLRelationshipType) {
-            const relationship = model.relationships.find((rel) => rel.id === referencedModelId)!;
-            const source = model.elements.find((element) => element.id === relationship.source.element)!.name;
-            const target = model.elements.find((element) => element.id === relationship.target.element)!.name;
+            const relationship = model.relationships[referencedModelId];
+            const source = model.elements[relationship.source.element].name;
+            const target = model.elements[relationship.target.element].name;
             const relationshipType = relationship.type;
             let type = 'association';
             let relation: string;
@@ -120,9 +120,9 @@ export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModel)
         return [];
     }
 
-    let availableIds: string[] = umlModel.elements.map((element) => element.id);
+    let availableIds: string[] = Object.keys(umlModel.elements);
     if (umlModel.relationships) {
-        availableIds = availableIds.concat(umlModel.relationships.map((relationship) => relationship.id));
+        availableIds = availableIds.concat(Object.keys(umlModel.relationships));
     }
     return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
 }
