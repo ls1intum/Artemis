@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
@@ -127,8 +128,15 @@ public class ContinuousPlagiarismControlService {
                 plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
 
         log.info("CPC - 07 - {}", plagiarismCases.size());
-        plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null).map(ContinuousPlagiarismControlService::buildCpcPost)
-                .forEach(postService::createContinuousPlagiarismControlPlagiarismCasePost);
+        plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null).map(ContinuousPlagiarismControlService::buildCpcPost).forEach(post -> {
+            try {
+                postService.createContinuousPlagiarismControlPlagiarismCasePost(post);
+            }
+            catch (ArtemisMailException e) {
+                // silent mail exception
+                log.error("Cannot send a cpc email: postId={}, plagiarismCaseId={}.", post.getId(), post.getPlagiarismCase().getId());
+            }
+        });
     }
 
     private static Post buildCpcPost(PlagiarismCase plagiarismCase) {
