@@ -19,6 +19,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';
     message: string;
+    subMessage?: string;
 };
 
 @Component({
@@ -107,7 +108,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     }
 
     handleArchiveStateChanges(courseArchiveState: CourseExamArchiveState) {
-        const { exportState, message } = courseArchiveState;
+        const { exportState, message, subMessage } = courseArchiveState;
         this.isBeingArchived = exportState === 'RUNNING';
         this.archiveButtonText = exportState === 'RUNNING' ? message : this.getArchiveButtonText();
         if (exportState === 'COMPLETED') {
@@ -118,7 +119,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             this.openModal(this.archiveCompleteWithWarningsModal);
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_ERRORS') {
-            this.alertService.error(this.getArchiveErrorText(message));
+            this.alertService.error(this.getArchiveErrorText(subMessage!));
         }
     }
 
@@ -144,11 +145,11 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    getArchiveErrorText(errorMessage: string) {
+    getArchiveErrorText(message: string) {
         if (this.archiveMode === 'Course') {
-            return this.translateService.instant('artemisApp.courseExamArchive.archiveCourseError', { message: errorMessage });
+            return this.translateService.instant(`artemisApp.courseExamArchive.archiveCourseError.${message}`, { courseName: this.course.title });
         } else {
-            return this.translateService.instant('artemisApp.courseExamArchive.archiveExamError');
+            return this.translateService.instant('artemisApp.courseExamArchive.archiveExamError', { examName: this.exam?.title });
         }
     }
 
