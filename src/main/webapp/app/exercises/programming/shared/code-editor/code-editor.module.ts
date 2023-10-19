@@ -23,7 +23,6 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
-import { IrisModule } from 'app/iris/iris.module';
 
 @NgModule({
     imports: [
@@ -34,7 +33,6 @@ import { IrisModule } from 'app/iris/iris.module';
         TreeviewModule.forRoot(),
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingManualAssessmentModule,
-        IrisModule,
     ],
     declarations: [
         CodeEditorGridComponent,
