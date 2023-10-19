@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { v4 as uuid } from 'uuid';
+import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 
@@ -17,7 +18,7 @@ export class FileService {
      * @param {ProjectType} projectType (if available)
      * @returns json test file
      */
-    getTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType) {
+    getTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType): Observable<string> {
         const urlParts: string[] = [language];
         if (projectType) {
             urlParts.push(projectType);
@@ -34,6 +35,14 @@ export class FileService {
         const blob = await lastValueFrom(this.http.get(filePath, { responseType: 'blob' }));
         const file = new File([blob], this.getUniqueFileName(this.getExtension(filePath), mapOfFiles));
         return Promise.resolve(file);
+    }
+
+    /**
+     * Fetches the template code of conduct
+     * @returns markdown file
+     */
+    getTemplateCodeOfCondcut(): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 
     /**
@@ -55,8 +64,8 @@ export class FileService {
     /**
      * Downloads the merged PDF file.
      *
-     * @param courseId: the id of the course
-     * @param lectureId: the id of the lecture
+     * @param courseId the id of the course
+     * @param lectureId the id of the lecture
      */
     downloadMergedFile(courseId: number, lectureId: number) {
         const newWindow = window.open('about:blank');

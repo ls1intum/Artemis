@@ -113,6 +113,7 @@ export enum ReferenceType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    USER = 'USER',
 }
 
 export enum UserRole {

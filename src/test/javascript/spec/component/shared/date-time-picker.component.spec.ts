@@ -36,13 +36,13 @@ describe('FormDateTimePickerComponent', () => {
     describe('test date conversion', () => {
         let convertedDate: Date | null;
         it('should convert the dayjs if it is not undefined', () => {
-            convertedDate = component.convert(normalDate);
+            convertedDate = component.convertToDate(normalDate);
 
             expect(convertedDate).toEqual(normalDateAsDateObject);
         });
 
         it('should return null if dayjs is undefined', () => {
-            convertedDate = component.convert();
+            convertedDate = component.convertToDate();
 
             expect(convertedDate).toBeNull();
         });
@@ -52,7 +52,7 @@ describe('FormDateTimePickerComponent', () => {
 
             expect(unconvertedDate.isValid()).toBeFalse();
 
-            convertedDate = component.convert(unconvertedDate);
+            convertedDate = component.convertToDate(unconvertedDate);
 
             expect(convertedDate).toBeNull();
         });
@@ -73,16 +73,19 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should register callback function', () => {
-        const testCallBackFunction = (date: dayjs.Dayjs) => 'I am a test callbackFunction: ' + date.toDate();
+        const onChangeSpy = jest.fn();
+        component.registerOnChange(onChangeSpy);
 
-        component.registerOnChange(testCallBackFunction);
+        (component as any).onChange?.(normalDate);
 
-        expect(component._onChange(normalDate)).toBe(testCallBackFunction(normalDate));
+        expect(onChangeSpy).toHaveBeenCalledOnce();
+        expect(onChangeSpy).toHaveBeenCalledWith(normalDate);
     });
 
     it('should update field', () => {
+        const onChangeSpy = jest.fn();
+        component.registerOnChange(onChangeSpy);
         const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
-        const onChangeSpy = jest.spyOn(component, '_onChange');
         const newDate = normalDate.add(2, 'days');
         component.value = normalDate;
 

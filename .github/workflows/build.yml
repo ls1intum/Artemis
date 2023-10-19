@@ -11,6 +11,7 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
+    - '!.github/workflows/testserver.yml'
   push:
     branches:
     - develop
@@ -137,6 +138,8 @@ jobs:
         context: .
         tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
         push: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=min
 
     # TODO: Push to Docker Hub (develop + tag)
 

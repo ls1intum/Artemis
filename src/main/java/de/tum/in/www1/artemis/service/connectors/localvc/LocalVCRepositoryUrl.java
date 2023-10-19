@@ -151,4 +151,14 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
     public Path getLocalRepositoryPath(String localVCBasePath) {
         return Paths.get(localVCBasePath, projectKey, repositorySlug + ".git");
     }
+
+    /**
+     * Get the path to the cloned repository
+     *
+     * @param baseRepoClonePath the base path of the cloned repositories
+     * @return the path to the cloned repository
+     */
+    public Path getRepoClonePath(String baseRepoClonePath) {
+        return Paths.get(baseRepoClonePath, "git", projectKey, repositorySlug);
+    }
 }
