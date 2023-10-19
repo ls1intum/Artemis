@@ -114,90 +114,112 @@ public final class IrisConstants {
             """;
 
     public static final String CODE_EDITOR_CONVERSATION = """
-                {{#system~}}
-                    I want you to act as an expert assistant to an instructor who is creating a programming exercise for their course.
-                    Your job is to understand what the instructor wants, asking questions if needed, and make suggestions to improve the exercise.
+            {{#system~}}
+                I want you to act as an expert assistant to a university instructor who is creating a programming exercise for their course.
+                Your job is to understand what the instructor wants, asking questions if needed, and formulate plans for how to
+                adapt the exercise to meet their requirements.
 
-                    A programming exercise consists of:
+                A programming exercise consists of:
 
-                    - a problem statement:
-                    Formatted in Markdown, it contains an engaging thematic story hook to introduce a technical concept which the students must learn.
-                    It also contains a detailed description of the tasks to be completed, and the expected behavior of the students' programs.
-                    It may or may not contain a PlantUML class diagram illustrating the system to be implemented.
+                - a problem statement:
+                Formatted in Markdown, it contains an engaging thematic story hook to introduce a technical concept which the students must learn.
+                It also contains a detailed description of the tasks to be completed, and the expected behavior of the students' programs.
+                It may or may not contain a PlantUML class diagram illustrating the system to be implemented.
 
-                    - a template repository:
-                    The students clone this repository and edit the files to complete the exercise.
+                - a template code repository:
+                The students clone this repository with git and work on it locally, following the problem statement's instructions to complete the exercise.
 
-                    - a solution repository:
-                    The students do not see this repository. It contains an example solution to the exercise.
+                - a solution code repository:
+                The students do not see this repository. It contains an example solution to the exercise.
 
-                    - a test repository:
-                    This repository automatically grades the students' submissions on structure and/or behavior.
-                    A test.json structure specification file is used for structural testing.
-                    A proprietary JUnit 5 extension called Ares is used for behavioral testing.
-                {{~/system}}
+                - a test repository:
+                This repository automatically grades the students' submissions on structure and/or behavior.
+                A test.json structure specification file is used for structural testing.
+                A proprietary JUnit 5 extension called Ares is used for behavioral testing.
 
+                Here is the information you have about the instructor's exercise, in its current state:
+            {{~/system}}
+
+            {{#if problemStatement}}
                 {{#system~}}The problem statement:{{~/system}}
                 {{#user~}}{{problemStatement}}{{~/user}}
                 {{#system~}}End of problem statement.{{~/system}}
+            {{else}}
+                {{#system~}}The problem statement has not yet been written.{{/system}}
+            {{/if}}
 
-                {{#system~}}The template repository:{{~/system}}
-                {{#each templateRepository}}
-                    {{#system~}}"{{@key}}":{{~/system}}
-                    {{#user~}}{{this}}{{~/user}}
-                {{/each}}
-                {{#system~}}End of template repository.{{~/system}}
+            {{#system~}}Here are all the filepaths and file contents in the template repository:{{~/system}}
+            {{#each templateRepository}}
+                {{#user~}}
+                    "{{@key}}":
+                    {{this}}
+                {{~/user}}
+            {{/each}}
+            {{#system~}}End of template repository.{{~/system}}
 
-                {{#system~}}The solution repository:{{~/system}}
-                {{#each solutionRepository}}
-                    {{#system~}}"{{@key}}":{{~/system}}
-                    {{#user~}}{{this}}{{~/user}}
-                {{/each}}
-                {{#system~}}End of solution repository.{{~/system}}
+            {{#system~}}Here are all the filepaths and file contents in the solution repository:{{~/system}}
+            {{#each solutionRepository}}
+                {{#user~}}
+                    "{{@key}}":
+                    {{this}}
+                {{~/user}}
+            {{/each}}
+            {{#system~}}End of solution repository.{{~/system}}
 
-                {{#system~}}The test repository:{{~/system}}
-                {{#each testRepository}}
-                    {{#system~}}"{{@key}}":{{~/system}}
-                    {{#user~}}{{this}}{{~/user}}
-                {{/each}}
-                {{#system~}}End of test repository.{{~/system}}
+            {{#system~}}Here are all the filepaths and file contents in the test repository:{{~/system}}
+            {{#each testRepository}}
+                {{#user~}}
+                    "{{@key}}":
+                    {{this}}
+                {{~/user}}
+            {{/each}}
+            {{#system~}}End of test repository.{{~/system}}
 
-                {{#system~}}Your chat history with the instructor:{{~/system}}
-                {{#each chatHistory}}
-                    {{#if (equal this.sender "user")}}
-                        {{#user~}}{{this.content[0].textContent}}{{~/user}}
-                    {{else}}
-                        {{#assistant~}}{{this.content[0].textContent}}{{~/assistant}}
-                    {{/if}}
-                {{/each}}
-
-                {{#system~}}
-                    Has the instructor given you enough information about their intent for the exercise for you to make suggestions?
-                    It is okay to make some assumptions about the instructor's intent, but you should ask questions if you are unsure.
-                    If you have enough information to work with, say "1". Otherwise, say "0".
-                {{~/system}}
-                {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
-
-                {{#if (contains will_suggest_changes "0")}}
-                    {{#system~}}Respond to the instructor and ask a question to clarify their intent.{{~/system}}
-                    {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
+            {{#system~}}Here are the last 5 or fewer messages between you and the instructor:{{~/system}}
+            {{#each (truncate chatHistory 5)}}
+                {{#if (equal this.sender "user")}}
+                    {{#user~}}{{this.content[0].textContent}}{{~/user}}
                 {{else}}
-                    {{#system~}}Respond to the instructor like a helpful assistant would, summarizing your plans for the exercise.{{~/system}}
-                    {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
-
-                    {{#geneach 'components' num_iterations=4}}
-                        {{#system~}}
-                            In your attempt to meet the instructor's requirements, which exercise component would you like to adapt (priority {{add @index 1}})?
-                            You can respond with "problem statement", "solution", "template", or "tests", or alternatively with " " if you do not wish to adapt any other components.
-                        {{~/system}}
-                        {{#assistant~}}{{gen 'this.component' temperature=0.0 max_tokens=7 stop=","}}{{~/assistant}}
-                        {{#if (equal this.component " ")}}
-                            {{break}}
-                        {{/if}}
-                        {{#system~}}What changes will you make to the {{this.component}}?{{~/system}}
-                        {{#assistant~}}{{gen 'this.plan' temperature=0.5 max_tokens=100}}{{~/assistant}}
-                    {{/geneach}}
+                    {{#assistant~}}{{this.content[0].textContent}}{{~/assistant}}
                 {{/if}}
+            {{/each}}
+
+            {{#system~}}
+                Has the instructor given you enough information about their intent for the exercise for you to make suggestions?
+                It is okay to make some assumptions about the instructor's intent, but you should ask questions if you are unsure.
+                If you have enough information to work with, say "1". Otherwise, say "0".
+            {{~/system}}
+            {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
+
+            {{#if (contains will_suggest_changes "0")}}
+                {{#system~}}Respond to the instructor and ask a question to clarify their intent.{{~/system}}
+                {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
+            {{else}}
+                {{#system~}}
+                    Respond to the instructor like a helpful assistant would, summarizing how you will adapt the exercise as a whole.
+                    Do not go into detail here, just give a very high-level overview to tell the instructor what to expect.
+                {{~/system}}
+                {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
+
+                {{#geneach 'components' num_iterations=4}}
+                    {{#system~}}
+                        In your attempt to meet the instructor's requirements, which exercise component would you like to adapt (priority {{add @index 1}})?
+                        You can respond with "problem statement", "solution", "template", or "tests".
+                        {{#if (not @first)}}
+                            If no other components need to be adapted, respond with the special response "!done!".
+                        {{/if}}
+                    {{~/system}}
+                    {{#assistant~}}{{gen 'this.component' temperature=0.0 max_tokens=7 stop=","}}{{~/assistant}}
+                    {{#if (equal this.component "!done!")}}
+                        {{break}}
+                    {{/if}}
+                    {{#system~}}
+                        Create instructions for yourself to adapt the {{this.component}} following the instructor's requirements.
+                        Do not write the actual changes yet, just briefly describe what actions you will take on the {{this.component}} in particular.
+                    {{~/system}}
+                    {{#assistant~}}{{gen 'this.plan' temperature=0.5 max_tokens=150}}{{~/assistant}}
+                {{/geneach}}
+            {{/if}}
             """;
 
     public static final String CODE_EDITOR_ADAPT_PROBLEM_STATEMENT = """
