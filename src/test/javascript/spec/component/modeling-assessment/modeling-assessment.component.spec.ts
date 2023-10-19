@@ -206,7 +206,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.messages.removeAssessmentInstructionLink');
         expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
-        expect(mockModel.assessments[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+        expect(Object.values(mockModel.assessments)[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
 
         // toHaveBeenCalledTimes(5): 2 from calculateLabel() + 3 from calculateDropInfo()
         expect(spy).toHaveBeenCalledTimes(5);
@@ -240,7 +240,7 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
 
-        comp.generateFeedbackFromAssessment(mockModel.assessments);
+        comp.generateFeedbackFromAssessment(Object.values(mockModel.assessments));
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
     });
 
