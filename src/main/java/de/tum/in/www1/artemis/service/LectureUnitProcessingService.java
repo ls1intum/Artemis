@@ -38,10 +38,10 @@ public class LectureUnitProcessingService {
 
     private final AttachmentUnitService attachmentUnitService;
 
-    private final PDFTextStripper pdfTextStripper;
+    private final PDFTextStripper pdfTextStripper = new PDFTextStripper();
 
     // A pdf splitter that should be used to split a file into single pages
-    private final Splitter pdfSinglePageSplitter;
+    private final Splitter pdfSinglePageSplitter = new Splitter();
 
     public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
             AttachmentUnitService attachmentUnitService) {
@@ -49,8 +49,6 @@ public class LectureUnitProcessingService {
         this.slideSplitterService = slideSplitterService;
         this.lectureRepository = lectureRepository;
         this.attachmentUnitService = attachmentUnitService;
-        this.pdfTextStripper = new PDFTextStripper();
-        this.pdfSinglePageSplitter = new Splitter();
     }
 
     /**

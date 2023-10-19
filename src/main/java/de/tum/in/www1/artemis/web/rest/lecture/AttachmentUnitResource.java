@@ -183,9 +183,9 @@ public class AttachmentUnitResource {
 
         URI fileURI = fileService.handleSaveFile(file, false, false);
         fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(fileURI), minutesUntilDeletion);
-        String fileName = FilePathService.actualPathForPublicPath(fileURI).getFileName().toString();
+        String filename = FilePathService.actualPathForPublicPath(fileURI).getFileName().toString();
 
-        return ResponseEntity.ok().body(GSON.toJson(fileName));
+        return ResponseEntity.ok().body(GSON.toJson(filename));
     }
 
     /**
@@ -205,7 +205,7 @@ public class AttachmentUnitResource {
         checkFile(filename);
 
         try {
-            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
+            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename)));
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes,
                     lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
@@ -234,7 +234,7 @@ public class AttachmentUnitResource {
         checkFile(filename);
 
         try {
-            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
+            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename)));
             LectureUnitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(fileBytes);
             return ResponseEntity.ok().body(attachmentUnitsData);
         }
@@ -260,7 +260,7 @@ public class AttachmentUnitResource {
         checkFile(filename);
 
         try {
-            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(filename));
+            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename)));
             List<Integer> slidesToRemove = this.lectureUnitProcessingService.getSlidesToRemoveByKeyphrase(fileBytes, commaSeparatedKeyPhrases);
             return ResponseEntity.ok().body(slidesToRemove);
         }
@@ -290,7 +290,7 @@ public class AttachmentUnitResource {
      *
      * @param lectureId The id of the lecture
      */
-    public void checkLecture(Long lectureId) {
+    private void checkLecture(Long lectureId) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
@@ -303,8 +303,8 @@ public class AttachmentUnitResource {
      *
      * @param filename the name of the file
      */
-    public void checkFile(String filename) {
-        Path filePath = FilePathService.getTempFilePath().resolve(filename);
+    private void checkFile(String filename) {
+        Path filePath = FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename));
         if (!Files.exists(filePath)) {
             throw new EntityNotFoundException(ENTITY_NAME, filename);
         }
