@@ -40,16 +40,20 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final FileService fileService;
 
+    private final ProgrammingExerciseCreationService programmingExerciseCreationService;
+
     private static final List<String> SHORT_NAME_REPLACEMENT_EXCLUSIONS = List.of("gradle-wrapper.jar");
 
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
-            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService) {
+            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService,
+            ProgrammingExerciseCreationService programmingExerciseCreationService) {
         this.programmingExerciseService = programmingExerciseService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.repositoryService = repositoryService;
         this.gitService = gitService;
         this.fileService = fileService;
+        this.programmingExerciseCreationService = programmingExerciseCreationService;
     }
 
     /**
@@ -80,7 +84,7 @@ public class ProgrammingExerciseImportFromFileService {
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport, true);
+            importedProgrammingExercise = programmingExerciseCreationService.createProgrammingExercise(programmingExerciseForImport, true);
             if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
             }

@@ -109,6 +109,8 @@ public class ProgrammingExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final ProgrammingExerciseCreationService programmingExerciseCreationService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
@@ -117,7 +119,8 @@ public class ProgrammingExerciseResource {
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProfileService profileService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, InstanceMessageSendService instanceMessageSendService,
+            ProgrammingExerciseCreationService programmingExerciseCreationService) {
         this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -141,6 +144,7 @@ public class ProgrammingExerciseResource {
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelRepository = channelRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.programmingExerciseCreationService = programmingExerciseCreationService;
     }
 
     /**
@@ -197,7 +201,7 @@ public class ProgrammingExerciseResource {
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise, false);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationService.createProgrammingExercise(programmingExercise, false);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
