@@ -116,7 +116,7 @@ public class TutorialGroupResource {
     }
 
     /**
-     * GET /courses/:courseId/tutorial-groups/campus-values : gets the campus values used for the tutorial groups of the course with the given id
+     * GET /courses/:courseId/tutorial-groups/campus-values : gets the campus values used for the tutorial groups of all tutorials where user is instructor
      * Note: Used for autocomplete in the client tutorial form
      *
      * @param courseId the id of the course to which the tutorial groups belong to
@@ -129,7 +129,7 @@ public class TutorialGroupResource {
         log.debug("REST request to get unique campus values used for tutorial groups in course : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueCampusValuesInRegisteredCourse(user.getGroups()));
     }
 

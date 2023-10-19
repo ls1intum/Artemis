@@ -367,8 +367,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
             ),
         ).subscribe((languages: string[]) => {
             this.languages = languages;
+            // default values for English & German
             if (!languages.includes('English')) this.languages.push('English');
-            if (!languages.includes('Deutsch')) this.languages.push('Deutsch');
+            if (!languages.includes('German')) this.languages.push('German');
         });
     }
 }
