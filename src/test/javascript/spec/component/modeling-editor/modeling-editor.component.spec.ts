@@ -65,7 +65,7 @@ describe('ModelingEditorComponent', () => {
         expect(editor).toBeDefined();
         await addDelay(500).then(() => {
             // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
-            expect(Object.values(editor.model.elements).map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
+            expect(Object.keys(editor.model.elements)).toEqual(Object.keys(classDiagram.elements));
         });
     });
 
