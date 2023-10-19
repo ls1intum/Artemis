@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { faExclamationTriangle, faPlayCircle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,11 +14,9 @@ import { Course } from 'app/entities/course.model';
 })
 export class Lti13DeepLinkingComponent implements OnInit {
     courseId: number;
-    onlineCourseConfiguration: OnlineCourseConfiguration;
     exercises: Exercise[];
     selectedExercise: Exercise;
     course: Course;
-    activeTab = 1;
 
     predicate = 'type';
     reverse = false;
@@ -28,7 +25,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
-    faFileImport = faPlayCircle;
     constructor(
         private route: ActivatedRoute,
         private sortService: SortService,
@@ -39,7 +35,11 @@ export class Lti13DeepLinkingComponent implements OnInit {
     ) {}
 
     /**
-     * Gets the configuration for the course encoded in the route and fetches the exercises
+     * Initializes the component.
+     * - Retrieves the course ID from the route parameters.
+     * - Fetches the user's identity.
+     * - Retrieves the course details and exercises.
+     * - Redirects unauthenticated users to the login page.
      */
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -59,6 +59,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
         });
     }
 
+    /**
+     * Redirects the user to the login page and sets up a listener for user login.
+     * After login, redirects the user back to the original link.
+     *
+     * @param currentLink The current URL to return to after login.
+     */
     redirectUserToLoginThenTargetLink(currentLink: any): void {
         // Redirect the user to the login page
         this.router.navigate(['/']).then(() => {
@@ -71,18 +77,36 @@ export class Lti13DeepLinkingComponent implements OnInit {
         });
     }
 
+    /**
+     * Sorts the list of exercises based on the selected predicate and order.
+     */
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
     }
 
+    /**
+     * Toggles the selected exercise.
+     *
+     * @param exercise The exercise to toggle.
+     */
     toggleExercise(exercise: Exercise) {
         this.selectedExercise = exercise;
     }
 
+    /**
+     * Checks if the given exercise is currently selected.
+     *
+     * @param exercise The exercise to check.
+     * @returns True if the exercise is selected, false otherwise.
+     */
     isExerciseSelected(exercise: Exercise) {
         return this.selectedExercise === exercise;
     }
 
+    /**
+     * Sends a deep link request for the selected exercise.
+     * If an exercise is selected, it sends a POST request to initiate deep linking.
+     */
     sendDeepLinkRequest() {
         if (this.selectedExercise) {
             const httpParams = new HttpParams().set('exerciseId', this.selectedExercise.id!);

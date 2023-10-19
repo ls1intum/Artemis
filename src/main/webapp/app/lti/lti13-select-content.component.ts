@@ -7,16 +7,17 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class Lti13SelectContentComponent implements OnInit {
     courseId: number;
-    registeredSuccessfully: boolean;
     jwt: string;
     id: string;
     actionLink: string;
-    response: string;
 
     constructor(private route: ActivatedRoute) {}
 
     /**
-     * perform LTI 13 deep linking
+     * Initializes the component.
+     * - Retrieves query parameters from the route snapshot.
+     * - Sets the action link for the form.
+     * - Automatically submits the form.
      */
     ngOnInit(): void {
         this.route.params.subscribe(() => {
@@ -27,6 +28,12 @@ export class Lti13SelectContentComponent implements OnInit {
         });
     }
 
+    /**
+     * Automatically submits the form.
+     * - Sets the action link for the form.
+     * - Sets JWT and ID input fields.
+     * - Submits the form.
+     */
     autoSubmitForm(): void {
         const form = document.getElementById('deepLinkingForm') as HTMLFormElement;
         form.action = this.actionLink;
