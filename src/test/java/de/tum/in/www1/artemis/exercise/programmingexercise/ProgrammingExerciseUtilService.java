@@ -184,7 +184,7 @@ public class ProgrammingExerciseUtilService {
 
     /**
      * Adds a programming exercise into the exerciseGroupNumber-th exercise group of the passed exam.
-     * exerciseGroupNumber should be smaller than the number of exercise groups!
+     * exerciseGroupNumber must be smaller than the number of exercise groups!
      *
      * @param exam                The exam to which the exercise should be added.
      * @param exerciseGroupNumber Used as an index into which exercise group of the exam the programming exercise should be added. Has to be smaller than the number of exercise
