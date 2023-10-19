@@ -7,6 +7,7 @@ import { faExclamationTriangle, faPlayCircle, faSort, faWrench } from '@fortawes
 import { SortService } from 'app/shared/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-select-exercise',
@@ -17,7 +18,7 @@ export class Lti13SelectContentComponent implements OnInit {
     onlineCourseConfiguration: OnlineCourseConfiguration;
     exercises: Exercise[];
     selectedExercise: Exercise;
-
+    course: Course;
     activeTab = 1;
 
     predicate = 'type';
@@ -47,6 +48,7 @@ export class Lti13SelectContentComponent implements OnInit {
                 if (user) {
                     this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
                         if (findWithExercisesResult?.body?.exercises) {
+                            this.course = findWithExercisesResult.body;
                             this.exercises = findWithExercisesResult.body.exercises;
                         }
                     });
