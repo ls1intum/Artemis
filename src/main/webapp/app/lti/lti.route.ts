@@ -21,14 +21,14 @@ export const ltiLaunchRoutes: Routes = [
     },
     {
         path: 'select-content',
-        component: Lti13DeepLinkingComponent,
+        component: Lti13SelectContentComponent,
         data: {
             pageTitle: 'artemisApp.lti13.deepLinking.title',
         },
     },
     {
         path: 'deep-linking/:courseId',
-        component: Lti13SelectContentComponent,
+        component: Lti13DeepLinkingComponent,
         data: {
             pageTitle: 'artemisApp.lti13.deepLinking.title',
         },

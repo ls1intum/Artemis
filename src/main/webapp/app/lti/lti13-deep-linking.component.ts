@@ -1,5 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { faExclamationTriangle, faPlayCircle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { SortService } from 'app/shared/service/sort.service';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -7,32 +15,92 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class Lti13DeepLinkingComponent implements OnInit {
     courseId: number;
-    registeredSuccessfully: boolean;
-    jwt: string;
-    id: string;
-    actionLink: string;
-    response: string;
+    onlineCourseConfiguration: OnlineCourseConfiguration;
+    exercises: Exercise[];
+    selectedExercise: Exercise;
+    course: Course;
+    activeTab = 1;
 
-    constructor(private route: ActivatedRoute) {}
+    predicate = 'type';
+    reverse = false;
+
+    // Icons
+    faSort = faSort;
+    faExclamationTriangle = faExclamationTriangle;
+    faWrench = faWrench;
+    faFileImport = faPlayCircle;
+    constructor(
+        private route: ActivatedRoute,
+        private sortService: SortService,
+        private courseManagementService: CourseManagementService,
+        private http: HttpClient,
+        private accountService: AccountService,
+        private router: Router,
+    ) {}
 
     /**
-     * perform LTI 13 deep linking
+     * Gets the configuration for the course encoded in the route and fetches the exercises
      */
-    ngOnInit(): void {
-        this.route.params.subscribe(() => {
-            this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
-            this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
-            this.actionLink = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
-            this.autoSubmitForm();
+    ngOnInit() {
+        this.route.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+            this.accountService.identity().then((user) => {
+                if (user) {
+                    this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
+                        if (findWithExercisesResult?.body?.exercises) {
+                            this.course = findWithExercisesResult.body;
+                            this.exercises = findWithExercisesResult.body.exercises;
+                        }
+                    });
+                } else {
+                    this.redirectUserToLoginThenTargetLink(window.location.href);
+                }
+            });
         });
     }
 
-    autoSubmitForm(): void {
-        const form = document.getElementById('deepLinkingForm') as HTMLFormElement;
-        form.action = this.actionLink;
-        console.log(this.actionLink);
-        (<HTMLInputElement>document.getElementById('JWT'))!.value = this.jwt;
-        (<HTMLInputElement>document.getElementById('id'))!.value = this.id;
-        form.submit();
+    redirectUserToLoginThenTargetLink(currentLink: any): void {
+        // Redirect the user to the login page
+        this.router.navigate(['/']).then(() => {
+            // After navigating to the login page, set up a listener for when the user logs in
+            this.accountService.getAuthenticationState().subscribe((user) => {
+                if (user) {
+                    window.location.replace(currentLink);
+                }
+            });
+        });
+    }
+
+    sortRows() {
+        this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+    }
+
+    toggleExercise(exercise: Exercise) {
+        this.selectedExercise = exercise;
+    }
+
+    isExerciseSelected(exercise: Exercise) {
+        return this.selectedExercise === exercise;
+    }
+
+    sendDeepLinkRequest() {
+        if (this.selectedExercise) {
+            const httpParams = new HttpParams().set('exerciseId', this.selectedExercise.id!);
+            this.http.post(`api/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
+                next: (response) => {
+                    if (response.status === 200) {
+                        if (response.body) {
+                            const targetLink = response.body['targetLinkUri'];
+                            window.location.replace(targetLink);
+                        }
+                    } else {
+                        console.log('Unexpected response status:', response.status);
+                    }
+                },
+                error: (error) => {
+                    console.error('An error occurred:', error);
+                },
+            });
+        }
     }
 }
