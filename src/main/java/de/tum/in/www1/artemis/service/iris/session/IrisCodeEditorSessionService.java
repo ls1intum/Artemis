@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -150,27 +149,25 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
 
         // The template and model are hard-coded for now, but will be configurable in the future
-        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_CONVERSATION, "STRATEGY_GPT4", params).handleAsync((response, err) -> {
-            if (err != null) {
-                log.error("Error while getting response from Iris model", err);
-                irisCodeEditorWebsocketService.sendException(session, err.getCause());
-            }
-            else if (response == null) {
+        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_CONVERSATION, "STRATEGY_GPT4", params).thenAcceptAsync(response -> {
+            if (response == null) {
                 log.error("No response from Iris model");
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
+                return;
             }
-            else {
-                log.info("Received conversation response from Iris model");
-                try {
-                    var irisMessage = toIrisMessage(response.content());
-                    var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
-                    irisCodeEditorWebsocketService.sendMessage(saved);
-                }
-                catch (IrisParseResponseException e) {
-                    log.error("Error while parsing response from Iris model", e);
-                    irisCodeEditorWebsocketService.sendException(session, e);
-                }
+            log.info("Received conversation response from Iris model");
+            try {
+                var irisMessage = toIrisMessage(response.content());
+                var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
+                irisCodeEditorWebsocketService.sendMessage(saved);
             }
+            catch (IrisParseResponseException e) {
+                log.error("Error while parsing response from Iris model", e);
+                irisCodeEditorWebsocketService.sendException(session, e);
+            }
+        }).exceptionallyAsync(err -> {
+            log.error("Error while getting response from Iris model", err);
+            irisCodeEditorWebsocketService.sendException(session, err.getCause());
             return null;
         });
     }
@@ -252,9 +249,9 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Requests exercise changes from the Iris model for the given session and exercise plan.
-     * This method sends a request to the Iris model for each component in the exercise plan,
-     * and handles the response to extract the changes and send them to the websocket service.
+     * Requests exercise changes from the Iris model for the given session and exercise plan. This method sends a
+     * request to the Iris model for each component in the exercise plan, and handles the response to extract the
+     * changes and send them to the websocket service.
      *
      * @param session      The IrisCodeEditorSession to request exercise changes for
      * @param exercisePlan The IrisExercisePlanMessageContent that contains the exercise plan
@@ -265,7 +262,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         while (exercisePlan.hasNext() && exercisePlan.isExecuting()) {
             var nextPlanComponent = exercisePlan.next();
             var component = nextPlanComponent.getComponent();
-            IrisTemplate prompt = switch (component) {
+            String template = switch (component) {
                 case PROBLEM_STATEMENT -> IrisConstants.CODE_EDITOR_ADAPT_PROBLEM_STATEMENT;
                 case SOLUTION_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_SOLUTION_REPOSITORY;
                 case TEMPLATE_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEMPLATE_REPOSITORY;
@@ -278,7 +275,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
             params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
             params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
-            irisConnectorService.sendRequestV2(prompt, "STRATEGY_GPT4", params).handleAsync((response, err) -> {
+            irisConnectorService.sendRequestV2(template, "STRATEGY_GPT4", params).handleAsync((response, err) -> {
                 if (err != null) {
                     log.error("Error while getting response from Iris model", err);
                     irisCodeEditorWebsocketService.sendException(session, err.getCause());
@@ -291,8 +288,13 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     log.info("Received response containing changes to exercise " + component + " from Iris model");
                     try {
                         var changes = extractChangesForComponent(response.content(), component);
-                        // In this case we do not save anything, as these changes must first be approved by the user
-                        irisCodeEditorWebsocketService.sendChanges(session, component, changes);
+                        if (!changes.isEmpty()) {
+                            // In this case we do not save anything, as these changes must first be approved by the user
+                            irisCodeEditorWebsocketService.sendChanges(session, component, changes);
+                        }
+                        else {
+                            log.error("No changes for exercise " + component + " in response from Iris model");
+                        }
                     }
                     catch (IrisParseResponseException e) {
                         log.error("Error while parsing exercise changes from Iris model", e);
@@ -307,8 +309,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Extracts the changes for a specific component from the response of the LLM.
-     * The response must have the following structure:
+     * Extracts the changes for a specific component from the response of the LLM. The response must have the following
+     * structure:
      *
      * <pre>
      *     {
@@ -335,14 +337,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         }
         List<IrisCodeEditorWebsocketService.FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.get("changes")) {
-            // FIXME: The type of change is not actually generated in the prompts yet. We specify the default value to compensate for this in the meantime.
-            // var type = switch (node.get("type").asText("modify")) {
-            // case "modify" -> IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
-            // case "create" -> IrisCodeEditorWebsocketService.FileChangeType.CREATE;
-            // case "delete" -> IrisCodeEditorWebsocketService.FileChangeType.DELETE;
-            // case "rename" -> IrisCodeEditorWebsocketService.FileChangeType.RENAME;
-            // default -> throw new IrisParseResponseException(new Throwable("Unknown exercise change type"));
-            // };
+            // We will support different file change types in the future. For now, every file change has type MODIFY
             var type = IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
             var file = node.get("file").asText();
             if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().isEmpty()) {
