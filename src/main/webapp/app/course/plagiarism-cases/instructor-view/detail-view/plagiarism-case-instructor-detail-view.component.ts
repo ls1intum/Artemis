@@ -218,7 +218,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     /**
      * Prints the whole page using the theme service
      */
-    printPlagiarismCase(): void {
-        this.themeService.print();
+    async printPlagiarismCase() {
+        return await this.themeService.print();
     }
 }
