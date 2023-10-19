@@ -255,16 +255,26 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return;
         }
 
-        this.umlModel.assessments = feedbacks.map<Assessment>((feedback) => ({
-            modelElementId: feedback.referenceId!,
-            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-            score: feedback.credits!,
-            feedback: feedback.text || undefined,
-            label: this.calculateLabel(feedback),
-            labelColor: this.calculateLabelColor(feedback),
-            correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
-            dropInfo: this.calculateDropInfo(feedback),
-        }));
+        this.umlModel.assessments = feedbacks.reduce<{
+            [id: string]: Assessment;
+        }>(
+            (assessments, feedback) => ({
+                ...assessments,
+                ...{
+                    [feedback.referenceId!]: {
+                        modelElementId: feedback.referenceId!,
+                        elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+                        score: feedback.credits!,
+                        feedback: feedback.text || undefined,
+                        label: this.calculateLabel(feedback),
+                        labelColor: this.calculateLabelColor(feedback),
+                        correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+                        dropInfo: this.calculateDropInfo(feedback),
+                    },
+                },
+            }),
+            {},
+        );
         if (this.apollonEditor) {
             await this.apollonEditor.nextRender;
             this.apollonEditor.model = this.umlModel;

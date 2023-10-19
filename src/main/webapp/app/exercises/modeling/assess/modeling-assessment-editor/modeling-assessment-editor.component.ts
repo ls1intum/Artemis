@@ -323,7 +323,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onSubmitAssessment() {
-        if ((this.model && this.referencedFeedback.length < this.model.elements.length) || !this.assessmentsAreValid) {
+        if ((this.model && this.referencedFeedback.length < Object.keys(this.model.elements).length) || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
@@ -490,7 +490,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             : new Map<string, string>();
 
         const referenceIds = this.referencedFeedback.map((feedback) => feedback.referenceId);
-        for (const element of this.model.elements) {
+        for (const element of Object.values(this.model.elements)) {
             if (!referenceIds.includes(element.id)) {
                 this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);
             }
