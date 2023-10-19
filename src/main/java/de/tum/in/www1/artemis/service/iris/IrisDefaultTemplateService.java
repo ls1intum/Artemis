@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
@@ -40,7 +41,7 @@ public final class IrisDefaultTemplateService {
             String fileContent = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
             return new IrisTemplate(fileContent);
         }
-        catch (Exception e) {
+        catch (IOException e) {
             log.error("Error while loading Iris template from file: {}", filePath, e);
             return new IrisTemplate("");
         }
