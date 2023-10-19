@@ -2681,7 +2681,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void testAbandonStudentExamAlreadyAbandoned() throws Exception {
         studentExam1.setAbandoned(true);
         studentExamRepository.save(studentExam1);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.BAD_REQUEST);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.OK, null);
         studentExam1 = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         // Ensure that student exam is still abandoned
         assertThat(studentExam1.isAbandoned()).isTrue();
@@ -2702,11 +2702,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAbandonStudentExamNotInTime() throws Exception {
-        // Forbidden because user tried to submit before start
+        // Forbidden because user tried to abandon before start
         exam1.setStartDate(ZonedDateTime.now().plusHours(1));
         examRepository.save(exam1);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.FORBIDDEN);
-        // Forbidden because user tried to submit after end
+        // Forbidden because user tried to abandon after end
         exam1.setStartDate(ZonedDateTime.now().minusHours(5));
         examRepository.save(exam1);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/abandon", studentExam1, HttpStatus.FORBIDDEN);
