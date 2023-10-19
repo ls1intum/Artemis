@@ -120,6 +120,7 @@ class Lti13LaunchFilterTest {
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
         doReturn(responseWriter).when(httpResponse).getWriter();
+        doReturn(targetLinkUri).when(lti13Service).parseTargetLinkUri(any());
         initValidIdToken();
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
