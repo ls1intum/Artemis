@@ -4,7 +4,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 /**
  * The IrisCodeEditorWebsocketMessageType defines the type of message sent over the code editor websocket.
@@ -58,7 +58,7 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
-    private subject: Subject<IrisExerciseComponentChangeSet> = new Subject();
+    private subject = new BehaviorSubject<IrisExerciseComponentChangeSet>(new IrisExerciseComponentChangeSet());
 
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
