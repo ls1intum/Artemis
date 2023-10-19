@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.web.rest.metis;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.AnswerPostService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * REST controller for managing AnswerPost.
@@ -19,10 +21,9 @@ import de.tum.in.www1.artemis.service.metis.AnswerPostService;
 @RequestMapping("/api")
 public class AnswerPostResource {
 
-    private final AnswerPostService answerPostService;
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
+    private final AnswerPostService answerPostService;
 
     public AnswerPostResource(AnswerPostService answerPostService) {
         this.answerPostService = answerPostService;
@@ -39,7 +40,10 @@ public class AnswerPostResource {
     @PostMapping("courses/{courseId}/answer-posts")
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) throws URISyntaxException {
+        log.debug("POST createAnswerPost invoked for course {} with post {}", courseId, answerPost.getContent());
+        long start = System.nanoTime();
         AnswerPost createdAnswerPost = answerPostService.createAnswerPost(courseId, answerPost);
+        log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
     }
 
@@ -55,7 +59,10 @@ public class AnswerPostResource {
     @PutMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> updateAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId, @RequestBody AnswerPost answerPost) {
+        log.debug("PUT updateAnswerPost invoked for course {} with post {}", courseId, answerPost.getContent());
+        long start = System.nanoTime();
         AnswerPost updatedAnswerPost = answerPostService.updateAnswerPost(courseId, answerPostId, answerPost);
+        log.info("updatedAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedAnswerPost, null, HttpStatus.OK);
     }
 
@@ -70,7 +77,10 @@ public class AnswerPostResource {
     @DeleteMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId) {
+        log.debug("PUT deleteAnswerPost invoked for course {} on post {}", courseId, answerPostId);
+        long start = System.nanoTime();
         answerPostService.deleteAnswerPostById(courseId, answerPostId);
+        log.info("deleteAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
     }
 }
