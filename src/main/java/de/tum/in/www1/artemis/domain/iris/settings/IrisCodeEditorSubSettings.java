@@ -13,26 +13,32 @@ import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
  */
 @Entity
 @DiscriminatorValue("CODE_EDITOR")
+@SecondaryTable(name = "iris_code_editor_sub_settings")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisCodeEditorSubSettings extends IrisSubSettings {
 
     @Nullable
+    @JoinColumn(table = "iris_code_editor_sub_settings")
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private IrisTemplate chatTemplate;
 
     @Nullable
+    @JoinColumn(table = "iris_code_editor_sub_settings")
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private IrisTemplate problemStatementGenerationTemplate;
 
     @Nullable
+    @JoinColumn(table = "iris_code_editor_sub_settings")
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private IrisTemplate templateRepoGenerationTemplate;
 
     @Nullable
+    @JoinColumn(table = "iris_code_editor_sub_settings")
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private IrisTemplate solutionRepoGenerationTemplate;
 
     @Nullable
+    @JoinColumn(table = "iris_code_editor_sub_settings")
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private IrisTemplate testRepoGenerationTemplate;
 
