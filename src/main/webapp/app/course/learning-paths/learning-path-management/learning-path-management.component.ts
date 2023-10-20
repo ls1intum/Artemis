@@ -9,11 +9,11 @@ import { AlertService } from 'app/core/util/alert.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { faSort, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { HealthStatus, LearningPathHealthDTO, getWarningAction, getWarningBody, getWarningHint, getWarningTitle } from 'app/entities/competency/learning-path-health.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { LearningPathProgressModalComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-modal.component';
+import { LearningPathProgressModalComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-modal.component';
 
 export enum TableColumn {
     ID = 'ID',
@@ -41,7 +41,7 @@ export class LearningPathManagementComponent implements OnInit {
         sortingOrder: SortingOrder.ASCENDING,
         sortedColumn: TableColumn.ID,
     };
-    content: SearchResult<LearningPathPageableSearchDTO>;
+    content: SearchResult<LearningPathInformationDTO>;
     total = 0;
 
     private search = new Subject<void>();
@@ -90,7 +90,7 @@ export class LearningPathManagementComponent implements OnInit {
      * @param item The item itself
      * @returns The ID of the item
      */
-    trackId(index: number, item: LearningPathPageableSearchDTO): number {
+    trackId(index: number, item: LearningPathInformationDTO): number {
         return item.id!;
     }
 
@@ -208,7 +208,7 @@ export class LearningPathManagementComponent implements OnInit {
         }
     }
 
-    viewLearningPath(learningPath: LearningPathPageableSearchDTO) {
+    viewLearningPath(learningPath: LearningPathInformationDTO) {
         const modalRef = this.modalService.open(LearningPathProgressModalComponent, {
             size: 'xl',
             backdrop: 'static',
