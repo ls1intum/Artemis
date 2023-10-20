@@ -436,6 +436,10 @@
             "fullName": "Dominik Remo",
             "sortBy": "Remo",
             "photoDirectory": "public/images/about/Dominik_Remo.jpg"
+        },
+        {
+            "fullName": "Nityananda Zbil",
+            "photoDirectory": "public/images/about/Nityananda_Zbil.jpg"
         }
     ]
 }
