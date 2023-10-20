@@ -23,6 +23,14 @@ import de.tum.in.www1.artemis.service.FileService;
  */
 public class LectureFactory {
 
+    /**
+     * Generates a Lecture for the given Course.
+     *
+     * @param startDate The start date of the Lecture
+     * @param endDate   The end date of the Lecture
+     * @param course    The Course the Lecture belongs to
+     * @return The generated Lecture
+     */
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
         lecture.setVisibleDate(startDate);
@@ -35,14 +43,14 @@ public class LectureFactory {
     }
 
     /**
-     * Create a dummy attachment unit for testing. Includes a dummy attachment with optional placeholder image file on disk
+     * Generates an AttachmentUnit with an Attachment. The Attachment can be created with or without a link to an image file.
      *
-     * @param withFile Whether to include a placeholder image file on disk
-     * @return AttachmentUnit that was created
+     * @param withFile True, if the Attachment should link to a file
+     * @return The generated AttachmentUnit
      */
     public static AttachmentUnit generateAttachmentUnit(boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started) : LectureFactory.generateAttachment(started);
+        Attachment attachmentOfAttachmentUnit = withFile ? generateAttachmentWithFile(started) : generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
@@ -51,10 +59,10 @@ public class LectureFactory {
     }
 
     /**
-     * Create a dummy attachment for testing
+     * Generates an Attachment with AttachmentType FILE.
      *
-     * @param date The optional upload and release date to set on the attachment
-     * @return Attachment that was created
+     * @param date The optional upload and release date of the Attachment
+     * @return The generated Attachment
      */
     public static Attachment generateAttachment(ZonedDateTime date) {
         Attachment attachment = new Attachment();
@@ -69,10 +77,10 @@ public class LectureFactory {
     }
 
     /**
-     * Create a dummy attachment for testing with a placeholder image file on disk
+     * Generates an Attachment with AttachmentType FILE and a link to an image file.
      *
-     * @param startDate The release date to set on the attachment
-     * @return Attachment that was created with its link set to a testing file on disk
+     * @param startDate The optional upload and release date of the Attachment
+     * @return The generated Attachment
      */
     public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
         Attachment attachment = generateAttachment(startDate);
