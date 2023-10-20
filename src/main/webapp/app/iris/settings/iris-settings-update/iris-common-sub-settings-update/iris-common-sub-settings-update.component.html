@@ -1,0 +1,44 @@
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" [disabled]="!isAdmin" [(ngModel)]="enabled" (change)="onEnabledChange()" />
+    <label class="form-check-label" for="flexSwitchCheckDefault" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
+</div>
+
+<span><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.allowedModels.title">Allowed Models</span>: </span>
+<div *ngIf="allowedIrisModelsInherited" class="alert alert-primary" role="alert">
+    {{ 'artemisApp.iris.settings.subSettings.allowedModels.inheritedInfo' | artemisTranslate }}
+</div>
+<div>
+    <select id="irisModels" [disabled]="!isAdmin" [(ngModel)]="allowedIrisModels" multiple (change)="onAllowedIrisModelsSelectionChange()">
+        <option *ngFor="let model of allIrisModels" [ngValue]="model">{{ model.name }}</option>
+    </select>
+</div>
+<jhi-button
+    *ngIf="parentSubSettings"
+    id="inheritAllowedModels"
+    [btnType]="WARNING"
+    [icon]="faTrash"
+    [title]="'artemisApp.iris.settings.subSettings.allowedModels.inheritButton'"
+    (onClick)="inheritAllowedModels()"
+></jhi-button>
+<br />
+
+<span><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.preferredModel">Preferred Model</span>: </span>
+<div ngbDropdown class="d-inline-block me-2">
+    <button class="btn btn-outline-primary w-100" id="dropdownBasic1" [disabled]="!isAdmin" ngbDropdownToggle>
+        {{ getSelectedModelName() }}
+    </button>
+    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+        <button *ngIf="modelOptional" (click)="setModel(undefined)" [class.selected]="subSettings?.preferredModel === undefined" ngbDropdownItem>
+            {{ 'artemisApp.iris.settings.subSettings.inheritModel' | artemisTranslate }}
+        </button>
+        <button
+            *ngFor="let model of allowedIrisModels"
+            (click)="setModel(model)"
+            [class.selected]="model.id === subSettings?.preferredModel"
+            [ngbTooltip]="model.description"
+            ngbDropdownItem
+        >
+            {{ model.name }}
+        </button>
+    </div>
+</div>

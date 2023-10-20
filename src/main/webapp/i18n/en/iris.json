@@ -22,9 +22,13 @@
                 "subSettings": {
                     "chatSettings": "Chat Settings",
                     "hestiaSettings": "Hestia Settings",
-                    "inheritChatSettings": "Inherit Chat Settings",
-                    "inheritHestiaSettings": "Inherit Hestia Settings",
+                    "codeEditorSettings": "Code Editor Settings",
                     "enabled-disabled": "Enabled/Disabled",
+                    "allowedModels": {
+                        "title": "Allowed Models",
+                        "inheritedInfo": "These models are inherited from higher level settings. Edit them here to overwrite them for this level.",
+                        "inheritButton": "Inherit Allowed Models"
+                    },
                     "preferredModel": "Preferred Model",
                     "inheritModel": "Inherit Model",
                     "rateLimit": "Rate Limit",
@@ -33,7 +37,8 @@
                     "rateLimitTimeframeHoursTooltip": "The time period in which the rate limit applies in hours.",
                     "template": {
                         "title": "Template",
-                        "inherit": "Inherit Template"
+                        "inherit": "Inherit Template",
+                        "inheritedInfo": "This template is inherited from higher level settings. Edit it here to overwrite it for this level."
                     }
                 },
                 "title": {

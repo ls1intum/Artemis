@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { IrisSettingsType } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
+import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
     selector: 'jhi-iris-global-settings-update',

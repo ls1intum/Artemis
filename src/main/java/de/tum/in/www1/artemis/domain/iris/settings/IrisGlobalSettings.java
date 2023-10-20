@@ -46,7 +46,7 @@ public class IrisGlobalSettings extends IrisSettings {
                 || (irisChatSettings.getTemplate() != null && irisChatSettings.getTemplate().getContent() != null && !irisChatSettings.getTemplate().getContent().isEmpty());
         var hestiaSettingsValid = !Hibernate.isInitialized(irisHestiaSettings) || irisHestiaSettings == null
                 || (irisHestiaSettings.getTemplate() != null && irisHestiaSettings.getTemplate().getContent() != null && !irisHestiaSettings.getTemplate().getContent().isEmpty());
-        return currentVersion > 0 && chatSettingsValid && hestiaSettingsValid;
+        return chatSettingsValid && hestiaSettingsValid;
     }
 
     public int getCurrentVersion() {

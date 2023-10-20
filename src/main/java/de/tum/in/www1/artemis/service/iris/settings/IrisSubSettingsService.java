@@ -236,7 +236,7 @@ public class IrisSubSettingsService {
 
     private Set<String> getCombinedAllowedModels(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getAllowedModels).filter(Objects::nonNull)
-                .reduce((first, second) -> second).orElse(new TreeSet<>());
+                .filter(models -> !models.isEmpty()).reduce((first, second) -> second).orElse(new TreeSet<>());
     }
 
     /**
@@ -264,6 +264,6 @@ public class IrisSubSettingsService {
     private <S extends IrisSubSettings> IrisTemplate getCombinedTemplate(List<IrisSettings> settingsList, Function<IrisSettings, S> subSettingsFunction,
             Function<S, IrisTemplate> templateFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(templateFunction)
-                .filter(template -> template != null && !template.getContent().isBlank()).reduce((first, second) -> second).orElse(null);
+                .filter(template -> template != null && template.getContent() != null && !template.getContent().isBlank()).reduce((first, second) -> second).orElse(null);
     }
 }

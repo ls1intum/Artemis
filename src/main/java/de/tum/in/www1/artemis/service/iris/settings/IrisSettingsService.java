@@ -90,13 +90,13 @@ public class IrisSettingsService {
      */
     private void autoUpdateGlobalSettings(IrisGlobalSettings settings) {
         if (settings.getCurrentVersion() < IrisConstants.GLOBAL_SETTINGS_VERSION) {
-            if (settings.isEnableAutoUpdateChat()) {
+            if (settings.isEnableAutoUpdateChat() || settings.getIrisChatSettings() == null) {
                 settings.getIrisChatSettings().setTemplate(new IrisTemplate(IrisConstants.DEFAULT_CHAT_TEMPLATE));
             }
-            if (settings.isEnableAutoUpdateHestia()) {
+            if (settings.isEnableAutoUpdateHestia() || settings.getIrisHestiaSettings() == null) {
                 settings.getIrisHestiaSettings().setTemplate(new IrisTemplate(IrisConstants.DEFAULT_HESTIA_TEMPLATE));
             }
-            if (settings.isEnableAutoUpdateCodeEditor()) {
+            if (settings.isEnableAutoUpdateCodeEditor() || settings.getIrisCodeEditorSettings() == null) {
                 updateIrisCodeEditorSettings(settings);
             }
             settings.setCurrentVersion(IrisConstants.GLOBAL_SETTINGS_VERSION);

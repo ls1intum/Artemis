@@ -22,16 +22,23 @@
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
                     "hestiaSettings": "Hestia Einstellungen",
+                    "codeEditorSettings": "Code Editor Einstellungen",
                     "inheritChatSettings": "Vererbe Chat Einstellungen",
                     "inheritHestiaSettings": "Vererbe Hestia Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",
+                    "allowedModels": {
+                        "title": "Erlaubte Modelle",
+                        "inheritedInfo": "Diese Modelle sind von einem höherem Level geerbt. Ändere sie hier, um sie in diesem Level zu überschreiben.",
+                        "inheritButton": "Erlaubte Modelle vererben"
+                    },
                     "preferredModel": "Präferiertes Modell",
                     "inheritModel": "Vererbe Modell",
                     "rateLimit": "Rate Limit",
                     "rateLimitTooltip": "Die maximale Anzahl an Antworten, die ein Benutzer vom LLM in einem bestimmten Zeitraum erhalten kann.",
                     "template": {
                         "title": "Template",
-                        "inherit": "Inherit Template"
+                        "inherit": "Template erben",
+                        "inheritedInfo": "Dieses Template ist von einem höherem Level geerbt. Ändere es hier, um es in diesem Level zu überschreiben."
                     }
                 },
                 "title": {

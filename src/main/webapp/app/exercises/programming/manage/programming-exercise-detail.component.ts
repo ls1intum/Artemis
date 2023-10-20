@@ -54,7 +54,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
+import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -423,8 +423,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * Shows the iris settings in a modal.
      */
     showIrisSettings(): void {
-        const modalRef = this.modalService.open(IrisProgrammingExerciseSettingsUpdateComponent, { size: 'xl' });
-        modalRef.componentInstance.programmingExerciseId = this.programmingExercise.id;
+        const modalRef = this.modalService.open(IrisExerciseSettingsUpdateComponent, { size: 'xl' });
+        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.exerciseId = this.programmingExercise.id;
     }
 
     createStructuralSolutionEntries() {
