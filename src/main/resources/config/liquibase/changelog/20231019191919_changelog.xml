@@ -81,7 +81,7 @@
                                  referencedTableName="iris_template"/>
         <!-- Set discriminators -->
         <sql>
-            UPDATE iris_settings SET discriminator = 'GLOBAL' WHERE id IN (SELECT id FROM iris_settings WHERE is_global = TRUE);
+            UPDATE iris_settings SET discriminator = 'GLOBAL' WHERE is_global = TRUE;
             UPDATE iris_settings SET discriminator = 'COURSE' WHERE id IN (SELECT iris_settings_id FROM course WHERE iris_settings_id IS NOT NULL);
             UPDATE iris_settings SET discriminator = 'EXERCISE' WHERE id IN (SELECT iris_settings_id FROM programming_exercise_details WHERE iris_settings_id IS NOT NULL);
 
