@@ -177,7 +177,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * @param componentRef the sub route component that has been mounted into the router outlet
      */
     onSubRouteActivate(componentRef: any) {
-        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages' || this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
         this.setUpConversationService();
 

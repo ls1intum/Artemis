@@ -167,7 +167,7 @@ export class PostService extends PostingService<Post> {
         if (post?.conversation || postContextFilter?.conversationId) {
             return '/messages';
         } else {
-            return '/posts';
+            return '/messages';
         }
     }
 }
