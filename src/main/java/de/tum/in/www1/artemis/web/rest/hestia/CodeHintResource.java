@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,11 +41,11 @@ public class CodeHintResource {
 
     private final CodeHintService codeHintService;
 
-    private final IrisSettingsService irisSettingsService;
+    private final Optional<IrisSettingsService> irisSettingsService;
 
     public CodeHintResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, CodeHintRepository codeHintRepository, CodeHintService codeHintService,
-            IrisSettingsService irisSettingsService) {
+            Optional<IrisSettingsService> irisSettingsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.solutionEntryRepository = solutionEntryRepository;
@@ -103,6 +102,7 @@ public class CodeHintResource {
      * @param codeHintId The id of the code hint
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
      */
+    @Profile("iris")
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
     @EnforceAtLeastEditor
     public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
@@ -110,7 +110,7 @@ public class CodeHintResource {
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.HESTIA, exercise);
+        irisSettingsService.orElseThrow().isEnabledForElseThrow(IrisSubSettingsType.HESTIA, exercise);
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
