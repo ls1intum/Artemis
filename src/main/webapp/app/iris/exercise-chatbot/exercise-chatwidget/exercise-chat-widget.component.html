@@ -78,8 +78,7 @@
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
                         <div class="bubble-left" *ngIf="isTextContent(content)">
-                            <span *ngIf="isFirstMessage && i === 0" [innerHTML]="getTextContent(content)! | artemisTranslate"></span>
-                            <span *ngIf="!isFirstMessage || (isFirstMessage && i > 0)" [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
+                            <span [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
                         </div>
                         <div *ngIf="isRateMessage()" class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
@@ -109,7 +108,7 @@
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
                         <div class="bubble-left" *ngIf="isTextContent(content)">
-                            <span [innerHTML]="getTextContent(content)! | artemisTranslate"></span>
+                            <span [innerHTML]="getTextContent(content)!"></span>
                         </div>
                     </div>
                 </div>

@@ -40,7 +40,6 @@ import {
     IrisMessageContent,
     IrisMessageContentType,
     IrisMessageTextContent,
-    getComponentInstruction,
     getPlanComponent,
     getTextContent,
     isPlanContent,
@@ -57,9 +56,9 @@ import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
-import { IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-component.model';
 import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -120,17 +119,18 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     unreadMessageIndex: number;
     error: IrisErrorType | null;
     dots = 1;
-    isFirstMessage = false;
     resendAnimationActive = false;
     shakeErrorField = false;
     shouldLoadGreetingMessage = true;
     fadeState = '';
+    courseId: number;
     exerciseId: number;
     sessionService: IrisSessionService;
     shouldShowEmptyMessageError = false;
     currentMessageCount: number;
     rateLimit: number;
     rateLimitTimeframeHours: number;
+    importExerciseUrl: string;
 
     // User preferences
     userAccepted: boolean;
@@ -149,14 +149,15 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     constructor(
         private dialog: MatDialog,
         @Inject(MAT_DIALOG_DATA) public data: any,
-        //private httpMessageService: IrisHttpMessageService,
         private userService: UserService,
         private router: Router,
         private sharedService: SharedService,
         private modalService: NgbModal,
         @Inject(DOCUMENT) private document: Document,
+        private translateService: TranslateService,
     ) {
         this.stateStore = data.stateStore;
+        this.courseId = data.courseId;
         this.exerciseId = data.exerciseId;
         this.sessionService = data.sessionService;
         this.navigationSubscription = this.router.events.subscribe((event) => {
@@ -321,13 +322,25 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     /**
+     * Inserts the correct link to import the current programming exercise for a new variant generation.
+     */
+    getFirstMessageContent(): string {
+        if (this.isChatSession()) {
+            return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
+        }
+        this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
+        return this.translateService
+            .instant('artemisApp.exerciseChatbot.codeEditorFirstMessage')
+            .replace(/{link:(.*)}/, '<a href="' + this.importExerciseUrl + '" target="_blank">$1</a>');
+    }
+
+    /**
      * Loads the first message in the conversation if it's not already loaded.
      */
     loadFirstMessage(): void {
-        const textContent = this.isChatSession() ? 'artemisApp.exerciseChatbot.tutorFirstMessage' : 'artemisApp.exerciseChatbot.codeEditorFirstMessage';
         const firstMessageContent = {
             type: IrisMessageContentType.TEXT,
-            textContent: textContent,
+            textContent: this.getFirstMessageContent(),
         } as IrisMessageTextContent;
 
         const firstMessage = {
@@ -337,10 +350,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         } as IrisArtemisClientMessage;
 
         if (this.messages.length === 0) {
-            this.isFirstMessage = true;
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
-        } else if (this.messages[0].sender === IrisSender.ARTEMIS_CLIENT) {
-            this.isFirstMessage = true;
         }
     }
 
@@ -735,10 +745,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     getPlanComponents(content: IrisMessageContent) {
         return getPlanComponent(content);
-    }
-
-    getComponentInstruction(component: IrisExercisePlanComponent) {
-        return getComponentInstruction(component);
     }
 
     isRateMessage() {
