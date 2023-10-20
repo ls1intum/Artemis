@@ -43,6 +43,10 @@
             </svg:g>
         </ng-template>
     </ngx-graph>
+
+    <div *ngIf="viewMode === PATH" class="floating-icon-button" (click)="viewProgress()">
+        <fa-icon [icon]="faEye" ngbTooltip="{{ 'artemisApp.learningPath.participate.viewProgress' | artemisTranslate }}"></fa-icon>
+    </div>
 </div>
 
 <ng-template #nodeTemplateRef let-node>

@@ -5,6 +5,8 @@ import * as shape from 'd3-shape';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { NgxLearningPathDTO, NgxLearningPathNode } from 'app/entities/competency/learning-path.model';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-learning-path-graph',
@@ -30,9 +32,12 @@ export class LearningPathGraphComponent implements OnInit {
     center$: Subject<boolean> = new Subject<boolean>();
     zoomToFit$: Subject<boolean> = new Subject<boolean>();
 
+    faEye = faEye;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private learningPathService: LearningPathService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -42,7 +47,7 @@ export class LearningPathGraphComponent implements OnInit {
     }
 
     @Input() set draggingEnabled(value) {
-        this._draggingEnabled = value || false;
+        this._draggingEnabled = value;
     }
 
     get draggingEnabled() {
