@@ -60,7 +60,7 @@
             <dd id="course-short-name">
                 <span>{{ course.shortName }}</span>
             </dd>
-            <ng-container *ngIf="(course.organizations?.length ?? 0) > 0">
+            <ng-container *ngIf="!!course.organizations?.length">
                 <dt><span jhiTranslate="artemisApp.course.organizations">Course Organizations</span></dt>
                 <dd id="course-organisations">
                     <span *ngFor="let organization of course.organizations" class="badge bg-primary font-weight-normal m-1 ps-3">{{ organization.name }}</span>
