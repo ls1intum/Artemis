@@ -519,8 +519,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Working time
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         examRepository.save(exam);
-        // studentExam.setExam(exam);
-        // studentExamRepository.save(studentExam);
 
         // student1 should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);

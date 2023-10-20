@@ -521,7 +521,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
-        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).hasSize(0);
+        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
     }
 
     @Test
@@ -532,7 +532,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
-        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).hasSize(0);
+        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
     }
 
     @Test
@@ -543,7 +543,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
-        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).hasSizeGreaterThan(0);
+        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isNotEmpty();
     }
 
     @Test
