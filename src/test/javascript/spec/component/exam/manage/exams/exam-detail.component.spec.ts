@@ -33,6 +33,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
+import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
+import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 
 @Component({
     template: '',
@@ -43,6 +45,7 @@ describe('ExamDetailComponent', () => {
     let examDetailComponentFixture: ComponentFixture<ExamDetailComponent>;
     let examDetailComponent: ExamDetailComponent;
     let service: ExamManagementService;
+    let quizPoolService: QuizPoolService;
     let router: Router;
 
     const exampleHTML = '<h1>Sample Markdown</h1>';
@@ -112,6 +115,7 @@ describe('ExamDetailComponent', () => {
                 examDetailComponentFixture = TestBed.createComponent(ExamDetailComponent);
                 examDetailComponent = examDetailComponentFixture.componentInstance;
                 service = TestBed.inject(ExamManagementService);
+                quizPoolService = TestBed.inject(QuizPoolService);
             });
 
         router = TestBed.inject(Router);
@@ -129,6 +133,7 @@ describe('ExamDetailComponent', () => {
         exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
         examDetailComponent.exam = exam;
+        jest.spyOn(quizPoolService, 'find').mockReturnValue(of(new HttpResponse<QuizPool>({ body: new QuizPool() })));
     });
 
     afterEach(() => {
