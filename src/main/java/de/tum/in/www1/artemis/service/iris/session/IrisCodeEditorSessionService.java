@@ -149,7 +149,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
 
         // The template and model are hard-coded for now, but will be configurable in the future
-        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_CONVERSATION, "STRATEGY_GPT4", params).thenAcceptAsync(response -> {
+        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_CONVERSATION, "STRATEGY_GPT35_TURBO", params).thenAcceptAsync(response -> {
             if (response == null) {
                 log.error("No response from Iris model");
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
@@ -157,6 +157,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             }
             log.info("Received conversation response from Iris model");
             try {
+                log.info(response.content().toPrettyString());
                 var irisMessage = toIrisMessage(response.content());
                 var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
                 irisCodeEditorWebsocketService.sendMessage(saved);
@@ -275,7 +276,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
             params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
             params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
-            irisConnectorService.sendRequestV2(template, "STRATEGY_GPT4", params).handleAsync((response, err) -> {
+            irisConnectorService.sendRequestV2(template, "STRATEGY_GPT35_TURBO", params).handleAsync((response, err) -> {
                 if (err != null) {
                     log.error("Error while getting response from Iris model", err);
                     irisCodeEditorWebsocketService.sendException(session, err.getCause());

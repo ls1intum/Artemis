@@ -185,16 +185,15 @@ public final class IrisConstants {
             {{/each}}
 
             {{#system~}}
-                Has the instructor given you enough information about their intent for the exercise for you to make suggestions?
-                It is okay to make some assumptions about the instructor's intent, but you should ask questions if you are unsure.
-                If you have enough information to work with, say "1". Otherwise, say "0".
+                Your job is to find out what the instructor wants to change about the exercise.
+                If you do not know yet what the instructor wants to change, you must first find out by asking questions.
+                Once you know what the instructor wants to do, you may suggest a plan to change the exercise.
+                Has the instructor given you enough information about their intent for the exercise for you to suggest a plan?
+                If so, say "1". Otherwise, if you still need to find out better what they want, say "0".
             {{~/system}}
             {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
 
-            {{#if (contains will_suggest_changes "0")}}
-                {{#system~}}Respond to the instructor and ask a question to clarify their intent.{{~/system}}
-                {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
-            {{else}}
+            {{#if (contains will_suggest_changes "1")}}
                 {{#system~}}
                     Respond to the instructor like a helpful assistant would, summarizing how you will adapt the exercise as a whole.
                     Do not go into detail here, just give a very high-level overview to tell the instructor what to expect.
@@ -219,6 +218,9 @@ public final class IrisConstants {
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.plan' temperature=0.5 max_tokens=150}}{{~/assistant}}
                 {{/geneach}}
+            {{else}}
+                {{#system~}}Respond to the instructor and ask a question to clarify their intent.{{~/system}}
+                {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
             {{/if}}
             """;
 
