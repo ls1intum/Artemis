@@ -8,7 +8,7 @@
             "archiveSuccessWithWarnings": "Der Archivierungsprozess wurde mit den folgenden Warnungen abgeschlossen:",
             "archiveCourseError": {
                 "NOTHING_TO_EXPORT": "Der Kurs '{{ courseName }}' wurde nicht archiviert, da er leer ist.",
-                "DIR_NOT_CREATED": "Der Kurs '{{ courseName }}' konnte nicht archiviert werde: Der Ordner konnte nicht erstellt werden"
+                "DIR_NOT_CREATED": "Der Kurs '{{ courseName }}' konnte nicht archiviert werden: Der Ordner konnte nicht erstellt werden"
             },
             "archiveExamError": "Die Prüfung konnte nicht archiviert werden '{{ examName }}': Der Ordner konnte nicht erstellt werden",
             "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
