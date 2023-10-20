@@ -127,13 +127,12 @@ public class ContinuousPlagiarismControlService {
         var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
                 plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
 
-        log.info("CPC - 07 - {}", plagiarismCases.size());
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null).map(ContinuousPlagiarismControlService::buildCpcPost).forEach(post -> {
             try {
                 postService.createContinuousPlagiarismControlPlagiarismCasePost(post);
             }
             catch (ArtemisMailException e) {
-                // silent mail exception
+                // Catch mail exceptions to so that notification for the second student will be delivered
                 log.error("Cannot send a cpc email: postId={}, plagiarismCaseId={}.", post.getId(), post.getPlagiarismCase().getId());
             }
         });

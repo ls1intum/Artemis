@@ -240,10 +240,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.plagiarismDetectionConfig c
-            LEFT JOIN FETCH e.studentParticipations p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH e.plagiarismDetectionConfig c
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
             WHERE e.dueDate >= :time
                 AND c.continuousPlagiarismControlEnabled = TRUE
             """)
@@ -470,7 +470,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     /**
-     * Finds all exercises where the due date is today or in the future and continuos plagiarism control is enabled
+     * Finds all exercises where the due date is yesterday, today or in the future and continuous plagiarism control is enabled
      * (does not return exercises belonging to test courses).
      *
      * @return set of exercises

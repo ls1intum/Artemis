@@ -78,7 +78,7 @@
             >
             </jhi-exercise-update-notification>
 
-            <jhi-exercise-update-plagiarism [exercise]="programmingExercise"> </jhi-exercise-update-plagiarism>
+            <jhi-exercise-update-plagiarism *ngIf="!isExamMode" [exercise]="programmingExercise"> </jhi-exercise-update-plagiarism>
 
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">
