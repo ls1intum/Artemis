@@ -6,7 +6,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathContainerComponent } from 'app/course/learning-paths/participate/learning-path-container.component';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -162,7 +162,6 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle lecture unit node click', () => {
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         const node = { id: 'some-id', type: NodeType.LECTURE_UNIT, linkedResource: 2, linkedResourceParent: 3 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
@@ -171,7 +170,6 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle exercise node click', () => {
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
