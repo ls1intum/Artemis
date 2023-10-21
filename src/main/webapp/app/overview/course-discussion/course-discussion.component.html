@@ -12,13 +12,6 @@
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
         <jhi-documentation-button [type]="documentationType" class="information-button"></jhi-documentation-button>
-        <div *ngIf="createdPost">
-            <button id="new-post" class="btn btn-md btn-primary ms-1" (click)="createEditModal.open()">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
-            </button>
-            <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
-        </div>
     </div>
 
     <form [formGroup]="formGroup">
@@ -53,8 +46,12 @@
                                     }})
                                 </span>
                             </mat-select-trigger>
-                            <mat-optgroup [label]="'artemisApp.metis.post.courseWideChannels' | artemisTranslate">
-                                <mat-option *ngFor="let channel of courseWideChannels" [value]="{ conversationId: channel.id, title: channel.name }" class="context-option">
+                            <mat-optgroup *ngFor="let subType of availableChannelSubtypes" [label]="'artemisApp.metis.overview.filterOptGroups.' + subType | artemisTranslate">
+                                <mat-option
+                                    *ngFor="let channel of categorizedChannels[subType]"
+                                    [value]="{ conversationId: channel.id, title: channel.name }"
+                                    class="context-option"
+                                >
                                     <span class="context-option-text">{{ channel.name }}</span>
                                 </mat-option>
                             </mat-optgroup>

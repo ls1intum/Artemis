@@ -57,6 +57,9 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.exerciseIds?.length) {
             params = params.set('exerciseIds', postContextFilter.exerciseIds.toString());
         }
+        if (postContextFilter.conversationIds) {
+            params = params.set('conversationIds', postContextFilter.conversationIds.toString());
+        }
         if (postContextFilter.plagiarismCaseId) {
             params = params.set('plagiarismCaseId', postContextFilter.plagiarismCaseId.toString());
         }

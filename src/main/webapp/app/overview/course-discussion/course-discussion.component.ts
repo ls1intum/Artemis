@@ -15,7 +15,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -30,6 +30,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     exercises?: Exercise[];
     lectures?: Lecture[];
     courseWideChannels: ChannelDTO[] = [];
+    categorizedChannels: { [key: string]: ChannelDTO[] } = {};
+    availableChannelSubtypes: string[];
     currentSortDirection = SortDirection.DESCENDING;
     totalItems = 0;
     pagingEnabled = true;
@@ -107,6 +109,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.metisService.getFilteredPosts({
             courseId: this.course!.id,
             searchText: this.searchText ? this.searchText : undefined,
+            conversationIds: [],
             postSortCriterion: this.currentSortCriterion,
             sortingOrder: this.currentSortDirection,
             pagingEnabled: this.pagingEnabled,
@@ -175,7 +178,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
         this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
         this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
-        this.currentPostContextFilter.conversationIds = conversationIds;
+        this.currentPostContextFilter.conversationIds = conversationIds.length ? conversationIds : this.courseWideChannels.map((channel) => channel.id!);
 
         super.onSelectContext();
     }
@@ -275,7 +278,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             courseWideContexts: undefined,
             exerciseIds: undefined,
             lectureIds: undefined,
-            conversationIds: undefined,
+            conversationIds: [],
             searchText: undefined,
             filterToUnresolved: false,
             filterToOwn: false,
@@ -299,6 +302,17 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
             this.courseWideChannels = conversations?.filter((conv) => isChannelDto(conv) && conv.isCourseWide) ?? [];
+            this.categorizedChannels = {};
+            this.availableChannelSubtypes = [];
+            const subTypeDisplayOrder = [ChannelSubType.GENERAL, ChannelSubType.EXERCISE, ChannelSubType.LECTURE, ChannelSubType.EXAM];
+            subTypeDisplayOrder.forEach((subType) => {
+                const channelsOfSubType = this.courseWideChannels.filter((channel) => channel.subType === subType);
+                if (channelsOfSubType.length) {
+                    this.categorizedChannels[subType] = channelsOfSubType;
+                    this.availableChannelSubtypes.push(subType);
+                }
+            });
+            console.log(this.courseWideChannels, this.categorizedChannels, this.availableChannelSubtypes);
         });
     }
 }

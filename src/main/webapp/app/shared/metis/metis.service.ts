@@ -31,7 +31,7 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -413,7 +413,7 @@ export class MetisService implements OnDestroy {
      * @return {Params} required parameter key-value pair
      */
     getQueryParamsForPost(post: Post): Params {
-        if (post.courseWideContext) {
+        if (post.courseWideContext || post.conversation) {
             return MetisService.getQueryParamsForCoursePost(post.id!);
         } else {
             return MetisService.getQueryParamsForLectureOrExercisePost(post.id!);
@@ -427,6 +427,7 @@ export class MetisService implements OnDestroy {
      */
     getContextInformation(post: Post): ContextInformation {
         let routerLinkComponents = undefined;
+        let queryParams = undefined;
         let displayName;
         if (post.exercise) {
             displayName = post.exercise.title!;
@@ -434,11 +435,15 @@ export class MetisService implements OnDestroy {
         } else if (post.lecture) {
             displayName = post.lecture.title!;
             routerLinkComponents = ['/courses', this.courseId, 'lectures', post.lecture.id!];
-        } else {
+        } else if (post.courseWideContext) {
             // course-wide topics are not linked, only displayName is set
             displayName = this.translateService.instant('artemisApp.metis.overview.' + post.courseWideContext);
+        } else if (post.conversation) {
+            displayName = post.conversation?.type === 'channel' ? (post.conversation as Channel).name : '';
+            routerLinkComponents = ['/courses', this.courseId, 'messages'];
+            queryParams = { conversationId: post.conversation.id! };
         }
-        return { routerLinkComponents, displayName };
+        return { routerLinkComponents, displayName, queryParams };
     }
 
     /**
@@ -552,15 +557,18 @@ export class MetisService implements OnDestroy {
         this.currentPostContextFilter.courseWideContexts?.sort();
         this.currentPostContextFilter.exerciseIds?.sort((a, b) => a - b);
         this.currentPostContextFilter.lectureIds?.sort((a, b) => a - b);
+        this.currentPostContextFilter.conversationIds?.sort((a, b) => a - b);
 
         other.courseWideContexts?.sort();
         other.exerciseIds?.sort((a, b) => a - b);
         other.lectureIds?.sort((a, b) => a - b);
+        other.conversationIds?.sort((a, b) => a - b);
 
         return (
             this.currentPostContextFilter.courseWideContexts?.toString() !== other.courseWideContexts?.toString() ||
             this.currentPostContextFilter.exerciseIds?.toString() !== other.exerciseIds?.toString() ||
-            this.currentPostContextFilter.lectureIds?.toString() !== other.lectureIds?.toString()
+            this.currentPostContextFilter.lectureIds?.toString() !== other.lectureIds?.toString() ||
+            this.currentPostContextFilter.conversationIds?.toString() !== other.conversationId?.toString()
         );
     }
 }

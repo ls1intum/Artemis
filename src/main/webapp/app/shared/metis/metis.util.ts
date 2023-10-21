@@ -129,6 +129,7 @@ export enum UserRole {
  */
 export interface ContextInformation {
     routerLinkComponents?: RouteComponents;
+    queryParams?: Params;
     displayName: string;
 }
 
