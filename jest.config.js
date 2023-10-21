@@ -47,6 +47,7 @@ const esModules = [
     'ngx-infinite-scroll',
     'internmap',
     '@swimlane/ngx-graph',
+    'ngx-slider-v2'
 ].join('|');
 
 const {
