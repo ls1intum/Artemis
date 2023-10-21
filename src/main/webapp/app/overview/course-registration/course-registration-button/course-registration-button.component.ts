@@ -42,7 +42,7 @@ export class CourseRegistrationButtonComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadUserIsAllowedToRegister();
-        this.confirmationTitle = this.translateService.instant('artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle', { courseTitle: this.course?.title });
+        this.confirmationTitle = this.translateService.instant('artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle', { courseName: this.course?.title });
     }
 
     /**
