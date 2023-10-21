@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { By } from '@angular/platform-browser';
-import { LearningPathProgressNavComponent } from 'app/course/learning-paths/learning-path-management/learning-path-progress-nav.component';
-import { LearningPathPageableSearchDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathProgressNavComponent } from 'app/course/learning-paths/progress-modal/learning-path-progress-nav.component';
+import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { UserNameAndLoginDTO } from 'app/core/user/user.model';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,7 +14,7 @@ describe('LearningPathProgressNavComponent', () => {
     let onRefreshStub: jest.SpyInstance;
     let onCenterViewStub: jest.SpyInstance;
     let onCloseStub: jest.SpyInstance;
-    let learningPath: LearningPathPageableSearchDTO;
+    let learningPath: LearningPathInformationDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -28,7 +28,7 @@ describe('LearningPathProgressNavComponent', () => {
                 onRefreshStub = jest.spyOn(comp.onRefresh, 'emit');
                 onCenterViewStub = jest.spyOn(comp.onCenterView, 'emit');
                 onCloseStub = jest.spyOn(comp.onClose, 'emit');
-                learningPath = new LearningPathPageableSearchDTO();
+                learningPath = new LearningPathInformationDTO();
                 learningPath.user = new UserNameAndLoginDTO();
                 learningPath.user.name = 'some arbitrary name';
                 learningPath.user.login = 'somearbitrarylogin';
