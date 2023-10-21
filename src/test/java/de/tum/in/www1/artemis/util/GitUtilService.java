@@ -83,7 +83,7 @@ public class GitUtilService {
             remoteGit.close();
         }
         catch (IOException | GitAPIException ex) {
-            ex.printStackTrace();
+            fail(ex.getMessage(), ex);
         }
     }
 
