@@ -19,6 +19,7 @@ export abstract class IrisChatbotComponent implements OnInit, OnDestroy {
     private exerciseId: number;
     private stateSubscription: Subscription;
     private chatOpenSubscription: Subscription;
+    private courseId: number;
 
     // Icons
     faCircle = faCircle;
@@ -37,6 +38,7 @@ export abstract class IrisChatbotComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
         this.route.params.subscribe((params) => {
+            this.courseId = parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
             if (this.exerciseId != null) {
                 this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
@@ -96,6 +98,7 @@ export abstract class IrisChatbotComponent implements OnInit, OnDestroy {
             disableClose: true,
             data: {
                 stateStore: this.stateStore,
+                courseId: this.courseId,
                 exerciseId: this.exerciseId,
                 sessionService: this.sessionService,
             },
