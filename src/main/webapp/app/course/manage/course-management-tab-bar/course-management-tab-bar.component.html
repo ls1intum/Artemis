@@ -34,6 +34,7 @@
         </a>
         <a
             class="tab-link"
+            *ngIf="course.tutorialGroupsConfiguration || course.isAtLeastInstructor"
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             [routerLink]="['/course-management', course.id, 'tutorial-groups']"
             routerLinkActive="active"
