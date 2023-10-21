@@ -228,6 +228,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
 
+    default ProgrammingExercise findByParticipationIdOrElseThrow(long participationId) throws EntityNotFoundException {
+        return findByParticipationId(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming exercise for participation with id " + participationId + " does not exist"));
+    }
+
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
