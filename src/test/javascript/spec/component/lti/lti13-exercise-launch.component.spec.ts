@@ -125,12 +125,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     });
 
     it('onInit launch fails on error', () => {
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
-            throwError(() => ({
-                status: 400,
-                error: {},
-            })),
-        );
+        const httpStub = simulateLtiLaunchError(http, 400);
 
         comp.ngOnInit();
 
@@ -143,13 +138,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     it('should redirect user to login when 401 error occurs', fakeAsync(() => {
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
-            throwError(() => ({
-                status: 401,
-                headers: { get: () => 'mockTargetLinkUri' },
-                error: {},
-            })),
-        );
+        const httpStub = simulateLtiLaunchError(http, 401);
         const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
         const authStateSpy = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(undefined));
 
@@ -169,13 +158,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         jest.spyOn(comp, 'authenticateUserThenRedirect');
         jest.spyOn(comp, 'redirectUserToTargetLink');
         const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
-            throwError(() => ({
-                status: 401,
-                headers: { get: () => 'mockTargetLinkUri' },
-                error: {},
-            })),
-        );
+        const httpStub = simulateLtiLaunchError(http, 401);
         const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(loggedInUserUser));
 
         comp.ngOnInit();
@@ -188,4 +171,37 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(navigateSpy).not.toHaveBeenCalled();
         expect(comp.redirectUserToTargetLink).toHaveBeenCalled();
     }));
+
+    it('should redirect user to target link after user logged in', fakeAsync(() => {
+        window.location.replace = jest.fn();
+        jest.spyOn(comp, 'authenticateUserThenRedirect');
+        jest.spyOn(comp, 'redirectUserToTargetLink');
+        jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');
+        const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
+        const httpStub = simulateLtiLaunchError(http, 401);
+        const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
+        const authStateSpy = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(loggedInUserUser));
+
+        comp.ngOnInit();
+        tick(1000);
+
+        expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
+        expect(identitySpy).toHaveBeenCalled();
+        expect(authStateSpy).toHaveBeenCalled();
+        expect(httpStub).toHaveBeenCalled();
+        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(navigateSpy).toHaveBeenCalled();
+        expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
+    }));
+
+    function simulateLtiLaunchError(http: HttpClient, status: number, headers: any = {}, error = {}) {
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
+            throwError(() => ({
+                status,
+                headers: { get: () => 'mockTargetLinkUri', ...headers },
+                error,
+            })),
+        );
+        return httpStub;
+    }
 });
