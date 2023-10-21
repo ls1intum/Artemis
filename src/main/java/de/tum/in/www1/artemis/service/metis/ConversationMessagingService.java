@@ -206,15 +206,10 @@ public class ConversationMessagingService extends PostingService {
      *
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch posts
+     * @param requestingUser    the user requesting messages in course-wide channels
      * @return page of posts that match the given context
      */
-    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter) {
-
-        if (postContextFilter.getConversationId() == null) {
-            throw new BadRequestAlertException("Messages must be associated with a conversion", METIS_POST_ENTITY_NAME, "conversationMissing");
-        }
-
-        var requestingUser = userRepository.getUser();
+    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
         if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
             Conversation conversation = conversationRepository.findByIdElseThrow(postContextFilter.getConversationId());
 
@@ -239,6 +234,23 @@ public class ConversationMessagingService extends PostingService {
 
         // invoke async due to db write access to avoid that the client has to wait
         conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.getConversationId(), ZonedDateTime.now());
+
+        return conversationPosts;
+    }
+
+    /**
+     * fetch messages from database by a list of course-wide channels
+     *
+     * @param pageable          requested page and page size
+     * @param postContextFilter request object to fetch messages
+     * @param requestingUser    the user requesting messages in course-wide channels
+     * @return page of posts that match the given context
+     */
+    public Page<Post> getCourseWideMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
+        // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
+        Page<Post> conversationPosts = conversationMessageRepository.findCourseWideMessages(postContextFilter, pageable, requestingUser.getId());
+
+        setAuthorRoleOfPostings(conversationPosts.getContent());
 
         return conversationPosts;
     }

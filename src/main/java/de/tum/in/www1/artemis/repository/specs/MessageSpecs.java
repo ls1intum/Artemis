@@ -1,14 +1,20 @@
 package de.tum.in.www1.artemis.repository.specs;
 
+import java.util.Arrays;
+
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.in.www1.artemis.domain.Course_;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost_;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel_;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
 
 public class MessageSpecs {
@@ -74,5 +80,40 @@ public class MessageSpecs {
             query.orderBy(criteriaBuilder.desc(sortCriterion));
             return null;
         });
+    }
+
+    /**
+     * Specification to fetch messages belonging to a list of conversations
+     *
+     * @param conversationIds ids of the conversation messages belong to
+     * @return specification used to chain DB operations
+     */
+    public static Specification<Post> getConversationsSpecification(Long[] conversationIds) {
+        return ((root, query, criteriaBuilder) -> {
+            if (conversationIds == null || conversationIds.length == 0) {
+                return null;
+            }
+            else {
+                return root.get(Post_.CONVERSATION).get(Conversation_.ID).in(Arrays.asList(conversationIds));
+            }
+        });
+    }
+
+    /**
+     * Creates a specification to fetch messages belonging to a course-wide channels in the course
+     *
+     * @param courseId id of course the posts belong to
+     * @return specification used to chain DB operations
+     */
+    public static Specification<Post> getCourseWideChannelsSpecification(Long courseId) {
+        return (root, query, criteriaBuilder) -> {
+            Join<Post, Channel> joinedChannels = criteriaBuilder.treat(root.join(Post_.CONVERSATION, JoinType.LEFT), Channel.class);
+            joinedChannels.on(criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), joinedChannels.get(Channel_.ID)));
+
+            // Predicate isChannel = criteriaBuilder.equal(joinedChannels.type(), Channel.class);
+            Predicate isInCourse = criteriaBuilder.equal(joinedChannels.get(Channel_.COURSE).get(Course_.ID), courseId);
+            Predicate isCourseWide = criteriaBuilder.isTrue(joinedChannels.get(Channel_.IS_COURSE_WIDE));
+            return criteriaBuilder.and(isInCourse, isCourseWide);
+        };
     }
 }

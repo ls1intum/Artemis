@@ -109,14 +109,26 @@ public class PostSpecs {
      * @param userId            id of the calling user
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getAnsweredOrReactedSpecification(boolean answeredOrReacted, Long userId) {
+    public static Specification<Post> getAnsweredOrReactedSpecification(boolean answeredOrReacted, Long userId, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
         return ((root, query, criteriaBuilder) -> {
-            if (!answeredOrReacted) {
-                return null;
-            }
-            else {
-                Join<Post, AnswerPost> joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
+            Join<Post, AnswerPost> joinedAnswers = null;
+
+            if (postSortCriterion == PostSortCriterion.ANSWER_COUNT && sortingOrder != null) {
+                joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
                 joinedAnswers.on(criteriaBuilder.equal(root.get(Post_.ID), joinedAnswers.get(AnswerPost_.POST).get(Post_.ID)));
+
+                List<Order> orderList = getOrderList(root, criteriaBuilder);
+                Expression<?> sortCriterion = criteriaBuilder.count(joinedAnswers);
+                orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
+                query.orderBy(orderList);
+                query.groupBy(root.get(Post_.ID));
+            }
+
+            if (answeredOrReacted) {
+                if (joinedAnswers == null) {
+                    joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
+                    joinedAnswers.on(criteriaBuilder.equal(root.get(Post_.ID), joinedAnswers.get(AnswerPost_.POST).get(Post_.ID)));
+                }
 
                 Join<Post, AnswerPost> joinedReactions = root.join(Post_.REACTIONS, JoinType.LEFT);
                 joinedReactions.on(criteriaBuilder.equal(root.get(Post_.ID), joinedReactions.get(Reaction_.POST).get(Post_.ID)));
@@ -126,6 +138,8 @@ public class PostSpecs {
 
                 return criteriaBuilder.or(answered, reacted);
             }
+
+            return null;
         });
     }
 
@@ -199,26 +213,19 @@ public class PostSpecs {
         return ((root, query, criteriaBuilder) -> {
             if (pagingEnabled && postSortCriterion != null && sortingOrder != null) {
 
-                List<Order> orderList = new ArrayList<>();
+                if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
+                    // sort by answer count already specified in PostSpecs.getAnsweredOrReactedSpecification
+                    return null;
+                }
 
                 // sort by priority
-                Expression<Object> pinnedFirstThenAnnouncementsArchivedLast = criteriaBuilder.selectCase()
-                        .when(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)),
-                                criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), criteriaBuilder.literal(CourseWideContext.ANNOUNCEMENT))), 1)
-                        .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 2)
-                        .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 3)
-                        .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 4);
-                orderList.add(criteriaBuilder.asc(pinnedFirstThenAnnouncementsArchivedLast));
+                List<Order> orderList = getOrderList(root, criteriaBuilder);
 
                 Expression<?> sortCriterion = null;
 
                 if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
                     // sort by creation date
                     sortCriterion = root.get(Post_.CREATION_DATE);
-                }
-                else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-                    // sort by answer count
-                    sortCriterion = root.get(Post_.ANSWER_COUNT);
                 }
                 else if (postSortCriterion == PostSortCriterion.VOTES) {
                     // sort by votes via voteEmojiCount
@@ -231,6 +238,18 @@ public class PostSpecs {
 
             return null;
         });
+    }
+
+    private static List<Order> getOrderList(Root<Post> root, CriteriaBuilder criteriaBuilder) {
+        Expression<Object> pinnedFirstThenAnnouncementsArchivedLast = criteriaBuilder.selectCase()
+                .when(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)),
+                        criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), criteriaBuilder.literal(CourseWideContext.ANNOUNCEMENT))), 1)
+                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 2)
+                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 3)
+                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 4);
+        List<Order> orderList = new ArrayList<>();
+        orderList.add(criteriaBuilder.asc(pinnedFirstThenAnnouncementsArchivedLast));
+        return orderList;
     }
 
     /**

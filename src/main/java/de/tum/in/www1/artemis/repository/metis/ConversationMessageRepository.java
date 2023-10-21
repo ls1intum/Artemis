@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.metis;
 
 import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.*;
+import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.getSortSpecification;
 import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
 import java.util.Set;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.specs.MessageSpecs;
+import de.tum.in.www1.artemis.repository.specs.PostSpecs;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -38,8 +40,30 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
         Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId())
                 .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()).and(getSortSpecification())
                         .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
-                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId, postContextFilter.getPostSortCriterion(),
+                        postContextFilter.getSortingOrder()))
                 .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())));
+
+        return findAll(specification, pageable);
+    }
+
+    /**
+     * Generates SQL Query via specifications to find and sort messages from course-wide
+     *
+     * @param postContextFilter filtering and sorting properties for post objects
+     * @param pageable          paging object which contains the page number and number of records to fetch
+     * @param userId            the id of the user for which the messages should be returned
+     * @return returns a Page of Messages
+     */
+    default Page<Post> findCourseWideMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
+        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.getCourseId()))
+                .and(getConversationsSpecification(postContextFilter.getConversationIds())
+                        .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()).and(getSortSpecification())
+                                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
+                        .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId, postContextFilter.getPostSortCriterion(),
+                                postContextFilter.getSortingOrder()))
+                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())))
+                .and(PostSpecs.getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
         return findAll(specification, pageable);
     }
