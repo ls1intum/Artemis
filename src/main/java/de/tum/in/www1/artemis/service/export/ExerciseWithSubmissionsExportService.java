@@ -188,7 +188,7 @@ public abstract class ExerciseWithSubmissionsExportService {
                 }
                 catch (IOException e) {
                     exportErrors.add("Could not create directory for embedded files: " + e.getMessage());
-                    log.warn("Could not create directory for embedded files. Won't include embedded files: " + e.getMessage());
+                    log.warn("Could not create directory for embedded files. Won't include embedded files.", e);
                     return null;
                 }
             }

@@ -238,7 +238,7 @@ class ProgrammingExerciseIntegrationTestService {
         var testjsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
+        GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
         // we use the temp repository as remote origin for all repositories that are created during the
@@ -2271,6 +2271,22 @@ class ProgrammingExerciseIntegrationTestService {
 
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                "/api/repository/" + participation1.getId() + "/files-content/" + submission.getCommitHash());
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        // without forwarding the redirectUrl is null
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
+                null);
     }
 
     private long getMaxProgrammingExerciseId() {

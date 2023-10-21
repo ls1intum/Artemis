@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -1063,6 +1063,43 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
             LocalRepository localRepository = new LocalRepository("main");
             assertThatNoException().isThrownBy(() -> hestiaUtilTestService.setupTemplate(files, exercise, localRepository));
             return localRepository;
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationFilesWithContentAtCommitShouldRedirect() throws Exception {
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            var studentLogin = TEST_PREFIX + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            // we should never reach this but the code doesn't compile without it
+            return null;
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetParticipationFilesWithContentAtCommitEditorForbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+
+            var studentLogin = TEST_PREFIX + "student1";
+            try {
+                localRepository.configureRepos("testLocalRepo", "testOriginRepo");
+                return hestiaUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
+            }
+            catch (Exception e) {
+                fail("Test setup failed");
+            }
+            // we should never reach this but the code doesn't compile without it
+            return null;
         });
     }
 }

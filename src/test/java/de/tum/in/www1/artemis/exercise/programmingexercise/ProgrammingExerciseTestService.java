@@ -34,7 +34,6 @@ import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -297,7 +296,6 @@ public class ProgrammingExerciseTestService {
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
-        auxRepo.resetLocalRepo();
         sourceExerciseRepo.resetLocalRepo();
         sourceTestRepo.resetLocalRepo();
         sourceSolutionRepo.resetLocalRepo();
@@ -1339,7 +1337,7 @@ public class ProgrammingExerciseTestService {
 
     private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
+
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), (Path) any(), anyBoolean());
     }
@@ -1553,7 +1551,7 @@ public class ProgrammingExerciseTestService {
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         VcsRepositoryUrl vcsUrl = exercise.getRepositoryURL(repoType);
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
+
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), (Path) any(), anyBoolean());
@@ -1579,25 +1577,21 @@ public class ProgrammingExerciseTestService {
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
 
@@ -1679,25 +1673,21 @@ public class ProgrammingExerciseTestService {
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
     }
@@ -1763,18 +1753,6 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
 
         return studentExams;
-    }
-
-    /**
-     * Disables auto garbage collection for the given repository.
-     *
-     * @param repository the repository
-     */
-    private void disableAutoGC(org.eclipse.jgit.lib.Repository repository) {
-        // See https://www.eclipse.org/lists/jgit-dev/msg03734.html
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-        repository.getConfig().setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
     }
 
     /**
