@@ -298,12 +298,8 @@ public class StudentExamService {
      * @param studentExam the student exam object which will be abandoned
      */
     public void abandonStudentExam(StudentExam studentExam) {
-        log.debug("Abandon student exam with id {}", studentExam.getId());
-
-        long start = System.nanoTime();
         studentExam.setAbandoned(true);
         studentExamRepository.abandonStudentExam(studentExam.getId());
-        log.debug("     Set student exam to abandoned in {}", formatDurationFrom(start));
     }
 
     /**
