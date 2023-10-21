@@ -221,7 +221,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)  
   
 * **Technische Universität Dresden**  
-  Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)  
+  Main contact person: [Andreas Domanowski](mailto:andreas.domanowski@tu-dresden.de)  
   
 * **Hochschule Heilbronn**  
   Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)  
