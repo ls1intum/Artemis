@@ -1,15 +1,15 @@
 package de.tum.in.www1.artemis.repository.specs;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.*;
 
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.in.www1.artemis.domain.Course_;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost_;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
@@ -76,8 +76,17 @@ public class MessageSpecs {
             // sort by creation date
             Expression<?> sortCriterion = root.get(Post_.CREATION_DATE);
 
+            Expression<Object> pinnedFirstTArchivedLast = criteriaBuilder.selectCase()
+                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 1)
+                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 2)
+                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 3);
+            List<Order> orderList = new ArrayList<>();
+
+            orderList.add(criteriaBuilder.asc(pinnedFirstTArchivedLast));
+            orderList.add(criteriaBuilder.desc(sortCriterion));
+
             // descending
-            query.orderBy(criteriaBuilder.desc(sortCriterion));
+            query.orderBy(orderList);
             return null;
         });
     }

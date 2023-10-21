@@ -122,7 +122,7 @@ export class PostService extends PostingService<Post> {
      */
     updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
         return this.http
-            .put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
+            .put(`${this.resourceUrl}${courseId}/messages/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
     }
 

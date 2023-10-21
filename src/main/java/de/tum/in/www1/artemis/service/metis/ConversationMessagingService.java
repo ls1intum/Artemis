@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -315,6 +316,28 @@ public class ConversationMessagingService extends PostingService {
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
 
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course, null);
+    }
+
+    /**
+     * Invokes the updateMessage method to persist the change of displayPriority
+     *
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the message to change the pin state for
+     * @param displayPriority new displayPriority
+     * @return updated post that was persisted
+     */
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = preCheckUserAndCourseForMessaging(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        message.setDisplayPriority(displayPriority);
+        Post updatedMessage = conversationMessageRepository.save(message);
+
+        message.getConversation().hideDetails();
+        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course, null);
+        return updatedMessage;
     }
 
     private Conversation mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {

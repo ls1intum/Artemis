@@ -19,12 +19,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -165,5 +167,21 @@ public class ConversationMessageResource {
         // deletion of message posts should not trigger entity deletion alert
         log.info("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
+     *
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the post change the displayPriority for
+     * @param displayPriority new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
+        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 }
