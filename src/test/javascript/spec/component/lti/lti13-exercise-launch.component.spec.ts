@@ -1,12 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
-import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
@@ -15,6 +17,10 @@ describe('Lti13ExerciseLaunchComponent', () => {
     let http: HttpClient;
     let loginService: LoginService;
     let accountService: AccountService;
+    const mockRouter = {
+        navigate: jest.fn(() => Promise.resolve(true)),
+    } as unknown as Router;
+    const navigateSpy = jest.spyOn(mockRouter, 'navigate');
 
     beforeEach(() => {
         route = {
@@ -28,13 +34,15 @@ describe('Lti13ExerciseLaunchComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LoginService, useValue: loginService },
-                { provide: AccountService, useValue: accountService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: Router, useValue: mockRouter },
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(Lti13ExerciseLaunchComponent);
                 comp = fixture.componentInstance;
+                accountService = TestBed.inject(AccountService);
             });
 
         http = TestBed.inject(HttpClient);
@@ -43,6 +51,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     afterEach(() => {
         window.sessionStorage.clear();
         jest.restoreAllMocks();
+        navigateSpy.mockClear();
     });
 
     it('onInit fail without state', () => {
@@ -130,4 +139,53 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         expect(comp.isLaunching).toBeFalse();
     });
+
+    it('should redirect user to login when 401 error occurs', fakeAsync(() => {
+        jest.spyOn(comp, 'authenticateUserThenRedirect');
+        jest.spyOn(comp, 'redirectUserToLoginThenTargetLink');
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
+            throwError(() => ({
+                status: 401,
+                headers: { get: () => 'mockTargetLinkUri' },
+                error: {},
+            })),
+        );
+        const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
+        const authStateSpy = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(undefined));
+
+        comp.ngOnInit();
+        tick(1000);
+
+        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
+        expect(identitySpy).toHaveBeenCalled();
+        expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith(['/']);
+        expect(authStateSpy).toHaveBeenCalled();
+    }));
+
+    it('should redirect user to target link when user is already logged in', fakeAsync(() => {
+        window.location.replace = jest.fn();
+        jest.spyOn(comp, 'authenticateUserThenRedirect');
+        jest.spyOn(comp, 'redirectUserToTargetLink');
+        const loggedInUserUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(
+            throwError(() => ({
+                status: 401,
+                headers: { get: () => 'mockTargetLinkUri' },
+                error: {},
+            })),
+        );
+        const identitySpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(loggedInUserUser));
+
+        comp.ngOnInit();
+        tick(1000);
+
+        expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
+        expect(identitySpy).toHaveBeenCalled();
+        expect(httpStub).toHaveBeenCalled();
+        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(comp.redirectUserToTargetLink).toHaveBeenCalled();
+    }));
 });
