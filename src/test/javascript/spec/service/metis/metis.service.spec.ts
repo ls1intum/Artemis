@@ -276,7 +276,7 @@ describe('Metis Service', () => {
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
 
             metisService.deleteAnswerPost(answerPost);
-            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([]));
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [] }]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
@@ -316,7 +316,7 @@ describe('Metis Service', () => {
             const createdReactionSub = metisService.createReaction(reaction).subscribe((createdReaction) => {
                 expect(createdReaction).toEqual(reaction);
             });
-            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([post]));
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [reaction] }]));
 
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
             tick();
@@ -331,9 +331,6 @@ describe('Metis Service', () => {
             post = { ...post, reactions: [reaction] };
             reaction.post = post;
             const createdPostSub = metisService.createPost(post).subscribe();
-            const createdReactionSub = metisService.createReaction(reaction).subscribe((createdReaction) => {
-                expect(createdReaction).toEqual(reaction);
-            });
 
             metisService.deleteReaction(reaction).subscribe(() => {
                 expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
@@ -342,7 +339,6 @@ describe('Metis Service', () => {
 
             tick();
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
-            createdReactionSub.unsubscribe();
             createdPostSub.unsubscribe();
             cachedPostsSub.unsubscribe();
         }));
