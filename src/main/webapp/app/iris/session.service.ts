@@ -7,6 +7,7 @@ import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
@@ -30,13 +31,11 @@ export abstract class IrisSessionService {
      * @param exerciseId The exercise ID to which the session will be attached.
      */
     getCurrentSessionOrCreate(exerciseId: number): void {
-        let sessionId: number;
-
         this.httpSessionService
             .getCurrentSession(exerciseId)
             .toPromise()
             .then((irisSessionResponse: HttpResponse<IrisSession>) => {
-                sessionId = irisSessionResponse.body!.id;
+                const sessionId = irisSessionResponse.body!.id;
                 return this.httpMessageService
                     .getMessages(sessionId)
                     .toPromise()
@@ -49,7 +48,7 @@ export abstract class IrisSessionService {
                             }
                             return 0;
                         });
-                        this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages));
+                        this.dispatchSuccess(sessionId, messages);
                     })
                     .catch(() => {
                         this.dispatchError(IrisErrorMessageKey.HISTORY_LOAD_FAILED);
@@ -69,12 +68,21 @@ export abstract class IrisSessionService {
      * @param exerciseId The exercise ID for which to create a new session.
      */
     createNewSession(exerciseId: number): void {
-        this.httpSessionService.createSessionForProgrammingExercise(exerciseId).subscribe(
+        this.httpSessionService.createSession(exerciseId).subscribe(
             (irisSessionResponse: any) => {
-                this.stateStore.dispatch(new SessionReceivedAction(irisSessionResponse.id, []));
+                this.dispatchSuccess(irisSessionResponse.id, []);
             },
             () => this.dispatchError(IrisErrorMessageKey.SESSION_CREATION_FAILED),
         );
+    }
+
+    async rateMessage(sessionId: number, messageId: number, helpful: boolean): Promise<IrisMessage> {
+        const response = await firstValueFrom(this.httpMessageService.rateMessage(sessionId, messageId, helpful));
+        return response.body!;
+    }
+
+    private dispatchSuccess(sessionId: number, messages: IrisMessage[]): void {
+        this.stateStore.dispatch(new SessionReceivedAction(sessionId, messages));
     }
 
     /**

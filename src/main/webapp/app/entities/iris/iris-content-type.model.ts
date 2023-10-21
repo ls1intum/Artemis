@@ -1,4 +1,4 @@
-import { IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-component.model';
+import { IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
 
 export enum IrisMessageContentType {
     TEXT = 'text',
@@ -22,9 +22,9 @@ export class IrisMessageTextContent extends IrisMessageContent {
 }
 
 export class IrisMessagePlanContent extends IrisMessageContent {
-    components: IrisExercisePlanComponent[];
+    components: IrisExercisePlanStep[];
     currentComponentIndex: number;
-    constructor(components: IrisExercisePlanComponent[], currentComponentIndex: number) {
+    constructor(components: IrisExercisePlanStep[], currentComponentIndex: number) {
         super(IrisMessageContentType.PLAN);
         this.components = components;
         this.currentComponentIndex = currentComponentIndex;
@@ -53,6 +53,6 @@ export function getPlanComponent(content: IrisMessageContent) {
     }
 }
 
-export function getComponentInstruction(component: IrisExercisePlanComponent) {
+export function getComponentInstruction(component: IrisExercisePlanStep) {
     return component.instructions;
 }

@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
@@ -24,12 +24,12 @@ import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 
 /**
- * REST controller for managing {@link IrisSession}.
+ * REST controller for managing {@link IrisChatSession}.
  */
 @RestController
 @Profile("iris")
 @RequestMapping("api/iris/")
-public class IrisSessionResource {
+public class IrisChatSessionResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -47,7 +47,7 @@ public class IrisSessionResource {
 
     private final IrisRateLimitService irisRateLimitService;
 
-    public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+    public IrisChatSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             IrisChatSessionRepository irisChatSessionRepository, UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisHealthIndicator irisHealthIndicator, IrisRateLimitService irisRateLimitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -68,7 +68,7 @@ public class IrisSessionResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/sessions/current")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
+    public ResponseEntity<IrisChatSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -87,7 +87,7 @@ public class IrisSessionResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/sessions")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<IrisSession>> getAllSessions(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<IrisChatSession>> getAllSessions(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -95,7 +95,7 @@ public class IrisSessionResource {
 
         var sessions = irisChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
-        return ResponseEntity.ok((List<IrisSession>) (List<?>) sessions);
+        return ResponseEntity.ok(sessions);
     }
 
     /**
@@ -108,7 +108,7 @@ public class IrisSessionResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/sessions")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();

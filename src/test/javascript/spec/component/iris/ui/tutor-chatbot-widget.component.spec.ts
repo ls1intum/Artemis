@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockPipe } from 'ng-mocks';
-import { ExerciseChatWidgetComponent } from 'app/iris/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,12 +33,14 @@ import { IrisSessionService } from 'app/iris/session.service';
 import { UserService } from 'app/core/user/user.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisTutorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/tutor-chatbot-widget.component';
+import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 
-describe('ExerciseChatWidgetComponent', () => {
-    let component: ExerciseChatWidgetComponent;
-    let fixture: ComponentFixture<ExerciseChatWidgetComponent>;
+describe('TutorChatbotWidgetComponent', () => {
+    let component: IrisTutorChatbotWidgetComponent;
+    let fixture: ComponentFixture<IrisTutorChatbotWidgetComponent>;
     let stateStore: IrisStateStore;
-    let mockHttpMessageService: IrisHttpMessageService;
+    let mockHttpMessageService: IrisHttpChatMessageService;
     let mockSessionService: IrisSessionService;
     let mockDialog: MatDialog;
     let mockModalService: NgbModal;
@@ -77,7 +79,7 @@ describe('ExerciseChatWidgetComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
-            declarations: [ExerciseChatWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            declarations: [IrisChatbotWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, sessionService: mockSessionService } },
                 { provide: IrisHttpMessageService, useValue: mockHttpMessageService },
@@ -98,7 +100,7 @@ describe('ExerciseChatWidgetComponent', () => {
                 global.window ??= window;
                 window.scroll = jest.fn();
                 window.HTMLElement.prototype.scrollTo = jest.fn();
-                fixture = TestBed.createComponent(ExerciseChatWidgetComponent);
+                fixture = TestBed.createComponent(IrisTutorChatbotWidgetComponent);
                 component = fixture.componentInstance;
                 component.shouldLoadGreetingMessage = false;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
@@ -165,7 +167,7 @@ describe('ExerciseChatWidgetComponent', () => {
         const message = 'Hello';
         const error = 'Something went wrong. Please try again later!';
         const mockMessage = {
-            sender: component.SENDER_USER,
+            sender: IrisSender.USER,
             content: [new IrisMessageTextContent('Hello')],
         };
         jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValueOnce(
@@ -490,7 +492,7 @@ describe('ExerciseChatWidgetComponent', () => {
         it('should open confirm modal when click on the clear button', () => {
             stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
             fixture.detectChanges();
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
 
             button.click();
 
@@ -499,14 +501,14 @@ describe('ExerciseChatWidgetComponent', () => {
         });
 
         it('should not render clear chat button if the history is empty', () => {
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
             expect(button).toBeNull();
         });
 
         it('should not render clear chat button if the history has only one message from the client', () => {
             stateStore.dispatch(new SessionReceivedAction(123, [mockArtemisClientMessage]));
             fixture.detectChanges();
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
 
             expect(button).toBeNull();
         });
@@ -514,7 +516,7 @@ describe('ExerciseChatWidgetComponent', () => {
         it('should render clear chat button if the history has one message from server', () => {
             stateStore.dispatch(new SessionReceivedAction(123, [mockServerMessage]));
             fixture.detectChanges();
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
 
             expect(button).not.toBeNull();
         });
@@ -522,7 +524,7 @@ describe('ExerciseChatWidgetComponent', () => {
         it('should render clear chat button if the history has one message from user', () => {
             stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage]));
             fixture.detectChanges();
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-session');
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
 
             expect(button).not.toBeNull();
         });

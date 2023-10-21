@@ -21,7 +21,7 @@ describe('Iris Http Chat Session Service', () => {
         it('should create a session', fakeAsync(() => {
             const returnedFromService = { id: '1' };
             service
-                .createSessionForProgrammingExercise(1)
+                .createSession(1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toEqual(returnedFromService));
             const req = httpMock.expectOne({ method: 'POST' });

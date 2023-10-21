@@ -10,7 +10,7 @@ import {
     mockServerMessage,
     mockServerPlanMessage,
 } from '../../helpers/sample/iris-sample-data';
-import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
+import { IrisHttpCodeEditorMessageService, UnsavedChangesDTO } from 'app/iris/http-code-editor-message.service';
 import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
 
 describe('Iris Http Code Editor Message Service', () => {
@@ -31,7 +31,7 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
             service
-                .createMessage(2, new IrisClientMessage())
+                .sendMessage(2, new IrisClientMessage(), new UnsavedChangesDTO())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -55,7 +55,13 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockExercisePlanComponent, instructions: 'I will add a QuickSort algorithm task.' };
             const expected = returnedFromService;
             service
-                .updateExercisePlanComponent(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!, mockExercisePlanComponent.id!, returnedFromService)
+                .updateExercisePlanStepInstructions(
+                    mockPlanConversation.id,
+                    mockServerPlanMessage.id,
+                    mockMessagePlanContent.id!,
+                    mockExercisePlanComponent.id!,
+                    returnedFromService,
+                )
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -67,7 +73,7 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockExercisePlanComponent };
             //const expected = { ...returnedFromService, id: 0 };
             service
-                .executePlan(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!)
+                .executePlanStep(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!, mockExercisePlanComponent.id!, new UnsavedChangesDTO())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.ok).toBeTrue());
             const req = httpMock.expectOne({ method: 'POST' });

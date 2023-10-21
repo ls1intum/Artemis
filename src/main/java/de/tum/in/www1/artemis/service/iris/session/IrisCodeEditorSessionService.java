@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
+import de.tum.in.www1.artemis.web.rest.dto.iris.UnsavedCodeEditorChangesDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -51,6 +53,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final AuthorizationCheckService authCheckService;
 
+    private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
+
     private final IrisSessionRepository irisSessionRepository;
 
     private final GitService gitService;
@@ -58,45 +62,22 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private final RepositoryService repositoryService;
 
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
-            IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            GitService gitService, RepositoryService repositoryService) {
+            IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisSessionRepository irisSessionRepository, GitService gitService,
+            RepositoryService repositoryService) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.authCheckService = authCheckService;
+        this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
         this.irisSessionRepository = irisSessionRepository;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
     }
 
-    /**
-     * Extract the contents of a repository as a Map<String, String> of file paths to file contents.
-     *
-     * @param vcsRepositoryUrl The URL of the repository to extract
-     * @return The contents of the repository
-     */
-    private Map<String, String> getRepositoryContents(@Nullable VcsRepositoryUrl vcsRepositoryUrl) {
-        var contents = Optional.ofNullable(vcsRepositoryUrl).map(url -> {
-            try {
-                return gitService.getOrCheckoutRepository(url, true);
-            }
-            catch (GitAPIException e) {
-                throw new InternalServerErrorException("Could not get or checkout exercise repository");
-            }
-        }).map(repositoryService::getFilesWithContent).map(HashMap::new) // We need a mutable map for the next step
-                .orElseGet(HashMap::new);
-        // There are a few files that we do not want to send to Iris
-        // because they are bulky and generally unrelated to the exercise content
-        contents.remove("readme.md");
-        contents.remove(".gitignore");
-        contents.remove(".gitattributes");
-        contents.remove("gradlew");
-        contents.remove("gradlew.bat");
-        contents.entrySet().removeIf(entry -> entry.getKey().startsWith("gradle/wrapper"));
-        // TODO: Any other files that we do not want to send to Iris?
-        // Perhaps we should compile a list of these files somewhere for easier maintenance
-        return contents;
+    public IrisCodeEditorSession createSession(ProgrammingExercise exercise, User user) {
+        return irisCodeEditorSessionRepository.save(new IrisCodeEditorSession(exercise, user));
     }
 
     /**
@@ -134,19 +115,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      *
      * @param irisSession The session to send the request for
      */
-    @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
+    public void converseWithModel(IrisSession irisSession, UnsavedCodeEditorChangesDTO unsavedChanges) {
         var fromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(fromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");
         }
-        var exercise = session.getExercise();
-        var params = new HashMap<String, Object>();
-        params.put("chatHistory", session.getMessages());
-        params.put("problemStatement", exercise.getProblemStatement());
-        params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
-        params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
-        params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
+
+        var params = initializeParams(session.getExercise(), unsavedChanges);
+        params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
 
         // The template and model are hard-coded for now, but will be configurable in the future
         irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_CONVERSATION, "STRATEGY_GPT35_TURBO", params).thenAcceptAsync(response -> {
@@ -224,7 +200,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             throw new IrisParseResponseException(new Throwable("Exercise plan components is not an array"));
         }
         var exercisePlan = new IrisExercisePlanMessageContent();
-        List<IrisExercisePlanComponent> components = new ArrayList<>();
+        List<IrisExercisePlanStep> planSteps = new ArrayList<>();
         for (JsonNode node : content.get("components")) {
             if (!node.hasNonNull("plan")) {
                 continue; // This might happen as a result of the LLM deciding to stop generating components, which is OK
@@ -239,13 +215,13 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 default -> null; // No idea what the model responded with, so we just ignore it
             };
             if (component != null) {
-                components.add(new IrisExercisePlanComponent(exercisePlan, component, plan));
+                planSteps.add(new IrisExercisePlanStep(exercisePlan, component, plan));
             }
         }
-        if (components.isEmpty()) {
+        if (planSteps.isEmpty()) {
             throw new IrisParseResponseException(new Throwable("No exercise plan components"));
         }
-        exercisePlan.setComponents(components);
+        exercisePlan.setSteps(planSteps);
         return exercisePlan;
     }
 
@@ -255,58 +231,49 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * changes and send them to the websocket service.
      *
      * @param session      The IrisCodeEditorSession to request exercise changes for
-     * @param exercisePlan The IrisExercisePlanMessageContent that contains the exercise plan
+     * @param exerciseStep The IrisExercisePlanComponent to request exercise changes for
      */
-    public void requestExerciseChanges(IrisCodeEditorSession session, IrisExercisePlanMessageContent exercisePlan) {
-        exercisePlan.setExecuting(true);
-        // Continue to execute the plan until there are no more components or the plan has been paused externally
-        while (exercisePlan.hasNext() && exercisePlan.isExecuting()) {
-            var nextPlanComponent = exercisePlan.next();
-            var component = nextPlanComponent.getComponent();
-            String template = switch (component) {
-                case PROBLEM_STATEMENT -> IrisConstants.CODE_EDITOR_ADAPT_PROBLEM_STATEMENT;
-                case SOLUTION_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_SOLUTION_REPOSITORY;
-                case TEMPLATE_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEMPLATE_REPOSITORY;
-                case TEST_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEST_REPOSITORY;
-            };
-            var exercise = session.getExercise();
-            var params = new HashMap<String, Object>();
-            params.put("instructions", nextPlanComponent.getInstructions());
-            params.put("problemStatement", exercise.getProblemStatement());
-            params.put("solutionRepository", getRepositoryContents(exercise.getVcsSolutionRepositoryUrl()));
-            params.put("templateRepository", getRepositoryContents(exercise.getVcsTemplateRepositoryUrl()));
-            params.put("testRepository", getRepositoryContents(exercise.getVcsTestRepositoryUrl()));
-            irisConnectorService.sendRequestV2(template, "STRATEGY_GPT35_TURBO", params).handleAsync((response, err) -> {
-                if (err != null) {
-                    log.error("Error while getting response from Iris model", err);
-                    irisCodeEditorWebsocketService.sendException(session, err.getCause());
-                }
-                else if (response == null) {
-                    log.error("No response from Iris model");
-                    irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
-                }
-                else {
-                    log.info("Received response containing changes to exercise " + component + " from Iris model");
-                    try {
-                        var changes = extractChangesForComponent(response.content(), component);
-                        if (!changes.isEmpty()) {
-                            // In this case we do not save anything, as these changes must first be approved by the user
-                            irisCodeEditorWebsocketService.sendChanges(session, component, changes);
-                        }
-                        else {
-                            log.error("No changes for exercise " + component + " in response from Iris model");
-                        }
+    public void requestChangesToExerciseComponent(IrisCodeEditorSession session, IrisExercisePlanStep exerciseStep, UnsavedCodeEditorChangesDTO unsavedChanges) {
+        var component = exerciseStep.getComponent();
+        String template = switch (component) {
+            case PROBLEM_STATEMENT -> IrisConstants.CODE_EDITOR_ADAPT_PROBLEM_STATEMENT;
+            case SOLUTION_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_SOLUTION_REPOSITORY;
+            case TEMPLATE_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEMPLATE_REPOSITORY;
+            case TEST_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEST_REPOSITORY;
+        };
+
+        var params = initializeParams(session.getExercise(), unsavedChanges);
+        // Add the instructions previously generated by Iris for this step of the plan
+        params.put("instructions", exerciseStep.getInstructions());
+
+        irisConnectorService.sendRequestV2(template, "STRATEGY_GPT35_TURBO", params).handleAsync((response, err) -> {
+            if (err != null) {
+                log.error("Error while getting response from Iris model", err);
+                irisCodeEditorWebsocketService.sendException(session, err.getCause());
+            }
+            else if (response == null) {
+                log.error("No response from Iris model");
+                irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
+            }
+            else {
+                log.info("Received response containing changes to exercise " + component + " from Iris model");
+                try {
+                    var changes = extractChangesForComponent(response.content(), component);
+                    if (!changes.isEmpty()) {
+                        // In this case we do not save anything, as these changes must first be approved by the user
+                        irisCodeEditorWebsocketService.sendChanges(session, component, changes);
                     }
-                    catch (IrisParseResponseException e) {
-                        log.error("Error while parsing exercise changes from Iris model", e);
-                        irisCodeEditorWebsocketService.sendException(session, e);
+                    else {
+                        log.error("No changes for exercise " + component + " in response from Iris model");
                     }
                 }
-                return null;
-            });
-        }
-        // This may have already been the reason for exiting the loop, but set it here in case it wasn't
-        exercisePlan.setExecuting(false);
+                catch (IrisParseResponseException e) {
+                    log.error("Error while parsing exercise changes from Iris model", e);
+                    irisCodeEditorWebsocketService.sendException(session, e);
+                }
+            }
+            return null;
+        });
     }
 
     /**
@@ -362,6 +329,90 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             changes.add(new IrisCodeEditorWebsocketService.FileChange(type, file, original, updated));
         }
         return changes;
+    }
+
+    /**
+     * Initializes the parameters for the request to Iris.
+     * This method merges the unsaved changes from the code editor with the database version of the exercise,
+     * and saves the result in a map to send to Iris.
+     *
+     * @param exercise The programming exercise
+     * @param unsaved  The UnsavedCodeEditorChangesDTO object containing any unsaved changes from the code editor
+     * @return A modifiable map with the parameters for the request to Iris
+     */
+    private Map<String, Object> initializeParams(ProgrammingExercise exercise, UnsavedCodeEditorChangesDTO unsaved) {
+        var problemStatement = Optional.ofNullable(unsaved.problemStatement()).orElse(exercise.getProblemStatement());
+        var solutionRepository = prepareRepository(exercise.getVcsSolutionRepositoryUrl(), unsaved.solutionRepository());
+        var templateRepository = prepareRepository(exercise.getVcsTemplateRepositoryUrl(), unsaved.templateRepository());
+        var testRepository = prepareRepository(exercise.getVcsTestRepositoryUrl(), unsaved.testRepository());
+        var params = new HashMap<String, Object>();
+        params.put("problemStatement", problemStatement);
+        params.put("solutionRepository", solutionRepository);
+        params.put("templateRepository", templateRepository);
+        params.put("testRepository", testRepository);
+        return params;
+    }
+
+    /**
+     * Prepares a repository for sending to the Iris model. This method loads the repository from the database if
+     * possible, and merges it with any unsaved changes. It then filters out any unwanted files.
+     *
+     * @param vcsRepositoryUrl The URL of the repository to prepare
+     * @param unsavedChanges   Any unsaved changes to merge with the repository
+     * @return The prepared repository
+     */
+    private Map<String, String> prepareRepository(@Nullable VcsRepositoryUrl vcsRepositoryUrl, Map<String, String> unsavedChanges) {
+        var merged = Optional.ofNullable(vcsRepositoryUrl).map(this::loadRepositoryFromDatabase) // Load from database if possible
+                .map(HashMap::new) // Make modifiable
+                .map(repository -> merge(repository, unsavedChanges)) // Any unsaved changes take priority
+                .orElseGet(() -> new HashMap<>(unsavedChanges)); // If there is no database version, just use the unsaved changes
+        return filterOutUnwantedFiles(merged);
+    }
+
+    /**
+     * Loads the repository under the given URL as a map of file paths to file contents.
+     *
+     * @param vcsRepositoryUrl The URL of the repository to load
+     * @return The loaded repository
+     */
+    private Map<String, String> loadRepositoryFromDatabase(VcsRepositoryUrl vcsRepositoryUrl) {
+        try {
+            Repository repository = gitService.getOrCheckoutRepository(vcsRepositoryUrl, true);
+            return repositoryService.getFilesWithContent(repository);
+        }
+        catch (GitAPIException e) {
+            throw new InternalServerErrorException("Could not get or checkout exercise repository");
+        }
+    }
+
+    /**
+     * Merge two maps, with the values from the higher priority map taking precedence in case of a key collision.
+     *
+     * @param lowerPriority  The map with lower priority
+     * @param higherPriority The map with higher priority
+     * @return The merged map
+     */
+    private static Map<String, String> merge(Map<String, String> lowerPriority, Map<String, String> higherPriority) {
+        Map<String, String> merged = new HashMap<>(lowerPriority);
+        merged.putAll(higherPriority);
+        return merged;
+    }
+
+    /**
+     * There are a few files that we do not want to send to Iris because they are bulky, not representable in plain
+     * text, or generally unrelated to the exercise content. This method filters out those files.
+     *
+     * @param repository The repository to filter
+     * @return The filtered repository
+     */
+    private Map<String, String> filterOutUnwantedFiles(Map<String, String> repository) {
+        repository.remove("readme.md");
+        repository.remove(".gitignore");
+        repository.remove(".gitattributes");
+        repository.remove("gradlew");
+        repository.remove("gradlew.bat");
+        repository.entrySet().removeIf(entry -> entry.getKey().startsWith("gradle/wrapper"));
+        return repository;
     }
 
 }

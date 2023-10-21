@@ -6,7 +6,7 @@ import { IrisMessagePlanContent, IrisMessageTextContent } from 'app/entities/iri
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketMessageType } from 'app/iris/chat-websocket.service';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { ExerciseComponent, IrisExercisePlanComponent } from 'app/entities/iris/iris-exercise-plan-component.model';
+import { ExerciseComponent, IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -19,7 +19,7 @@ export const mockExercisePlanComponent = {
     id: 2,
     exercisePlan: 1,
     component: ExerciseComponent.PROBLEM_STATEMENT,
-} as IrisExercisePlanComponent;
+} as IrisExercisePlanStep;
 export const mockMessagePlanContent = {
     id: 2,
     components: [mockExercisePlanComponent],

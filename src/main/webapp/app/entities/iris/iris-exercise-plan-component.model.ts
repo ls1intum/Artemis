@@ -4,7 +4,7 @@ export enum ExerciseComponent {
     TEMPLATE_REPOSITORY = 'Template repository',
     TEST_REPOSITORY = 'Test repository',
 }
-export class IrisExercisePlanComponent {
+export class IrisExercisePlanStep {
     id?: number;
     exercisePlan: number;
     component: ExerciseComponent;

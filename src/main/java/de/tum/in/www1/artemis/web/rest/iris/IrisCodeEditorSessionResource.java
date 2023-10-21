@@ -99,7 +99,7 @@ public class IrisCodeEditorSessionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         var sessions = irisCodeEditorSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
+        sessions.forEach(s -> irisCodeEditorSessionService.checkHasAccessToIrisSession(s, user));
         return ResponseEntity.ok(sessions);
     }
 
@@ -120,7 +120,7 @@ public class IrisCodeEditorSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
-        var session = irisSessionService.createCodeEditorSession(exercise, user);
+        var session = irisCodeEditorSessionService.createSession(exercise, user);
 
         var uriString = "/api/iris/code-editor-sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

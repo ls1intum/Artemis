@@ -4,8 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 
-import javax.ws.rs.BadRequestException;
-
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -117,14 +115,10 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
      *
      * @param session The chat session to send to the LLM
      */
-    @Override
-    public void requestAndHandleResponse(IrisSession session) {
-        var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+    public void requestAndHandleResponse(IrisChatSession session) {
+        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         Map<String, Object> parameters = new HashMap<>();
-        if (!(fullSession instanceof IrisChatSession chatSession)) {
-            throw new BadRequestException("Trying to get Iris response for session " + session.getId() + " without exercise");
-        }
-        if (((IrisChatSession) fullSession).getExercise().isExamExercise()) {
+        if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         var exercise = chatSession.getExercise();
@@ -146,7 +140,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 parameters.put("buildLog", latestSubmission.get().getBuildLogEntries());
             }
         }
-        parameters.put("session", fullSession);
+        parameters.put("session", chatSession);
         addDiffAndTemplatesForStudentAndExerciseIfPossible(chatSession.getUser(), exercise, parameters);
 
         var irisSettings = irisSettingsService.getCombinedIrisSettings(exercise, false);
@@ -154,15 +148,15 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 .handleAsync((irisMessage, throwable) -> {
                     if (throwable != null) {
                         log.error("Error while getting response from Iris model", throwable);
-                        irisChatWebsocketService.sendException(fullSession, throwable.getCause());
+                        irisChatWebsocketService.sendException(chatSession, throwable.getCause());
                     }
                     else if (irisMessage != null) {
-                        var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), fullSession, IrisMessageSender.LLM);
+                        var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), chatSession, IrisMessageSender.LLM);
                         irisChatWebsocketService.sendMessage(irisMessageSaved);
                     }
                     else {
                         log.error("No response from Iris model");
-                        irisChatWebsocketService.sendException(fullSession, new IrisNoResponseException());
+                        irisChatWebsocketService.sendException(chatSession, new IrisNoResponseException());
                     }
                     return null;
                 });

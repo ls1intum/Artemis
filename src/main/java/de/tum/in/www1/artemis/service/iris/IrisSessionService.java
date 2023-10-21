@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisHestiaSessionService;
@@ -37,17 +36,13 @@ public class IrisSessionService {
 
     private final IrisChatSessionRepository irisChatSessionRepository;
 
-    private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
-
     public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisHestiaSessionService irisHestiaSessionService,
-            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisChatSessionRepository irisChatSessionRepository,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository) {
+            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisChatSessionRepository irisChatSessionRepository) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
         this.irisHestiaSessionService = irisHestiaSessionService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
-        this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
     }
 
     /**
@@ -62,10 +57,6 @@ public class IrisSessionService {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         return irisChatSessionRepository.save(new IrisChatSession(exercise, user));
-    }
-
-    public IrisCodeEditorSession createCodeEditorSession(ProgrammingExercise exercise, User user) {
-        return irisCodeEditorSessionRepository.save(new IrisCodeEditorSession(exercise, user));
     }
 
     /**
@@ -89,17 +80,6 @@ public class IrisSessionService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         getIrisSessionSubService(session).checkHasAccessToIrisSession(session, user);
-    }
-
-    /**
-     * Sends a request to Iris to get a message for the given session.
-     * It decides which Iris subsystem should handle it based on the session type.
-     * Currently, only the chat subsystem exists.
-     *
-     * @param session The session to get a message for
-     */
-    public void requestMessageFromIris(IrisSession session) {
-        getIrisSessionSubService(session).requestAndHandleResponse(session);
     }
 
     private IrisSessionSubServiceInterface getIrisSessionSubService(IrisSession session) {

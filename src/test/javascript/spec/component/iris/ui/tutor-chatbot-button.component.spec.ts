@@ -15,11 +15,11 @@ import { ActivatedRoute } from '@angular/router';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
 import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
-import { ExerciseChatbotComponent } from 'app/iris/exercise-chatbot/exercise-chatbot.component';
+import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
 
-describe('ExerciseChatbotComponent', () => {
-    let component: ExerciseChatbotComponent;
-    let fixture: ComponentFixture<ExerciseChatbotComponent>;
+describe('TutorChatbotButtonComponent', () => {
+    let component: IrisTutorChatbotButtonComponent;
+    let fixture: ComponentFixture<IrisTutorChatbotButtonComponent>;
     let sessionService: IrisChatSessionService;
     let stateStore: IrisStateStore;
     let mockDialog: MatDialog;
@@ -54,7 +54,7 @@ describe('ExerciseChatbotComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [ExerciseChatbotComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [IrisTutorChatbotButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 IrisHttpChatSessionService,
                 { provide: MatDialog, useValue: mockDialog },
@@ -65,7 +65,7 @@ describe('ExerciseChatbotComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ExerciseChatbotComponent);
+                fixture = TestBed.createComponent(IrisTutorChatbotButtonComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
                 sessionService = fixture.debugElement.injector.get(IrisChatSessionService);

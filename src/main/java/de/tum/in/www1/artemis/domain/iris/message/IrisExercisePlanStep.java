@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Entity
 @Table(name = "iris_exercise_plan_component")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisExercisePlanComponent extends DomainObject {
+public class IrisExercisePlanStep extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "exercise_plan_id")
@@ -27,16 +27,16 @@ public class IrisExercisePlanComponent extends DomainObject {
     @Column(name = "instructions")
     private String instructions;
 
-    public IrisExercisePlanComponent() {
+    public IrisExercisePlanStep() {
     }
 
-    public IrisExercisePlanComponent(IrisExercisePlanMessageContent exercisePlan, ExerciseComponent component, String instructions) {
+    public IrisExercisePlanStep(IrisExercisePlanMessageContent exercisePlan, ExerciseComponent component, String instructions) {
         this.exercisePlan = exercisePlan;
         this.component = component;
         this.instructions = instructions;
     }
 
-    public IrisExercisePlanMessageContent getExercisePlan() {
+    public IrisExercisePlanMessageContent getPlan() {
         return exercisePlan;
     }
 

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
@@ -12,15 +13,15 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
-import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
+import de.tum.in.www1.artemis.web.rest.dto.iris.IrisMessageAndUnsavedChangesDTO;
+import de.tum.in.www1.artemis.web.rest.dto.iris.UnsavedCodeEditorChangesDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -33,40 +34,42 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
 
     private final IrisCodeEditorWebsocketService irisCodeEditorWebsocketService;
 
-    private final IrisMessageContentRepository irisMessageContentRepository;
-
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
-    private final IrisExercisePlanComponentRepository irisExercisePlanComponentRepository;
+    private final IrisExercisePlanComponentRepository irisExercisePlanStepRepository;
 
-    public IrisCodeEditorMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
+    public IrisCodeEditorMessageResource(IrisSessionRepository irisSessionRepository, IrisCodeEditorSessionService irisSessionService, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisRateLimitService rateLimitService, UserRepository userRepository,
-            IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, IrisMessageContentRepository irisMessageContentRepository,
-            IrisCodeEditorSessionService irisCodeEditorSessionService, IrisExercisePlanComponentRepository irisExercisePlanComponentRepository) {
+            IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, IrisCodeEditorSessionService irisCodeEditorSessionService,
+            IrisExercisePlanComponentRepository irisExercisePlanStepRepository) {
         super(irisSessionRepository, irisSessionService, irisMessageService, irisMessageRepository, rateLimitService, userRepository);
         this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
-        this.irisMessageContentRepository = irisMessageContentRepository;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
-        this.irisExercisePlanComponentRepository = irisExercisePlanComponentRepository;
+        this.irisExercisePlanStepRepository = irisExercisePlanStepRepository;
     }
 
     /**
      * POST code-editor-sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId of the session
-     * @param message   to send
+     * @param dto       message from the user and exercise state as currently seen by the user
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("code-editor-sessions/{sessionId}/messages")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
-        return super.createMessage(sessionId, message);
-    }
+    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageAndUnsavedChangesDTO dto) throws URISyntaxException {
+        var session = irisSessionRepository.findByIdElseThrow(sessionId);
+        irisCodeEditorSessionService.checkIsIrisActivated(session);
+        var user = userRepository.getUser();
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
 
-    @Override
-    String sendMessageAndReturnUri(IrisSession session, IrisMessage savedMessage) {
+        var savedMessage = irisMessageService.saveMessage(dto.message(), session, IrisMessageSender.USER);
+        irisCodeEditorSessionService.converseWithModel(session, dto.unsavedChanges());
+        savedMessage.setMessageDifferentiator(dto.message().getMessageDifferentiator());
         irisCodeEditorWebsocketService.sendMessage(savedMessage);
-        return "/api/iris/code-editor-sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        String uriString = "/api/iris/code-editor-sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
     /**
@@ -91,26 +94,85 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
      */
     @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
-        return super.resendMessage(sessionId, messageId);
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody UnsavedCodeEditorChangesDTO unsavedChanges) {
+        var fromDB = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        if (!(fromDB instanceof IrisCodeEditorSession session)) {
+            throw new BadRequestException("Session is not a code editor session");
+        }
+        irisCodeEditorSessionService.checkIsIrisActivated(session);
+        var user = userRepository.getUser();
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
+
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+            throw new BadRequestException("Only the last message can be resent");
+        }
+        if (message.getSender() != IrisMessageSender.USER) {
+            throw new BadRequestException("Only user messages can be resent");
+        }
+        irisCodeEditorSessionService.converseWithModel(session, unsavedChanges);
+        message.setMessageDifferentiator(message.getMessageDifferentiator());
+
+        return ResponseEntity.ok(message);
     }
 
     /**
-     * Put code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/execute: Send the (updated) plan message to the LLM
+     * Put code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute:
+     * Execute a step of an exercise plan
      *
      * @param sessionId of the session
      * @param messageId of the message
-     * @param contentId of the content
+     * @param planId    of the content
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/execute")
+    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute")
     @EnforceAtLeastEditor
-    public ResponseEntity<Void> executePlan(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId) {
-        var fromDB = irisMessageContentRepository.findByIdElseThrow(contentId);
-        if (!(fromDB instanceof IrisExercisePlanMessageContent exercisePlan)) {
-            throw new BadRequestException("Content is not an exercise plan");
+    public ResponseEntity<Void> executeExercisePlanStep(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId, @PathVariable Long stepId,
+            @RequestBody UnsavedCodeEditorChangesDTO exerciseState) {
+        var step = irisExercisePlanStepRepository.findByIdElseThrow(stepId);
+        var session = checkIdsAndGetSession(sessionId, messageId, planId, step);
+
+        irisCodeEditorSessionService.checkIsIrisActivated(session);
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, null);
+        irisCodeEditorSessionService.requestChangesToExerciseComponent(session, step, exerciseState);
+        // Return with empty body now, the changes will be sent over the websocket when they are ready
+        return ResponseEntity.ok(null);
+    }
+
+    /**
+     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}:
+     * Update the instructions of an exercise plan step
+     *
+     * @param sessionId of the session
+     * @param messageId of the message
+     * @param planId    of the exercise plan
+     * @param stepId    of the plan step
+     * @param planStep  the plan step with updated instructions
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with status {@code 404 (Not Found)} if the component could not
+     *         be found.
+     */
+    @PutMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}")
+    @EnforceAtLeastEditor
+    public ResponseEntity<IrisExercisePlanStep> updateExercisePlanStepInstructions(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId,
+            @PathVariable Long stepId, @RequestBody IrisExercisePlanStep planStep) {
+        var step = irisExercisePlanStepRepository.findByIdElseThrow(stepId);
+        var session = checkIdsAndGetSession(sessionId, messageId, planId, step);
+
+        irisCodeEditorSessionService.checkIsIrisActivated(session);
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, null);
+
+        step.setInstructions(planStep.getInstructions());
+        var savedExercisePlanComponent = irisExercisePlanStepRepository.save(step);
+        return ResponseEntity.ok(savedExercisePlanComponent);
+    }
+
+    private static IrisCodeEditorSession checkIdsAndGetSession(Long sessionId, Long messageId, Long planId, IrisExercisePlanStep step) {
+        var plan = step.getPlan();
+        if (!Objects.equals(plan.getId(), planId)) {
+            throw new ConflictException("The specified contentId is incorrect", "IrisExercisePlanComponent", "irisExercisePlanComponentConflict");
         }
-        var message = exercisePlan.getMessage();
+        var message = plan.getMessage();
         if (!Objects.equals(message.getId(), messageId)) {
             throw new ConflictException("The specified messageId is incorrect", "IrisMessageContent", "irisMessageContentConflict");
         }
@@ -121,53 +183,6 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
         if (!(session instanceof IrisCodeEditorSession codeEditorSession)) {
             throw new BadRequestException("Session is not a code editor session");
         }
-        if (!exercisePlan.hasNext()) {
-            throw new BadRequestException("The exercise plan has no next step");
-        }
-
-        irisSessionService.checkIsIrisActivated(session);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
-        irisCodeEditorSessionService.requestExerciseChanges(codeEditorSession, exercisePlan);
-        return ResponseEntity.ok(null);
-    }
-
-    /**
-     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}: Set the component instruction of the ExercisePlanComponent
-     *
-     * @param sessionId     of the session
-     * @param messageId     of the message
-     * @param contentId     of the content
-     * @param componentId   of the exercisePlanComponent
-     * @param planComponent to set for the corresponding component
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with status {@code 404 (Not Found)} if the component could not
-     *         be found.
-     */
-    @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/contents/{contentId}/components/{componentId}" })
-    @EnforceAtLeastEditor
-    public ResponseEntity<IrisExercisePlanComponent> updateExercisePlanComponent(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long contentId,
-            @PathVariable Long componentId, @RequestBody IrisExercisePlanComponent planComponent) {
-        var exercisePlanComponent = irisExercisePlanComponentRepository.findByIdElseThrow(componentId);
-        var exercisePlan = exercisePlanComponent.getExercisePlan();
-        if (!Objects.equals(exercisePlan.getId(), contentId)) {
-            throw new ConflictException("The specified contentId is incorrect", "IrisExercisePlanComponent", "irisExercisePlanComponentConflict");
-        }
-        var message = exercisePlan.getMessage();
-        if (!Objects.equals(message.getId(), messageId)) {
-            throw new ConflictException("The specified messageId is incorrect", "IrisMessageContent", "irisMessageContentConflict");
-        }
-        if (message.getSender() != IrisMessageSender.LLM) {
-            throw new BadRequestException("You can only edit the plan messages sent by Iris");
-        }
-        var session = message.getSession();
-        if (!Objects.equals(session.getId(), sessionId)) {
-            throw new ConflictException("The specified sessionId is incorrect", "IrisMessage", "irisMessageSessionConflict");
-        }
-
-        irisSessionService.checkIsIrisActivated(session);
-        irisSessionService.checkHasAccessToIrisSession(session, null);
-
-        exercisePlanComponent.setInstructions(planComponent.getInstructions());
-        var savedExercisePlanComponent = irisExercisePlanComponentRepository.save(exercisePlanComponent);
-        return ResponseEntity.ok(savedExercisePlanComponent);
+        return codeEditorSession;
     }
 }

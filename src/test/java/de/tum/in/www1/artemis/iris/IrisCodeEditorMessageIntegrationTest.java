@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -29,6 +30,9 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisSessionService irisSessionService;
+
+    @Autowired
+    private IrisCodeEditorSessionService irisCodeEditorSessionService;
 
     @Autowired
     private IrisMessageService irisMessageService;
@@ -63,7 +67,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void sendOneMessage() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
         setupExercise();
@@ -87,8 +91,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void sendOneMessageToWrongSession() throws Exception {
-        var irisSession1 = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
-        var irisSession2 = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor2"));
+        var irisSession1 = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession2 = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor2"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession1);
         request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
@@ -96,7 +100,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void sendMessageWithoutContent() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
@@ -105,7 +109,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getMessages() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage message1 = createDefaultMockMessage(irisSession);
         IrisMessage message2 = createDefaultMockMessage(irisSession);
         IrisMessage message3 = createDefaultMockMessage(irisSession);
@@ -126,7 +130,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void executePlan() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.addContent(createMockExercisePlanContent(message));
@@ -146,7 +150,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateComponentPlan() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.addContent(createMockExercisePlanContent(message));
@@ -154,10 +158,10 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var exercisePlanContent = irisMessage.getContent().get(0);
         setupExercise();
         assertThat(exercisePlanContent instanceof IrisExercisePlanMessageContent).isEqualTo(true);
-        var component = ((IrisExercisePlanMessageContent) exercisePlanContent).getComponents().get(0);
+        var component = ((IrisExercisePlanMessageContent) exercisePlanContent).getSteps().get(0);
 
         request.putWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId()
-                + "/components/" + component.getId(), updateProblemStatement(component), IrisExercisePlanComponent.class, HttpStatus.OK);
+                + "/components/" + component.getId(), updateProblemStatement(component), IrisExercisePlanStep.class, HttpStatus.OK);
         var irisMessageFromDB = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         var componentFromDB = irisExercisePlanComponentRepository.findByIdElseThrow(component.getId());
         assertThat(irisMessageFromDB.getContent()).hasSize(1);
@@ -167,7 +171,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void sendOneMessageBadRequest() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageError();
@@ -184,7 +188,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void sendOneMessageEmptyBody() throws Exception {
-        var irisSession = irisSessionService.createCodeEditorSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
         irisRequestMockProvider.mockMessageResponse(null);
@@ -230,16 +234,16 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private IrisExercisePlanMessageContent createMockExercisePlanContent(IrisMessage message) {
         var content = new IrisExercisePlanMessageContent();
-        content.setComponents(List.of(new IrisExercisePlanComponent(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
-                new IrisExercisePlanComponent(content, ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
-                new IrisExercisePlanComponent(content, ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),
-                new IrisExercisePlanComponent(content, ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")));
+        content.setSteps(List.of(new IrisExercisePlanStep(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
+                new IrisExercisePlanStep(content, ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
+                new IrisExercisePlanStep(content, ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),
+                new IrisExercisePlanStep(content, ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")));
         content.setId(ThreadLocalRandom.current().nextLong());
         content.setMessage(message);
         return content;
     }
 
-    private IrisExercisePlanComponent updateProblemStatement(IrisExercisePlanComponent psComponent) {
+    private IrisExercisePlanStep updateProblemStatement(IrisExercisePlanStep psComponent) {
         psComponent.setInstructions("test PS");
         return psComponent;
     }

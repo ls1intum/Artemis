@@ -1,21 +1,25 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import javax.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
-import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.session.IrisChatSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 
 /**
@@ -26,11 +30,14 @@ import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 @RequestMapping("api/iris/")
 public class IrisChatMessageResource extends IrisMessageResource {
 
+    private final IrisChatSessionService irisChatSessionService;
+
     private final IrisChatWebsocketService irisChatWebsocketService;
 
-    public IrisChatMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
+    public IrisChatMessageResource(IrisSessionRepository irisSessionRepository, IrisChatSessionService irisChatSessionService, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisRateLimitService rateLimitService, UserRepository userRepository, IrisChatWebsocketService irisChatWebsocketService) {
-        super(irisSessionRepository, irisSessionService, irisMessageService, irisMessageRepository, rateLimitService, userRepository);
+        super(irisSessionRepository, irisChatSessionService, irisMessageService, irisMessageRepository, rateLimitService, userRepository);
+        this.irisChatSessionService = irisChatSessionService;
         this.irisChatWebsocketService = irisChatWebsocketService;
     }
 
@@ -44,13 +51,21 @@ public class IrisChatMessageResource extends IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
-        return super.createMessage(sessionId, message);
-    }
+        var fromDB = irisSessionRepository.findByIdElseThrow(sessionId);
+        if (!(fromDB instanceof IrisChatSession session)) {
+            throw new BadRequestException("Session is not a chat session");
+        }
+        irisSessionService.checkIsIrisActivated(session);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
 
-    @Override
-    String sendMessageAndReturnUri(IrisSession session, IrisMessage savedMessage) {
+        var savedMessage = irisMessageService.saveMessage(message, fromDB, IrisMessageSender.USER);
+        irisChatSessionService.requestAndHandleResponse(session);
+        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisChatWebsocketService.sendMessage(savedMessage);
-        return "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
     /**
@@ -76,7 +91,26 @@ public class IrisChatMessageResource extends IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
-        return super.resendMessage(sessionId, messageId);
+        var fromDB = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        if (!(fromDB instanceof IrisChatSession session)) {
+            throw new BadRequestException("Session is not a chat session");
+        }
+        irisSessionService.checkIsIrisActivated(session);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
+
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+            throw new BadRequestException("Only the last message can be resent");
+        }
+        if (message.getSender() != IrisMessageSender.USER) {
+            throw new BadRequestException("Only user messages can be resent");
+        }
+        irisChatSessionService.requestAndHandleResponse(session);
+        message.setMessageDifferentiator(message.getMessageDifferentiator());
+
+        return ResponseEntity.ok(message);
     }
 
     /**

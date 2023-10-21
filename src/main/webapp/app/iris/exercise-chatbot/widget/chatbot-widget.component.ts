@@ -15,7 +15,7 @@ import {
 import { NavigationStart, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components/button.component';
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -36,53 +36,26 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import {
-    IrisMessageContent,
-    IrisMessageContentType,
-    IrisMessageTextContent,
-    getPlanComponent,
-    getTextContent,
-    isPlanContent,
-    isTextContent,
-} from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageContent, IrisMessageContentType, IrisMessageTextContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs/esm';
-import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
+import { AnimationEvent } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
-import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
-import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
-import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-    selector: 'jhi-exercise-chat-widget',
-    templateUrl: './exercise-chat-widget.component.html',
-    styleUrls: ['./exercise-chat-widget.component.scss'],
-    animations: [
-        trigger('fadeAnimation', [
-            state(
-                'start',
-                style({
-                    opacity: 1,
-                }),
-            ),
-            state(
-                'end',
-                style({
-                    opacity: 0,
-                }),
-            ),
-            transition('start => end', [animate('2s ease')]),
-        ]),
-    ],
+    selector: 'jhi-chatbot-widget',
+    templateUrl: './chatbot-widget.component.html',
+    styleUrls: ['./chatbot-widget.component.scss'],
 })
-export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+    protected readonly IrisSender = IrisSender;
     // Icons
     faTrash = faTrash;
     faCircle = faCircle;
@@ -102,10 +75,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
     @ViewChild('messageTextarea', { static: false }) messageTextarea: ElementRef<HTMLTextAreaElement>;
     @ViewChild('unreadMessage', { static: false }) unreadMessage!: ElementRef;
-
-    // Constants
-    readonly SENDER_USER = IrisSender.USER;
-    readonly SENDER_SERVER = IrisSender.LLM;
 
     // State variables
     stateStore: IrisStateStore;
@@ -154,7 +123,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         private sharedService: SharedService,
         private modalService: NgbModal,
         @Inject(DOCUMENT) private document: Document,
-        private translateService: TranslateService,
+        protected translateService: TranslateService,
     ) {
         this.stateStore = data.stateStore;
         this.courseId = data.courseId;
@@ -212,7 +181,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             this.scrollToBottom('auto');
         }
 
-        interact('.chat-widget')
+        interact('.chatbot-widget')
             .resizable({
                 // resize from all edges and corners
                 edges: { left: true, right: true, bottom: true, top: true },
@@ -291,7 +260,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 50;
         const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 100;
 
-        const nE = this.document.querySelector('.chat-widget') as HTMLElement;
+        const nE = this.document.querySelector('.chatbot-widget') as HTMLElement;
         nE.style.transform = `translate(${initX}px, ${initY}px)`;
         nE.setAttribute('data-x', String(initX));
         nE.setAttribute('data-y', String(initY));
@@ -310,28 +279,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         this.stateSubscription.unsubscribe();
         this.navigationSubscription.unsubscribe();
         this.toggleScrollLock(false);
-    }
-
-    /**
-     * Animates the dots while loading each Iris message in the chat widget.
-     */
-    animateDots() {
-        setInterval(() => {
-            this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
-        }, 500);
-    }
-
-    /**
-     * Inserts the correct link to import the current programming exercise for a new variant generation.
-     */
-    getFirstMessageContent(): string {
-        if (this.isChatSession()) {
-            return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
-        }
-        this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
-        return this.translateService
-            .instant('artemisApp.exerciseChatbot.codeEditorFirstMessage')
-            .replace(/{link:(.*)}/, '<a href="' + this.importExerciseUrl + '" target="_blank">$1</a>');
     }
 
     /**
@@ -355,18 +302,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     /**
-     * Scrolls the chat body to the bottom.
-     * @param behavior - The scroll behavior.
+     * Gets Iris' introductory message for the type of chat widget.
      */
-    scrollToBottom(behavior: ScrollBehavior) {
-        setTimeout(() => {
-            const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
-            chatBodyElement.scrollTo({
-                top: chatBodyElement.scrollHeight,
-                behavior: behavior,
-            });
-        });
-    }
+    protected abstract getFirstMessageContent(): string;
 
     /**
      * Handles the send button click event and sends the user's message.
@@ -388,16 +326,81 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                // .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
-                .then(() => {
-                    this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
-                })
+                .then(() => this.sendCreateRequest(message))
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
         this.resetChatBodyHeight();
+    }
+
+    protected abstract sendCreateRequest(message: IrisClientMessage): Promise<IrisMessage>;
+
+    resendMessage(message: IrisClientMessage) {
+        this.resendAnimationActive = true;
+        message.messageDifferentiator = message.id ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
+
+        const timeoutId = setTimeout(() => {
+            // will be cleared by the store automatically
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+            this.scrollToBottom('smooth');
+        }, 20000);
+        this.stateStore
+            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
+            .then(() => {
+                if (message.id) {
+                    return this.sendResendRequest(message);
+                }
+                return this.sendCreateRequest(message);
+            })
+            .then(() => {
+                this.scrollToBottom('smooth');
+            })
+            .catch((error) => this.handleIrisError(error))
+            .finally(() => {
+                this.resendAnimationActive = false;
+                this.scrollToBottom('smooth');
+            });
+    }
+
+    protected abstract sendResendRequest(message: IrisClientMessage): Promise<IrisMessage>;
+
+    /**
+     * Rates a message as helpful or unhelpful.
+     * @param message_id - The ID of the message to rate.
+     * @param index - The index of the message in the messages array.
+     * @param helpful - A boolean indicating if the message is helpful or not.
+     */
+    rateMessage(message_id: number, index: number, helpful: boolean) {
+        this.sessionService
+            .rateMessage(this.sessionId, message_id, helpful)
+            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+            .catch(() => {
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
+                this.scrollToBottom('smooth');
+            });
+    }
+
+    /**
+     * Scrolls the chat body to the bottom.
+     * @param behavior - The scroll behavior.
+     */
+    scrollToBottom(behavior: ScrollBehavior) {
+        setTimeout(() => {
+            const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
+            chatBodyElement.scrollTo({
+                top: chatBodyElement.scrollHeight,
+                behavior: behavior,
+            });
+        });
+    }
+
+    /**
+     * Returns whether to display the clear chat button.
+     */
+    isClearChatButtonEnabled(): boolean {
+        return this.messages.length > 1 || (this.messages.length === 1 && !isArtemisClientSentMessage(this.messages[0]));
     }
 
     /**
@@ -421,6 +424,15 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
                 unreadMessageElement.scrollIntoView({ behavior: 'auto' });
             }
         });
+    }
+
+    /**
+     * Animates the dots while loading each Iris message in the chat widget.
+     */
+    animateDots() {
+        setInterval(() => {
+            this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
+        }, 500);
     }
 
     /**
@@ -571,43 +583,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     }
 
     /**
-     * Rates a message as helpful or unhelpful.
-     * @param message_id - The ID of the message to rate.
-     * @param index - The index of the message in the messages array.
-     * @param helpful - A boolean indicating if the message is helpful or not.
-     */
-    rateMessage(message_id: number, index: number, helpful: boolean) {
-        if (this.sessionService.httpMessageService instanceof IrisHttpChatMessageService) {
-            this.sessionService.httpMessageService
-                .rateMessage(<number>this.sessionId, message_id, helpful)
-                .toPromise()
-                .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
-                .catch(() => {
-                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
-                    this.scrollToBottom('smooth');
-                });
-        }
-    }
-
-    /**
-     * execute component plans
-     * @param message_id - The ID of the message.
-     * @param content_id - The ID of the content to execute.
-     */
-    executePlan(message_id: number, content_id: number) {
-        if (this.sessionService.httpMessageService instanceof IrisHttpCodeEditorMessageService) {
-            this.sessionService.httpMessageService
-                .executePlan(<number>this.sessionId, message_id, content_id)
-                .toPromise()
-                // .then(() => this.stateStore.dispatch(new ExecutePlanSuccessAction(content_id)))
-                .catch(() => {
-                    //this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.EXECUTE_PLAN_FAILED));
-                    this.scrollToBottom('smooth');
-                });
-        }
-    }
-
-    /**
      * Checks if a message is a student-sent message.
      * @param message - The message to check.
      * @returns A boolean indicating if the message is a student-sent message.
@@ -640,39 +615,10 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
      * @returns A new IrisClientMessage object representing the user message.
      */
     newUserMessage(message: string): IrisClientMessage {
-        const content = new IrisMessageTextContent(message);
         return {
-            sender: this.SENDER_USER,
-            content: [content],
+            sender: IrisSender.USER,
+            content: [new IrisMessageTextContent(message)],
         };
-    }
-
-    resendMessage(message: IrisClientMessage) {
-        this.resendAnimationActive = true;
-        message.messageDifferentiator = message.id ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
-
-        const timeoutId = setTimeout(() => {
-            // will be cleared by the store automatically
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
-            this.scrollToBottom('smooth');
-        }, 20000);
-        this.stateStore
-            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-            .then(() => {
-                if (message.id) {
-                    return this.sessionService.httpMessageService.resendMessage(<number>this.sessionId, message).toPromise();
-                } else {
-                    return this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
-                }
-            })
-            .then(() => {
-                this.scrollToBottom('smooth');
-            })
-            .catch((error) => this.handleIrisError(error))
-            .finally(() => {
-                this.resendAnimationActive = false;
-                this.scrollToBottom('smooth');
-            });
     }
 
     private handleIrisError(error: HttpErrorResponse) {
@@ -723,10 +669,6 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         return null;
     }
 
-    isClearChatEnabled(): boolean {
-        return this.messages.length > 1 || (this.messages.length === 1 && !isArtemisClientSentMessage(this.messages[0]));
-    }
-
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
     }
@@ -737,21 +679,5 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     getTextContent(content: IrisMessageContent) {
         return getTextContent(content);
-    }
-
-    isPlanContent(content: IrisMessageContent) {
-        return isPlanContent(content);
-    }
-
-    getPlanComponents(content: IrisMessageContent) {
-        return getPlanComponent(content);
-    }
-
-    isRateMessage() {
-        return this.sessionService.httpMessageService instanceof IrisHttpChatMessageService;
-    }
-
-    isChatSession() {
-        return this.sessionService instanceof IrisChatSessionService;
     }
 }

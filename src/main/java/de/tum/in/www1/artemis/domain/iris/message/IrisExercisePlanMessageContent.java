@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
-import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.*;
@@ -15,58 +14,34 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "iris_exercise_plan_message_content")
 @DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisExercisePlanMessageContent extends IrisMessageContent implements Iterator<IrisExercisePlanComponent> {
+public class IrisExercisePlanMessageContent extends IrisMessageContent {
 
     @OneToMany(mappedBy = "exercisePlan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<IrisExercisePlanComponent> components;
+    private List<IrisExercisePlanStep> steps;
 
     @Column(name = "current_component_index")
-    private short currentComponentIndex = 0;
+    private short currentStepIndex = 0;
 
-    @Transient
-    private boolean executing = false;
-
-    public List<IrisExercisePlanComponent> getComponents() {
-        return components;
+    public List<IrisExercisePlanStep> getSteps() {
+        return steps;
     }
 
-    public void setComponents(List<IrisExercisePlanComponent> components) {
-        this.components = components;
+    public void setSteps(List<IrisExercisePlanStep> steps) {
+        this.steps = steps;
     }
 
-    public short getCurrentComponentIndex() {
-        return currentComponentIndex;
+    public short getCurrentStepIndex() {
+        return currentStepIndex;
     }
 
-    public void setCurrentComponentIndex(short currentInstructionIndex) {
-        this.currentComponentIndex = currentInstructionIndex;
-    }
-
-    public boolean isExecuting() {
-        return executing;
-    }
-
-    public void setExecuting(boolean executing) {
-        this.executing = executing;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return currentComponentIndex < components.size();
-    }
-
-    @Override
-    public IrisExercisePlanComponent next() {
-        if (!hasNext()) {
-            throw new IllegalStateException("No more instructions available");
-        }
-        return components.get(currentComponentIndex++);
+    public void setCurrentStepIndex(short currentInstructionIndex) {
+        this.currentStepIndex = currentInstructionIndex;
     }
 
     @Override
     public String getContentAsString() {
         var sb = new StringBuilder("Exercise plan:\n");
-        for (var entry : components) {
+        for (var entry : steps) {
             sb.append(entry.getComponent().toString()).append(": \"").append(entry.getInstructions()).append("\"\n");
         }
         return sb.toString();
@@ -74,7 +49,7 @@ public class IrisExercisePlanMessageContent extends IrisMessageContent implement
 
     @Override
     public String toString() {
-        return "IrisExercisePlanMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", components=" + components + ", currentInstructionIndex="
-                + currentComponentIndex + '}';
+        return "IrisExercisePlanMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", components=" + steps + ", currentInstructionIndex="
+                + currentStepIndex + '}';
     }
 }

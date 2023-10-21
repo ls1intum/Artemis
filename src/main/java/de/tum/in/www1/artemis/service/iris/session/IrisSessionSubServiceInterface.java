@@ -10,13 +10,6 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 public interface IrisSessionSubServiceInterface {
 
     /**
-     * Sends a request to Iris to get a message for the given session.
-     *
-     * @param irisSession The session to get a message for
-     */
-    void requestAndHandleResponse(IrisSession irisSession);
-
-    /**
      * Checks if the user has access to the Iris session.
      *
      * @param irisSession The session to check

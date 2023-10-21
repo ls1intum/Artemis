@@ -1,0 +1,42 @@
+<jhi-chatbot-widget>
+    <div messages *ngFor="let message of messages; let i = index">
+        <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
+        <div *ngFor="let content of message.content">
+            <div *ngIf="isStudentSentMessage(message)" style="display: flex">
+                <div style="display: flex; margin-left: auto; margin-right: 0; padding-right: 5px">
+                    <button
+                        id="resendButton"
+                        style="all: unset; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer"
+                        (click)="resendMessage(message)"
+                        [disabled]="resendAnimationActive"
+                        *ngIf="i === messages.length - 1 && message.sender === IrisSender.USER && !this.isLoading && !(rateLimit >= 0 && currentMessageCount >= rateLimit)"
+                    >
+                        <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
+                    </button>
+                </div>
+                <div *ngIf="isTextContent(content)" style="display: flex">
+                    <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown" class="bubble-right"></span></pre>
+                </div>
+            </div>
+            <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
+                <div class="bubble-left" *ngIf="isTextContent(content)">
+                    <span [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
+                </div>
+                <div class="rate-message-buttons">
+                    <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
+                        <fa-icon [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'" style="margin-right: 15px" [icon]="faThumbsUp" size="sm">
+                        </fa-icon>
+                    </button>
+                    <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="message.helpful === false">
+                        <fa-icon [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'" [icon]="faThumbsDown" size="sm"></fa-icon>
+                    </button>
+                </div>
+            </div>
+            <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
+                <div class="bubble-left" *ngIf="isTextContent(content)">
+                    <span [innerHTML]="getTextContent(content)!"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</jhi-chatbot-widget>
