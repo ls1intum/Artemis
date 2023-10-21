@@ -568,7 +568,7 @@ export class MetisService implements OnDestroy {
             this.currentPostContextFilter.courseWideContexts?.toString() !== other.courseWideContexts?.toString() ||
             this.currentPostContextFilter.exerciseIds?.toString() !== other.exerciseIds?.toString() ||
             this.currentPostContextFilter.lectureIds?.toString() !== other.lectureIds?.toString() ||
-            this.currentPostContextFilter.conversationIds?.toString() !== other.conversationId?.toString()
+            this.currentPostContextFilter.conversationIds?.toString() !== other.conversationIds?.toString()
         );
     }
 }
