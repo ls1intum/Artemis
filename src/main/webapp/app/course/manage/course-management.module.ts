@@ -66,7 +66,6 @@ import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/
 import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
 import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
 
-
 @NgModule({
     imports: [
         ArtemisSharedModule,
