@@ -7,10 +7,11 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
+import { SelectWithSearchComponent } from './select-with-search/select-with-search.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, AceEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, ProfileToggleModule],
-    declarations: [MarkdownEditorComponent],
+    declarations: [MarkdownEditorComponent, SelectWithSearchComponent],
     exports: [MarkdownEditorComponent],
 })
 export class ArtemisMarkdownEditorModule {}

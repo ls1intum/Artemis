@@ -63,7 +63,9 @@ import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
+import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
 import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
+
 
 @NgModule({
     imports: [
@@ -114,8 +116,8 @@ import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.mo
         ExerciseCategoriesModule,
         NgbNavModule,
         ArtemisExerciseCreateButtonsModule,
-        NgbNavModule,
         ProfileToggleModule,
+        ArtemisLearningPathManagementModule,
     ],
     declarations: [
         CourseManagementComponent,

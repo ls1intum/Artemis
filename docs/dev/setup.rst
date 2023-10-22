@@ -931,7 +931,7 @@ Other useful commands
   ``docker compose start <name of the service>``)
 - Restart a service: ``docker compose restart <name of the service>``
 - Remove all local Docker containers: ``docker container rm $(docker ps -a -q)``
-- Remove all local Artemis Docker images: ``docker rmi $(docker images -q ghcr.io/ls1intum/artemis)``
+- Remove all local Artemis Docker images: ``docker rmi $(docker images --filter=reference="ghcr.io/ls1intum/artemis:*" -q)``
 
 ------------------------------------------------------------------------------------------------------------------------
 

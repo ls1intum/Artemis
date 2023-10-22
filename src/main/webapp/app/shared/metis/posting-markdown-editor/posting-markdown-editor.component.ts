@@ -13,6 +13,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { LectureService } from 'app/lecture/lecture.service';
+import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
@@ -39,6 +41,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     constructor(
         private cdref: ChangeDetectorRef,
         private metisService: MetisService,
+        private courseManagementService: CourseManagementService,
         private lectureService: LectureService,
         private profileToggleService: ProfileToggleService,
     ) {}
@@ -55,6 +58,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
+            new UserMentionCommand(this.courseManagementService, this.metisService),
             new ExerciseReferenceCommand(this.metisService),
             new LectureAttachmentReferenceCommand(this.metisService, this.lectureService, this.profileToggleService),
         ];

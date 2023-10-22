@@ -1,8 +1,12 @@
 import { Submission } from 'app/entities/submission.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
+import { Directive, Input } from '@angular/core';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
+@Directive()
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
+    abstract exerciseType: ExerciseType;
     /**
      * checks whether the component has unsaved changes.
      * It is called in the periodic update timer to determine, if the component needs an update
@@ -23,5 +27,11 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
     abstract updateViewFromSubmission(): void;
 
     abstract getSubmission(): Submission | undefined;
+    abstract getExerciseId(): number | undefined;
     abstract getExercise(): Exercise;
+    @Input() readonly = false;
+    @Input() examTimeline = false;
+    // needs to be public so that it can be accessed in the tests
+    submissionVersion: SubmissionVersion;
+    abstract setSubmissionVersion(submissionVersion: SubmissionVersion): void;
 }

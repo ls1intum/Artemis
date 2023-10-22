@@ -19,6 +19,8 @@ import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helper
 import { LectureService } from 'app/lecture/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
@@ -37,6 +39,7 @@ describe('PostingsMarkdownEditor', () => {
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
+    let courseManagementService: CourseManagementService;
     let lectureService: LectureService;
     let findLectureWithDetailsSpy: jest.SpyInstance;
     let profileToggleService: ProfileToggleService;
@@ -46,6 +49,7 @@ describe('PostingsMarkdownEditor', () => {
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 MockProvider(LectureService),
+                MockProvider(CourseManagementService),
                 { provide: HttpClient, useClass: MockHttpService },
                 MockProvider(AlertService),
             ],
@@ -58,6 +62,7 @@ describe('PostingsMarkdownEditor', () => {
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
+                courseManagementService = TestBed.inject(CourseManagementService);
                 lectureService = TestBed.inject(LectureService);
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
                 const returnValue = of(new HttpResponse({ body: [], status: 200 }));
@@ -82,6 +87,7 @@ describe('PostingsMarkdownEditor', () => {
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
+            new UserMentionCommand(courseManagementService, metisService),
             new ExerciseReferenceCommand(metisService),
             new LectureAttachmentReferenceCommand(metisService, lectureService, profileToggleService),
         ]);

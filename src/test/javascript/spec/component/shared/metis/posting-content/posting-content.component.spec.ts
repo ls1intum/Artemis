@@ -19,6 +19,7 @@ import {
     metisLecture,
     metisLecturePosts,
 } from '../../../../helpers/sample/metis-sample-data';
+import { Params } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 
 describe('PostingContentComponent', () => {
@@ -112,6 +113,12 @@ describe('PostingContentComponent', () => {
         expect(component.getPatternMatches()).toEqual([firstMatch]);
     });
 
+    it('should calculate correct pattern matches for content with one user reference', () => {
+        component.content = 'I do want to reference [user]name(login)[/user]!';
+        const firstMatch = { startIndex: 23, endIndex: 47, referenceType: ReferenceType.USER } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
     it('should calculate correct pattern matches for content with post, multiple exercise, lecture and attachment references', () => {
         component.content =
             'I do want to reference #4, #10, ' +
@@ -121,7 +128,8 @@ describe('PostingContentComponent', () => {
             '[programming](courses/1/exercises/1)Programming Exercise[/programming], ' +
             '[text](courses/1/exercises/1)Text Exercise[/text], ' +
             '[lecture](courses/1/lectures/1)Lecture[/lecture], and ' +
-            '[attachment](attachmentPath/attachment.pdf)PDF File[/attachment] in my posting content.';
+            '[attachment](attachmentPath/attachment.pdf)PDF File[/attachment] in my posting content' +
+            '[user]name(login)[/user]!';
 
         const firstMatch = { startIndex: 23, endIndex: 25, referenceType: ReferenceType.POST } as PatternMatch;
         const secondMatch = { startIndex: 27, endIndex: 30, referenceType: ReferenceType.POST } as PatternMatch;
@@ -132,8 +140,9 @@ describe('PostingContentComponent', () => {
         const seventhMatch = { startIndex: 290, endIndex: 339, referenceType: ReferenceType.TEXT } as PatternMatch;
         const eightMatch = { startIndex: 341, endIndex: 389, referenceType: ReferenceType.LECTURE } as PatternMatch;
         const ninthMatch = { startIndex: 395, endIndex: 459, referenceType: ReferenceType.ATTACHMENT } as PatternMatch;
+        const tenthMatch = { startIndex: 481, endIndex: 505, referenceType: ReferenceType.USER } as PatternMatch;
 
-        expect(component.getPatternMatches()).toEqual([firstMatch, secondMatch, thirdMatch, fourthMatch, fifthMatch, sixthMatch, seventhMatch, eightMatch, ninthMatch]);
+        expect(component.getPatternMatches()).toEqual([firstMatch, secondMatch, thirdMatch, fourthMatch, fifthMatch, sixthMatch, seventhMatch, eightMatch, ninthMatch, tenthMatch]);
     });
 
     describe('Computing posting content parts', () => {
@@ -451,6 +460,21 @@ describe('PostingContentComponent', () => {
                     referenceStr: `PDF File Slide 7`,
                     referenceType: ReferenceType.SLIDE,
                     slideToReference: attachmentDirectory + 'slides/attachment-unit/123/slide/9',
+                    contentAfterReference: '.',
+                } as PostingContentPart,
+            ]);
+        }));
+
+        it('should compute parts when referencing a user', fakeAsync(() => {
+            component.content = `This message is important for [user]Test(test_login)[/user].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'This message is important for ',
+                    referenceStr: `Test`,
+                    referenceType: ReferenceType.USER,
+                    queryParams: { referenceUserLogin: 'test_login' } as Params,
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);

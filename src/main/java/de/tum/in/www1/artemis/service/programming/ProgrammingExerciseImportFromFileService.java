@@ -60,9 +60,10 @@ public class ProgrammingExerciseImportFromFileService {
      * @param programmingExerciseForImport the programming exercise that should be imported
      * @param zipFile                      the zip file that contains the exercise
      * @param course                       the course to which the exercise should be added
+     * @param user                         the user initiating the import
      * @return the imported programming exercise
      **/
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course)
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course, User user)
             throws IOException, GitAPIException, URISyntaxException {
         if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
@@ -79,12 +80,12 @@ public class ProgrammingExerciseImportFromFileService {
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
+            importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport, true);
             if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
             }
             copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
-            importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
+            importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
             importedProgrammingExercise.setCourse(course);
         }
         finally {
@@ -115,7 +116,8 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName) throws IOException, GitAPIException, URISyntaxException {
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName, User user)
+            throws IOException, GitAPIException, URISyntaxException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()), false);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()), false);
         Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()), false);
@@ -126,10 +128,10 @@ public class ProgrammingExerciseImportFromFileService {
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
-        // TODO: use the current instructor user for the commit
-        gitService.commitAndPush(templateRepo, "Import template from file", true, null);
-        gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
-        gitService.commitAndPush(testRepo, "Import tests from file", true, null);
+
+        gitService.commitAndPush(templateRepo, "Import template from file", true, user);
+        gitService.commitAndPush(solutionRepo, "Import solution from file", true, user);
+        gitService.commitAndPush(testRepo, "Import tests from file", true, user);
     }
 
     private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) {

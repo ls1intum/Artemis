@@ -32,12 +32,12 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { v4 as uuid } from 'uuid';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import { InteractiveSearchCommand } from 'app/shared/markdown-editor/commands/interactiveSearchCommand';
 import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 
@@ -75,8 +75,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     public MultiOptionCommand = MultiOptionCommand;
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
-
-    ProfileToggle = ProfileToggle;
+    public InteractiveSearchCommand = InteractiveSearchCommand;
+    public ProfileToggle = ProfileToggle;
 
     // This ref is used for entering the fullscreen mode.
     @ViewChild('wrapper', { read: ElementRef, static: false }) wrapper: ElementRef;
@@ -165,7 +165,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** Resizable constants **/
     @Input()
-    enableResize = false;
+    enableResize = true;
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
     @Input()
@@ -186,6 +186,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     faAngleDown = faAngleDown;
 
     uniqueMarkdownEditorId: string;
+
+    editorContentString: string;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,

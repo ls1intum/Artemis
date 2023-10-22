@@ -52,6 +52,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
+import { StudentExamTimelineComponent } from './student-exams/student-exam-timeline/student-exam-timeline.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { ExamEditWorkingTimeDialogComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time-dialog.component';
 import { SuspiciousBehaviorComponent } from './suspicious-behavior/suspicious-behavior.component';
@@ -63,6 +64,12 @@ import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
 
+import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.module';
+import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
+import { NgxSliderModule } from 'ngx-slider-v2';
+import { ProgrammingExerciseExamDiffComponent } from './student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
+import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
@@ -96,6 +103,11 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
         TitleChannelNameModule,
+        ArtemisExamNavigationBarModule,
+        ArtemisExamSubmissionComponentsModule,
+        NgxSliderModule,
+        GitDiffReportModule,
+        ArtemisProgrammingExerciseModule,
         ProfileToggleModule,
     ],
     declarations: [
@@ -133,6 +145,8 @@ const ENTITY_STATES = [...examManagementState];
         SuspiciousSessionsOverviewComponent,
         PlagiarismCasesOverviewComponent,
         SuspiciousSessionsComponent,
+        StudentExamTimelineComponent,
+        ProgrammingExerciseExamDiffComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

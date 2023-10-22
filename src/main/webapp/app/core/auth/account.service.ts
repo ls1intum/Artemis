@@ -61,10 +61,14 @@ export class AccountService implements IAccountService {
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
         if (user) {
             this.websocketService.enableReconnect();
+            this.websocketService.connect();
             this.featureToggleService.subscribeFeatureToggleUpdates();
             this.profileToggleService.subscribeProfileToggleUpdates();
         } else {
             this.websocketService.disableReconnect();
+            if (this.websocketService.isConnected()) {
+                this.websocketService.disconnect();
+            }
             this.featureToggleService.unsubscribeFeatureToggleUpdates();
             this.profileToggleService.unsubscribeProfileToggleUpdates();
         }
@@ -145,7 +149,6 @@ export class AccountService implements IAccountService {
                 map((response: HttpResponse<User>) => {
                     const user = response.body!;
                     if (user) {
-                        this.websocketService.connect();
                         this.userIdentity = user;
 
                         // improved error tracking in sentry
@@ -161,10 +164,6 @@ export class AccountService implements IAccountService {
                     return this.userIdentity;
                 }),
                 catchError(() => {
-                    // this will be called during logout
-                    if (this.websocketService.isConnected()) {
-                        this.websocketService.disconnect();
-                    }
                     this.userIdentity = undefined;
                     return of(undefined);
                 }),
