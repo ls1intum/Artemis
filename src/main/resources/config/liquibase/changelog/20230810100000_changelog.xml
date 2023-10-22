@@ -43,11 +43,7 @@
             <!-- Find the testcase by matching the text / test name and the exercise -->
             UPDATE feedback, programming_exercise_test_case, fe
             SET test_case_id = programming_exercise_test_case.id
-            WHERE feedback.type = 3 <!-- Automatic -->
-                AND feedback.text IS NOT NULL
-                AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
-                AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
-                AND feedback.id = fe.id
+            WHERE feedback.id = fe.id
                 AND programming_exercise_test_case.test_name = feedback.text
                 AND programming_exercise_test_case.exercise_id = fe.exercise_id
         </sql>
@@ -114,8 +110,7 @@
             )
             UPDATE feedback, programming_exercise_test_case, fe
             SET test_case_id = programming_exercise_test_case.id
-            WHERE
-                feedback.id = fe.id
+            WHERE feedback.id = fe.id
                 AND programming_exercise_test_case.test_name = feedback.text
                 AND programming_exercise_test_case.exercise_id = fe.exercise_id
         </sql>
