@@ -57,6 +57,7 @@ import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } 
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
+import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/student-exam-timeline/student-exam-timeline.component';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 
 export const examManagementRoute: Routes = [
@@ -287,6 +288,18 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/student-exams/:studentExamId/summary',
         component: StudentExamSummaryComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/student-exams/:studentExamId/exam-timeline',
+        component: StudentExamTimelineComponent,
         resolve: {
             studentExam: StudentExamResolve,
         },

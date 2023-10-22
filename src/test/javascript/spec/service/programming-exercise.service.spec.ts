@@ -18,6 +18,8 @@ import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programmin
 import { Course } from 'app/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/entities/submission.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -268,6 +270,29 @@ describe('ProgrammingExercise Service', () => {
         const url = `api/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush(request);
+        tick();
+    }));
+
+    it('should make GET request to retrieve diff between submission and template', fakeAsync(() => {
+        const exerciseId = 1;
+        const submissionId = 2;
+        const expected = { id: 1, entries: [] } as unknown as ProgrammingExerciseGitDiffReport;
+        service.getDiffReportForSubmissionWithTemplate(exerciseId, submissionId).subscribe((resp) => expect(resp).toEqual(expected));
+        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-with-template`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should make GET request to retrieve diff between submissions', fakeAsync(() => {
+        const exerciseId = 1;
+        const submissionId = 2;
+        const submissionId2 = 3;
+        const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
+        service.getDiffReportForSubmissions(exerciseId, submissionId, submissionId2).subscribe((resp) => expect(resp).toEqual(expected));
+        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report/${submissionId2}`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expected);
         tick();
     }));
 

@@ -334,6 +334,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
         suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
+        exam_timeline: 'artemisApp.examTimeline.breadcrumb',
     };
 
     studentPathBreadcrumbTranslations = {
