@@ -240,6 +240,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             this.editor.setMode(this.editorMode);
             this.editor.getEditor().resize();
             this.editor.getEditor().focus();
+            // always scroll to the top, otherwise inline annotations might be placed incorrectly
+            this.editor.getEditor().getSession().setScrollTop(0);
             // Reset the undo stack after file change, otherwise the user can undo back to the old file
             this.editor.getEditor().getSession().setUndoManager(new UndoManager());
             this.displayAnnotations();

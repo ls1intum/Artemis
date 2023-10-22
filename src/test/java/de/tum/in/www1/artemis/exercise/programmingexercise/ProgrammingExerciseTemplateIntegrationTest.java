@@ -254,7 +254,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
         catch (Exception e) {
             // printing the cause because this contains the relevant error message (and not a generic one from the connector)
-            log.error("Error occurred while executing Gradle build: " + e.getCause());
+            log.error("Error occurred while executing Gradle build.", e.getCause());
             return -1;
         }
         return 0;
