@@ -30,7 +30,7 @@
 
 .loading-container,
 .preview-content {
-    margin-left: 10px;
+    margin-left: 5px;
     max-width: 600px;
 
     /* Add responsive styles */
@@ -65,6 +65,7 @@
 .preview-card {
     flex-direction: row;
     padding-left: 10px;
+    margin-left: 2px;
     position: relative;
 }
 
@@ -90,7 +91,7 @@
 .close-button {
     position: absolute;
     top: 0;
-    left: -15px;
+    left: -12px;
     font-weight: bold;
     cursor: pointer;
     opacity: 0; /* Initially hide the button */
