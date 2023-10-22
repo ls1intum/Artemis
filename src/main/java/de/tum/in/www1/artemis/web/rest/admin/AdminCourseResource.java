@@ -53,10 +53,10 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, OnlineCourseConfigurationService onlineCourseConfigurationService, ChannelService channelService) {
+            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -117,8 +117,8 @@ public class AdminCourseResource {
         course.validateAccuracyOfScores();
         course.validateStartAndEndDate();
 
-        if (course.isOnlineCourse()) {
-            onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
+        if (course.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
+            onlineCourseConfigurationService.get().createOnlineCourseConfiguration(course);
         }
 
         courseService.createOrValidateGroups(course);

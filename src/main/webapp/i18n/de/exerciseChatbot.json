@@ -52,10 +52,10 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}",
                 "technicalError": "Es ist ein technischer Fehler aufgetreten. Bitte wende dich an Artemis Administratoren sollte der Fehler weiterhin zu sehen sein.",
                 "irisNotAvailable": "Iris antwortet nicht. Bitte versuche es später!",
-                "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem 24-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!"
+                "rateLimitExceeded": "Du hast die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst, erreicht. Bitte versuche es später erneut!"
             },
             "firstMessage": "Hallo, ich bin Iris! Ich kann dir bei deiner Programmieraufgabe helfen. Du kannst <a href='/about-iris' target='_blank'>hier</a> mehr über mich erfahren.",
-            "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem 24-Stunden-Zeitfenster an Iris senden kannst."
+            "rateLimitTooltip": "Dies ist die maximale Anzahl von Nachrichten, die du in einem {{ hours }}-Stunden-Zeitfenster an Iris senden kannst."
         }
     }
 }

@@ -85,6 +85,16 @@
                     "title": "Create Grading Keys",
                     "shortDescription": "Create a grading key with custom or default grade steps for a course or an exam.",
                     "descriptionTextOne": "Scores are helpful to assess individual exercises but at the end of a semester you and your students would like to see a standard grade. On the grading key page, you can have a grading key for each course and exam, define the grade steps by specifying intervals, the minimum passing grade and the lower/upper bound inclusivity. The default grading key can also be generated with a single click. Artemis then automatically handles mapping scores to grade steps or bonus points, as well as calculating student result statistics based on grade steps."
+                },
+                "submissionPolicy": {
+                    "title": "Specify Submission Policies",
+                    "shortDescription": "Discourage trial-and-error approaches with submission penalty and lock repository policies.",
+                    "descriptionTextOne": "Depending on the exercises and your teaching style, it might be useful to specify a submission policy. In general, lock repository and submission penalty policies combat trial-and-error solving approaches. When the student reaches the submission limit, the former prevents further submissions, while the latter results in a point deduction. Submission policies are initially specified in the creation process of a programming exercise and can later be adjusted in the grading configuration of the particular programming exercise."
+                },
+                "examExerciseUpdates": {
+                    "title": "Exercise Update during an Exam",
+                    "shortDescription": "Update exercises during an exam and notify the students about the changes.",
+                    "descriptionTextOne": "When you have to update the problem statement of an exercise during the exam, you can do this on the exercise edit page and notify the students about it and they will be able to see the updated problem statement."
                 }
             }
         },
@@ -167,6 +177,11 @@
                     "title": "View Grading Keys",
                     "shortDescription": "See your final and attained grade for a course or an exam as soon as you have a new assignment graded.",
                     "descriptionTextOne": "When a grading key for a course or an exam is defined, you can examine it and see the score interval corresponding to each grading step and the minimum grade needed to pass. Grading keys also have a bonus points mode which converts the obtained score to a bonus. You don't have to wait until the end of the semester to use the grading key, you can always check out your attained grade based on the exercises conducted and assessed so far."
+                },
+                "exerciseUpdateNotification": {
+                    "title": "Exercise Update Notification",
+                    "shortDescription": "If the instructor of your course has to update the problem statement you will receive a notification.",
+                    "descriptionTextOne": "If the instructor updates the problem statement of an exercise during the exam, you will be notified about it and you will be able to see the updated problem statement. You can switch between the updated version and a view highlighting the changes."
                 }
             }
         }

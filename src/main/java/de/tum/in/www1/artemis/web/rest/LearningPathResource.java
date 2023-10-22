@@ -17,13 +17,13 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -107,7 +107,7 @@ public class LearningPathResource {
     @GetMapping("courses/{courseId}/learning-paths")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<LearningPathPageableSearchDTO>> getLearningPathsOnPage(@PathVariable long courseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -136,6 +136,25 @@ public class LearningPathResource {
         }
 
         return ResponseEntity.ok(learningPathService.getHealthStatusForCourse(course));
+    }
+
+    /**
+     * GET learning-path/:learningPathId : Gets the learning path information.
+     *
+     * @param learningPathId the id of the learning path that should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the learning path
+     */
+    @GetMapping("learning-path/{learningPathId}")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathInformationDTO> getLearningPath(@PathVariable long learningPathId) {
+        log.debug("REST request to get learning path with id: {}", learningPathId);
+        final var learningPath = learningPathRepository.findWithEagerUserByIdElseThrow(learningPathId);
+        final var user = userRepository.getUser();
+        if (!user.getId().equals(learningPath.getUser().getId())) {
+            throw new AccessForbiddenException("You are not the owner of the learning path.");
+        }
+        return ResponseEntity.ok(new LearningPathInformationDTO(learningPath));
     }
 
     /**
