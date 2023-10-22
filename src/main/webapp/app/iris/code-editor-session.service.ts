@@ -17,27 +17,54 @@ export class IrisCodeEditorSessionService extends IrisSessionService {
      */
     constructor(
         stateStore: IrisStateStore,
-        private irisHttpCodeEditorSessionService: IrisHttpCodeEditorSessionService,
+        irisSessionService: IrisHttpCodeEditorSessionService,
         private irisHttpCodeEditorMessageService: IrisHttpCodeEditorMessageService,
     ) {
-        super(stateStore, irisHttpCodeEditorSessionService, irisHttpCodeEditorMessageService);
+        super(stateStore, irisSessionService, irisHttpCodeEditorMessageService);
     }
 
-    async createMessage(sessionId: number, message: IrisUserMessage, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
+    /**
+     * Sends a message to the server and returns the created message.
+     * @param sessionId of the session in which the message should be created
+     * @param message to be created
+     * @param unsavedChanges the unsaved changes the user has made in the editor
+     */
+    async sendMessage(sessionId: number, message: IrisUserMessage, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
         const response = await firstValueFrom(this.irisHttpCodeEditorMessageService.createMessage(sessionId, message, unsavedChanges));
         return response.body!;
     }
 
+    /**
+     * Resends a message to the server and returns the created message.
+     * @param sessionId of the session in which the message should be created
+     * @param message to be created
+     * @param unsavedChanges the unsaved changes the user has made in the editor
+     */
     async resendMessage(sessionId: number, message: IrisUserMessage, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
         const response = await firstValueFrom(this.irisHttpCodeEditorMessageService.resendMessage(sessionId, message, unsavedChanges));
         return response.body!;
     }
 
-    async executePlanStep(sessionId: number, messageId: number, planId: number, stepId: number, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
-        const response = await firstValueFrom(this.irisHttpCodeEditorMessageService.executePlanStep(sessionId, messageId, planId, stepId, unsavedChanges));
-        return response.body!;
+    /**
+     * Executes one step of an exercise plan.
+     * @param sessionId of the session in which the exercise plan exists
+     * @param messageId of the message which contains the exercise plan
+     * @param planId of the exercise plan
+     * @param stepId of the step to be executed
+     * @param unsavedChanges the unsaved changes the user has made in the editor
+     */
+    async executePlanStep(sessionId: number, messageId: number, planId: number, stepId: number, unsavedChanges: UnsavedChangesDTO): Promise<void> {
+        await firstValueFrom(this.irisHttpCodeEditorMessageService.executePlanStep(sessionId, messageId, planId, stepId, unsavedChanges));
     }
 
+    /**
+     * Updates the instructions of an exercise plan step and returns the updated step.
+     * @param sessionId of the session in which the exercise plan exists
+     * @param messageId of the message which contains the exercise plan
+     * @param planId of the exercise plan
+     * @param stepId of the step to be updated
+     * @param step with the updated instructions
+     */
     async updatePlanStepInstructions(sessionId: number, messageId: number, planId: number, stepId: number, step: IrisExercisePlanStep): Promise<IrisExercisePlanStep> {
         const response = await firstValueFrom(this.irisHttpCodeEditorMessageService.updateExercisePlanStepInstructions(sessionId, messageId, planId, stepId, step));
         return response.body!;

@@ -55,7 +55,7 @@ export class IrisTutorChatbotWidgetComponent extends IrisChatbotWidgetComponent 
     }
 
     protected sendCreateRequest(message: IrisUserMessage): Promise<IrisMessage> {
-        return this.chatSessionService.createMessage(this.sessionId, message);
+        return this.chatSessionService.sendMessage(this.sessionId, message);
     }
 
     protected sendResendRequest(message: IrisUserMessage): Promise<IrisMessage> {

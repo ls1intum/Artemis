@@ -16,17 +16,27 @@ export class IrisChatSessionService extends IrisSessionService {
      */
     constructor(
         stateStore: IrisStateStore,
-        private irisHttpChatSessionService: IrisHttpChatSessionService,
+        irisSessionService: IrisHttpChatSessionService,
         private irisHttpChatMessageService: IrisHttpChatMessageService,
     ) {
-        super(stateStore, irisHttpChatSessionService, irisHttpChatMessageService);
+        super(stateStore, irisSessionService, irisHttpChatMessageService);
     }
 
-    async createMessage(sessionId: number, message: IrisUserMessage): Promise<IrisMessage> {
+    /**
+     * Sends a message to the server and returns the created message.
+     * @param sessionId of the session in which the message should be created
+     * @param message to be created
+     */
+    async sendMessage(sessionId: number, message: IrisUserMessage): Promise<IrisMessage> {
         const response = await firstValueFrom(this.irisHttpChatMessageService.createMessage(sessionId, message));
         return response.body!;
     }
 
+    /**
+     * Resends a message to the server and returns the created message.
+     * @param sessionId of the session in which the message should be created
+     * @param message to be created
+     */
     async resendMessage(sessionId: number, message: IrisUserMessage): Promise<IrisMessage> {
         const response = await firstValueFrom(this.irisHttpChatMessageService.resendMessage(sessionId, message));
         return response.body!;

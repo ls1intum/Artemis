@@ -66,7 +66,7 @@ export class IrisCodeEditorChatbotWidgetComponent extends IrisChatbotWidgetCompo
 
     protected sendCreateRequest(message: IrisUserMessage): Promise<IrisMessage> {
         const unsavedChanges = new UnsavedChangesDTO(); // TODO: get unsaved changes from editor
-        return this.codeEditorSessionService.createMessage(this.sessionId, message, unsavedChanges);
+        return this.codeEditorSessionService.sendMessage(this.sessionId, message, unsavedChanges);
     }
 
     protected sendResendRequest(message: IrisUserMessage): Promise<IrisMessage> {
