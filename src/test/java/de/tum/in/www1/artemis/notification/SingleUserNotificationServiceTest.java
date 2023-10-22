@@ -393,7 +393,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(javaMailSender, timeout(1000)).send(mimeMessageCaptor.capture());
-        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
+        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo("Verdict for your plagiarism case");
     }
 
     @Test
