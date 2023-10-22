@@ -20,12 +20,12 @@
                         FROM exercise
                         WHERE exercise.discriminator = 'P'
                           AND exercise.template_participation_id IS NOT NULL)
-               , sp AS (SELECT exercise.id, exercise.solution_participation_id
+                , sp AS (SELECT exercise.id, exercise.solution_participation_id
                         FROM exercise
                         WHERE exercise.discriminator = 'P'
                           AND exercise.solution_participation_id IS NOT NULL)
-               <!-- Maps every feedback to their exercise id -->
-               , fe AS (SELECT feedback.id, feedback.text, exercise.id AS exercise_id
+                <!-- Maps every feedback to their exercise id -->
+                , fe AS (SELECT feedback.id, feedback.text, exercise.id AS exercise_id
                         FROM feedback
                           LEFT JOIN result ON feedback.result_id = result.id
                           LEFT JOIN participation ON result.participation_id = participation.id
@@ -38,18 +38,16 @@
                             OR participation.id = (SELECT tp.template_participation_id FROM tp WHERE tp.id = exercise.id)
                             OR participation.id = (SELECT sp.solution_participation_id FROM sp WHERE sp.id = exercise.id)))
 
-            UPDATE feedback
             <!-- Find the testcase by matching the text / test name and the exercise -->
-            SET test_case_id = (SELECT programming_exercise_test_case.id
-                                FROM programming_exercise_test_case,
-                                     fe
-                                WHERE programming_exercise_test_case.test_name = fe.text
-                                  AND programming_exercise_test_case.exercise_id = fe.exercise_id
-                                  AND fe.id = feedback.id)
+            UPDATE feedback, programming_exercise_test_case, fe
+            SET test_case_id = texttc.id
             WHERE feedback.type = 3 <!-- Automatic -->
                 AND feedback.text IS NOT NULL
                 AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
                 AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
+                AND feedback.id = fe.id
+                AND programming_exercise_test_case.test_name = feedback.text
+                AND programming_exercise_test_case.exercise_id = fe.exercise_id
         </sql>
 
         <sql>
