@@ -18,9 +18,11 @@ import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/
 import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
 import { IrisCodeEditorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/code-editor-chatbot-widget.component';
 import { IrisTutorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/tutor-chatbot-widget.component';
+import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 
 @NgModule({
     declarations: [
+        IrisChatbotWidgetComponent,
         IrisCodeEditorChatbotWidgetComponent,
         IrisTutorChatbotWidgetComponent,
         IrisCodeEditorChatbotButtonComponent,

@@ -11,7 +11,7 @@ import {
     mockServerPlanMessage,
 } from '../../helpers/sample/iris-sample-data';
 import { IrisHttpCodeEditorMessageService, UnsavedChangesDTO } from 'app/iris/http-code-editor-message.service';
-import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
+import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
 
 describe('Iris Http Code Editor Message Service', () => {
     let service: IrisHttpCodeEditorMessageService;
@@ -31,7 +31,7 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
             service
-                .sendMessage(2, new IrisClientMessage(), new UnsavedChangesDTO())
+                .sendMessage(2, new IrisUserMessage(), new UnsavedChangesDTO())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });

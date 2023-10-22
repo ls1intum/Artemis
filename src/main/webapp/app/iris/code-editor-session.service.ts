@@ -3,7 +3,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisHttpCodeEditorSessionService } from 'app/iris/http-code-editor-session.service';
 import { IrisHttpCodeEditorMessageService, UnsavedChangesDTO } from 'app/iris/http-code-editor-message.service';
-import { IrisClientMessage, IrisMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { firstValueFrom } from 'rxjs';
 import { IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
 
@@ -23,12 +23,12 @@ export class IrisCodeEditorSessionService extends IrisSessionService {
         super(stateStore, irisHttpCodeEditorSessionService, irisHttpCodeEditorMessageService);
     }
 
-    async createMessage(sessionId: number, message: IrisClientMessage, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
+    async createMessage(sessionId: number, message: IrisUserMessage, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
         const response = await firstValueFrom(this.irisHttpCodeEditorMessageService.createMessage(sessionId, message, unsavedChanges));
         return response.body!;
     }
 
-    async resendMessage(sessionId: number, message: IrisClientMessage, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
+    async resendMessage(sessionId: number, message: IrisUserMessage, unsavedChanges: UnsavedChangesDTO): Promise<IrisMessage> {
         const response = await firstValueFrom(this.irisHttpCodeEditorMessageService.resendMessage(sessionId, message, unsavedChanges));
         return response.body!;
     }

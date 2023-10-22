@@ -16,7 +16,7 @@ import {
     mockWebsocketUnknownError,
 } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
+import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
 
 describe('IrisChatWebsocketService', () => {
     let irisWebsocketService: IrisChatWebsocketService;
@@ -133,7 +133,7 @@ describe('IrisChatWebsocketService', () => {
 
         expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
             ...new StudentMessageSentAction(
-                mockWebsocketClientMessage.message as IrisClientMessage,
+                mockWebsocketClientMessage.message as IrisUserMessage,
                 setTimeout(() => {}),
             ),
             timeoutId: expect.any(Number),

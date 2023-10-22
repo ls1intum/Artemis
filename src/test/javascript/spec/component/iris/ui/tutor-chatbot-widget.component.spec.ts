@@ -27,7 +27,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { IrisClientMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisSessionService } from 'app/iris/session.service';
 import { UserService } from 'app/core/user/user.service';
@@ -383,7 +383,7 @@ describe('TutorChatbotWidgetComponent', () => {
 
     it('should return an IrisClientMessage with correct fields', () => {
         const testMessage = 'Test message';
-        const expectedResult: IrisClientMessage = {
+        const expectedResult: IrisUserMessage = {
             sender: IrisSender.USER,
             content: [new IrisMessageTextContent(testMessage)],
         };

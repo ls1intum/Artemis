@@ -24,7 +24,7 @@ export class IrisServerMessage implements BaseEntity {
     helpful?: boolean;
 }
 
-export class IrisClientMessage implements BaseEntity {
+export class IrisUserMessage implements BaseEntity {
     id?: number;
     content: IrisMessageTextContent[];
     sentAt?: dayjs.Dayjs;
@@ -32,7 +32,7 @@ export class IrisClientMessage implements BaseEntity {
     messageDifferentiator?: number;
 }
 
-export type IrisMessage = IrisServerMessage | IrisClientMessage | IrisArtemisClientMessage;
+export type IrisMessage = IrisServerMessage | IrisUserMessage | IrisArtemisClientMessage;
 
 export function isServerSentMessage(message: IrisMessage): message is IrisServerMessage {
     return message.sender === IrisSender.ARTEMIS_SERVER || message.sender === IrisSender.LLM;
@@ -42,6 +42,6 @@ export function isArtemisClientSentMessage(message: IrisMessage): message is Iri
     return message.sender === IrisSender.ARTEMIS_CLIENT;
 }
 
-export function isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+export function isStudentSentMessage(message: IrisMessage): message is IrisUserMessage {
     return message.sender === IrisSender.USER;
 }

@@ -1,5 +1,5 @@
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisClientMessage, IrisMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { Component, Inject } from '@angular/core';
 import { UserService } from 'app/core/user/user.service';
 import { SharedService } from 'app/iris/shared.service';
@@ -50,15 +50,15 @@ export class IrisTutorChatbotWidgetComponent extends IrisChatbotWidgetComponent 
         this.chatSessionService = data.sessionService as IrisChatSessionService;
     }
 
-    getFirstMessageContent(): string {
+    protected getFirstMessageContent(): string {
         return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
     }
 
-    protected sendCreateRequest(message: IrisClientMessage): Promise<IrisMessage> {
+    protected sendCreateRequest(message: IrisUserMessage): Promise<IrisMessage> {
         return this.chatSessionService.createMessage(this.sessionId, message);
     }
 
-    protected sendResendRequest(message: IrisClientMessage): Promise<IrisMessage> {
+    protected sendResendRequest(message: IrisUserMessage): Promise<IrisMessage> {
         return this.chatSessionService.resendMessage(this.sessionId, message);
     }
 }

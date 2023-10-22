@@ -28,10 +28,10 @@ import {
 } from 'app/iris/state-store.model';
 import {
     IrisArtemisClientMessage,
-    IrisClientMessage,
     IrisMessage,
     IrisSender,
     IrisServerMessage,
+    IrisUserMessage,
     isArtemisClientSentMessage,
     isServerSentMessage,
     isStudentSentMessage,
@@ -49,11 +49,6 @@ import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 
-@Component({
-    selector: 'jhi-chatbot-widget',
-    templateUrl: './chatbot-widget.component.html',
-    styleUrls: ['./chatbot-widget.component.scss'],
-})
 export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly IrisSender = IrisSender;
     // Icons
@@ -115,7 +110,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     private navigationSubscription: Subscription;
     private readonly MAX_INT_JAVA = 2147483647;
 
-    constructor(
+    protected constructor(
         private dialog: MatDialog,
         @Inject(MAT_DIALOG_DATA) public data: any,
         private userService: UserService,
@@ -335,9 +330,9 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
         this.resetChatBodyHeight();
     }
 
-    protected abstract sendCreateRequest(message: IrisClientMessage): Promise<IrisMessage>;
+    protected abstract sendCreateRequest(message: IrisUserMessage): Promise<IrisMessage>;
 
-    resendMessage(message: IrisClientMessage) {
+    resendMessage(message: IrisUserMessage) {
         this.resendAnimationActive = true;
         message.messageDifferentiator = message.id ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
 
@@ -364,7 +359,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             });
     }
 
-    protected abstract sendResendRequest(message: IrisClientMessage): Promise<IrisMessage>;
+    protected abstract sendResendRequest(message: IrisUserMessage): Promise<IrisMessage>;
 
     /**
      * Rates a message as helpful or unhelpful.
@@ -587,7 +582,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
      * @param message - The message to check.
      * @returns A boolean indicating if the message is a student-sent message.
      */
-    isStudentSentMessage(message: IrisMessage): message is IrisClientMessage {
+    isStudentSentMessage(message: IrisMessage): message is IrisUserMessage {
         return isStudentSentMessage(message);
     }
 
@@ -614,7 +609,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
      * @param message - The content of the message.
      * @returns A new IrisClientMessage object representing the user message.
      */
-    newUserMessage(message: string): IrisClientMessage {
+    newUserMessage(message: string): IrisUserMessage {
         return {
             sender: IrisSender.USER,
             content: [new IrisMessageTextContent(message)],

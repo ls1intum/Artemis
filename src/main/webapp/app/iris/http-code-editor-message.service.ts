@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
 import { IrisHttpMessageService, Response } from 'app/iris/http-message.service';
-import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisServerMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { convertDateFromClient } from 'app/utils/date.utils';
 import { tap } from 'rxjs/operators';
 
@@ -28,7 +28,7 @@ export class IrisHttpCodeEditorMessageService extends IrisHttpMessageService {
      * @param message  to be created
      * @param unsavedChanges unsaved changes from the editor which the AI should know about
      */
-    createMessage(sessionId: number, message: IrisClientMessage, unsavedChanges: UnsavedChangesDTO): Response<IrisMessage> {
+    createMessage(sessionId: number, message: IrisUserMessage, unsavedChanges: UnsavedChangesDTO): Response<IrisMessage> {
         message.messageDifferentiator = this.randomInt();
         return this.httpClient
             .post<IrisServerMessage>(
@@ -57,7 +57,7 @@ export class IrisHttpCodeEditorMessageService extends IrisHttpMessageService {
      * @param unsavedChanges unsaved changes from the editor which the AI should know about
      * @return {Response<IrisMessage>}
      */
-    resendMessage(sessionId: number, message: IrisClientMessage, unsavedChanges: UnsavedChangesDTO): Response<IrisMessage> {
+    resendMessage(sessionId: number, message: IrisUserMessage, unsavedChanges: UnsavedChangesDTO): Response<IrisMessage> {
         message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
         return this.httpClient
             .post<IrisServerMessage>(`${this.apiPrefix}/${this.sessionType}/${sessionId}/messages/${message.id}/resend`, unsavedChanges, { observe: 'response' })

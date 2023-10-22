@@ -1,5 +1,5 @@
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisClientMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IrisMessageContent, getPlanComponent, isPlanContent } from 'app/entities/iris/iris-content-type.model';
 import { Component, Inject } from '@angular/core';
@@ -57,19 +57,19 @@ export class IrisCodeEditorChatbotWidgetComponent extends IrisChatbotWidgetCompo
         this.codeEditorSessionService = data.sessionService as IrisCodeEditorSessionService;
     }
 
-    getFirstMessageContent(): string {
+    protected getFirstMessageContent(): string {
         this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
         return this.translateService
             .instant('artemisApp.exerciseChatbot.codeEditorFirstMessage')
             .replace(/{link:(.*)}/, '<a href="' + this.importExerciseUrl + '" target="_blank">$1</a>');
     }
 
-    protected sendCreateRequest(message: IrisClientMessage): Promise<IrisMessage> {
+    protected sendCreateRequest(message: IrisUserMessage): Promise<IrisMessage> {
         const unsavedChanges = new UnsavedChangesDTO(); // TODO: get unsaved changes from editor
         return this.codeEditorSessionService.createMessage(this.sessionId, message, unsavedChanges);
     }
 
-    protected sendResendRequest(message: IrisClientMessage): Promise<IrisMessage> {
+    protected sendResendRequest(message: IrisUserMessage): Promise<IrisMessage> {
         const unsavedChanges = new UnsavedChangesDTO(); // TODO: get unsaved changes from editor
         return this.codeEditorSessionService.resendMessage(this.sessionId, message, unsavedChanges);
     }
@@ -93,6 +93,13 @@ export class IrisCodeEditorChatbotWidgetComponent extends IrisChatbotWidgetCompo
             });
     }
 
+    /**
+     * update the instructions of an exercise plan step
+     * @param messageId of the message
+     * @param planId of the exercise plan
+     * @param stepId of the plan step
+     * @param step with the updated instructions
+     */
     updateExercisePlanStep(messageId: number, planId: number, stepId: number, step: IrisExercisePlanStep) {
         this.codeEditorSessionService
             .updatePlanStepInstructions(this.sessionId, messageId, planId, stepId, step)

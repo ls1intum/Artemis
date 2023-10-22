@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
-import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
+import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
 
 describe('Iris Http Chat Message Service', () => {
     let service: IrisHttpChatMessageService;
@@ -23,7 +23,7 @@ describe('Iris Http Chat Message Service', () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
             service
-                .createMessage(2, new IrisClientMessage())
+                .createMessage(2, new IrisUserMessage())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });

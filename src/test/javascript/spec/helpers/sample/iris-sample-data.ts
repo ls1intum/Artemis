@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { IrisArtemisClientMessage, IrisClientMessage, IrisSender, IrisServerMessage } from 'app/entities/iris/iris-message.model';
+import { IrisArtemisClientMessage, IrisSender, IrisServerMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessagePlanContent, IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketMessageType } from 'app/iris/chat-websocket.service';
@@ -56,7 +56,7 @@ export const mockClientMessage = {
     sender: IrisSender.USER,
     content: [mockMessageContent],
     sentAt: dayjs(),
-} as IrisClientMessage;
+} as IrisUserMessage;
 
 export const mockWebsocketServerMessage = {
     type: IrisChatWebsocketMessageType.MESSAGE,
