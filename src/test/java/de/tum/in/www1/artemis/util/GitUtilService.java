@@ -31,7 +31,7 @@ public class GitUtilService {
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
     private final Path localPath = Path.of(".", "repos", "server-integration-test").resolve("test-repository").normalize();
 
-    private final Path remotePath = Path.of(System.getProperty("java.io.tmpdir")).resolve("remotegittest/scm/test-repository");
+    private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 
     public GitUtilService() throws IOException {
     }
@@ -83,7 +83,7 @@ public class GitUtilService {
             remoteGit.close();
         }
         catch (IOException | GitAPIException ex) {
-            ex.printStackTrace();
+            fail(ex.getMessage(), ex);
         }
     }
 
@@ -191,10 +191,14 @@ public class GitUtilService {
     }
 
     public void stashAndCommitAll(REPOS repo) {
+        stashAndCommitAll(repo, "new commit");
+    }
+
+    public void stashAndCommitAll(REPOS repo, String commitMsg) {
         try {
             Git git = new Git(getRepoByType(repo));
             git.add().addFilepattern(".").call();
-            GitService.commit(git).setMessage("new commit").call();
+            GitService.commit(git).setMessage(commitMsg).call();
         }
         catch (GitAPIException ignored) {
         }
