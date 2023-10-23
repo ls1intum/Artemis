@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -51,9 +52,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -75,6 +74,9 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -483,6 +485,7 @@ public class LocalVCLocalCITestService {
      * @param buildFailed                     whether the build should have failed or not.
      */
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
+        await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
