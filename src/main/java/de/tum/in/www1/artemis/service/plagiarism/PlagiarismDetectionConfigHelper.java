@@ -21,14 +21,14 @@ public final class PlagiarismDetectionConfigHelper {
     }
 
     /**
-     * Ads missing plagiarism checks config
+     * Ads missing plagiarism checks config for course exercises.
      *
      * @param <T>        type of Exercise
      * @param exercise   exercise without plagiarism checks config
      * @param repository repository used for saving exercises of type T
      */
-    public static <T extends Exercise> void createAndSaveDefaultIfNull(T exercise, JpaRepository<T, Long> repository) {
-        if (exercise.getPlagiarismDetectionConfig() == null) {
+    public static <T extends Exercise> void createAndSaveDefaultIfNullAndCourseExercise(T exercise, JpaRepository<T, Long> repository) {
+        if (exercise.isCourseExercise() && exercise.getPlagiarismDetectionConfig() == null) {
             log.info("Filling missing plagiarisms checks config: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
             var config = PlagiarismDetectionConfig.createDefault();
             exercise.setPlagiarismDetectionConfig(config);
