@@ -44,7 +44,7 @@ jhi-learning-path-graph-node:hover {
     }
 }
 
-::ng-deep .graph-container .node-icon-container fa-icon svg {
+:host::ng-deep .graph-container .node-icon-container fa-icon svg {
     margin: 10%;
     width: 80%;
     height: 80%;
