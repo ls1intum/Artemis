@@ -10,7 +10,7 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseFilter, ExerciseWithDueDate } from 'app/overview/course-exercises/course-exercises.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 
@@ -124,5 +124,28 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
             dueDate: exercise.dueDate,
         };
         expect(component.nextRelevantExercise).toEqual(expectedExercise);
+    });
+
+    it('should set next relevant exercise', () => {
+        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newExercise.releaseDate = dayjs().subtract(3, 'hours');
+        newExercise.dueDate = dayjs().add(3, 'hours');
+        newExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(newExercise);
+
+        component.ngOnChanges();
+
+        expect(component.nextRelevantExercise).toEqual({
+            exercise: newExercise,
+            dueDate: newExercise.dueDate,
+        });
+    });
+
+    it('should NOT set next relevant exercise', () => {
+        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(undefined);
+
+        component.ngOnChanges();
+
+        expect(component.nextRelevantExercise).toBeUndefined();
     });
 });

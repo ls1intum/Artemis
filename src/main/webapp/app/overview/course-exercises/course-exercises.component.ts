@@ -239,7 +239,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
 
     /**
      * Check if the given exercise fulfills the currently selected filters
-     * @param exercise the exercise to check
+     * @param exercise to check
+     * @param activeFilters that are applied
      * @return true if the given exercise fulfills the currently selected filters; false otherwise
      */
     public static fulfillsCurrentFilter(exercise: Exercise, activeFilters: Set<ExerciseFilter>): boolean {
