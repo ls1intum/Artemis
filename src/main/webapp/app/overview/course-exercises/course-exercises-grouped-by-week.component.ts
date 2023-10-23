@@ -34,6 +34,7 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
     @Input() exerciseForGuidedTour?: Exercise;
     @Input() weeklyIndexKeys: string[];
     @Input() activeFilters: Set<ExerciseFilter>;
+    @Input() sortingAttribute: SortingAttribute;
 
     exerciseGroups: GroupedExercisesByWeek;
     nextRelevantExercise?: ExerciseWithDueDate;
@@ -76,8 +77,7 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
         const noDueDateKey = this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate');
 
         exercises?.forEach((exercise) => {
-            // TODO exchange sorting attribute
-            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, SortingAttribute.DUE_DATE);
+            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, this.sortingAttribute);
             if (!dateValue) {
                 if (!groupedExercises[noDueDateKey]) {
                     groupedExercises[noDueDateKey] = {
