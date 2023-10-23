@@ -71,11 +71,21 @@ public class LocalCISharedBuildJobQueue {
         this.queue.addItemListener(new BuildJobItemListener(), true);
     }
 
+    /**
+     * Create build job item object and add it to the queue.
+     *
+     * @param participationId participation id of the build job
+     * @param commitHash      commit hash of the build job
+     */
     public void addBuildJobInformation(Long participationId, String commitHash) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(participationId, commitHash);
         queue.add(buildJobQueueItem);
     }
 
+    /**
+     * Get first build job item from the queue. If it exists, process build job and after completion,
+     * try to process next item.
+     */
     public void processBuild() {
 
         if (queue.isEmpty()) {
@@ -117,15 +127,18 @@ public class LocalCISharedBuildJobQueue {
                 programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
                         new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
             }
+
+            // after processing a build job, remove it from the processing jobs
+            processingJobs.remove(buildJob.getParticipationId());
+            // process next build job
+            processBuild();
         });
-
-        // after processing a build job, remove it from the processing jobs
-        processingJobs.remove(buildJob.getParticipationId());
-        // process next build job
-        processBuild();
-
     }
 
+    /**
+     * Requeue timed out build jobs. If a build job is still in processedJobs after the expiration time,
+     * it might be because the node crashed. Therefore, the build job is added back to the queue.
+     */
     @Scheduled(fixedRate = 60000)
     public void requeueTimedOutJobs() {
 
@@ -186,6 +199,10 @@ public class LocalCISharedBuildJobQueue {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
+
+            // hazelcastInstance.getCluster().getMembers().forEach(member -> log.info("Hazelcast, member: " + member));
+            // log.info("Hazelcast, cluster: " + hazelcastInstance.getCluster());
+
             log.info("Hazelcast, item added: " + item.getItem());
             if (nodeIsAvailable()) {
                 processBuild();
