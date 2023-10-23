@@ -4,8 +4,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -139,16 +137,6 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         irisMessage.setSender(IrisMessageSender.USER);
         irisMessage.addContent(new IrisTextMessageContent(irisMessage, userPrompt.toString()));
         return irisMessage;
-    }
-
-    /**
-     * Not supported for Iris Hestia sessions.
-     *
-     * @param irisSession The session to get a message for
-     */
-    @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
-        throw new BadRequestException("Iris Hestia Session not supported");
     }
 
     /**
