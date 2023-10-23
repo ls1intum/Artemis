@@ -55,6 +55,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     public hasUnreadMessages: boolean;
     public messagesRouteLoaded: boolean;
+    public communicationRouteLoaded: boolean;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -138,7 +139,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.conversationServiceInstantiated && this.messagesRouteLoaded) {
+        if (!this.conversationServiceInstantiated && (this.messagesRouteLoaded || this.communicationRouteLoaded)) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -177,7 +178,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * @param componentRef the sub route component that has been mounted into the router outlet
      */
     onSubRouteActivate(componentRef: any) {
-        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages' || this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
+        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
         this.setUpConversationService();
 
