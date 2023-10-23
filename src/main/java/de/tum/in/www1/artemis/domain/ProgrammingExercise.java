@@ -473,7 +473,7 @@ public class ProgrammingExercise extends Exercise {
             return new VcsRepositoryUrl(templateRepositoryUrl);
         }
         catch (URISyntaxException e) {
-            e.printStackTrace();
+            log.warn("Cannot create URI for templateRepositoryUrl: {} due to the following error: {}", templateRepositoryUrl, e.getMessage());
         }
         return null;
     }
@@ -494,7 +494,7 @@ public class ProgrammingExercise extends Exercise {
             return new VcsRepositoryUrl(solutionRepositoryUrl);
         }
         catch (URISyntaxException e) {
-            e.printStackTrace();
+            log.warn("Cannot create URI for solutionRepositoryUrl: {} due to the following error: {}", solutionRepositoryUrl, e.getMessage());
         }
         return null;
     }
