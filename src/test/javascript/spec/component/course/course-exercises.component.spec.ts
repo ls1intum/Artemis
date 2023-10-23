@@ -153,12 +153,14 @@ describe('CourseExercisesComponent', () => {
         component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.ASC);
-        expect(component.weeklyIndexKeys).toEqual(['2021-01-03', '2021-01-10']);
+        expect(component.filteredAndSortedExercises![0]).toEqual(evenOlderExercise);
+        expect(component.filteredAndSortedExercises![1]).toEqual(oldExercise);
 
         component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.DESC);
-        expect(component.weeklyIndexKeys).toEqual(['2021-01-10', '2021-01-03']);
+        expect(component.filteredAndSortedExercises![0]).toEqual(oldExercise);
+        expect(component.filteredAndSortedExercises![1]).toEqual(evenOlderExercise);
     });
 
     it('should filter all exercises with upcoming release date', () => {
