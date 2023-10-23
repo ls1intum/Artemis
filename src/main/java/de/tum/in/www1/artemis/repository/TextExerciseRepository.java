@@ -44,10 +44,16 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
+    @Query("""
+            SELECT DISTINCT e FROM TextExercise e
+            LEFT JOIN FETCH e.gradingCriteria
+            WHERE e.id = :#{#exerciseId}
+            """)
+    Optional<TextExercise> findByIdWithGradingCriteria(long exerciseId);
+
     @NotNull
-    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     default TextExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
-        return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
     @NotNull
