@@ -45,6 +45,12 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     }
 
     @NotNull
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
+    default TextExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
+        return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
+    @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return findByIdWithExampleSubmissionsAndResults(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }

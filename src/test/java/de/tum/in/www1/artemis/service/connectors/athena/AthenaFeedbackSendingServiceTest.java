@@ -18,7 +18,9 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
@@ -27,6 +29,12 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Mock
     private TextBlockRepository textBlockRepository;
+
+    @Mock
+    private TextExerciseRepository textExerciseRepository;
+
+    @Mock
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -53,12 +61,13 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     @BeforeEach
     void setUp() {
         athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleUrlHelper,
-                new AthenaDTOConverter(textBlockRepository));
+                new AthenaDTOConverter(textBlockRepository, textExerciseRepository, programmingExerciseRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionsEnabled(true);
+        when(textExerciseRepository.findByIdWithGradingCriteriaElseThrow(textExercise.getId())).thenReturn(textExercise);
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
 
@@ -76,6 +85,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setFeedbackSuggestionsEnabled(true);
+        when(programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(programmingExercise.getId())).thenReturn(programmingExercise);
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setParticipation(new StudentParticipation());

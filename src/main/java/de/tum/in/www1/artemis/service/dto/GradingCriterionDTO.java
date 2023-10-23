@@ -8,6 +8,9 @@ import de.tum.in.www1.artemis.domain.GradingCriterion;
 public record GradingCriterionDTO(long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
 
     public static GradingCriterionDTO of(GradingCriterion gradingCriterion) {
+        if (gradingCriterion == null) {
+            return null;
+        }
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(),
                 gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet()));
     }

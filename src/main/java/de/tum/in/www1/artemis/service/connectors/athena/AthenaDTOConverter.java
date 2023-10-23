@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.dto.athena.*;
 
 /**
@@ -18,8 +20,14 @@ public class AthenaDTOConverter {
 
     private final TextBlockRepository textBlockRepository;
 
-    public AthenaDTOConverter(TextBlockRepository textBlockRepository) {
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    public AthenaDTOConverter(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.textBlockRepository = textBlockRepository;
+        this.textExerciseRepository = textExerciseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -31,10 +39,14 @@ public class AthenaDTOConverter {
     public Object ofExercise(Exercise exercise) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
-                return TextExerciseDTO.of((TextExercise) exercise);
+                // Fetch text exercise with grade criteria
+                var textExercise = textExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
+                return TextExerciseDTO.of(textExercise);
             }
             case PROGRAMMING -> {
-                return ProgrammingExerciseDTO.of((ProgrammingExercise) exercise, artemisServerUrl);
+                // Fetch programming exercise with grading criteria
+                var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exercise.getId());
+                return ProgrammingExerciseDTO.of(programmingExercise, artemisServerUrl);
             }
         }
         throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());

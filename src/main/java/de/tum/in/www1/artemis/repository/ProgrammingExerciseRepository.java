@@ -440,6 +440,18 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
+     * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
+    default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
      * Find a programming exercise with auxiliary repositories by its id and throw an EntityNotFoundException if it cannot be found
      *
      * @param programmingExerciseId of the programming exercise.
