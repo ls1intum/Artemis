@@ -123,8 +123,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
-        tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
+        var tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
@@ -145,8 +144,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
-        tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
+        var tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
