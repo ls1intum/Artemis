@@ -75,20 +75,12 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
     private groupExercises(exercises?: Exercise[]) {
         const groupedExercises: GroupedExercisesByWeek = {};
         const noDueDateKey = this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate');
+        const noDueDateExercises: Exercise[] = [];
 
         exercises?.forEach((exercise) => {
             const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, this.sortingAttribute);
             if (!dateValue) {
-                if (!groupedExercises[noDueDateKey]) {
-                    groupedExercises[noDueDateKey] = {
-                        exercises: [],
-                        isCurrentWeek: false,
-                        isCollapsed: false,
-                    };
-                }
-
-                groupedExercises[noDueDateKey].exercises.push(exercise);
-
+                noDueDateExercises.push(exercise);
                 return;
             }
             const dateIndex = dateValue ? dayjs(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
@@ -106,26 +98,14 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
             groupedExercises[dateIndex].exercises.push(exercise);
         });
 
-        // // Sort the keys of groupedExercises
-        // const sortedKeys = Object.keys(groupedExercises).sort((a, b) => {
-        //     // Place the "no due date" key first
-        //     if (a === noDueDateKey) {
-        //         return 1;
-        //     }
-        //     if (b === noDueDateKey) {
-        //         return -1;
-        //     }
-        //     // Sort other keys based on your criteria
-        //     return a.localeCompare(b);
-        // });
-        //
-        // // Create a new object with sorted keys
-        // const sortedGroupedExercises: GroupedExercisesByWeek = {};
-        // for (const key of sortedKeys) {
-        //     sortedGroupedExercises[key] = groupedExercises[key];
-        // }
-        //
-        // this.exerciseGroups = sortedGroupedExercises;
+        // Exercises without due date shall always be displayed at the bottom
+        if (noDueDateExercises.length) {
+            groupedExercises[noDueDateKey] = {
+                exercises: noDueDateExercises,
+                isCurrentWeek: false,
+                isCollapsed: false,
+            };
+        }
 
         this.exerciseGroups = groupedExercises;
     }
