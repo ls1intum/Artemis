@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
@@ -13,7 +13,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseEntry, LearningPathHistoryStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-history-storage.service';
+import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry, StorageEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/participate/learning-path-graph-sidebar.component';
 
 @Component({
     selector: 'jhi-learning-path-container',
@@ -21,10 +22,12 @@ import { ExerciseEntry, LearningPathHistoryStorageService, LectureUnitEntry } fr
     templateUrl: './learning-path-container.component.html',
 })
 export class LearningPathContainerComponent implements OnInit {
+    @ViewChild('graphSidebar') graphSidebar: LearningPathGraphSidebarComponent;
+
     @Input() courseId: number;
     learningPathId: number;
 
-    learningObjectId: number;
+    learningObjectId?: number;
     lectureId?: number;
     lecture?: Lecture;
     lectureUnit?: LectureUnit;
@@ -41,7 +44,7 @@ export class LearningPathContainerComponent implements OnInit {
         private learningPathService: LearningPathService,
         private lectureService: LectureService,
         private exerciseService: ExerciseService,
-        public learningPathHistoryStorageService: LearningPathHistoryStorageService,
+        public learningPathStorageService: LearningPathStorageService,
     ) {}
 
     ngOnInit() {
@@ -52,43 +55,57 @@ export class LearningPathContainerComponent implements OnInit {
         }
         this.learningPathService.getLearningPathId(this.courseId).subscribe((learningPathIdResponse) => {
             this.learningPathId = learningPathIdResponse.body!;
-
-            // load latest lecture unit or exercise that was accessed
-            this.onPrevTask();
         });
     }
 
     onNextTask() {
-        if (this.lectureUnit?.id) {
-            this.learningPathHistoryStorageService.storeLectureUnit(this.learningPathId, this.lectureId!, this.lectureUnit.id);
-        } else if (this.exercise?.id) {
-            this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
-        }
+        const entry = this.currentStateToEntry();
         // reset state to avoid invalid states
         this.undefineAll();
-        // todo: load recommendation, part of next pr
+        const recommendation = this.learningPathStorageService.getNextRecommendation(this.learningPathId, entry);
+        this.loadEntry(recommendation);
     }
 
-    undefineAll() {
+    onPrevTask() {
+        const entry = this.currentStateToEntry();
+        // reset state to avoid invalid states
+        this.undefineAll();
+        if (this.learningPathStorageService.hasPrevRecommendation(this.learningPathId, entry)) {
+            this.loadEntry(this.learningPathStorageService.getPrevRecommendation(this.learningPathId, entry));
+        }
+    }
+
+    currentStateToEntry() {
+        if (this.lectureUnit?.id) {
+            return new LectureUnitEntry(this.lectureId!, this.lectureUnit.id);
+        } else if (this.exercise?.id) {
+            return new ExerciseEntry(this.exercise.id);
+        }
+    }
+
+    private undefineAll() {
+        // reset ids
+        this.lectureId = undefined;
+        this.learningObjectId = undefined;
+        // reset models
         this.lecture = undefined;
         this.lectureUnit = undefined;
         this.exercise = undefined;
     }
 
-    onPrevTask() {
-        // reset state to avoid invalid states
-        this.undefineAll();
-        if (this.learningPathHistoryStorageService.hasPrevious(this.learningPathId)) {
-            const entry = this.learningPathHistoryStorageService.getPrevious(this.learningPathId);
-            if (entry instanceof LectureUnitEntry) {
-                this.learningObjectId = entry.lectureUnitId;
-                this.lectureId = entry.lectureId;
-                this.loadLectureUnit();
-            } else if (entry instanceof ExerciseEntry) {
-                this.learningObjectId = entry.exerciseId;
-                this.loadExercise();
-            }
+    private loadEntry(entry: StorageEntry | undefined) {
+        if (entry instanceof LectureUnitEntry) {
+            this.learningObjectId = entry.lectureUnitId;
+            this.lectureId = entry.lectureId;
+            this.loadLectureUnit();
+        } else if (entry instanceof ExerciseEntry) {
+            this.learningObjectId = entry.exerciseId;
+            this.loadExercise();
+        } else {
+            this.graphSidebar.learningPathGraphComponent.clearHighlighting();
+            return;
         }
+        this.graphSidebar.learningPathGraphComponent.highlightNode(entry);
     }
 
     loadLectureUnit() {
@@ -105,7 +122,7 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     loadExercise() {
-        this.exerciseService.getExerciseDetails(this.learningObjectId).subscribe({
+        this.exerciseService.getExerciseDetails(this.learningObjectId!).subscribe({
             next: (exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
             },
@@ -128,7 +145,7 @@ export class LearningPathContainerComponent implements OnInit {
     }
 
     setupLectureUnitView(instance: LearningPathLectureUnitViewComponent) {
-        if (this.lecture) {
+        if (this.lecture && this.lectureUnit) {
             instance.lecture = this.lecture;
             instance.lectureUnit = this.lectureUnit!;
         }
@@ -138,7 +155,7 @@ export class LearningPathContainerComponent implements OnInit {
         if (this.exercise) {
             instance.learningPathMode = true;
             instance.courseId = this.courseId;
-            instance.exerciseId = this.learningObjectId;
+            instance.exerciseId = this.learningObjectId!;
         }
     }
 
@@ -146,19 +163,16 @@ export class LearningPathContainerComponent implements OnInit {
         if (node.type !== NodeType.LECTURE_UNIT && node.type !== NodeType.EXERCISE) {
             return;
         }
-        if (this.lectureUnit?.id) {
-            this.learningPathHistoryStorageService.storeLectureUnit(this.learningPathId, this.lectureId!, this.lectureUnit.id);
-        } else if (this.exercise?.id) {
-            this.learningPathHistoryStorageService.storeExercise(this.learningPathId, this.exercise.id);
-        }
         // reset state to avoid invalid states
         this.undefineAll();
         this.learningObjectId = node.linkedResource!;
         this.lectureId = node.linkedResourceParent;
         if (node.type === NodeType.LECTURE_UNIT) {
             this.loadLectureUnit();
+            this.graphSidebar.learningPathGraphComponent.highlightNode(new LectureUnitEntry(this.lectureId!, this.learningObjectId));
         } else if (node.type === NodeType.EXERCISE) {
             this.loadExercise();
+            this.graphSidebar.learningPathGraphComponent.highlightNode(new ExerciseEntry(this.learningObjectId));
         }
     }
 }

@@ -14,6 +14,9 @@ import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamSession } from 'app/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -26,7 +29,13 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
+    @Input() examTimeLineView = false;
+    @Output() onPageChanged = new EventEmitter<{
+        overViewChange: boolean;
+        exercise?: Exercise;
+        forceSave: boolean;
+        submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
+    }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
@@ -51,10 +60,12 @@ export class ExamNavigationBarComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
-            // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
-            this.changeExerciseById(exerciseIdToNavigateTo);
-        });
+        if (!this.examTimeLineView) {
+            this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
+                // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
+                this.changeExerciseById(exerciseIdToNavigateTo);
+            });
+        }
 
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
@@ -108,8 +119,9 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param overviewPage: user wants to switch to the overview page
      * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
      * @param forceSave: true if forceSave shall be used.
+     * @param submission the submission to be viewed, used in the exam timeline
      */
-    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean): void {
+    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
@@ -117,7 +129,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = -1;
@@ -179,6 +191,13 @@ export class ExamNavigationBarComponent implements OnInit {
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
+        this.icon = faCheck;
+        // If we are in the exam timeline we do not use not synced as not synced shows
+        // that the current submission is not saved which doesn't make sense in the timeline.
+        if (this.examTimeLineView) {
+            return this.exerciseIndex === exerciseIndex ? 'synced active' : 'synced';
+        }
+
         // start with a yellow status (edit icon)
         // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !

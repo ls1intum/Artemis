@@ -17,6 +17,9 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.auto.service.AutoService;
 
 // TODO this is not working yet
@@ -25,12 +28,14 @@ import com.google.auto.service.AutoService;
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class BeanInfoProcessor extends AbstractProcessor {
 
+    private final Logger log = LoggerFactory.getLogger(BeanInfoProcessor.class);
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (TypeElement annotation : annotations) {
             Set<? extends Element> annotatedElements = new HashSet<>(roundEnv.getElementsAnnotatedWith(annotation));
             annotatedElements.stream().filter(ele -> ele.getKind().isClass()).map(ele -> (TypeElement) ele).flatMap(ele -> findSupers(ele).stream())
-                    .forEach(ele -> generateBeanInfo((TypeElement) ele));
+                    .forEach(ele -> generateBeanInfo(ele));
         }
         return false;
     }
@@ -69,7 +74,7 @@ public class BeanInfoProcessor extends AbstractProcessor {
             processingEnv.getMessager().printMessage(Kind.WARNING, "Cannot create " + beanInfoFQN + ", maybe it already exists?");
         }
         catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error while generating bean info", e);
             processingEnv.getMessager().printMessage(Kind.ERROR, "IO exception");
         }
     }

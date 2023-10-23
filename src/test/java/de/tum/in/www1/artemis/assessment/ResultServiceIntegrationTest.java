@@ -5,10 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -205,7 +202,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void shouldReturnNotFoundForNonExistingResult() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
         participationUtilService.addSampleFeedbackToResults(result);
-        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
+        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + UUID.randomUUID().getMostSignificantBits() + "/details", HttpStatus.NOT_FOUND,
+                Feedback.class);
     }
 
     @Test
