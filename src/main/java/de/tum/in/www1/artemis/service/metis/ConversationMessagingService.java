@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -19,7 +20,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -211,20 +211,7 @@ public class ConversationMessagingService extends PostingService {
      * @return page of posts that match the given context
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
-        if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(postContextFilter.getConversationId());
-
-            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-                // Mark messages as read
-                conversationParticipant.setLastRead(ZonedDateTime.now());
-                conversationParticipantRepository.saveAndFlush(conversationParticipant);
-            }
-            else {
-                throw new AccessForbiddenException("User not allowed to access this conversation!");
-            }
-
-        }
+        conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.getConversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
@@ -333,8 +320,10 @@ public class ConversationMessagingService extends PostingService {
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         message.setDisplayPriority(displayPriority);
-        Post updatedMessage = conversationMessageRepository.save(message);
 
+        conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty());
+
+        Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();
         broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course, null);
         return updatedMessage;

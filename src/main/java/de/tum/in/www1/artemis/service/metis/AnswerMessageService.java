@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -82,9 +83,10 @@ public class AnswerMessageService extends PostingService {
         if (answerMessage.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        conversationService.isMemberElseThrow(answerMessage.getPost().getConversation().getId(), author.getId());
 
         Conversation conversation = conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId());
+
+        conversationService.isMemberOrCreateForCourseWideElseThrow(conversation.getId(), author, Optional.empty());
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
