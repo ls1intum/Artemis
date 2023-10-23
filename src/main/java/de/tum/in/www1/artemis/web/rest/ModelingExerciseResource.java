@@ -245,7 +245,7 @@ public class ModelingExerciseResource {
     private ModelingExercise findModelingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         if (includePlagiarismDetectionConfig) {
             var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(exerciseId);
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(modelingExercise, modelingExerciseRepository);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(modelingExercise, modelingExerciseRepository);
             return modelingExercise;
         }
         return modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
