@@ -459,4 +459,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return Set of Submissions
      */
     Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
+
+    default Submission findByIdElseThrow(long submissionId) {
+        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
+    }
 }
