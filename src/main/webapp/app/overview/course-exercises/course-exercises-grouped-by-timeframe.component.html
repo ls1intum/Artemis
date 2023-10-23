@@ -1,4 +1,4 @@
-<div *ngIf="!filteredExercises?.length; else exercisesWithAppliedSearchAndFilters">
+<div *ngIf="!filteredAndSortedExercises?.length; else exercisesWithAppliedSearchAndFilters">
     {{ 'artemisApp.courseOverview.exerciseList.noExerciseMatchesSearchAndFilters' | artemisTranslate }}
 </div>
 <ng-template #exercisesWithAppliedSearchAndFilters>

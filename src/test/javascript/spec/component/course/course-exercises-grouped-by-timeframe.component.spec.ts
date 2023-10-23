@@ -81,7 +81,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
 
     describe('groupExercisesByTimeframe', () => {
         it('should assign default groups if no exercises are present', () => {
-            component.filteredExercises = undefined;
+            component.filteredAndSortedExercises = undefined;
             const defaultExerciseGroups = component.getDefaultExerciseGroups();
 
             component.ngOnChanges();
@@ -96,7 +96,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
             //@ts-ignore spying on private method
             const adjustExpandedOrCollapsedStateOfExerciseGroupsSpy = jest.spyOn(component, 'adjustExpandedOrCollapsedStateOfExerciseGroups');
 
-            component.filteredExercises = filteredExercises;
+            component.filteredAndSortedExercises = filteredExercises;
 
             component.ngOnChanges();
 
@@ -117,7 +117,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
 
     describe('adjustExpandedOrCollapsedStateOfExerciseGroups', () => {
         it('should never expand past section by default', () => {
-            component.filteredExercises = [pastExercise_1];
+            component.filteredAndSortedExercises = [pastExercise_1];
 
             component.ngOnChanges();
 
@@ -125,7 +125,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
         });
 
         it('should expand noDueDate section', () => {
-            component.filteredExercises = [pastExercise_1, noDueDateExercise_1];
+            component.filteredAndSortedExercises = [pastExercise_1, noDueDateExercise_1];
 
             component.ngOnChanges();
 
@@ -134,7 +134,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
         });
 
         it('should expand future section', () => {
-            component.filteredExercises = [pastExercise_1, futureExercise_1, noDueDateExercise_1];
+            component.filteredAndSortedExercises = [pastExercise_1, futureExercise_1, noDueDateExercise_1];
 
             component.ngOnChanges();
 
@@ -144,7 +144,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
         });
 
         it('should expand current section', () => {
-            component.filteredExercises = [pastExercise_1, currentExercise_1, noDueDateExercise_1];
+            component.filteredAndSortedExercises = [pastExercise_1, currentExercise_1, noDueDateExercise_1];
 
             component.ngOnChanges();
 
@@ -154,7 +154,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
         });
 
         it('should expand current and future section', () => {
-            component.filteredExercises = [pastExercise_1, currentExercise_1, futureExercise_1, noDueDateExercise_1];
+            component.filteredAndSortedExercises = [pastExercise_1, currentExercise_1, futureExercise_1, noDueDateExercise_1];
 
             component.ngOnChanges();
 
@@ -165,7 +165,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
         });
 
         it('should keep past expanded if it was expanded before', () => {
-            component.filteredExercises = [pastExercise_1, currentExercise_1, futureExercise_1, noDueDateExercise_1];
+            component.filteredAndSortedExercises = [pastExercise_1, currentExercise_1, futureExercise_1, noDueDateExercise_1];
             component.ngOnChanges();
             component.exerciseGroups.past.isCollapsed = false;
             component.exerciseGroups.current.isCollapsed = true;
@@ -184,7 +184,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
                 //@ts-ignore spying on private method
                 const expandAllExercisesAndSaveStateBeforeSearchSpy = jest.spyOn(component, 'expandAllExercisesAndSaveStateBeforeSearch');
 
-                component.filteredExercises = filteredExercises;
+                component.filteredAndSortedExercises = filteredExercises;
                 component.appliedSearchString = 'Text Exercise Title';
 
                 component.ngOnChanges();
@@ -198,7 +198,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
                 //@ts-ignore spying on private method
                 const expandAllExercisesAndSaveStateBeforeSearchSpy = jest.spyOn(component, 'expandAllExercisesAndSaveStateBeforeSearch');
 
-                component.filteredExercises = filteredExercises;
+                component.filteredAndSortedExercises = filteredExercises;
                 component.ngOnChanges();
                 component.exerciseGroups.past.isCollapsed = false;
                 component.exerciseGroups.current.isCollapsed = true;
@@ -225,7 +225,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
             //@ts-ignore spying on private method
             const keepCurrentCollapsedOrExpandedStateOfExerciseGroupsSpy = jest.spyOn(component, 'keepCurrentCollapsedOrExpandedStateOfExerciseGroups');
 
-            component.filteredExercises = [pastExercise_1, pastExercise_2, currentExercise_1, currentExercise_2, futureExercise_1, noDueDateExercise_1];
+            component.filteredAndSortedExercises = [pastExercise_1, pastExercise_2, currentExercise_1, currentExercise_2, futureExercise_1, noDueDateExercise_1];
             component.appliedSearchString = '';
             component.ngOnChanges();
             component.exerciseGroups.past.isCollapsed = false;
@@ -234,7 +234,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
             component.exerciseGroups.noDueDate.isCollapsed = false;
 
             const exercisesWithNewAppliedFilter = [pastExercise_1, currentExercise_2, futureExercise_1];
-            component.filteredExercises = exercisesWithNewAppliedFilter;
+            component.filteredAndSortedExercises = exercisesWithNewAppliedFilter;
 
             component.ngOnChanges();
             expect(keepCurrentCollapsedOrExpandedStateOfExerciseGroupsSpy).toHaveBeenCalledOnce();

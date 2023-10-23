@@ -29,7 +29,7 @@ const DEFAULT_EXERCISE_GROUPS = {
 export class CourseExercisesGroupedByTimeframeComponent implements OnChanges {
     protected readonly Object = Object;
 
-    @Input() filteredExercises?: Exercise[];
+    @Input() filteredAndSortedExercises?: Exercise[];
     @Input() course?: Course;
     @Input() exerciseForGuidedTour?: Exercise;
     @Input() appliedSearchString?: string;
@@ -54,11 +54,11 @@ export class CourseExercisesGroupedByTimeframeComponent implements OnChanges {
     private groupExercisesByTimeframe(): ExerciseGroups {
         const updatedExerciseGroups: ExerciseGroups = cloneDeep(DEFAULT_EXERCISE_GROUPS);
 
-        if (!this.filteredExercises) {
+        if (!this.filteredAndSortedExercises) {
             return updatedExerciseGroups;
         }
 
-        for (const exercise of this.filteredExercises) {
+        for (const exercise of this.filteredAndSortedExercises) {
             const exerciseGroup = this.getExerciseGroup(exercise);
             updatedExerciseGroups[exerciseGroup].exercises.push(exercise);
         }

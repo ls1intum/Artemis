@@ -119,14 +119,14 @@
             <ng-container *ngIf="course?.exercises?.length !== 0; else noExercisesAvailableForCourse">
                 <jhi-course-exercises-grouped-by-timeframe
                     *ngIf="showExercisesGroupedByTimeframe; else exercisesGroupedByWeek"
-                    [filteredExercises]="filteredExercises"
+                    [filteredAndSortedExercises]="filteredAndSortedExercises"
                     [course]="course"
                     [exerciseForGuidedTour]="exerciseForGuidedTour"
                     [appliedSearchString]="lastAppliedSearchString"
                 />
                 <ng-template #exercisesGroupedByWeek>
                     <jhi-course-exercises-grouped-by-week
-                        [filteredAndSortedExercises]="filteredExercises"
+                        [filteredAndSortedExercises]="filteredAndSortedExercises"
                         [course]="course!"
                         [exerciseForGuidedTour]="exerciseForGuidedTour"
                         [weeklyIndexKeys]="weeklyIndexKeys"

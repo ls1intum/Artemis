@@ -78,7 +78,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     searchExercisesInput: string;
     exerciseFilter: ExerciseFilterModel;
 
-    filteredExercises: Exercise[] | undefined;
+    filteredAndSortedExercises: Exercise[] | undefined;
     showExercisesGroupedByTimeframe: boolean = true;
     lastAppliedSearchString: string | undefined;
 
@@ -239,7 +239,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         let filtered = this.course?.exercises?.filter((exercise) => CourseExercisesComponent.fulfillsCurrentFilter(exercise, this.activeFilters));
         filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
 
-        this.filteredExercises = this.sortExercises(filtered);
+        this.filteredAndSortedExercises = this.sortExercises(filtered);
         this.groupExercises(filtered);
     }
 
