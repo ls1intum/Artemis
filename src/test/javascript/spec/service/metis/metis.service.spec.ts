@@ -472,7 +472,7 @@ describe('Metis Service', () => {
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ lectureIds: [metisLecture.id!] }, false);
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ lectureIds: [metisLecture.id!] });
         }));
 
         it('should create websocket subscription when posts with exercise context are initially retrieved from DB', fakeAsync(() => {
@@ -497,7 +497,7 @@ describe('Metis Service', () => {
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideContexts: [courseWidePostWithTags.courseWideContext!] }, false);
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ courseWideContexts: [courseWidePostWithTags.courseWideContext!] });
         }));
 
         it('should not create new subscription if already exists', fakeAsync(() => {
@@ -507,7 +507,7 @@ describe('Metis Service', () => {
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
             // trigger createWebsocketSubscription for the second time with the same context filter. i.e. same channel
             metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] });
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseIds: [metisExercise.id!] }, false);
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenNthCalledWith(2, { exerciseIds: [metisExercise.id!] });
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
         }));
 
@@ -520,7 +520,7 @@ describe('Metis Service', () => {
                 type: ConversationType.CHANNEL,
                 isCourseWide: true,
             } as ChannelDTO);
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}/conversations/1`);
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
@@ -642,11 +642,7 @@ describe('Metis Service', () => {
                 mockReceiveObservable.next(mockPostDTO);
 
                 // Ensure getPosts() was not called
-                if (action === MetisPostAction.CREATE) {
-                    expect(getPostsSpy).toHaveBeenCalledOnce();
-                } else {
-                    expect(getPostsSpy).not.toHaveBeenCalled();
-                }
+                expect(getPostsSpy).not.toHaveBeenCalled();
             },
         );
     });
