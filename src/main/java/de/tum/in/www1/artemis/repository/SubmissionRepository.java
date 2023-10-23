@@ -442,4 +442,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     default Submission findByIdWithResultsElseThrow(long submissionId) {
         return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
     }
+
+    default Submission findByIdElseThrow(long submissionId) {
+        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));
+    }
 }
