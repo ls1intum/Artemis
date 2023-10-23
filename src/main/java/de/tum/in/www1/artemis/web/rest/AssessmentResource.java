@@ -91,7 +91,7 @@ public abstract class AssessmentResource {
         // remove sensitive information for students
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             exercise.filterSensitiveInformation();
-            result.setAssessor(null);
+            result.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);

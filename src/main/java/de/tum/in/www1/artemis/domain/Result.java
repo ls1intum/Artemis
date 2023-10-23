@@ -509,6 +509,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
+        setAssessmentNote(null);
     }
 
     /**

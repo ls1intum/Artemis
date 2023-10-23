@@ -326,7 +326,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            modelingSubmission.getLatestResult().setAssessor(null);
+            modelingSubmission.getLatestResult().filterSensitiveInformation();
         }
 
         // make sure sensitive information are not sent to the client

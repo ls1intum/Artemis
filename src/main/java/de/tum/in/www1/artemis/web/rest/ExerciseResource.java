@@ -289,7 +289,7 @@ public class ExerciseResource {
             participation.setResults(exercise.findResultsFilteredForStudents(participation));
             // By filtering the results available yet, they can become null for the exercise.
             if (participation.getResults() != null) {
-                participation.getResults().forEach(r -> r.setAssessor(null));
+                participation.getResults().forEach(Result::filterSensitiveInformation);
             }
             exercise.addParticipation(participation);
         }
