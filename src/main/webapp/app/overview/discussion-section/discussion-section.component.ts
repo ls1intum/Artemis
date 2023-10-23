@@ -3,7 +3,6 @@ import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { combineLatest, map } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -171,36 +170,21 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * @param courseId
      */
     setChannel(courseId: number): void {
-        if (this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
-            this.metisService.getFilteredPosts({
-                exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
-                lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
-            });
-            return;
-        }
         const getChannel = () => {
             return {
                 next: (channel: Channel) => {
                     this.channel = channel ?? undefined;
 
-                    if (!this.channel && this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.MESSAGING_ONLY) {
+                    if (!this.channel) {
                         this.noChannelAvailable = true;
                         this.collapsed = true;
                         return;
                     }
 
-                    if (this.channel?.id) {
-                        const contextFilter = { conversationId: this.channel.id };
-                        const channelDTO = new ChannelDTO();
-                        channelDTO.isCourseWide = true;
-                        this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
-                    } else {
-                        const contextFilter = {
-                            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
-                            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
-                        };
-                        this.metisService.getFilteredPosts(contextFilter);
-                    }
+                    const contextFilter = { conversationId: this.channel.id };
+                    const channelDTO = new ChannelDTO();
+                    channelDTO.isCourseWide = true;
+                    this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
