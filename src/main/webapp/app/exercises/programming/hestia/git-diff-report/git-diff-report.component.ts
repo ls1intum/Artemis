@@ -7,17 +7,15 @@ import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming
     templateUrl: './git-diff-report.component.html',
 })
 export class GitDiffReportComponent implements OnInit {
-    @Input()
-    report: ProgrammingExerciseGitDiffReport;
+    @Input() report: ProgrammingExerciseGitDiffReport;
 
-    @Input()
-    templateFileContentByPath: Map<string, string>;
+    @Input() templateFileContentByPath: Map<string, string>;
 
-    @Input()
-    solutionFileContentByPath: Map<string, string>;
+    @Input() solutionFileContentByPath: Map<string, string>;
 
-    @Input()
-    filePaths: string[];
+    @Input() filePaths: string[];
+
+    @Input() diffForTemplateAndSolution = true;
 
     // TODO: Make this configurable by the user
     numberOfContextLines = 3;

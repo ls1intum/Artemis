@@ -165,7 +165,6 @@ public class LocalCIConnectorService {
      * @throws LocalCIException if something unexpected goes wrong when creating the submission or triggering the build.
      */
     private void processNewPushToTestRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
-
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission;
         try {
