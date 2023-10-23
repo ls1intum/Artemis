@@ -14,6 +14,8 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 const currentExercise_1 = {
     id: 3,
@@ -32,6 +34,7 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CourseExercisesGroupedByWeekComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(CourseExerciseRowComponent)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -165,5 +168,22 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
 
         const sundayBeforeDueDate = participation.individualDueDate.day(0).format(WEEK_EXERCISE_GROUP_FORMAT_STRING);
         expect(component.exerciseGroups[sundayBeforeDueDate].exercises).toEqual([newExercise]);
+    });
+
+    it('should group exercises in correct week categories', () => {
+        const exercises = [];
+        for (let i = 1; i < 8; i++) {
+            const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+            newExercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(i, 'days');
+            newExercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(i, 'days');
+            exercises.push(newExercise);
+        }
+        exercises.push(new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise);
+        component.sortingAttribute = SortingAttribute.DUE_DATE;
+        component.filteredAndSortedExercises = exercises;
+
+        component.ngOnChanges();
+
+        expect(Object.keys(component.exerciseGroups)).toContainAllValues(['2021-01-17', '2021-01-10', 'artemisApp.courseOverview.exerciseList.noExerciseDate']);
     });
 });

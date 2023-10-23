@@ -226,8 +226,6 @@ describe('CourseExercisesComponent', () => {
         component.toggleFilters(filters);
 
         expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.NEEDS_WORK));
-        // expect(Object.keys(component.weeklyExercisesGrouped)).toEqual(['2021-01-17', '2021-01-10', 'noDate']);
-        // expect(component.weeklyIndexKeys).toEqual(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.exerciseCountMap.get('modeling')).toBe(9);
 
         // trigger updateUpcomingExercises dynamically with dayjs()
