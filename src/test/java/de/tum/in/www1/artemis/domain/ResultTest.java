@@ -131,4 +131,19 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(result.getFeedbacks()).usingRecursiveFieldByFieldElementComparator().containsExactlyInAnyOrder(tst1, tst2);
     }
+
+    @Test
+    void filterSensitiveInformation() {
+        Result result = new Result();
+        result.setAssessor(new User());
+        result.setAssessmentNote(new AssessmentNote());
+
+        assertThat(result.getAssessor()).isNotNull();
+        assertThat(result.getAssessmentNote()).isNotNull();
+
+        result.filterSensitiveInformation();
+
+        assertThat(result.getAssessor()).isNull();
+        assertThat(result.getAssessmentNote()).isNull();
+    }
 }
