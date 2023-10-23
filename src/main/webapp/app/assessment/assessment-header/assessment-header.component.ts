@@ -94,11 +94,11 @@ export class AssessmentHeaderComponent {
         if (this.result?.completionDate) {
             return true;
         } else {
-            if (this.result && Result.hasNonEmptyAssessmentNote(this.result)) {
-                return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
-            } else {
-                return this.submitDisabled;
-            }
+        else if (this.result && Result.hasNonEmptyAssessmentNote(this.result)) {
+            return !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+        } else {
+            return this.submitDisabled;
+        }
         }
     }
 
