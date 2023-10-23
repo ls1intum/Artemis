@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 /**
  * REST controller for managing {@link IrisSettings}.
  */
+@Profile("iris")
 @RestController
 @RequestMapping("api/")
 public class IrisSettingsResource {
