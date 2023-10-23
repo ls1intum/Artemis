@@ -290,6 +290,26 @@ describe('CourseExercisesComponent', () => {
         expect(component.weeklyExercisesGrouped[sundayBeforeDueDate].exercises).toEqual([newExercise]);
     });
 
+    it('should apply filters to the next relevant exercise', () => {
+        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newExercise.releaseDate = dayjs().subtract(3, 'hours');
+        newExercise.dueDate = dayjs().add(3, 'hours');
+        newExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+
+        component.course!.exercises = [newExercise];
+
+        component.ngOnChanges();
+
+        expect(component.nextRelevantExercise).toEqual({
+            exercise: newExercise,
+            dueDate: newExercise.dueDate,
+        });
+
+        component.toggleFilters([ExerciseFilter.OPTIONAL]);
+
+        expect(component.nextRelevantExercise).toBeUndefined();
+    });
+
     it('should sort upcoming exercises by ascending individual due dates', () => {
         const exerciseRegularDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
         exerciseRegularDueDate.releaseDate = dayjs().add(10, 'days');
@@ -351,7 +371,9 @@ describe('CourseExercisesComponent', () => {
         exercise3.title = 'Introduction to Software Engineering';
         component.course!.exercises = [exercise1, exercise2, exercise3];
         searchButton.dispatchEvent(event);
-        expect(component.weeklyExercisesGrouped['noDate'].exercises).toContainAllValues([exercise1, exercise2]);
+
+        expect(component.filteredAndSortedExercises).toContainAllValues([exercise1, exercise2]);
+        expect(component.filteredAndSortedExercises).not.toContainAllValues([exercise3]);
     });
 
     it('should open unenrollment modal on button click', () => {
