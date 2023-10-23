@@ -187,10 +187,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         this.applyFiltersAndOrder();
     }
 
-    /**
-     * Checks whether an exercise is visible to students or not
-     * @param exercise The exercise which should be checked
-     */
     isVisibleToStudents(exercise: Exercise): boolean | undefined {
         return !this.activeFilters.has(ExerciseFilter.UNRELEASED) || (exercise as QuizExercise)?.visibleToStudents;
     }
