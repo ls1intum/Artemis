@@ -23,6 +23,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgModel } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseExercisesGroupedByCategoryComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-category.component';
+import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
 
 describe('CourseOverviewExerciseListControls', () => {
     let parentFixture: ComponentFixture<CourseOverviewComponent>;
@@ -47,6 +49,8 @@ describe('CourseOverviewExerciseListControls', () => {
                 MockDirective(NgModel),
                 MockComponent(SidePanelComponent),
                 MockComponent(HeaderCourseComponent),
+                MockComponent(CourseExercisesGroupedByCategoryComponent),
+                MockComponent(CourseExercisesGroupedByWeekComponent),
                 TranslatePipeMock,
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,

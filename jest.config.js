@@ -47,6 +47,7 @@ const esModules = [
     'ngx-infinite-scroll',
     'internmap',
     '@swimlane/ngx-graph',
+    'ngx-slider-v2'
 ].join('|');
 
 const {
@@ -100,10 +101,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 85.9,
-            branches: 73.2,
-            functions: 79.8,
-            lines: 86.1,
+            statements: 86.0,
+            branches: 73.3,
+            functions: 79.9,
+            lines: 86.2,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
