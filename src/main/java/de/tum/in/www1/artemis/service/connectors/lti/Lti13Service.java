@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.lti;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -18,8 +17,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -35,7 +32,6 @@ import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -356,15 +352,10 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        // ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-        // ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        ltiDeepLinkingService.initializeDeepLinkingResponse(ltiIdToken, clientRegistrationId);
 
-        var user = userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).orElseThrow();
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority()))));
-
-        ltiDeepLinkingService.initializeDeepLinkingResponse(ltiIdToken);
-        ltiDeepLinkingService.setupDeepLinkingSettings(ltiIdToken, clientRegistrationId);
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
     }
 
     public String parseTargetLinkUri(String targetLinkUri) {
