@@ -3,7 +3,7 @@
     (onConfirm)="registerForCourse(course.id!)"
     title="artemisApp.studentDashboard.enroll.enrollInCourse"
     confirmationText="{{ course.enrollmentConfirmationMessage! }}"
-    confirmationTitle="artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle"
+    confirmationTitle="{{ this.confirmationTitle }}"
     [disabled]="loading"
     [translateText]="false"
     [textIsMarkdown]="true"
