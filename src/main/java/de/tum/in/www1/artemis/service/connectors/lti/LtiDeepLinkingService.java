@@ -68,14 +68,17 @@ public class LtiDeepLinkingService {
      */
     public String buildLtiDeepLinkResponse() {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(this.artemisServerUrl + "/lti/select-content");
+        String returnUrl = this.deepLinkingSettings.getAsString("deep_link_return_url");
+
         Map<String, Object> claims = new HashMap<String, Object>();
         for (var entry : deepLinkingResponse.entrySet()) {
             claims.put(entry.getKey(), entry.getValue().getAsString());
         }
         String jwt = tokenRetriever.createDeepLinkingJWT(this.clientRegistrationId, claims);
-        uriComponentsBuilder.queryParam("jwt", jwt);
-        uriComponentsBuilder.queryParam("id", this.deploymentId);
-        uriComponentsBuilder.queryParam("deepLinkUri", UriComponent.encode(this.deepLinkingSettings.getAsString("deep_link_return_url"), UriComponent.Type.QUERY_PARAM));
+
+        String htmlResponse = fillHtmlResponse(returnUrl, jwt);
+
+        uriComponentsBuilder.queryParam("htmlResponse", UriComponent.encode(htmlResponse, UriComponent.Type.QUERY_PARAM));
 
         return uriComponentsBuilder.build().toUriString();
     }
@@ -146,5 +149,12 @@ public class LtiDeepLinkingService {
         item.addProperty("title", title);
         item.addProperty("url", url);
         return item;
+    }
+
+    private String fillHtmlResponse(String returnUrl, String jwt) {
+        return "<!DOCTYPE html>\n" + "<html>\n" + "<head>\n" + "</head>\n" + "<body>\n" + "\n" + "    <!-- The auto-submitted form -->\n"
+                + "    <form id=\"ltiRedirectForm\" action=\"" + returnUrl + "\" method=\"post\">\n" + "        <input type=\"hidden\" name=\"JWT\" value=\"" + jwt + "\" />\n"
+                + "        <input type=\"hidden\" name=\"id\" value=\"" + this.deploymentId + "\" />\n" + "        <!-- Additional hidden fields if needed -->\n" + "    </form>\n"
+                + "\n" + "    <script>\n" + "        document.getElementById('ltiRedirectForm').submit();\n" + "    </script>\n" + "</body>\n" + "</html>";
     }
 }

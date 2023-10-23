@@ -15,31 +15,15 @@ export class Lti13SelectContentComponent implements OnInit {
 
     /**
      * Initializes the component.
-     * - Retrieves query parameters from the route snapshot.
-     * - Sets the action link for the form.
-     * - Automatically submits the form.
+     * - Retrieves html response from the route snapshot.
+     * - Loads the response.
      */
     ngOnInit(): void {
         this.route.params.subscribe(() => {
-            this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
-            this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
-            this.actionLink = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
-            this.autoSubmitForm();
+            const htmlResponse = this.route.snapshot.queryParamMap.get('htmlResponse') ?? '';
+            document.open();
+            document.write(htmlResponse);
+            document.close();
         });
-    }
-
-    /**
-     * Automatically submits the form.
-     * - Sets the action link for the form.
-     * - Sets JWT and ID input fields.
-     * - Submits the form.
-     */
-    autoSubmitForm(): void {
-        const form = document.getElementById('deepLinkingForm') as HTMLFormElement;
-        form.action = this.actionLink;
-        console.log(this.actionLink);
-        (<HTMLInputElement>document.getElementById('JWT'))!.value = this.jwt;
-        (<HTMLInputElement>document.getElementById('id'))!.value = this.id;
-        form.submit();
     }
 }
