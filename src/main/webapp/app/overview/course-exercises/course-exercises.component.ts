@@ -60,7 +60,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     public course?: Course;
-    public weeklyIndexKeys: string[];
     public upcomingExercises: ExerciseWithDueDate[] = [];
     public exerciseCountMap: Map<string, number>;
 
@@ -239,7 +238,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
 
         this.filteredAndSortedExercises = this.sortExercises(filtered);
-        this.groupExercises(filtered);
+        this.updateCourseInformationWidget(filtered);
     }
 
     /**
@@ -309,9 +308,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         return exercise.studentParticipations && exercise.studentParticipations.length > 0 ? exercise.studentParticipations[0] : undefined;
     }
 
-    private groupExercises(exercises?: Exercise[]) {
+    private updateCourseInformationWidget(exercises?: Exercise[]) {
         this.exerciseCountMap = new Map<string, number>();
-        this.weeklyIndexKeys = [];
         const upcomingExercises: Exercise[] = [];
         exercises?.forEach((exercise) => {
             this.increaseExerciseCounter(exercise);

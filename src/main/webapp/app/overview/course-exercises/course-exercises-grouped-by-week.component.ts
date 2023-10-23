@@ -32,7 +32,6 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
     @Input() filteredAndSortedExercises?: Exercise[];
     @Input() course: Course;
     @Input() exerciseForGuidedTour?: Exercise;
-    @Input() weeklyIndexKeys: string[];
     @Input() activeFilters: Set<ExerciseFilter>;
     @Input() sortingAttribute: SortingAttribute;
 
