@@ -21,6 +21,8 @@ type GroupedExercisesByWeek = Record<
     }
 >;
 
+export const WEEK_EXERCISE_GROUP_FORMAT_STRING = 'YYYY-MM-DD';
+
 @Component({
     selector: 'jhi-course-exercises-grouped-by-week',
     templateUrl: './course-exercises-grouped-by-week.component.html',
@@ -82,7 +84,7 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
                 noDueDateExercises.push(exercise);
                 return;
             }
-            const dateIndex = dateValue ? dayjs(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
+            const dateIndex = dateValue ? dayjs(dateValue).startOf('week').format(WEEK_EXERCISE_GROUP_FORMAT_STRING) : 'NoDate';
 
             if (!groupedExercises[dateIndex]) {
                 groupedExercises[dateIndex] = {

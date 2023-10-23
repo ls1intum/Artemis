@@ -285,9 +285,7 @@ describe('CourseExercisesComponent', () => {
         expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.OVERDUE));
         expect(component.exerciseCountMap.get('modeling')).toBe(1);
 
-        // the exercise should be grouped into the week with the individual due date
-        const sundayBeforeDueDate = participation.individualDueDate.day(0).format('YYYY-MM-DD');
-        expect(component.weeklyExercisesGrouped[sundayBeforeDueDate].exercises).toEqual([newExercise]);
+        expect(component.filteredAndSortedExercises).toContain(newExercise);
     });
 
     it('should sort upcoming exercises by ascending individual due dates', () => {

@@ -4,15 +4,16 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
+import { CourseExercisesGroupedByWeekComponent, WEEK_EXERCISE_GROUP_FORMAT_STRING } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ExerciseFilter, ExerciseWithDueDate } from 'app/overview/course-exercises/course-exercises.component';
+import { ExerciseFilter, ExerciseWithDueDate, SortingAttribute } from 'app/overview/course-exercises/course-exercises.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 const currentExercise_1 = {
     id: 3,
@@ -147,5 +148,22 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
         component.ngOnChanges();
 
         expect(component.nextRelevantExercise).toBeUndefined();
+    });
+
+    it('should group exercise with individual due date into the week with the individual due date', () => {
+        // regular due date is in the past, but the individual one in the future
+        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newExercise.releaseDate = dayjs('2021-01-10T16:11:00+01:00');
+        newExercise.dueDate = dayjs('2021-01-13T16:11:00+01:00');
+        const participation = new StudentParticipation();
+        participation.individualDueDate = dayjs().add(10, 'days');
+        newExercise.studentParticipations = [participation];
+        component.filteredAndSortedExercises = [newExercise];
+        component.sortingAttribute = SortingAttribute.DUE_DATE;
+
+        component.ngOnChanges();
+
+        const sundayBeforeDueDate = participation.individualDueDate.day(0).format(WEEK_EXERCISE_GROUP_FORMAT_STRING);
+        expect(component.exerciseGroups[sundayBeforeDueDate].exercises).toEqual([newExercise]);
     });
 });
