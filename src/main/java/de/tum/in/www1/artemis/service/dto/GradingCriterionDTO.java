@@ -5,10 +5,10 @@ import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 
-public record GradingGriterionDTO(long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
+public record GradingCriterionDTO(long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
 
-    public static GradingGriterionDTO of(GradingCriterion gradingCriterion) {
-        return new GradingGriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(),
+    public static GradingCriterionDTO of(GradingCriterion gradingCriterion) {
+        return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(),
                 gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet()));
     }
 }

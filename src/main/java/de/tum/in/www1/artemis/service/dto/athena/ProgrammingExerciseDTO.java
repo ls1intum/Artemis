@@ -7,12 +7,12 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.service.dto.GradingGriterionDTO;
+import de.tum.in.www1.artemis.service.dto.GradingCriterionDTO;
 
 /**
  * A DTO representing a ProgrammingExercise, for transferring data to Athena
  */
-public record ProgrammingExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, List<GradingGriterionDTO> gradingCriteria,
+public record ProgrammingExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, List<GradingCriterionDTO> gradingCriteria,
         String problemStatement, String programmingLanguage, String solutionRepositoryUrl, String templateRepositoryUrl, String testsRepositoryUrl) {
 
     /**
@@ -20,7 +20,7 @@ public record ProgrammingExerciseDTO(long id, String title, Double maxPoints, do
      */
     public static ProgrammingExerciseDTO of(@NotNull ProgrammingExercise exercise, String artemisServerUrl) {
         return new ProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
-                exercise.getGradingCriteria().stream().map(GradingGriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(),
+                exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getProgrammingLanguage().name(),
                 artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exercise.getId() + "/repository/solution",
                 artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exercise.getId() + "/repository/template",
                 artemisServerUrl + ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH + exercise.getId() + "/repository/tests");
