@@ -100,9 +100,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    @Nullable
     @Column(name = "feedback_suggestions_enabled") // enables Athena
-    private Boolean feedbackSuggestionsEnabled = false;
+    private boolean feedbackSuggestionsEnabled = false;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
