@@ -17,8 +17,6 @@ export class CourseRegistrationButtonComponent implements OnInit {
     userIsAllowedToRegister = false;
     loading = false;
 
-    confirmationTitle: string;
-
     constructor(
         private accountService: AccountService,
         private courseService: CourseManagementService,
