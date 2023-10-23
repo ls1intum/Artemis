@@ -314,7 +314,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/templates/code-of-conduct")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getCourseCodeOfConduct() throws IOException {
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
         log.debug("REST request to get template : {}", templatePath);
