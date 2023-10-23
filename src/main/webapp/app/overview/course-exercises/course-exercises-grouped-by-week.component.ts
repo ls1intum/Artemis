@@ -73,13 +73,12 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
 
     private groupExercises(exercises?: Exercise[]) {
         const groupedExercises: GroupedExercisesByWeek = {};
+        const noDueDateKey = this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate');
 
         exercises?.forEach((exercise) => {
             // TODO exchange sorting attribute
             const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, SortingAttribute.DUE_DATE);
             if (!dateValue) {
-                const noDueDateKey = this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate');
-
                 if (!groupedExercises[noDueDateKey]) {
                     groupedExercises[noDueDateKey] = {
                         exercises: [],
@@ -107,35 +106,26 @@ export class CourseExercisesGroupedByWeekComponent implements OnInit, OnChanges 
             groupedExercises[dateIndex].exercises.push(exercise);
         });
 
-        this.exerciseGroups = groupedExercises;
-    }
-
-    private groupExercises1(exercises?: Exercise[]) {
-        const groupedExercises: GroupedExercisesByWeek = {};
-        const notAssociatedExercises: Exercise[] = [];
-
-        exercises?.forEach((exercise) => {
-            // TODO exchange sorting attribute
-            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, SortingAttribute.DUE_DATE);
-            if (!dateValue) {
-                const noDueDateKey = this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate');
-                groupedExercises[noDueDateKey] = {
-                    exercises: notAssociatedExercises,
-                    isCurrentWeek: false,
-                    isCollapsed: false,
-                };
-                return;
-            }
-            const dateIndex = dateValue ? dayjs(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
-
-            groupedExercises[dateIndex].start = dayjs(dateValue).startOf('week');
-            groupedExercises[dateIndex].end = dayjs(dateValue).endOf('week');
-            groupedExercises[dateIndex].isCollapsed = dateValue.isBefore(dayjs(), 'week');
-            groupedExercises[dateIndex].isCurrentWeek = dateValue.isSame(dayjs(), 'week');
-            groupedExercises[dateIndex].exercises = groupedExercises[dateIndex]?.exercises ?? [];
-
-            groupedExercises[dateIndex].exercises.push(exercise);
-        });
+        // // Sort the keys of groupedExercises
+        // const sortedKeys = Object.keys(groupedExercises).sort((a, b) => {
+        //     // Place the "no due date" key first
+        //     if (a === noDueDateKey) {
+        //         return 1;
+        //     }
+        //     if (b === noDueDateKey) {
+        //         return -1;
+        //     }
+        //     // Sort other keys based on your criteria
+        //     return a.localeCompare(b);
+        // });
+        //
+        // // Create a new object with sorted keys
+        // const sortedGroupedExercises: GroupedExercisesByWeek = {};
+        // for (const key of sortedKeys) {
+        //     sortedGroupedExercises[key] = groupedExercises[key];
+        // }
+        //
+        // this.exerciseGroups = sortedGroupedExercises;
 
         this.exerciseGroups = groupedExercises;
     }

@@ -238,7 +238,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     private applyFiltersAndOrder() {
         let filtered = this.course?.exercises?.filter((exercise) => CourseExercisesComponent.fulfillsCurrentFilter(exercise, this.activeFilters));
         filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
-        this.filteredExercises = filtered;
+
+        this.filteredExercises = this.sortExercises(filtered);
         this.groupExercises(filtered);
     }
 
@@ -310,18 +311,16 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     private groupExercises(exercises?: Exercise[]) {
-        // set all values to 0
         this.exerciseCountMap = new Map<string, number>();
-        this.weeklyExercisesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
         const indexKeys: string[] = [];
-        const sortedExercises = this.sortExercises(exercises);
         const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
-        sortedExercises?.forEach((exercise) => {
+        exercises?.forEach((exercise) => {
             const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, this.sortingAttribute);
             this.increaseExerciseCounter(exercise);
+
             if (!dateValue) {
                 notAssociatedExercises.push(exercise);
                 return;
