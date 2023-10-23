@@ -5,11 +5,14 @@ import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
-import * as utils from 'app/shared/util/utils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseFilter, ExerciseWithDueDate } from 'app/overview/course-exercises/course-exercises.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 const currentExercise_1 = {
     id: 3,
@@ -19,6 +22,10 @@ const currentExercise_1 = {
 describe('CourseExercisesGroupedByWeekComponent', () => {
     let fixture: ComponentFixture<CourseExercisesGroupedByWeekComponent>;
     let component: CourseExercisesGroupedByWeekComponent;
+    let exerciseService: ExerciseService;
+
+    let course: Course;
+    let exercise: Exercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,6 +36,17 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseExercisesGroupedByWeekComponent);
                 component = fixture.componentInstance;
+                exerciseService = TestBed.inject(ExerciseService);
+
+                course = new Course();
+                course.id = 123;
+                exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+                exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
+                exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
+                course.exercises = [exercise];
+                course.unenrollmentEnabled = true;
+                course.unenrollmentEndDate = dayjs().add(1, 'days');
+
                 fixture.detectChanges();
             });
     });
@@ -38,12 +56,9 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
     });
 
     it('should initialize', () => {
-        const getAsMutableObjectSpy = jest.spyOn(utils, 'getAsMutableObject');
-
         component.ngOnInit();
         component.ngOnChanges();
         expect(component).toBeTruthy();
-        expect(getAsMutableObjectSpy).toHaveBeenCalledTimes(2);
     });
 
     describe('isVisibleToStudents', () => {
@@ -99,5 +114,15 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
 
             expect(isVisibleToStudentsResult).toBeFalse();
         });
+    });
+
+    it('should react to changes', () => {
+        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
+        component.ngOnChanges();
+        const expectedExercise = {
+            exercise,
+            dueDate: exercise.dueDate,
+        };
+        expect(component.nextRelevantExercise).toEqual(expectedExercise);
     });
 });

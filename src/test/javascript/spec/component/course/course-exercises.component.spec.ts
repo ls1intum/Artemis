@@ -19,7 +19,6 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { ActivatedRoute } from '@angular/router';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -40,7 +39,6 @@ describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
-    let exerciseService: ExerciseService;
     let localStorageService: LocalStorageService;
 
     let course: Course;
@@ -88,7 +86,6 @@ describe('CourseExercisesComponent', () => {
                 fixture = TestBed.createComponent(CourseExercisesComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
-                exerciseService = TestBed.inject(ExerciseService);
                 localStorageService = TestBed.inject(LocalStorageService);
 
                 course = new Course();
@@ -118,16 +115,6 @@ describe('CourseExercisesComponent', () => {
         expect(component.course).toEqual(course);
         expect(courseStorageStub.mock.calls).toHaveLength(1);
         expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
-    });
-
-    it('should react to changes', () => {
-        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
-        component.ngOnChanges();
-        const expectedExercise = {
-            exercise,
-            dueDate: exercise.dueDate,
-        };
-        expect(component.nextRelevantExercise).toEqual(expectedExercise);
     });
 
     it('should reorder all exercises', () => {
@@ -301,26 +288,6 @@ describe('CourseExercisesComponent', () => {
         // the exercise should be grouped into the week with the individual due date
         const sundayBeforeDueDate = participation.individualDueDate.day(0).format('YYYY-MM-DD');
         expect(component.weeklyExercisesGrouped[sundayBeforeDueDate].exercises).toEqual([newExercise]);
-    });
-
-    it('should apply filters to the next relevant exercise', () => {
-        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-        newExercise.releaseDate = dayjs().subtract(3, 'hours');
-        newExercise.dueDate = dayjs().add(3, 'hours');
-        newExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
-
-        component.course!.exercises = [newExercise];
-
-        component.ngOnChanges();
-
-        expect(component.nextRelevantExercise).toEqual({
-            exercise: newExercise,
-            dueDate: newExercise.dueDate,
-        });
-
-        component.toggleFilters([ExerciseFilter.OPTIONAL]);
-
-        expect(component.nextRelevantExercise).toBeUndefined();
     });
 
     it('should sort upcoming exercises by ascending individual due dates', () => {
