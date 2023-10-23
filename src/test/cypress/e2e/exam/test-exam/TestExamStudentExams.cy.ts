@@ -109,9 +109,21 @@ describe('Test Exam - student exams', () => {
             courseManagement.openExamsOfCourse(course.id!);
             examManagement.openStudentExams(exam.id!);
 
-            const searchedUser = students.at(0)!;
-            studentExamManagement.typeSearchText(searchedUser.username);
-            studentExamManagement.checkExamStudent(searchedUser.username);
+            let searchText = students.at(0)!.username + ', ' + students.at(1)!.username;
+            studentExamManagement.typeSearchText(searchText);
+            studentExamManagement.checkExamStudent(students.at(0)!.username);
+            studentExamManagement.checkExamStudent(students.at(1)!.username);
+
+            searchText = studentNames.at(0)! + ', ' + studentNames.at(1)!;
+            studentExamManagement.typeSearchText(searchText);
+            studentExamManagement.checkExamStudent(students.at(0)!.username);
+            studentExamManagement.checkExamStudent(students.at(1)!.username);
+
+            searchText = 'Artemis Test User';
+            studentExamManagement.typeSearchText(searchText);
+            studentExamManagement.checkExamStudent(students.at(0)!.username);
+            studentExamManagement.checkExamStudent(students.at(1)!.username);
+            studentExamManagement.checkExamStudent(students.at(2)!.username);
         });
     });
 
