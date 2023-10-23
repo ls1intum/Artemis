@@ -60,6 +60,19 @@ Prerequisites:
 3. Make sure that the UI of the programming exercise in the exam mode stays unchanged. You can use the [exam mode documentation](https://docs.artemis.cit.tum.de/user/exam_mode/) as reference.
 4. ...
 
+### Testserver States
+> [!NOTE]
+> These badges show the state of the test servers.
+> Green = Currently available, Red = Currently locked
+
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test1)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test2)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test3)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test4)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test5)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test6)
+![](https://byob.yarr.is/ls1intum/Artemis/artemis-test9)
+
 ### Review Progress
 <!-- Each Pull Request should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->
 <!-- The reviewer or author check the following boxes depending on what was reviewed or tested. All boxes should be checked before merge. -->
