@@ -62,7 +62,7 @@ describe('AssessmentLayoutComponent', () => {
 
     it('should include jhi-assessment-note', () => {
         const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
-        expect(assessmentNoteComponent).toBeTruthy();
+        expect(assessmentNoteComponent).not.toBeNull();
     });
 
     it('should include jhi-complaints-for-tutor-form', () => {
