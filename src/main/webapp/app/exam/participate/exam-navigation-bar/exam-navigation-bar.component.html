@@ -18,6 +18,7 @@
             <!-- exam overview item -->
             <div class="navigation-item overview">
                 <button
+                    *ngIf="!examTimeLineView"
                     class="btn btn-primary w-100 synced"
                     [ngClass]="getOverviewStatus()"
                     [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
@@ -47,7 +48,7 @@
                         id="exam-exercise-{{ i }}"
                         class="btn btn-primary w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
-                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate"
+                        [ngbTooltip]="!examTimeLineView ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate) : ''"
                         (click)="changePage(false, i, false)"
                     >
                         <fa-icon [icon]="icon"></fa-icon>
@@ -68,7 +69,7 @@
         </div>
     </div>
     <div class="col">
-        <div class="row justify-content-end align-items-start pe-2">
+        <div *ngIf="!examTimeLineView" class="row justify-content-end align-items-start pe-2">
             <div class="d-flex mb-2 justify-content-end">
                 <button id="save" *ngIf="!overviewPageOpen" [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
