@@ -61,7 +61,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     private translateSubscription: Subscription;
     public course?: Course;
     public weeklyIndexKeys: string[];
-    public weeklyExercisesGrouped: object; // TODO: convert into map
     public upcomingExercises: ExerciseWithDueDate[] = [];
     public exerciseCountMap: Map<string, number>;
 
@@ -313,50 +312,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     private groupExercises(exercises?: Exercise[]) {
         this.exerciseCountMap = new Map<string, number>();
         this.weeklyIndexKeys = [];
-        const groupedExercises = {};
-        const indexKeys: string[] = [];
-        const notAssociatedExercises: Exercise[] = [];
         const upcomingExercises: Exercise[] = [];
         exercises?.forEach((exercise) => {
-            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, this.sortingAttribute);
             this.increaseExerciseCounter(exercise);
-
-            if (!dateValue) {
-                notAssociatedExercises.push(exercise);
-                return;
-            }
-            const dateIndex = dateValue ? dayjs(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
-            if (!groupedExercises[dateIndex]) {
-                indexKeys.push(dateIndex);
-                groupedExercises[dateIndex] = {
-                    start: dayjs(dateValue).startOf('week'),
-                    end: dayjs(dateValue).endOf('week'),
-                    isCollapsed: dateValue.isBefore(dayjs(), 'week'),
-                    isCurrentWeek: dateValue.isSame(dayjs(), 'week'),
-                    exercises: [],
-                };
-            }
-            groupedExercises[dateIndex].exercises.push(exercise);
-            if (exercise.dueDate && !dayjs().isAfter(dateValue, 'day')) {
-                upcomingExercises.push(exercise);
-            }
         });
+
         this.updateUpcomingExercises(upcomingExercises);
-        if (notAssociatedExercises.length > 0) {
-            this.weeklyExercisesGrouped = {
-                ...groupedExercises,
-                noDate: {
-                    label: this.translateService.instant('artemisApp.courseOverview.exerciseList.noExerciseDate'),
-                    isCollapsed: false,
-                    isCurrentWeek: false,
-                    exercises: notAssociatedExercises,
-                },
-            };
-            this.weeklyIndexKeys = [...indexKeys, 'noDate'];
-        } else {
-            this.weeklyExercisesGrouped = groupedExercises;
-            this.weeklyIndexKeys = indexKeys;
-        }
         this.calcNumberOfExercises();
     }
 
