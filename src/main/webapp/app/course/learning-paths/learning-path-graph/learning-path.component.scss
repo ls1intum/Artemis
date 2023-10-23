@@ -8,19 +8,11 @@
 }
 
 .path-node {
-    .node-icon-container {
+    jhi-learning-path-graph-node {
         display: block;
         width: fit-content;
+        font-size: 3em;
         margin: auto;
-        text-align: center;
-
-        fa-icon {
-            font-size: 3em;
-
-            svg {
-                margin: auto;
-            }
-        }
     }
 }
 
