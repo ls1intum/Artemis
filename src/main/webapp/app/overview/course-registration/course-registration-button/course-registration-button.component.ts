@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -25,7 +24,6 @@ export class CourseRegistrationButtonComponent implements OnInit {
         private courseService: CourseManagementService,
         private profileService: ProfileService,
         private alertService: AlertService,
-        private translateService: TranslateService,
     ) {}
 
     loadUserIsAllowedToRegister() {
@@ -42,7 +40,6 @@ export class CourseRegistrationButtonComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadUserIsAllowedToRegister();
-        this.confirmationTitle = this.translateService.instant('artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle', { courseName: this.course?.title });
     }
 
     /**
