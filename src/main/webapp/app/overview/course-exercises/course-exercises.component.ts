@@ -309,6 +309,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         this.exerciseCountMap = new Map<string, number>();
         const upcomingExercises: Exercise[] = [];
         exercises?.forEach((exercise) => {
+            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, this.sortingAttribute);
+            if (exercise.dueDate && !dayjs().isAfter(dateValue, 'day')) {
+                upcomingExercises.push(exercise);
+            }
+
             this.increaseExerciseCounter(exercise);
         });
 
