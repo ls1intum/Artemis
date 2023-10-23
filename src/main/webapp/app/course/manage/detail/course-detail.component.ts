@@ -12,6 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -36,6 +37,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     activeStudents?: number[];
     course: Course;
 
+    messagingEnabled: boolean;
+    communicationEnabled: boolean;
+
     ltiEnabled = false;
 
     private eventSubscriber: Subscription;
@@ -54,6 +58,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     constructor(
         private eventManager: EventManager,
         private courseManagementService: CourseManagementService,
+        private organizationService: OrganizationManagementService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private profileService: ProfileService,
@@ -69,6 +74,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
+                this.messagingEnabled = !!this.course.courseInformationSharingConfiguration?.includes('MESSAGING');
+                this.communicationEnabled = !!this.course.courseInformationSharingConfiguration?.includes('COMMUNICATION');
             }
         });
         // There is no course 0 -> will fetch no course if route does not provide different courseId
@@ -78,6 +85,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         });
         this.fetchCourseStatistics(courseId);
         this.registerChangeInCourses(courseId);
+        this.fetchOrganizations(courseId);
     }
 
     /**
@@ -112,6 +120,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 this.activeStudents = courseResponse.body!.activeStudents;
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    private fetchOrganizations(courseId: number) {
+        this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
+            this.course.organizations = organizations;
         });
     }
 }
