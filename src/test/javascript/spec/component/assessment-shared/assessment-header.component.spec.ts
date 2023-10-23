@@ -387,21 +387,21 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should enable saving after entering an internal assessment note', () => {
-        expect(component.saveDisabled).toBeTruthy();
+        expect(component.saveDisabled).toBeTrue();
         component.isAssessor = true;
         component.result = new Result();
         component.result.assessmentNote = new AssessmentNote();
-        expect(component.saveDisabled).toBeTruthy();
+        expect(component.saveDisabled).toBeTrue();
         component.result.assessmentNote.note = 'some input';
-        expect(component.saveDisabled).toBeFalsy();
+        expect(component.saveDisabled).toBeFalse();
     });
 
     it('should not enable submitting after entering an internal assessment note', () => {
-        expect(component.submitDisabled).toBeTruthy();
+        expect(component.submitDisabled).toBeTrue();
         component.isAssessor = true;
         component.result = new Result();
         component.result.assessmentNote = new AssessmentNote();
         component.result.assessmentNote.note = 'some input';
-        expect(component.submitDisabled).toBeTruthy();
+        expect(component.submitDisabled).toBeTrue();
     });
 });

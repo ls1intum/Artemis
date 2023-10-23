@@ -56,7 +56,7 @@ export class AssessmentLayoutComponent {
     }
 
     setAssessmentNoteForResult(assessmentNote: AssessmentNote) {
-        if (this.result !== undefined) {
+        if (this.result) {
             this.result.assessmentNote = assessmentNote;
         }
     }
