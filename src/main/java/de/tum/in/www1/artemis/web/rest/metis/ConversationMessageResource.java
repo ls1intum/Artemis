@@ -103,7 +103,7 @@ public class ConversationMessageResource {
         if (postContextFilter.getConversationId() != null) {
             coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser);
         }
-        else if (postContextFilter.getConversationIds() != null) {
+        else if (postContextFilter.getCourseWideChannelIds() != null) {
             coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser);
         }
         else {

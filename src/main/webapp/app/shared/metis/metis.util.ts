@@ -52,7 +52,7 @@ export interface PostContextFilter {
     courseWideContexts?: CourseWideContext[];
     exerciseIds?: number[];
     lectureIds?: number[];
-    conversationIds?: number[];
+    courseWideChannelIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
     conversationId?: number;

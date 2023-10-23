@@ -557,18 +557,18 @@ export class MetisService implements OnDestroy {
         this.currentPostContextFilter.courseWideContexts?.sort();
         this.currentPostContextFilter.exerciseIds?.sort((a, b) => a - b);
         this.currentPostContextFilter.lectureIds?.sort((a, b) => a - b);
-        this.currentPostContextFilter.conversationIds?.sort((a, b) => a - b);
+        this.currentPostContextFilter.courseWideChannelIds?.sort((a, b) => a - b);
 
         other.courseWideContexts?.sort();
         other.exerciseIds?.sort((a, b) => a - b);
         other.lectureIds?.sort((a, b) => a - b);
-        other.conversationIds?.sort((a, b) => a - b);
+        other.courseWideChannelIds?.sort((a, b) => a - b);
 
         return (
             this.currentPostContextFilter.courseWideContexts?.toString() !== other.courseWideContexts?.toString() ||
             this.currentPostContextFilter.exerciseIds?.toString() !== other.exerciseIds?.toString() ||
             this.currentPostContextFilter.lectureIds?.toString() !== other.lectureIds?.toString() ||
-            this.currentPostContextFilter.conversationIds?.toString() !== other.conversationIds?.toString()
+            this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString()
         );
     }
 }

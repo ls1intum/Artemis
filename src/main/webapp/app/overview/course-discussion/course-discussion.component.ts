@@ -109,7 +109,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.metisService.getFilteredPosts({
             courseId: this.course!.id,
             searchText: this.searchText ? this.searchText : undefined,
-            conversationIds: [],
+            courseWideChannelIds: [],
             postSortCriterion: this.currentSortCriterion,
             sortingOrder: this.currentSortDirection,
             pagingEnabled: this.pagingEnabled,
@@ -178,7 +178,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
         this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
         this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
-        this.currentPostContextFilter.conversationIds = conversationIds.length ? conversationIds : this.courseWideChannels.map((channel) => channel.id!);
+        this.currentPostContextFilter.courseWideChannelIds = conversationIds.length ? conversationIds : this.courseWideChannels.map((channel) => channel.id!);
 
         super.onSelectContext();
     }
@@ -278,7 +278,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             courseWideContexts: undefined,
             exerciseIds: undefined,
             lectureIds: undefined,
-            conversationIds: [],
+            courseWideChannelIds: [],
             searchText: undefined,
             filterToUnresolved: false,
             filterToOwn: false,
@@ -312,7 +312,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
                     this.availableChannelSubtypes.push(subType);
                 }
             });
-            console.log(this.courseWideChannels, this.categorizedChannels, this.availableChannelSubtypes);
         });
     }
 }
