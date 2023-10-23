@@ -100,10 +100,8 @@ public abstract class PostingService {
             websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postConversation != null) {
-            String conversationTopicName = genericTopicName + "/conversations/" + postConversation.getId();
-
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(conversationTopicName, postDTO);
+                websocketMessagingService.sendMessage(genericTopicName, postDTO);
             }
             else {
                 if (recipients == null) {
@@ -111,7 +109,7 @@ public abstract class PostingService {
                     recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
                             .map(ConversationParticipant::getUser).collect(Collectors.toSet());
                 }
-                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), conversationTopicName, postDTO));
+                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postConversation.getId(), postDTO));
             }
 
             return;

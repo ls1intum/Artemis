@@ -475,6 +475,14 @@ export class MetisService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
+            const postConvId = postDTO.post.conversation?.id;
+            if (
+                (this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId) ||
+                (this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId))
+            ) {
+                return;
+            }
+
             postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
             postDTO.post.answers?.forEach((answer: AnswerPost) => {
                 answer.creationDate = dayjs(answer.creationDate);
@@ -483,8 +491,7 @@ export class MetisService implements OnDestroy {
             switch (postDTO.action) {
                 case MetisPostAction.CREATE:
                     if (
-                        postDTO.post.conversation?.id !== undefined &&
-                        postDTO.post.conversation.id === this.currentPostContextFilter.conversationId &&
+                        postConvId &&
                         (!this.currentPostContextFilter.searchText || postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase()))
                     ) {
                         // we can add the received conversation message to the cached messages without violating the current context filter setting
@@ -509,13 +516,13 @@ export class MetisService implements OnDestroy {
                     break;
             }
             // emit updated version of cachedPosts to subscribing components...
-            if (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType) {
+            if (PageType.OVERVIEW === this.pageType) {
                 const oldPage = this.currentPostContextFilter.page;
                 const oldPageSize = this.currentPostContextFilter.pageSize;
                 this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
                 this.currentPostContextFilter.page = 0;
                 // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
-                this.getFilteredPosts(this.currentPostContextFilter, !postDTO.post.conversation && postDTO.action === MetisPostAction.CREATE, this.currentConversation);
+                this.getFilteredPosts(this.currentPostContextFilter, !postConvId, this.currentConversation);
                 this.currentPostContextFilter.pageSize = oldPageSize;
                 this.currentPostContextFilter.page = oldPage;
             } else {
@@ -532,9 +539,7 @@ export class MetisService implements OnDestroy {
      */
     private createSubscriptionFromPostContextFilter(): void {
         let channel = MetisWebsocketChannelPrefix;
-        if (getAsChannelDto(this.currentConversation)?.isCourseWide) {
-            channel = `${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
-        } else if (this.currentPostContextFilter.conversationId) {
+        if (this.currentPostContextFilter.conversationId && !getAsChannelDto(this.currentConversation)?.isCourseWide) {
             channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case
