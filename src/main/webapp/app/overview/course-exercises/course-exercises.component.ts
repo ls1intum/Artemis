@@ -323,12 +323,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
 
     private sortExercises(exercises?: Exercise[], sortOrder?: ExerciseSortingOrder) {
         const sortingOrder = sortOrder ?? this.sortingOrder;
-        return exercises?.sort((a, b) => {
-            const sortingAttributeA = CourseExercisesComponent.getSortingAttributeFromExercise(a, this.sortingAttribute);
-            const sortingAttributeB = CourseExercisesComponent.getSortingAttributeFromExercise(b, this.sortingAttribute);
+        return exercises?.sort((exerciseA, exerciseB) => {
+            const sortingAttributeA = CourseExercisesComponent.getSortingAttributeFromExercise(exerciseA, this.sortingAttribute);
+            const sortingAttributeB = CourseExercisesComponent.getSortingAttributeFromExercise(exerciseB, this.sortingAttribute);
             const aValue = sortingAttributeA ? sortingAttributeA.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const bValue = sortingAttributeB ? sortingAttributeB.second(0).millisecond(0).valueOf() : dayjs().valueOf();
-            const titleSortValue = a.title && b.title ? a.title.localeCompare(b.title) : 0;
+            const titleSortValue = exerciseA.title && exerciseB.title ? exerciseA.title.localeCompare(exerciseB.title) : 0;
             return sortingOrder.valueOf() * (aValue - bValue === 0 ? titleSortValue : aValue - bValue);
         });
     }
