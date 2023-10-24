@@ -126,8 +126,9 @@
                             </div>
                         </form>
                         <div class="bold-line row mt-1 mb-2"></div>
-                        <div class="items-container">
+                        <div #itemsContainer class="items-container" infinite-scroll [scrollWindow]="false" (scrolledUp)="fetchNextPage()">
                             <jhi-posting-thread
+                                #postingThread
                                 *ngFor="let post of posts; trackBy: postsTrackByFn"
                                 [id]="'item-' + post.id"
                                 class="item"
