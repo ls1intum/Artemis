@@ -160,6 +160,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
         }
 
+        log.info("Laurenz first trigger");
+
         // There can't be two submissions for the same participation and commitHash!
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(),
                 commit.getCommitHash());
