@@ -5,6 +5,8 @@ import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
+import { User } from 'app/core/user/user.model';
+import { Posting } from 'app/entities/metis/posting.model';
 import { isCommunicationEnabled } from 'app/entities/course.model';
 
 @Component({
@@ -16,8 +18,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
     @Input() previewMode?: boolean;
     @Input() isAnnouncement = false;
+    @Input() author?: User;
     @Input() isEdited = false;
-
+    @Input() posting?: Posting;
+    @Input() isReply?: boolean;
     @Output() userReferenceClicked = new EventEmitter<string>();
 
     showContent = false;
