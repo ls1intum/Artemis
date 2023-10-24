@@ -286,9 +286,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     private updateUpcomingExercises(upcomingExercises: Exercise[]) {
-        const sortedExercises = (this.sortExercises(upcomingExercises, ExerciseSortingOrder.ASC) || []).map((exercise) => {
+        const sortedExercises = (this.sortExercises(upcomingExercises, ExerciseSortingOrder.ASC, SortingAttribute.DUE_DATE) || []).map((exercise) => {
             return { exercise, dueDate: CourseExercisesComponent.exerciseDueDate(exercise) };
         });
+
         if (upcomingExercises.length <= 5) {
             this.upcomingExercises = sortedExercises;
         } else {
@@ -309,7 +310,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         this.exerciseCountMap = new Map<string, number>();
         const upcomingExercises: Exercise[] = [];
         exercises?.forEach((exercise) => {
-            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, this.sortingAttribute);
+            const dateValue = CourseExercisesComponent.getSortingAttributeFromExercise(exercise, SortingAttribute.DUE_DATE);
             if (exercise.dueDate && !dayjs().isAfter(dateValue, 'day')) {
                 upcomingExercises.push(exercise);
             }
@@ -321,11 +322,13 @@ export class CourseExercisesComponent implements OnInit, OnDestroy, AfterViewIni
         this.calcNumberOfExercises();
     }
 
-    private sortExercises(exercises?: Exercise[], sortOrder?: ExerciseSortingOrder) {
+    private sortExercises(exercises?: Exercise[], sortOrder?: ExerciseSortingOrder, sortAttribute?: SortingAttribute) {
+        const sortingAttribute = sortAttribute ?? this.sortingAttribute;
         const sortingOrder = sortOrder ?? this.sortingOrder;
+
         return exercises?.sort((exerciseA, exerciseB) => {
-            const sortingAttributeA = CourseExercisesComponent.getSortingAttributeFromExercise(exerciseA, this.sortingAttribute);
-            const sortingAttributeB = CourseExercisesComponent.getSortingAttributeFromExercise(exerciseB, this.sortingAttribute);
+            const sortingAttributeA = CourseExercisesComponent.getSortingAttributeFromExercise(exerciseA, sortingAttribute);
+            const sortingAttributeB = CourseExercisesComponent.getSortingAttributeFromExercise(exerciseB, sortingAttribute);
             const aValue = sortingAttributeA ? sortingAttributeA.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const bValue = sortingAttributeB ? sortingAttributeB.second(0).millisecond(0).valueOf() : dayjs().valueOf();
             const titleSortValue = exerciseA.title && exerciseB.title ? exerciseA.title.localeCompare(exerciseB.title) : 0;

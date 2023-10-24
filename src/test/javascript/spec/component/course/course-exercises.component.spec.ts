@@ -293,6 +293,7 @@ describe('CourseExercisesComponent', () => {
         exerciseRegularDueDate.dueDate = dueDate1;
         const participationRegularDueDate = new StudentParticipation(ParticipationType.STUDENT);
         exerciseRegularDueDate.studentParticipations = [participationRegularDueDate];
+        exerciseRegularDueDate.id = 1;
 
         const exerciseIndividualDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
         exerciseIndividualDueDate.releaseDate = dayjs().add(5, 'days');
@@ -303,6 +304,7 @@ describe('CourseExercisesComponent', () => {
         const dueDate2 = dayjs().add(20, 'days');
         participationIndividualDueDate.individualDueDate = dueDate2;
         exerciseIndividualDueDate.studentParticipations = [participationIndividualDueDate];
+        exerciseIndividualDueDate.id = 2;
 
         const checkUpcomingExercises = () => {
             const expectedUpcomingExercises = [
