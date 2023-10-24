@@ -178,7 +178,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
         this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
         this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
-        this.currentPostContextFilter.courseWideChannelIds = conversationIds.length ? conversationIds : this.courseWideChannels.map((channel) => channel.id!);
+        this.currentPostContextFilter.courseWideChannelIds = conversationIds;
 
         super.onSelectContext();
     }
