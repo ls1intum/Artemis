@@ -76,16 +76,17 @@ public class MessageSpecs {
             // sort by creation date
             Expression<?> sortCriterion = root.get(Post_.CREATION_DATE);
 
+            // sort by display priority
             Expression<Object> pinnedFirstTArchivedLast = criteriaBuilder.selectCase()
                     .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 1)
                     .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 2)
                     .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 3);
             List<Order> orderList = new ArrayList<>();
 
+            // sort by display priority, then creation date
             orderList.add(criteriaBuilder.asc(pinnedFirstTArchivedLast));
             orderList.add(criteriaBuilder.desc(sortCriterion));
 
-            // descending
             query.orderBy(orderList);
             return null;
         });
@@ -97,13 +98,13 @@ public class MessageSpecs {
      * @param conversationIds ids of the conversation messages belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getConversationsSpecification(Long[] conversationIds) {
+    public static Specification<Post> getConversationsSpecification(long[] conversationIds) {
         return ((root, query, criteriaBuilder) -> {
             if (conversationIds == null || conversationIds.length == 0) {
                 return null;
             }
             else {
-                return root.get(Post_.CONVERSATION).get(Conversation_.ID).in(Arrays.asList(conversationIds));
+                return root.get(Post_.CONVERSATION).get(Conversation_.ID).in(Arrays.stream(conversationIds).boxed().toList());
             }
         });
     }
@@ -119,7 +120,6 @@ public class MessageSpecs {
             Join<Post, Channel> joinedChannels = criteriaBuilder.treat(root.join(Post_.CONVERSATION, JoinType.LEFT), Channel.class);
             joinedChannels.on(criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), joinedChannels.get(Channel_.ID)));
 
-            // Predicate isChannel = criteriaBuilder.equal(joinedChannels.type(), Channel.class);
             Predicate isInCourse = criteriaBuilder.equal(joinedChannels.get(Channel_.COURSE).get(Course_.ID), courseId);
             Predicate isCourseWide = criteriaBuilder.isTrue(joinedChannels.get(Channel_.IS_COURSE_WIDE));
             return criteriaBuilder.and(isInCourse, isCourseWide);

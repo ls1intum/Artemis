@@ -20,7 +20,7 @@ public class PostContextFilter {
 
     private Long[] lectureIds;
 
-    private Long[] courseWideChannelIds;
+    private long[] courseWideChannelIds;
 
     private Long plagiarismCaseId;
 
@@ -79,11 +79,11 @@ public class PostContextFilter {
         this.lectureIds = lectureIds;
     }
 
-    public Long[] getCourseWideChannelIds() {
+    public long[] getCourseWideChannelIds() {
         return courseWideChannelIds;
     }
 
-    public void setCourseWideChannelIds(Long[] courseWideChannelIds) {
+    public void setCourseWideChannelIds(long[] courseWideChannelIds) {
         this.courseWideChannelIds = courseWideChannelIds;
     }
 

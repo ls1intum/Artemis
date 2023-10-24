@@ -103,16 +103,21 @@ public class PostSpecs {
     }
 
     /**
-     * Specification to fetch Posts the calling user has Answered or Reacted to
+     * Specification to fetch messages the calling user has answered or reacted to.
+     * <p>
+     * Additionally, it sorts the messages by number of answers, if the sorting criterion specifies it
      *
      * @param answeredOrReacted whether only the Posts calling user has Answered or Reacted to should be fetched or not
      * @param userId            id of the calling user
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getAnsweredOrReactedSpecification(boolean answeredOrReacted, Long userId, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
+    public static Specification<Post> getAnsweredOrReactedAndAnswerSortSpecification(boolean answeredOrReacted, Long userId, PostSortCriterion postSortCriterion,
+            SortingOrder sortingOrder) {
         return ((root, query, criteriaBuilder) -> {
             Join<Post, AnswerPost> joinedAnswers = null;
 
+            // To avoid multiple joins with answers, we set the sorting order criterion here
+            // instead of in PostSpecs.getSortSpecification, if the filter is set
             if (postSortCriterion == PostSortCriterion.ANSWER_COUNT && sortingOrder != null) {
                 joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
                 joinedAnswers.on(criteriaBuilder.equal(root.get(Post_.ID), joinedAnswers.get(AnswerPost_.POST).get(Post_.ID)));
@@ -124,6 +129,7 @@ public class PostSpecs {
                 query.groupBy(root.get(Post_.ID));
             }
 
+            // Check if answeredOrReacted filter is set
             if (answeredOrReacted) {
                 if (joinedAnswers == null) {
                     joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);

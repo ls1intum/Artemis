@@ -40,7 +40,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
         Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId())
                 .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()).and(getSortSpecification())
                         .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
-                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId, postContextFilter.getPostSortCriterion(),
+                .and(getAnsweredOrReactedAndAnswerSortSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId, postContextFilter.getPostSortCriterion(),
                         postContextFilter.getSortingOrder()))
                 .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())));
 
@@ -60,7 +60,7 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
                 .and(getConversationsSpecification(postContextFilter.getCourseWideChannelIds())
                         .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()).and(getSortSpecification())
                                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
-                        .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId, postContextFilter.getPostSortCriterion(),
+                        .and(getAnsweredOrReactedAndAnswerSortSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId, postContextFilter.getPostSortCriterion(),
                                 postContextFilter.getSortingOrder()))
                         .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())))
                 .and(PostSpecs.getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));

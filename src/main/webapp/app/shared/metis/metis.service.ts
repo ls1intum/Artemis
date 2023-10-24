@@ -476,10 +476,11 @@ export class MetisService implements OnDestroy {
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
             const postConvId = postDTO.post.conversation?.id;
-            if (
-                (this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId) ||
-                (this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId))
-            ) {
+            const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
+            const postIsNotFromSelectedCourseWideChannels =
+                this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
+
+            if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels) {
                 return;
             }
 

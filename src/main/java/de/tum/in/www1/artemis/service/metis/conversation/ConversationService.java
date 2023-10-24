@@ -121,18 +121,20 @@ public class ConversationService {
      * @param lastReadDate   Optional date being used for a newly created participant to set the last-read date
      */
     public void isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
-        if (!isMember(conversationId, user.getId())) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+        if (isMember(conversationId, user.getId())) {
+            return;
+        }
 
-            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
-                conversationParticipant.setIsModerator(authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user));
-                lastReadDate.ifPresent(conversationParticipant::setLastRead);
-                conversationParticipantRepository.saveAndFlush(conversationParticipant);
-            }
-            else {
-                throw new AccessForbiddenException("User not allowed to access this conversation!");
-            }
+        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+            conversationParticipant.setIsModerator(authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user));
+            lastReadDate.ifPresent(conversationParticipant::setLastRead);
+            conversationParticipantRepository.saveAndFlush(conversationParticipant);
+        }
+        else {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
     }
 
