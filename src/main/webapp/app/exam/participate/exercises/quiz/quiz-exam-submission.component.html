@@ -1,8 +1,8 @@
 <div class="row">
-    <div class="quiz-navigation sticky-top" *ngIf="exercise">
+    <div class="quiz-navigation sticky-top" *ngIf="quizConfiguration.quizQuestions && !examTimeline">
         <div class="quiz-navigation-content">
             <div class="stepwizardquiz">
-                <div *ngFor="let question of exercise.quizQuestions; let i = index" class="stepwizardquiz__step">
+                <div *ngFor="let question of quizConfiguration.quizQuestions; let i = index" class="stepwizardquiz__step">
                     <span
                         *ngIf="question.type === DRAG_AND_DROP"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
@@ -36,18 +36,18 @@
             </div>
         </div>
     </div>
-    <div class="quiz-content container" *ngIf="exercise">
+    <div class="quiz-content container" *ngIf="quizConfiguration.quizQuestions">
         <h4 class="exercise-title">
-            {{ exercise?.exerciseGroup?.title ?? '-' }}
+            {{ examTimeline ? quizConfiguration.title : quizConfiguration?.exerciseGroup?.title ?? '-' }}
             <span
-                >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+                >[{{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
                 <jhi-included-in-score-badge
-                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                    [includedInOverallScore]="exercise.includedInOverallScore"
+                    *ngIf="quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    [includedInOverallScore]="quizConfiguration.includedInOverallScore"
                 ></jhi-included-in-score-badge
             ></span>
         </h4>
-        <div *ngFor="let question of exercise.quizQuestions; let i = index">
+        <div *ngFor="let question of quizConfiguration.quizQuestions; let i = index">
             <!-- TODO: Map vs Array consistency -->
             <jhi-multiple-choice-question
                 id="question{{ question.id }}"
@@ -56,8 +56,9 @@
                 [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
                 (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
                 [fnOnSelection]="onSelectionChanged.bind(this)"
-                [submittedQuizExercise]="exercise"
+                [quizQuestions]="quizConfiguration.quizQuestions"
                 [questionIndex]="i + 1"
+                [clickDisabled]="readonly"
             ></jhi-multiple-choice-question>
             <!-- TODO: Map vs Array consistency -->
             <jhi-drag-and-drop-question
@@ -68,6 +69,7 @@
                 (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
                 [onMappingUpdate]="onSelectionChanged.bind(this)"
                 [questionIndex]="i + 1"
+                [clickDisabled]="readonly"
             ></jhi-drag-and-drop-question>
             <!-- TODO: Map vs Array consistency -->
             <jhi-short-answer-question
@@ -78,6 +80,7 @@
                 (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
                 [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
                 [questionIndex]="i + 1"
+                [clickDisabled]="readonly"
             ></jhi-short-answer-question>
         </div>
     </div>

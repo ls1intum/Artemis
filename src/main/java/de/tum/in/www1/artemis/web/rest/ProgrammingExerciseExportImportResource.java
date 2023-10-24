@@ -242,7 +242,7 @@ public class ProgrammingExerciseExportImportResource {
         final var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
-            return ResponseEntity.ok(programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course));
+            return ResponseEntity.ok(programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course, user));
         }
         catch (IOException | URISyntaxException | GitAPIException e) {
             log.error(e.getMessage(), e);
@@ -271,7 +271,7 @@ public class ProgrammingExerciseExportImportResource {
             path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
         }
         catch (Exception e) {
-            log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);
+            log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
             throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
         }
         var finalZipFile = path.toFile();

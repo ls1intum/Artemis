@@ -1,5 +1,5 @@
 <div [id]="'exercise-' + textExercise?.id">
-    <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
+    <jhi-header-participation-page *ngIf="displayHeader" class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
         <span pagetitle>
             {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
             <span class="font-weight-normal">{{ examMode ? textExercise.exerciseGroup?.title : textExercise?.title }}</span>
@@ -19,7 +19,7 @@
     </jhi-header-participation-page>
 
     <!--resizable container-->
-    <jhi-resizeable-container *ngIf="textExercise" [isExerciseParticipation]="true">
+    <jhi-resizeable-container *ngIf="textExercise" [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement">
         <!--region Left Panel-->
         <div left-body class="text-editor-grid ps-2 pb-2 w-100">
             <div class="grid-area-team-info pb-4 ps-md-2" *ngIf="textExercise?.teamMode && isActive">

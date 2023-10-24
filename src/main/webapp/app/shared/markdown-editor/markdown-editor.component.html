@@ -4,7 +4,7 @@
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
-                <div [ngStyle]="{ 'minHeight.px': minHeightEditor }" class="height-100 border-0 markdown-editor d-flex flex-column" [id]="uniqueMarkdownEditorId">
+                <div [ngStyle]="{ 'minHeight.px': minHeightEditor }" class="height-100 markdown-editor d-flex flex-column" [id]="uniqueMarkdownEditorId">
                     <jhi-ace-editor
                         #aceEditor
                         [mode]="aceEditorOptions.mode"
@@ -12,6 +12,7 @@
                         [text]="markdown || ''"
                         (textChange)="markdownTextChange($event)"
                         class="form-control markdown-editor__content"
+                        (textChanged)="editorContentString = $event"
                         [class.file-input]="enableFileUpload"
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"
                         (drop)="enableFileUpload ? onFileDrop($event) : ''"
@@ -84,7 +85,13 @@
                             </ng-container>
                         </div>
                     </div>
-                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
+                    <jhi-select-with-search
+                        *ngFor="let command of defaultCommands | typeCheck: InteractiveSearchCommand"
+                        [command]="command"
+                        [editorContentString]="editorContentString"
+                    ></jhi-select-with-search>
+
+                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand | negatedTypeCheck: InteractiveSearchCommand">
                         <div>
                             <button
                                 mat-button

@@ -197,7 +197,7 @@ public class ProgrammingExerciseResource {
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise, false);
             programmingExerciseService.triggerBaseAndSolutionBuildPlansForNewExercise(newProgrammingExercise);
 
             // Create default static code analysis categories
