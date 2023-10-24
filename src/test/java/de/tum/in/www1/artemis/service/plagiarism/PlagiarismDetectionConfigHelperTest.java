@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
@@ -14,9 +16,10 @@ import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 class PlagiarismDetectionConfigHelperTest {
 
     @Test
-    void shouldDoNothingIfExerciseHasPlagiarismDetectionConfig() {
-        // given: exercise with PlagiarismDetectionConfig
+    void shouldDoNothingIfCourseExerciseHasPlagiarismDetectionConfig() {
+        // given: course exercise with PlagiarismDetectionConfig
         var exercise = new ModelingExercise();
+        exercise.setCourse(new Course());
         var config = PlagiarismDetectionConfig.createDefault();
         exercise.setPlagiarismDetectionConfig(config);
 
@@ -24,7 +27,7 @@ class PlagiarismDetectionConfigHelperTest {
         var repository = mock(ModelingExerciseRepository.class);
 
         // when
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(exercise, repository);
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, repository);
 
         // then
         verifyNoMoreInteractions(repository);
@@ -32,15 +35,33 @@ class PlagiarismDetectionConfigHelperTest {
     }
 
     @Test
-    void shouldAddDefaultConfigIfExerciseDoesNotHavePlagiarismDetectionConfig() {
-        // given: exercise without PlagiarismDetectionConfig
+    void shouldDoNothingIfExamExercise() {
+        // given: exam exercise without PlagiarismDetectionConfig
         var exercise = new ModelingExercise();
+        exercise.setExerciseGroup(new ExerciseGroup());
 
         // and
         var repository = mock(ModelingExerciseRepository.class);
 
         // when
-        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(exercise, repository);
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, repository);
+
+        // then
+        verifyNoMoreInteractions(repository);
+        assertThat(exercise.getPlagiarismDetectionConfig()).isNull();
+    }
+
+    @Test
+    void shouldAddDefaultConfigIfExerciseDoesNotHavePlagiarismDetectionConfig() {
+        // given: course exercise without PlagiarismDetectionConfig
+        var exercise = new ModelingExercise();
+        exercise.setCourse(new Course());
+
+        // and
+        var repository = mock(ModelingExerciseRepository.class);
+
+        // when
+        PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, repository);
 
         // then
         verify(repository).save(exercise);

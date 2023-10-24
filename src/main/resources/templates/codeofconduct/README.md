@@ -1,4 +1,5 @@
 <!-- Code of Conduct Template: Adapt to your demands -->
+<!-- Important: This template will directly be shown on the iOS and Android client if a course has no explicit code of conduct set. -->
 
 We as students, tutors, and instructors pledge to make participation in our course a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 

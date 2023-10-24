@@ -80,7 +80,7 @@ public class ContinuousPlagiarismControlService {
             log.info("Started continuous plagiarism control for exercise: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
             final long startTime = System.nanoTime();
 
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNull(exercise, exerciseRepository);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, exerciseRepository);
 
             try {
                 var result = executeChecksForExercise(exercise);

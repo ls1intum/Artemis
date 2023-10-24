@@ -295,8 +295,15 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.getTeamAssignmentConfig().setId(null);
         }
 
-        var config = PlagiarismDetectionConfig.createDefault();
-        newExercise.setPlagiarismDetectionConfig(config);
+        if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() != null) {
+            newExercise.getPlagiarismDetectionConfig().setId(null);
+        }
+        else if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() == null) {
+            newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        }
+        else {
+            newExercise.setPlagiarismDetectionConfig(null);
+        }
     }
 
     /**
