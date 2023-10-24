@@ -48,6 +48,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionsEnabled(true);
+        textExercise.setGradingCriteria(List.of(new GradingCriterion()));
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
 
