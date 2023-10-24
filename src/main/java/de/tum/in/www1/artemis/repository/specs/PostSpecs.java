@@ -122,11 +122,10 @@ public class PostSpecs {
                 joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
                 joinedAnswers.on(criteriaBuilder.equal(root.get(Post_.ID), joinedAnswers.get(AnswerPost_.POST).get(Post_.ID)));
 
-                List<Order> orderList = getOrderList(root, criteriaBuilder);
+                List<Order> orderList = getDisplayPriorityOrderList(root, criteriaBuilder);
                 Expression<?> sortCriterion = criteriaBuilder.count(joinedAnswers);
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
                 query.orderBy(orderList);
-                query.groupBy(root.get(Post_.ID));
             }
 
             // Check if answeredOrReacted filter is set
@@ -225,7 +224,7 @@ public class PostSpecs {
                 }
 
                 // sort by priority
-                List<Order> orderList = getOrderList(root, criteriaBuilder);
+                List<Order> orderList = getDisplayPriorityOrderList(root, criteriaBuilder);
 
                 Expression<?> sortCriterion = null;
 
@@ -246,15 +245,20 @@ public class PostSpecs {
         });
     }
 
-    private static List<Order> getOrderList(Root<Post> root, CriteriaBuilder criteriaBuilder) {
-        Expression<Object> pinnedFirstThenAnnouncementsArchivedLast = criteriaBuilder.selectCase()
-                .when(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)),
-                        criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), criteriaBuilder.literal(CourseWideContext.ANNOUNCEMENT))), 1)
-                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 2)
-                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 3)
-                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 4);
+    /**
+     * Builds and ascending order list for display priorities of messages
+     *
+     * @param root            root of the query
+     * @param criteriaBuilder the criteria builder
+     * @return the order list for display priorities
+     */
+    public static List<Order> getDisplayPriorityOrderList(Root<Post> root, CriteriaBuilder criteriaBuilder) {
+        Expression<Object> pinnedFirstArchivedLast = criteriaBuilder.selectCase()
+                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 1)
+                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 2)
+                .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 3);
         List<Order> orderList = new ArrayList<>();
-        orderList.add(criteriaBuilder.asc(pinnedFirstThenAnnouncementsArchivedLast));
+        orderList.add(criteriaBuilder.asc(pinnedFirstArchivedLast));
         return orderList;
     }
 

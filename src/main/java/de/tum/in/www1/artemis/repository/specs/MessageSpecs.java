@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository.specs;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,7 +8,6 @@ import javax.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.in.www1.artemis.domain.Course_;
-import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost_;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
@@ -27,7 +25,6 @@ public class MessageSpecs {
      */
     public static Specification<Post> getConversationSpecification(Long conversationId) {
         return ((root, query, criteriaBuilder) -> {
-            query.distinct(true); // get distinct messages
             // fetch additional values to avoid subsequent db calls
             var answerFetch = root.fetch(Post_.ANSWERS, JoinType.LEFT);
             answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
@@ -72,19 +69,11 @@ public class MessageSpecs {
      */
     public static Specification<Post> getSortSpecification() {
         return ((root, query, criteriaBuilder) -> {
+            // sort by display priority
+            List<Order> orderList = PostSpecs.getDisplayPriorityOrderList(root, criteriaBuilder);
 
             // sort by creation date
             Expression<?> sortCriterion = root.get(Post_.CREATION_DATE);
-
-            // sort by display priority
-            Expression<Object> pinnedFirstTArchivedLast = criteriaBuilder.selectCase()
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 1)
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 2)
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 3);
-            List<Order> orderList = new ArrayList<>();
-
-            // sort by display priority, then creation date
-            orderList.add(criteriaBuilder.asc(pinnedFirstTArchivedLast));
             orderList.add(criteriaBuilder.desc(sortCriterion));
 
             query.orderBy(orderList);
@@ -100,6 +89,12 @@ public class MessageSpecs {
      */
     public static Specification<Post> getConversationsSpecification(long[] conversationIds) {
         return ((root, query, criteriaBuilder) -> {
+            // fetch additional values to avoid subsequent db calls
+            var answerFetch = root.fetch(Post_.ANSWERS, JoinType.LEFT);
+            answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
+            root.fetch(Post_.REACTIONS, JoinType.LEFT);
+            root.fetch(Post_.TAGS, JoinType.LEFT);
+
             if (conversationIds == null || conversationIds.length == 0) {
                 return null;
             }
