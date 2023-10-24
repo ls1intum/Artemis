@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet author="keller" id="20231023163427">
+    <changeSet author="keller" id="20231023163427-1">
         <comment>Create new channels for existing lecture/exercise and migrate posts of lecture/exercise to respective channel</comment>
         <comment>Step 1: Create channels for lectures that do not have a channel yet</comment>
         <sql>
@@ -93,6 +93,12 @@
               AND (c.end_date IS NULL OR c.end_date > NOW());
         </sql>
         <comment>Step 8: Move course-wide-context posts to general course-wide channels</comment>
+    </changeSet>
+    <changeSet author="keller" id="20231023163427-2">
+        <!-- MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
         <sql>
             UPDATE post p
                 JOIN conversation c ON p.course_id = c.course_id AND c.name = 'announcement' AND c.is_course_wide = true AND p.course_wide_context = 'ANNOUNCEMENT' AND p.conversation_id IS NULL
@@ -112,6 +118,48 @@
             UPDATE post p
                 JOIN conversation c ON p.course_id = c.course_id AND c.name = 'random' AND c.is_course_wide = true AND p.course_wide_context = 'RANDOM' AND p.conversation_id IS NULL
                 SET conversation_id = c.id;
+        </sql>
+        <comment>Step 9: Delete course_wide_context and course_id from posts</comment>
+        <sql>
+            UPDATE post
+            SET course_wide_context = NULL, course_id = NULL
+            WHERE course_wide_context IN ('ANNOUNCEMENT', 'ORGANIZATION', 'TECH_SUPPORT', 'RANDOM')
+              AND course_id IS NOT NULL
+              AND conversation_id IS NOT NULL;
+        </sql>
+    </changeSet>
+    <changeSet author="keller" id="20231023163427-3">
+        <!-- Postgres -->
+        <preConditions onFail="CONTINUE">
+            <or>
+                <dbms type="postgres"/>
+                <dbms type="postgresql"/>
+            </or>
+        </preConditions>
+        <sql>
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'announcement' AND c.is_course_wide = true AND p.course_wide_context = 'ANNOUNCEMENT' AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'organization' AND c.is_course_wide = true AND p.course_wide_context = 'ORGANIZATION' AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'tech-support' AND c.is_course_wide = true AND p.course_wide_context = 'TECH_SUPPORT' AND p.conversation_id IS NULL;
+        </sql>
+        <sql>
+            UPDATE post p
+            SET conversation_id = c.id
+                FROM conversation c
+            WHERE p.course_id = c.course_id AND c.name = 'random' AND c.is_course_wide = true AND p.course_wide_context = 'RANDOM' AND p.conversation_id IS NULL;
         </sql>
         <comment>Step 9: Delete course_wide_context and course_id from posts</comment>
         <sql>
