@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +27,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -133,6 +137,8 @@ public class ProgrammingExerciseService {
 
     private final IrisSettingsService irisSettingsService;
 
+    private final TransactionTemplate transactionTemplate;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -144,7 +150,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
-            ProgrammingSubmissionService programmingSubmissionService, IrisSettingsService irisSettingsService) {
+            ProgrammingSubmissionService programmingSubmissionService, IrisSettingsService irisSettingsService, PlatformTransactionManager transactionManager) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -172,6 +178,7 @@ public class ProgrammingExerciseService {
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.irisSettingsService = irisSettingsService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -193,48 +200,75 @@ public class ProgrammingExerciseService {
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
-     * @param isImportedFromFile  defines if the programming exercise is imported from a file
+     * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
+     *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    @Transactional // TODO: apply the transaction on a smaller scope
-    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
-    public ProgrammingExercise createProgrammingExerciseTransactional(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
-        programmingExercise.generateAndSetProjectKey();
-        final User exerciseCreator = userRepository.getUser();
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
+        AtomicBoolean gitExceptionThrown = new AtomicBoolean(false);
 
-        VersionControlService versionControl = versionControlService.orElseThrow();
-        programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
-        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
-        initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
+        ProgrammingExercise createdExercise = (ProgrammingExercise) transactionTemplate.execute((TransactionCallback) status -> {
+            programmingExercise.generateAndSetProjectKey();
+            final User exerciseCreator = userRepository.getUser();
 
-        // Save participations to get the ids required for the webhooks
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+            VersionControlService versionControl = versionControlService.orElseThrow();
+            programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+            try {
+                programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
+            }
+            catch (GitAPIException e) {
+                gitExceptionThrown.set(true);
+            }
+            initParticipations(programmingExercise);
+            setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
 
-        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+            // Save participations to get the ids required for the webhooks
+            connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
-        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+            connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
-        // Save programming exercise to prevent transient exception
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+            try {
+                programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
+            }
+            catch (GitAPIException e) {
+                gitExceptionThrown.set(true);
+            }
+            programmingSubmissionService.createInitialSubmissions(programmingExercise);
 
-        channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
+            // Save programming exercise to prevent transient exception
+            ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
-        // save to get the id required for the webhook
-        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
+            channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
+            setupBuildPlansForNewExercise(savedProgrammingExercise);
+            // save to get the id required for the webhook
+            savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
-        versionControl.addWebHooksForExercise(savedProgrammingExercise);
-        scheduleOperations(savedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
-        return savedProgrammingExercise;
+            programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
+
+            // The creation of the webhooks must occur after the initial push, because the participation is
+            // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+            versionControl.addWebHooksForExercise(savedProgrammingExercise);
+            scheduleOperations(savedProgrammingExercise.getId());
+            groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
+            return savedProgrammingExercise;
+        });
+
+        if (gitExceptionThrown.get()) {
+            throw new CanceledException("An error occurred while creating the exercise repositories.");
+        }
+
+        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
+        // we do not trigger them here
+        if (!isImportedFromFile) {
+            // trigger BASE and SOLUTION build plans once here
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(createdExercise.getTemplateParticipation());
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(createdExercise.getSolutionParticipation());
+        }
+
+        return createdExercise;
     }
 
     public void scheduleOperations(Long programmingExerciseId) {
@@ -346,10 +380,8 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
      *                                exercise should contain a fully initialized template and solution participation.
-     * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
-     *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      */
-    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) {
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
@@ -367,14 +399,6 @@ public class ProgrammingExerciseService {
         continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
 
         giveCIProjectPermissions(programmingExercise);
-
-        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
-        // we do not trigger them here
-        if (!isImportedFromFile) {
-            // trigger BASE and SOLUTION build plans once here
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
-        }
     }
 
     /**
