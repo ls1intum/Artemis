@@ -477,12 +477,15 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Clears the list before adding a new assessment note. This ensures that it contains at most one element.
+     * When setting null, the list is just cleared, without adding anything afterward.
      *
      * @param assessmentNote The assessment note that is added to the list as its new sole element.
      */
     public void setAssessmentNote(AssessmentNote assessmentNote) {
         this.assessmentNote.clear();
-        this.assessmentNote.add(assessmentNote);
+        if (assessmentNote != null) {
+            this.assessmentNote.add(assessmentNote);
+        }
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
