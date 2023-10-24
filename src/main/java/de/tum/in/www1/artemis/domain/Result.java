@@ -505,14 +505,16 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
-     * their assessor.
+     * Removes the assessor and the internal assessment note from the result, can be invoked to make sure that sensitive
+     * information is not sent to the client. E.g. students should not see information about their assessor.
      * <p>
      * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
-        setAssessmentNote(null);
+        if (Hibernate.isInitialized(assessmentNote)) {
+            setAssessmentNote(null);
+        }
     }
 
     /**
