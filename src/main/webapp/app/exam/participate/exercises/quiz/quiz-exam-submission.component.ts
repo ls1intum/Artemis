@@ -16,8 +16,11 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -49,6 +52,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     @Input()
     studentSubmission: AbstractQuizSubmission;
 
+    @Input() exercise: QuizExercise;
+    @Input() examTimeline = false;
+
     @Input() quizConfiguration: QuizConfiguration;
 
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
@@ -76,12 +82,19 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.quizConfiguration.id;
     }
 
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
     /**
      * Initialize the selections / mappings for each question with an empty array
      */
     initQuiz() {
         // randomize order
-        this.quizService.randomizeOrder(this.quizConfiguration.quizQuestions, this.quizConfiguration.randomizeQuestionOrder);
+        // in the exam timeline, we do not want to randomize the order as this makes it difficult to view the changes between submissions.
+        if (!this.examTimeline) {
+            this.quizService.randomizeOrder(this.quizConfiguration.quizQuestions, this.quizConfiguration.randomizeQuestionOrder);
+        }
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
@@ -258,5 +271,15 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             shortAnswerSubmittedAnswer.submittedTexts = submittedTexts;
             this.studentSubmission.submittedAnswers!.push(shortAnswerSubmittedAnswer);
         }, this);
+    }
+
+    updateViewFromSubmissionVersion(): void {
+        this.studentSubmission.submittedAnswers = JSON.parse(this.submissionVersion.content);
+        this.updateViewFromSubmission();
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
+        this.updateViewFromSubmissionVersion();
     }
 }

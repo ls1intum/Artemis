@@ -19,6 +19,9 @@
                     [viewMode]="PATH"
                     [courseId]="courseId"
                     [learningPathId]="learningPathId"
+                    [panningEnabled]="true"
+                    [zoomEnabled]="true"
+                    [panOnZoom]="true"
                     (nodeClicked)="nodeClicked.emit($event)"
                 ></jhi-learning-path-graph>
             </div>
