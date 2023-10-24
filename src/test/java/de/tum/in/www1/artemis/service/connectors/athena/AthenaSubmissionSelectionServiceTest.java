@@ -16,6 +16,8 @@ import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 
 class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
@@ -28,7 +30,13 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private TextExercise textExercise;
 
@@ -49,11 +57,14 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textExercise.setFeedbackSuggestionsEnabled(true);
         textExercise.setGradingCriteria(List.of(new GradingCriterion()));
+        textExerciseRepository.save(textExercise);
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExercise.setGradingCriteria(List.of(new GradingCriterion()));
+        programmingExerciseRepository.save(programmingExercise);
         programmingSubmission1 = new ProgrammingSubmission();
         programmingSubmission1.setId(3L);
         programmingSubmission2 = new ProgrammingSubmission();
