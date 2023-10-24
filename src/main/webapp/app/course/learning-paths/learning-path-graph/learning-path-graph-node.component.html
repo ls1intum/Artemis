@@ -10,19 +10,21 @@
 </div>
 <ng-template #noTask>
     <div
-        class="node-icon-container"
+        class="node-s node-icon-container"
         *ngIf="node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END; else noCompetency"
         [jhiStickyPopover]="popContentCompetency"
         placement="right"
         triggers="manual"
     >
-        <fa-icon id="generic" [icon]="faCircle"></fa-icon>
+        <fa-icon *ngIf="node.type === NodeType.COMPETENCY_START" id="generic" [icon]="faFlag"></fa-icon>
+        <fa-icon *ngIf="node.type === NodeType.COMPETENCY_END" id="generic" [icon]="faFlagCheckered"></fa-icon>
     </div>
 </ng-template>
 
 <ng-template #noCompetency>
-    <div class="node-icon-container">
-        <fa-icon id="match" [icon]="faCircle"></fa-icon>
+    <div class="node-xs node-icon-container">
+        <fa-icon *ngIf="node.type === NodeType.MATCH_START" id="match" [icon]="faSignsPost"></fa-icon>
+        <fa-icon *ngIf="node.type === NodeType.MATCH_END" id="match" [icon]="faCircle"></fa-icon>
     </div>
 </ng-template>
 
