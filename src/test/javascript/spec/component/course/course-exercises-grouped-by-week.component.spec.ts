@@ -16,6 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 
 const currentExercise_1 = {
     id: 3,
@@ -185,5 +186,10 @@ describe('CourseExercisesGroupedByWeekComponent', () => {
         component.ngOnChanges();
 
         expect(Object.keys(component.exerciseGroups)).toContainAllValues(['2021-01-17', '2021-01-10', 'artemisApp.courseOverview.exerciseList.noExerciseDate']);
+    });
+
+    it('should contain element for guided tour', () => {
+        const guidedTourExerciseContainer = fixture.debugElement.query(By.css('.guided-tour.exercise-row-container')).nativeElement;
+        expect(guidedTourExerciseContainer).toBeTruthy();
     });
 });

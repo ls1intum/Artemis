@@ -17,8 +17,8 @@
     <div class="collapsed"></div>
 </div>
 
-<div>
-    <div class="guided-tour exercise-row-container mb-3" *ngFor="let weekKey of Object.keys(exerciseGroups)">
+<div class="guided-tour exercise-row-container">
+    <div class="mb-3" *ngFor="let weekKey of Object.keys(exerciseGroups)">
         <div
             class="control-label"
             [ngClass]="{ 'text-primary': exerciseGroups[weekKey] ? exerciseGroups[weekKey].isCurrentWeek : false }"

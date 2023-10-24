@@ -1,12 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { CourseExercisesGroupedByTimeframeComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-timeframe.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
+import { By } from '@angular/platform-browser';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 
 const pastExercise_1 = {
     id: 1,
@@ -59,8 +62,8 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CourseExercisesGroupedByTimeframeComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, NgbModule],
+            declarations: [CourseExercisesGroupedByTimeframeComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CourseExerciseRowComponent)],
         })
             .compileComponents()
             .then(() => {
@@ -243,6 +246,16 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
             expect(component.exerciseGroups.future.isCollapsed).toBeTrue();
             expect(component.exerciseGroups.noDueDate.isCollapsed).toBeFalse();
         });
+    });
+
+    it('should contain element for guided tour if any exercises are present', () => {
+        component.filteredAndSortedExercises = [currentExercise_1];
+
+        component.ngOnChanges();
+        fixture.detectChanges();
+
+        const guidedTourExerciseContainer = fixture.debugElement.query(By.css('.guided-tour.exercise-row-container')).nativeElement;
+        expect(guidedTourExerciseContainer).toBeTruthy();
     });
 
     function expectAllExerciseGroupsAreExpanded() {
