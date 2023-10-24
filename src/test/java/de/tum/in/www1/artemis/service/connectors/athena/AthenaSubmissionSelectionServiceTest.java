@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -17,6 +18,8 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 
 class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
+
+    private static final String TEST_PREFIX = "athenasubmissionselectionservicetest";
 
     @Autowired
     private AthenaSubmissionSelectionService athenaSubmissionSelectionService;
@@ -57,6 +60,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionSelectionFromEmpty() {
         athenaRequestMockProvider.ensureNoRequest();
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of());
@@ -64,6 +68,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionSelectionFromOneText() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId()));
@@ -71,6 +76,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionSelectionFromOneProgramming() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("programming", 3, jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.submissionIds").isArray());
@@ -79,6 +85,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNoSubmissionSelectionFromOne() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", -1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId()));
@@ -86,6 +93,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionSelectionFromTwoText() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId(), textSubmission2.getId()));
@@ -93,6 +101,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionSelectionFromTwoProgramming() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("programming", 4, jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.submissionIds").isArray());
@@ -101,6 +110,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionSelectionWithFeedbackSuggestionsDisabled() {
         textExercise.setFeedbackSuggestionsEnabled(false);
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
@@ -108,6 +118,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionSelectionWithException() {
         athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException();
         assertThatNoException().isThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())));
