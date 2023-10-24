@@ -8,7 +8,7 @@
         (markdownChange)="updateProblemStatement($event)"
         (onPreviewSelect)="generateHtml()"
         [showDefaultPreview]="false"
-        [enableResize]="false"
+        [minHeightEditor]="500"
     >
         <jhi-programming-exercise-instructions
             id="preview"
@@ -60,6 +60,4 @@
             class="editable-instruction-container__status__testcase"
         ></jhi-programming-exercise-instruction-instructor-analysis>
     </div>
-    <!-- Required for resizing; don't remove empty span -->
-    <fa-icon *ngIf="enableResize" [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
 </div>

@@ -198,6 +198,7 @@
                 "header": "Lernpfad"
             },
             "participate": {
+                "viewProgress": "Aktuellen Fortschritt im Detail ansehen",
                 "noTaskSelected": "Aktuell hast du keine Vorlesungseinheit oder Aufgabe ausgewählt.",
                 "prev": "Zurück",
                 "prevHint": "Zurück zur letzten Vorlesungseinheit oder Aufgabe",
