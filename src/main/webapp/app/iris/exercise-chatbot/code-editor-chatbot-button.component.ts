@@ -14,7 +14,7 @@ import { IrisCodeEditorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/
     selector: 'jhi-code-editor-chatbot',
     templateUrl: './code-editor-chatbot-button.component.html',
     styleUrls: ['./code-editor-chatbot-button.component.scss'],
-    providers: [IrisStateStore, IrisCodeEditorWebsocketService, IrisCodeEditorSessionService],
+    providers: [IrisCodeEditorSessionService],
 })
 export class IrisCodeEditorChatbotButtonComponent extends IrisChatbotButtonComponent<IrisCodeEditorChatbotWidgetComponent> {
     protected readonly IrisLogoSize = IrisLogoSize;

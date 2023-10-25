@@ -14,7 +14,7 @@ import { IrisTutorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widge
     selector: 'jhi-tutor-chatbot-button',
     templateUrl: './tutor-chatbot-button.component.html',
     styleUrls: ['./tutor-chatbot-button.component.scss'],
-    providers: [IrisStateStore, IrisChatWebsocketService, IrisChatSessionService, IrisHeartbeatService],
+    providers: [IrisChatWebsocketService, IrisChatSessionService, IrisHeartbeatService],
 })
 export class IrisTutorChatbotButtonComponent extends IrisChatbotButtonComponent<IrisTutorChatbotWidgetComponent> {
     constructor(

@@ -15,7 +15,7 @@ import {
 import { NavigationStart, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components/button.component';
-import { AfterViewInit, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -49,6 +49,7 @@ import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 
+@Component({ template: '' })
 export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly IrisSender = IrisSender;
     // Icons
@@ -176,7 +177,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             this.scrollToBottom('auto');
         }
 
-        interact('.chatbot-widget')
+        interact('.chat-widget')
             .resizable({
                 // resize from all edges and corners
                 edges: { left: true, right: true, bottom: true, top: true },
@@ -255,7 +256,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
         const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 50;
         const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 100;
 
-        const nE = this.document.querySelector('.chatbot-widget') as HTMLElement;
+        const nE = this.document.querySelector('.chat-widget') as HTMLElement;
         nE.style.transform = `translate(${initX}px, ${initY}px)`;
         nE.setAttribute('data-x', String(initX));
         nE.setAttribute('data-y', String(initY));
