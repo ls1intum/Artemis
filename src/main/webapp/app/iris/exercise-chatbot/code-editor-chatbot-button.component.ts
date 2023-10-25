@@ -11,7 +11,7 @@ import { IrisLogoSize } from '../iris-logo/iris-logo.component';
 import { IrisCodeEditorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/code-editor-chatbot-widget.component';
 
 @Component({
-    selector: 'jhi-code-editor-chatbot',
+    selector: 'jhi-code-editor-chatbot-button',
     templateUrl: './code-editor-chatbot-button.component.html',
     styleUrls: ['./code-editor-chatbot-button.component.scss'],
     providers: [IrisStateStore, IrisCodeEditorWebsocketService, IrisCodeEditorSessionService],
