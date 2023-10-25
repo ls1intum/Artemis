@@ -31,7 +31,7 @@ import {
     ViewChildren,
     ViewEncapsulation,
 } from '@angular/core';
-import { Subscription, fromEvent } from 'rxjs';
+import { Subscription, firstValueFrom, fromEvent } from 'rxjs';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -266,14 +266,15 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * Fetches the requested file by filename and opens a new editor session for it (if not yet done)
      * @param fileName Name of the file to be opened in the editor
      */
-    loadFile(fileName: string) {
+    async loadFile(fileName: string) {
         this.isLoading = true;
-        this.repositoryFileService.getFile(fileName).subscribe({
-            next: (fileObj) => {
+        console.log('load file: ' + fileName);
+        return firstValueFrom(this.repositoryFileService.getFile(fileName))
+            .then((fileObj) => {
                 this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 }, loadingError: false };
                 this.finalizeLoading(fileName);
-            },
-            error: (error) => {
+            })
+            .catch((error) => {
                 this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('loadingFailed' + error.message);
@@ -281,8 +282,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     this.onError.emit('loadingFailed');
                 }
                 this.finalizeLoading(fileName);
-            },
-        });
+            });
     }
 
     async finalizeLoading(fileName: string) {
@@ -318,7 +318,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
-    async updateFileText(file: string, code: string) {
+    public updateFileText(file: string, code: string) {
         if (file && this.fileSession[file]) {
             if (this.fileSession[file].code !== code) {
                 this.fileSession[file].code = code;
@@ -327,8 +327,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
-    public getFileContent(file: string) {
-        return this.fileSession[file]?.code;
+    public async getFileContent(file: string): Promise<string> {
+        if (this.fileSession[file]) {
+            return this.fileSession[file]!.code;
+        }
+        return this.loadFile(file).then(() => this.fileSession[file]!.code);
     }
 
     ngOnDestroy() {

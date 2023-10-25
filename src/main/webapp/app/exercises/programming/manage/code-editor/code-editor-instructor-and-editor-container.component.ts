@@ -14,13 +14,10 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { FileChange, FileChangeType, IrisCodeEditorWebsocketService, IrisExerciseComponent, IrisExerciseComponentChangeSet } from 'app/iris/code-editor-websocket.service';
-import { CreateFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { IrisStateStore } from 'app/iris/state-store.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
-    providers: [IrisCodeEditorWebsocketService, IrisStateStore],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
@@ -50,7 +47,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         private codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
-        codeEditorWebsocketService.onCodeChanges().subscribe((changes: IrisExerciseComponentChangeSet) => this.handleIrisChangeSet(changes));
+        codeEditorWebsocketService.onCodeChanges().subscribe((changes: IrisExerciseComponentChangeSet) => {
+            this.handleIrisChangeSet(changes);
+        });
     }
 
     onResizeEditorInstructions() {
@@ -68,13 +67,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private handleIrisChangeSet(changeSet: IrisExerciseComponentChangeSet) {
         if (changeSet.component === IrisExerciseComponent.PROBLEM_STATEMENT) {
-            changeSet.changes.forEach((change: FileChange) => {
-                if (change.type === FileChangeType.MODIFY) {
-                    const psContent = this.editableInstructions.programmingExercise.problemStatement;
-                    psContent?.replace(change.original!, change.updated!);
-                    this.editableInstructions.updateProblemStatement(psContent!);
-                }
-            });
+            this.applyPSChange(changeSet.changes);
             return;
         }
         const targetRepo = this.toRepository(changeSet.component);
@@ -127,18 +120,43 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Apply the given changes to the current repository (i.e. the one that is currently selected in the Ace Editor).
      * @param changes The changes to apply
      */
-    private applyCodeChange(changes: FileChange[]) {
-        changes.forEach((change) => {
+    private async applyCodeChange(changes: FileChange[]) {
+        console.log(this.codeEditorContainer.aceEditor != undefined);
+        for (const change of changes) {
             if (change.type === FileChangeType.MODIFY) {
-                const fileContent = this.codeEditorContainer.aceEditor.getFileContent(change.file!);
-                fileContent.replace(change.original!, change.updated!);
-                this.codeEditorContainer.aceEditor.updateFileText(change.file!, fileContent).then((file) => console.log(file));
+                const fileContent = await this.codeEditorContainer.aceEditor.getFileContent(change.file!);
+                let updateContent;
+                if (change.original !== '!all!') {
+                    console.log(change.original!);
+                    console.log(fileContent.includes(change.original!));
+                    updateContent = fileContent.replace(change.original!, change.updated!);
+                } else {
+                    updateContent = change.updated;
+                }
+                console.log(updateContent);
+                this.codeEditorContainer.aceEditor.updateFileText(change.file!, updateContent!);
             }
-            if (change.type === FileChangeType.CREATE) {
-                const fileChange = new CreateFileChange(FileType.FILE, change.file!);
-                //aceEditor needs this.selectedFile === fileChange.fileName
-                this.codeEditorContainer.selectedFile = fileChange.fileName;
-                this.codeEditorContainer.onFileChange([[change.updated!], fileChange]);
+            // TODO: Add actions for other change type
+            // if (change.type === FileChangeType.CREATE) {
+            //     const fileChange = new CreateFileChange(FileType.FILE, change.file!);
+            //     //aceEditor needs this.selectedFile === fileChange.fileName
+            //     this.codeEditorContainer.selectedFile = fileChange.fileName;
+            //     this.codeEditorContainer.onFileChange([[change.updated!], fileChange]);
+            // }
+        }
+    }
+
+    private applyPSChange(changes: FileChange[]) {
+        changes.forEach((change: FileChange) => {
+            if (change.type === FileChangeType.MODIFY) {
+                const psContent = this.editableInstructions.programmingExercise.problemStatement;
+                let updateContent;
+                if (change.original !== '!all!') {
+                    updateContent = psContent!.replace(change.original!, change.updated!);
+                } else {
+                    updateContent = change.updated!;
+                }
+                this.editableInstructions.updateProblemStatement(updateContent);
             }
         });
     }
