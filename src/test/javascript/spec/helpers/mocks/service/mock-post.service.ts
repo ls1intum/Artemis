@@ -8,6 +8,7 @@ import {
     metisExercisePosts,
     metisLecturePosts,
     metisPostExerciseUser1,
+    metisPostInChannel,
     metisPostOrganization,
     metisPostRandom,
     metisPostTechSupport,
@@ -77,6 +78,14 @@ export class MockPostService {
                 body: messagesBetweenUser1User2,
                 headers: new HttpHeaders({
                     'X-Total-Count': messagesBetweenUser1User2.length.toString(),
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
+        }
+        if (postContextFilter.courseWideChannelIds) {
+            return of({
+                body: [metisPostInChannel],
+                headers: new HttpHeaders({
+                    'X-Total-Count': 1,
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         } else {

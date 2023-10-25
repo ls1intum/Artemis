@@ -41,6 +41,7 @@ import {
     metisLecture3,
     metisLectureChannelDto,
     metisLecturePosts,
+    metisPostInChannel,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
@@ -329,6 +330,25 @@ describe('CourseDiscussionComponent', () => {
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.posts).toEqual(metisLecturePosts);
+    }));
+
+    it('should fetch new posts when context filter changes to conversation', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            context: [
+                {
+                    conversationId: metisPostInChannel.conversation!.id!,
+                },
+            ],
+        });
+        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
+        contextOptions.triggerEventHandler('selectionChange', false);
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
+        expect(component.posts).toEqual([metisPostInChannel]);
     }));
 
     it('should fetch new posts when multiple context filters are selected', fakeAsync(() => {
