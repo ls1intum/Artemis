@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
@@ -122,6 +124,13 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].lineStart").value(12), jsonPath("$.feedbacks[0].lineEnd").value(12));
 
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
+    }
+
+    @Test
+    void testFeedbackSendingWrongExerciseType() {
+        athenaRequestMockProvider.mockSendFeedbackAndExpect("modeling");
+        assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(new ModelingExercise(), new ModelingSubmission(), List.of()))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

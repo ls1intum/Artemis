@@ -62,17 +62,10 @@ public class AthenaFeedbackSuggestionsService {
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(Exercise exercise, Submission submission) throws NetworkingException {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
-        try {
-            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-            ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request,
-                    0);
-            log.info("Athena responded to feedback suggestions request: {}", response.data);
-            return response.data.stream().toList();
-        }
-        catch (NetworkingException error) {
-            log.error("Error while calling Athena", error);
-            throw error;
-        }
+        final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
+        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request, 0);
+        log.info("Athena responded to feedback suggestions request: {}", response.data);
+        return response.data.stream().toList();
     }
 
     /**
@@ -85,16 +78,10 @@ public class AthenaFeedbackSuggestionsService {
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(Exercise exercise, Submission submission) throws NetworkingException {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
-        try {
-            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
-            ResponseDTOProgramming response = programmingAthenaConnector
-                    .invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request, 0);
-            log.info("Athena responded to feedback suggestions request: {}", response.data);
-            return response.data.stream().toList();
-        }
-        catch (NetworkingException error) {
-            log.error("Error while calling Athena", error);
-            throw error;
-        }
+        final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
+        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions",
+                request, 0);
+        log.info("Athena responded to feedback suggestions request: {}", response.data);
+        return response.data.stream().toList();
     }
 }
