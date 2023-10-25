@@ -40,9 +40,9 @@ describe('AthenaService', () => {
     });
 
     it('should get feedback suggestions when athena is enabled', fakeAsync(() => {
-        const textFeedbackSuggestions: TextFeedbackSuggestion[] = [{ title: 'Test Text', description: 'Test Text Description', indexStart: 5 } as TextFeedbackSuggestion];
+        const textFeedbackSuggestions = [new TextFeedbackSuggestion(0, 1, 2, 'Test Text', 'Test Text Description', 0.0, undefined, 5, 10)];
         const programmingFeedbackSuggestions: ProgrammingFeedbackSuggestion[] = [
-            { title: 'Test Programming', description: 'Test Programming Description', credits: -1.0, filePath: 'src/Test.java', lineStart: 4 } as ProgrammingFeedbackSuggestion,
+            new ProgrammingFeedbackSuggestion(0, 2, 2, 'Test Programming', 'Test Programming Description', -1.0, undefined, 'src/Test.java', 4, undefined),
         ];
         let textResponse: TextBlockRef[] | null = null;
         let programmingResponse: Feedback[] | null = null;
