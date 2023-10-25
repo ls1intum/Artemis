@@ -440,6 +440,10 @@
         {
             "fullName": "Nityananda Zbil",
             "photoDirectory": "public/images/about/Nityananda_Zbil.jpg"
+        },
+        {
+            "fullName": "Laurenz Blumentritt",
+            "photoDirectory": "public/images/about/Laurenz_Blumentritt.jpg"
         }
     ]
 }
