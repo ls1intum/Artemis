@@ -308,20 +308,19 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             // We will support different file change types in the future. For now, every file change has type MODIFY
             var type = IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
             var file = node.get("file").asText();
-            if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().isEmpty()) {
+            if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().equals("!done!")) {
                 // This is a special case when the LLM decided to stop generating changes for a component.
                 // Ideally, this should not need to be handled here. The only reason it needs to be is because of
                 // a bug with Guidance geneach that compels us to use a workaround to break from the loop manually
                 // in the guidance program (see https://github.com/guidance-ai/guidance/issues/385).
-                // Anyway, if the file is empty, we can just break from the loop.
+                // Anyway, if the file is "!done!", we can just break from the loop.
                 break;
             }
             var original = node.get("original").asText();
             if (component == ExerciseComponent.PROBLEM_STATEMENT && original.trim().equals("!done!")) {
-                // This is kind of hacky, but necessary for the same reason as above.
-                // In the case of the problem statement there is no file generated, so we need another way
-                // for the LLM to tell us that it is done generating changes. In this case, it will send
-                // the string "!done!" as the original value, which indicates that we should break from the loop.
+                // Same issue as above.
+                // In the case of the problem statement there is no file generated, so we ask it to
+                // respond with "!done!" as the value of the variable "original" if it has no more edits.
                 // Both of these workarounds should be removed once the bug in Guidance is fixed!
                 break;
             }
@@ -341,10 +340,10 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return A modifiable map with the parameters for the request to Iris
      */
     private Map<String, Object> initializeParams(ProgrammingExercise exercise, UnsavedCodeEditorChangesDTO unsaved) {
-        var problemStatement = Optional.ofNullable(unsaved.problemStatement()).orElse(exercise.getProblemStatement());
-        var solutionRepository = prepareRepository(exercise.getVcsSolutionRepositoryUrl(), unsaved.solutionRepository());
-        var templateRepository = prepareRepository(exercise.getVcsTemplateRepositoryUrl(), unsaved.templateRepository());
-        var testRepository = prepareRepository(exercise.getVcsTestRepositoryUrl(), unsaved.testRepository());
+        var problemStatement = unsaved.problemStatement().orElse(exercise.getProblemStatement());
+        var solutionRepository = prepareRepository(exercise.getVcsSolutionRepositoryUrl(), unsaved.solutionRepository().orElseGet(HashMap::new));
+        var templateRepository = prepareRepository(exercise.getVcsTemplateRepositoryUrl(), unsaved.templateRepository().orElseGet(HashMap::new));
+        var testRepository = prepareRepository(exercise.getVcsTestRepositoryUrl(), unsaved.testRepository().orElseGet(HashMap::new));
         var params = new HashMap<String, Object>();
         params.put("problemStatement", problemStatement);
         params.put("solutionRepository", solutionRepository);
