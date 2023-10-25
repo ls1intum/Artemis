@@ -341,6 +341,7 @@
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
             "examSessions": "Sitzungen",
+            "examTimeline": "Klausurverlauf",
             "grade": "Note",
             "gradeBeforeBonus": "Note vor Bonus",
             "gradeAfterBonus": "Note nach Bonus",
@@ -562,6 +563,7 @@
                 },
                 "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
             },
+            "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
@@ -742,6 +744,11 @@
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+        },
+        "examTimeline": {
+            "title": "Klausurverlauf von {{ username }}",
+            "breadcrumb": "Klausurverlauf",
+            "disabledTooltip": "Der Klausurverlauf ist nur verfügbar, wenn die Klausur abgegeben wurde."
         },
         "examStatus": {
             "columnTitle": "Klausurstatus",

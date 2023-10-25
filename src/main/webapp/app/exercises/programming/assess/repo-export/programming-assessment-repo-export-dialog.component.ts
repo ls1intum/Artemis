@@ -45,7 +45,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.isAtLeastInstructor = this.programmingExercises.every((exercise) => exercise.isAtLeastInstructor);
         this.isLoading = false;
         this.repositoryExportOptions = {
-            exportAllParticipants: false,
+            exportAllParticipants: this.isRepoExportForMultipleExercises,
             filterLateSubmissions: false,
             excludePracticeSubmissions: false,
             combineStudentCommits: true,
@@ -61,7 +61,6 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     exportRepos() {
-        this.repositoryExportOptions.exportAllParticipants = true;
         this.programmingExercises.forEach((exercise) => {
             if (!exercise.id) {
                 return;
@@ -69,29 +68,34 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             this.exportInProgress = true;
             // The participation ids take priority over the participant identifiers (student login or team names).
             if (this.participationIdList?.length) {
-                this.repoExportService.exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions).subscribe({
-                    next: this.handleExportRepoResponse,
-                    error: () => {
-                        this.exportInProgress = false;
-                    },
-                });
+                this.repoExportService
+                    .exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
+                    .subscribe({
+                        next: this.handleExportRepoResponseSuccess,
+                        error: () => this.handleExportRepoResponseError(exercise.id!),
+                    })
+                    .add(() => this.activeModal.dismiss(true));
                 return;
             }
-            const participantIdentifierList =
-                this.participantIdentifierList !== undefined && this.participantIdentifierList !== '' ? this.participantIdentifierList.split(',').map((e) => e.trim()) : ['ALL'];
+            const participantIdentifierList = this.repositoryExportOptions.exportAllParticipants ? ['ALL'] : this.participantIdentifierList.split(',').map((e) => e.trim());
 
-            this.repoExportService.exportReposByParticipantIdentifiers(exercise.id, participantIdentifierList, this.repositoryExportOptions).subscribe({
-                next: this.handleExportRepoResponse,
-                error: () => {
-                    this.exportInProgress = false;
-                },
-            });
+            this.repoExportService
+                .exportReposByParticipantIdentifiers(exercise.id, participantIdentifierList, this.repositoryExportOptions)
+                .subscribe({
+                    next: this.handleExportRepoResponseSuccess,
+                    error: () => this.handleExportRepoResponseError(exercise.id!),
+                })
+                .add(() => this.activeModal.dismiss(true));
         });
     }
 
-    handleExportRepoResponse = (response: HttpResponse<Blob>) => {
+    handleExportRepoResponseError = (exerciseId: number) => {
+        this.alertService.warning('artemisApp.programmingExercise.export.notFoundMessageRepos', { exerciseId });
+        this.exportInProgress = false;
+    };
+
+    handleExportRepoResponseSuccess = (response: HttpResponse<Blob>) => {
         this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
-        this.activeModal.dismiss(true);
         this.exportInProgress = false;
         downloadZipFileFromResponse(response);
     };
