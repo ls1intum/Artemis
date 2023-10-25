@@ -48,7 +48,6 @@ export class SharingComponent implements OnInit {
         private programmingExerciseSharingService: ProgrammingExerciseSharingService,
     ) {
         this.route.params.subscribe((params) => {
-            console.log('###DEBUG', params);
             this.sharingInfo.basketToken = params['basketToken'];
         });
         this.route.queryParams.subscribe((qparams) => {

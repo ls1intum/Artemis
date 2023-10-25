@@ -12,6 +12,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
+import { Course } from 'app/entities/course.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -36,24 +37,24 @@ export class ProgrammingExerciseSharingService {
 
     loadProblemStatementForExercises(sharingInfo: SharingInfo): Observable<string> {
         const headers = new HttpHeaders();
-        return this.http.post<string>(this.resourceUrlBasket + '/problemStatement', sharingInfo, { headers, responseType: 'text' as 'json' });
+        return this.http.post<string>(this.resourceUrlBasket + 'problemStatement', sharingInfo, { headers, responseType: 'text' as 'json' });
     }
 
-    loadDetailsForExercises(sharingInfo: SharingInfo): Observable<string> {
-        const headers = new HttpHeaders();
-        return this.http.post<string>(this.resourceUrlBasket + '/exerciseDetails', sharingInfo, { headers, responseType: 'text' as 'json' });
+    loadDetailsForExercises(sharingInfo: SharingInfo): Observable<ProgrammingExercise> {
+        return this.http.post<ProgrammingExercise>(this.resourceUrlBasket + 'exerciseDetails', sharingInfo);
     }
 
     /**
      * Sets a new programming exercise up
      * @param programmingExercise which should be setup
+     * @param course in which the exercise should be imported
      * @param sharingInfo sharing related data needed for the import
      */
-    setUpFromSharingImport(programmingExercise: ProgrammingExercise, sharingInfo: SharingInfo): Observable<EntityResponseType> {
+    setUpFromSharingImport(programmingExercise: ProgrammingExercise, course: Course, sharingInfo: SharingInfo): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
-            .post<ProgrammingExercise>('api/sharing/setup-import', { exercise: copy, course: copy.course, sharingInfo }, { observe: 'response' })
+            .post<ProgrammingExercise>('api/sharing/setup-import', { exercise: copy, course, sharingInfo }, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

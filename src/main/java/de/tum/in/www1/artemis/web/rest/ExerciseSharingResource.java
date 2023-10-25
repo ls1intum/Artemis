@@ -86,14 +86,14 @@ public class ExerciseSharingResource {
      */
     @PostMapping("/sharing/import/basket/problemStatement")
     public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
-        String filePath = "exercise.md";
-        return getFileContentFromBasket(filePath, sharingInfo);
+        String problemStatement = this.exerciseSharingService.getProblemStatementFromBasket(sharingInfo);
+        return ResponseEntity.ok().body(problemStatement);
     }
 
     @PostMapping("/sharing/import/basket/exerciseDetails")
     public ResponseEntity<String> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
-        String filePath = "Exercise-Details.json";
-        return getFileContentFromBasket(filePath, sharingInfo);
+        String exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
+        return ResponseEntity.ok().body(exerciseDetails);
     }
 
     @NotNull
@@ -168,7 +168,6 @@ public class ExerciseSharingResource {
                     log.warn("Could not delete imported file from Sharing-Platform");
                 }
             }
-
         }
 
         InputStreamResource resource = new InputStreamResource(new NewFileInputStream(zipFile));

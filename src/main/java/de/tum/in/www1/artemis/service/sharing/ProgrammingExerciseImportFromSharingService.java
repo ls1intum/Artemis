@@ -39,6 +39,10 @@ public class ProgrammingExerciseImportFromSharingService {
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
         SharingMultipartZipFile zipFile = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.getSharingInfo());
+
+        if (sharingSetupInfo.getExercise().getCourseViaExerciseGroupOrCourseMember() == null) {
+            sharingSetupInfo.getExercise().setCourse(sharingSetupInfo.getCourse());
+        }
         return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.getExercise(), zipFile, sharingSetupInfo.getCourse(), true);
     }
 }

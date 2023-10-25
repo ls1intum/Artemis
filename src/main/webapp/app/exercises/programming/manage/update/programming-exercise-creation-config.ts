@@ -21,6 +21,7 @@ export type ProgrammingExerciseCreationConfig = {
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
+    isImportFromSharing: boolean;
     appNamePatternForSwift: string;
     modePickerOptions: ModePickerOption<ProjectType>[];
     withDependencies: boolean;

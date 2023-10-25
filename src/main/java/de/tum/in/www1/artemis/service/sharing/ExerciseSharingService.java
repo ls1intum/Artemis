@@ -3,19 +3,22 @@ package de.tum.in.www1.artemis.service.sharing;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
 
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
-import org.codeability.sharing.plugins.api.search.SearchResultDTO;
 import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +36,6 @@ import de.tum.in.www1.artemis.domain.sharing.SharingMultipartZipFile;
 import de.tum.in.www1.artemis.exception.SharingException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.SharingPluginService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SharingInfoDTO;
 
 @Service
@@ -72,19 +74,19 @@ public class ExerciseSharingService {
     });
 
     public Optional<ShoppingBasket> getBasketInfo(String basketToken, String apiBaseUrl) {
-        ClientConfig restClientConfig = new ClientConfig();
-        restClientConfig.register(ShoppingBasket.class);
-        Client client = ClientBuilder.newClient(restClientConfig);
+        try {
+            ClientConfig restClientConfig = new ClientConfig();
+            restClientConfig.register(ShoppingBasket.class);
+            Client client = ClientBuilder.newClient(restClientConfig);
 
-        WebTarget target = client.target(apiBaseUrl.concat("/basket/").concat(basketToken));
+            WebTarget target = client.target(apiBaseUrl.concat("/basket/").concat(basketToken));
+            ShoppingBasket shoppingBasket = target.request().accept(MediaType.APPLICATION_JSON).get(ShoppingBasket.class);
 
-        ShoppingBasket shoppingBasket = target.request().accept(MediaType.APPLICATION_JSON).get(ShoppingBasket.class);
-        if (shoppingBasket != null) {
-            for (SearchResultDTO ex : shoppingBasket.exerciseInfo) {
-                // TODO: add some artemis specific magic here in case
-            }
+            return Optional.ofNullable(shoppingBasket);
+        } catch (ResponseProcessingException rpe) {
+            log.warn("Unrecognized property when importing exercise from Sharing", rpe);
+            return Optional.empty();
         }
-        return Optional.ofNullable(shoppingBasket);
     }
 
     public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
@@ -125,6 +127,71 @@ public class ExerciseSharingService {
     }
 
     /**
+     * Retrieves the Problem-Statement file from a Sharing basket
+     * @param sharingInfo of the basket to extract the problem statement from
+     * @return The content of the Problem-Statement file
+     * @throws IOException if a reading error occurs
+     */
+    public String getProblemStatementFromBasket(SharingInfoDTO sharingInfo) throws IOException {
+        Pattern pattern = Pattern.compile("^Problem-Statement", Pattern.CASE_INSENSITIVE);
+
+        String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
+        return Objects.requireNonNullElse(problemStatement, "No Problem Statement found!");
+    }
+
+    /**
+     * Retrieves the Exercise-Details file from a Sharing basket
+     * @param sharingInfo of the basket to extract the problem statement from
+     * @return The content of the Exercise-Details file
+     * @throws IOException if a reading error occurs
+     */
+    public String getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) throws IOException {
+        Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
+
+        String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
+        return Objects.requireNonNullElse(problemStatement, "No Problem Statement found!");
+    }
+
+    /**
+     * Retrieves an entry from a given Sharing basket, basing on the given RegEx.
+     * If nothing is found, null is returned.
+     * @param matchingPattern RegEx matching the entry to return.
+     * @param sharingInfo of the basket to retrieve the entry from
+     * @return The content of the entry, or null if not found.
+     * @throws IOException if a readingf error occurs
+     */
+    public String getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
+        InputStream repositoryStream = null;
+        try {
+            repositoryStream = this.getCachedBasketItem(sharingInfo).getInputStream();
+        }
+        catch (IOException | SharingException e) {
+            log.error("Cannot read input Template for " + sharingInfo.getBasketToken());
+        }
+
+        ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);
+
+        ZipEntry entry;
+        while((entry = zippedRepositoryStream.getNextEntry()) != null) {
+            Matcher matcher = matchingPattern.matcher(entry.getName());
+            if (matcher.find()) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+                String entryContent = baos.toString(StandardCharsets.UTF_8);
+                baos.close();
+                zippedRepositoryStream.closeEntry();
+                return entryContent;
+            }
+            zippedRepositoryStream.closeEntry();
+        }
+        return null; // Not found
+    }
+
+    /**
      * Creates Zip file for exercise and returns a URL pointing to Sharing
      * with a callback URL addressing the generated Zip file for download
      *
@@ -137,7 +204,12 @@ public class ExerciseSharingService {
         }
         try {
             ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-            File zipFile = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(exercise, null).toFile();
+            List<String> exportErrors = new ArrayList<>();
+            File zipFile = programmingExerciseExportService.exportProgrammingExerciseForDownload(exercise, exportErrors).toFile();
+
+            if (!exportErrors.isEmpty()) {
+                throw new SharingException("Could not generate Zip file to export");
+            }
             String token = zipFile.getName().replace(".zip", "");
 
             URIBuilder builder = new URIBuilder();

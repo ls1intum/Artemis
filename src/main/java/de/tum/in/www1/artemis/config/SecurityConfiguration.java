@@ -34,6 +34,9 @@ import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
+import static de.tum.in.www1.artemis.config.Constants.SHARINGCONFIG_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.SHARINGIMPORT_RESOURCE_API_PATH;
+
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)

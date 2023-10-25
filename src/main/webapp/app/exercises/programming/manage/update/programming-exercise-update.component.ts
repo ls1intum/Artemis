@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { DifficultyLevel, Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -21,7 +21,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
-import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
+import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -128,7 +128,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public updateTemplate = false;
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
-    // Additional data fro import from Sharing
+    // Additional data for import from Sharing
     public sharingInfo: SharingInfo = new SharingInfo();
 
     public projectTypes: ProjectType[] = [];
@@ -281,7 +281,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
+        if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
             this.loadProgrammingLanguageTemplate(language);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -302,7 +302,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.updateProjectTypeSettings(type);
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
+        if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -405,69 +405,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImportFromFile) {
                         this.createProgrammingExerciseForImportFromFile();
                     }
+                    if (this.isImportFromSharing) {
+                        this.createProgrammingExerciseForImportFromSharing();
+                    }
                     if (this.isImportFromExistingExercise) {
                         this.createProgrammingExerciseForImport(params);
                     } else {
-                        if (this.isImportFromSharing) {
-                            this.activatedRoute.queryParams.subscribe((qparams: [string: string]) => {
-                                this.sharingInfo.basketToken = qparams['basketToken'];
-                                this.sharingInfo.returnURL = qparams['returnUrl'];
-                                this.sharingInfo.apiBaseURL = qparams['apiBaseUrl'];
-                                this.sharingInfo.selectedExercise = qparams['selectedExercise'];
-                                this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe((res: ShoppingBasket) => {
-                                    console.log('DEBUG###', res, this.sharingInfo);
-                                    this.programmingExercise.title = res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.title;
-                                    switch (res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.difficulty) {
-                                        case 'simple': {
-                                            this.programmingExercise.difficulty = DifficultyLevel.EASY;
-                                            break;
-                                        }
-                                        case 'medium': {
-                                            this.programmingExercise.difficulty = DifficultyLevel.MEDIUM;
-                                            break;
-                                        }
-                                        case 'advanced': {
-                                            this.programmingExercise.difficulty = DifficultyLevel.HARD;
-                                            break;
-                                        }
-                                    }
-
-                                    this.programmingExercise.categories = res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.keyword
-                                        // trivial keywords are omitted
-                                        .filter((keyword) => keyword.toLowerCase() !== 'artemis')
-                                        .map((keyword) => {
-                                            const category = new ExerciseCategory();
-                                            category.color = Math.floor(Math.random() * 16777215).toString(16);
-                                            category.category = keyword;
-                                            return category;
-                                        });
-                                    const pl = res.exerciseInfo[this.sharingInfo.selectedExercise].metadata.programmingLanguage[0];
-                                    let language = this.selectedProgrammingLanguage;
-                                    if (pl.toUpperCase() === 'JAVA') {
-                                        language = ProgrammingLanguage.JAVA;
-                                    } else if (pl.toUpperCase() === 'C') {
-                                        language = ProgrammingLanguage.C;
-                                    } else if (pl.toUpperCase() === 'PYTHON') {
-                                        language = ProgrammingLanguage.PYTHON;
-                                    }
-                                    this.selectedProgrammingLanguage = language;
-
-                                    this.programmingExercise.packageName = 'unused';
-                                    this.packageNameRequired = false;
-                                    this.updateFurtherArtemisSharedOptions();
-                                });
-                            });
-                            this.programmingExerciseSharingService.loadProblemStatementForExercises(this.sharingInfo).subscribe((statement: string) => {
-                                this.programmingExercise.problemStatement = statement;
-                            });
-                        }
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
                             this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
-                            // we need the course id  to make the request to the server if it's an import from file
-                            if (this.isImportFromFile) {
+                            // we need the course id to make the request to the server if it's an import from file
+                            if (this.isImportFromFile || this.isImportFromSharing) {
                                 this.courseId = params['courseId'];
                             }
                         } else if (params['courseId']) {
@@ -475,7 +425,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.isExamMode = false;
                             this.courseService.find(this.courseId).subscribe((res) => {
                                 this.programmingExercise.course = res.body!;
-                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !(this.isImportFromFile || this.isImportFromSharing)) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
@@ -510,7 +460,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        if (this.programmingExercise.id || this.isImportFromFile) {
+        if (this.programmingExercise.id || this.isImportFromFile || this.isImportFromSharing) {
             this.problemStatementLoaded = true;
         }
         // Select the correct pattern
@@ -555,45 +505,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY)) {
             this.supportedLanguages.push(ProgrammingLanguage.EMPTY);
         }
-    }
-
-    /**
-     * loads further options from sharing specific for artemis from artemis.yaml.
-     */
-    private updateFurtherArtemisSharedOptions() {
-        this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe((statement: string) => {
-            const artemisSharedOptions = JSON.parse(statement) as FurtherArtemisSharingOptions;
-            if (artemisSharedOptions.maxPoints) {
-                this.programmingExercise.maxPoints = artemisSharedOptions.maxPoints;
-            }
-            if (artemisSharedOptions.bonusPoints) {
-                this.programmingExercise.bonusPoints = artemisSharedOptions.bonusPoints;
-            }
-            if (artemisSharedOptions.mode) {
-                this.programmingExercise.mode = artemisSharedOptions.mode || ExerciseMode.INDIVIDUAL;
-            }
-            if (artemisSharedOptions.projectType) {
-                this.programmingExercise.projectType = artemisSharedOptions.projectType;
-            }
-            if (artemisSharedOptions.gradingInstructions) {
-                this.programmingExercise.gradingInstructions = artemisSharedOptions.gradingInstructions;
-            }
-            if (artemisSharedOptions.allowOfflineIDE) {
-                this.programmingExercise.allowOfflineIde = artemisSharedOptions.allowOfflineIDE;
-            }
-            if (artemisSharedOptions.allowOnlineEditor) {
-                this.programmingExercise.allowOnlineEditor = artemisSharedOptions.allowOnlineEditor;
-            }
-            if (artemisSharedOptions.showTestNamesToStudents) {
-                this.programmingExercise.showTestNamesToStudents = artemisSharedOptions.showTestNamesToStudents;
-            }
-            if (artemisSharedOptions.sequentialTestRuns) {
-                this.programmingExercise.sequentialTestRuns = artemisSharedOptions.sequentialTestRuns;
-            }
-            if (artemisSharedOptions.publishBuildPlan) {
-                this.programmingExercise.publishBuildPlanUrl = artemisSharedOptions.publishBuildPlan;
-            }
-        });
     }
 
     /**
@@ -706,6 +617,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
+        } else if (this.isImportFromSharing) {
+            this.courseService.find(this.courseId).subscribe((res) => {
+                this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, res.body!, this.sharingInfo).subscribe({
+                    next: (response: HttpResponse<ProgrammingExercise>) => {
+                        this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
+                        this.onSaveSuccess(response.body!);
+                    },
+                    error: (err) => this.onSaveError(err),
+                });
+            });
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
@@ -715,20 +636,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else {
-            if (!this.isImportFromSharing) {
-                this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
-            } else {
-                this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.sharingInfo).subscribe({
-                    next: (response: HttpResponse<ProgrammingExercise>) => {
-                        this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
-                        window.scrollTo(0, 0);
-                        setTimeout(() => {
-                            this.onSaveSuccess(response.body!);
-                        }, 2500);
-                    },
-                    error: (err) => this.onSaveError(err),
-                });
-            }
+            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
     }
 
@@ -1138,6 +1046,32 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private createProgrammingExerciseForImportFromFile() {
         this.programmingExercise = cloneDeep(history.state.programmingExerciseForImportFromFile);
+        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
+        // we need to get it from the history object as setting the programming language
+        // sets the project type of the programming exercise to the default value for the programming language.
+        this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
+        this.resetPropertiesForImport();
+    }
+
+    private createProgrammingExerciseForImportFromSharing() {
+        this.activatedRoute.queryParams.subscribe((qparams: [string: string]) => {
+            this.sharingInfo.basketToken = qparams['basketToken'];
+            this.sharingInfo.returnURL = qparams['returnUrl'];
+            this.sharingInfo.apiBaseURL = qparams['apiBaseUrl'];
+            this.sharingInfo.selectedExercise = qparams['selectedExercise'];
+            this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe((exerciseDetails: ProgrammingExercise) => {
+                this.programmingExercise = exerciseDetails;
+                this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
+                this.selectedProjectType = this.programmingExercise.projectType!;
+                this.resetPropertiesForImport();
+            });
+        });
+        this.programmingExerciseSharingService.loadProblemStatementForExercises(this.sharingInfo).subscribe((statement: string) => {
+            this.programmingExercise.problemStatement = statement;
+        });
+    }
+
+    private resetPropertiesForImport() {
         this.programmingExercise.id = undefined;
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
@@ -1147,18 +1081,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.releaseDate = undefined;
         this.programmingExercise.startDate = undefined;
         this.programmingExercise.exampleSolutionPublicationDate = undefined;
-        //without dates set, they can only be false
+        // without dates set, they can only be false
         this.programmingExercise.allowComplaintsForAutomaticAssessments = false;
         this.programmingExercise.allowManualFeedbackRequests = false;
-        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        // we need to get it from the history object as setting the programming language
-        // sets the project type of the programming exercise to the default value for the programming language.
-        this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
             isImportFromFile: this.isImportFromFile,
+            isImportFromSharing: this.isImportFromSharing,
             isImportFromExistingExercise: this.isImportFromExistingExercise,
             showSummary: false,
             isEdit: this.isEdit,
@@ -1207,18 +1138,4 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
         };
     }
-}
-
-interface FurtherArtemisSharingOptions {
-    maxPoints: number;
-    bonusPoints: number;
-    mode: ExerciseMode;
-    projectType: ProjectType;
-    gradingInstructions: string;
-    staticCodeAnalysis: boolean;
-    allowOfflineIDE: boolean;
-    allowOnlineEditor: boolean;
-    showTestNamesToStudents: boolean;
-    sequentialTestRuns: boolean;
-    publishBuildPlan: boolean;
 }
