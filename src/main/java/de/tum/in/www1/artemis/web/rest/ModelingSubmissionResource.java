@@ -235,8 +235,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
-            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId, @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
