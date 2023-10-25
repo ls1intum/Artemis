@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
@@ -52,15 +51,12 @@ public class ConversationMessageResource {
 
     private final CourseRepository courseRepository;
 
-    private final ConversationRepository conversationRepository;
-
     public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ConversationRepository conversationRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationMessagingService = conversationMessagingService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
-        this.conversationRepository = conversationRepository;
     }
 
     /**
