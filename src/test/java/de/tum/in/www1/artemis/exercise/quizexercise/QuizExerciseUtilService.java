@@ -175,7 +175,7 @@ public class QuizExerciseUtilService {
         Course course = courseUtilService.createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
-        QuizExerciseFactory.initializeQuizExercise(quizExercise);
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
 
         return quizExercise;
     }
@@ -234,7 +234,7 @@ public class QuizExerciseUtilService {
         examRepository.save(exam);
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
-        QuizExerciseFactory.initializeQuizExercise(quizExercise);
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
 
         quizExerciseRepository.save(quizExercise);
 
@@ -395,7 +395,7 @@ public class QuizExerciseUtilService {
      */
     public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(releaseDate, dueDate, assessmentDueDate, quizMode, course);
-        QuizExerciseFactory.initializeQuizExerciseWithAllQuestionTypes(quizExercise);
+        QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quizExercise);
         return quizExerciseRepository.save(quizExercise);
     }
 

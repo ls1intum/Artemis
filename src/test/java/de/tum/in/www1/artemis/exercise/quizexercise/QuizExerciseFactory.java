@@ -41,7 +41,7 @@ public class QuizExerciseFactory {
     @NotNull
     public static QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
-        initializeQuizExercise(quizExercise);
+        addQuestionsToQuizExercise(quizExercise);
 
         return quizExercise;
     }
@@ -56,18 +56,19 @@ public class QuizExerciseFactory {
     @NotNull
     public static QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = generateQuizExerciseForExam(exerciseGroup);
-        initializeQuizExercise(quizExercise);
+        addQuestionsToQuizExercise(quizExercise);
 
         return quizExercise;
     }
 
     /**
-     * Initializes a quiz exercise with different types of questions.
-     * After initialization, the quiz consists of one multiple choice, one drag and drop, and one short answer question.
+     * Adds different types of questions to the given quiz.
+     * One multiple choice, one drag and drop, and one short answer question is added to the quiz.
+     * The grading instructions are set to null.
      *
-     * @param quizExercise The quiz to be initialized.
+     * @param quizExercise The quiz to which questions should be added.
      */
-    public static void initializeQuizExercise(QuizExercise quizExercise) {
+    public static void addQuestionsToQuizExercise(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
@@ -386,12 +387,13 @@ public class QuizExerciseFactory {
     }
 
     /**
-     * Initializes a quiz exercise with all different types of questions.
-     * After initialization, the quiz consists of one multiple choice, one drag and drop, one short answer, and single choice question.
+     * Adds different types of questions to the given quiz.
+     * One multiple choice, one drag and drop, one short answer, and one single choice question is added to the quiz.
+     * The grading instructions are set to null.
      *
-     * @param quizExercise The quiz to be initialized.
+     * @param quizExercise The quiz to which questions should be added.
      */
-    public static void initializeQuizExerciseWithAllQuestionTypes(QuizExercise quizExercise) {
+    public static void addAllQuestionTypesToQuizExercise(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
         quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
         quizExercise.addQuestions(createShortAnswerQuestionWithRealisticText());
@@ -660,7 +662,7 @@ public class QuizExerciseFactory {
     @NotNull
     public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
-        initializeQuizExerciseWithAllQuestionTypes(quizExercise);
+        addAllQuestionTypesToQuizExercise(quizExercise);
         return quizExercise;
     }
 
