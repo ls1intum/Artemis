@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -33,7 +32,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
@@ -41,6 +42,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private LocalCIConnectorService localCIConnectorService;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     private LocalRepository studentAssignmentRepository;
 
@@ -227,7 +231,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testIOExceptionWhenParsingTestResults() {
+    void testIOExceptionWhenParsingTestResults() throws InterruptedException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
@@ -243,17 +247,27 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         });
 
         localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        ProgrammingMessagingService programmingMessagingService = mock(ProgrammingMessagingService.class);
+
+        Thread.sleep(15000);
+
+        await().untilAsserted(() -> verify(programmingMessagingService, times(1)).notifyUserAboutSubmissionError((ProgrammingSubmission) any(), any()));
+
         // Should notify the user.
         verifyUserNotification(studentParticipation);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFaultyResultFiles() throws IOException {
+    void testFaultyResultFiles() throws IOException, InterruptedException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, "/repositories/test-repository/build/test-results/test");
         localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        Thread.sleep(15000);
+
         // Should notify the user.
         verifyUserNotification(studentParticipation);
     }

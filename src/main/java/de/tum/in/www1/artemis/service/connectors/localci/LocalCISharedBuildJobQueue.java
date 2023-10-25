@@ -124,6 +124,7 @@ public class LocalCISharedBuildJobQueue {
                 programmingMessagingService.notifyUserAboutNewResult(result, participation);
             }
             else {
+                log.info("Laurenz jajaja");
                 programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
                         new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
             }
