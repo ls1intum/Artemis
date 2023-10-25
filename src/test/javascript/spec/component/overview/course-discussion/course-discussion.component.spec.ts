@@ -5,7 +5,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -30,12 +30,16 @@ import {
     metisCourse,
     metisCoursePosts,
     metisCoursePostsWithCourseWideContext,
+    metisExamChannelDto,
     metisExercise,
     metisExercise2,
+    metisExerciseChannelDto,
     metisExercisePosts,
+    metisGeneralChannelDto,
     metisLecture,
     metisLecture2,
     metisLecture3,
+    metisLectureChannelDto,
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
@@ -44,6 +48,8 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MatSelectModule } from '@angular/material/select';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -88,11 +94,21 @@ describe('CourseDiscussionComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
             .then(() => {
                 courseStorageService = TestBed.inject(CourseStorageService);
+
+                const metisConversationService = TestBed.inject(MetisConversationService);
+                Object.defineProperty(metisConversationService, 'isServiceSetup$', {
+                    get: () => new BehaviorSubject(true).asObservable(),
+                });
+                Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
+                    get: () => new BehaviorSubject([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]).asObservable(),
+                });
+
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(metisCourse));
                 fixture = TestBed.createComponent(CourseDiscussionComponent);
                 component = fixture.componentInstance;
@@ -115,9 +131,10 @@ describe('CourseDiscussionComponent', () => {
         expect(component.posts).toEqual(metisCoursePosts);
         expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
+            courseWideContexts: undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
+            courseWideChannelIds: [],
             searchText: undefined,
             filterToUnresolved: false,
             filterToOwn: false,
@@ -150,11 +167,12 @@ describe('CourseDiscussionComponent', () => {
         const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(component.lectures).toEqual([metisLecture, metisLecture2, metisLecture3]);
         expect(component.exercises).toEqual([metisExercise, metisExercise2]);
+        expect(component.courseWideChannels).toEqual([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]);
         // select should provide all context options
-        expect(contextOptions.textContent).toContain(metisLecture.title);
-        expect(contextOptions.textContent).toContain(metisLecture2.title);
-        expect(contextOptions.textContent).toContain(metisExercise.title);
-        expect(contextOptions.textContent).toContain(metisExercise2.title);
+        expect(contextOptions.textContent).toContain(metisGeneralChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisExerciseChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisLectureChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisExamChannelDto.name);
         // nothing should be selected
         const selectedContextOption = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(selectedContextOption.value).toBeUndefined();
@@ -178,6 +196,7 @@ describe('CourseDiscussionComponent', () => {
             courseWideContexts: undefined,
             exerciseIds: undefined,
             lectureIds: undefined,
+            courseWideChannelIds: [],
             searchText: component.searchText,
             filterToUnresolved: false,
             filterToOwn: false,
@@ -401,9 +420,10 @@ describe('CourseDiscussionComponent', () => {
     function expectGetFilteredPostsToBeCalled() {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
+            courseWideContexts: undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
+            courseWideChannelIds: [],
             page: component.page - 1,
             pageSize: component.itemsPerPage,
             pagingEnabled: true,
