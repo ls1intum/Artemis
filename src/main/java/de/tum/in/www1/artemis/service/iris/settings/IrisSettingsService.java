@@ -128,6 +128,7 @@ public class IrisSettingsService {
      * Save the Iris settings. Should always be used over directly calling the repository.
      * Automatically decides whether to save a new Iris settings object or update an existing one.
      *
+     * @param <T>      The subtype of the IrisSettings object
      * @param settings The Iris settings to save
      * @return The saved Iris settings
      */
@@ -144,6 +145,7 @@ public class IrisSettingsService {
      * Save a new IrisSettings object. Should always be used over directly calling the repository.
      * Ensures that the settings are valid and that no settings for the given object already exist.
      *
+     * @param <T>      The subtype of the IrisSettings object
      * @param settings The IrisSettings to save
      * @return The saved IrisSettings
      */
