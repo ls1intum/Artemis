@@ -110,7 +110,8 @@ To retrieve Dynamic Registration URL from Artemis, follow the steps outlined bel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. warning::
-Prerequisite: LTI configuration between Artemis and Moodle should be successfully completed by the Moodle Admin. Please ensure that the instructor steps and Moodle admin steps have been followed correctly.
+    Prerequisite: LTI configuration between Artemis and Moodle should be successfully completed by the Moodle Admin. Please ensure that the instructor steps and Moodle admin steps have been followed correctly.
+
 
 Once the LTI configuration between Artemis and Moodle is successfully completed, instructors have the capability to link specific Artemis exercises directly to their Moodle courses. This integration provides students with direct access to Artemis exercises from their Moodle courses. The process involves two primary steps:
 #. Retrieving the LTI 1.3 Launch URL for the desired Artemis exercise.
@@ -212,7 +213,7 @@ Once the online course setting is enabled, and Dynamic Registration URL is recei
 Below given steps for how to configure Artemis course over LTI with Moodle.
 
 Establish Artemis configuration from Moodle
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 With the Dynamic Registration URL provided by the course instructor, Moodle Admins can configure the LTI 1.3 integration in Moodle:
 
 #. Access Site Administration: Log into your Moodle account. From the main dashboard, navigate to the Site Administration section. This section contains various administrative settings for the Moodle platform.
