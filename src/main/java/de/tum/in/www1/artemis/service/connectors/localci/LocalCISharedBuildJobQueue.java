@@ -124,7 +124,6 @@ public class LocalCISharedBuildJobQueue {
                 programmingMessagingService.notifyUserAboutNewResult(result, participation);
             }
             else {
-                log.info("Laurenz jajaja");
                 programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
                         new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
             }
@@ -200,9 +199,6 @@ public class LocalCISharedBuildJobQueue {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
-
-            // hazelcastInstance.getCluster().getMembers().forEach(member -> log.info("Hazelcast, member: " + member));
-            // log.info("Hazelcast, cluster: " + hazelcastInstance.getCluster());
 
             log.info("Hazelcast, item added: " + item.getItem());
             if (nodeIsAvailable()) {
