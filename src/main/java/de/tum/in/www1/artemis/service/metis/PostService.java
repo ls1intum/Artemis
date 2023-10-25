@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
@@ -65,19 +64,16 @@ public class PostService extends PostingService {
 
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
-    private final ConversationService conversationService;
-
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
             PostSimilarityComparisonStrategy postContentCompareStrategy, WebsocketMessagingService websocketMessagingService, PlagiarismCaseService plagiarismCaseService,
-            PlagiarismCaseRepository plagiarismCaseRepository, ConversationParticipantRepository conversationParticipantRepository, ConversationService conversationService) {
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationParticipantRepository conversationParticipantRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.postRepository = postRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
         this.plagiarismCaseService = plagiarismCaseService;
-        this.conversationService = conversationService;
     }
 
     /**
