@@ -22,8 +22,12 @@
 
         <addColumn tableName="iris_settings">
             <column name="discriminator" type="VARCHAR(64)"/>
-            <column name="exercise_id" type="BIGINT"/>
-            <column name="course_id" type="BIGINT"/>
+            <column name="exercise_id" type="BIGINT">
+                <constraints unique="true"/>
+            </column>
+            <column name="course_id" type="BIGINT">
+                <constraints unique="true"/>
+            </column>
             <column name="current_version" type="INT"/>
 
             <column name="enable_auto_update_chat" type="BOOLEAN"/>
@@ -105,25 +109,25 @@
             <!-- Invert association course <-> iris_settings -->
             UPDATE iris_settings
                 JOIN (
-                SELECT id, iris_settings_id FROM course WHERE iris_settings_id IS NOT NULL
+                    SELECT id, iris_settings_id FROM course WHERE iris_settings_id IS NOT NULL
                 ) AS course_data
             ON iris_settings.id = course_data.iris_settings_id
-                SET iris_settings.id = course_data.id;
+                SET iris_settings.course_id = course_data.id;
 
             <!-- Invert association exercise <-> iris_settings -->
             UPDATE iris_settings
                 JOIN (
-                SELECT id, iris_settings_id FROM programming_exercise_details WHERE iris_settings_id IS NOT NULL
+                    SELECT id, iris_settings_id FROM programming_exercise_details WHERE iris_settings_id IS NOT NULL
                 ) AS exercise_data
             ON iris_settings.id = exercise_data.iris_settings_id
-                SET iris_settings.id = exercise_data.id;
+                SET iris_settings.exercise_id = exercise_data.id;
         </sql>
     </changeSet>
 
     <changeSet id="20231019191919-2-Postgres" author="morrien">
         <!-- Postgres -->
         <preConditions onFail="CONTINUE">
-            <dbms type="postgres"/>
+            <dbms type="postgresql"/>
         </preConditions>
 
         <sql>
@@ -137,11 +141,15 @@
 
     <changeSet id="20231019191919-3" author="morrien">
         <!-- drop old stuff -->
-        <dropForeignKeyConstraint baseTableName="course" constraintName="fk_course_on_iris_settings"/>
+        <dropForeignKeyConstraint baseTableName="course"
+                                  constraintName="fk_course_on_iris_settings"/>
         <dropForeignKeyConstraint baseTableName="programming_exercise_details"
                                   constraintName="fk_programming_exercise_details_on_iris_settings"/>
-        <dropColumn columnName="iris_settings_id" tableName="course"/>
-        <dropColumn columnName="iris_settings_id" tableName="programming_exercise_details"/>
-        <dropColumn columnName="is_global" tableName="iris_settings"/>
+        <dropColumn columnName="iris_settings_id"
+                    tableName="course"/>
+        <dropColumn columnName="iris_settings_id"
+                    tableName="programming_exercise_details"/>
+        <dropColumn columnName="is_global"
+                    tableName="iris_settings"/>
     </changeSet>
 </databaseChangeLog>
