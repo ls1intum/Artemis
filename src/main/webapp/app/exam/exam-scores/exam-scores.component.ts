@@ -144,6 +144,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
+            //TODO remove
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
             const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']);
