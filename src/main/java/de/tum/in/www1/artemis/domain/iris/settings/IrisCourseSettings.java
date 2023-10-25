@@ -7,9 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Course;
 
 /**
- * An IrisSettings object represents the settings for Iris for a part of Artemis.
- * These settings can be either global, course or exercise specific.
- * {@link de.tum.in.www1.artemis.service.iris.IrisSettingsService} for more details how IrisSettings are used.
+ * An {@link IrisSettings} implementation for course specific settings.
+ * Course settings are used to override global settings and allows all sub setting types.
  */
 @Entity
 @DiscriminatorValue("COURSE")
@@ -28,7 +27,7 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_hestia_settings_id")
     private IrisHestiaSubSettings irisHestiaSettings;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_code_editor_settings_id")
     private IrisCodeEditorSubSettings irisCodeEditorSettings;
 

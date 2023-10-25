@@ -16,8 +16,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
- * An IrisSubSettings object represents the settings for a specific feature of Iris.
- * {@link IrisSettings} is the parent of this class.
+ * IrisSubSettings is an abstract super class for the specific sub settings types.
+ * Sub Settings are settings for a specific feature of Iris.
+ * {@link IrisChatSubSettings} are used to specify settings for the chat feature.
+ * {@link IrisHestiaSubSettings} are used to specify settings for the Hestia integration.
+ * {@link IrisCodeEditorSubSettings} are used to specify settings for the code editor feature.
+ * <p>
+ * Also see {@link de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService} for more information.
  */
 @Entity
 @Table(name = "iris_sub_settings")

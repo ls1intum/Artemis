@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.iris.settings;
 import java.util.*;
 import java.util.function.Function;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
@@ -13,9 +14,12 @@ import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedCodeEditorSubSettings
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedHestiaSubSettingsDTO;
 
 /**
- * Service for handling {@link IrisSettings} objects.
+ * Service for handling {@link IrisSubSettings} objects.
+ * This server provides methods to update and combine sub settings objects.
+ * See {@link IrisSettingsService} for more information about handling {@link IrisSettings}.
  */
 @Service
+@Profile("iris")
 public class IrisSubSettingsService {
 
     private final AuthorizationCheckService authCheckService;
@@ -24,6 +28,19 @@ public class IrisSubSettingsService {
         this.authCheckService = authCheckService;
     }
 
+    /**
+     * Updates a chat sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     * - If the user is not an admin the rate limit will not be updated.
+     * - If the user is not an admin the allowed models will not be updated.
+     * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     *
+     * @param currentSettings Current chat sub settings.
+     * @param newSettings     Updated chat sub settings.
+     * @param parentSettings  Parent chat sub settings.
+     * @return Updated chat sub settings.
+     */
     public IrisChatSubSettings update(IrisChatSubSettings currentSettings, IrisChatSubSettings newSettings, IrisCombinedChatSubSettingsDTO parentSettings) {
         if (newSettings == null) {
             if (parentSettings == null) {
@@ -46,6 +63,18 @@ public class IrisSubSettingsService {
         return currentSettings;
     }
 
+    /**
+     * Updates a Hestia sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     * - If the user is not an admin the allowed models will not be updated.
+     * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     *
+     * @param currentSettings Current Hestia sub settings.
+     * @param newSettings     Updated Hestia sub settings.
+     * @param parentSettings  Parent Hestia sub settings.
+     * @return Updated Hestia sub settings.
+     */
     public IrisHestiaSubSettings update(IrisHestiaSubSettings currentSettings, IrisHestiaSubSettings newSettings, IrisCombinedHestiaSubSettingsDTO parentSettings) {
         if (newSettings == null) {
             if (parentSettings == null) {
@@ -64,6 +93,18 @@ public class IrisSubSettingsService {
         return currentSettings;
     }
 
+    /**
+     * Updates a Code Editor sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     * - If the user is not an admin the allowed models will not be updated.
+     * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     *
+     * @param currentSettings Current Code Editor sub settings.
+     * @param newSettings     Updated Code Editor sub settings.
+     * @param parentSettings  Parent Code Editor sub settings.
+     * @return Updated Code Editor sub settings.
+     */
     public IrisCodeEditorSubSettings update(IrisCodeEditorSubSettings currentSettings, IrisCodeEditorSubSettings newSettings, IrisCombinedCodeEditorSubSettingsDTO parentSettings) {
         if (newSettings == null) {
             if (parentSettings == null) {
@@ -120,7 +161,7 @@ public class IrisSubSettingsService {
         else if (allowedModels != null && allowedModels.contains(newPreferredModel)) {
             return newPreferredModel;
         }
-        else if (parentAllowedModels != null && parentAllowedModels.contains(newPreferredModel)) {
+        else if (allowedModels == null && parentAllowedModels != null && parentAllowedModels.contains(newPreferredModel)) {
             return newPreferredModel;
         }
         else {

@@ -12,9 +12,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
- * An IrisSettings object represents the settings for Iris for a part of Artemis.
- * These settings can be either global, course or exercise specific.
- * {@link de.tum.in.www1.artemis.service.iris.IrisSettingsService} for more details how IrisSettings are used.
+ * IrisSettings is an abstract super class for the specific settings types.
+ * Settings bundle {@link IrisSubSettings} together.
+ * {@link IrisGlobalSettings} are used to specify settings on a global level.
+ * {@link IrisCourseSettings} are used to specify settings on a course level.
+ * {@link IrisExerciseSettings} are used to specify settings on an exercise level.
+ * <p>
+ * Also see {@link de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService} for more information.
  */
 @Entity
 @Table(name = "iris_settings")

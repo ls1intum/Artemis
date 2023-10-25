@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  * This service is responsible for CRUD operations on {@link IrisSettings}.
  * It also provides methods for combining multiple {@link IrisSettings} and checking if a certain Iris feature is
  * enabled for an exercise.
+ * See {@link IrisSubSettingsService} for more information on the handling of {@link IrisSubSettings}.
  */
 @Service
 @Profile("iris")
@@ -42,8 +43,9 @@ public class IrisSettingsService {
     /**
      * Hooks into the {@link ApplicationReadyEvent} and creates or updates the global IrisSettings object on startup.
      *
-     * @param event Specifies when this method gets called and provides the event with all application data
+     * @param event Unused event param used to specify when the method should be executed
      */
+    @Profile("scheduling")
     @EventListener
     public void execute(ApplicationReadyEvent event) throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();
@@ -139,11 +141,11 @@ public class IrisSettingsService {
     }
 
     /**
-     * Save the Iris settings. Should always be used over directly calling the repository.
-     * Ensures that there is only one global Iris settings object.
+     * Save a new IrisSettings object. Should always be used over directly calling the repository.
+     * Ensures that the settings are valid and that no settings for the given object already exist.
      *
-     * @param settings The Iris settings to save
-     * @return The saved Iris settings
+     * @param settings The IrisSettings to save
+     * @return The saved IrisSettings
      */
     private <T extends IrisSettings> T saveNewIrisSettings(T settings) {
         if (settings instanceof IrisGlobalSettings) {
@@ -161,8 +163,18 @@ public class IrisSettingsService {
         return irisSettingsRepository.save(settings);
     }
 
+    /**
+     * Update an existing IrisSettings object. Should always be used over directly calling the repository.
+     * Ensures that the settings are valid and that the existing settings ID matches the update ID.
+     * Then updates the existing settings according to the type of the settings object.
+     *
+     * @param <T>                The subtype of the IrisSettings object
+     * @param existingSettingsId The ID of the existing IrisSettings object
+     * @param settingsUpdate     The Iris settings object to update
+     * @return The updated IrisSettings
+     */
     @SuppressWarnings("unchecked")
-    public <T extends IrisSettings> T updateIrisSettings(long existingSettingsId, T settingsUpdate) {
+    private <T extends IrisSettings> T updateIrisSettings(long existingSettingsId, T settingsUpdate) {
         if (!Objects.equals(existingSettingsId, settingsUpdate.getId())) {
             throw new ConflictException("Existing Iris settings ID does not match update ID", "IrisSettings", "idMismatch");
         }
@@ -186,6 +198,13 @@ public class IrisSettingsService {
         }
     }
 
+    /**
+     * Helper method to update global Iris settings.
+     *
+     * @param existingSettings The existing global Iris settings
+     * @param settingsUpdate   The global Iris settings to update
+     * @return The updated global Iris settings
+     */
     private IrisGlobalSettings updateGlobalSettings(IrisGlobalSettings existingSettings, IrisGlobalSettings settingsUpdate) {
         existingSettings.setIrisChatSettings(irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), null));
         existingSettings.setIrisHestiaSettings(irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), null));
@@ -193,6 +212,13 @@ public class IrisSettingsService {
         return irisSettingsRepository.save(existingSettings);
     }
 
+    /**
+     * Helper method to update course Iris settings.
+     *
+     * @param existingSettings The existing course Iris settings
+     * @param settingsUpdate   The course Iris settings to update
+     * @return The updated course Iris settings
+     */
     private IrisCourseSettings updateCourseSettings(IrisCourseSettings existingSettings, IrisCourseSettings settingsUpdate) {
         var parentSettings = getCombinedIrisGlobalSettings();
         existingSettings.setIrisChatSettings(
@@ -204,6 +230,13 @@ public class IrisSettingsService {
         return irisSettingsRepository.save(existingSettings);
     }
 
+    /**
+     * Helper method to update exercise Iris settings.
+     *
+     * @param existingSettings The existing exercise Iris settings
+     * @param settingsUpdate   The exercise Iris settings to update
+     * @return The updated exercise Iris settings
+     */
     private IrisExerciseSettings updateExerciseSettings(IrisExerciseSettings existingSettings, IrisExerciseSettings settingsUpdate) {
         var parentSettings = getCombinedIrisSettingsFor(existingSettings.getExercise().getCourseViaExerciseGroupOrCourseMember(), false);
         existingSettings.setIrisChatSettings(
@@ -241,6 +274,11 @@ public class IrisSettingsService {
         }
     }
 
+    /**
+     * Get the global Iris settings as an {@link IrisCombinedSettingsDTO}.
+     *
+     * @return The (combined) global Iris settings
+     */
     public IrisCombinedSettingsDTO getCombinedIrisGlobalSettings() {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
@@ -249,6 +287,16 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineCodeEditorSettings(settingsList, false));
     }
 
+    /**
+     * Get the combined Iris settings for a course as an {@link IrisCombinedSettingsDTO}.
+     * Combines the global Iris settings with the course Iris settings.
+     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
+     * See also {@link IrisSubSettingsService} for how the combining works in detail
+     *
+     * @param course  The course to get the Iris settings for
+     * @param minimal Whether to return the minimal version of the settings
+     * @return The combined Iris settings for the course
+     */
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Course course, boolean minimal) {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
@@ -258,6 +306,16 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal));
     }
 
+    /**
+     * Get the combined Iris settings for an exercise as an {@link IrisCombinedSettingsDTO}.
+     * Combines the global Iris settings with the course Iris settings and the exercise Iris settings.
+     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
+     * See also {@link IrisSubSettingsService} for how the combining works in detail
+     *
+     * @param exercise The exercise to get the Iris settings for
+     * @param minimal  Whether to return the minimal version of the settings
+     * @return The combined Iris settings for the exercise
+     */
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Exercise exercise, boolean minimal) {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
@@ -268,6 +326,13 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal));
     }
 
+    /**
+     * Get the default Iris settings for a course.
+     * The default settings are used if no Iris settings for the course exist.
+     *
+     * @param course The course to get the default Iris settings for
+     * @return The default Iris settings for the course
+     */
     public IrisCourseSettings getDefaultSettingsFor(Course course) {
         var settings = new IrisCourseSettings();
         settings.setCourse(course);
@@ -277,6 +342,13 @@ public class IrisSettingsService {
         return settings;
     }
 
+    /**
+     * Get the default Iris settings for an exercise.
+     * The default settings are used if no Iris settings for the exercise exist.
+     *
+     * @param exercise The exercise to get the default Iris settings for
+     * @return The default Iris settings for the exercise
+     */
     public IrisExerciseSettings getDefaultSettingsFor(Exercise exercise) {
         var settings = new IrisExerciseSettings();
         settings.setExercise(exercise);
@@ -284,10 +356,24 @@ public class IrisSettingsService {
         return settings;
     }
 
+    /**
+     * Get the raw (uncombined) Iris settings for a course.
+     * If no Iris settings for the course exist, the default settings are returned.
+     *
+     * @param course The course to get the Iris settings for
+     * @return The raw Iris settings for the course
+     */
     public IrisCourseSettings getRawIrisSettingsFor(Course course) {
         return irisSettingsRepository.findCourseSettings(course.getId()).orElse(getDefaultSettingsFor(course));
     }
 
+    /**
+     * Get the raw (uncombined) Iris settings for an exercise.
+     * If no Iris settings for the exercise exist, the default settings are returned.
+     *
+     * @param exercise The exercise to get the Iris settings for
+     * @return The raw Iris settings for the exercise
+     */
     public IrisExerciseSettings getRawIrisSettingsFor(Exercise exercise) {
         return irisSettingsRepository.findExerciseSettings(exercise.getId()).orElse(getDefaultSettingsFor(exercise));
     }

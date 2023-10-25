@@ -7,9 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Exercise;
 
 /**
- * An IrisSettings object represents the settings for Iris for a part of Artemis.
- * These settings can be either global, course or exercise specific.
- * {@link de.tum.in.www1.artemis.service.iris.IrisSettingsService} for more details how IrisSettings are used.
+ * An {@link IrisSettings} implementation for exercise specific settings.
+ * Exercise settings are used to override course settings and currently only allow setting the {@link IrisChatSubSettings}.
  */
 @Entity
 @DiscriminatorValue("EXERCISE")

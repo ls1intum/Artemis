@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
 /**
- * An IrisSubSettings object represents the settings for a specific feature of Iris.
- * {@link IrisSettings} is the parent of this class.
+ * An {@link IrisSubSettings} implementation for code editor settings.
+ * Code editor settings notably provide multiple {@link IrisTemplate}s for the different steps in the code generation.
  */
 @Entity
 @DiscriminatorValue("CODE_EDITOR")

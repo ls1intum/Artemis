@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
 /**
- * An IrisSubSettings object represents the settings for a specific feature of Iris.
- * {@link IrisSettings} is the parent of this class.
+ * An {@link IrisSubSettings} implementation for the Hestia integration settings.
+ * Hestia settings provide a single {@link IrisTemplate} for the hestia code hint generation requests.
  */
 @Entity
 @DiscriminatorValue("HESTIA")

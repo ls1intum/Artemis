@@ -7,9 +7,9 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * An IrisSettings object represents the settings for Iris for a part of Artemis.
- * These settings can be either global, course or exercise specific.
- * {@link de.tum.in.www1.artemis.service.iris.IrisSettingsService} for more details how IrisSettings are used.
+ * An {@link IrisSettings} implementation for global settings.
+ * Global settings provide default values for all of Artemis for all sub setting types.
+ * It also includes functionality to automatically update the sub settings in the future.
  */
 @Entity
 @DiscriminatorValue("GLOBAL")

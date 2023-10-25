@@ -8,8 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
 /**
- * An IrisSubSettings object represents the settings for a specific feature of Iris.
- * {@link IrisSettings} is the parent of this class.
+ * An {@link IrisSubSettings} implementation for chat settings.
+ * Chat settings notably provide settings for the rate limit.
+ * Chat settings provide a single {@link IrisTemplate} for the chat messages.
  */
 @Entity
 @DiscriminatorValue("CHAT")
