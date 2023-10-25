@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository.specs;
 
 import java.util.Arrays;
-import java.util.List;
 
 import javax.persistence.criteria.*;
 
@@ -59,25 +58,6 @@ public class MessageSpecs {
 
                 return criteriaBuilder.and(searchInMessageContent);
             }
-        });
-    }
-
-    /**
-     * Specification which sorts Messages by creation date descending
-     *
-     * @return specification used to chain DB operations
-     */
-    public static Specification<Post> getSortSpecification() {
-        return ((root, query, criteriaBuilder) -> {
-            // sort by display priority
-            List<Order> orderList = PostSpecs.getDisplayPriorityOrderList(root, criteriaBuilder);
-
-            // sort by creation date
-            Expression<?> sortCriterion = root.get(Post_.CREATION_DATE);
-            orderList.add(criteriaBuilder.desc(sortCriterion));
-
-            query.orderBy(orderList);
-            return null;
         });
     }
 
