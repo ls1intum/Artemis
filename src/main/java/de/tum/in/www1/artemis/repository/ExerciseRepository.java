@@ -504,7 +504,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE p.student.id = :userId
                   OR students.id = :userId
              """)
-    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(long userId);
+    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(long userId);
 
     /**
      * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}

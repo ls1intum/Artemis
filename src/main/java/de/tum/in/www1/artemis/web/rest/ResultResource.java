@@ -137,7 +137,7 @@ public class ResultResource {
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
-        log.debug("REST request to get Result : {}", resultId);
+        log.debug("REST request to get details of Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
