@@ -44,7 +44,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         translateService: TranslateService,
         route: ActivatedRoute,
         alertService: AlertService,
-        private codeEditorWebsocketService: IrisCodeEditorWebsocketService,
+        codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
         codeEditorWebsocketService.onCodeChanges().subscribe((changes: IrisExerciseComponentChangeSet) => {
@@ -67,12 +67,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private handleIrisChangeSet(changeSet: IrisExerciseComponentChangeSet) {
         if (changeSet.component === IrisExerciseComponent.PROBLEM_STATEMENT) {
-            this.applyPSChange(changeSet.changes);
+            this.applyChangesToProblemStatement(changeSet.changes);
             return;
         }
         const targetRepo = this.toRepository(changeSet.component);
         if (targetRepo === this.selectedRepository) {
-            this.applyCodeChange(changeSet.changes); // Apply changes immediately
+            this.applyCodeChanges(changeSet.changes); // Apply changes immediately
         } else {
             const alreadyBufferedChanges = this.bufferedRepositoryChanges.get(targetRepo) || [];
             alreadyBufferedChanges.push(...changeSet.changes);
@@ -102,7 +102,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Called when the user switches to another repository. Applies any buffered changes to the new repository.
      */
     protected onRepositoryChanged() {
-        this.applyBufferedChangesToCurrentRepo();
+        this.waitForCodeEditorContainer().then(() => this.applyBufferedChangesToCurrentRepo());
+    }
+
+    /**
+     * Wait and check every 100ms until the code editor container is not undefined anymore.
+     * We don't want to do this. If you know of a better way, please help.
+     */
+    private async waitForCodeEditorContainer() {
+        return new Promise<void>((resolve) => {
+            const check = setInterval(() => {
+                if (this.codeEditorContainer) {
+                    clearInterval(check);
+                    resolve();
+                }
+            }, 100);
+        });
     }
 
     /**
@@ -113,50 +128,49 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const changesToApply = this.bufferedRepositoryChanges.get(this.selectedRepository);
         if (!changesToApply) return;
         this.bufferedRepositoryChanges.delete(this.selectedRepository);
-        this.applyCodeChange(changesToApply);
+        this.applyCodeChanges(changesToApply);
     }
 
     /**
      * Apply the given changes to the current repository (i.e. the one that is currently selected in the Ace Editor).
+     * This method will eagerly load any files which are not already loaded in the Ace Editor,
+     * so that the changes can be applied to them.
      * @param changes The changes to apply
      */
-    private async applyCodeChange(changes: FileChange[]) {
-        console.log(this.codeEditorContainer.aceEditor != undefined);
+    private async applyCodeChanges(changes: FileChange[]) {
+        // First load all files that are not already loaded.
+        // Doing this in a Promise.all ensures that all files are loaded in parallel, which should be faster than loading them one after another.
+        await Promise.all(
+            changes
+                .filter((change) => change.file)
+                .map((change) => {
+                    this.codeEditorContainer.aceEditor.ensureFileIsLoaded(change.file!).catch((err) => console.error(err));
+                }),
+        );
         for (const change of changes) {
+            if (!change.file) continue;
             if (change.type === FileChangeType.MODIFY) {
-                const fileContent = await this.codeEditorContainer.aceEditor.getFileContent(change.file!);
-                let updateContent;
-                if (change.original !== '!all!') {
-                    console.log(change.original!);
-                    console.log(fileContent.includes(change.original!));
-                    updateContent = fileContent.replace(change.original!, change.updated!);
+                if (change.original === '!all!') {
+                    this.codeEditorContainer.aceEditor.updateFileText(change.file!, change.updated!);
                 } else {
-                    updateContent = change.updated;
+                    const fileContent = await this.codeEditorContainer.aceEditor.getFileContent(change.file!);
+                    const suggestedContent = fileContent.replace(change.original!, change.updated!);
+                    this.codeEditorContainer.aceEditor.updateFileText(change.file!, suggestedContent);
                 }
-                console.log(updateContent);
-                this.codeEditorContainer.aceEditor.updateFileText(change.file!, updateContent!);
             }
-            // TODO: Add actions for other change type
-            // if (change.type === FileChangeType.CREATE) {
-            //     const fileChange = new CreateFileChange(FileType.FILE, change.file!);
-            //     //aceEditor needs this.selectedFile === fileChange.fileName
-            //     this.codeEditorContainer.selectedFile = fileChange.fileName;
-            //     this.codeEditorContainer.onFileChange([[change.updated!], fileChange]);
-            // }
         }
     }
 
-    private applyPSChange(changes: FileChange[]) {
+    private applyChangesToProblemStatement(changes: FileChange[]) {
         changes.forEach((change: FileChange) => {
             if (change.type === FileChangeType.MODIFY) {
-                const psContent = this.editableInstructions.programmingExercise.problemStatement;
-                let updateContent;
-                if (change.original !== '!all!') {
-                    updateContent = psContent!.replace(change.original!, change.updated!);
+                if (change.original === '!all!') {
+                    this.editableInstructions.updateProblemStatement(change.updated!);
                 } else {
-                    updateContent = change.updated!;
+                    const psContent = this.editableInstructions.exercise.problemStatement || '';
+                    const updateContent = psContent.replace(change.original!, change.updated!);
+                    this.editableInstructions.updateProblemStatement(updateContent);
                 }
-                this.editableInstructions.updateProblemStatement(updateContent);
             }
         });
     }

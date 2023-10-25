@@ -137,22 +137,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         this.onError(err.message);
                     },
                 });
-            // wait till code editor container is defined
-            await this.waitForCodeEditorContainer();
-            console.log(this.codeEditorContainer);
             this.onRepositoryChanged();
-        });
-    }
-
-    async waitForCodeEditorContainer() {
-        return new Promise<void>((resolve) => {
-            const checkInterval = setInterval(() => {
-                if (this.codeEditorContainer) {
-                    console.log(this.codeEditorContainer);
-                    clearInterval(checkInterval);
-                    resolve();
-                }
-            }, 100);
         });
     }
 

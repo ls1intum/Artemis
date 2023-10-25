@@ -263,16 +263,33 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
+     * Ensures that the file with the specified filename exists in the file session.
+     * If it doesn't, it is fetched from the server and added to the file session.
+     * If there is an error loading the file, the file session is still updated, but the loadingError flag is set to true.
+     * @param fileName Name of the file to be loaded
+     */
+    async ensureFileIsLoaded(fileName: string): Promise<void> {
+        if (!this.fileSession[fileName]) {
+            await firstValueFrom(this.repositoryFileService.getFile(fileName))
+                .then((fileObj) => {
+                    this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 }, loadingError: false };
+                })
+                .catch((error) => {
+                    this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
+                    throw error; // rethrow error so that the caller can handle it (e.g. show error message to the user)
+                });
+        }
+    }
+
+    /**
      * Fetches the requested file by filename and opens a new editor session for it (if not yet done)
      * @param fileName Name of the file to be opened in the editor
      */
     async loadFile(fileName: string) {
         this.isLoading = true;
-        console.log('load file: ' + fileName);
-        return firstValueFrom(this.repositoryFileService.getFile(fileName))
-            .then((fileObj) => {
-                this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 }, loadingError: false };
-                this.finalizeLoading(fileName);
+        return this.ensureFileIsLoaded(fileName)
+            .then(() => {
+                this.initEditorIfFileSelected(fileName);
             })
             .catch((error) => {
                 this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
@@ -281,11 +298,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 } else {
                     this.onError.emit('loadingFailed');
                 }
-                this.finalizeLoading(fileName);
+                this.initEditorIfFileSelected(fileName);
             });
     }
 
-    async finalizeLoading(fileName: string) {
+    async initEditorIfFileSelected(fileName: string) {
         this.isLoading = false;
         // Only initialize the editor if the selected file has not changed in between
         // - prevents console errors (see https://github.com/ls1intum/Artemis/pull/603)
@@ -328,10 +345,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     public async getFileContent(file: string): Promise<string> {
-        if (this.fileSession[file]) {
-            return this.fileSession[file]!.code;
-        }
-        return this.loadFile(file).then(() => this.fileSession[file]!.code);
+        await this.ensureFileIsLoaded(file);
+        return this.fileSession[file].code;
     }
 
     ngOnDestroy() {
