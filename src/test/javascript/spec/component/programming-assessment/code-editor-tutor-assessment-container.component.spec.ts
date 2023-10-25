@@ -1,6 +1,6 @@
 import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -664,5 +664,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.feedbackSuggestions = [feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3];
         comp.removeSuggestion(feedbackSuggestion2);
         expect(comp.feedbackSuggestions).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
+    });
+
+    it('should show a confirmation dialog if there are pending feedback suggestions', async () => {
+        const modalOpenStub = jest.spyOn(comp['modalService'], 'open').mockReturnValue({ closed: of(true) } as NgbModalRef); // Confirm dismissal
+        comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
+        await comp.discardPendingSubmissionsWithConfirmation();
+        expect(modalOpenStub).toHaveBeenCalled();
+        // Dismissal should clear all feedback suggestions
+        expect(comp.feedbackSuggestions).toBeEmpty();
+    });
+
+    it('should keep feedback suggestions if the confirmation dialog is cancelled', async () => {
+        const modalOpenStub = jest.spyOn(comp['modalService'], 'open').mockReturnValue({ closed: of(false) } as NgbModalRef); // Cancel suggestion dismissal
+        comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
+        await comp.discardPendingSubmissionsWithConfirmation();
+        expect(modalOpenStub).toHaveBeenCalled();
+        // Cancelling should keep everything intact
+        expect(comp.feedbackSuggestions).not.toBeEmpty();
+    });
+
+    it('should not show a confirmation dialog if there are no feedback suggestions left', async () => {
+        const modalOpenStub = jest.spyOn(comp['modalService'], 'open');
+        comp.feedbackSuggestions = [];
+        await comp.discardPendingSubmissionsWithConfirmation();
+        expect(modalOpenStub).not.toHaveBeenCalled();
     });
 });
