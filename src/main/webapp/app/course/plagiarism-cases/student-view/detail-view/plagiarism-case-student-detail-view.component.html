@@ -57,7 +57,13 @@
                                 *ngIf="posts[0].creationDate"
                                 [innerHTML]="
                                     'artemisApp.plagiarism.replyToAccusationDueDateNotification'
-                                        | artemisTranslate: { dueDate: posts[0].creationDate.add(7, 'day').format('DD.MM.YYYY') }
+                                        | artemisTranslate
+                                            : {
+                                                  dueDate: (this.plagiarismCase.createdByContinuousPlagiarismControl
+                                                      ? this.plagiarismCase.exercise!.dueDate!.add(7, 'day')
+                                                      : posts[0].creationDate.add(7, 'day')
+                                                  ).format('DD.MM.YYYY')
+                                              }
                                 "
                             ></h5>
                             <jhi-button [btnType]="ButtonType.WARNING" (click)="postComponent.openCreateAnswerPostModal()" title="artemisApp.plagiarism.replyToAccusation">
