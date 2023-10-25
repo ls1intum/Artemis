@@ -28,19 +28,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import {
     metisCourse,
-    metisCoursePosts,
-    metisCoursePostsWithCourseWideContext,
     metisExamChannelDto,
     metisExercise,
     metisExercise2,
     metisExerciseChannelDto,
-    metisExercisePosts,
     metisGeneralChannelDto,
     metisLecture,
     metisLecture2,
     metisLecture3,
     metisLectureChannelDto,
-    metisLecturePosts,
     metisPostInChannel,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
@@ -129,7 +125,7 @@ describe('CourseDiscussionComponent', () => {
         tick();
         expect(component.course).toBe(metisCourse);
         expect(component.createdPost).not.toBeNull();
-        expect(component.posts).toEqual(metisCoursePosts);
+        expect(component.posts).toEqual([metisPostInChannel]);
         expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
             courseWideContexts: undefined,
@@ -183,7 +179,7 @@ describe('CourseDiscussionComponent', () => {
         // descending should be selected as sort direction
         // show correct number of posts found
         const postCountInformation = getElement(fixture.debugElement, '.post-result-information');
-        expect(component.posts).toEqual(metisCoursePosts);
+        expect(component.posts).toEqual([metisPostInChannel]);
         expect(postCountInformation.textContent).not.toBeNull();
     }));
 
@@ -275,63 +271,6 @@ describe('CourseDiscussionComponent', () => {
         // actual post filtering done at server side, tested by PostIntegrationTest
     }));
 
-    it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        component.formGroup.patchValue({
-            context: [
-                {
-                    courseWideContext: CourseWideContext.ORGANIZATION,
-                },
-            ],
-        });
-        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('selectionChange', false);
-        tick();
-        fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.posts).toEqual(metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.ORGANIZATION));
-    }));
-
-    it('should fetch new posts when context filter changes to exercise', fakeAsync(async () => {
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        component.formGroup.patchValue({
-            context: [
-                {
-                    exerciseId: metisExercise.id,
-                },
-            ],
-        });
-        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('selectionChange', false);
-        tick();
-        fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.posts).toEqual(metisExercisePosts);
-    }));
-
-    it('should fetch new posts when context filter changes to lecture', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        component.formGroup.patchValue({
-            context: [
-                {
-                    lectureId: metisLecture.id,
-                },
-            ],
-        });
-        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('selectionChange', false);
-        tick();
-        fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.posts).toEqual(metisLecturePosts);
-    }));
-
     it('should fetch new posts when context filter changes to conversation', fakeAsync(() => {
         component.ngOnInit();
         tick();
@@ -358,19 +297,10 @@ describe('CourseDiscussionComponent', () => {
         component.formGroup.patchValue({
             context: [
                 {
-                    lectureId: metisLecture.id,
+                    conversationId: 1,
                 },
                 {
-                    exerciseId: metisExercise.id,
-                },
-                {
-                    courseWideContext: CourseWideContext.TECH_SUPPORT,
-                },
-                {
-                    courseWideContext: CourseWideContext.RANDOM,
-                },
-                {
-                    courseWideContext: CourseWideContext.ORGANIZATION,
+                    conversationId: 2,
                 },
             ],
         });
@@ -381,9 +311,9 @@ describe('CourseDiscussionComponent', () => {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(metisServiceGetFilteredPostsSpy.mock.calls[2][0]).toEqual({
             ...component.currentPostContextFilter,
-            courseWideContexts: [CourseWideContext.TECH_SUPPORT, CourseWideContext.RANDOM, CourseWideContext.ORGANIZATION],
-            lectureIds: [metisLecture.id],
-            exerciseIds: [metisExercise.id],
+            courseWideContexts: undefined,
+            lectureIds: undefined,
+            exerciseIds: undefined,
         });
     }));
 
@@ -406,10 +336,11 @@ describe('CourseDiscussionComponent', () => {
     }));
 
     it('should fetch next page of posts if exists', fakeAsync(() => {
-        component.itemsPerPage = 5;
+        component.itemsPerPage = 1;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
+        component.totalItems = 2;
         component.fetchNextPage();
         // next page does not exist, service method won't be called again
         component.fetchNextPage();

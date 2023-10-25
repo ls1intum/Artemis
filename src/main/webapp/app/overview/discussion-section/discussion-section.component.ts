@@ -184,6 +184,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     const contextFilter = { conversationId: this.channel.id };
                     const channelDTO = new ChannelDTO();
                     channelDTO.isCourseWide = true;
+                    channelDTO.id = this.channel.id;
                     this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
 
                     this.createEmptyPost();

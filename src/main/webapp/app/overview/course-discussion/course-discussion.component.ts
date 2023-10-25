@@ -164,13 +164,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         const conversationIds: number[] = [];
 
         for (const context of this.formGroup.get('context')?.value || []) {
-            if (context.lectureId) {
-                lectureIds.push(context.lectureId);
-            } else if (context.exerciseId) {
-                exerciseIds.push(context.exerciseId);
-            } else if (context.courseWideContext) {
-                courseWideContexts.push(context.courseWideContext);
-            } else if (context.conversationId) {
+            if (context.conversationId) {
                 conversationIds.push(context.conversationId);
             }
         }
