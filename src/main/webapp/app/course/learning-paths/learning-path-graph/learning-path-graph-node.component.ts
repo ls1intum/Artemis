@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { faCheckCircle, faCircle, faPlayCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircle, faFlag, faFlagCheckered, faPlayCircle, faQuestionCircle, faSignsPost } from '@fortawesome/free-solid-svg-icons';
 import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { Competency, CompetencyProgress } from 'app/entities/competency.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -26,6 +26,9 @@ export class LearningPathGraphNodeComponent {
     faPlayCircle = faPlayCircle;
     faQuestionCircle = faQuestionCircle;
     faCircle = faCircle;
+    faSignsPost = faSignsPost;
+    faFlagCheckered = faFlagCheckered;
+    faFlag = faFlag;
 
     nodeDetailsData = new NodeDetailsData();
 
