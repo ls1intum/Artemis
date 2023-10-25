@@ -71,7 +71,7 @@ jobs:
           username: ${{ secrets.DOCS_SSH_USER }}
           key: ${{ secrets.DOCS_SSH_KEY }}
           proxy_host: ${{ secrets.DEPLOYMENT_GATEWAY_HOST }}
-          proxy_username: ${{ secretsDEPLOYMENT_GATEWAY_USER }}
+          proxy_username: ${{ secrets.DEPLOYMENT_GATEWAY_USER }}
           proxy_key: ${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}
           proxy_port: ${{ secrets.DEPLOYMENT_GATEWAY_PORT }}
           script: |
