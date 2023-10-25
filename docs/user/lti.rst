@@ -223,7 +223,7 @@ With the Dynamic Registration URL provided by the course instructor, Moodle Admi
         :width: 700
         :alt: Moodle - Site Administration
 
-#. Enter Dynamic Registration URL: In the Manage Tools section, you will find a field labeled Tool URL. Paste the previously copied Dynamic Registration URL from Artemis into this field.
+#. Enter Dynamic Registration URL: In the Manage Tools section, you will find a field labeled Tool URL. Paste the Dynamic Registration URL provided by the instructor into this field.
 #. Initiate LTI Advantage Integration: After entering the URL, click on the Add LTI Advantage button. This action will begin the process of integrating Artemis with Moodle using the LTI 1.3 standard.
 
     .. figure:: lti/moodle_add_tool_url.png
