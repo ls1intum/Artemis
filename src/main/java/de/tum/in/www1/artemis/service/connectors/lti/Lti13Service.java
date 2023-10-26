@@ -357,14 +357,4 @@ public class Lti13Service {
         ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
                 ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
     }
-
-    public String parseTargetLinkUri(String targetLinkUri) {
-        if (getCourseFromTargetLink(targetLinkUri) == null) {
-            return targetLinkUri;
-        }
-        else {
-            return ltiDeepLinkingService.buildDeepLinkingTargetLinkUri(getCourseFromTargetLink(targetLinkUri).getId().toString());
-        }
-    }
-
 }

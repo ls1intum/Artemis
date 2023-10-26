@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.lti.Lti13DeepLinkingResponse;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * Service for handling LTI deep linking functionality.
@@ -36,8 +37,6 @@ public class LtiDeepLinkingService {
     private final Lti13TokenRetriever tokenRetriever;
 
     private Lti13DeepLinkingResponse lti13DeepLinkingResponse;
-
-    private final String DEEP_LINKING_TARGET_URL = "/lti/deep-linking/";
 
     private String clientRegistrationId;
 
@@ -60,13 +59,18 @@ public class LtiDeepLinkingService {
     public String buildLtiDeepLinkResponse() {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(this.artemisServerUrl + "/lti/select-content");
 
-        String returnUrl = this.lti13DeepLinkingResponse.getReturnUrl();
         String jwt = tokenRetriever.createDeepLinkingJWT(this.clientRegistrationId, this.lti13DeepLinkingResponse.getClaims());
+        String returnUrl = this.lti13DeepLinkingResponse.getReturnUrl();
+
+        // Validate properties are set to create a response
+        validateDeepLinkingResponseSettings(returnUrl, jwt);
+
         String htmlResponse = fillHtmlResponse(returnUrl, jwt);
 
         uriComponentsBuilder.queryParam("htmlResponse", UriComponent.encode(htmlResponse, UriComponent.Type.QUERY_PARAM));
 
         return uriComponentsBuilder.build().toUriString();
+
     }
 
     /**
@@ -87,21 +91,30 @@ public class LtiDeepLinkingService {
      * @param exerciseId The exercise ID.
      */
     public void populateContentItems(String courseId, String exerciseId) {
-        JsonObject item = setContentItem(courseId, exerciseId);
+        if (this.lti13DeepLinkingResponse == null) {
+            throw new BadRequestAlertException("Deep linking response is not initialized correctly.", "LTI", "deepLinkingResponseInitializeFailed");
+        }
 
+        JsonObject item = setContentItem(courseId, exerciseId);
         JsonArray contentItems = new JsonArray();
         contentItems.add(item);
         this.lti13DeepLinkingResponse.setContentItems(contentItems.toString());
     }
 
-    /**
-     * Build the deep linking target link URI.
-     *
-     * @param courseId The course ID.
-     * @return The deep linking target link URI.
-     */
-    public String buildDeepLinkingTargetLinkUri(String courseId) {
-        return artemisServerUrl + DEEP_LINKING_TARGET_URL + courseId;
+    public String getClientRegistrationId() {
+        return clientRegistrationId;
+    }
+
+    public void setClientRegistrationId(String clientRegistrationId) {
+        this.clientRegistrationId = clientRegistrationId;
+    }
+
+    public Lti13DeepLinkingResponse getLti13DeepLinkingResponse() {
+        return lti13DeepLinkingResponse;
+    }
+
+    public void setLti13DeepLinkingResponse(Lti13DeepLinkingResponse lti13DeepLinkingResponse) {
+        this.lti13DeepLinkingResponse = lti13DeepLinkingResponse;
     }
 
     private JsonObject setContentItem(String courseId, String exerciseId) {
@@ -118,11 +131,29 @@ public class LtiDeepLinkingService {
         return item;
     }
 
+    private void validateDeepLinkingResponseSettings(String returnURL, String jwt) {
+        if (isEmptyString(jwt)) {
+            throw new BadRequestAlertException("Deep linking response cannot be created", "LTI", "deepLinkingResponseFailed");
+        }
+
+        if (isEmptyString(returnURL)) {
+            throw new BadRequestAlertException("Cannot find platform return URL", "LTI", "deepLinkReturnURLEmpty");
+        }
+
+        if (isEmptyString(this.lti13DeepLinkingResponse.getDeploymentId())) {
+            throw new BadRequestAlertException("Platform deployment id cannot be empty", "LTI", "deploymentIdEmpty");
+        }
+    }
+
     private String fillHtmlResponse(String returnUrl, String jwt) {
         return "<!DOCTYPE html>\n" + "<html>\n" + "<head>\n" + "</head>\n" + "<body>\n" + "\n" + "    <!-- The auto-submitted form -->\n"
                 + "    <form id=\"ltiRedirectForm\" action=\"" + returnUrl + "\" method=\"post\">\n" + "        <input type=\"hidden\" name=\"JWT\" value=\"" + jwt + "\" />\n"
                 + "        <input type=\"hidden\" name=\"id\" value=\"" + this.lti13DeepLinkingResponse.getDeploymentId() + "\" />\n"
                 + "        <!-- Additional hidden fields if needed -->\n" + "    </form>\n" + "\n" + "    <script>\n"
                 + "        document.getElementById('ltiRedirectForm').submit();\n" + "    </script>\n" + "</body>\n" + "</html>";
+    }
+
+    boolean isEmptyString(String string) {
+        return string == null || string.isEmpty();
     }
 }

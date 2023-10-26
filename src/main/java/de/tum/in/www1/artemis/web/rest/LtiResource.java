@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationServi
 import net.minidev.json.JSONObject;
 
 /**
- * REST controller to handle LTI10 launches.
+ * REST controller to handle LTI13 launches.
  */
 @RestController
 @RequestMapping("/api")
