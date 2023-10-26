@@ -250,7 +250,7 @@
             "gradesBeforeBonus": "Grades before bonus",
             "gradesAfterBonus": "Grades after bonus",
             "noStudentResultAvailable": "No student results available",
-            "noExerciseGroupAvailable": "No exercise groups provided"
+            "noExerciseGroupAvailable": "No exercise groups available"
         },
         "examParticipation": {
             "timer": "Time left: ",
