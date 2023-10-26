@@ -3,7 +3,6 @@ Server Tests
 ************
 
 This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out :ref:`this <best_practices_for_test_cases>`.
-`this <https://ls1intum.github.io/Artemis/user/exercises/programming/#best-practices-for-writing-test-cases>`__.
 
 0. General testing tips
 ========================
@@ -12,7 +11,7 @@ Instead of naming your variables ``int a``, ``double b``, ``String c``, you shou
 To increase readability, prefix variable names with ``actual`` and ``expected``.
 
 For example, if you want to test the method ``borrow`` in the class ``Book``, ``testBorrowInBook()`` would be an appropriate name for the test case.
-When comparing two books in the test, use meaningful names such as ``actualBook `` and ``expectedBook``.
+When comparing two books in the test, use meaningful names such as ``actualBook`` and ``expectedBook``.
 
 .. code-block:: java
 
@@ -118,7 +117,9 @@ utilizes the services provided by ``FileUploadTestService``. The ``FileUploadTes
 
 
 In general, **UtilServices** manage the communication with the database, and **Factories** are responsible for object creation and initialization. If you cannot find the correct helper function, add a new one to the most fitting UtilService or Factory and enhance it with JavaDoc.
-Make sure to always use the ids returned by the database and to not assume the existence or non-existence of specific values!
+
+.. note::
+    Make sure to always use the ids returned by the database and to not assume the existence or non-existence of specific values.
 
 
 5. Test performance tips
