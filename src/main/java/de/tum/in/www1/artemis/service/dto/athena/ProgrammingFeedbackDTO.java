@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 /**
  * A DTO representing a Feedback on a ProgrammingExercise, for transferring data to Athena and receiving suggestions from Athena
  */
-public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, long structuredGradingInstructionId,
+public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
         String filePath, Integer lineStart, Integer lineEnd) {
 
     /**
