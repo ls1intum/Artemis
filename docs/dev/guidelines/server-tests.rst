@@ -2,7 +2,8 @@
 Server Tests
 ************
 
-This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
+This section covers recommended practices for writing Artemis server tests. If you want to write tests for Artemis programming exercises to test students' submissions, check out :ref:`this <best_practices_for_test_cases>`.
+`this <https://ls1intum.github.io/Artemis/user/exercises/programming/#best-practices-for-writing-test-cases>`__.
 
 0. General testing tips
 ========================
@@ -61,7 +62,7 @@ If the ``isTrue`` assertion is unavoidable, specify a custom error message using
 
 .. code-block:: java
 
-    assertThat(submission.isSubmittedInTime()).as("submission was not in time").isTrue();
+    assertThat(submission.isSubmittedInTime()).as("submission should be in time").isTrue();
 
 For more information, please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-core-assertions-guide>`__, especially the `section about avoiding incorrect usage <https://assertj.github.io/doc/#assertj-core-incorrect-usage>`__.
 
@@ -80,7 +81,7 @@ Here is a simple ArchUnit test using an ArchRule to forbid JUnit assertions (in 
         noJunitJupiterAssertions.check(testClasses);
     }
 
-We first define the ArchRule prohibiting the JUnit assertion package and then enforce it in test classes.
+We first define the ArchRule prohibiting the JUnit assertion package and then enforce it in test classes. Add new general ArchUnit test cases into the existing ``ArchitectureTest`` class or create a new class extending ``AbstractArchitectureTest`` for more specific tests.
 
 
 3. Counting database query calls within tests
@@ -88,6 +89,8 @@ We first define the ArchRule prohibiting the JUnit assertion package and then en
 
 It's possible to write tests checking how many database accesses a REST call performs. These tests ensure that code changes don't lead to more database calls or remind developers if they do, which is especially important for commonly used endpoints.
 However, we should carefully consider before adding such assertions as it makes the test more tedious to maintain.
+
+It's possible to write tests checking how many database accesses an operation performs. These tests ensure that code changes don't inadvertently decrease performance and remind developers if they do, which is especially important for commonly used functionality.
 
 The test below tracks how many database accesses a REST call performs. The custom assert ``assertThatDb`` uses the ``HibernateQueryInterceptor`` to count the number of queries. The assertion checks the number of database accesses and returns the original result of the REST call, which you can continue to use throughout the test.
 
@@ -115,6 +118,7 @@ utilizes the services provided by ``FileUploadTestService``. The ``FileUploadTes
 
 
 In general, **UtilServices** manage the communication with the database, and **Factories** are responsible for object creation and initialization. If you cannot find the correct helper function, add a new one to the most fitting UtilService or Factory and enhance it with JavaDoc.
+Make sure to always use the ids returned by the database and to not assume the existence or non-existence of specific values!
 
 
 5. Test performance tips
