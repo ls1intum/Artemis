@@ -4,6 +4,10 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <div *ngIf="!isLoading && (!studentResults || !exerciseGroups)">
+        <div class="alert alert-warning" *ngIf="!exerciseGroups">{{ 'artemisApp.examScores.noExerciseGroupAvailable' | artemisTranslate }}</div>
+        <div class="alert alert-info" *ngIf="!studentResults">{{ 'artemisApp.examScores.noStudentResultAvailable' | artemisTranslate }}</div>
+    </div>
 
     <div *ngIf="!isLoading && studentResults && exerciseGroups">
         <div class="d-flex">

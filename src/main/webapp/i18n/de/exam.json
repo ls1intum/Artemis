@@ -248,7 +248,9 @@
             "totalColumn": "Total",
             "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich",
             "gradesBeforeBonus": "Noten vor Bonus",
-            "gradesAfterBonus": "Noten nach Bonus"
+            "gradesAfterBonus": "Noten nach Bonus",
+            "noStudentResultAvailable": "Keine Studentenabgabe vorhanden",
+            "noExerciseGroupAvailable": "Keine Aufgabengruppen vorhanden"
         },
         "examParticipation": {
             "timer": "Restzeit: ",

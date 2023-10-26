@@ -77,7 +77,7 @@ public class ParticipantScoreResource {
      * has been battle tested enough.
      *
      * @param examId the id of the exam for which to calculate the exam scores
-     * @return list of scores for every registered user in the xam
+     * @return list of scores for every registered user in the exam or 404 not found if scores are empty
      */
     @GetMapping("/exams/{examId}/exam-scores")
     @EnforceAtLeastInstructor
@@ -88,6 +88,6 @@ public class ParticipantScoreResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateExamScores(exam);
         log.info("getScoresOfExam took {}ms", System.currentTimeMillis() - start);
-        return ResponseEntity.ok().body(scoreDTOS);
+        return scoreDTOS.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok().body(scoreDTOS);
     }
 }
