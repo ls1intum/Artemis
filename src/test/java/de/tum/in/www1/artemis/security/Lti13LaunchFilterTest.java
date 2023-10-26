@@ -123,7 +123,7 @@ class Lti13LaunchFilterTest {
         idTokenClaims.put(Claims.LTI_DEPLOYMENT_ID, "some-deployment-id");
 
         idTokenClaims.put(Claims.DEEP_LINKING_SETTINGS, "{ \"deep_link_return_url\": \"https://platform.example/deep_links\" }");
-        idTokenClaims.put(Claims.TARGET_LINK_URI, "https://any-artemis-domain.org/api/deep-linking/121");
+        idTokenClaims.put(Claims.TARGET_LINK_URI, "https://any-artemis-domain.org/lti/deep-linking/121");
         idTokenClaims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
     }
 
@@ -169,7 +169,7 @@ class Lti13LaunchFilterTest {
         JSONObject responseJsonBody = argument.getValue();
         verify(lti13Service).buildLtiResponse(any(), any());
         assertThat(((String) responseJsonBody.get("targetLinkUri"))).as("Response body contains the expected targetLinkUri")
-                .contains("https://any-artemis-domain.org/api/deep-linking/121");
+                .contains("https://any-artemis-domain.org/lti/deep-linking/121");
 
     }
 

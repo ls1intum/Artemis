@@ -43,7 +43,7 @@ public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
-    private static final String COURSE_PATH_PATTERN = "/api/public/lti13/deep-linking/{courseId}";
+    private static final String COURSE_PATH_PATTERN = "/lti/deep-linking/{courseId}";
 
     private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
@@ -344,11 +344,14 @@ public class Lti13Service {
 
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Course targetCourse = getCourseFromTargetLink(targetLinkUrl);
+        if (targetCourse == null) {
+            String message = "No course to start deep-linking at " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
+        }
 
         OnlineCourseConfiguration onlineCourseConfiguration = targetCourse.getOnlineCourseConfiguration();
         if (onlineCourseConfiguration == null) {
-            String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
-            log.error(message);
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 

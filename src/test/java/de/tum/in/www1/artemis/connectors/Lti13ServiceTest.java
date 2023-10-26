@@ -473,6 +473,92 @@ class Lti13ServiceTest {
         assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
     }
 
+    @Test
+    void startDeepLinkingCourseFound() {
+        long exerciseId = 134;
+        Exercise exercise = new TextExercise();
+        exercise.setId(exerciseId);
+
+        long courseId = 12;
+        Course course = new Course();
+        course.setId(courseId);
+        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
+        exercise.setCourse(course);
+        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+
+        JSONObject mockSettings = new JSONObject();
+        mockSettings.put("deep_link_return_url", "test_return_url");
+        when(oidcIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS)).thenReturn(mockSettings);
+
+        when(oidcIdToken.getClaim("iss")).thenReturn("http://artemis.com");
+        when(oidcIdToken.getClaim("aud")).thenReturn("http://moodle.com");
+        when(oidcIdToken.getClaim("exp")).thenReturn("12345");
+        when(oidcIdToken.getClaim("iat")).thenReturn("test");
+        when(oidcIdToken.getClaim("nonce")).thenReturn("1234-34535-abcbcbd");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        when(oidcIdToken.getClaim(Claims.MESSAGE_TYPE)).thenReturn("LtiDeepLinkingRequest");
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + courseId);
+
+        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
+
+        Optional<User> user = Optional.of(new User());
+        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+
+        lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId);
+
+        verify(ltiDeepLinkingService).initializeDeepLinkingResponse(oidcIdToken, clientRegistrationId);
+    }
+
+    @Test
+    void startDeepLinkingNotOnlineCourse() {
+        long exerciseId = 134;
+        Exercise exercise = new TextExercise();
+        exercise.setId(exerciseId);
+
+        long courseId = 12;
+        Course course = new Course();
+        course.setId(courseId);
+        exercise.setCourse(course);
+        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + courseId);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+
+    }
+
+    @Test
+    void startDeepLinkingCourseNotFound() {
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/100000");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+
+        verify(ltiDeepLinkingService, never()).initializeDeepLinkingResponse(any(), any());
+    }
+
+    @Test
+    void startDeepLinkingInvalidPath() {
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/with/invalid/path/to/deeplinking/11");
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+
+        verify(ltiDeepLinkingService, never()).initializeDeepLinkingResponse(any(), any());
+    }
+
+    @Test
+    void startDeepLinkingMalformedUrl() {
+        doReturn("path").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+
+        verify(ltiDeepLinkingService, never()).initializeDeepLinkingResponse(any(), any());
+    }
+
     private State getValidStateForNewResult(Result result) {
         User user = new User();
         user.setLogin("someone");
