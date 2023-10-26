@@ -22,6 +22,11 @@
         overflow: hidden;
     }
 
+    .markdown-editor {
+        border-left: var(--border-color) 1px solid;
+        border-right: var(--border-color) 1px solid;
+    }
+
     .instructions__content__markdown {
         background-color: var(--markdown-preview-editor-background);
     }
@@ -61,10 +66,5 @@
         &__item {
             flex: 1;
         }
-    }
-
-    .rg-bottom {
-        align-self: center;
-        cursor: row-resize;
     }
 }
