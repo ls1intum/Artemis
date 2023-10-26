@@ -34,6 +34,15 @@ export class LearningPathStorageService {
     }
 
     /**
+     * Gets all recommendations of the learning path in recommended order
+     *
+     * @param learningPathId the id of the learning path
+     */
+    getRecommendations(learningPathId: number) {
+        return this.learningPathRecommendations.get(learningPathId);
+    }
+
+    /**
      * Gets if the given learning object has a successor.
      *
      * @param learningPathId the id of the learning path
