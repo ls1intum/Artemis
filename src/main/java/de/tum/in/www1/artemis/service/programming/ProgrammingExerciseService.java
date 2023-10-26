@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -20,7 +19,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,52 +207,56 @@ public class ProgrammingExerciseService {
      * @throws IOException     If the template files couldn't be read
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
-        AtomicBoolean gitExceptionThrown = new AtomicBoolean(false);
-
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
+        ProgrammingExercise createdExercise;
 
-        ProgrammingExercise createdExercise = transactionTemplate.execute(new TransactionCallback<ProgrammingExercise>() {
+        try {
+            // We execute the following steps in a transaction to be able to roll back in the case of errors.
+            // As a transactional method cannot be used in the same class, we have to use this workaround.
+            createdExercise = transactionTemplate.execute(new TransactionCallback<ProgrammingExercise>() {
 
-            @Override
-            public ProgrammingExercise doInTransaction(@NotNull TransactionStatus status) {
-                try {
-                    programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
+                @Override
+                public ProgrammingExercise doInTransaction(@NotNull TransactionStatus status) {
+                    try {
+                        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
+                    }
+                    catch (GitAPIException e) {
+                        log.error("An exception occurred while creating repositories for new exercise.", e);
+                        throw new RuntimeException(e);
+                    }
+                    initParticipations(programmingExercise);
+                    setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
+
+                    // Save participations to get the ids required for the webhooks
+                    connectBaseParticipationsToExerciseAndSave(programmingExercise);
+
+                    connectAuxiliaryRepositoriesToExercise(programmingExercise);
+
+                    try {
+                        programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
+                    }
+                    catch (GitAPIException e) {
+                        log.error("An exception occurred while setting up the exercise template for new programming exercise.", e);
+                        throw new RuntimeException(e);
+                    }
+                    programmingSubmissionService.createInitialSubmissions(programmingExercise);
+
+                    // Save programming exercise to prevent transient exception
+                    ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+
+                    channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
+
+                    setupBuildPlansForNewExercise(savedProgrammingExercise);
+                    return programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
                 }
-                catch (GitAPIException e) {
-                    gitExceptionThrown.set(true);
-                }
-                initParticipations(programmingExercise);
-                setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
-
-                // Save participations to get the ids required for the webhooks
-                connectBaseParticipationsToExerciseAndSave(programmingExercise);
-
-                connectAuxiliaryRepositoriesToExercise(programmingExercise);
-
-                try {
-                    programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
-                }
-                catch (GitAPIException e) {
-                    gitExceptionThrown.set(true);
-                }
-                programmingSubmissionService.createInitialSubmissions(programmingExercise);
-
-                // Save programming exercise to prevent transient exception
-                ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-
-                channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
-
-                setupBuildPlansForNewExercise(savedProgrammingExercise);
-                return programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
-            }
-        });
-
-        if (gitExceptionThrown.get()) {
-            throw new CanceledException("An error occurred while creating the exercise repositories.");
+            });
+        }
+        catch (RuntimeException e) {
+            throw (GitAPIException) e.getCause();
         }
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(createdExercise);
