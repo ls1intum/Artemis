@@ -482,7 +482,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Removes all feedback details that should not be passed to the student.
      *
-     * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
+     * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback) {
         filterSensitiveFeedbacks(removeHiddenFeedback, participation.getExercise());
@@ -491,7 +491,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Removes all feedback details that should not be passed to the student.
      *
-     * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
+     * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      * @param exercise             the exercise related to this result. Used to determine if test case names should be removed.
      */
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
@@ -521,7 +521,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @see ResultDTO
      *
-     * @param removeHiddenFeedback if feedbacks marked with visibility 'after due date' should also be removed.
+     * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      * @param exercise             used to check if students can see the test case names
      * @return the new filtered list
      */

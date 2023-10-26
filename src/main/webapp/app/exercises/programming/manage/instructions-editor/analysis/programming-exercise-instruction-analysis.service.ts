@@ -49,7 +49,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
     private analyzeTestCases = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseTestCases: string[]) => {
         // Extract the testCase list from the task matches.
         const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, TEST_CASE_REGEX);
-        // Look for test cases that are not part of the test repository. Could e.g. be typos.
+        // Look for test cases that are not part of the test repository. Could, e.g., be typos.
         const invalidTestCaseAnalysis = testCasesInMarkdown
             .map(
                 ([lineNumber, testCases]) =>

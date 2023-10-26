@@ -653,7 +653,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Only keeps automatic feedbacks that also are associated with a relevant test case.
-     * Used to remove feedbacks that are e.g. related to test cases with visibility = never.
+     * Used to remove feedbacks that are, e.g., related to test cases with visibility = never.
      * <p>
      * Does not remove static code analysis feedback.
      *

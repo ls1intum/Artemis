@@ -257,7 +257,7 @@ public class Feedback extends DomainObject {
     /**
      * Returns if this is a positive feedback.
      * <p>
-     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g. when this is a
+     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g., when this is a
      * feedback for a programming exercise test case that has not been executed for the submission.
      *
      * @return true, if this is a positive feedback.

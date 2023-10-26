@@ -241,7 +241,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Finds the test case id wrapped into a <testid></testid> text.
-     * Returns null if the text does not reference a testid, but is e.g. a name instead.
+     * Returns null if the text does not reference a testid, but is, e.g., a name instead.
      * <p>
      * Examples:
      * <ul>
@@ -385,7 +385,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Replaces a comma separated list of test case names with their corresponding id replacement.
-     * If no matching test case exists (e.g. due to a typo), we keep the test name.
+     * We keep the test name if no matching test case exists (e.g. due to a typo).
      * <p>
      * Example: {@code testBubbleSort(),doesNotExists -> <testid>27</testid>,doesNotExists }
      */
@@ -420,11 +420,11 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Looks for all tasks in the given problem statement, and replaces its mentioned test cases using the given replacer method.
-     * Replacer methods are e.g. {@link ProgrammingExerciseTaskService#extractTestCaseIdReplacementsFromNames(String, Set)}
+     * Replacer methods are {@link ProgrammingExerciseTaskService#extractTestCaseIdReplacementsFromNames(String, Set)}
      * or {@link ProgrammingExerciseTaskService#extractTestNamesFromTestIds(String, Set)}.
      *
      * @param problemStatement the problem statement to replace the tasks
-     * @param testCases        all test cases of the exercise, used to look up the new value to use
+     * @param testCases        all test cases of the exercise; used to look up the new value to use
      * @param replacer         the replacer method that gets executed when a test case gets found
      * @return the new problem statement
      */
@@ -432,12 +432,12 @@ public class ProgrammingExerciseTaskService {
         Matcher matcher = TASK_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
-            // matchResult is fa full task, e.g. [task][Bubble Sort](testBubbleSort,testClass[BubbleSort])
+            // matchResult is fa full task, e.g., [task][Bubble Sort](testBubbleSort,testClass[BubbleSort])
             String fullMatch = matchResult.group();
-            // group 1: task name, group 2: test names. e.g testBubbleSort,testClass[BubbleSort]
+            // group 1: task name, group 2: test names, e.g, testBubbleSort,testClass[BubbleSort]
             String testNames = matchResult.group(2);
 
-            // converted testids, e.g. <testid>10</testid>,<testid>12</testid>
+            // converted testids, e.g., <testid>10</testid>,<testid>12</testid>
             String testIds = replacer.apply(testNames, testCases);
 
             // replace the names with their ids
@@ -447,11 +447,11 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Looks for all test cases integrated into plantuml diagrams in the given problem statement, and replaces its test case using the given replacer method.
-     * Replacer methods are e.g. {@link ProgrammingExerciseTaskService#extractTestCaseIdReplacementsFromNames(String, Set)}
+     * Replacer methods are {@link ProgrammingExerciseTaskService#extractTestCaseIdReplacementsFromNames(String, Set)}
      * or {@link ProgrammingExerciseTaskService#extractTestNamesFromTestIds(String, Set)}.
      *
      * @param problemStatement the problem statement to replace the plantuml diagram tests
-     * @param testCases        all test cases of the exercise, used to look up the new value to use
+     * @param testCases        all test cases of the exercise; used to look up the new value to use
      * @param replacer         the replacer method that gets executed when a test case gets found
      * @return the new problem statement
      */
@@ -466,9 +466,9 @@ public class ProgrammingExerciseTaskService {
             return tests.replaceAll(testsMatchResult -> {
                 // testsMatchResult: one testscolor instance, e.g. testsColor(testAttributes[BubbleSort])
                 String fullMatch = testsMatchResult.group();
-                // group 1: test name, e.g testAttributes[BubbleSort]
+                // group 1: test name, e.g, testAttributes[BubbleSort]
                 String testName = testsMatchResult.group(1);
-                // id to insert, e.g. <testid>15</testid>
+                // id to insert, e.g., <testid>15</testid>
                 String testId = replacer.apply(testName, testCases);
                 return fullMatch.replace(testName, testId);
             });
