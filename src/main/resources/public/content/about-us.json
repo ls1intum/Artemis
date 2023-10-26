@@ -444,6 +444,10 @@
         {
             "fullName": "Laurenz Blumentritt",
             "photoDirectory": "public/images/about/Laurenz_Blumentritt.jpg"
+        },
+        {
+            "fullName": "Lennart Keller",
+            "photoDirectory": "public/images/about/Lennart_Keller.jpg"
         }
     ]
 }
