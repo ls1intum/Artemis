@@ -3,13 +3,12 @@ package de.tum.in.www1.artemis.service.dto.athena;
 import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.service.dto.GradingInstructionDTO;
 
 /**
  * A DTO representing a Feedback on a ProgrammingExercise, for transferring data to Athena and receiving suggestions from Athena
  */
-public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits,
-        GradingInstructionDTO structuredGradingInstruction, String filePath, Integer lineStart, Integer lineEnd) {
+public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, long structuredGradingInstructionId,
+        String filePath, Integer lineStart, Integer lineEnd) {
 
     /**
      * Creates a TextFeedbackDTO from a Feedback object
@@ -31,6 +30,6 @@ public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId
         }
         // There is only one line and Athena supports multiple lines, so we just take the line for both start and end
         return new ProgrammingFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(),
-                GradingInstructionDTO.of(feedback.getGradingInstruction()), filePath, lineStart, lineStart);
+                feedback.getGradingInstruction() == null ? null : feedback.getGradingInstruction().getId(), filePath, lineStart, lineStart);
     }
 }

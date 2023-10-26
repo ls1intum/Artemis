@@ -4,12 +4,11 @@ import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.service.dto.GradingInstructionDTO;
 
 /**
  * A DTO representing a Feedback on a TextExercise, for transferring data to Athena and receiving suggestions from Athena
  */
-public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, GradingInstructionDTO structuredGradingInstruction,
+public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, long structuredGradingInstructionId,
         Integer indexStart, Integer indexEnd) {
 
     /**
@@ -25,6 +24,6 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
         Integer startIndex = feedbackBlock == null ? null : feedbackBlock.getStartIndex();
         Integer endIndex = feedbackBlock == null ? null : feedbackBlock.getEndIndex();
         return new TextFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(),
-                GradingInstructionDTO.of(feedback.getGradingInstruction()), startIndex, endIndex);
+                feedback.getGradingInstruction() == null ? null : feedback.getGradingInstruction().getId(), startIndex, endIndex);
     }
 }

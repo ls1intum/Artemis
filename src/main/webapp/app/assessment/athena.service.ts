@@ -47,6 +47,20 @@ export class AthenaService {
     }
 
     /**
+     * Find a grading instruction by id in the given exercise
+     */
+    private findGradingInstruction(exercise: Exercise, id: number): any | undefined {
+        for (const criterium of exercise.gradingCriteria ?? []) {
+            for (const instruction of criterium.structuredGradingInstructions) {
+                if (instruction.id == id) {
+                    return instruction;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    /**
      * Get feedback suggestions for the given text submission from Athena
      *
      * @param exercise
@@ -65,7 +79,10 @@ export class AthenaService {
                     // Text feedback suggestions are automatically accepted, so we can set the text directly:
                     feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
-                    feedback.gradingInstruction = suggestion.gradingInstruction;
+                    // Load grading instruction from exercise, if available
+                    if (suggestion.structuredGradingInstructionId != undefined) {
+                        feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);
+                    }
                     if (suggestion.indexStart == null) {
                         // Unreferenced feedback, return Feedback object
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
@@ -108,7 +125,10 @@ export class AthenaService {
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
                         feedback.reference = undefined;
                     }
-                    feedback.gradingInstruction = suggestion.gradingInstruction;
+                    // Load grading instruction from exercise, if available
+                    if (suggestion.structuredGradingInstructionId != undefined) {
+                        feedback.gradingInstruction = this.findGradingInstruction(exercise, suggestion.structuredGradingInstructionId);
+                    }
                     return feedback;
                 });
             }),
