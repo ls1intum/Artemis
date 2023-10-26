@@ -71,7 +71,7 @@ public class LocalCIConfiguration {
         log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
-                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread " + thread.getName(), exception)).build();
+                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
 
         RejectedExecutionHandler customRejectedExecutionHandler = (runnable, executor) -> {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
@@ -120,7 +120,7 @@ public class LocalCIConfiguration {
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-        log.info("Docker client created with connection URI: " + dockerConnectionUri);
+        log.info("Docker client created with connection URI: {}", dockerConnectionUri);
 
         return dockerClient;
     }

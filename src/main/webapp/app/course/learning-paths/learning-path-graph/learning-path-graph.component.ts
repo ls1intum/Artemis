@@ -35,7 +35,6 @@ export class LearningPathGraphComponent implements OnInit {
     protected readonly NodeType = NodeType;
 
     constructor(
-        private activatedRoute: ActivatedRoute,
         private learningPathService: LearningPathService,
     ) {}
 
@@ -46,7 +45,7 @@ export class LearningPathGraphComponent implements OnInit {
     }
 
     @Input() set draggingEnabled(value) {
-        this._draggingEnabled = value || false;
+        this._draggingEnabled = value;
     }
 
     get draggingEnabled() {

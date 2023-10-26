@@ -2,6 +2,7 @@
     display: flex;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 
     .node {
         display: flex;
@@ -17,6 +18,15 @@
     .edge {
         stroke: var(--body-color) !important;
         marker-end: url(#arrow);
+    }
+
+    .floating-icon-button {
+        position: absolute;
+        right: 0;
+        padding: 0.25em;
+    }
+    .floating-icon-button:hover {
+        cursor: pointer;
     }
 }
 
@@ -34,7 +44,7 @@ jhi-learning-path-graph-node:hover {
     }
 }
 
-::ng-deep .graph-container .node-icon-container fa-icon svg {
+:host::ng-deep .graph-container .node-icon-container fa-icon svg {
     margin: 10%;
     width: 80%;
     height: 80%;

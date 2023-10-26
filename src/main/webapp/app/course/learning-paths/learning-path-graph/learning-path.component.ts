@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NgxLearningPathNode, getIcon } from 'app/entities/competency/learning-path.model';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
@@ -8,7 +8,6 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-learning-path',
     styleUrls: ['./learning-path.component.scss'],
     templateUrl: './learning-path.component.html',
-    encapsulation: ViewEncapsulation.None,
 })
 export class LearningPathComponent implements OnInit {
     @Input() learningPathId: number;
