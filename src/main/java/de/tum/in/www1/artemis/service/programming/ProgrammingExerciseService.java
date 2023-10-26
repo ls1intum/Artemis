@@ -272,6 +272,11 @@ public class ProgrammingExerciseService {
         return createdExercise;
     }
 
+    /**
+     * Triggers a build for the template and solution participation of the given programming exercise.
+     *
+     * @param programmingExercise The programming exercise for which the builds should be triggered.
+     */
     public void triggerBuildForTemplateAndSolutionParticipation(ProgrammingExercise programmingExercise) {
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
