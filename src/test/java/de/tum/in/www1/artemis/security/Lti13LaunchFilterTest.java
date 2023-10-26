@@ -114,6 +114,19 @@ class Lti13LaunchFilterTest {
         idTokenClaims.put(Claims.TARGET_LINK_URI, targetLinkUri);
     }
 
+    private void initValidTokenForDeepLinking() {
+        idTokenClaims.put("iss", "https://some.lms.org");
+        idTokenClaims.put("aud", "[962fa4d8-bcbf-49a0-94b2-2de05ad274af]");
+        idTokenClaims.put("exp", "1510185728");
+        idTokenClaims.put("iat", "1510185228");
+        idTokenClaims.put("nonce", "fc5fdc6d-5dd6-47f4-b2c9-5d1216e9b771");
+        idTokenClaims.put(Claims.LTI_DEPLOYMENT_ID, "some-deployment-id");
+
+        idTokenClaims.put(Claims.DEEP_LINKING_SETTINGS, "{ \"deep_link_return_url\": \"https://platform.example/deep_links\" }");
+        idTokenClaims.put(Claims.TARGET_LINK_URI, "https://any-artemis-domain.org/api/deep-linking/121");
+        idTokenClaims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
+    }
+
     @Test
     void authenticatedLogin() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
@@ -137,6 +150,30 @@ class Lti13LaunchFilterTest {
     }
 
     @Test
+    void authenticatedLoginForDeepLinking() throws Exception {
+        doReturn(true).when(authentication).isAuthenticated();
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+        doReturn(responseWriter).when(httpResponse).getWriter();
+        initValidTokenForDeepLinking();
+
+        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
+
+        verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
+        verify(httpResponse).setContentType("application/json");
+        verify(httpResponse).setCharacterEncoding("UTF-8");
+        verify(lti13Service).startDeepLinking(any(), any());
+
+        ArgumentCaptor<JSONObject> argument = ArgumentCaptor.forClass(JSONObject.class);
+        verify(responseWriter).print(argument.capture());
+        JSONObject responseJsonBody = argument.getValue();
+        verify(lti13Service).buildLtiResponse(any(), any());
+        assertThat(((String) responseJsonBody.get("targetLinkUri"))).as("Response body contains the expected targetLinkUri")
+                .contains("https://any-artemis-domain.org/api/deep-linking/121");
+
+    }
+
+    @Test
     void authenticatedLogin_oauth2AuthenticationException() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
@@ -146,6 +183,7 @@ class Lti13LaunchFilterTest {
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
         verify(lti13Service, never()).performLaunch(any(), any());
+        verify(lti13Service, never()).startDeepLinking(any(), any());
     }
 
     @Test
@@ -158,6 +196,7 @@ class Lti13LaunchFilterTest {
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
         verify(lti13Service, never()).performLaunch(any(), any());
+        verify(lti13Service, never()).startDeepLinking(any(), any());
     }
 
     @Test

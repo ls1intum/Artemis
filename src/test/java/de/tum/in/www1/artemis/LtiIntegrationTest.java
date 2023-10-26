@@ -345,6 +345,34 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deepLinkingFailsAsStudent() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("exerciseId", "155");
+
+        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.FORBIDDEN, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingFailsWithoutExerciseId() throws Exception {
+        request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingFailsForNonOnlineCourse() throws Exception {
+        course.setOnlineCourse(false);
+        course.setOnlineCourseConfiguration(null);
+        courseRepository.save(course);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("exerciseId", "155");
+
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+    }
+
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
         assertThat(parameters.getFirst("initialize")).isNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNotNull();
