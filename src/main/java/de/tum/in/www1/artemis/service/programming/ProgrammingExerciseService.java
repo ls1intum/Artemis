@@ -249,9 +249,7 @@ public class ProgrammingExerciseService {
                 channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
                 setupBuildPlansForNewExercise(savedProgrammingExercise);
-                // save to get the id required for the webhook
-                savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
-                return savedProgrammingExercise;
+                return programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
             }
         });
 
@@ -261,8 +259,6 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(createdExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
         versionControl.addWebHooksForExercise(createdExercise);
         scheduleOperations(createdExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(createdExercise);
