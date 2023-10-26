@@ -161,7 +161,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** Resizable constants **/
     @Input()
-    enableResize = false;
+    enableResize = true;
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
     @Input()

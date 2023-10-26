@@ -1,20 +1,38 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { Post } from 'app/entities/metis/post.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 describe('LinkPreviewComponent', () => {
     let component: LinkPreviewComponent;
     let fixture: ComponentFixture<LinkPreviewComponent>;
+    let metisService: MetisService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [LinkPreviewComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(LinkPreviewComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+            declarations: [LinkPreviewComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ConfirmIconComponent)],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+            ], // Add any required dependencies here
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(LinkPreviewComponent);
+        metisService = TestBed.inject(MetisService);
+        component = fixture.componentInstance;
+        component.posting = new Post(); // Set up a dummy Posting object if required
+        fixture.detectChanges();
     });
 
     it('should create', () => {
@@ -104,5 +122,55 @@ describe('LinkPreviewComponent', () => {
         const errorContainer = fixture.nativeElement.querySelector('.error-container');
 
         expect(errorContainer).toBeFalsy();
+    });
+
+    it('should initialize isAuthorOfOriginalPost', () => {
+        // Modify the metisService to return a desired value for metisUserIsAuthorOfPosting
+        const metisServiceSpy = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+
+        component.ngOnInit();
+
+        expect(component.isAuthorOfOriginalPost).toBeTrue();
+        expect(metisServiceSpy).toHaveBeenCalled();
+    });
+
+    it('should remove link preview from message', () => {
+        const linkPreview: any = {
+            url: 'https://example.com',
+        };
+
+        component.isReply = false;
+        component.posting = new Post();
+        component.posting.content = 'This is a sample post with a link: https://example.com';
+
+        const metisServiceSpy = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        const metisServiceUpdatePostSpy = jest.spyOn(metisService, 'updatePost');
+
+        component.ngOnInit();
+        component.removeLinkPreview(linkPreview);
+
+        expect(metisServiceSpy).toHaveBeenCalled();
+        expect(metisServiceUpdatePostSpy).toHaveBeenCalled();
+        expect(component.posting.content).toContain('<https://example.com>');
+    });
+
+    it('should remove link preview from reply', () => {
+        const linkPreview: any = {
+            url: 'https://example.com',
+        };
+
+        component.isReply = true;
+        component.posting = new AnswerPost();
+        component.posting.content = 'This is a sample answer post with a link: https://example.com';
+
+        const metisServiceSpy = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        const metisServiceUpdateAnswerPostSpy = jest.spyOn(metisService, 'updateAnswerPost');
+
+        component.ngOnInit();
+        component.removeLinkPreview(linkPreview);
+
+        expect(metisServiceSpy).toHaveBeenCalled();
+        expect(metisServiceUpdateAnswerPostSpy).toHaveBeenCalled();
+        expect(component.posting.content).toContain('<https://example.com>');
     });
 });
