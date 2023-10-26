@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { Layout } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
 import { Subject } from 'rxjs';
@@ -34,9 +33,7 @@ export class LearningPathGraphComponent implements OnInit {
 
     protected readonly NodeType = NodeType;
 
-    constructor(
-        private learningPathService: LearningPathService,
-    ) {}
+    constructor(private learningPathService: LearningPathService) {}
 
     ngOnInit() {
         if (this.learningPathId) {
