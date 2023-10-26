@@ -202,6 +202,8 @@ During the exam creation and configuration, you can create your exam and configu
 
         Configure the Grading of a Programming Exercise
 
+    - The *Configure Grading* screen also allows the configuration of :ref:`submission policies <configure_submission_policies>`.
+
 .. _register_students:
 
 1.5 Register Students
@@ -436,10 +438,10 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 - To assess a submission a second time go to the exercise assessment dashboard. When it is enabled, a |start_new_assessment| button will be visible in the second correction round.
 - The new second assessment will have all the feedback copied from the first assessment. Those can be overridden, and new feedback can be added as well. This does not override the original result, but saves a separate second result.
 - Within the second correction round review instructors and tutors can highlight which feedback was created for which correction round. This is displayed as a badge at the bottom of every feedback. This view can be enabled or disabled any time during the second correction round review by pressing the button at the top of the page. The feature is currently available for text, modeling and file-upload exercises.
-- You can access each assessment of both rounds by going to the exam's |exercise_groups| -> |submissions|
+- You can access each assessment of both rounds by going to the exam's |exercise_groups| -> |scores| of the respective exercise.
 
-.. figure:: instructor/submissions.png
-    :alt: Submissions
+.. figure:: instructor/scores_table.png
+    :alt: Scores page
     :align: center
 
 3.3 Suspicious Behavior Detection
@@ -650,7 +652,6 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |summary| image:: instructor/buttons/summary.png
 .. |unlock_repo| image:: instructor/buttons/unlock_repo.png
 .. |view| image:: instructor/buttons/view.png
-.. |submissions| image:: instructor/buttons/submissions.png
 .. |import_students| image:: instructor/buttons/import_students.png
 .. |import_students_button| image:: instructor/buttons/import_students_button.png
 .. |verify_attendance| image:: instructor/buttons/verify_attendance.png

@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.6.0"
+version = "6.6.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -419,7 +419,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.3"
+    gradleVersion = "8.4"
 }
 
 tasks.register("stage") {

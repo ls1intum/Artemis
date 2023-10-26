@@ -21,9 +21,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -59,9 +57,11 @@ public class SubmissionResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
+    private final SubmissionVersionRepository submissionVersionRepository;
+
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, SubmissionVersionRepository submissionVersionRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -71,6 +71,7 @@ public class SubmissionResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.submissionVersionRepository = submissionVersionRepository;
     }
 
     /**
@@ -109,7 +110,7 @@ public class SubmissionResource {
 
     /**
      * GET /test-run-submissions : get test run submission for an exercise.
-     *
+     * <p>
      * Only returns the users test run submission for a specific exercise
      *
      * @param exerciseId exerciseID for which all submissions should be returned
@@ -145,7 +146,7 @@ public class SubmissionResource {
 
     /**
      * Get /exercises/:exerciseId/submissions-with-complaints
-     *
+     * <p>
      * Get all submissions associated to an exercise which have complaints in,
      * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
@@ -166,7 +167,7 @@ public class SubmissionResource {
 
     /**
      * Get /exercises/:exerciseId//more-feedback-requests-with-complaints
-     *
+     * <p>
      * Get all more feedback requests associated to an exercise which have more feedback requests in,
      * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
@@ -220,5 +221,24 @@ public class SubmissionResource {
         }
 
         return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+    }
+
+    /**
+     * GET /submissions/{submissionId}/versions : get all submission versions for a given submission
+     * {@link SubmissionVersion} are used in exams and store every submission a student has made.
+     * <p>
+     * A submission version is created every time a student clicks save or every 30s when the current state is saved
+     *
+     * @param submissionId the id of the submission for which all versions should be returned
+     * @return a list of {@link SubmissionVersionDTO} for the given submission
+     */
+
+    @GetMapping("/submissions/{submissionId}/versions")
+    @EnforceAtLeastInstructor
+    public List<SubmissionVersionDTO> getSubmissionVersions(@PathVariable long submissionId) {
+        var submission = submissionRepository.findByIdElseThrow(submissionId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, submission.getParticipation().getExercise(), userRepository.getUser());
+        var submissionVersions = submissionVersionRepository.findSubmissionVersionBySubmissionIdOrderByCreatedDateAsc(submission.getId());
+        return submissionVersions.stream().map(SubmissionVersionDTO::of).toList();
     }
 }
