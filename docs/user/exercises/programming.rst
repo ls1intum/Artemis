@@ -121,6 +121,14 @@ for other programming languages.
 
 .. include:: test-case-best-practices.inc
 
+Best practices for creating AI-proof exercises
+----------------------------------------------
+
+The following section presents guidelines for crafting AI-resistant exercise instructions.
+While not every recommendation will suit every exercise, focus on those most pertinent to the specific problem at hand.
+This is illustrated with diverse exercise examples.
+
+.. include:: programming-exercise-AI-proof-guidelines.inc
 
 Sending Feedback back to Artemis
 --------------------------------
@@ -146,4 +154,4 @@ Each one represents a single test case feedback and should have the format:
 * ``successful``: Indicates if the test case execution for this submission should be marked as successful or failed.
   Defaults to ``false`` if not present.
 * ``message``: The message shown as additional information to the student.
-  **Required for non-successful tests/feedback**, optional otherwise.
+  **Required for non-successful tests/feedback**, o
